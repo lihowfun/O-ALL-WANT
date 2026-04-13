@@ -1,0 +1,9 @@
+{
+  "version": "0.1.0-dev",
+  "project": "${PROJECT_NAME}",
+  "last_updated": "${DATE}",
+  "do_not_rerun": [
+    "example: exp_001_initial_baseline (reason: 3 hours GPU, results in memory.md 2026-01-15)"
+  ],
+  "notes": "This file tracks version and experiment control. Agents read 'version' and 'do_not_rerun' every session."
+}

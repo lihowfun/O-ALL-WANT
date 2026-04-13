@@ -1,0 +1,38 @@
+# Agent Memory Framework — .gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+dist/
+*.egg-info/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project-specific
+# When deployed to a real project, .agents/memory.md should be versioned
+# But if you're testing locally, you might want to ignore it
+# .agents/memory.md
+
+# Codex / AI tools
+.codex
