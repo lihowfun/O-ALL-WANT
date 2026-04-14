@@ -2,14 +2,14 @@
 
 <div align="center">
   <!-- Translations are automatically generated via readme-i18n.com -->
-  <a href="https://www.readme-i18n.com/lihowfun/agent-memory-framework?lang=en">English</a> | 
-  <a href="https://www.readme-i18n.com/lihowfun/agent-memory-framework?lang=de">Deutsch</a> | 
-  <a href="https://www.readme-i18n.com/lihowfun/agent-memory-framework?lang=es">Español</a> | 
-  <a href="https://www.readme-i18n.com/lihowfun/agent-memory-framework?lang=fr">français</a> | 
-  <a href="https://www.readme-i18n.com/lihowfun/agent-memory-framework?lang=ja">日本語</a> | 
-  <a href="https://www.readme-i18n.com/lihowfun/agent-memory-framework?lang=ko">한국어</a> | 
-  <a href="https://www.readme-i18n.com/lihowfun/agent-memory-framework?lang=ru">Русский</a> | 
-  <a href="https://github.com/lihowfun/agent-memory-framework">中文</a>
+  <a href="https://www.readme-i18n.com/lihowfun/O-ALL-WANT?lang=en">English</a> | 
+  <a href="https://www.readme-i18n.com/lihowfun/O-ALL-WANT?lang=de">Deutsch</a> | 
+  <a href="https://www.readme-i18n.com/lihowfun/O-ALL-WANT?lang=es">Español</a> | 
+  <a href="https://www.readme-i18n.com/lihowfun/O-ALL-WANT?lang=fr">français</a> | 
+  <a href="https://www.readme-i18n.com/lihowfun/O-ALL-WANT?lang=ja">日本語</a> | 
+  <a href="https://www.readme-i18n.com/lihowfun/O-ALL-WANT?lang=ko">한국어</a> | 
+  <a href="https://www.readme-i18n.com/lihowfun/O-ALL-WANT?lang=ru">Русский</a> | 
+  <a href="https://github.com/lihowfun/O-ALL-WANT">中文</a>
 </div>
 
 > Why choose when you can have it all?
