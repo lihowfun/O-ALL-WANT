@@ -1,5 +1,7 @@
 # 🍲 O-ALL-WANT (OAW) Framework
 
+[English](README.en.md) | [中文](README.md)
+
 > Why choose when you can have it all?
 
 這是一個專為「貪心」的開發者設計的 AI Harness 大雜燴。我們不只想要 AI 幫我們寫
@@ -152,7 +154,7 @@ python3 scripts/wiki_sync.py lint
   - [Wiki Sync Guide](docs/Wiki_Sync_Guide.md)
   - [Architecture Origins](docs/Architecture_Origins.md)
   - [Design Principles](docs/Design_Principles.md)
-  - [OAW README Refresh Report](docs/OAW_README_REFRESH_REPORT.md)
+  - [OAW README Refresh Report](docs/archive/OAW_README_REFRESH_REPORT.md)
 
 ## License
 
