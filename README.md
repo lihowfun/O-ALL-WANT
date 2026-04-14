@@ -122,13 +122,7 @@ bash .agent-framework/install.sh
 
 ## 靈感來源 / Source Lineage
 
-這個 repo 不是從零憑空長出來的，而是把幾個我覺得真的有用的方向融合在一起：
-
-- 🧠 **Memory Palace / MemPalace**: 強化長期記憶與 structured wrap-up，讓 agent 比較不會中途失憶。
-- 📉 **context-hub + token routing**: 讓 searchable knowledge files、annotate、session continuity 和 lazy-read 可以一起工作。
-- 📚 **Karpathy-style LLM Wiki**: 把 raw notes 和 compiled wiki 拆開，讓知識能慢慢編譯成 durable markdown。
-- ⚡ **thin harness / fat skills**: 讓 router 保持薄，把高頻任務收進 skills，不要每次重講一次。
-
+這個 repo 的核心思想揉合了 **MemPalace**, **context-hub**, **Karpathy-style LLM Wiki** 與 **thin harness / fat skills** 等概念。
 如果你想看比較完整的來源對照與整合理由，請看：
 
 - [Architecture Origins](docs/Architecture_Origins.md)

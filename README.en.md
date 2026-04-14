@@ -113,13 +113,7 @@ So, it is a modularised "I want it all", not a pile of all rules jumbled togethe
 
 ## Inspirations / Source Lineage
 
-This repo did not sprout from nothing. It fuses several directions I found genuinely useful:
-
-- 🧠 **Memory Palace / MemPalace**: Enhances long-term memory and structured wrap-up so agents don't forget mid-way.
-- 📉 **context-hub + token routing**: Allows searchable knowledge files, annotation, session continuity, and lazy-reading to work together.
-- 📚 **Karpathy-style LLM Wiki**: Separates raw notes from compiled wikis, letting knowledge gradually compile into durable markdown.
-- ⚡ **Thin harness / fat skills**: Keeps the router thin, encapsulating high-frequency tasks into skills so they aren't repeated every time.
-
+The core philosophy of this framework merges concepts from **MemPalace**, **context-hub**, **Karpathy-style LLM Wiki**, and **thin harness / fat skills**.
 If you want to see a more complete source comparison and integration rationale, please check:
 
 - [Architecture Origins](docs/Architecture_Origins.md)
