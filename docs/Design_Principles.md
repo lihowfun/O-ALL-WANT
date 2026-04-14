@@ -42,7 +42,8 @@ scripts, keep the harness thin.
 
 Problem: the agent reads hundreds of irrelevant lines before it even knows the task.
 
-Fix: always start with `AI_CONTEXT.md` and `VERSION.json`, then route by lane.
+Fix: always start with `CLAUDE.md`, then let it route into `AI_CONTEXT.md`,
+`VERSION.json`, and the right lane.
 
 ### Ad-hoc repeated workflows
 

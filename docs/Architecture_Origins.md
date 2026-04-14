@@ -104,14 +104,18 @@
 ### Hybrid Router
 
 ```text
-                            operational lane
-              AI_CONTEXT.md / ROADMAP.md / VERSION.json / memory
-                                        |
-                                        v
-docs/raw/  -------->  docs/knowledge/*.md + index.md + log.md  <--------  .agents/skills/
-fallback-only            durable wiki retrieval layer                     execution lane
+                               CLAUDE.md
+                             startup router
+                                   |
+             -------------------------------------------------
+             |                       |                       |
+             v                       v                       v
+   operational lane             wiki lane              execution lane
+AI_CONTEXT / ROADMAP /        docs/knowledge/          .agents/skills/
+VERSION / memory             + index.md + log.md
 
 Rolling memory remains append-only across all lanes.
+docs/raw/ remains fallback-only and feeds the wiki via `wiki_sync.py`.
 ```
 
 ### Agent Session Flow
@@ -119,7 +123,9 @@ Rolling memory remains append-only across all lanes.
 ```text
 Agent starts
     ↓
-Read AI_CONTEXT.md + VERSION.json
+Read CLAUDE.md
+    ↓
+Router opens AI_CONTEXT.md + VERSION.json
     ↓
 Choose lane: operational / wiki / execution
     ↓

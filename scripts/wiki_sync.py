@@ -485,6 +485,7 @@ def lint():
     raw_sources = _discover_raw_sources()
     knowledge_pages = _load_knowledge_pages()
     pages_by_id = defaultdict(list)
+    raw_sources_by_ref = {source["relative_path"]: source for source in raw_sources}
 
     raw_source_ids = defaultdict(list)
     for source in raw_sources:
@@ -534,9 +535,11 @@ def lint():
         if page["source_refs"]:
             source_dates = []
             for source_ref in page["source_refs"]:
-                resolved = os.path.normpath(os.path.join(BASE_DIR, source_ref))
-                if os.path.exists(resolved):
-                    source_dates.append(date.fromtimestamp(os.path.getmtime(resolved)))
+                source = raw_sources_by_ref.get(source_ref)
+                if source:
+                    source_date = _parse_date(source["last_updated"])
+                    if source_date:
+                        source_dates.append(source_date)
             if source_dates and page_date and page_date < max(source_dates):
                 issues.append(f"stale page '{page['id']}': raw source newer than page metadata")
 

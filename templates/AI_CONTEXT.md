@@ -1,4 +1,4 @@
-# ${PROJECT_NAME} — AI Agent Context (Single Source of Truth)
+# ${PROJECT_NAME} — AI Agent Context (Project Facts SSOT)
 
 > ${ONE_LINE_DESCRIPTION} | ${VERSION} | Repo: ${REPO_URL}
 > Pipeline: **${PIPELINE_SUMMARY}**
@@ -18,6 +18,8 @@
   `${EXTERNAL_SERVICES}` with your real stack.
 - If you keep `docs/raw/` source notes, replace the example sync commands and
   topic names with the actual wiki topics your project uses.
+- Keep routing, forbidden actions, and end-of-task reporting rules in
+  `CLAUDE.md`. Do not turn this file into a second router.
 
 ## Language
 
@@ -43,23 +45,11 @@
 └─────────────────────┘     └──────────────────────────────┘     └─────────────────────┘
 ```
 
-## Core Rules
+## Critical Project Facts
 
-1. Back decisions with data — don't be a yes-man
-2. Act first, ask later — prove with experiments
-3. Add only, don't delete (unless explicitly asked)
-4. Explain in plain language — no jargon without context
-5. End every task with a report — **4-section format enforced** (What / Verified / Docs updated / Next). See `CLAUDE.md ## Session End`
-
-## Forbidden Actions
-
-<!-- Project-specific things that should never be modified -->
-- Do not modify `${SAFETY_CRITICAL_FILE}`
-- Do not remove `${IMPORTANT_WORKAROUND}`
-- Do not re-run experiments listed in `VERSION.json` `do_not_rerun`
-- Do not hardcode credentials (use env vars)
-- Do not treat `docs/raw/` as startup-default context
-- Do not edit compiled wiki pages directly if the same topic is generated from `docs/raw/`
+- Safety-critical file: `${SAFETY_CRITICAL_FILE}`
+- Workaround that must be preserved: `${IMPORTANT_WORKAROUND}`
+- Behavioral rules, startup routing, and forbidden actions live in `CLAUDE.md`
 
 ## Current Baselines
 
@@ -84,34 +74,19 @@
 - ${RUNTIME_ENVIRONMENT}
 - ${EXTERNAL_SERVICES}
 
-## Context Lanes
+## Information Surfaces
 
-| Lane | Primary Files | Use For | Avoid |
-|------|---------------|---------|-------|
-| Operational | `AI_CONTEXT.md`, `ROADMAP.md`, `VERSION.json`, `.agents/memory.md` | Branch status, release planning, active experiments | Reading all knowledge pages up front |
-| Wiki | `docs/knowledge/index.md`, topic pages, `Experiment_Findings.md` | Stable concepts, reusable findings, durable background | Jumping straight to raw sources |
-| Execution | `.agents/skills/*.md` | Repeated workflows with verification steps | Re-inventing the same SOP ad hoc |
+| Surface | Primary Files | What Lives There |
+|---------|---------------|------------------|
+| Operational | `AI_CONTEXT.md`, `ROADMAP.md`, `VERSION.json`, `.agents/memory.md` | Current state, guardrails, recent decisions |
+| Wiki | `docs/knowledge/index.md`, topic pages, `Experiment_Findings.md` | Durable background knowledge and reusable findings |
+| Execution | `.agents/skills/*.md`, `scripts/*.py` | Repeatable workflows and deterministic maintenance |
+| Raw fallback | `docs/raw/*.md` | Detailed source notes used only when a compiled topic is missing or stale |
 
-## Knowledge Sync Rules
+## Concrete Commands
 
-- `docs/raw/` stores sanitized source material and is **fallback-only**
-- `docs/knowledge/` stores durable compiled pages meant for normal retrieval
-- If a topic is missing or stale, refresh it with:
-  - `python3 scripts/wiki_sync.py refresh ${PRIMARY_WIKI_TOPIC}`
-  - `python3 scripts/wiki_sync.py lint`
-
-## Key Files — Lazy Read Protocol
-
-> ⚠️ Don't read everything at once! Read on demand based on the current task.
-> Full routing table: see `CLAUDE.md`.
-
-| Priority | File | When to Read | Lines |
-|:--------:|------|-------------|:-----:|
-| 🔴 Must | `AI_CONTEXT.md` (this file) | Every session | ~100 |
-| 🔴 Must | `VERSION.json` (version + do_not_rerun) | Every session | ~20 |
-| 🟡 On demand | `ROADMAP.md` first 60 lines | Changing code / running experiments | varies |
-| 🟡 On demand | `.agents/memory.md` last 5 entries | Checking past decisions | varies |
-| 🟡 On demand | `docs/knowledge/index.md` + topic pages | Stable background / reusable findings | 20-120 each |
-| 🟡 Fallback | `docs/raw/*.md` | Topic missing or stale in compiled wiki | varies |
-| 🟡 Tooling | `scripts/wiki_sync.py` | Rebuild / lint compiled wiki | ~150 |
-| 🚫 Never | `docs/archive/*` | Stale, retired docs | — |
+- Smoke test: `${SMOKE_TEST_CMD}`
+- Regression test: `${REGRESSION_TEST_CMD}`
+- Integration test: `${INTEGRATION_TEST_CMD}`
+- Refresh one wiki topic: `python3 scripts/wiki_sync.py refresh ${PRIMARY_WIKI_TOPIC}`
+- Lint wiki metadata: `python3 scripts/wiki_sync.py lint`

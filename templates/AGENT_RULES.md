@@ -1,8 +1,15 @@
-# ${PROJECT_NAME} — Agent Rules
+# ${PROJECT_NAME} — Master Router
 
 > Replace `${PROJECT_NAME}`, `${LANGUAGE}`, and the custom forbidden-action
 > placeholders before first use. Keep the rest of the structure intact unless
 > your workflow truly needs a different policy.
+
+## Router Contract
+
+- `CLAUDE.md` is the only startup router
+- `AI_CONTEXT.md` stores project facts, not a second rulebook
+- If the two overlap, use `CLAUDE.md` for behavior and `AI_CONTEXT.md` for
+  project-specific facts and commands
 
 ## Response Language
 
@@ -11,8 +18,8 @@
 
 ## Session Startup (Read On Demand — NOT Everything)
 
-**Always read (every session)**:
-1. ✅ `AI_CONTEXT.md` — architecture, rules, baselines, tech stack
+**After opening this file, always read**:
+1. ✅ `AI_CONTEXT.md` — architecture, baselines, commands, tech stack
 2. ✅ `VERSION.json` → only check `version` + `do_not_rerun` fields
 
 **Route by lane (based on the current task)**:
@@ -28,6 +35,8 @@
 - If `.agents/skills/` has a matching skill (e.g., `/benchmark`, `/debug-pipeline`, `/wiki-refresh`), **follow the skill workflow first**
 - Skills still obey this file's lazy-read protocol
 - Only go ad-hoc when no matching skill exists
+- If a maintenance step can be done by `context_hub.py` or `wiki_sync.py`,
+  prefer the script over repeated prose instructions
 
 > ⚠️ **FORBIDDEN**: Reading all .md files at session start. Understand the task first, then read on demand.
 > ⚠️ **FORBIDDEN**: Re-running experiments listed in `VERSION.json` `do_not_rerun`.
@@ -38,7 +47,7 @@
 ```
 📁 root/
 ├── CLAUDE.md              ← You are reading this (agent rules)
-├── AI_CONTEXT.md          ← Architecture + baselines + rules (SSOT)
+├── AI_CONTEXT.md          ← Project facts, baselines, commands
 ├── VERSION.json           ← Version number + do_not_rerun
 ├── ROADMAP.md             ← Phase plan + progress
 ├── README.md              ← User quick-start
@@ -84,12 +93,12 @@
 ### 4. What Comes Next
 - P0/P1/P2 action items + estimated cost + dependencies
 
-## Forbidden Actions
+## Project-Specific Forbidden Actions
 
-<!-- Customize these for your project -->
+> The global prohibitions above already cover startup bulk-reads, `do_not_rerun`,
+> and raw-vs-compiled wiki behavior. Keep this list for project-specific bans.
+
 1. Do not remove safety checks without explicit approval
-2. Do not re-run experiments in the `do_not_rerun` list
-3. Do not hardcode credentials in source code (use env vars + `.env.example`)
-4. Do not edit compiled wiki pages directly when a `docs/raw/` source exists for that topic
-5. ${CUSTOM_FORBIDDEN_ACTION_1}
-6. ${CUSTOM_FORBIDDEN_ACTION_2}
+2. Do not hardcode credentials in source code (use env vars + `.env.example`)
+3. ${CUSTOM_FORBIDDEN_ACTION_1}
+4. ${CUSTOM_FORBIDDEN_ACTION_2}
