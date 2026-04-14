@@ -1,7 +1,7 @@
-# Research Pipeline Demo — AI Agent Context (Single Source of Truth)
+# Public Hybrid Demo — AI Agent Context
 
 > Public hybrid wiki router demo | 0.2.0-example | Repo: https://github.com/lihowfun/agent-memory-framework
-> Pipeline: **Raw notes -> compiled wiki -> experiment review -> merge decision**
+> Pipeline: **Raw notes -> compiled wiki -> reusable project knowledge**
 
 ## Language
 
@@ -11,7 +11,6 @@
 ## Architecture
 
 ```text
-BRANCH.md / BRANCH_STATUS.md ──→ branch scope and merge criteria
 ROADMAP.md / VERSION.json ─────→ phase, experiment guardrails, do_not_rerun
 .agents/memory.md ─────────────→ recent decisions and findings
 docs/raw/*.md ─────────────────→ fallback-only source notes
@@ -31,7 +30,6 @@ docs/knowledge/*.md ───────────→ compiled durable wiki p
 
 - Do not edit generated wiki pages directly when the topic has a matching raw source
 - Do not re-run experiments in `VERSION.json` `do_not_rerun`
-- Do not delete `BRANCH.md` or `BRANCH_STATUS.md` before the experiment is merged
 - Do not hardcode secrets
 
 ## Current Baselines
@@ -39,7 +37,7 @@ docs/knowledge/*.md ───────────→ compiled durable wiki p
 | Metric | Value | Date | Notes |
 |--------|-------|------|-------|
 | Router evaluation coverage | 5 prompts | 2026-04-13 | Baseline suite for A/B/C comparison |
-| Default install promise | < 1 minute | 2026-04-13 | Hybrid wiki remains optional |
+| Default install promise | < 1 minute | 2026-04-13 | Wiki sync remains optional |
 
 ## Testing
 
@@ -47,7 +45,7 @@ docs/knowledge/*.md ───────────→ compiled durable wiki p
 |------|------|---------|
 | 1 Smoke | After docs or script changes | `python3 scripts/context_hub.py status` |
 | 2 Wiki Integrity | After raw/wiki changes | `python3 scripts/wiki_sync.py build && python3 scripts/wiki_sync.py lint` |
-| 3 Integration | Before merge recommendation | `python3 scripts/context_hub.py bootstrap` |
+| 3 Integration | Before release recommendation | `python3 scripts/context_hub.py bootstrap` |
 
 ## Tech Stack
 
@@ -59,7 +57,7 @@ docs/knowledge/*.md ───────────→ compiled durable wiki p
 
 | Lane | Primary Files | Use For |
 |------|---------------|---------|
-| Operational | `AI_CONTEXT.md`, `ROADMAP.md`, `VERSION.json`, `BRANCH*.md`, `.agents/memory.md` | Phase status, branch scope, merge rules |
+| Operational | `AI_CONTEXT.md`, `ROADMAP.md`, `VERSION.json`, `.agents/memory.md` | Phase status, current priorities, release rules |
 | Wiki | `docs/knowledge/index.md`, topic pages, `Experiment_Findings.md` | Durable background knowledge |
 | Execution | `.agents/skills/*.md` | Repeated workflows such as wiki refresh or experiment reporting |
 

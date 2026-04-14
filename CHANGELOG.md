@@ -11,7 +11,7 @@ All notable changes to this project will be documented in this file.
 - `docs/knowledge/Experiment_Findings.md` template
 - `wiki-refresh.md` skill for refreshing compiled wiki topics
 - `docs/Wiki_Sync_Guide.md` and `docs/Hybrid_Wiki_Router_Experiment.md`
-- `example/research-pipeline-demo/` sanitized public demo inspired by research-pipeline operating style
+- `example/public-hybrid-demo/` sanitized public demo for the hybrid router
 
 ### Changed
 - Upgraded the framework from a simple three-layer memory description to a hybrid router:

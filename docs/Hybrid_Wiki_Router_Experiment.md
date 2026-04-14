@@ -20,17 +20,17 @@ Do not replace the current framework with a pure LLM Wiki. Keep three lanes:
 - Upgraded knowledge pages to use frontmatter metadata
 - Added `Experiment_Findings.md`, `index.md`, and `log.md`
 - Added `wiki-refresh.md` skill
-- Added a public research-pipeline demo example
+- Added a public hybrid demo example
 
 ## Verification Snapshot
 
 - `python3 -m py_compile scripts/context_hub.py scripts/wiki_sync.py`
-- `python3 example/research-pipeline-demo/scripts/wiki_sync.py build`
-- `python3 example/research-pipeline-demo/scripts/wiki_sync.py lint`
-- `python3 example/research-pipeline-demo/scripts/context_hub.py status`
-- `python3 example/research-pipeline-demo/scripts/context_hub.py search "router"`
-- `python3 example/research-pipeline-demo/scripts/context_hub.py annotate Experiment_Findings "..."`
-- `python3 example/research-pipeline-demo/scripts/wiki_sync.py refresh Experiment_Findings`
+- `python3 example/public-hybrid-demo/scripts/wiki_sync.py build`
+- `python3 example/public-hybrid-demo/scripts/wiki_sync.py lint`
+- `python3 example/public-hybrid-demo/scripts/context_hub.py status`
+- `python3 example/public-hybrid-demo/scripts/context_hub.py search "router"`
+- `python3 example/public-hybrid-demo/scripts/context_hub.py annotate Experiment_Findings "..."`
+- `python3 example/public-hybrid-demo/scripts/wiki_sync.py refresh Experiment_Findings`
 - fresh install smoke in an empty temp directory:
   - `bash install.sh`
   - `python3 scripts/context_hub.py status`
@@ -69,7 +69,7 @@ Use the same prompts across all three modes:
 2. Recall a prior decision and explain why it was made
 3. Answer a durable background question from project docs
 4. Update knowledge after a new raw source note is added
-5. Plan around branch, phase, or experiment status
+5. Plan around current phase or release status
 
 ## Merge Criteria
 
@@ -89,4 +89,4 @@ Current branch read:
 
 - keep the hybrid router as the recommended next version
 - keep wiki sync optional in the default onboarding path
-- use the research-pipeline demo as the public reference implementation
+- use the public hybrid demo as the public reference implementation

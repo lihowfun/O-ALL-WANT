@@ -81,22 +81,21 @@
 
 ---
 
-### 5. SEAL-inspired Operational Documentation
+### 5. Operational Documentation Discipline
 
-**Source**: Public operating style reference from research/pipeline repos such as PRIVATE_PROJECT
+**Source**: Common practice in long-running software and research repositories
 
 **Core concepts**:
 
-- Strong SSOT beats scattered project lore
-- Version and experiment state should be explicit, not hidden in chat history
-- Condensed ledgers are more useful than full notebook dumps for future agents
+- Keep the main project context obvious instead of scattering it across many docs
+- Keep version and release metadata explicit
+- Keep experiment conclusions shorter than the raw notebook trail
 
 **What we adopted**:
 
-- `AI_CONTEXT.md` as the strong single source of truth
+- `AI_CONTEXT.md` as the main project context file
 - `ROADMAP.md` + richer `VERSION.json` metadata
 - `docs/knowledge/Experiment_Findings.md` as a compact conclusions ledger
-- Branch/experiment docs in the example deployment, not the default starter
 
 ---
 
@@ -135,7 +134,7 @@ Execute task, verify, and write memory/report output
 
 ## How The Influences Complement Each Other
 
-| Concern | Context Hub | MemPalace | Fat Skills | LLM Wiki | SEAL-style ops |
+| Concern | Context Hub | MemPalace | Fat Skills | LLM Wiki | Operational docs |
 |---------|-------------|-----------|------------|----------|----------------|
 | Structure | ✅ | — | ✅ | ✅ | ✅ |
 | Discipline | — | ✅ | — | — | ✅ |
@@ -149,7 +148,7 @@ Combined effect:
 - MemPalace forces continuity instead of hoping agents remember
 - Fat Skills turn repeated work into reusable SOPs
 - The LLM Wiki pattern keeps raw knowledge and retrieval pages separate
-- SEAL-style ops keep branch, roadmap, and experiment state explicit
+- Operational docs keep current priorities and release metadata easy to find
 
 Together they form a public, markdown-first, vector-DB-free long-term memory
 system that stays readable by both humans and agents.
