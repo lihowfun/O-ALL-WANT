@@ -121,7 +121,7 @@ The core philosophy of this framework merges concepts from the following excelle
 
 - 🧠 **[Memory Palace / MemPalace](https://github.com/MemPalace/mempalace)**: Fixes mid-task amnesia using structured wrap-ups
 - 📉 **[andrewyng/context-hub](https://github.com/andrewyng/context-hub)**: Provides the basis for searchable knowledge, annotation, and session continuity
-- 📚 **Karpathy-style LLM Wiki**: The concept of separating raw notes from actively compiled, durable wikis
+- 📚 **[Karpathy-style LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)**: The concept of separating raw notes from actively compiled, durable wikis
 - ⚡ **[Thin harness / fat skills (Garry Tan)](https://x.com/garrytan/status/2042925773300908103)**: The philosophy of encapsulating workflows in skills, keeping the router thin
 
 If you want to see a more complete source comparison and integration rationale, please check:

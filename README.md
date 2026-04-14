@@ -130,7 +130,7 @@ bash .agent-framework/install.sh
 
 - 🧠 **[Memory Palace / MemPalace](https://github.com/MemPalace/mempalace)**: 解決 Agent 中途失憶與 Structured wrap-up
 - 📉 **[andrewyng/context-hub](https://github.com/andrewyng/context-hub)**: 啟發了 searchable knowledge files、annotate 與 routing 機制
-- 📚 **Karpathy-style LLM Wiki**: 把隨手筆記與正式編譯的 Wiki 獨立開來的知識管理流派
+- 📚 **[Karpathy-style LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)**: 把隨手筆記與正式編譯的 Wiki 獨立開來的知識管理流派
 - ⚡ **[thin harness / fat skills (Garry Tan)](https://x.com/garrytan/status/2042925773300908103)**: 把高頻操作收進獨立 skill 以保持 router 輕薄的哲學
 
 如果你想看比較完整的來源對照與整合理由，請看：
