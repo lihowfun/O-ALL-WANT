@@ -6,16 +6,15 @@
 > `O-ALL-WANT (OAW)` 來描述它的核心精神: 記憶、Token 調度、LLM Wiki、
 > SOP workflows，我全都要。
 
-這是一個專為「貪心」的開發者設計的 AI Harness 大雜燴。
-
-我們不只想要 AI 幫我們寫 Code，我們還要它永不失憶、節省 Token，而且還能像
-Andrej Karpathy 說的那樣，自動幫我們維護一套永續演進的知識 Wiki。
+這是一個專為「貪心」的開發者設計的 AI Harness 大雜燴。我們不只想要 AI 幫我們寫
+Code，還要它跨 session 不失憶、別浪費 Token，最好還能像 Andrej Karpathy
+說的那樣，順手把碎知識慢慢編成一套會演進的 Wiki。
 
 本專案是我在數個下班後的夜晚，透過奴役 Codex GPT 5.4
-（沒錯，我讓它加班幫我寫的）將市面上最火熱的幾個 Harness Repo、
-記憶宮殿架構與 Token 優化邏輯強行整合在一起的結晶。
+（沒錯，我讓它加班幫我寫的），把市面上幾個最火熱的 Harness Repo、
+記憶宮殿做法與 Token 優化邏輯硬整合在一起的結晶。
 
-我要的其實很簡單:
+所以我要的其實很簡單:
 
 - 要能寫 code
 - 要能跨 session 不失憶
