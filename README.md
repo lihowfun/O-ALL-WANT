@@ -4,6 +4,10 @@
 
 > Why choose when you can have it all?
 
+<p align="center">
+  <img src="docs/assets/oboi_meme.png" width="400" alt="我全都要">
+</p>
+
 這是一個專為「貪心」的開發者設計的 AI Harness 大雜燴。我們不只想要 AI 幫我們寫
 Code，還要它跨 session 不失憶、別浪費 Token，最好還能像 Andrej Karpathy
 說的那樣，順手把碎知識慢慢編成一套會演進的 Wiki。

@@ -4,6 +4,10 @@
 
 > Why choose when you can have it all?
 
+<p align="center">
+  <img src="docs/assets/oboi_meme.png" width="400" alt="I want it all">
+</p>
+
 This is an AI Harness hodgepodge designed specifically for "greedy" developers. We want AI not only to write code for us, but also to maintain cross-session memory, save tokens, and ideally compile scattered knowledge into an evolving Wiki—just like Andrej Karpathy suggested.
 
 This project is the culmination of several late nights bossing around Codex GPT 5.4 (yes, I made it work overtime to write this for me). It forcibly integrates some of the most popular Harness repositories, Memory Palace concepts, and Token optimization logic into one cohesive framework.
