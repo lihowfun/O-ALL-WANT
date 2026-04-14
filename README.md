@@ -120,9 +120,15 @@ bash .agent-framework/install.sh
 
 所以它是模組化的「我全都要」，不是把所有規則堆成一坨。
 
-## 靈感來源 / Source Lineage
+## 靈感來源 / Source Lineage (站在巨人肩膀上)
 
-這個 repo 的核心思想揉合了 **MemPalace**, **context-hub**, **Karpathy-style LLM Wiki** 與 **thin harness / fat skills** 等概念。
+這個 repo 的核心思想揉合了以下幾個非常經典的好專案與概念，讓它們互相補足：
+
+- 🧠 **[Memory Palace / MemPalace](https://github.com/MemPalace/mempalace)**: 解決 Agent 中途失憶與 Structured wrap-up
+- 📉 **[andrewyng/context-hub](https://github.com/andrewyng/context-hub)**: 啟發了 searchable knowledge files、annotate 與 routing 機制
+- 📚 **Karpathy-style LLM Wiki**: 把隨手筆記與正式編譯的 Wiki 獨立開來的知識管理流派
+- ⚡ **[thin harness / fat skills (Garry Tan)](https://x.com/garrytan/status/2042925773300908103)**: 把高頻操作收進獨立 skill 以保持 router 輕薄的哲學
+
 如果你想看比較完整的來源對照與整合理由，請看：
 
 - [Architecture Origins](docs/Architecture_Origins.md)
