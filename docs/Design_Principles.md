@@ -1,138 +1,196 @@
-# Design Principles — Thin Harness, Fat Skills
+# Design Principles — Thin Harness, Hybrid Router
 
-> How to structure AI agent context for maximum efficiency and minimum token waste.
-> Based on production experience + three architectural influences.
+> How to structure AI agent context for maximum efficiency and minimum token
+> waste while keeping durable knowledge easy to update.
 
 ---
 
 ## Core Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────┐
-│  Fat Skills      (90% of the value)         │
-│  Markdown workflows encoding judgment +     │
-│  domain knowledge                           │
+│ Fat Skills                                  │
+│ Reusable workflows with verification        │
 ├─────────────────────────────────────────────┤
-│  Thin Harness    (~100 lines)               │
-│  Agent rules / context routing / safety     │
+│ Thin Harness                                │
+│ Agent rules, lane routing, safety           │
 ├─────────────────────────────────────────────┤
-│  Deterministic   (tools & scripts)          │
-│  CLI, tests, benchmarks, data pipelines     │
+│ Deterministic Tools                         │
+│ context_hub.py, wiki_sync.py, tests, CLI    │
 └─────────────────────────────────────────────┘
 
-Principle: Push intelligence UP (skills), push execution DOWN (deterministic tools),
-keep the harness THIN.
+Principle: push judgment up into skills, push repeatable maintenance down into
+scripts, keep the harness thin.
 ```
 
-## Five Key Concepts
+## Six Key Concepts
 
 | # | Concept | One Sentence |
-|---|---------|-------------|
-| 1 | **Skill Files** | Reusable markdown workflows — like function calls with parameters |
-| 2 | **Harness** | The wrapper around the LLM — only does: loop / read-write / context / safety |
-| 3 | **Resolvers** | Context routing tables — task type X auto-loads documents Y |
-| 4 | **Latent vs Deterministic** | LLM judgment needed vs same-input-same-output. Don't mix them. |
-| 5 | **Learning Loop** | Skills accumulate edge cases → get smarter over time |
+|---|---------|--------------|
+| 1 | Skill Files | Reusable markdown workflows for repeated tasks |
+| 2 | Harness | A small router that decides what to read next |
+| 3 | Lanes | Operational, wiki, and execution context should not be mixed blindly |
+| 4 | Wiki Compilation | Raw notes stay detailed; compiled topic pages stay readable |
+| 5 | Latent vs Deterministic | If the step should be identical every time, script it |
+| 6 | Learning Loop | Skills and memory should capture edge cases as they appear |
 
 ---
 
-## Anti-Patterns to Avoid
+## Anti-Patterns To Avoid
 
-### ❌ Bulk-reading at startup
-**Problem**: Agent reads 1,000+ lines of docs before understanding what the user wants.
-**Fix**: Lazy-read protocol — read `AI_CONTEXT.md` only, then route by task type.
+### Bulk-reading at startup
 
-### ❌ Ad-hoc workflows
-**Problem**: Agent invents a new process every time for recurring tasks.
-**Fix**: Skill files — write the workflow once, reuse forever.
+Problem: the agent reads hundreds of irrelevant lines before it even knows the task.
 
-### ❌ Knowledge in git history only
-**Problem**: Important decisions live in commit messages, unreachable by agents.
-**Fix**: Rolling memory (`memory.md`) + annotatable knowledge files.
+Fix: always start with `AI_CONTEXT.md` and `VERSION.json`, then route by lane.
 
-### ❌ "Best practice" suggestions
-**Problem**: Voluntary reporting means agents skip it when under token pressure.
-**Fix**: Mandatory rules — enforced in agent rules file, embedded in every skill.
+### Ad-hoc repeated workflows
 
-### ❌ Monolithic context file
-**Problem**: One 500-line file covers everything, most of it irrelevant to the current task.
-**Fix**: Separate into SSOT (`AI_CONTEXT.md`) + topic-indexed knowledge + skills.
+Problem: the agent reinvents the same benchmark, release, or refresh process.
+
+Fix: encode high-frequency tasks as skills.
+
+### Raw-note retrieval by default
+
+Problem: detailed notebooks are great for authorship but terrible for everyday retrieval.
+
+Fix: use compiled wiki pages for retrieval and `docs/raw/` only as fallback.
+
+### Knowledge hidden in git history only
+
+Problem: important conclusions are technically preserved but practically invisible.
+
+Fix: keep rolling memory and durable knowledge pages in repo-visible markdown.
+
+### Monolithic context
+
+Problem: one giant context file makes every task pay the same token cost.
+
+Fix: split the system into operational docs, compiled wiki, and execution skills.
 
 ---
 
-## Skill Design Guidelines
+## Lane Design
 
-### When to create a skill
-- You've done the same task **3+ times**
-- Each time you re-explain the workflow to the agent
-- There are **known edge cases** the agent keeps forgetting
+### Operational Lane
 
-### When NOT to create a skill
-- One-off task (just do it ad-hoc)
-- The workflow is still evolving rapidly (wait until it stabilizes)
-- It's purely deterministic (make it a script instead)
+Use:
 
-### Skill anatomy
+- `AI_CONTEXT.md`
+- `ROADMAP.md`
+- `VERSION.json`
+- recent `.agents/memory.md`
 
-```yaml
+Best for:
+
+- branch status
+- release decisions
+- active experiment constraints
+- current priorities
+
+### Wiki Lane
+
+Use:
+
+- `docs/knowledge/index.md`
+- relevant topic pages
+- `Experiment_Findings.md`
+
+Best for:
+
+- durable background knowledge
+- reusable architecture explanations
+- condensed prior findings
+
+### Execution Lane
+
+Use:
+
+- `.agents/skills/*.md`
+
+Best for:
+
+- benchmarks
+- release checklists
+- wiki refreshes
+- repeated debugging flows
+
+### Raw Source Fallback
+
+Use:
+
+- `docs/raw/*.md`
+
+Only when:
+
+- a topic is missing
+- a topic looks stale
+- you are authoring or refreshing the compiled wiki
+
 ---
-name: skill-name
-triggers: ["keyword1", "keyword2"]  # How the resolver finds this skill
-params: { PARAM1: "desc", PARAM2: "desc" }
-requires: [AI_CONTEXT.md, VERSION.json]  # Must-read before execution
-outputs: [memory.md entry, knowledge annotation]  # What gets produced
----
+
+## The Wiki Loop
+
+```text
+New source note lands in docs/raw/
+    ↓
+python3 scripts/wiki_sync.py refresh Topic_Name
+    ↓
+docs/knowledge/Topic_Name.md stays concise and searchable
+    ↓
+index.md + log.md update deterministically
+    ↓
+future agents read the compiled topic instead of the raw note
 ```
 
-```markdown
-# Steps
-1. Pre-checks (deterministic)
-2. Execute core action (may involve LLM judgment — mark clearly)
-3. Verify results (deterministic)
-4. Record results (deterministic — write to memory/knowledge)
+## The Learning Loop
 
-# Edge Cases (Learning Block)
-- [date] What happened + resolution
-```
-
-### The learning loop
-
-```
-Session N:   Agent uses /benchmark → anomalous result → records edge case
-Session N+1: Agent uses /benchmark → Step 1 reads edge cases → avoids the trap
-Session N+5: 5+ edge cases → agent proposes skill rewrite
+```text
+Task runs
+    ↓
+Decision / failure / experiment result gets written to memory
+    ↓
+Reusable conclusions get promoted into docs/knowledge/
+    ↓
+If maintenance becomes repetitive, move the flow into a skill
 ```
 
 ---
 
-## ROI Estimates
+## ROI
 
 | Benefit | Mechanism | Savings |
 |---------|-----------|---------|
-| Skip irrelevant reads | Lazy-read routing | ~60-80% startup tokens |
-| Reuse workflows | Skills | ~2,500 tokens/skill use |
-| Avoid re-investigation | Edge cases in skills | ~1,800 tokens/debug session |
-| Consistent reports | Forced templates | ~1,200 tokens/report |
-| Prevent re-runs | `do_not_rerun` in VERSION.json | Hours of compute |
-
-**Total estimated savings**: ~5,000-8,000 tokens per session for high-frequency tasks.
+| Fewer irrelevant reads | lane routing | ~60-80% startup tokens |
+| Reuse workflows | skills | ~2,500 tokens per repeated task |
+| Stable knowledge maintenance | raw→wiki compilation | lower doc drift |
+| Consistent reports | forced report structure | fewer lost conclusions |
+| Fewer accidental reruns | `do_not_rerun` in `VERSION.json` | hours of compute |
 
 ---
 
-## Implementation Roadmap
+## Rollout Order
 
-### Phase 1: Foundation (1 hour)
-- Copy templates into your project
-- Fill in `AI_CONTEXT.md` and agent rules
-- Create 1-2 knowledge files
+### Phase 1: Foundation
 
-### Phase 2: First Skills (2-3 hours)
-- Identify your top 3 recurring tasks
-- Write skills using `_TEMPLATE.md`
-- Test with your AI agent
+- Install the framework
+- Fill in `AI_CONTEXT.md` and `CLAUDE.md`
+- Start writing memory entries
 
-### Phase 3: Optimization (ongoing)
-- Accumulate edge cases in skills
-- Periodically archive old memory entries
-- Add knowledge frontmatter for auto-resolution (future)
-- Automate the learning loop (future)
+### Phase 2: Skills
+
+- Identify 2-3 repeated tasks
+- Turn them into skills
+- Verify each skill produces memory output
+
+### Phase 3: Wiki
+
+- Add raw source notes under `docs/raw/`
+- Compile durable topics with `wiki_sync.py`
+- Keep `index.md` and `log.md` passing lint
+
+### Phase 4: Optimization
+
+- Archive stale memory
+- tighten related-topic links
+- refine branch and experiment ledgers

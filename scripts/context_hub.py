@@ -7,32 +7,203 @@ annotate knowledge, manage rolling decision memory, and bootstrap
 new sessions.
 
 Part of the Agent Memory Framework.
-https://github.com/YOUR_ORG/agent-memory-framework
+https://github.com/lihowfun/agent-memory-framework
 """
-import fcntl
+import argparse
+import json
 import os
 import re
-import sys
-import argparse
 from datetime import datetime
+
+try:
+    import fcntl  # type: ignore
+except ImportError:  # pragma: no cover - exercised on Windows
+    fcntl = None
+
+try:
+    import msvcrt  # type: ignore
+except ImportError:  # pragma: no cover - exercised on POSIX
+    msvcrt = None
 
 # ─── Configuration ────────────────────────────────────────────────────────────
 # Adjust these paths to match your project structure.
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = os.environ.get("AGENT_MEMORY_BASE_DIR") or os.path.dirname(
+    os.path.dirname(os.path.abspath(__file__))
+)
 DOCS_DIR = os.path.join(BASE_DIR, "docs", "knowledge")
+RAW_DIR = os.path.join(BASE_DIR, "docs", "raw")
 MEMORY_FILE = os.path.join(BASE_DIR, ".agents", "memory.md")
 AI_CONTEXT_FILE = os.path.join(BASE_DIR, "AI_CONTEXT.md")
+META_PAGE_TYPES = {"meta"}
 
 # ─── Utilities ────────────────────────────────────────────────────────────────
 
 
-def _locked_write(filepath, content):
-    """Write file content with exclusive lock to prevent multi-agent race conditions."""
+def _resolve_lock_backend(os_name=None, fcntl_module=fcntl, msvcrt_module=msvcrt):
+    """Choose the best available file-lock backend for the current platform."""
+    current_os = os_name or os.name
+
+    if current_os == "nt" and msvcrt_module is not None:
+        return "windows", msvcrt_module
+    if fcntl_module is not None:
+        return "posix", fcntl_module
+    if msvcrt_module is not None:
+        return "windows", msvcrt_module
+    return "none", None
+
+
+def _locked_write(filepath, content, os_name=None, fcntl_module=fcntl, msvcrt_module=msvcrt):
+    """Write file content with the best available lock to reduce multi-agent races."""
+    backend, lock_module = _resolve_lock_backend(
+        os_name=os_name,
+        fcntl_module=fcntl_module,
+        msvcrt_module=msvcrt_module,
+    )
+
+    if backend == "windows":
+        with open(filepath, "a+", encoding="utf-8") as f:
+            f.seek(0)
+            lock_module.locking(f.fileno(), lock_module.LK_LOCK, 1)
+            try:
+                f.seek(0)
+                f.truncate()
+                f.write(content)
+                f.flush()
+            finally:
+                f.seek(0)
+                lock_module.locking(f.fileno(), lock_module.LK_UNLCK, 1)
+        return
+
     with open(filepath, "w", encoding="utf-8") as f:
-        fcntl.flock(f, fcntl.LOCK_EX)
-        f.write(content)
-        fcntl.flock(f, fcntl.LOCK_UN)
+        if backend == "posix":
+            lock_module.flock(f, lock_module.LOCK_EX)
+        try:
+            f.write(content)
+            f.flush()
+        finally:
+            if backend == "posix":
+                lock_module.flock(f, lock_module.LOCK_UN)
+
+
+def _strip_tag_prefix(note):
+    """Remove a single leading [TAG] prefix while preserving the rest of the note."""
+    return re.sub(r"^\[\w+\]\s*", "", note, count=1)
+
+
+def _parse_frontmatter(content):
+    """Parse a minimal YAML-like frontmatter block if present."""
+    if not content.startswith("---\n"):
+        return {}, content
+
+    lines = content.splitlines()
+    closing_index = None
+    for i in range(1, len(lines)):
+        if lines[i].strip() == "---":
+            closing_index = i
+            break
+
+    if closing_index is None:
+        return {}, content
+
+    metadata = {}
+    current_key = None
+    current_list = None
+
+    for raw_line in lines[1:closing_index]:
+        line = raw_line.rstrip()
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        if stripped.startswith("- ") and current_key:
+            if current_list is None:
+                current_list = []
+                metadata[current_key] = current_list
+            current_list.append(stripped[2:].strip())
+            continue
+        if ":" not in line:
+            continue
+        key, value = line.split(":", 1)
+        current_key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        if value:
+            metadata[current_key] = value
+            current_list = None
+        else:
+            current_list = []
+            metadata[current_key] = current_list
+
+    body = "\n".join(lines[closing_index + 1 :]).lstrip("\n")
+    return metadata, body
+
+
+def _normalize_list(value):
+    """Normalize a scalar/list frontmatter field to a list of strings."""
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return [item for item in value if item]
+    if isinstance(value, str):
+        value = value.strip()
+        if not value:
+            return []
+        if value.startswith("[") and value.endswith("]"):
+            items = [item.strip().strip('"').strip("'") for item in value[1:-1].split(",")]
+            return [item for item in items if item]
+        return [value]
+    return [str(value)]
+
+
+def _page_title(filename, content, metadata):
+    """Best-effort title resolution for a knowledge page."""
+    if metadata.get("title"):
+        return metadata["title"]
+    for line in content.splitlines():
+        if line.startswith("# "):
+            return line[2:].strip()
+    return filename.replace(".md", "").replace("_", " ")
+
+
+def _knowledge_pages(include_meta=False):
+    """Yield loaded knowledge pages with parsed metadata."""
+    if not os.path.exists(DOCS_DIR):
+        return []
+
+    pages = []
+    for filename in sorted(os.listdir(DOCS_DIR)):
+        if not filename.endswith(".md"):
+            continue
+        path = os.path.join(DOCS_DIR, filename)
+        with open(path, "r", encoding="utf-8") as file:
+            content = file.read()
+        metadata, body = _parse_frontmatter(content)
+        if not include_meta and metadata.get("page_type") in META_PAGE_TYPES:
+            continue
+        pages.append(
+            {
+                "filename": filename,
+                "path": path,
+                "metadata": metadata,
+                "content": content,
+                "body": body,
+                "title": _page_title(filename, body, metadata),
+            }
+        )
+    return pages
+
+
+def _raw_source_count():
+    """Count raw markdown sources, excluding helper files."""
+    if not os.path.exists(RAW_DIR):
+        return 0
+    count = 0
+    for filename in os.listdir(RAW_DIR):
+        if not filename.endswith(".md"):
+            continue
+        if filename.startswith("_") or filename.lower() == "readme.md":
+            continue
+        count += 1
+    return count
 
 
 # ─── Search ───────────────────────────────────────────────────────────────────
@@ -45,20 +216,21 @@ def search(query):
         return
 
     results = []
-    for f in sorted(os.listdir(DOCS_DIR)):
-        if not f.endswith(".md"):
-            continue
-        path = os.path.join(DOCS_DIR, f)
-        with open(path, "r", encoding="utf-8") as file:
-            content = file.read()
-            if not query or query.lower() in content.lower() or query.lower() in f.lower():
-                title = f
-                for line in content.split("\n"):
-                    if line.startswith("# "):
-                        title = line[2:].strip()
-                        break
-                annotations = content.count("[AI Annotation]")
-                results.append((f.replace(".md", ""), title, annotations))
+    for page in _knowledge_pages():
+        filename = page["filename"]
+        content = page["content"]
+        metadata = page["metadata"]
+        search_blob = "\n".join(
+            [
+                filename,
+                page["title"],
+                content,
+                " ".join(_normalize_list(metadata.get("related_topics"))),
+            ]
+        )
+        if not query or query.lower() in search_blob.lower():
+            annotations = content.count("[AI Annotation")
+            results.append((filename.replace(".md", ""), page["title"], annotations))
 
     if not results:
         print("No matches found. Try broadening the search.")
@@ -97,6 +269,14 @@ def annotate(topic, note):
         print(f"Topic '{topic}' not found. Cannot annotate.")
         return
 
+    with open(file_path, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    metadata, _body = _parse_frontmatter(content)
+    if metadata.get("page_type") in META_PAGE_TYPES:
+        print(f"Topic '{topic}' is a meta page and should not be annotated directly.")
+        return
+
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     # Auto-detect tag from note content
@@ -104,9 +284,6 @@ def annotate(topic, note):
     tag_match = re.match(r'^\[(\w+)\]\s*', note)
     if tag_match:
         tag = f" ({tag_match.group(1)})"
-
-    with open(file_path, "r", encoding="utf-8") as f:
-        content = f.read()
 
     annotation_block = f"\n\n> **[AI Annotation{tag}]** ({timestamp}): {note}\n"
 
@@ -130,7 +307,7 @@ def memory_add(note):
     tag_match = re.match(r'^\[(\w+)\]', note)
     tag = tag_match.group(1) if tag_match else "NOTE"
 
-    entry = f"\n## [{timestamp}] [{tag}] {note.lstrip('[' + tag + '] ') if tag_match else note}\n"
+    entry = f"\n## [{timestamp}] [{tag}] {_strip_tag_prefix(note) if tag_match else note}\n"
 
     os.makedirs(os.path.dirname(MEMORY_FILE), exist_ok=True)
 
@@ -194,7 +371,6 @@ def status():
     print(f"{'='*70}\n")
 
     # 1. Version
-    import json
     version_file = os.path.join(BASE_DIR, "VERSION.json")
     if os.path.exists(version_file):
         with open(version_file, "r") as f:
@@ -202,6 +378,8 @@ def status():
         print(f"  📦 VERSION: {v.get('version', 'unknown')}")
         dnr = v.get("do_not_rerun", [])
         print(f"  🚫 DO NOT RERUN: {len(dnr)} experiments locked")
+        if v.get("current_phase"):
+            print(f"  🎯 CURRENT PHASE: {v.get('current_phase')}")
     print()
 
     # 2. Recent memory
@@ -220,10 +398,12 @@ def status():
     # 3. Knowledge topics
     print("  📚 KNOWLEDGE TOPICS")
     print(f"  {'-'*40}")
-    if os.path.exists(DOCS_DIR):
-        for f in sorted(os.listdir(DOCS_DIR)):
-            if f.endswith(".md"):
-                print(f"    {f.replace('.md', '')}")
+    pages = _knowledge_pages()
+    for page in pages:
+        print(f"    {page['filename'].replace('.md', '')}")
+    if _raw_source_count():
+        print()
+        print(f"  🧾 RAW SOURCES: {_raw_source_count()} file(s) in docs/raw/")
     print()
 
 

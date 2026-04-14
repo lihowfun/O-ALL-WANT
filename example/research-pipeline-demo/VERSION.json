@@ -1,0 +1,21 @@
+{
+  "version": "0.2.0-example",
+  "project": "research-pipeline-demo",
+  "last_updated": "2026-04-13",
+  "current_phase": "hybrid-router-validation",
+  "next_phase": "merge-or-retire",
+  "benchmark_snapshot": {
+    "summary": "Hybrid router prompt suite = 5 prompts, zero unresolved lint issues target",
+    "date": "2026-04-13"
+  },
+  "do_not_rerun": [
+    "exp_000_manual_raw_dump (reason: superseded by the compiled wiki workflow)",
+    "exp_001_full-markdown-bulk-read (reason: too expensive and lower signal)"
+  ],
+  "notes": "Public demo for the hybrid wiki router branch.",
+  "wiki_sync": {
+    "default_mode": "optional",
+    "raw_dir": "docs/raw",
+    "knowledge_dir": "docs/knowledge"
+  }
+}

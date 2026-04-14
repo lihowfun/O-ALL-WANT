@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.0-dev] — 2026-04-13
+
+### Added
+- `scripts/wiki_sync.py` with `build`, `refresh`, and `lint` commands
+- `docs/raw/` starter templates for raw source notes
+- Compiled wiki metadata pattern (`index.md`, `log.md`, topic frontmatter)
+- `docs/knowledge/Experiment_Findings.md` template
+- `wiki-refresh.md` skill for refreshing compiled wiki topics
+- `docs/Wiki_Sync_Guide.md` and `docs/Hybrid_Wiki_Router_Experiment.md`
+- `example/research-pipeline-demo/` sanitized public demo inspired by research-pipeline operating style
+
+### Changed
+- Upgraded the framework from a simple three-layer memory description to a hybrid router:
+  operational lane + compiled wiki lane + execution lane
+- `install.sh` now installs `scripts/wiki_sync.py` and `docs/raw/`
+- `context_hub.py` now skips wiki meta pages in search/status and reports raw-source counts
+- `AI_CONTEXT.md`, `CLAUDE.md`, `VERSION.json`, and skill templates now describe raw→wiki workflows
+
 ## [0.1.1] — 2026-04-13
 
 ### Added
@@ -35,5 +53,5 @@ All notable changes to this project will be documented in this file.
 
 ### Design Sources
 - [Andrew Ng's Context Hub](https://github.com/andrewyng/context-hub) — knowledge management infrastructure
-- [MemPalace](https://github.com/milla-jovovich/mempalace) — anti-amnesia discipline
+- [MemPalace](https://github.com/MemPalace/mempalace) — anti-amnesia discipline
 - [Garry Tan "Thin Harness, Fat Skills"](https://greptile.com/blog/agents) — executable knowledge

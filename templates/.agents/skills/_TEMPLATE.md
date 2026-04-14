@@ -10,12 +10,19 @@ requires:
   - VERSION.json
 optional_reads:
   - docs/knowledge/${RELEVANT_TOPIC}.md
+  - docs/raw/${OPTIONAL_SOURCE}.md
 outputs:
   - .agents/memory.md entry
   - docs/knowledge/${TOPIC}.md annotation (if significant)
 ---
 
 # /${SKILL_NAME} — ${SHORT_TITLE}
+
+> Replace every `${...}` token before first use. Parameter placeholders should
+> match the `params` block above; any extra runtime placeholders should be
+> explained inline for the next person reading the skill.
+> If the skill refreshes compiled wiki pages, call `python3 scripts/wiki_sync.py`
+> after editing `docs/raw/`.
 
 ## Parameters
 - **PARAM1**: ${PARAM1}
@@ -39,12 +46,18 @@ ${HOW_TO_CONFIRM_SUCCESS}
 ### Step 4: Record Results
 
 ```bash
-python scripts/context_hub.py memory add "[TAG] ${SKILL_NAME} — ${SUMMARY}"
+python3 scripts/context_hub.py memory add "[TAG] ${SKILL_NAME} — ${SUMMARY}"
 ```
 
 If significant finding:
 ```bash
-python scripts/context_hub.py annotate ${TOPIC} "[TAG] ${FINDING}"
+python3 scripts/context_hub.py annotate ${TOPIC} "[TAG] ${FINDING}"
+```
+
+If the skill changes `docs/raw/`:
+```bash
+python3 scripts/wiki_sync.py refresh ${TOPIC}
+python3 scripts/wiki_sync.py lint
 ```
 
 ---

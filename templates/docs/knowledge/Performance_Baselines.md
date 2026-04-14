@@ -1,6 +1,20 @@
+---
+id: Performance_Baselines
+title: Performance Baselines
+page_type: topic
+source_refs: []
+last_updated: YYYY-MM-DD
+related_topics:
+  - Architecture_Decisions
+  - Experiment_Findings
+---
+
 # Performance Baselines
 
 > Track key performance metrics. Agents read this when comparing benchmark results.
+> Replace the `${METRIC_*}`, `${VALUE}`, `${CONFIG}`, `${DATE}`, `${NOTES}`,
+> `${OLD}`, `${NEW}`, and `${WHAT_CHANGED}` placeholders with the numbers you
+> actually compare during reviews.
 
 ---
 
@@ -23,4 +37,4 @@
 
 ## AI Annotations
 
-<!-- Auto-appended by agents via: python scripts/context_hub.py annotate Performance_Baselines "note" -->
+<!-- Auto-appended by agents via: python3 scripts/context_hub.py annotate Performance_Baselines "note" -->

@@ -1,0 +1,9 @@
+{
+  "version": "0.1.0-example",
+  "project": "minimal-example-app",
+  "last_updated": "2026-04-13",
+  "do_not_rerun": [
+    "p0_clone_install_status_2026-04-13 (reason: onboarding baseline already captured in docs/knowledge/Performance_Baselines.md)"
+  ],
+  "notes": "This file tracks version and experiment control. Agents read 'version' and 'do_not_rerun' every session."
+}

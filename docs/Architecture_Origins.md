@@ -1,178 +1,165 @@
 # Agent Memory Architecture — Design Origins
 
-> This document explains the three architectural influences behind the Agent Memory Framework
-> and how they integrate into a unified system.
+> This document explains the architectural influences behind the Agent Memory
+> Framework and how they integrate into the hybrid wiki router.
 
 ---
 
-## 📚 Design Origins
+## Design Origins
 
 ### 1. Andrew Ng's Context Hub
 
 **Source**: [github.com/andrewyng/context-hub](https://github.com/andrewyng/context-hub)
 
 **Core concepts**:
-- **Versioned documents**: Knowledge preserved in structured files across sessions
-- **Annotation mechanism**: AI agents can annotate knowledge files, accumulating findings
-- **Context layer**: Dedicated layer manages agent context to reduce hallucination
+
+- Versioned documents preserve context across sessions
+- Knowledge files can be annotated as new findings arrive
+- A dedicated context layer reduces re-explanation and hallucination
 
 **What we adopted**:
-- ✅ `context_hub.py` — CLI tool for knowledge management (8 commands)
-- ✅ Knowledge files (`docs/knowledge/*.md`) — topic-indexed permanent knowledge
-- ✅ Rolling memory (`.agents/memory.md`) — cross-session decision log
-- ✅ Versioned context (`VERSION.json`) — version tracking + experiment control
+
+- `context_hub.py` for search, get, annotate, memory, lesson, status, bootstrap
+- Topic-indexed knowledge under `docs/knowledge/`
+- Rolling memory in `.agents/memory.md`
+- `VERSION.json` as a lightweight experiment-control file
 
 ---
 
 ### 2. MemPalace
 
-**Source**: [github.com/milla-jovovich/mempalace](https://github.com/milla-jovovich/mempalace)
+**Source**: [github.com/MemPalace/mempalace](https://github.com/MemPalace/mempalace)
 
 **Core concepts**:
-- **Anti-amnesia mechanism**: Force AI agents to record after every task
-- **Structured reports**: Fixed format, not free text
-- **Cross-session continuity**: Ensure knowledge persists between sessions
+
+- Anti-amnesia rules only work when they are enforced
+- Task reports should be structured, not optional free text
+- Cross-session continuity needs explicit logs
 
 **What we adopted**:
-- ✅ Mandatory Session End reports (4-section format in agent rules)
-- ✅ Self-improving skill (3 mandatory rules: report, log failures, capture corrections)
-- ✅ Structured TAG system (`[BUG]`, `[DECISION]`, `[EXPERIMENT]`, `[INSIGHT]`, `[WORKAROUND]`, `[ARCHITECTURE]`)
-- ✅ Skills with built-in memory write steps
+
+- Mandatory 4-section wrap-up format
+- Structured tags such as `[BUG]`, `[DECISION]`, `[EXPERIMENT]`, `[INSIGHT]`
+- Self-improving rules that force memory writes and failure capture
 
 ---
 
 ### 3. Garry Tan's "Thin Harness, Fat Skills"
 
-**Source**: [greptile.com/blog/agents](https://greptile.com/blog/agents) (Daksh Gupta / Garry Tan)
+**Source**: [x.com/garrytan/status/2042925773300908103](https://x.com/garrytan/status/2042925773300908103)
 
 **Core concepts**:
-- **Fat Skills**: Markdown workflow files encoding domain judgment + process knowledge
-- **Thin Harness**: Minimal orchestration layer (~100 lines) that routes tasks to skills
-- **Resolvers**: Context routing tables — task type X auto-loads documents Y
-- **Learning Loop**: Skills accumulate edge cases and improve over time
+
+- Skills encode reusable workflows and domain judgment
+- The harness should stay thin and mostly handle routing and safety
+- Repeated edge cases belong in workflows, not in ad hoc prompts
 
 **What we adopted**:
-- ✅ Skills directory (`.agents/skills/`) with reusable workflow files
-- ✅ Thin agent rules file (`CLAUDE.md` < 100 lines) with task routing table
-- ✅ Edge Cases learning blocks in every skill
-- ✅ Skills-First Principle (follow skills before going ad-hoc)
+
+- `.agents/skills/` as the execution lane
+- A routing-first `CLAUDE.md` / agent-rules file
+- Skill templates with explicit inputs, verification, and outputs
 
 ---
 
-## 🏗️ Integrated Architecture
+### 4. Karpathy-style LLM Wiki
 
-### Three-Layer Memory System
+**Source**: Conceptual pattern — raw notes compiled into durable markdown wiki pages
 
-```
-┌─────────────────────────────────────────────────────────┐
-│  Layer 1: Session Memory (Built-in)                     │
-│  Agent-native memory (Claude /memory, Cursor rules)     │
-│  Scope: same session only                               │
-│  Source: MemPalace (Rule 3: user corrections)            │
-└─────────────────────────────┬───────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────┐
-│  Layer 2: Rolling Memory (.agents/memory.md)            │
-│  Last 20-50 important decisions/findings                │
-│  Scope: cross-session, recent context                   │
-│  Source: Andrew Ng + MemPalace                           │
-└─────────────────────────────┬───────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────┐
-│  Layer 3: Knowledge Base (docs/knowledge/*.md)          │
-│  Permanent topic-indexed knowledge                      │
-│  Scope: project lifetime                                │
-│  Source: Andrew Ng Context Hub                           │
-└─────────────────────────────────────────────────────────┘
+**Core concepts**:
+
+- Keep raw notes detailed, local, and immutable in spirit
+- Keep retrieval pages concise and curated
+- Use markdown as the durable knowledge format instead of defaulting to vector DB
+
+**What we adopted**:
+
+- `docs/raw/` as the fallback-only source layer
+- `scripts/wiki_sync.py` as the deterministic raw-to-wiki compiler
+- `docs/knowledge/index.md` and `docs/knowledge/log.md` as generated meta pages
+- Topic frontmatter with `id`, `source_refs`, `last_updated`, `related_topics`
+
+---
+
+### 5. SEAL-inspired Operational Documentation
+
+**Source**: Public operating style reference from research/pipeline repos such as PRIVATE_PROJECT
+
+**Core concepts**:
+
+- Strong SSOT beats scattered project lore
+- Version and experiment state should be explicit, not hidden in chat history
+- Condensed ledgers are more useful than full notebook dumps for future agents
+
+**What we adopted**:
+
+- `AI_CONTEXT.md` as the strong single source of truth
+- `ROADMAP.md` + richer `VERSION.json` metadata
+- `docs/knowledge/Experiment_Findings.md` as a compact conclusions ledger
+- Branch/experiment docs in the example deployment, not the default starter
+
+---
+
+## Integrated Architecture
+
+### Hybrid Router
+
+```text
+                            operational lane
+              AI_CONTEXT.md / ROADMAP.md / VERSION.json / memory
+                                        |
+                                        v
+docs/raw/  -------->  docs/knowledge/*.md + index.md + log.md  <--------  .agents/skills/
+fallback-only            durable wiki retrieval layer                     execution lane
+
+Rolling memory remains append-only across all lanes.
 ```
 
 ### Agent Session Flow
 
-```
+```text
 Agent starts
     ↓
-Read agent rules (lazy-read protocol)         ← Garry Tan: Thin Harness
+Read AI_CONTEXT.md + VERSION.json
     ↓
-Read AI_CONTEXT.md (SSOT)                     ← Andrew Ng: Context Layer
+Choose lane: operational / wiki / execution
     ↓
-Read VERSION.json (version + do_not_rerun)    ← Andrew Ng: Versioned Docs
+If wiki topic exists: read docs/knowledge topic
     ↓
-On demand: memory.md last 5 entries           ← Andrew Ng + MemPalace
+If wiki topic missing or stale: read docs/raw source + refresh with wiki_sync.py
     ↓
-Match task to skill (if available)            ← Garry Tan: Fat Skills
-    ↓
-Execute task (follow skill or ad-hoc)
-    ↓
-Session End: 4-section report                 ← MemPalace: Forced Reports
-    ↓
-Write to memory.md                            ← MemPalace: Anti-Amnesia
-    ↓
-If significant: annotate knowledge            ← Andrew Ng: Annotation
+Execute task, verify, and write memory/report output
 ```
 
 ---
 
-## 🎯 How the Three Sources Complement Each Other
+## How The Influences Complement Each Other
 
-| Concern | Andrew Ng | MemPalace | Garry Tan |
-|---------|-----------|-----------|-----------|
-| **Structure** | ✅ File organization, CLI tooling | — | ✅ Skills format spec |
-| **Discipline** | — | ✅ Forced reports, failure logging | — |
-| **Execution** | — | — | ✅ Reusable workflows |
-| **Retention** | ✅ Knowledge files, annotations | ✅ Memory entries, TAG system | ✅ Edge case accumulation |
-| **Routing** | — | — | ✅ Task routing table, resolvers |
+| Concern | Context Hub | MemPalace | Fat Skills | LLM Wiki | SEAL-style ops |
+|---------|-------------|-----------|------------|----------|----------------|
+| Structure | ✅ | — | ✅ | ✅ | ✅ |
+| Discipline | — | ✅ | — | — | ✅ |
+| Execution | — | — | ✅ | — | — |
+| Retention | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Routing | — | — | ✅ | ✅ | ✅ |
 
-**Combined effect**:
-- Andrew Ng Context Hub provides the **infrastructure** (search, annotate, bootstrap)
-- MemPalace provides the **discipline** (forced reports, structured tags, cross-session persistence)
-- Garry Tan Skills provides the **execution** (turning knowledge into repeatable action)
+Combined effect:
 
-Together they form a complete **Agent Long-Term Memory + Executable Knowledge** system.
+- Context Hub gives the framework searchable files and CLI operations
+- MemPalace forces continuity instead of hoping agents remember
+- Fat Skills turn repeated work into reusable SOPs
+- The LLM Wiki pattern keeps raw knowledge and retrieval pages separate
+- SEAL-style ops keep branch, roadmap, and experiment state explicit
 
----
-
-## 📊 Measured Impact
-
-### Before (no framework)
-- ❌ Agent forgets decisions across sessions
-- ❌ Same bugs investigated repeatedly
-- ❌ Knowledge scattered across git commits, unsearchable
-- ❌ No standard report format
-- ❌ ~999 lines read at every session startup
-
-### After (framework deployed)
-- ✅ Rolling memory with 50+ structured entries
-- ✅ Topic-indexed knowledge files with annotation support
-- ✅ All skills force memory writes
-- ✅ Session End 4-section report is standard
-- ✅ ~212 lines at startup (-79%), rest read on demand
-- ✅ ~73% token reduction on simple queries
+Together they form a public, markdown-first, vector-DB-free long-term memory
+system that stays readable by both humans and agents.
 
 ---
 
-## 🎓 Lessons Learned
+## Lessons Learned
 
-1. **The three sources don't conflict — they complement each other**
-   - Context Hub manages structure
-   - MemPalace enforces discipline
-   - Garry Tan enables execution
-
-2. **Lazy-read is critical**
-   - Memory.md can't grow infinitely — archive old entries
-   - Knowledge is read on demand, not at startup
-   - Agent rules provide the routing table
-
-3. **Skills are the upgrade path for knowledge**
-   - Knowledge says "what"
-   - Skills say "how"
-   - They complement, not duplicate
-
-4. **Forced > suggested**
-   - Mandatory Session End reports: enforced ✅
-   - Memory writes in skills: enforced ✅
-   - Edge case accumulation: suggested (still manual) — next improvement target
-
-5. **Start small, grow organically**
-   - Begin with 2-3 skills for your most repetitive tasks
-   - Add knowledge files as you discover recurring topics
-   - Edge cases accumulate naturally over time
+1. These patterns do not conflict. They solve different failure modes.
+2. Raw notes should not be the default retrieval surface.
+3. Recent memory and durable wiki serve different jobs and should both remain.
+4. Operational docs deserve their own lane instead of being mixed into knowledge topics.
+5. A deterministic compiler is the easiest way to keep markdown knowledge fresh without adding heavy infrastructure.
