@@ -1,5 +1,7 @@
 # ${PROJECT_NAME} — AI Agent Context (Project Facts SSOT)
 
+> ⚠️ **FORBIDDEN**: Do NOT put agent operational instructions or behavior rules here. Use `CLAUDE.md` instead.
+
 > ${ONE_LINE_DESCRIPTION} | ${VERSION} | Repo: ${REPO_URL}
 > Pipeline: **${PIPELINE_SUMMARY}**
 
