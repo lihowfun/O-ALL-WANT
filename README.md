@@ -1,10 +1,6 @@
-# 🥟 O-ALL-WANT (OAW) Framework
+# 🍲 O-ALL-WANT (OAW) Framework
 
 > Why choose when you can have it all?
->
-> GitHub repo 名稱仍是 `agent-memory-framework`，但 README 這一版開始用
-> `O-ALL-WANT (OAW)` 來描述它的核心精神: 記憶、Token 調度、LLM Wiki、
-> SOP workflows，我全都要。
 
 這是一個專為「貪心」的開發者設計的 AI Harness 大雜燴。我們不只想要 AI 幫我們寫
 Code，還要它跨 session 不失憶、別浪費 Token，最好還能像 Andrej Karpathy
