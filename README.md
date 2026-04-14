@@ -98,6 +98,17 @@ bash .agent-framework/install.sh
 > 參考 OAW 的邏輯，幫我設計一個專屬的開發 harness，先保持簡潔，但保留
 > memory、wiki、skills 的擴充空間。
 
+## 📖 怎麼使用 LLM Wiki？ (LLM Wiki 運作原理)
+
+**什麼時候該用 LLM Wiki？**
+當你有「凌亂的會議筆記」、「長篇大論的技術文件」或「隨手記錄的 Bug 分析」，希望 AI 能記住，但每次都把原始文件塞給 AI 會浪費太多 Token，甚至讓 AI 失焦時。
+
+**使用流程 (Demo)：**
+1. **丟入草稿 (Raw):** 把凌亂的筆記或文件純文字，隨意丟進 `docs/raw/` 目錄中（例如：建立一個 `docs/raw/api_notes.md`）。
+2. **讓 AI 編譯 (Compile):** 執行指令 `python3 scripts/wiki_sync.py refresh api_notes`
+3. **完成 (Done):** 工具會自動將草稿提煉成結構化、精簡的正式文件，存入 `docs/knowledge/`，並自動更新知識目錄 (index)。
+4. **未來使用:** 之後你的 Agent 在查閱專案資料時，會直接閱讀 `docs/knowledge/` 裡整理好的精華版本，既省 Token 又精準！
+
 ## 為什麼這樣不會變亂
 
 因為它不是把所有規則硬塞進同一個 prompt，而是把責任拆開：

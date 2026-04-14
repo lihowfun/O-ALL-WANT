@@ -89,6 +89,17 @@ Then give the command:
 
 > Referencing OAW's logic, help me design a custom development harness. Keep it concise initially, but preserve the expansion space for memory, wiki, and skills.
 
+## 📖 How to use the LLM Wiki?
+
+**When should you use the LLM Wiki?**
+When you have "messy meeting notes," "verbose technical documents," or "quick bug analyses" that you want the AI to remember, but blindly feeding them to the AI every time wastes too many tokens and causes the AI to lose focus or hallucinate.
+
+**Workflow (Demo):**
+1. **Drop in the Draft (Raw):** Just drop your messy notes or raw text files into the `docs/raw/` directory (e.g., create a `docs/raw/api_notes.md`).
+2. **Let AI Compile (Compile):** Run the command `python3 scripts/wiki_sync.py refresh api_notes`
+3. **Done:** The script will automatically distill the chaotic draft into a structured, concise formal document in `docs/knowledge/`, and automatically update the index page.
+4. **Future Use:** From then on, when your Agent looks up project information, it will read the curated essence in `docs/knowledge/`—saving tokens and remaining highly precise!
+
 ## Why won't this become a mess?
 
 Because it does not force all rules into the same prompt; it separates responsibilities:
