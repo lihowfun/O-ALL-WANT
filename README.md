@@ -6,9 +6,16 @@
 > `O-ALL-WANT (OAW)` 來描述它的核心精神: 記憶、Token 調度、LLM Wiki、
 > SOP workflows，我全都要。
 
-這不是一個單一流派的純血 Harness。
+這是一個專為「貪心」的開發者設計的 AI Harness 大雜燴。
 
-這是把幾個我真的想要的能力硬整合在一起的 markdown-first AI harness:
+我們不只想要 AI 幫我們寫 Code，我們還要它永不失憶、節省 Token，而且還能像
+Andrej Karpathy 說的那樣，自動幫我們維護一套永續演進的知識 Wiki。
+
+本專案是我在數個下班後的夜晚，透過奴役 Codex GPT 5.4
+（沒錯，我讓它加班幫我寫的）將市面上最火熱的幾個 Harness Repo、
+記憶宮殿架構與 Token 優化邏輯強行整合在一起的結晶。
+
+我要的其實很簡單:
 
 - 要能寫 code
 - 要能跨 session 不失憶
@@ -16,26 +23,33 @@
 - 要能把碎筆記慢慢編成可重用的知識 wiki
 - 要能把重複流程收進 skills 和 scripts，而不是每次重講一次
 
-是的，很多內容真的是我和 Codex GPT 5.4 熬夜一起整理出來的。
+如果你只需要單一功能，請直接去 Fork 對應的原作（別在這裡浪費時間）；
+但如果你跟我一樣全都要，這裡有：
 
-## 這包到底有什麼
+## 🛠 內含大雜燴清單
 
-- 🧠 **Memory layer**: `.agents/memory.md` 讓 agent 有滾動式近期記憶
-- 📉 **Token routing**: `CLAUDE.md` 當 master router，按 task lazy-read
-- 📚 **LLM Wiki loop**: `docs/raw/` + `docs/knowledge/` + `scripts/wiki_sync.py`
-- ⚡ **Agent workflows**: `.agents/skills/*.md` 收 SOP，不靠臨場發揮
-- 🛠 **Deterministic helpers**: `context_hub.py` 和 `wiki_sync.py` 把繁瑣事交給程式
+- 🧠 **Memory Palace (記憶宮殿)**: 讓你的 Agent 擁有持久化記憶，不再對話到一半就失憶。
+  這一層的核心落點是 `.agents/memory.md` 與結構化 wrap-up discipline。
+- 📉 **Token Optimizer**: 透過精密的 Context 路由，把每一分 Token 都花在刀口上。
+  核心做法是讓 `CLAUDE.md` 當 master router，按 lane lazy-read。
+- 📚 **LLM Wiki (Karpathy Concept)**: 自動化知識編譯流程，讓 AI 幫你整理教科書，而不是每次亂翻 PDF。
+  核心組合是 `docs/raw/`、`docs/knowledge/` 和 `scripts/wiki_sync.py`。
+- ⚡ **Agentic Workflows**: 預置多套 Markdown 導向的 SOP，讓高頻任務不要每次重講。
+  這一層主要落在 `.agents/skills/*.md` 和 helper scripts。
 
 ## 架構圖
+
+先由 `CLAUDE.md` 決定這次任務該走哪條 lane；只有真的需要時才讀 wiki、
+skills 或 raw notes，所以不會一上來就把整個 repo 和所有規則塞進 context。
 
 ```mermaid
 flowchart LR
     U["User / Agent"] --> R["CLAUDE.md<br/>Master Router"]
     R --> O["Operational Lane<br/>AI_CONTEXT.md / ROADMAP.md / VERSION.json / recent memory"]
-    R --> W["Wiki Lane<br/>docs/knowledge/*.md"]
+    R --> W["Wiki Lane<br/>docs/knowledge/*.md + index/log"]
     R --> X["Execution Lane<br/>.agents/skills/*.md"]
     W --> C["scripts/context_hub.py<br/>search / get / annotate / memory"]
-    S["docs/raw/*.md<br/>fallback-only source notes"] --> Y["scripts/wiki_sync.py<br/>build / refresh / lint"]
+    S["docs/raw/*.md<br/>fallback-only source notes"] --> Y["scripts/wiki_sync.py<br/>invoked build / refresh / lint"]
     Y --> W
 ```
 
@@ -89,40 +103,40 @@ bash .agent-framework/install.sh
 
 ## 為什麼這樣不會變亂
 
-很多人把 memory、wiki、workflow、optimizer 全塞進 repo 後，AI 很快就開始亂。
-OAW 的處理方式不是再加更多口號，而是把責任拆開。
+因為它不是把所有規則硬塞進同一個 prompt，而是把責任拆開：
 
-| 常見問題 | OAW 的解法 |
-|----------|------------|
-| 指令權重稀釋 | `CLAUDE.md` 是唯一 startup router，先決定讀什麼，再讀內容 |
-| Context Window 浪費 | 用 operational / wiki / execution lanes lazy-read，不一次全讀 |
-| 邏輯衝突 | 把 procedure 下放給 scripts 和 skills，不靠 agent 自己記得做 |
-| Wiki 變成 always-on 背景工 | `wiki_sync.py` 只在需要時執行，不是每回合強制更新 |
-
-一句話版:
-
-- Router 負責「先看哪裡」
-- `AI_CONTEXT.md` 負責「專案事實」
-- skills 負責「重複流程」
-- scripts 負責「機械維護」
+- `CLAUDE.md` 負責先決定該讀哪裡
+- `AI_CONTEXT.md` 負責專案事實與命令
+- `.agents/skills/` 負責重複流程
+- scripts 負責機械維護
 
 所以它是模組化的「我全都要」，不是把所有規則堆成一坨。
 
 ## 靈感來源 / Source Lineage
 
-這個 repo 不是從零憑空長出來的，主要吸收了幾個很實用的方向:
+這個 repo 不是從零憑空長出來的，而是把幾個我覺得真的有用的方向融合在一起：
 
-- [Andrew Ng context-hub](https://github.com/andrewyng/context-hub): 搜尋式 knowledge files、annotate 與 session continuity
-- [MemPalace](https://github.com/MemPalace/mempalace): anti-amnesia、結構化 wrap-up、跨 session discipline
-- Garry Tan 的 thin harness / fat skills 想法: 讓 router 保持薄，把高頻 workflow 收進 skills
-- Karpathy-style LLM Wiki concept: raw notes 和 retrieval wiki 分層，讓 markdown 逐步編成 durable knowledge
+- 🧠 **Memory Palace / MemPalace**: 強化長期記憶與 structured wrap-up，讓 agent 比較不會中途失憶。
+- 📉 **context-hub + token routing**: 讓 searchable knowledge files、annotate、session continuity 和 lazy-read 可以一起工作。
+- 📚 **Karpathy-style LLM Wiki**: 把 raw notes 和 compiled wiki 拆開，讓知識能慢慢編譯成 durable markdown。
+- ⚡ **thin harness / fat skills**: 讓 router 保持薄，把高頻任務收進 skills，不要每次重講一次。
 
-詳細整合方式請看:
+如果你想看比較完整的來源對照與整合理由，請看：
 
 - [Architecture Origins](docs/Architecture_Origins.md)
 - [Design Principles](docs/Design_Principles.md)
 
-## 常用指令
+## 常用工具指令
+
+下面這些不是「神秘咒語」，它們就是這個 framework 最常用的幾個 helper：
+
+| 指令 | 用途 |
+|------|------|
+| `status` | 看目前版本、近期決策、knowledge topics、raw source 數量 |
+| `search` | 搜尋 wiki topic 或內容 |
+| `memory add` | 記錄新的 decision / bug / insight |
+| `annotate` | 在指定知識頁追加 AI annotation |
+| `wiki_sync lint` | 檢查 raw/wiki metadata 是否一致 |
 
 ```bash
 python3 scripts/context_hub.py status
@@ -132,33 +146,18 @@ python3 scripts/context_hub.py annotate Known_Limitations "[BUG] Reproduced on W
 python3 scripts/wiki_sync.py lint
 ```
 
-## Examples
+## Examples + Docs
 
-- [Minimal Install Fixture](example/minimal-project/README.md): 一個已安裝完成的最小快照
-- [Public Hybrid Demo](example/public-hybrid-demo/README.md): 一個有 raw notes、compiled wiki、skills 的公開示例
-
-## Docs
-
-- [CLI Reference](docs/CLI_Reference.md)
-- [Skill Guide](docs/Skill_Guide.md)
-- [Wiki Sync Guide](docs/Wiki_Sync_Guide.md)
-- [Architecture Origins](docs/Architecture_Origins.md)
-- [Design Principles](docs/Design_Principles.md)
-- [OAW README Refresh Report](docs/OAW_README_REFRESH_REPORT.md)
-
-## FAQ
-
-**我第一天就需要 wiki compiler 嗎？**  
-不需要。先用 `CLAUDE.md`、`AI_CONTEXT.md`、`.agents/memory.md` 和
-`docs/knowledge/` 就夠了。`docs/raw/` + `wiki_sync.py` 是進階層。
-
-**我一定要用 Python 嗎？**  
-不一定。檔案結構本身不依賴 Python。Python 主要是給 `context_hub.py` 和
-`wiki_sync.py` 這些 helper 用的。
-
-**這是不是 vector DB 替代品？**  
-不是完全替代，而是預設先用 markdown-first、local-first、deterministic-first
-的方式處理長期知識。需要更重的 retrieval 再往上疊。
+- Examples:
+  - [Minimal Install Fixture](example/minimal-project/README.md): 一個已安裝完成的最小快照
+  - [Public Hybrid Demo](example/public-hybrid-demo/README.md): 一個有 raw notes、compiled wiki、skills 的公開示例
+- Docs:
+  - [CLI Reference](docs/CLI_Reference.md)
+  - [Skill Guide](docs/Skill_Guide.md)
+  - [Wiki Sync Guide](docs/Wiki_Sync_Guide.md)
+  - [Architecture Origins](docs/Architecture_Origins.md)
+  - [Design Principles](docs/Design_Principles.md)
+  - [OAW README Refresh Report](docs/OAW_README_REFRESH_REPORT.md)
 
 ## License
 
