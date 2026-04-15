@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.0] — 2026-04-16
+
+### Added
+- Cross-agent/IDE compatibility table — pointer files for Codex (`AGENTS.md`), Cursor (`.cursorrules`), Windsurf (`.windsurfrules`), Gemini (`GEMINI.md`)
+- Self-hosting: OAW repo now uses its own harness to manage itself (eating our own dog food)
+- `.github/copilot-instructions.md` auto-created by installer for GitHub Copilot support
+
+### Changed
+- **README rewrite (zh + en)**: agentic-first UX — dispatch table, precise AI prompts for Plan A/B, file tree with agent-behavior annotations
+- Section reorder: "Why won't this become a mess" now follows architecture diagram for narrative flow
+- Integrated LLM Wiki section into architecture explanation (no more standalone section)
+- Softened absolute claims ("Agent 自動做" → "Agent 通常會做") for cross-agent accuracy
+- GitHub repo URL updated to `lihowfun/O-ALL-WANT`
+
+### Verified
+- Fresh install test (macOS): clone + install.sh + context_hub.py status in < 5s
+- Cross-agent review: harness structure validated against a real downstream project
+- All scripts functional: context_hub.py (8 commands), wiki_sync.py (3 commands)
+
 ## [0.2.0-dev] — 2026-04-13
 
 ### Added
