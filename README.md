@@ -198,10 +198,11 @@ your-project/
 
 ## 靈感來源 / Source Lineage (站在巨人肩膀上)
 
-這個 repo 的核心思想揉合了以下幾個非常經典的好專案與概念，讓它們互相補足：
+這個 repo 的核心思想揉合了以下幾個非常經典的好專案與概念，讓它們互相補足。
+OAW 沒有複製這些專案的原始碼——它們是不同語言、不同架構的獨立實現——但設計理念深受其影響：
 
-- 🧠 **[Memory Palace / MemPalace](https://github.com/MemPalace/mempalace)**: 解決 Agent 中途失憶與 Structured wrap-up
-- 📉 **[andrewyng/context-hub](https://github.com/andrewyng/context-hub)**: 啟發了 searchable knowledge files、annotate 與 routing 機制
+- 🧠 **[Memory Palace / MemPalace](https://github.com/MemPalace/mempalace)** (MIT): 解決 Agent 中途失憶與 Structured wrap-up
+- 📉 **[andrewyng/context-hub](https://github.com/andrewyng/context-hub)** (MIT): 啟發了 searchable knowledge files、annotate 與 routing 機制
 - 📚 **[Karpathy-style LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)**: 把隨手筆記與正式編譯的 Wiki 獨立開來的知識管理流派
 - ⚡ **[thin harness / fat skills (Garry Tan)](https://x.com/garrytan/status/2042925773300908103)**: 把高頻操作收進獨立 skill 以保持 router 輕薄的哲學
 
