@@ -52,6 +52,32 @@ flowchart LR
     Y --> W
 ```
 
+## 為什麼這樣不會變亂
+
+因為它不是把所有規則硬塞進同一個 prompt，而是把責任拆開：
+
+| 層 | 負責什麼 | 對應檔案 |
+|----|---------|---------|
+| **Router** | 決定先讀哪裡、調度哪個 skill | `CLAUDE.md` |
+| **Context** | 專案事實與架構 | `AI_CONTEXT.md` |
+| **Skills** | 可重複流程（像 function call） | `.agents/skills/` |
+| **Knowledge** | 精煉後的長期知識（省 Token） | `docs/knowledge/` |
+| **Memory** | 短期事件日記（決策、bug） | `.agents/memory.md` |
+| **Scripts** | 機械維護（搜尋、編譯 wiki） | `scripts/` |
+
+模組化的「我全都要」，不是把所有規則堆成一坨。
+
+### 知識怎麼自動長出來？
+
+你的凌亂筆記（會議記錄、技術草稿、Bug 分析）丟進 `docs/raw/`，
+跟 Agent 說「幫我把 api_notes 整理成知識頁」——
+在支援這套路由的環境裡，Agent 會優先走 `/wiki-refresh` skill，把它編譯成
+`docs/knowledge/` 裡的精華版。
+以後 Agent 查資料讀精華版就好，省 Token 又精準。
+
+> 💡 **Memory vs Knowledge**：Memory 是日記（短期事件），Knowledge 是教科書（長期知識）。
+> 同類 memory 累積 3-5 條，就該告訴 Agent「幫我提煉到 wiki」。
+
 ## 快速上手
 
 ### 方案 A: 已有專案 — 讓 AI 幫你加裝 harness
@@ -152,32 +178,6 @@ your-project/
 | `python3 scripts/context_hub.py memory add "[TAG] 內容"` | 手動記錄到 memory |
 | `python3 scripts/wiki_sync.py refresh topic_name` | 手動編譯某個 wiki 主題 |
 | `python3 scripts/wiki_sync.py lint` | 檢查 wiki metadata 一致性 |
-
-## 為什麼這樣不會變亂
-
-因為它不是把所有規則硬塞進同一個 prompt，而是把責任拆開：
-
-| 層 | 負責什麼 | 對應檔案 |
-|----|---------|---------|
-| **Router** | 決定先讀哪裡、調度哪個 skill | `CLAUDE.md` |
-| **Context** | 專案事實與架構 | `AI_CONTEXT.md` |
-| **Skills** | 可重複流程（像 function call） | `.agents/skills/` |
-| **Knowledge** | 精煉後的長期知識（省 Token） | `docs/knowledge/` |
-| **Memory** | 短期事件日記（決策、bug） | `.agents/memory.md` |
-| **Scripts** | 機械維護（搜尋、編譯 wiki） | `scripts/` |
-
-模組化的「我全都要」，不是把所有規則堆成一坨。
-
-### 知識怎麼自動長出來？
-
-你的凌亂筆記（會議記錄、技術草稿、Bug 分析）丟進 `docs/raw/`，
-跟 Agent 說「幫我把 api_notes 整理成知識頁」——
-在支援這套路由的環境裡，Agent 會優先走 `/wiki-refresh` skill，把它編譯成
-`docs/knowledge/` 裡的精華版。
-以後 Agent 查資料讀精華版就好，省 Token 又精準。
-
-> 💡 **Memory vs Knowledge**：Memory 是日記（短期事件），Knowledge 是教科書（長期知識）。
-> 同類 memory 累積 3-5 條，就該告訴 Agent「幫我提煉到 wiki」。
 
 ## 靈感來源 / Source Lineage (站在巨人肩膀上)
 

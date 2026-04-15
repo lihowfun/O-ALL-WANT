@@ -48,6 +48,32 @@ flowchart LR
     Y --> W
 ```
 
+## Why won't this become a mess?
+
+Because it doesn't force all rules into the same prompt — it separates responsibilities:
+
+| Layer | Responsibility | File |
+|-------|---------------|------|
+| **Router** | Decides what to read, which skill to dispatch | `CLAUDE.md` |
+| **Context** | Project facts & architecture | `AI_CONTEXT.md` |
+| **Skills** | Repeatable workflows (like function calls) | `.agents/skills/` |
+| **Knowledge** | Curated long-term knowledge (saves tokens) | `docs/knowledge/` |
+| **Memory** | Short-term event diary (decisions, bugs) | `.agents/memory.md` |
+| **Scripts** | Mechanical maintenance (search, compile wiki) | `scripts/` |
+
+A modularized "I want it all" — not all rules piled into one blob.
+
+### How does knowledge grow automatically?
+
+Drop your messy notes (meeting minutes, tech drafts, bug analyses) into `docs/raw/`,
+then tell the Agent "help me organize api_notes into a knowledge page" —
+in an agent environment that follows this router, it should prefer the `/wiki-refresh`
+skill and compile it into a curated page in `docs/knowledge/`.
+From then on, the Agent reads the curated version — saving tokens and staying precise.
+
+> 💡 **Memory vs Knowledge**: Memory is a diary (short-term events), Knowledge is a textbook (long-term knowledge).
+> When 3–5 similar memory entries accumulate, tell the Agent "distill these into a wiki page."
+
 ## Quick Start
 
 ### Plan A: Add Harness to an Existing Project
@@ -141,32 +167,6 @@ If you prefer to operate scripts directly:
 | `python3 scripts/context_hub.py memory add "[TAG] content"` | Manually record to memory |
 | `python3 scripts/wiki_sync.py refresh topic_name` | Manually compile a wiki topic |
 | `python3 scripts/wiki_sync.py lint` | Check wiki metadata consistency |
-
-## Why won't this become a mess?
-
-Because it doesn't force all rules into the same prompt — it separates responsibilities:
-
-| Layer | Responsibility | File |
-|-------|---------------|------|
-| **Router** | Decides what to read, which skill to dispatch | `CLAUDE.md` |
-| **Context** | Project facts & architecture | `AI_CONTEXT.md` |
-| **Skills** | Repeatable workflows (like function calls) | `.agents/skills/` |
-| **Knowledge** | Curated long-term knowledge (saves tokens) | `docs/knowledge/` |
-| **Memory** | Short-term event diary (decisions, bugs) | `.agents/memory.md` |
-| **Scripts** | Mechanical maintenance (search, compile wiki) | `scripts/` |
-
-A modularized "I want it all" — not all rules piled into one blob.
-
-### How does knowledge grow automatically?
-
-Drop your messy notes (meeting minutes, tech drafts, bug analyses) into `docs/raw/`,
-then tell the Agent "help me organize api_notes into a knowledge page" —
-in an agent environment that follows this router, it should prefer the `/wiki-refresh`
-skill and compile it into a curated page in `docs/knowledge/`.
-From then on, the Agent reads the curated version — saving tokens and staying precise.
-
-> 💡 **Memory vs Knowledge**: Memory is a diary (short-term events), Knowledge is a textbook (long-term knowledge).
-> When 3–5 similar memory entries accumulate, tell the Agent "distill these into a wiki page."
 
 ## Inspirations / Source Lineage (Standing on the shoulders of giants)
 
