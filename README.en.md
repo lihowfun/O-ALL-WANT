@@ -93,6 +93,40 @@ Then give the command:
 
 > Referencing OAW's logic, help me design a custom development harness. Keep it concise initially, but preserve the expansion space for memory, wiki, and skills.
 
+## 🎁 What You Get After Install
+
+```text
+your-project/
+├── CLAUDE.md              ← Agent's brain entry point (your first step: edit it)
+├── AI_CONTEXT.md          ← Project facts handbook (second step: fill in your info)
+├── VERSION.json           ← Version tracking + experiment locks
+├── ROADMAP.md             ← Phase plan
+├── .agents/
+│   ├── memory.md          ← Agent's diary (auto-records decisions and bugs)
+│   └── skills/            ← Reusable workflows (like function calls)
+├── docs/
+│   ├── knowledge/         ← Compiled knowledge wiki (Agent reads here)
+│   └── raw/               ← Your raw notes (Agent doesn't read proactively)
+└── scripts/
+    ├── context_hub.py     ← Knowledge management CLI
+    └── wiki_sync.py       ← Notes → wiki compiler
+```
+
+> 💡 **In three sentences**: `CLAUDE.md` is the Agent's brain, `AI_CONTEXT.md` is your project's encyclopedia, `.agents/memory.md` is the Agent's diary. Everything else — read on demand.
+
+## 🧭 When To Use What?
+
+| I want to... | Use this | Command / Action |
+|--------------|----------|-----------------|
+| Record a decision or bug | `.agents/memory.md` | `python3 scripts/context_hub.py memory add "[DECISION] Switched to plan X"` |
+| Turn messy notes into knowledge | `docs/raw/` → `docs/knowledge/` | `python3 scripts/wiki_sync.py refresh topic_name` |
+| Search compiled knowledge | `docs/knowledge/` | `python3 scripts/context_hub.py search "keyword"` |
+| Run a repeatable workflow | `.agents/skills/` | Tell Agent: `follow .agents/skills/benchmark.md` |
+| Check project status | CLI | `python3 scripts/context_hub.py status` |
+
+> 💡 **Memory vs Wiki**: Memory is a diary (short-term events), Wiki is a textbook (long-term knowledge).
+> When 3–5 similar memory entries accumulate, distill them into a wiki page. See [Design Principles](docs/Design_Principles.md).
+
 ## 📖 How to use the LLM Wiki?
 
 **When should you use the LLM Wiki?**
@@ -160,7 +194,19 @@ python3 scripts/wiki_sync.py lint
   - [Wiki Sync Guide](docs/Wiki_Sync_Guide.md)
   - [Architecture Origins](docs/Architecture_Origins.md)
   - [Design Principles](docs/Design_Principles.md)
-  - [OAW README Refresh Report](docs/archive/OAW_README_REFRESH_REPORT.md)
+
+## 🐕 Self-Hosting: This Repo Is Its Own First User
+
+You may notice `CLAUDE.md`, `AI_CONTEXT.md`, etc. at the repo root — these
+are not templates for you; they are the **customized** versions the OAW team
+uses to manage this repo with its own framework.
+
+- Root `CLAUDE.md` = OAW development master router
+- `templates/AGENT_RULES.md` = **the template you get after install** (this is for you)
+- Skills and knowledge pages live in `templates/`
+
+> 💡 This is eating our own dog food. If this framework works well enough
+> to manage itself, it should work for your project too.
 
 ## License
 

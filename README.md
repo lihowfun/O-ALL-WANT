@@ -100,6 +100,41 @@ bash .agent-framework/install.sh
 > 參考 OAW 的邏輯，幫我設計一個專屬的開發 harness，先保持簡潔，但保留
 > memory、wiki、skills 的擴充空間。
 
+## 🎁 安裝完你會看到什麼
+
+```text
+your-project/
+├── CLAUDE.md              ← Agent 的大腦入口（你的第一件事：編輯它）
+├── AI_CONTEXT.md          ← 專案事實手冊（第二件事：填入你的專案資訊）
+├── VERSION.json           ← 版本追蹤 + 實驗鎖定
+├── ROADMAP.md             ← 階段計畫
+├── .agents/
+│   ├── memory.md          ← Agent 的日記（自動記錄決策和 bug）
+│   └── skills/            ← 可重用的工作流程（像 function call）
+├── docs/
+│   ├── knowledge/         ← 編譯好的知識 wiki（Agent 讀這裡）
+│   └── raw/               ← 你的原始筆記（Agent 不主動讀）
+└── scripts/
+    ├── context_hub.py     ← 知識管理 CLI
+    └── wiki_sync.py       ← 筆記→wiki 編譯器
+```
+
+> 💡 **三句話版本**：`CLAUDE.md` 是 Agent 的大腦，`AI_CONTEXT.md` 是你專案的百科，
+> `.agents/memory.md` 是 Agent 的日記。其他的，需要的時候再看。
+
+## 🧭 什麼時候用什麼？
+
+| 我想要... | 用這個 | 指令 / 做法 |
+|-----------|--------|------------|
+| 記錄一個決策或 bug | `.agents/memory.md` | `python3 scripts/context_hub.py memory add "[DECISION] 改用方案 X"` |
+| 把亂七八糟的筆記變成知識 | `docs/raw/` → `docs/knowledge/` | `python3 scripts/wiki_sync.py refresh topic_name` |
+| 查已編譯的知識 | `docs/knowledge/` | `python3 scripts/context_hub.py search "關鍵字"` |
+| 執行重複性流程 | `.agents/skills/` | 告訴 Agent: `follow .agents/skills/benchmark.md` |
+| 看目前專案狀態 | CLI | `python3 scripts/context_hub.py status` |
+
+> 💡 **Memory vs Wiki**：Memory 是日記（短期事件），Wiki 是教科書（長期知識）。
+> 當同類 memory 累積 3-5 條，就該提煉到 wiki。詳見 [Design Principles](docs/Design_Principles.md)。
+
 ## 📖 怎麼使用 LLM Wiki？ (LLM Wiki 運作原理)
 
 **什麼時候該用 LLM Wiki？**
@@ -167,7 +202,18 @@ python3 scripts/wiki_sync.py lint
   - [Wiki Sync Guide](docs/Wiki_Sync_Guide.md)
   - [Architecture Origins](docs/Architecture_Origins.md)
   - [Design Principles](docs/Design_Principles.md)
-  - [OAW README Refresh Report](docs/archive/OAW_README_REFRESH_REPORT.md)
+
+## 🐕 Self-Hosting：這個 repo 本身就是自己的第一個用戶
+
+你可能注意到 repo root 有 `CLAUDE.md`、`AI_CONTEXT.md` 等已客製化的檔案 —
+這不是使用者要用的 template，而是 OAW 團隊**用自己的 framework 管理自己的 repo**。
+
+- Root 的 `CLAUDE.md` = OAW 開發用的 master router
+- `templates/AGENT_RULES.md` = **你安裝後拿到的 template**（這才是給你的）
+- Skills 和 knowledge pages 統一住在 `templates/` 裡
+
+> 💡 這就是 eating our own dog food。如果這個 framework 連管理自己都好用，
+> 那它應該也能管理你的專案。
 
 ## License
 

@@ -30,9 +30,8 @@ htmlcov/
 Thumbs.db
 
 # Project-specific
-# When deployed to a real project, .agents/memory.md should be versioned
-# But if you're testing locally, you might want to ignore it
-# .agents/memory.md
+# Personal development log — not shared across team
+.agents/memory.md
 
 # Codex / AI tools
 .codex
