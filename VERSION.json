@@ -1,0 +1,20 @@
+{
+  "version": "1.0.0",
+  "project": "agent-memory-framework",
+  "last_updated": "2026-04-15",
+  "current_phase": "stable",
+  "next_phase": "community-feedback",
+  "benchmark_snapshot": {
+    "summary": "Install time < 5s, 15 template files, 6 skills",
+    "date": "2026-04-14"
+  },
+  "do_not_rerun": [
+    "P0 validation 2026-04-14 (reason: full install matrix tested, results in docs/archive/Release_Checklist.md)"
+  ],
+  "notes": "This file tracks version and experiment control. Agents read 'version' and 'do_not_rerun' every session.",
+  "wiki_sync": {
+    "default_mode": "optional",
+    "raw_dir": "docs/raw",
+    "knowledge_dir": "docs/knowledge"
+  }
+}
