@@ -116,13 +116,45 @@ your-project/
 
 ## 🧭 When To Use What?
 
-| I want to... | Use this | Command / Action |
-|--------------|----------|-----------------|
-| Record a decision or bug | `.agents/memory.md` | `python3 scripts/context_hub.py memory add "[DECISION] Switched to plan X"` |
-| Turn messy notes into knowledge | `docs/raw/` → `docs/knowledge/` | `python3 scripts/wiki_sync.py refresh topic_name` |
-| Search compiled knowledge | `docs/knowledge/` | `python3 scripts/context_hub.py search "keyword"` |
-| Run a repeatable workflow | `.agents/skills/` | Tell Agent: `follow .agents/skills/benchmark.md` |
-| Check project status | CLI | `python3 scripts/context_hub.py status` |
+> **Core principle: Just talk to your Agent.** After reading `CLAUDE.md`, the Agent automatically decides which files to read, which skill to invoke, and which script to run. You don't need to memorize commands.
+
+### You speak naturally, Agent dispatches automatically
+
+| You say to Agent... | Agent automatically... |
+|--------------------|----------------------|
+| "I just decided to switch to Redis for caching" | Writes to `.agents/memory.md` → `[DECISION] Switch to Redis for caching` |
+| "This bug is caused by an N+1 query" | Writes to `.agents/memory.md` → `[BUG] N+1 query...`; proactively proposes wiki distillation when similar entries accumulate |
+| "Help me organize the notes in docs/raw/" | Triggers `/wiki-refresh` skill → runs `wiki_sync.py refresh` → outputs curated `docs/knowledge/` page |
+| "Run a benchmark" | Triggers `/benchmark` skill → reads baselines → executes → generates comparison report |
+| "Prepare release v1.2.0" | Triggers `/version-release` skill → runs full checklist → auto-bumps version |
+| "This thing is broken, help me debug" | Triggers `/debug-pipeline` skill → systematic layer-by-layer diagnosis → records root cause |
+| "What's the current project status?" | Runs `context_hub.py status` → shows version, recent decisions, knowledge topics |
+
+### How does this work?
+
+Every skill has `triggers` keywords (e.g., `["benchmark", "evaluate", "test scores"]`).
+`CLAUDE.md`'s **Skills-First Principle** makes the Agent auto-match on every task:
+
+```text
+Your request → CLAUDE.md (master router) → match skill triggers → dispatch skill
+                                         → skill internally calls scripts
+                                         → results written to memory / knowledge
+```
+
+> 💡 **The only thing you need to do**: Set up `CLAUDE.md`, then talk to your Agent normally.
+> Dispatching, recording, knowledge management — all the Agent's job.
+
+### Advanced: Manual CLI Usage (Optional)
+
+If you prefer to operate scripts directly:
+
+| Command | Purpose |
+|---------|---------|
+| `python3 scripts/context_hub.py status` | View version, recent decisions, knowledge topics |
+| `python3 scripts/context_hub.py search "keyword"` | Search the knowledge base |
+| `python3 scripts/context_hub.py memory add "[TAG] content"` | Manually record to memory |
+| `python3 scripts/wiki_sync.py refresh topic_name` | Manually compile a wiki topic |
+| `python3 scripts/wiki_sync.py lint` | Check wiki metadata consistency |
 
 > 💡 **Memory vs Wiki**: Memory is a diary (short-term events), Wiki is a textbook (long-term knowledge).
 > When 3–5 similar memory entries accumulate, distill them into a wiki page. See [Design Principles](docs/Design_Principles.md).
@@ -132,11 +164,14 @@ your-project/
 **When should you use the LLM Wiki?**
 When you have "messy meeting notes," "verbose technical documents," or "quick bug analyses" that you want the AI to remember, but blindly feeding them to the AI every time wastes too many tokens and causes the AI to lose focus or hallucinate.
 
-**Workflow (Demo):**
-1. **Drop in the Draft (Raw):** Just drop your messy notes or raw text files into the `docs/raw/` directory (e.g., create a `docs/raw/api_notes.md`).
-2. **Let AI Compile (Compile):** Run the command `python3 scripts/wiki_sync.py refresh api_notes`
-3. **Done:** The script will automatically distill the chaotic draft into a structured, concise formal document in `docs/knowledge/`, and automatically update the index page.
-4. **Future Use:** From then on, when your Agent looks up project information, it will read the curated essence in `docs/knowledge/`—saving tokens and remaining highly precise!
+**Workflow (just talk to your Agent):**
+1. **Drop in the Draft (Raw):** Drop your messy notes into `docs/raw/` (e.g., `docs/raw/api_notes.md`).
+2. **Tell Agent:** "Help me organize api_notes into a knowledge page"
+3. **Agent auto-dispatches:** Triggers `/wiki-refresh` skill → runs `wiki_sync.py refresh api_notes` → outputs `docs/knowledge/API_Notes.md`
+4. **Future use:** Agent reads the curated `docs/knowledge/` version — saving tokens and staying precise!
+
+> 💡 **Key point: You don't need to memorize any commands.** Just drop notes into `docs/raw/`
+> and tell the Agent "help me organize this." The skill handles the rest.
 
 ## Why won't this become a mess?
 
@@ -162,26 +197,6 @@ If you want to see a more complete source comparison and integration rationale, 
 
 - [Architecture Origins](docs/Architecture_Origins.md)
 - [Design Principles](docs/Design_Principles.md)
-
-## Common Tool Commands
-
-The following are not "mysterious spells," they are just the most common helpers for this framework:
-
-| Command | Purpose |
-|------|------|
-| `status` | View current version, recent decisions, knowledge topics, and raw source counts |
-| `search` | Search wiki topics or content |
-| `memory add` | Record new decisions / bugs / insights |
-| `annotate` | Append an AI annotation to a specified knowledge page |
-| `wiki_sync lint` | Check if raw and wiki metadata are consistent |
-
-```bash
-python3 scripts/context_hub.py status
-python3 scripts/context_hub.py search "bug"
-python3 scripts/context_hub.py memory add "[DECISION] Switched to approach X"
-python3 scripts/context_hub.py annotate Known_Limitations "[BUG] Reproduced on Windows"
-python3 scripts/wiki_sync.py lint
-```
 
 ## Examples + Docs
 

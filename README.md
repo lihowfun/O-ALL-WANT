@@ -124,13 +124,45 @@ your-project/
 
 ## 🧭 什麼時候用什麼？
 
-| 我想要... | 用這個 | 指令 / 做法 |
-|-----------|--------|------------|
-| 記錄一個決策或 bug | `.agents/memory.md` | `python3 scripts/context_hub.py memory add "[DECISION] 改用方案 X"` |
-| 把亂七八糟的筆記變成知識 | `docs/raw/` → `docs/knowledge/` | `python3 scripts/wiki_sync.py refresh topic_name` |
-| 查已編譯的知識 | `docs/knowledge/` | `python3 scripts/context_hub.py search "關鍵字"` |
-| 執行重複性流程 | `.agents/skills/` | 告訴 Agent: `follow .agents/skills/benchmark.md` |
-| 看目前專案狀態 | CLI | `python3 scripts/context_hub.py status` |
+> **核心原則：你只需要跟 Agent 講話。** Agent 讀了 `CLAUDE.md` 之後，會根據你的需求自動選擇要讀哪些檔案、調度哪個 skill、執行哪個 script。你不需要記指令。
+
+### 你講人話，Agent 自動調度
+
+| 你對 Agent 說... | Agent 會自動做... |
+|-----------------|------------------|
+| 「我剛決定改用 Redis 當 cache」 | 寫入 `.agents/memory.md` → `[DECISION] 改用 Redis 當 cache` |
+| 「這個 bug 是 N+1 query 造成的」 | 寫入 `.agents/memory.md` → `[BUG] N+1 query...`；累積同類多條時主動提議提煉到 wiki |
+| 「幫我整理一下 docs/raw/ 裡的筆記」 | 觸發 `/wiki-refresh` skill → 執行 `wiki_sync.py refresh` → 產出 `docs/knowledge/` 精華頁 |
+| 「跑一下 benchmark」 | 觸發 `/benchmark` skill → 讀 baselines → 執行 → 產出對比報告 |
+| 「準備 release v1.2.0」 | 觸發 `/version-release` skill → 跑完整 checklist → 自動 bump version |
+| 「這東西壞了，幫我 debug」 | 觸發 `/debug-pipeline` skill → 逐層排查 → 記錄 root cause |
+| 「目前專案什麼狀態？」 | 執行 `context_hub.py status` → 顯示版本、最近決策、知識主題清單 |
+
+### 這是怎麼做到的？
+
+每個 skill 都有 `triggers` 關鍵字（例如 `["benchmark", "evaluate", "test scores"]`）。
+`CLAUDE.md` 的 **Skills-First Principle** 讓 Agent 在接到任務時自動比對：
+
+```text
+你的需求 → CLAUDE.md (master router) → 比對 skill triggers → 調度對應 skill
+                                      → skill 內部自動呼叫 scripts
+                                      → 結果寫入 memory / knowledge
+```
+
+> 💡 **你唯一要做的事**：把 `CLAUDE.md` 設定好，然後跟 Agent 正常講話。
+> 剩下的調度、記錄、知識管理，全部是 Agent 的事。
+
+### 進階：手動使用 CLI（可選）
+
+如果你想直接操作 scripts，以下是常用指令：
+
+| 指令 | 用途 |
+|------|------|
+| `python3 scripts/context_hub.py status` | 看目前版本、近期決策、知識主題 |
+| `python3 scripts/context_hub.py search "關鍵字"` | 搜尋知識庫 |
+| `python3 scripts/context_hub.py memory add "[TAG] 內容"` | 手動記錄到 memory |
+| `python3 scripts/wiki_sync.py refresh topic_name` | 手動編譯某個 wiki 主題 |
+| `python3 scripts/wiki_sync.py lint` | 檢查 wiki metadata 一致性 |
 
 > 💡 **Memory vs Wiki**：Memory 是日記（短期事件），Wiki 是教科書（長期知識）。
 > 當同類 memory 累積 3-5 條，就該提煉到 wiki。詳見 [Design Principles](docs/Design_Principles.md)。
@@ -140,11 +172,14 @@ your-project/
 **什麼時候該用 LLM Wiki？**
 當你有「凌亂的會議筆記」、「長篇大論的技術文件」或「隨手記錄的 Bug 分析」，希望 AI 能記住，但每次都把原始文件塞給 AI 會浪費太多 Token，甚至讓 AI 失焦時。
 
-**使用流程 (Demo)：**
-1. **丟入草稿 (Raw):** 把凌亂的筆記或文件純文字，隨意丟進 `docs/raw/` 目錄中（例如：建立一個 `docs/raw/api_notes.md`）。
-2. **讓 AI 編譯 (Compile):** 執行指令 `python3 scripts/wiki_sync.py refresh api_notes`
-3. **完成 (Done):** 工具會自動將草稿提煉成結構化、精簡的正式文件，存入 `docs/knowledge/`，並自動更新知識目錄 (index)。
-4. **未來使用:** 之後你的 Agent 在查閱專案資料時，會直接閱讀 `docs/knowledge/` 裡整理好的精華版本，既省 Token 又精準！
+**使用流程（你只需要講話）：**
+1. **丟入草稿 (Raw):** 把凌亂的筆記丟進 `docs/raw/` 目錄（例如：`docs/raw/api_notes.md`）。
+2. **跟 Agent 說：** 「幫我把 api_notes 整理成知識頁」
+3. **Agent 自動調度：** 觸發 `/wiki-refresh` skill → 執行 `wiki_sync.py refresh api_notes` → 產出 `docs/knowledge/API_Notes.md`
+4. **未來使用：** Agent 查資料時直接讀 `docs/knowledge/` 的精華版，省 Token 又精準！
+
+> 💡 **重點：你不需要記任何指令。** 你只需要把筆記丟進 `docs/raw/`，
+> 然後告訴 Agent「幫我整理」。Skill 會處理剩下的事。
 
 ## 為什麼這樣不會變亂
 
@@ -170,26 +205,6 @@ your-project/
 
 - [Architecture Origins](docs/Architecture_Origins.md)
 - [Design Principles](docs/Design_Principles.md)
-
-## 常用工具指令
-
-下面這些不是「神秘咒語」，它們就是這個 framework 最常用的幾個 helper：
-
-| 指令 | 用途 |
-|------|------|
-| `status` | 看目前版本、近期決策、knowledge topics、raw source 數量 |
-| `search` | 搜尋 wiki topic 或內容 |
-| `memory add` | 記錄新的 decision / bug / insight |
-| `annotate` | 在指定知識頁追加 AI annotation |
-| `wiki_sync lint` | 檢查 raw/wiki metadata 是否一致 |
-
-```bash
-python3 scripts/context_hub.py status
-python3 scripts/context_hub.py search "bug"
-python3 scripts/context_hub.py memory add "[DECISION] Switched to approach X"
-python3 scripts/context_hub.py annotate Known_Limitations "[BUG] Reproduced on Windows"
-python3 scripts/wiki_sync.py lint
-```
 
 ## Examples + Docs
 
