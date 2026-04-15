@@ -113,6 +113,23 @@ bash .agent-framework/install.sh
 > 設定 `CLAUDE.md` 的語言偏好和 forbidden actions，
 > 然後建議初期需要哪些 skills。
 
+### 🔌 不同 Agent / IDE 的對應方式
+
+安裝後的 router 檔案叫 `CLAUDE.md`，但不同 Agent 平台有各自預設讀取的規則檔：
+
+| Agent / IDE | 預設讀取 | OAW 對應方式 |
+|-------------|---------|-------------|
+| **Claude Code** | `CLAUDE.md` | ✅ 安裝後直接對應 |
+| **GitHub Copilot** | `.github/copilot-instructions.md` | ✅ 安裝時已自動建立，內容指向 `CLAUDE.md` |
+| **OpenAI Codex** | `AGENTS.md` | 在專案根目錄建立 `AGENTS.md`，寫入 `Read CLAUDE.md for project rules.` |
+| **Cursor** | `.cursorrules` | 在專案根目錄建立 `.cursorrules`，寫入 `Read CLAUDE.md for project rules.` |
+| **Windsurf** | `.windsurfrules` | 在專案根目錄建立 `.windsurfrules`，寫入 `Read CLAUDE.md for project rules.` |
+| **Gemini** | `GEMINI.md` | 在專案根目錄建立 `GEMINI.md`，寫入 `Read CLAUDE.md for project rules.` |
+
+> 💡 **本質上就一個 router**：不管你用哪個 Agent，規則都住在 `CLAUDE.md`。
+> 其他檔案只是一行 pointer，讓該 Agent 知道去讀 `CLAUDE.md`。
+> 嫌手動麻煩的話，也可以直接告訴你的 Agent：「先讀 CLAUDE.md」— 效果一樣。
+
 ## 🎁 主要檔案結構
 
 ```text

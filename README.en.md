@@ -101,6 +101,23 @@ After installation, give your Agent this prompt:
 
 > Read `CLAUDE.md` first, then `AI_CONTEXT.md`. The project I'm building is [describe your project]. Customize the harness for this project: fill in AI_CONTEXT.md, set up ROADMAP.md milestones, and tune CLAUDE.md routing rules.
 
+### 🔌 Adapting for Different Agents / IDEs
+
+The installed router file is named `CLAUDE.md`, but different Agent platforms look for their own convention files at startup:
+
+| Agent / IDE | Default file | OAW adapter |
+|-------------|-------------|-------------|
+| **Claude Code** | `CLAUDE.md` | ✅ Works out of the box |
+| **GitHub Copilot** | `.github/copilot-instructions.md` | ✅ Auto-created by installer, points to `CLAUDE.md` |
+| **OpenAI Codex** | `AGENTS.md` | Create `AGENTS.md` in project root: `Read CLAUDE.md for project rules.` |
+| **Cursor** | `.cursorrules` | Create `.cursorrules` in project root: `Read CLAUDE.md for project rules.` |
+| **Windsurf** | `.windsurfrules` | Create `.windsurfrules` in project root: `Read CLAUDE.md for project rules.` |
+| **Gemini** | `GEMINI.md` | Create `GEMINI.md` in project root: `Read CLAUDE.md for project rules.` |
+
+> 💡 **One router to rule them all**: No matter which Agent you use, the rules live in `CLAUDE.md`.
+> Other files are just one-line pointers telling that Agent to read `CLAUDE.md`.
+> If you prefer, simply tell your Agent "read CLAUDE.md first" — same effect.
+
 ## 🎁 Main Files You'll Get
 
 ```text
