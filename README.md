@@ -54,12 +54,7 @@ flowchart LR
 
 ## 快速上手
 
-Measured on 2026-04-13: clone + install + first successful
-`python3 scripts/context_hub.py status` completed in 3.55s on macOS.
-
-### 方案 A: The Merger
-
-如果你已經有專案，想把它進化成比較會記、比較會省 token 的 agent workspace:
+### 方案 A: 已有專案 — 讓 AI 幫你加裝 harness
 
 ```bash
 cd /path/to/your/project
@@ -67,20 +62,15 @@ git clone https://github.com/lihowfun/agent-memory-framework.git .agent-framewor
 bash .agent-framework/install.sh
 ```
 
-安裝後只要先做三件事:
+安裝完成後，丟這段給你的 AI agent：
 
-1. 編輯 `CLAUDE.md`
-2. 編輯 `AI_CONTEXT.md`
-3. 告訴你的 agent: `Read CLAUDE.md first, then AI_CONTEXT.md.`
+> 先讀 `CLAUDE.md`，再讀 `AI_CONTEXT.md`。
+> 根據我這個專案的語言和架構，幫我客製化這兩個檔案：
+> 把 `CLAUDE.md` 裡的 `${LANGUAGE}` 換成我的溝通語言，
+> 把 `AI_CONTEXT.md` 裡的 placeholder 換成我的真實專案資訊。
+> 然後分析我的 codebase，建議哪些重複流程可以收進 `.agents/skills/`。
 
-如果你想讓 AI 直接幫你整合，可以丟這句:
-
-> 請分析這個 OAW framework，保留我原本專案的結構，幫我整合 memory、
-> token routing、skills 與 wiki sync。
-
-### 方案 B: The Architect
-
-如果你還沒有專案，想從零搭一個比較完整的 harness:
+### 方案 B: 從零開始 — 讓 AI 幫你規劃新專案
 
 ```bash
 mkdir my-project && cd my-project
@@ -89,38 +79,35 @@ git clone https://github.com/lihowfun/agent-memory-framework.git .agent-framewor
 bash .agent-framework/install.sh
 ```
 
-接著讓 AI 先讀:
+安裝完成後，丟這段給你的 AI agent：
 
-- `CLAUDE.md`
-- `AI_CONTEXT.md`
-- `ROADMAP.md`
-
-然後再下指令:
-
-> 參考 OAW 的邏輯，幫我設計一個專屬的開發 harness，先保持簡潔，但保留
-> memory、wiki、skills 的擴充空間。
+> 先讀 `CLAUDE.md`，再讀 `AI_CONTEXT.md`。
+> 我要做的專案是 [簡述你的專案]。
+> 幫我客製化 harness：填好 `AI_CONTEXT.md` 的架構和技術堆疊，
+> 設定 `CLAUDE.md` 的語言偏好和 forbidden actions，
+> 然後建議初期需要哪些 skills。
 
 ## 🎁 安裝完你會看到什麼
 
 ```text
 your-project/
-├── CLAUDE.md              ← Agent 的大腦入口（你的第一件事：編輯它）
-├── AI_CONTEXT.md          ← 專案事實手冊（第二件事：填入你的專案資訊）
-├── VERSION.json           ← 版本追蹤 + 實驗鎖定
-├── ROADMAP.md             ← 階段計畫
+├── CLAUDE.md              ← Agent 的大腦：決定讀哪些檔案、調度哪個 skill
+├── AI_CONTEXT.md          ← 專案百科：AI 讀這裡了解你的專案
+├── VERSION.json           ← 版本追蹤 + 鎖定已完成的實驗（避免 AI 重跑）
+├── ROADMAP.md             ← 階段計畫：AI 判斷目前進度用
 ├── .agents/
-│   ├── memory.md          ← Agent 的日記（自動記錄決策和 bug）
-│   └── skills/            ← 可重用的工作流程（像 function call）
+│   ├── memory.md          ← AI 的日記：自動記錄每次的決策、bug、發現
+│   └── skills/            ← AI 的 SOP 庫：觸發關鍵字自動調度
 ├── docs/
-│   ├── knowledge/         ← 編譯好的知識 wiki（Agent 讀這裡）
-│   └── raw/               ← 你的原始筆記（Agent 不主動讀）
+│   ├── knowledge/         ← 精煉知識庫：AI 查資料讀這裡（省 Token）
+│   └── raw/               ← 你的原始筆記：AI 只在需要時才讀
 └── scripts/
-    ├── context_hub.py     ← 知識管理 CLI
-    └── wiki_sync.py       ← 筆記→wiki 編譯器
+    ├── context_hub.py     ← AI 呼叫的知識管理工具
+    └── wiki_sync.py       ← AI 呼叫的 筆記→wiki 編譯器
 ```
 
 > 💡 **三句話版本**：`CLAUDE.md` 是 Agent 的大腦，`AI_CONTEXT.md` 是你專案的百科，
-> `.agents/memory.md` 是 Agent 的日記。其他的，需要的時候再看。
+> `.agents/memory.md` 是 Agent 的日記。其他的，Agent 需要的時候自己會去讀。
 
 ## 🧭 什麼時候用什麼？
 
@@ -164,33 +151,30 @@ your-project/
 | `python3 scripts/wiki_sync.py refresh topic_name` | 手動編譯某個 wiki 主題 |
 | `python3 scripts/wiki_sync.py lint` | 檢查 wiki metadata 一致性 |
 
-> 💡 **Memory vs Wiki**：Memory 是日記（短期事件），Wiki 是教科書（長期知識）。
-> 當同類 memory 累積 3-5 條，就該提煉到 wiki。詳見 [Design Principles](docs/Design_Principles.md)。
-
-## 📖 怎麼使用 LLM Wiki？ (LLM Wiki 運作原理)
-
-**什麼時候該用 LLM Wiki？**
-當你有「凌亂的會議筆記」、「長篇大論的技術文件」或「隨手記錄的 Bug 分析」，希望 AI 能記住，但每次都把原始文件塞給 AI 會浪費太多 Token，甚至讓 AI 失焦時。
-
-**使用流程（你只需要講話）：**
-1. **丟入草稿 (Raw):** 把凌亂的筆記丟進 `docs/raw/` 目錄（例如：`docs/raw/api_notes.md`）。
-2. **跟 Agent 說：** 「幫我把 api_notes 整理成知識頁」
-3. **Agent 自動調度：** 觸發 `/wiki-refresh` skill → 執行 `wiki_sync.py refresh api_notes` → 產出 `docs/knowledge/API_Notes.md`
-4. **未來使用：** Agent 查資料時直接讀 `docs/knowledge/` 的精華版，省 Token 又精準！
-
-> 💡 **重點：你不需要記任何指令。** 你只需要把筆記丟進 `docs/raw/`，
-> 然後告訴 Agent「幫我整理」。Skill 會處理剩下的事。
-
 ## 為什麼這樣不會變亂
 
 因為它不是把所有規則硬塞進同一個 prompt，而是把責任拆開：
 
-- `CLAUDE.md` 負責先決定該讀哪裡
-- `AI_CONTEXT.md` 負責專案事實與命令
-- `.agents/skills/` 負責重複流程
-- scripts 負責機械維護
+| 層 | 負責什麼 | 對應檔案 |
+|----|---------|---------|
+| **Router** | 決定先讀哪裡、調度哪個 skill | `CLAUDE.md` |
+| **Context** | 專案事實與架構 | `AI_CONTEXT.md` |
+| **Skills** | 可重複流程（像 function call） | `.agents/skills/` |
+| **Knowledge** | 精煉後的長期知識（省 Token） | `docs/knowledge/` |
+| **Memory** | 短期事件日記（決策、bug） | `.agents/memory.md` |
+| **Scripts** | 機械維護（搜尋、編譯 wiki） | `scripts/` |
 
-所以它是模組化的「我全都要」，不是把所有規則堆成一坨。
+模組化的「我全都要」，不是把所有規則堆成一坨。
+
+### 知識怎麼自動長出來？
+
+你的凌亂筆記（會議記錄、技術草稿、Bug 分析）丟進 `docs/raw/`，
+跟 Agent 說「幫我把 api_notes 整理成知識頁」——
+Agent 觸發 `/wiki-refresh` skill，自動編譯成 `docs/knowledge/` 裡的精華版。
+以後 Agent 查資料讀精華版就好，省 Token 又精準。
+
+> 💡 **Memory vs Knowledge**：Memory 是日記（短期事件），Knowledge 是教科書（長期知識）。
+> 同類 memory 累積 3-5 條，就該告訴 Agent「幫我提煉到 wiki」。
 
 ## 靈感來源 / Source Lineage (站在巨人肩膀上)
 

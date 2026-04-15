@@ -50,11 +50,7 @@ flowchart LR
 
 ## Quick Start
 
-Measured on 2026-04-13: clone + install + first successful `python3 scripts/context_hub.py status` completed in 3.55s on macOS.
-
-### Plan A: The Merger
-
-If you already have a project and want to evolve it into an agent workspace that retains memory and saves tokens:
+### Plan A: Add Harness to an Existing Project
 
 ```bash
 cd /path/to/your/project
@@ -62,19 +58,11 @@ git clone https://github.com/lihowfun/agent-memory-framework.git .agent-framewor
 bash .agent-framework/install.sh
 ```
 
-After installation, just do three things:
+After installation, give your Agent this prompt:
 
-1. Edit `CLAUDE.md`
-2. Edit `AI_CONTEXT.md`
-3. Tell your agent: `Read CLAUDE.md first, then AI_CONTEXT.md.`
+> Read `CLAUDE.md` first, then `AI_CONTEXT.md`. Based on my project's language and architecture, customize these two files — keep whatever already exists, and add only the OAW-specific parts: routing rules, memory format, and skill triggers.
 
-If you want the AI to integrate it for you directly, you can pass this prompt:
-
-> Please analyze this OAW framework, keep my original project structure, and help me integrate memory, token routing, skills, and wiki sync.
-
-### Plan B: The Architect
-
-If you don't have a project yet and want to build a rather complete harness from scratch:
+### Plan B: Start a New Project with Harness
 
 ```bash
 mkdir my-project && cd my-project
@@ -83,36 +71,31 @@ git clone https://github.com/lihowfun/agent-memory-framework.git .agent-framewor
 bash .agent-framework/install.sh
 ```
 
-Next, let the AI read:
+After installation, give your Agent this prompt:
 
-- `CLAUDE.md`
-- `AI_CONTEXT.md`
-- `ROADMAP.md`
-
-Then give the command:
-
-> Referencing OAW's logic, help me design a custom development harness. Keep it concise initially, but preserve the expansion space for memory, wiki, and skills.
+> Read `CLAUDE.md` first, then `AI_CONTEXT.md`. The project I'm building is [describe your project]. Customize the harness for this project: fill in AI_CONTEXT.md, set up ROADMAP.md milestones, and tune CLAUDE.md routing rules.
 
 ## 🎁 What You Get After Install
 
 ```text
 your-project/
-├── CLAUDE.md              ← Agent's brain entry point (your first step: edit it)
-├── AI_CONTEXT.md          ← Project facts handbook (second step: fill in your info)
-├── VERSION.json           ← Version tracking + experiment locks
-├── ROADMAP.md             ← Phase plan
+├── CLAUDE.md              ← Agent's brain: decides what to read, which skill to dispatch
+├── AI_CONTEXT.md          ← Project encyclopedia: Agent reads this to understand your project
+├── VERSION.json           ← Version tracking + locks completed experiments (prevents reruns)
+├── ROADMAP.md             ← Phase plan: Agent uses this to assess current progress
 ├── .agents/
-│   ├── memory.md          ← Agent's diary (auto-records decisions and bugs)
-│   └── skills/            ← Reusable workflows (like function calls)
+│   ├── memory.md          ← Agent's diary: auto-records decisions, bugs, discoveries
+│   └── skills/            ← Agent's SOP library: dispatched automatically by trigger keywords
 ├── docs/
-│   ├── knowledge/         ← Compiled knowledge wiki (Agent reads here)
-│   └── raw/               ← Your raw notes (Agent doesn't read proactively)
+│   ├── knowledge/         ← Curated knowledge base: Agent reads here for context (saves tokens)
+│   └── raw/               ← Your raw notes: Agent only reads these on demand
 └── scripts/
-    ├── context_hub.py     ← Knowledge management CLI
-    └── wiki_sync.py       ← Notes → wiki compiler
+    ├── context_hub.py     ← Knowledge management tool invoked by Agent
+    └── wiki_sync.py       ← Notes → wiki compiler invoked by Agent
 ```
 
-> 💡 **In three sentences**: `CLAUDE.md` is the Agent's brain, `AI_CONTEXT.md` is your project's encyclopedia, `.agents/memory.md` is the Agent's diary. Everything else — read on demand.
+> 💡 **In three sentences**: `CLAUDE.md` is the Agent's brain, `AI_CONTEXT.md` is your project's encyclopedia,
+> `.agents/memory.md` is the Agent's diary. Everything else — the Agent reads it when it needs to.
 
 ## 🧭 When To Use What?
 
@@ -156,33 +139,30 @@ If you prefer to operate scripts directly:
 | `python3 scripts/wiki_sync.py refresh topic_name` | Manually compile a wiki topic |
 | `python3 scripts/wiki_sync.py lint` | Check wiki metadata consistency |
 
-> 💡 **Memory vs Wiki**: Memory is a diary (short-term events), Wiki is a textbook (long-term knowledge).
-> When 3–5 similar memory entries accumulate, distill them into a wiki page. See [Design Principles](docs/Design_Principles.md).
-
-## 📖 How to use the LLM Wiki?
-
-**When should you use the LLM Wiki?**
-When you have "messy meeting notes," "verbose technical documents," or "quick bug analyses" that you want the AI to remember, but blindly feeding them to the AI every time wastes too many tokens and causes the AI to lose focus or hallucinate.
-
-**Workflow (just talk to your Agent):**
-1. **Drop in the Draft (Raw):** Drop your messy notes into `docs/raw/` (e.g., `docs/raw/api_notes.md`).
-2. **Tell Agent:** "Help me organize api_notes into a knowledge page"
-3. **Agent auto-dispatches:** Triggers `/wiki-refresh` skill → runs `wiki_sync.py refresh api_notes` → outputs `docs/knowledge/API_Notes.md`
-4. **Future use:** Agent reads the curated `docs/knowledge/` version — saving tokens and staying precise!
-
-> 💡 **Key point: You don't need to memorize any commands.** Just drop notes into `docs/raw/`
-> and tell the Agent "help me organize this." The skill handles the rest.
-
 ## Why won't this become a mess?
 
-Because it does not force all rules into the same prompt; it separates responsibilities:
+Because it doesn't force all rules into the same prompt — it separates responsibilities:
 
-- `CLAUDE.md` is responsible for deciding where to read first.
-- `AI_CONTEXT.md` is responsible for project facts and commands.
-- `.agents/skills/` is responsible for repeated workflows.
-- `scripts` is responsible for mechanical maintenance.
+| Layer | Responsibility | File |
+|-------|---------------|------|
+| **Router** | Decides what to read, which skill to dispatch | `CLAUDE.md` |
+| **Context** | Project facts & architecture | `AI_CONTEXT.md` |
+| **Skills** | Repeatable workflows (like function calls) | `.agents/skills/` |
+| **Knowledge** | Curated long-term knowledge (saves tokens) | `docs/knowledge/` |
+| **Memory** | Short-term event diary (decisions, bugs) | `.agents/memory.md` |
+| **Scripts** | Mechanical maintenance (search, compile wiki) | `scripts/` |
 
-So, it is a modularised "I want it all", not a pile of all rules jumbled together.
+A modularized "I want it all" — not all rules piled into one blob.
+
+### How does knowledge grow automatically?
+
+Drop your messy notes (meeting minutes, tech drafts, bug analyses) into `docs/raw/`,
+then tell the Agent "help me organize api_notes into a knowledge page" —
+the Agent triggers the `/wiki-refresh` skill and compiles it into a curated page in `docs/knowledge/`.
+From then on, the Agent reads the curated version — saving tokens and staying precise.
+
+> 💡 **Memory vs Knowledge**: Memory is a diary (short-term events), Knowledge is a textbook (long-term knowledge).
+> When 3–5 similar memory entries accumulate, tell the Agent "distill these into a wiki page."
 
 ## Inspirations / Source Lineage (Standing on the shoulders of giants)
 
