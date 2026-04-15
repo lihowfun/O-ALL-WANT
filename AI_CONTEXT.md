@@ -34,6 +34,10 @@
 - **Key invariants**:
   - `templates/` and `example/minimal-project/` must stay in sync
   - `scripts/context_hub.py` and `scripts/wiki_sync.py` are framework core
+  - Skills and knowledge live in `templates/` only (no root duplicates)
+- **Self-hosting**: This repo manages itself with its own harness.
+  Root `CLAUDE.md`/`AI_CONTEXT.md` are customized for OAW development.
+  `templates/` holds the user-facing placeholders.
 - **Behavioral rules**: Live in `CLAUDE.md`, not here
 
 ## Current Baselines

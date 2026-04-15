@@ -24,13 +24,13 @@
 
 | Lane | Use When | Read First | Fallback |
 |------|----------|------------|----------|
-| Operational | Current state, release status, branch scope, experiment execution | `ROADMAP.md` first 60 lines + `.agents/memory.md` last 5 entries | `docs/knowledge/Experiment_Findings.md` |
-| Wiki | Stable concepts, background knowledge, reusable domain facts | `docs/knowledge/index.md` + relevant topic page(s) | `docs/raw/` relevant sources, then `python3 scripts/wiki_sync.py refresh <topic>` |
-| Execution | Repeating workflows and SOPs | Matching file in `.agents/skills/` | Operational lane docs only if the skill asks for them |
-| Debug | Reproducing failures and workarounds | `docs/knowledge/Known_Limitations.md` | `.agents/memory.md` last 5 entries |
+| Operational | Current state, release status, branch scope, experiment execution | `ROADMAP.md` first 60 lines + `.agents/memory.md` last 5 entries | `templates/docs/knowledge/Experiment_Findings.md` |
+| Wiki | Stable concepts, background knowledge, reusable domain facts | `templates/docs/knowledge/index.md` + relevant topic page(s) | `templates/docs/raw/` relevant sources |
+| Execution | Repeating workflows and SOPs | Matching file in `templates/.agents/skills/` | Operational lane docs only if the skill asks for them |
+| Debug | Reproducing failures and workarounds | `templates/docs/knowledge/Known_Limitations.md` | `.agents/memory.md` last 5 entries |
 
 **Skills-First Principle**:
-- If `.agents/skills/` has a matching skill (e.g., `/benchmark`, `/debug-pipeline`, `/wiki-refresh`), **follow the skill workflow first**
+- If `templates/.agents/skills/` has a matching skill (e.g., `/benchmark`, `/debug-pipeline`, `/wiki-refresh`), **follow the skill workflow first**
 - Skills still obey this file's lazy-read protocol
 - Only go ad-hoc when no matching skill exists
 - If a maintenance step can be done by `context_hub.py` or `wiki_sync.py`,
@@ -42,32 +42,45 @@
 
 ## File Architecture — What Lives Where
 
+> This repo uses its own harness for self-hosting. Skills, knowledge, and raw
+> notes live in `templates/` and are installed into user projects via
+> `install.sh`. The root-level `CLAUDE.md`, `AI_CONTEXT.md`, etc. are the
+> **customized** versions for developing this framework itself.
+
 ```
 📁 root/
-├── CLAUDE.md              ← You are reading this (agent rules)
-├── AI_CONTEXT.md          ← Project facts, baselines, commands
+├── CLAUDE.md              ← You are reading this (agent rules for OAW dev)
+├── AI_CONTEXT.md          ← OAW project facts, baselines, commands
 ├── VERSION.json           ← Version number + do_not_rerun
 ├── ROADMAP.md             ← Phase plan + progress
-├── README.md              ← User quick-start
+├── README.md              ← User quick-start (public-facing)
 │
 ├── .agents/
-│   ├── memory.md          ← Decision/bug/finding log (newest first)
-│   └── skills/            ← Executable workflows (read by task type)
+│   └── memory.md          ← Decision/bug/finding log (git-ignored)
+│
+├── templates/             ← Installable templates for users
+│   ├── AGENT_RULES.md     ← Becomes CLAUDE.md after install
+│   ├── AI_CONTEXT.md      ← Placeholder for user projects
+│   ├── .agents/skills/    ← Reusable workflows (also used by this repo)
+│   ├── docs/knowledge/    ← Wiki templates
+│   └── docs/raw/          ← Raw note templates
 │
 ├── docs/
-│   ├── raw/               ← Immutable source notes (fallback-only)
-│   ├── knowledge/         ← Compiled durable wiki (read on demand)
-│   │   ├── index.md                 Knowledge map (meta)
-│   │   ├── log.md                   Sync ledger (meta)
-│   │   ├── Known_Limitations.md     Known issues & workarounds
-│   │   ├── Performance_Baselines.md Score benchmarks
-│   │   └── ...
-│   └── archive/           ← Stale docs, do not read
+│   ├── Architecture_Origins.md, Design_Principles.md, etc.
+│   └── archive/           ← Audit trails and reports
 │
-└── scripts/
-    ├── context_hub.py     ← CLI for knowledge management
-    └── wiki_sync.py       ← Deterministic raw→wiki compiler
+├── scripts/
+│   ├── context_hub.py     ← CLI for knowledge management
+│   └── wiki_sync.py       ← Deterministic raw→wiki compiler
+│
+└── example/
+    ├── minimal-project/   ← Post-install snapshot
+    └── public-hybrid-demo/← Full example with raw + wiki + skills
 ```
+
+**For OAW development**: Skills are at `templates/.agents/skills/`.
+Knowledge pages are at `templates/docs/knowledge/`.
+These are the canonical copies — do not duplicate them at root.
 
 ## Session End — Mandatory Report (4 sections)
 
