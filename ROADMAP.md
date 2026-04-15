@@ -2,35 +2,24 @@
 
 ## Current Focus
 
-- Phase: **Self-Hosting & Maintenance**
-- Goal: Use this framework's own harness to maintain itself
+- Phase: **Stable + Community Feedback**
+- Goal: Polish documentation, accept community feedback
 - Definition of done: 
-  - Harness installed in `feature/self-harness` branch ✅
-  - Core files customized (CLAUDE.md, AI_CONTEXT.md, VERSION.json, ROADMAP.md) ✅
-  - Memory log operational ✅
-  - CLI tools tested ✅
-  - Execute P1 improvements from 2026-04-15 review report
+  - Self-hosting harness merged to main ✅
+  - README improvements (post-install, decision table, self-hosting) ✅
+  - Skills alignment between templates/ and example/
 
 ## Active Work
 
 | Priority | Workstream | Status | Notes |
 |----------|------------|--------|-------|
-| P0 | Self-harness setup | ✅ Done | Installed in `feature/self-harness` worktree |
-| P0 | Core files customization | ✅ Done | All core files configured |
-| P0 | Harness testing | ✅ Done | 17/17 tests passed |
-| P1 | README improvements | Planned | Add "What You Get After Install", "When To Use What" table |
+| P0 | Self-harness on main | ✅ Done | Merged to main |
+| P0 | README improvements | ✅ Done | Added 3 new sections (zh + en) |
 | P1 | Skills alignment | Planned | Sync `templates/` and `example/minimal-project/` |
 | P1 | Design docs update | Planned | Add naming evolution note ("Fat Skills" → "Hybrid Router") |
-| P2 | Archive cleanup | Planned | Clean up test fixtures |
+| P2 | Community feedback | Ongoing | Monitor issues and PRs |
 
-## P1 Improvements (From Repo Health Review)
-
-### README Readability
-
-- [ ] Add "What You Get After Install" section to both READMEs
-- [ ] Add "When To Use What" quick-reference table
-- [ ] Clarify that `CLAUDE.md` appears only after install
-- [ ] Clarify lazy-read vs always-read file types
+## Remaining P1 Items
 
 ### Cross-File Consistency
 
@@ -40,11 +29,11 @@
 ## Next Milestones
 
 1. ✅ Repo health review complete (2026-04-15)
-2. ✅ Sensitive content sanitized
-3. ✅ Harness self-hosting operational
-4. Complete P1 improvements
-5. Merge `feature/self-harness` to `main`
-6. Tag v1.1.0 with self-hosting capability
+2. ✅ Sensitive content sanitized (2026-04-15)
+3. ✅ Harness self-hosting merged to main (2026-04-15)
+4. ✅ README improvements shipped (2026-04-15)
+5. Skills alignment + Design docs update
+6. Tag v1.1.0
 
 ## Completed
 

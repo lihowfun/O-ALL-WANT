@@ -84,7 +84,7 @@
 
 - [x] Verified git tracking status — `_tmp/` and `private/` not tracked ✅
 - [x] Deleted `private/` directory (contained sensitive experiment data)
-- [x] Deleted `_tmp/private_project_plan/` (contained sensitive project files)
+- [x] Deleted stale test fixtures from `_tmp/`
 - [x] Created `.gitignore` at workspace root with `_tmp/` and `private/`
 - [x] Confirmed no sensitive references in `repo/` git history
 - [x] Sanitized this review file to remove sensitive project names

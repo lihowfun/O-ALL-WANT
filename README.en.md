@@ -10,7 +10,7 @@
 
 This is an AI Harness hodgepodge designed specifically for "greedy" developers. We want AI not only to write code for us, but also to maintain cross-session memory, save tokens, and ideally compile scattered knowledge into an evolving Wiki—just like Andrej Karpathy suggested.
 
-This project is the culmination of several late nights bossing around Codex GPT 5.4, integrating some of the most popular Harness repositories, Memory Palace concepts, and Token optimization logic into one cohesive framework.
+This project is the culmination of several late nights bossing around Claude Code and Codex, integrating some of the most popular Harness repositories, Memory Palace concepts, and Token optimization logic into one cohesive framework.
 
 So what I want is actually very simple:
 
