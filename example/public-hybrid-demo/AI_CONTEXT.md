@@ -1,6 +1,6 @@
 # Public Hybrid Demo — AI Agent Context
 
-> Public hybrid wiki router demo | 0.2.0-example | Repo: https://github.com/lihowfun/agent-memory-framework
+> Public hybrid wiki router demo | 0.2.0-example | Repo: https://github.com/lihowfun/O-ALL-WANT
 > Pipeline: **Raw notes -> compiled wiki -> reusable project knowledge**
 
 ## Language

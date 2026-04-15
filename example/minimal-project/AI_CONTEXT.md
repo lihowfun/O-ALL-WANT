@@ -1,7 +1,7 @@
 # Minimal Example App — AI Agent Context (Single Source of Truth)
 
 > Post-install sample project for validating the Agent Memory Framework |
-> 0.1.0-example | Repo: https://github.com/lihowfun/agent-memory-framework
+> 0.1.0-example | Repo: https://github.com/lihowfun/O-ALL-WANT
 > Pipeline: **Install framework -> run CLI smoke tests -> document findings**
 
 ## Language

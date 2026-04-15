@@ -54,7 +54,7 @@ flowchart LR
 
 ```bash
 cd /path/to/your/project
-git clone https://github.com/lihowfun/agent-memory-framework.git .agent-framework
+git clone https://github.com/lihowfun/O-ALL-WANT.git .agent-framework
 bash .agent-framework/install.sh
 ```
 
@@ -67,7 +67,7 @@ After installation, give your Agent this prompt:
 ```bash
 mkdir my-project && cd my-project
 git init
-git clone https://github.com/lihowfun/agent-memory-framework.git .agent-framework
+git clone https://github.com/lihowfun/O-ALL-WANT.git .agent-framework
 bash .agent-framework/install.sh
 ```
 
@@ -75,7 +75,7 @@ After installation, give your Agent this prompt:
 
 > Read `CLAUDE.md` first, then `AI_CONTEXT.md`. The project I'm building is [describe your project]. Customize the harness for this project: fill in AI_CONTEXT.md, set up ROADMAP.md milestones, and tune CLAUDE.md routing rules.
 
-## 🎁 What You Get After Install
+## 🎁 Main Files You'll Get
 
 ```text
 your-project/
@@ -85,7 +85,7 @@ your-project/
 ├── ROADMAP.md             ← Phase plan: Agent uses this to assess current progress
 ├── .agents/
 │   ├── memory.md          ← Agent's diary: auto-records decisions, bugs, discoveries
-│   └── skills/            ← Agent's SOP library: dispatched automatically by trigger keywords
+│   └── skills/            ← Agent's SOP library: dispatched by task type
 ├── docs/
 │   ├── knowledge/         ← Curated knowledge base: Agent reads here for context (saves tokens)
 │   └── raw/               ← Your raw notes: Agent only reads these on demand
@@ -99,24 +99,27 @@ your-project/
 
 ## 🧭 When To Use What?
 
-> **Core principle: Just talk to your Agent.** After reading `CLAUDE.md`, the Agent automatically decides which files to read, which skill to invoke, and which script to run. You don't need to memorize commands.
+> **Core principle: mostly just talk to your Agent.** If your Agent reads `CLAUDE.md`
+> first and follows this router/skills setup, it will usually decide which files
+> to read, which skill to invoke, and which script to run. You usually do not
+> need to memorize commands.
 
-### You speak naturally, Agent dispatches automatically
+### You speak naturally, the Agent will usually dispatch like this
 
-| You say to Agent... | Agent automatically... |
+| You say to Agent... | Agent will usually... |
 |--------------------|----------------------|
 | "I just decided to switch to Redis for caching" | Writes to `.agents/memory.md` → `[DECISION] Switch to Redis for caching` |
 | "This bug is caused by an N+1 query" | Writes to `.agents/memory.md` → `[BUG] N+1 query...`; proactively proposes wiki distillation when similar entries accumulate |
-| "Help me organize the notes in docs/raw/" | Triggers `/wiki-refresh` skill → runs `wiki_sync.py refresh` → outputs curated `docs/knowledge/` page |
-| "Run a benchmark" | Triggers `/benchmark` skill → reads baselines → executes → generates comparison report |
-| "Prepare release v1.2.0" | Triggers `/version-release` skill → runs full checklist → auto-bumps version |
-| "This thing is broken, help me debug" | Triggers `/debug-pipeline` skill → systematic layer-by-layer diagnosis → records root cause |
+| "Help me organize the notes in docs/raw/" | Matches the `/wiki-refresh` skill → runs `wiki_sync.py refresh` → outputs a curated `docs/knowledge/` page |
+| "Run a benchmark" | Matches the `/benchmark` skill → reads baselines → executes → generates a comparison report |
+| "Prepare release v1.2.0" | Matches the `/version-release` skill → runs the checklist → bumps version |
+| "This thing is broken, help me debug" | Matches the `/debug-pipeline` skill → systematic layer-by-layer diagnosis → records the root cause |
 | "What's the current project status?" | Runs `context_hub.py status` → shows version, recent decisions, knowledge topics |
 
 ### How does this work?
 
 Every skill has `triggers` keywords (e.g., `["benchmark", "evaluate", "test scores"]`).
-`CLAUDE.md`'s **Skills-First Principle** makes the Agent auto-match on every task:
+If your agent follows `CLAUDE.md`'s **Skills-First Principle**, it will usually match tasks like this:
 
 ```text
 Your request → CLAUDE.md (master router) → match skill triggers → dispatch skill
@@ -124,8 +127,8 @@ Your request → CLAUDE.md (master router) → match skill triggers → dispatch
                                          → results written to memory / knowledge
 ```
 
-> 💡 **The only thing you need to do**: Set up `CLAUDE.md`, then talk to your Agent normally.
-> Dispatching, recording, knowledge management — all the Agent's job.
+> 💡 **Your main job**: Set up `CLAUDE.md`, then talk to your Agent normally.
+> Dispatching, recording, and knowledge management should mostly be handled by the router + skills + scripts.
 
 ### Advanced: Manual CLI Usage (Optional)
 
@@ -158,7 +161,8 @@ A modularized "I want it all" — not all rules piled into one blob.
 
 Drop your messy notes (meeting minutes, tech drafts, bug analyses) into `docs/raw/`,
 then tell the Agent "help me organize api_notes into a knowledge page" —
-the Agent triggers the `/wiki-refresh` skill and compiles it into a curated page in `docs/knowledge/`.
+in an agent environment that follows this router, it should prefer the `/wiki-refresh`
+skill and compile it into a curated page in `docs/knowledge/`.
 From then on, the Agent reads the curated version — saving tokens and staying precise.
 
 > 💡 **Memory vs Knowledge**: Memory is a diary (short-term events), Knowledge is a textbook (long-term knowledge).

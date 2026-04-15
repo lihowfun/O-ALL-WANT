@@ -7,7 +7,7 @@ annotate knowledge, manage rolling decision memory, and bootstrap
 new sessions.
 
 Part of the Agent Memory Framework.
-https://github.com/lihowfun/agent-memory-framework
+https://github.com/lihowfun/O-ALL-WANT
 """
 import argparse
 import json

@@ -1,10 +1,10 @@
 #!/bin/bash
-# Agent Memory Framework — One-Command Installer
-# https://github.com/lihowfun/agent-memory-framework
+# O-ALL-WANT — One-Command Installer
+# https://github.com/lihowfun/O-ALL-WANT
 
 set -e  # Exit on error
 
-echo "🚀 Agent Memory Framework Installer"
+echo "🚀 O-ALL-WANT Installer"
 echo "===================================="
 echo ""
 
@@ -108,7 +108,7 @@ echo "   4. Tell your AI agent: \"Read CLAUDE.md first, then AI_CONTEXT.md. Foll
 echo ""
 echo "💡 Try the tools:"
 echo "   python3 scripts/context_hub.py status"
-echo "   python3 scripts/context_hub.py memory add \"[DECISION] Installed agent memory framework\""
+echo "   python3 scripts/context_hub.py memory add \"[DECISION] Installed O-ALL-WANT\""
 echo "   python3 scripts/wiki_sync.py lint"
 echo ""
 echo "📚 Full docs: $FRAMEWORK_DIR/docs/"

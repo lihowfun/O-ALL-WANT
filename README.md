@@ -58,7 +58,7 @@ flowchart LR
 
 ```bash
 cd /path/to/your/project
-git clone https://github.com/lihowfun/agent-memory-framework.git .agent-framework
+git clone https://github.com/lihowfun/O-ALL-WANT.git .agent-framework
 bash .agent-framework/install.sh
 ```
 
@@ -75,7 +75,7 @@ bash .agent-framework/install.sh
 ```bash
 mkdir my-project && cd my-project
 git init
-git clone https://github.com/lihowfun/agent-memory-framework.git .agent-framework
+git clone https://github.com/lihowfun/O-ALL-WANT.git .agent-framework
 bash .agent-framework/install.sh
 ```
 
@@ -87,7 +87,7 @@ bash .agent-framework/install.sh
 > 設定 `CLAUDE.md` 的語言偏好和 forbidden actions，
 > 然後建議初期需要哪些 skills。
 
-## 🎁 安裝完你會看到什麼
+## 🎁 主要檔案結構
 
 ```text
 your-project/
@@ -97,7 +97,7 @@ your-project/
 ├── ROADMAP.md             ← 階段計畫：AI 判斷目前進度用
 ├── .agents/
 │   ├── memory.md          ← AI 的日記：自動記錄每次的決策、bug、發現
-│   └── skills/            ← AI 的 SOP 庫：觸發關鍵字自動調度
+│   └── skills/            ← AI 的 SOP 庫：依 task 類型被調度
 ├── docs/
 │   ├── knowledge/         ← 精煉知識庫：AI 查資料讀這裡（省 Token）
 │   └── raw/               ← 你的原始筆記：AI 只在需要時才讀
@@ -111,24 +111,26 @@ your-project/
 
 ## 🧭 什麼時候用什麼？
 
-> **核心原則：你只需要跟 Agent 講話。** Agent 讀了 `CLAUDE.md` 之後，會根據你的需求自動選擇要讀哪些檔案、調度哪個 skill、執行哪個 script。你不需要記指令。
+> **核心原則：你主要只需要跟 Agent 講話。** 如果你的 Agent 會先讀 `CLAUDE.md`，
+> 並遵守這套 skills/router 規則，它通常會根據需求選擇要讀哪些檔案、調度哪個
+> skill、執行哪個 script；你通常不需要自己記 CLI。
 
-### 你講人話，Agent 自動調度
+### 你講人話，Agent 通常會這樣調度
 
-| 你對 Agent 說... | Agent 會自動做... |
+| 你對 Agent 說... | Agent 通常會做... |
 |-----------------|------------------|
 | 「我剛決定改用 Redis 當 cache」 | 寫入 `.agents/memory.md` → `[DECISION] 改用 Redis 當 cache` |
 | 「這個 bug 是 N+1 query 造成的」 | 寫入 `.agents/memory.md` → `[BUG] N+1 query...`；累積同類多條時主動提議提煉到 wiki |
-| 「幫我整理一下 docs/raw/ 裡的筆記」 | 觸發 `/wiki-refresh` skill → 執行 `wiki_sync.py refresh` → 產出 `docs/knowledge/` 精華頁 |
-| 「跑一下 benchmark」 | 觸發 `/benchmark` skill → 讀 baselines → 執行 → 產出對比報告 |
-| 「準備 release v1.2.0」 | 觸發 `/version-release` skill → 跑完整 checklist → 自動 bump version |
-| 「這東西壞了，幫我 debug」 | 觸發 `/debug-pipeline` skill → 逐層排查 → 記錄 root cause |
+| 「幫我整理一下 docs/raw/ 裡的筆記」 | 比對到 `/wiki-refresh` skill → 執行 `wiki_sync.py refresh` → 產出 `docs/knowledge/` 精華頁 |
+| 「跑一下 benchmark」 | 比對到 `/benchmark` skill → 讀 baselines → 執行 → 產出對比報告 |
+| 「準備 release v1.2.0」 | 比對到 `/version-release` skill → 跑完整 checklist → bump version |
+| 「這東西壞了，幫我 debug」 | 比對到 `/debug-pipeline` skill → 逐層排查 → 記錄 root cause |
 | 「目前專案什麼狀態？」 | 執行 `context_hub.py status` → 顯示版本、最近決策、知識主題清單 |
 
 ### 這是怎麼做到的？
 
 每個 skill 都有 `triggers` 關鍵字（例如 `["benchmark", "evaluate", "test scores"]`）。
-`CLAUDE.md` 的 **Skills-First Principle** 讓 Agent 在接到任務時自動比對：
+如果你的 agent 會遵守 `CLAUDE.md` 的 **Skills-First Principle**，它通常會在接到任務時先做這層比對：
 
 ```text
 你的需求 → CLAUDE.md (master router) → 比對 skill triggers → 調度對應 skill
@@ -136,8 +138,8 @@ your-project/
                                       → 結果寫入 memory / knowledge
 ```
 
-> 💡 **你唯一要做的事**：把 `CLAUDE.md` 設定好，然後跟 Agent 正常講話。
-> 剩下的調度、記錄、知識管理，全部是 Agent 的事。
+> 💡 **你主要要做的事**：把 `CLAUDE.md` 設定好，然後跟 Agent 正常講話。
+> 剩下的調度、記錄、知識管理，會由這套 router + skills + scripts 盡量接手。
 
 ### 進階：手動使用 CLI（可選）
 
@@ -170,7 +172,8 @@ your-project/
 
 你的凌亂筆記（會議記錄、技術草稿、Bug 分析）丟進 `docs/raw/`，
 跟 Agent 說「幫我把 api_notes 整理成知識頁」——
-Agent 觸發 `/wiki-refresh` skill，自動編譯成 `docs/knowledge/` 裡的精華版。
+在支援這套路由的環境裡，Agent 會優先走 `/wiki-refresh` skill，把它編譯成
+`docs/knowledge/` 裡的精華版。
 以後 Agent 查資料讀精華版就好，省 Token 又精準。
 
 > 💡 **Memory vs Knowledge**：Memory 是日記（短期事件），Knowledge 是教科書（長期知識）。
