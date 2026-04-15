@@ -168,3 +168,26 @@ system that stays readable by both humans and agents.
 3. Recent memory and durable wiki serve different jobs and should both remain.
 4. Operational docs deserve their own lane instead of being mixed into knowledge topics.
 5. A deterministic compiler is the easiest way to keep markdown knowledge fresh without adding heavy infrastructure.
+
+---
+
+## Honest Borrowing Ledger
+
+Each source's actual contribution to OAW, and what remains aspirational:
+
+### Andrew Ng's Context Hub
+- ✅ **Borrowed**: Knowledge file structure (`docs/knowledge/`), CLI-based context management (`context_hub.py`), search/annotate/status pattern
+- ➕ **OAW adds**: Skills dispatch layer, wiki compilation pipeline, hybrid 4-lane routing
+
+### MemPalace
+- ✅ **Borrowed**: Rolling `memory.md` with append-only discipline, "read last N entries" pattern, session-end 4-part summary format
+- ⏳ **Not yet implemented**: Hierarchical compression, topic consolidation (memory → topic pages), memory archival rotation
+- 📝 **Current state**: OAW's memory is a rolling log with truncated reads — effective but not yet a true "memory palace" with spatial/hierarchical organization
+
+### Garry Tan "Thin Harness, Fat Skills"
+- ✅ **Borrowed**: Philosophy of thin harness (`CLAUDE.md` < 120 lines) + executable knowledge in skill files
+- ➕ **OAW adds**: Trigger keyword matching, `_TEMPLATE.md` standardization, skill-first dispatch principle in router
+
+### Karpathy-style LLM Wiki
+- ✅ **Borrowed**: Separate raw notes from curated retrieval pages, markdown as durable format
+- ➕ **OAW adds**: Deterministic compiler (`wiki_sync.py`), frontmatter metadata, generated index/log

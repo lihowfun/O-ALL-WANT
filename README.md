@@ -231,6 +231,10 @@ your-project/
 - `templates/AGENT_RULES.md` = **你安裝後拿到的 template**（這才是給你的）
 - Skills 和 knowledge pages 統一住在 `templates/` 裡
 
+**Public Memory Policy**：公開 repo 不提交 rolling memory（`.agents/memory.md` 已 gitignore），
+只提交提煉後的結論到 `docs/knowledge/` 和 `docs/archive/`。
+這正是 OAW 推薦的做法：memory 是日記（本地留），knowledge 是教科書（公開分享）。
+
 > 💡 這就是 eating our own dog food。如果這個 framework 連管理自己都好用，
 > 那它應該也能管理你的專案。
 

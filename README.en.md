@@ -221,6 +221,10 @@ uses to manage this repo with its own framework.
 - `templates/AGENT_RULES.md` = **the template you get after install** (this is for you)
 - Skills and knowledge pages live in `templates/`
 
+**Public Memory Policy**: Public repos should not commit rolling memory (`.agents/memory.md` is gitignored).
+Only distilled conclusions go to `docs/knowledge/` and `docs/archive/`.
+This is exactly the workflow OAW recommends: memory is a diary (stays local), knowledge is a textbook (shared publicly).
+
 > 💡 This is eating our own dog food. If this framework works well enough
 > to manage itself, it should work for your project too.
 

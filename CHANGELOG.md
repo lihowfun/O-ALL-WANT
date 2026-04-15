@@ -8,6 +8,8 @@ All notable changes to this project will be documented in this file.
 - Cross-agent/IDE compatibility table — pointer files for Codex (`AGENTS.md`), Cursor (`.cursorrules`), Windsurf (`.windsurfrules`), Gemini (`GEMINI.md`)
 - Self-hosting: OAW repo now uses its own harness to manage itself (eating our own dog food)
 - `.github/copilot-instructions.md` auto-created by installer for GitHub Copilot support
+- `docs/knowledge/Release_Learnings.md` — durable knowledge page capturing release review patterns
+- Public memory policy clarified in Self-Hosting section
 
 ### Changed
 - **README rewrite (zh + en)**: agentic-first UX — dispatch table, precise AI prompts for Plan A/B, file tree with agent-behavior annotations
@@ -15,9 +17,14 @@ All notable changes to this project will be documented in this file.
 - Integrated LLM Wiki section into architecture explanation (no more standalone section)
 - Softened absolute claims ("Agent 自動做" → "Agent 通常會做") for cross-agent accuracy
 - GitHub repo URL updated to `lihowfun/O-ALL-WANT`
+- Design Sources updated with honest "Borrowed / Not Yet Implemented" ledger
+
+### Fixed
+- `templates/VERSION.json` was still `0.2.0-dev` — new users saw stale version after install
+- Root `AI_CONTEXT.md` and `VERSION.json` still referenced old repo name `agent-memory-framework`
 
 ### Verified
-- Fresh install test (macOS): clone + install.sh + context_hub.py status in < 5s
+- Fresh install test (macOS): clone + install.sh + context_hub.py status — version now shows correctly
 - Cross-agent review: harness structure validated against a real downstream project
 - All scripts functional: context_hub.py (8 commands), wiki_sync.py (3 commands)
 
@@ -70,7 +77,7 @@ All notable changes to this project will be documented in this file.
 - Documentation: Architecture Origins, Design Principles
 - MIT License
 
-### Design Sources
-- [Andrew Ng's Context Hub](https://github.com/andrewyng/context-hub) — knowledge management infrastructure
-- [MemPalace](https://github.com/MemPalace/mempalace) — anti-amnesia discipline
-- [Garry Tan "Thin Harness, Fat Skills"](https://greptile.com/blog/agents) — executable knowledge
+### Design Sources — What OAW Actually Borrowed
+- [Andrew Ng's Context Hub](https://github.com/andrewyng/context-hub) — **Borrowed**: knowledge file structure (`docs/knowledge/`), CLI-based context management (`context_hub.py`), search/annotate/status pattern. **OAW adds**: skills dispatch layer, wiki compilation pipeline, hybrid 4-lane routing.
+- [MemPalace](https://github.com/MemPalace/mempalace) — **Borrowed**: rolling `memory.md` with append-only discipline, "read last N entries" pattern, session-end 4-part summary format. **Not yet implemented**: hierarchical compression, memory→topic consolidation, archival rotation.
+- [Garry Tan "Thin Harness, Fat Skills"](https://x.com/garrytan/status/1917325461256498517) — **Borrowed**: philosophy of keeping the harness thin (`CLAUDE.md` < 120 lines) while putting executable knowledge in skill files. **OAW adds**: trigger-based dispatch, `_TEMPLATE.md` standardization.

@@ -2,7 +2,7 @@
 
 > ⚠️ **FORBIDDEN**: Do NOT put agent operational instructions here. Use `CLAUDE.md` instead.
 
-> AI Agent 的長期記憶與知識管理框架 | v1.0.0 | Repo: lihowfun/agent-memory-framework  
+> AI Agent 的長期記憶與知識管理框架 | v1.0.0 | Repo: lihowfun/O-ALL-WANT  
 > Pipeline: **Template repo → install.sh → Per-project harness**
 
 ## Language
