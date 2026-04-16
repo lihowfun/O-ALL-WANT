@@ -33,6 +33,20 @@ If you only need a single feature, please directly Fork the original author's re
 - ⚡ **Agentic Workflows**: Pre-configured Markdown-driven SOPs, so high-frequency tasks don't need to be explained repeatedly.
   This layer primarily lands in `.agents/skills/*.md` and helper scripts.
 
+### 🤝 Optional Companion: RTK (Rust Token Killer)
+
+RTK is an **optional companion**, not a built-in OAW dependency. OAW decides
+what knowledge to read; RTK compresses how much shell output comes back. They
+operate at different layers and usually complement each other well.
+
+RTK upstream claims **60-90%** output reduction on many supported CLI commands.
+If you want that extra shell-output compression, you can install it separately:
+
+```bash
+brew install rtk
+rtk init -g
+```
+
 ## Architecture Diagram
 
 `CLAUDE.md` decides which lane a task should take; it only reads wikis, skills, or raw notes when strictly necessary, preventing the entire repo and all rules from being shoved into context right away.
@@ -180,8 +194,11 @@ If you prefer to operate scripts directly:
 | Command | Purpose |
 |---------|---------|
 | `python3 scripts/context_hub.py status` | View version, recent decisions, knowledge topics |
+| `python3 scripts/context_hub.py status --compact` | One-line summary of version / topics / memories / locked experiments |
 | `python3 scripts/context_hub.py search "keyword"` | Search the knowledge base |
+| `python3 scripts/context_hub.py search "keyword" --compact` | One-line topic list for quick scanning |
 | `python3 scripts/context_hub.py memory add "[TAG] content"` | Manually record to memory |
+| `python3 scripts/context_hub.py bootstrap --compact` | Minimal bootstrap summary for a new agent session |
 | `python3 scripts/wiki_sync.py refresh topic_name` | Manually compile a wiki topic |
 | `python3 scripts/wiki_sync.py lint` | Check wiki metadata consistency |
 

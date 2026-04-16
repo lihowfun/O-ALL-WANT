@@ -208,11 +208,12 @@ def _raw_source_count():
 
 # ─── Search ───────────────────────────────────────────────────────────────────
 
-def search(query):
+def search(query, compact=False):
     """Search knowledge base topics by keyword."""
-    print(f"Searching for '{query}' in {DOCS_DIR}...")
+    if not compact:
+        print(f"Searching for '{query}' in {DOCS_DIR}...")
     if not os.path.exists(DOCS_DIR):
-        print("Knowledge directory not found.")
+        print("0 topics" if compact else "Knowledge directory not found.")
         return
 
     results = []
@@ -233,7 +234,9 @@ def search(query):
             results.append((filename.replace(".md", ""), page["title"], annotations))
 
     if not results:
-        print("No matches found. Try broadening the search.")
+        print("0 topics" if compact else "No matches found. Try broadening the search.")
+    elif compact:
+        print(f"{len(results)} topics: {', '.join(t[0] for t in results)}")
     else:
         print(f"\n{'='*70}")
         print(f"  MATCHING KNOWLEDGE TOPICS ({len(results)} found)")
@@ -364,16 +367,48 @@ def lesson(mistake, correction):
 
 # ─── Status ───────────────────────────────────────────────────────────────────
 
-def status():
+def status(compact=False):
     """Print a one-screen project status summary."""
+    version_file = os.path.join(BASE_DIR, "VERSION.json")
+    version_str = "unknown"
+    phase_str = ""
+    dnr_count = 0
+    if os.path.exists(version_file):
+        with open(version_file, "r", encoding="utf-8") as f:
+            v = json.load(f)
+        version_str = v.get("version", "unknown")
+        dnr_count = len(v.get("do_not_rerun", []))
+        phase_str = v.get("current_phase", "")
+
+    if compact:
+        pages = _knowledge_pages()
+        mem_count = 0
+        if os.path.exists(MEMORY_FILE):
+            with open(MEMORY_FILE, "r", encoding="utf-8") as f:
+                content = f.read()
+            mem_count = len(
+                [
+                    entry
+                    for entry in re.split(r"(?=^## \[)", content, flags=re.MULTILINE)
+                    if entry.startswith("## [")
+                ]
+            )
+        raw_count = _raw_source_count()
+        parts = [f"v{version_str}", f"{len(pages)} topics", f"{mem_count} memories", f"{dnr_count} locked"]
+        if phase_str:
+            parts.append(f"phase: {phase_str}")
+        if raw_count:
+            parts.append(f"{raw_count} raw")
+        print(" | ".join(parts))
+        return
+
     print(f"\n{'='*70}")
     print(f"  📊 PROJECT STATUS")
     print(f"{'='*70}\n")
 
     # 1. Version
-    version_file = os.path.join(BASE_DIR, "VERSION.json")
     if os.path.exists(version_file):
-        with open(version_file, "r") as f:
+        with open(version_file, "r", encoding="utf-8") as f:
             v = json.load(f)
         print(f"  📦 VERSION: {v.get('version', 'unknown')}")
         dnr = v.get("do_not_rerun", [])
@@ -409,8 +444,23 @@ def status():
 
 # ─── Bootstrap ────────────────────────────────────────────────────────────────
 
-def bootstrap():
+def bootstrap(compact=False):
     """Output everything a new agent session needs to get started."""
+    if compact:
+        status(compact=True)
+        print()
+        if os.path.exists(MEMORY_FILE):
+            with open(MEMORY_FILE, "r", encoding="utf-8") as f:
+                content = f.read()
+            entries = re.split(r"(?=^## \[)", content, flags=re.MULTILINE)
+            entries = [entry for entry in entries if entry.startswith("## [")]
+            if entries:
+                print("Recent:")
+                for entry in entries[:3]:
+                    print(f"  {entry.strip().split(chr(10))[0]}")
+        search("", compact=True)
+        return
+
     print(f"\n{'='*70}")
     print(f"  🚀 CONTEXT HUB BOOTSTRAP — New Session")
     print(f"{'='*70}\n")
@@ -443,13 +493,16 @@ def main():
         epilog="""
 Commands:
   %(prog)s search "query"              Search knowledge topics
+  %(prog)s search --compact            One-line topic list (saves tokens)
   %(prog)s get Topic_Name              Fetch a topic's full content
   %(prog)s annotate Topic "note"       Annotate a topic with a finding
   %(prog)s memory add "[TAG] note"     Add a memory entry
   %(prog)s memory show --last 5        Show recent decisions
   %(prog)s lesson "mistake" "fix"      Record a lesson learned
   %(prog)s status                      One-screen project status
+  %(prog)s status --compact            One-line status (saves tokens)
   %(prog)s bootstrap                   Get new-session context dump
+  %(prog)s bootstrap --compact         Minimal bootstrap (saves tokens)
         """
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -457,6 +510,7 @@ Commands:
     # Search
     p_search = subparsers.add_parser("search", help="Search knowledge base topics.")
     p_search.add_argument("query", nargs="?", default="", help="Query to search for.")
+    p_search.add_argument("--compact", action="store_true", help="One-line output (saves tokens).")
 
     # Get
     p_get = subparsers.add_parser("get", help="Get full content of a topic.")
@@ -483,16 +537,18 @@ Commands:
     p_lesson.add_argument("correction", help="What the correct approach is.")
 
     # Status
-    subparsers.add_parser("status", help="Print one-screen project status summary.")
+    p_status = subparsers.add_parser("status", help="Print one-screen project status summary.")
+    p_status.add_argument("--compact", action="store_true", help="One-line output (saves tokens).")
 
     # Bootstrap
-    subparsers.add_parser("bootstrap", help="Output new-session bootstrap context.")
+    p_bootstrap = subparsers.add_parser("bootstrap", help="Output new-session bootstrap context.")
+    p_bootstrap.add_argument("--compact", action="store_true", help="Minimal output (saves tokens).")
 
     args = parser.parse_args()
     os.makedirs(DOCS_DIR, exist_ok=True)
 
     if args.command == "search":
-        search(args.query)
+        search(args.query, compact=args.compact)
     elif args.command == "get":
         get(args.topic)
     elif args.command == "annotate":
@@ -505,9 +561,9 @@ Commands:
     elif args.command == "lesson":
         lesson(args.mistake, args.correction)
     elif args.command == "status":
-        status()
+        status(compact=args.compact)
     elif args.command == "bootstrap":
-        bootstrap()
+        bootstrap(compact=args.compact)
 
 
 if __name__ == "__main__":

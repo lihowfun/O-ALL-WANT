@@ -36,6 +36,19 @@ Code，還要它跨 session 不失憶、別浪費 Token，最好還能像 Andrej
 - ⚡ **Agentic Workflows**: 預置多套 Markdown 導向的 SOP，讓高頻任務不要每次重講。
   這一層主要落在 `.agents/skills/*.md` 和 helper scripts。
 
+### 🤝 可選搭配：RTK (Rust Token Killer)
+
+RTK 是 **optional companion**，不是 OAW 的內建依賴。OAW 管「知識路由」（讀什麼），
+RTK 管「shell output 壓縮」（回多少）；兩者在不同層工作，通常可以互補。
+
+RTK upstream 表示它能在許多支援的 CLI 命令上帶來 **60-90%** 的輸出壓縮。如果你
+也想壓低 shell output token，可以另外安裝：
+
+```bash
+brew install rtk
+rtk init -g
+```
+
 ## 架構圖
 
 先由 `CLAUDE.md` 決定這次任務該走哪條 lane；只有真的需要時才讀 wiki、
@@ -191,8 +204,11 @@ your-project/
 | 指令 | 用途 |
 |------|------|
 | `python3 scripts/context_hub.py status` | 看目前版本、近期決策、知識主題 |
+| `python3 scripts/context_hub.py status --compact` | 用一行摘要看版本 / topics / memories / 鎖定實驗 |
 | `python3 scripts/context_hub.py search "關鍵字"` | 搜尋知識庫 |
+| `python3 scripts/context_hub.py search "關鍵字" --compact` | 用一行 topic 清單快速掃描結果 |
 | `python3 scripts/context_hub.py memory add "[TAG] 內容"` | 手動記錄到 memory |
+| `python3 scripts/context_hub.py bootstrap --compact` | 用最小啟動摘要給 agent 暖機 |
 | `python3 scripts/wiki_sync.py refresh topic_name` | 手動編譯某個 wiki 主題 |
 | `python3 scripts/wiki_sync.py lint` | 檢查 wiki metadata 一致性 |
 
