@@ -5,7 +5,7 @@
   "current_phase": "stable",
   "next_phase": "community-feedback",
   "benchmark_snapshot": {
-    "summary": "Install time < 5s, 15 template files, 6 skills, pre-launch hardening",
+    "summary": "Install time < 5s, 15 template files, 6 skills, public launch build",
     "date": "2026-04-17"
   },
   "do_not_rerun": [
