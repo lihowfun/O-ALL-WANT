@@ -1,0 +1,60 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Python syntax check on CLI tools
+        run: |
+          python3 -m py_compile scripts/context_hub.py
+          python3 -m py_compile scripts/wiki_sync.py
+
+      - name: wiki_sync.py CLI surfaces expected subcommands
+        run: |
+          python3 scripts/wiki_sync.py --help | grep -q build
+          python3 scripts/wiki_sync.py --help | grep -q refresh
+          python3 scripts/wiki_sync.py --help | grep -q lint
+
+      - name: install.sh refuses self-install
+        run: |
+          set +e
+          out=$(./install.sh 2>&1)
+          rc=$?
+          echo "$out"
+          if [ $rc -eq 0 ]; then
+            echo "::error::install.sh should have refused when run from repo root"
+            exit 1
+          fi
+          echo "$out" | grep -q "Refusing to install"
+
+      - name: install.sh installs cleanly into a fresh directory
+        run: |
+          target=$(mktemp -d)
+          pushd "$target" > /dev/null
+          echo y | "$GITHUB_WORKSPACE/install.sh"
+          popd > /dev/null
+          test -f "$target/CLAUDE.md"
+          test -f "$target/AI_CONTEXT.md"
+          test -f "$target/scripts/wiki_sync.py"
+          test -f "$target/.agents/memory.md"
+          test -f "$target/docs/knowledge/index.md"
+
+      - name: Post-install wiki_sync.py lint passes on a fresh install
+        run: |
+          target=$(mktemp -d)
+          pushd "$target" > /dev/null
+          echo y | "$GITHUB_WORKSPACE/install.sh"
+          python3 scripts/wiki_sync.py lint
+          popd > /dev/null
