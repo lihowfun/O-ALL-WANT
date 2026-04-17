@@ -37,7 +37,7 @@ OAW 的 `--compact` 已把「輸出也要壓短」的概念融進來。若想要
 
 ## 架構一頁看懂
 
-先讓 `CLAUDE.md` 決定這次任務要走哪條 lane，再由 skills 和 scripts 接手重複工，這樣就不會一上來把整個 repo 全塞進 context。
+`CLAUDE.md` 決定走哪條 lane，skills 和 scripts 接手重複工——每次只讀當下需要的部分，不在一開始就把整個 repo 塞進 context。
 
 ```mermaid
 flowchart LR
@@ -59,8 +59,8 @@ cd /path/to/your/project
 # 全新專案：先 init
 # mkdir my-project && cd my-project && git init
 
-git clone https://github.com/lihowfun/O-ALL-WANT.git .agent-framework
-bash .agent-framework/install.sh
+git clone https://github.com/lihowfun/O-ALL-WANT.git OAW
+bash OAW/install.sh
 ```
 
 裝完對 agent 講(直接複製)：

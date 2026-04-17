@@ -85,8 +85,8 @@ cd /path/to/your/project
 # Brand-new project: init first
 # mkdir my-project && cd my-project && git init
 
-git clone https://github.com/lihowfun/O-ALL-WANT.git .agent-framework
-bash .agent-framework/install.sh
+git clone https://github.com/lihowfun/O-ALL-WANT.git OAW
+bash OAW/install.sh
 ```
 
 Then paste this to your agent:
