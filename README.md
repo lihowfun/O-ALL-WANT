@@ -33,19 +33,7 @@
 
 ### 🤝 可選搭配：RTK (Rust Token Killer)
 
-RTK 是 [rtk-ai/rtk](https://github.com/rtk-ai/rtk) 提供的 shell output 壓縮工具。OAW 管「讀什麼」，RTK 管「回多少」；兩者在不同層，概念上很互補。
-
-它不是 OAW 的必要依賴，也不是透過 OAW 安裝。OAW 真正吸收進來的，是 RTK 那種「除了控制讀進來的 context，也要控制吐回來的 output」的概念；這件事現在主要反映在 OAW 內建的 `--compact` 輸出模式上。換句話說，OAW 有借這個思路，但沒有把 RTK 本體打包進來。
-
-如果你只是想用 OAW 內建的 token-friendly 摘要模式，不用裝 RTK，直接用：
-
-```bash
-python3 scripts/context_hub.py status --compact
-python3 scripts/context_hub.py search "keyword" --compact
-python3 scripts/context_hub.py bootstrap --compact
-```
-
-如果你真的想另外裝 RTK，請直接看 RTK upstream README / release 說明。OAW 自己不會幫你安裝或管理 RTK。
+OAW 的 `--compact` 已把「輸出也要壓短」的概念融進來。若想要 Rust 原生的極致 token 壓縮，請直接看 [rtk-ai/rtk](https://github.com/rtk-ai/rtk)。
 
 ## 架構一頁看懂
 
@@ -61,19 +49,6 @@ flowchart LR
     S["docs/raw/*.md<br/>fallback-only source notes"] --> Y["scripts/wiki_sync.py<br/>invoked build / refresh / lint"]
     Y --> W
 ```
-
-裝完你會看到這些檔案：
-
-| 檔案 | 職責 | 你要動嗎? |
-|------|------|----------|
-| `CLAUDE.md` | Agent 大腦：決定讀哪、調度哪個 skill | ✅ 安裝時填一次 `${LANGUAGE}` |
-| `AI_CONTEXT.md` | 專案百科：架構、技術堆疊、baseline | ✅ 安裝時填一次 |
-| `.agents/memory.md` | 短期日記：決策 / bug / 發現 | ❌ agent 自動記 |
-| `docs/knowledge/` | 長期知識：精華頁(AI 讀這裡) | ❌ agent 從 `docs/raw/` 自動編 |
-| `.agents/skills/*.md` | SOP 庫：按 task 調度 | 視需要：寫自己的 skill |
-| `scripts/*.py` | 機械維護：搜尋、編譯 wiki | ❌ agent 會呼叫 |
-
-> 💡 **Memory vs Knowledge**：Memory 是日記(短期事件)，Knowledge 是教科書(長期知識)。同類 memory 累積 3-5 條，就可以叫 agent「幫我提煉到 wiki」。
 
 ## 快速上手
 
@@ -91,9 +66,7 @@ bash .agent-framework/install.sh
 裝完對 agent 講(直接複製)：
 
 > 先讀 `CLAUDE.md`，再讀 `AI_CONTEXT.md`。
-> 幫我把 `${LANGUAGE}` 換成我的溝通語言，
-> 把 `AI_CONTEXT.md` 的 placeholder 換成這個專案的真實資訊。
-> 然後分析 codebase，建議哪些重複流程可以收進 `.agents/skills/`。
+> 對照架構，把這個專案的真實狀況填進來，然後告訴我哪些重複流程可以收進 `.agents/skills/`。
 
 ### 🔌 不同 Agent / IDE 的對應方式
 
