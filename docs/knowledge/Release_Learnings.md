@@ -1,11 +1,11 @@
 ---
-topic: release-learnings
-page_type: knowledge
+id: Release_Learnings
+title: Release Learnings
+page_type: topic
 last_updated: 2026-04-16
 confidence: high
 source: v1.0.0 release reviews
-related_topics:
-  - Architecture_Decisions
+related_topics: []
 ---
 
 # Release Learnings

@@ -5,6 +5,21 @@
 
 ---
 
+## Naming Evolution (for anyone reading older discussions)
+
+OAW's vocabulary has shifted once already — keep this in mind when reading
+archived design notes:
+
+| Earlier name | Current name | Why the shift |
+|--------------|--------------|---------------|
+| **Fat Skills / Thin Harness** (Garry Tan, inspiration) | **Hybrid Router** (current) | "Fat Skills" captures only the execution lane. OAW's real contribution is the **4-lane routing** (Operational / Wiki / Execution / Debug). |
+| **Three-layer memory** (early `agent-memory-framework` era) | **Hybrid Router + Compiled Wiki** | Three layers described storage; the current phrasing describes *read-time decisions*, which is what actually saves tokens. |
+| **Agent Memory Framework** (repo name through v0.2) | **O-ALL-WANT (OAW)** | The framework grew opinionated enough to deserve its own brand; the memory layer is one ingredient, not the product. |
+
+If a doc still uses an older term, that is historical context, not a new concept.
+
+---
+
 ## Core Architecture
 
 ```text

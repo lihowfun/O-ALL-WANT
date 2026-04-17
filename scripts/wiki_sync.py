@@ -479,9 +479,42 @@ def _parse_date(value):
         return None
 
 
-def lint():
-    """Check metadata quality for docs/raw and docs/knowledge."""
+PLACEHOLDER_PATTERNS = (
+    (re.compile(r"\$\{[A-Za-z0-9_]+\}"), "unfilled `${...}` placeholder"),
+    # Match literal YYYY-MM-DD but not real ISO dates like 2026-04-17.
+    (re.compile(r"\bYYYY-MM-DD\b"), "literal `YYYY-MM-DD` date placeholder"),
+)
+PLACEHOLDER_SKIP_BASENAMES = {
+    "_TEMPLATE.md",
+    "_SOURCE_TEMPLATE.md",
+    "README.md",
+}
+
+
+def _scan_placeholders(paths):
+    """Yield (path, lineno, pattern_desc, snippet) for placeholder hits."""
+    for path in paths:
+        basename = os.path.basename(path)
+        if basename in PLACEHOLDER_SKIP_BASENAMES or basename.startswith("_"):
+            continue
+        try:
+            content = _safe_read(path)
+        except OSError:
+            continue
+        for lineno, line in enumerate(content.splitlines(), start=1):
+            for pattern, desc in PLACEHOLDER_PATTERNS:
+                if pattern.search(line):
+                    yield path, lineno, desc, line.strip()[:120]
+
+
+def lint(strict=False):
+    """Check metadata quality for docs/raw and docs/knowledge.
+
+    ``strict=True`` also flags unfilled placeholders (``${...}`` and literal
+    ``YYYY-MM-DD``). Default stays warn-only so existing users are not broken.
+    """
     issues = []
+    warnings = []
     raw_sources = _discover_raw_sources()
     knowledge_pages = _load_knowledge_pages()
     pages_by_id = defaultdict(list)
@@ -544,7 +577,26 @@ def lint():
                 issues.append(f"stale page '{page['id']}': raw source newer than page metadata")
 
         if not page["source_refs"] and not page["related_topics"] and inbound_links[page["id"]] == 0:
-            issues.append(f"orphan page '{page['id']}': no sources and no topic links")
+            # Singleton pages (no source refs, no cross-links) are a soft signal,
+            # not a hard error — a repo with one curated note is fine.
+            warnings.append(f"orphan page '{page['id']}': no sources and no topic links")
+
+    # Placeholder scan — over knowledge pages and raw sources. Skip fixture
+    # files (leading underscore) since those intentionally carry placeholders.
+    scan_paths = [page["path"] for page in knowledge_pages]
+    scan_paths.extend(source["path"] for source in raw_sources)
+    for path, lineno, desc, snippet in _scan_placeholders(scan_paths):
+        rel = os.path.relpath(path, BASE_DIR)
+        warnings.append(f"{desc} in {rel}:{lineno}: {snippet}")
+
+    if warnings:
+        label = "❌" if strict else "⚠️"
+        verb = "errors" if strict else "warnings"
+        print(f"{label} wiki_sync lint {verb} — {len(warnings)} soft issue(s):")
+        for warning in warnings:
+            print(f"  - {warning}")
+        if strict:
+            issues.extend(warnings)
 
     if issues:
         print("❌ wiki_sync lint found unresolved issues:")
@@ -575,7 +627,12 @@ Commands:
     p_refresh = subparsers.add_parser("refresh", help="Refresh one topic or all topics.")
     p_refresh.add_argument("topic", help="Topic ID or 'all'.")
 
-    subparsers.add_parser("lint", help="Validate raw/wiki metadata and links.")
+    p_lint = subparsers.add_parser("lint", help="Validate raw/wiki metadata and links.")
+    p_lint.add_argument(
+        "--strict",
+        action="store_true",
+        help="Treat unfilled `${...}` / `YYYY-MM-DD` placeholders as errors (default: warn only).",
+    )
 
     args = parser.parse_args()
 
@@ -585,7 +642,7 @@ Commands:
         elif args.command == "refresh":
             refresh(args.topic)
         elif args.command == "lint":
-            raise SystemExit(lint())
+            raise SystemExit(lint(strict=args.strict))
     except ValueError as exc:
         print(f"❌ {exc}")
         raise SystemExit(1) from exc

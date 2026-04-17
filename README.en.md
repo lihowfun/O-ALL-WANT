@@ -8,6 +8,21 @@
   <img src="docs/assets/oboi_meme.png" width="400" alt="I want it all">
 </p>
 
+## 🚀 30-second try-it
+
+```bash
+git clone https://github.com/lihowfun/O-ALL-WANT.git
+cd /path/to/your/project            # your own repo
+/path/to/O-ALL-WANT/install.sh      # one-liner installs the harness
+# Then tell your agent: "Read CLAUDE.md first, then AI_CONTEXT.md."
+```
+
+After install you'll have `CLAUDE.md`, `AI_CONTEXT.md`, `.agents/`,
+`docs/knowledge/`, `scripts/`. Your agent now knows **what to read and what
+not to read**, and won't re-explore the whole repo every session.
+
+---
+
 This is an AI Harness hodgepodge designed specifically for "greedy" developers. We want AI not only to write code for us, but also to maintain cross-session memory, save tokens, and ideally compile scattered knowledge into an evolving Wiki—just like Andrej Karpathy suggested.
 
 This project is the culmination of several late nights bossing around Claude Code and Codex, integrating some of the most popular Harness repositories, Memory Palace concepts, and Token optimization logic into one cohesive framework.

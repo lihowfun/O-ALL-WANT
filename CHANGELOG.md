@@ -2,6 +2,59 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.0] — 2026-04-17
+
+Pre-public-launch hardening. No feature additions beyond the opt-in `--strict`
+lint flag; everything else is docs, CI, and footgun removal.
+
+### Added
+- `CONTRIBUTING.md` — quick-start for external contributors: what's useful,
+  what to skip, how to run CI locally, commit/PR style, release cadence rules.
+- `example/README.md` — clearly labels `minimal-project/` as Start Here and
+  explains when to reach for `public-hybrid-demo/` instead.
+- `README.md` / `README.en.md` — "30-second try-it" block at the very top so
+  first-time visitors can see the install command without scrolling.
+- `docs/Design_Principles.md` — Naming Evolution table (Fat Skills →
+  Hybrid Router; three-layer memory → Hybrid Router + Compiled Wiki;
+  Agent Memory Framework → OAW) so archived discussions stay readable.
+- `scripts/wiki_sync.py lint --strict` — opt-in flag that flags unfilled
+  `${...}` placeholders and literal `YYYY-MM-DD` dates as errors. Default
+  lint behavior unchanged (still warn-only) so existing users are not broken.
+- `.github/workflows/test.yml` — extra CI steps: lint is clean on the OAW
+  repo itself; `--strict` correctly fails on a fresh install that still
+  has template placeholders.
+
+### Changed
+- `install.sh` refuses to install into the OAW framework repo itself
+  (previously `$(pwd)` silently overwrote root CLAUDE.md / AI_CONTEXT.md /
+  ROADMAP.md when users accidentally ran `./install.sh` from the clone).
+  Override with `--force-self-install` if you really mean it.
+- `scripts/wiki_sync.py` — orphan-page detection softened from error to
+  warning. A repo with one curated knowledge note is a valid pattern.
+- `docs/knowledge/Release_Learnings.md` — frontmatter cleaned up
+  (`page_type: topic`, stable `id`/`title`, no broken `related_topics`).
+  Previously caused a spurious lint failure when linting the OAW repo.
+
+### Fixed
+- Running `./install.sh` from the repo root no longer corrupts the framework's
+  own root files.
+- `wiki_sync.py lint` now passes on the OAW repo itself (previously failed on
+  a pre-existing Release_Learnings frontmatter issue).
+
+### Reverted
+- `v1.1.0` and its follow-through commit were reverted on main — the feature
+  set was driven by a single integrator's feedback right after v1.0 shipped,
+  and it's better to collect multiple data points before adding new template
+  surfaces (`CURRENT_STATE.md`, non-interactive wiki_sync subcommands, Session
+  End AI-responsibility rewrite). The work lives on branch `v1.1-preview` and
+  stays there until at least one more user requests the same pattern.
+
+### Verified
+- Full CI matrix locally: py_compile on both scripts; `--help` exposes
+  build/refresh/lint; install.sh refuses self-install; fresh-tempdir install
+  drops the expected file set; `wiki_sync.py lint` passes on both the OAW
+  repo and a fresh install; `--strict` correctly fails on fresh install.
+
 ## [1.0.0] — 2026-04-16
 
 ### Added

@@ -58,3 +58,21 @@ jobs:
           echo y | "$GITHUB_WORKSPACE/install.sh"
           python3 scripts/wiki_sync.py lint
           popd > /dev/null
+
+      - name: Lint is clean on the OAW repo itself
+        run: python3 scripts/wiki_sync.py lint
+
+      - name: --strict mode flags unfilled placeholders after install
+        run: |
+          target=$(mktemp -d)
+          pushd "$target" > /dev/null
+          echo y | "$GITHUB_WORKSPACE/install.sh"
+          set +e
+          python3 scripts/wiki_sync.py lint --strict
+          rc=$?
+          set -e
+          popd > /dev/null
+          if [ $rc -eq 0 ]; then
+            echo "::error::--strict should fail on a fresh install with unfilled placeholders"
+            exit 1
+          fi
