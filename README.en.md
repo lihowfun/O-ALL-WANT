@@ -8,12 +8,25 @@
   <img src="docs/assets/oboi_meme.png" width="400" alt="I want it all">
 </p>
 
+## Why are you here?
+
+This AI harness hodgepodge is for "greedy" developers. You want AI to write code, **and** you want it to:
+
+- 🧠 **Not lose memory across sessions** — `.agents/memory.md` auto-logs decisions / bugs / findings
+- 📉 **Not re-read the whole repo every turn** — `CLAUDE.md` routes by lane, lazy-read, saves tokens
+- 📚 **Compile scattered notes into a reusable wiki** (Karpathy-style) — `docs/raw/` → `docs/knowledge/` via `scripts/wiki_sync.py`
+- ⚡ **Capture repeated workflows as SOPs** — `.agents/skills/*.md`, no more restating
+
+You want it all. So do I. This repo is the result of several late nights bossing around Claude Code and Codex, stitching together the most popular harness repos, memory palace concepts, and token-optimization tricks into one cohesive thing.
+
+**Only want one of these?** Please fork the original author's repo (listed at the bottom in Source Lineage) — don't waste your time here.
+
 ## 🚀 30-second try-it
 
 ```bash
-git clone https://github.com/lihowfun/O-ALL-WANT.git
-cd /path/to/your/project            # your own repo
-/path/to/O-ALL-WANT/install.sh      # one-liner installs the harness
+cd /path/to/your/project
+git clone https://github.com/lihowfun/O-ALL-WANT.git .agent-framework
+bash .agent-framework/install.sh
 # Then tell your agent: "Read CLAUDE.md first, then AI_CONTEXT.md."
 ```
 
@@ -21,50 +34,17 @@ After install you'll have `CLAUDE.md`, `AI_CONTEXT.md`, `.agents/`,
 `docs/knowledge/`, `scripts/`. Your agent now knows **what to read and what
 not to read**, and won't re-explore the whole repo every session.
 
----
+### 🤝 Optional companion: RTK (Rust Token Killer)
 
-This is an AI Harness hodgepodge designed specifically for "greedy" developers. We want AI not only to write code for us, but also to maintain cross-session memory, save tokens, and ideally compile scattered knowledge into an evolving Wiki—just like Andrej Karpathy suggested.
-
-This project is the culmination of several late nights bossing around Claude Code and Codex, integrating some of the most popular Harness repositories, Memory Palace concepts, and Token optimization logic into one cohesive framework.
-
-So what I want is actually very simple:
-
-- It must write code.
-- It must not lose memory across sessions.
-- It must save tokens—do not read the entire repo every time.
-- It must slowly compile scattered notes into a reusable knowledge wiki.
-- It must capture repeated workflows into skills and scripts, instead of restating them every time.
-
-If you only need a single feature, please directly Fork the original author's repository (don't waste your time here). But if you are like me and want it all, here you go:
-
-## 🛠 Hodgepodge Inventory
-
-- 🧠 **Memory Palace**: Gives your Agent persistent memory, so it doesn't forget mid-conversation.
-  The core of this layer lands in `.agents/memory.md` and a structured wrap-up discipline.
-- 📉 **Token Optimizer**: Spends every token where it counts through precise Context routing.
-  The core approach is using `CLAUDE.md` as the master router, reading by lane lazily.
-- 📚 **LLM Wiki (Karpathy Concept)**: Automates the knowledge compilation process, so AI helps you organize a textbook instead of flipping through random PDFs every time.
-  The core combination is `docs/raw/`, `docs/knowledge/`, and `scripts/wiki_sync.py`.
-- ⚡ **Agentic Workflows**: Pre-configured Markdown-driven SOPs, so high-frequency tasks don't need to be explained repeatedly.
-  This layer primarily lands in `.agents/skills/*.md` and helper scripts.
-
-### 🤝 Optional Companion: RTK (Rust Token Killer)
-
-RTK is an **optional companion**, not a built-in OAW dependency. OAW decides
-what knowledge to read; RTK compresses how much shell output comes back. They
-operate at different layers and usually complement each other well.
-
-RTK upstream claims **60-90%** output reduction on many supported CLI commands.
-If you want that extra shell-output compression, you can install it separately:
+OAW decides **what** to read; RTK compresses **how much** shell output comes back. Different layers, complementary.
 
 ```bash
-brew install rtk
-rtk init -g
+brew install rtk && rtk init -g
 ```
 
-## Architecture Diagram
+## Architecture in one page
 
-`CLAUDE.md` decides which lane a task should take; it only reads wikis, skills, or raw notes when strictly necessary, preventing the entire repo and all rules from being shoved into context right away.
+`CLAUDE.md` decides which lane a task takes; it only reads wikis, skills, or raw notes when strictly necessary.
 
 ```mermaid
 flowchart LR
@@ -77,189 +57,105 @@ flowchart LR
     Y --> W
 ```
 
-## Why won't this become a mess?
+What you get after install:
 
-Because it doesn't force all rules into the same prompt — it separates responsibilities:
+| File | Responsibility | Do you touch it? |
+|------|---------------|-----------------|
+| `CLAUDE.md` | Agent's brain: decides what to read, which skill to dispatch | ✅ Fill `${LANGUAGE}` once at install |
+| `AI_CONTEXT.md` | Project encyclopedia: architecture, stack, baselines | ✅ Fill once at install |
+| `.agents/memory.md` | Short-term diary: decisions / bugs / findings | ❌ Agent writes it |
+| `docs/knowledge/` | Long-term knowledge: curated pages (agent reads here) | ❌ Agent compiles from `docs/raw/` |
+| `.agents/skills/*.md` | SOP library: dispatched by task type | Optional: write your own |
+| `scripts/*.py` | Mechanical maintenance: search, wiki compile | ❌ Agent invokes |
 
-| Layer | Responsibility | File |
-|-------|---------------|------|
-| **Router** | Decides what to read, which skill to dispatch | `CLAUDE.md` |
-| **Context** | Project facts & architecture | `AI_CONTEXT.md` |
-| **Skills** | Repeatable workflows (like function calls) | `.agents/skills/` |
-| **Knowledge** | Curated long-term knowledge (saves tokens) | `docs/knowledge/` |
-| **Memory** | Short-term event diary (decisions, bugs) | `.agents/memory.md` |
-| **Scripts** | Mechanical maintenance (search, compile wiki) | `scripts/` |
-
-A modularized "I want it all" — not all rules piled into one blob.
-
-### How does knowledge grow automatically?
-
-Drop your messy notes (meeting minutes, tech drafts, bug analyses) into `docs/raw/`,
-then tell the Agent "help me organize api_notes into a knowledge page" —
-in an agent environment that follows this router, it should prefer the `/wiki-refresh`
-skill and compile it into a curated page in `docs/knowledge/`.
-From then on, the Agent reads the curated version — saving tokens and staying precise.
-
-> 💡 **Memory vs Knowledge**: Memory is a diary (short-term events), Knowledge is a textbook (long-term knowledge).
-> When 3–5 similar memory entries accumulate, tell the Agent "distill these into a wiki page."
+> 💡 **Memory vs Knowledge**: Memory is a diary (short-term events), Knowledge is a textbook (long-term). Once 3–5 similar memory entries accumulate, ask the agent to "distill these into a wiki page."
 
 ## Quick Start
 
-### Plan A: Add Harness to an Existing Project
-
 ```bash
+# Existing project: go into your repo
 cd /path/to/your/project
+
+# Brand-new project: init first
+# mkdir my-project && cd my-project && git init
+
 git clone https://github.com/lihowfun/O-ALL-WANT.git .agent-framework
 bash .agent-framework/install.sh
 ```
 
-After installation, give your Agent this prompt:
+After install, paste this to your agent:
 
-> Read `CLAUDE.md` first, then `AI_CONTEXT.md`. Based on my project's language and architecture, customize these two files — keep whatever already exists, and add only the OAW-specific parts: routing rules, memory format, and skill triggers.
+> Read `CLAUDE.md` first, then `AI_CONTEXT.md`.
+> Replace `${LANGUAGE}` with my preferred language;
+> replace the placeholders in `AI_CONTEXT.md` with this project's real facts.
+> Then scan my codebase and suggest which repeated workflows belong in `.agents/skills/`.
 
-### Plan B: Start a New Project with Harness
+### 🔌 Adapting for different agents / IDEs
 
-```bash
-mkdir my-project && cd my-project
-git init
-git clone https://github.com/lihowfun/O-ALL-WANT.git .agent-framework
-bash .agent-framework/install.sh
-```
-
-After installation, give your Agent this prompt:
-
-> Read `CLAUDE.md` first, then `AI_CONTEXT.md`. The project I'm building is [describe your project]. Customize the harness for this project: fill in AI_CONTEXT.md, set up ROADMAP.md milestones, and tune CLAUDE.md routing rules.
-
-### 🔌 Adapting for Different Agents / IDEs
-
-The installed router file is named `CLAUDE.md`, but different Agent platforms look for their own convention files at startup:
+The router file is always `CLAUDE.md`, but different agents look for different default rule files:
 
 | Agent / IDE | Default file | OAW adapter |
 |-------------|-------------|-------------|
 | **Claude Code** | `CLAUDE.md` | ✅ Works out of the box |
 | **GitHub Copilot** | `.github/copilot-instructions.md` | ✅ Auto-created by installer, points to `CLAUDE.md` |
-| **OpenAI Codex** | `AGENTS.md` | Create `AGENTS.md` in project root: `Read CLAUDE.md for project rules.` |
-| **Cursor** | `.cursorrules` | Create `.cursorrules` in project root: `Read CLAUDE.md for project rules.` |
-| **Windsurf** | `.windsurfrules` | Create `.windsurfrules` in project root: `Read CLAUDE.md for project rules.` |
-| **Gemini** | `GEMINI.md` | Create `GEMINI.md` in project root: `Read CLAUDE.md for project rules.` |
+| **OpenAI Codex** | `AGENTS.md` | One-line pointer: `Read CLAUDE.md for project rules.` |
+| **Cursor** | `.cursorrules` | Same |
+| **Windsurf** | `.windsurfrules` | Same |
+| **Gemini** | `GEMINI.md` | Same |
 
-> 💡 **One router to rule them all**: No matter which Agent you use, the rules live in `CLAUDE.md`.
-> Other files are just one-line pointers telling that Agent to read `CLAUDE.md`.
-> If you prefer, simply tell your Agent "read CLAUDE.md first" — same effect.
+If you can't be bothered, just tell the agent "read CLAUDE.md first" — same effect.
 
-## 🎁 Main Files You'll Get
+## 🧭 You speak naturally, the agent does the work
 
-```text
-your-project/
-├── CLAUDE.md              ← Agent's brain: decides what to read, which skill to dispatch
-├── AI_CONTEXT.md          ← Project encyclopedia: Agent reads this to understand your project
-├── VERSION.json           ← Version tracking + locks completed experiments (prevents reruns)
-├── ROADMAP.md             ← Phase plan: Agent uses this to assess current progress
-├── .agents/
-│   ├── memory.md          ← Agent's diary: auto-records decisions, bugs, discoveries
-│   └── skills/            ← Agent's SOP library: dispatched by task type
-├── docs/
-│   ├── knowledge/         ← Curated knowledge base: Agent reads here for context (saves tokens)
-│   └── raw/               ← Your raw notes: Agent only reads these on demand
-└── scripts/
-    ├── context_hub.py     ← Knowledge management tool invoked by Agent
-    └── wiki_sync.py       ← Notes → wiki compiler invoked by Agent
-```
-
-> 💡 **In three sentences**: `CLAUDE.md` is the Agent's brain, `AI_CONTEXT.md` is your project's encyclopedia,
-> `.agents/memory.md` is the Agent's diary. Everything else — the Agent reads it when it needs to.
-
-## 🧭 When To Use What?
-
-> **Core principle: mostly just talk to your Agent.** If your Agent reads `CLAUDE.md`
-> first and follows this router/skills setup, it will usually decide which files
-> to read, which skill to invoke, and which script to run. You usually do not
-> need to memorize commands.
-
-### You speak naturally, the Agent will usually dispatch like this
+**Core principle**: mostly just talk to your agent. Assumes it reads `CLAUDE.md` and follows the Skills-First Principle.
 
 | You say to Agent... | Agent will usually... |
 |--------------------|----------------------|
-| "I just decided to switch to Redis for caching" | Writes to `.agents/memory.md` → `[DECISION] Switch to Redis for caching` |
-| "This bug is caused by an N+1 query" | Writes to `.agents/memory.md` → `[BUG] N+1 query...`; proactively proposes wiki distillation when similar entries accumulate |
-| "Help me organize the notes in docs/raw/" | Matches the `/wiki-refresh` skill → runs `wiki_sync.py refresh` → outputs a curated `docs/knowledge/` page |
-| "Run a benchmark" | Matches the `/benchmark` skill → reads baselines → executes → generates a comparison report |
-| "Prepare release v1.2.0" | Matches the `/version-release` skill → runs the checklist → bumps version |
-| "This thing is broken, help me debug" | Matches the `/debug-pipeline` skill → systematic layer-by-layer diagnosis → records the root cause |
-| "What's the current project status?" | Runs `context_hub.py status` → shows version, recent decisions, knowledge topics |
+| "I just decided to switch to Redis for caching" | Writes to `.agents/memory.md` → `[DECISION] Switch to Redis` |
+| "This bug is caused by an N+1 query" | Writes to memory; suggests wiki distillation once similar entries accumulate |
+| "Help me organize the notes in docs/raw/" | Matches the `/wiki-refresh` skill → runs `wiki_sync.py refresh` → outputs curated knowledge page |
+| "Run a benchmark" | Matches `/benchmark` skill → reads baselines → executes → generates report |
+| "Prepare release v1.2.0" | Matches `/version-release` skill → runs full checklist |
+| "This is broken, help me debug" | Matches `/debug-pipeline` skill → layer-by-layer diagnosis → records root cause |
+| "What's the current project status?" | Runs `context_hub.py status` → version + recent decisions + knowledge topics |
 
-### How does this work?
+Deep dive: [Skill Guide](docs/Skill_Guide.md).
 
-Every skill has `triggers` keywords (e.g., `["benchmark", "evaluate", "test scores"]`).
-If your agent follows `CLAUDE.md`'s **Skills-First Principle**, it will usually match tasks like this:
-
-```text
-Your request → CLAUDE.md (master router) → match skill triggers → dispatch skill
-                                         → skill internally calls scripts
-                                         → results written to memory / knowledge
-```
-
-> 💡 **Your main job**: Set up `CLAUDE.md`, then talk to your Agent normally.
-> Dispatching, recording, and knowledge management should mostly be handled by the router + skills + scripts.
-
-### Advanced: Manual CLI Usage (Optional)
-
-If you prefer to operate scripts directly:
+### Prefer to run commands yourself?
 
 | Command | Purpose |
 |---------|---------|
-| `python3 scripts/context_hub.py status` | View version, recent decisions, knowledge topics |
-| `python3 scripts/context_hub.py status --compact` | One-line summary of version / topics / memories / locked experiments |
+| `python3 scripts/context_hub.py status` | Version + recent decisions + knowledge topics |
 | `python3 scripts/context_hub.py search "keyword"` | Search the knowledge base |
-| `python3 scripts/context_hub.py search "keyword" --compact` | One-line topic list for quick scanning |
-| `python3 scripts/context_hub.py memory add "[TAG] content"` | Manually record to memory |
-| `python3 scripts/context_hub.py bootstrap --compact` | Minimal bootstrap summary for a new agent session |
-| `python3 scripts/wiki_sync.py refresh topic_name` | Manually compile a wiki topic |
-| `python3 scripts/wiki_sync.py lint` | Check wiki metadata consistency |
+| `python3 scripts/context_hub.py memory add "[TAG] content"` | Manually write to memory |
+| `python3 scripts/wiki_sync.py refresh topic_name` | Compile one wiki topic |
+| `python3 scripts/wiki_sync.py lint` | Check metadata consistency |
+| `python3 scripts/wiki_sync.py lint --strict` | Also flag unfilled `${...}` / `YYYY-MM-DD` |
 
-## Inspirations / Source Lineage (Standing on the shoulders of giants)
+Full list: [CLI Reference](docs/CLI_Reference.md).
 
-The core philosophy of this framework merges concepts from the following excellent projects and ideas.
-OAW does not copy source code from these projects — they are independent implementations in different languages and architectures — but the design is deeply influenced by them:
+## 🐕 Self-hosting: the repo is its own first user
 
-- 🧠 **[Memory Palace / MemPalace](https://github.com/MemPalace/mempalace)** (MIT): Fixes mid-task amnesia using structured wrap-ups
-- 📉 **[andrewyng/context-hub](https://github.com/andrewyng/context-hub)** (MIT): Provides the basis for searchable knowledge, annotation, and session continuity
-- 📚 **[Karpathy-style LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)**: The concept of separating raw notes from actively compiled, durable wikis
-- ⚡ **[Thin harness / fat skills (Garry Tan)](https://x.com/garrytan/status/2042925773300908103)**: The philosophy of encapsulating workflows in skills, keeping the router thin
+The root `CLAUDE.md` / `AI_CONTEXT.md` / etc. are the **OAW team's own** working files — not the template you install. Your template lives in `templates/` and `install.sh` copies it for you.
 
-If you want to see a more complete source comparison and integration rationale, please check:
+**Public memory policy**: `.agents/memory.md` is gitignored (memory is a local diary). What's shared publicly is the distilled `docs/knowledge/` (the textbook).
 
-- [Architecture Origins](docs/Architecture_Origins.md)
-- [Design Principles](docs/Design_Principles.md)
+## Source Lineage (standing on the shoulders of giants)
+
+OAW does not copy source code from these projects; it is deeply influenced by their design:
+
+- 🧠 **[Memory Palace / MemPalace](https://github.com/MemPalace/mempalace)** (MIT) — mid-task amnesia + structured wrap-up
+- 📉 **[andrewyng/context-hub](https://github.com/andrewyng/context-hub)** (MIT) — searchable knowledge + annotate + routing
+- 📚 **[Karpathy-style LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)** — separating raw notes from compiled wiki
+- ⚡ **[thin harness / fat skills (Garry Tan)](https://x.com/garrytan/status/2042925773300908103)** — push high-frequency ops into skills, keep the router thin
+
+Deeper reading: [Architecture Origins](docs/Architecture_Origins.md) · [Design Principles](docs/Design_Principles.md)
 
 ## Examples + Docs
 
-- Examples:
-  - [Minimal Install Fixture](example/minimal-project/README.md): A snapshot of a minimal completed installation.
-  - [Public Hybrid Demo](example/public-hybrid-demo/README.md): A public example featuring raw notes, compiled wikis, and skills.
-- Docs:
-  - [CLI Reference](docs/CLI_Reference.md)
-  - [Skill Guide](docs/Skill_Guide.md)
-  - [Wiki Sync Guide](docs/Wiki_Sync_Guide.md)
-  - [Architecture Origins](docs/Architecture_Origins.md)
-  - [Design Principles](docs/Design_Principles.md)
-
-## 🐕 Self-Hosting: This Repo Is Its Own First User
-
-You may notice `CLAUDE.md`, `AI_CONTEXT.md`, etc. at the repo root — these
-are not templates for you; they are the **customized** versions the OAW team
-uses to manage this repo with its own framework.
-
-- Root `CLAUDE.md` = OAW development master router
-- `templates/AGENT_RULES.md` = **the template you get after install** (this is for you)
-- Skills and knowledge pages live in `templates/`
-
-**Public Memory Policy**: Public repos should not commit rolling memory (`.agents/memory.md` is gitignored).
-Only distilled conclusions go to `docs/knowledge/` and `docs/archive/`.
-This is exactly the workflow OAW recommends: memory is a diary (stays local), knowledge is a textbook (shared publicly).
-
-> 💡 This is eating our own dog food. If this framework works well enough
-> to manage itself, it should work for your project too.
+- Examples: [`example/`](example/) (start with `minimal-project/`)
+- [CLI Reference](docs/CLI_Reference.md) · [Skill Guide](docs/Skill_Guide.md) · [Wiki Sync Guide](docs/Wiki_Sync_Guide.md)
+- [CONTRIBUTING.md](CONTRIBUTING.md) · [CHANGELOG.md](CHANGELOG.md)
 
 ## License
 
