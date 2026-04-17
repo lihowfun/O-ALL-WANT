@@ -1,9 +1,9 @@
 {
-  "version": "0.0.0-dev",
+  "version": "1.0.0",
   "project": "O-ALL-WANT",
   "last_updated": "2026-04-17",
-  "current_phase": "development",
-  "next_phase": "v1.0.0-release",
+  "current_phase": "stable",
+  "next_phase": "community-feedback",
   "task_state": {
     "in_progress": [],
     "blocked": []

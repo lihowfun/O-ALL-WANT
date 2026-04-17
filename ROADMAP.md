@@ -18,9 +18,9 @@
 | P0 | README 英文主頁 + 多語言 | ✅ Done | README.md=EN, README.zh.md=ZH, readme-i18n 其他語言 |
 | P0 | Harness Engineering 三大支柱 | ✅ Done | README + 3 knowledge 頁 |
 | P0 | Git history 清理 | ✅ Done | filter-repo 移除敏感 ref |
-| P1 | Skills alignment | Pending | Sync `templates/` 和 `example/minimal-project/` |
-| P1 | Design docs update | Pending | `Design_Principles.md` 補充 Hybrid Router 命名演進 |
-| P1 | 正式 tag v1.0.0 | Pending | 確認 P1 Pending 都清完後執行 |
+| P1 | Skills alignment | ✅ Done | wiki-refresh.md 補入 example/minimal-project/ |
+| P1 | Design docs update | ✅ Done | Design_Principles.md 已有 Hybrid Router 命名演進 |
+| P1 | 正式 tag v1.0.0 | ✅ Done | 2026-04-18 |
 | P2 | Community feedback | Ongoing | Monitor issues and PRs |
 
 ## Next Milestones
@@ -32,10 +32,11 @@
 5. ✅ Cross-agent compatibility table (2026-04-16)
 6. ✅ Pre-release build complete (2026-04-16)
 7. ✅ README 大改版：EN 主頁、Harness Engineering、SOP Dispatch (2026-04-18)
-8. [ ] Skills alignment + tag v1.0.0
+8. ✅ Skills alignment + tag v1.0.0 (2026-04-18)
 
 ## Completed
 
+- ✅ 2026-04-18: tag v1.0.0 正式發布
 - ✅ 2026-04-18: README 英文主頁化，Harness Engineering 三大支柱、wiki_sync 工作流說明、readme-i18n 多語言
 - ✅ 2026-04-16: Pre-release build — cross-agent table, CHANGELOG, review validation
 - ✅ 2026-04-15: Harness testing (17/17 passed)
