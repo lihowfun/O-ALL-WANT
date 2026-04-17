@@ -16,6 +16,28 @@ echo "📁 Installing to: $PROJECT_ROOT"
 echo "📦 Framework source: $FRAMEWORK_DIR"
 echo ""
 
+# Refuse to install into the OAW framework repo itself.
+# Running ./install.sh from inside the OAW clone treats the repo as a target
+# and overwrites its own root CLAUDE.md / AI_CONTEXT.md / ROADMAP.md. Catch
+# this before the copy step — prior self-install accidents are what motivated
+# the check. Pass --force-self-install to override (rarely wanted).
+if [ "$PROJECT_ROOT" = "$FRAMEWORK_DIR" ] || [ -f "$PROJECT_ROOT/templates/AGENT_RULES.md" ]; then
+    if [ "$1" != "--force-self-install" ]; then
+        echo "❌ Refusing to install: this directory looks like the OAW framework repo itself."
+        echo ""
+        echo "   PROJECT_ROOT: $PROJECT_ROOT"
+        echo "   FRAMEWORK_DIR: $FRAMEWORK_DIR"
+        echo ""
+        echo "   Installing here would overwrite the framework's own root files."
+        echo "   To install into another project:"
+        echo "     cd /path/to/your/project && $FRAMEWORK_DIR/install.sh"
+        echo "   If you really know what you are doing, pass --force-self-install."
+        exit 1
+    fi
+    echo "⚠️  --force-self-install set — proceeding despite self-install detection."
+    echo ""
+fi
+
 # Build the exact list of managed files the installer may overwrite
 MANAGED_PATHS=(
     "CLAUDE.md"
