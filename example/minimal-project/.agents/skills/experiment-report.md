@@ -15,8 +15,6 @@ optional_reads:
 outputs:
   - .agents/memory.md entry ([EXPERIMENT] tag)
   - knowledge annotation (if significant finding)
-  - docs/knowledge/EXPERIMENT_LOG.md row (always, via wiki_sync add-experiment)
-  - docs/knowledge/CURRENT_STATE.md annotation (if phase status moved)
 ---
 
 # /experiment-report — Structured Experiment Report
@@ -78,37 +76,7 @@ python3 scripts/context_hub.py annotate Performance_Baselines "[EXPERIMENT] ${su
 python3 scripts/context_hub.py annotate Known_Limitations "[INSIGHT] ${summary}"
 ```
 
-### Step 5: Auto-Update Wiki (AI responsibility, do not skip)
-
-> The user will not remind you. Any tool that depends on user memory goes stale.
-> Run these non-interactive commands yourself before finishing the session.
-
-**5a. Always: append to EXPERIMENT_LOG**
-
-```bash
-python3 scripts/wiki_sync.py add-experiment \
-  --name "${EXPERIMENT_NAME}" \
-  --status "${accepted|rejected|running|blocked|inconclusive}" \
-  --result "${RESULTS}" \
-  --conclusion "${CONCLUSION}"
-```
-
-**5b. If phase status moved: update CURRENT_STATE**
-
-```bash
-python3 scripts/wiki_sync.py update-state \
-  --phase "${phase_id}" \
-  --status "${✅ done|🔄 in progress|⏳ queued}" \
-  --note "${EXPERIMENT_NAME}: ${one-line impact}"
-```
-
-**5c. Final lint**
-
-```bash
-python3 scripts/wiki_sync.py lint
-```
-
-### Step 6: Check if ROADMAP Needs Updating
+### Step 5: Check if ROADMAP Needs Updating
 
 **Update ROADMAP if any of these apply**:
 - Experiment conclusion changes phase priority
