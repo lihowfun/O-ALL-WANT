@@ -21,18 +21,6 @@
 
 **只需要其中一樣?** 請直接 fork 對應的原作(列在最下面的 Source Lineage),別在這浪費時間。
 
-## 🚀 30 秒試用
-
-```bash
-cd /path/to/your/project
-git clone https://github.com/lihowfun/O-ALL-WANT.git .agent-framework
-bash .agent-framework/install.sh
-# 裝完告訴 agent:「先讀 CLAUDE.md,再讀 AI_CONTEXT.md」
-```
-
-裝完會多出來 `CLAUDE.md`、`AI_CONTEXT.md`、`.agents/`、`docs/knowledge/`、`scripts/`。
-Agent 從此知道**該讀什麼、不該讀什麼**,跨 session 也不會重新探索整個 repo。
-
 ### 🤝 可選搭配:RTK (Rust Token Killer)
 
 OAW 管「知識路由」(讀什麼);RTK 管「shell output 壓縮」(回多少)。不同層,互補。

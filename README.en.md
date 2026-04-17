@@ -21,19 +21,6 @@ You want it all. So do I. This repo is the result of several late nights bossing
 
 **Only want one of these?** Please fork the original author's repo (listed at the bottom in Source Lineage) — don't waste your time here.
 
-## 🚀 30-second try-it
-
-```bash
-cd /path/to/your/project
-git clone https://github.com/lihowfun/O-ALL-WANT.git .agent-framework
-bash .agent-framework/install.sh
-# Then tell your agent: "Read CLAUDE.md first, then AI_CONTEXT.md."
-```
-
-After install you'll have `CLAUDE.md`, `AI_CONTEXT.md`, `.agents/`,
-`docs/knowledge/`, `scripts/`. Your agent now knows **what to read and what
-not to read**, and won't re-explore the whole repo every session.
-
 ### 🤝 Optional companion: RTK (Rust Token Killer)
 
 OAW decides **what** to read; RTK compresses **how much** shell output comes back. Different layers, complementary.
