@@ -556,157 +556,16 @@ def lint():
     return 0
 
 
-EXPERIMENT_LOG_PATH = os.path.join(KNOWLEDGE_DIR, "EXPERIMENT_LOG.md")
-CURRENT_STATE_PATH = os.path.join(KNOWLEDGE_DIR, "CURRENT_STATE.md")
-
-
-def _ensure_experiment_log():
-    """Create EXPERIMENT_LOG.md with a default header if it does not exist."""
-    if os.path.exists(EXPERIMENT_LOG_PATH):
-        return
-    header = [
-        _render_frontmatter(
-            {
-                "id": "EXPERIMENT_LOG",
-                "title": "Experiment Log",
-                "page_type": "topic",
-                "build_origin": "wiki_sync",
-                "source_refs": [],
-                "last_updated": _today(),
-                "related_topics": ["CURRENT_STATE", "Performance_Baselines"],
-            }
-        ),
-        "# Experiment Log",
-        "",
-        "> Append-only ledger of experiments. Maintained by",
-        "> `python3 scripts/wiki_sync.py add-experiment`. Newest entries on top.",
-        "",
-        "| Date | Name | Status | Result | Conclusion |",
-        "|------|------|:------:|--------|------------|",
-        "",
-    ]
-    _write(EXPERIMENT_LOG_PATH, "\n".join(header))
-
-
-def _replace_frontmatter_field(content, key, value):
-    """Rewrite a scalar frontmatter field without reformatting the body."""
-    if not content.startswith("---\n"):
-        return content
-    lines = content.splitlines()
-    closing = None
-    for i in range(1, len(lines)):
-        if lines[i].strip() == "---":
-            closing = i
-            break
-    if closing is None:
-        return content
-    pattern = re.compile(rf"^{re.escape(key)}\s*:.*$")
-    replaced = False
-    for i in range(1, closing):
-        if pattern.match(lines[i]):
-            lines[i] = f"{key}: {value}"
-            replaced = True
-            break
-    if not replaced:
-        lines.insert(closing, f"{key}: {value}")
-        closing += 1
-    return "\n".join(lines) + ("\n" if content.endswith("\n") else "")
-
-
-def add_experiment(name, status, result, conclusion, exp_date=None, dir_path=None):
-    """Append a row to EXPERIMENT_LOG.md (non-interactive)."""
-    if dir_path:
-        global KNOWLEDGE_DIR, EXPERIMENT_LOG_PATH
-        KNOWLEDGE_DIR = dir_path
-        EXPERIMENT_LOG_PATH = os.path.join(KNOWLEDGE_DIR, "EXPERIMENT_LOG.md")
-
-    _ensure_experiment_log()
-    entry_date = exp_date or _today()
-    safe = lambda s: (s or "").replace("|", "\\|").replace("\n", " ").strip()
-    row = f"| {entry_date} | {safe(name)} | {safe(status)} | {safe(result)} | {safe(conclusion)} |"
-
-    existing = _safe_read(EXPERIMENT_LOG_PATH)
-    lines = existing.splitlines()
-    header_idx = None
-    for i, line in enumerate(lines):
-        if line.startswith("|------"):
-            header_idx = i
-            break
-    if header_idx is None:
-        raise ValueError("EXPERIMENT_LOG.md missing table header; delete the file to regenerate.")
-    lines.insert(header_idx + 1, row)
-    updated = "\n".join(lines)
-    updated = _replace_frontmatter_field(updated, "last_updated", _today())
-    if not updated.endswith("\n"):
-        updated += "\n"
-    _write(EXPERIMENT_LOG_PATH, updated)
-    print(f"✅ Experiment logged: {name} [{status}] → {EXPERIMENT_LOG_PATH}")
-
-
-def update_state(phase=None, status=None, note=None, dir_path=None):
-    """Update CURRENT_STATE.md phase row + append an AI annotation (non-interactive)."""
-    if dir_path:
-        global KNOWLEDGE_DIR, CURRENT_STATE_PATH
-        KNOWLEDGE_DIR = dir_path
-        CURRENT_STATE_PATH = os.path.join(KNOWLEDGE_DIR, "CURRENT_STATE.md")
-
-    if not os.path.exists(CURRENT_STATE_PATH):
-        raise ValueError(
-            f"CURRENT_STATE.md not found at {CURRENT_STATE_PATH}. "
-            "Copy it from templates/docs/knowledge/CURRENT_STATE.md first."
-        )
-
-    content = _safe_read(CURRENT_STATE_PATH)
-    content = _replace_frontmatter_field(content, "last_updated", _today())
-
-    if phase and status:
-        pattern = re.compile(
-            rf"^(\|\s*`?{re.escape(phase)}`?\s*\|)([^|]*)(\|)",
-            re.MULTILINE,
-        )
-        new_content, n = pattern.subn(
-            lambda m: f"{m.group(1)} {status} {m.group(3)}", content, count=1
-        )
-        if n:
-            content = new_content
-        else:
-            # Phase row not found — inform but continue so annotation still lands.
-            print(f"⚠️  Phase row '{phase}' not found in CURRENT_STATE.md — appending annotation only.")
-
-    if note:
-        stamp = datetime.now().strftime("%Y-%m-%d %H:%M")
-        annotation = f"- [{stamp}] {note}"
-        marker = "## AI Annotations"
-        if marker in content:
-            head, tail = content.split(marker, 1)
-            tail_stripped = tail.lstrip("\n")
-            # Drop the generator comment if this is the first real annotation.
-            tail_stripped = re.sub(r"^<!--[^>]*-->\s*", "", tail_stripped)
-            content = f"{head}{marker}\n\n{annotation}\n{tail_stripped}"
-        else:
-            content = content.rstrip() + f"\n\n## AI Annotations\n\n{annotation}\n"
-
-    if not content.endswith("\n"):
-        content += "\n"
-    _write(CURRENT_STATE_PATH, content)
-    print(f"✅ CURRENT_STATE updated: phase={phase or '—'} status={status or '—'}")
-
-
 def main():
     parser = argparse.ArgumentParser(
         description="Agent Memory Framework — deterministic wiki compiler",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Commands:
-  %(prog)s build                        Compile docs/raw/ into docs/knowledge/ + index/log
-  %(prog)s refresh Topic_Name           Rebuild one topic, then update index/log
-  %(prog)s refresh all                  Rebuild every compiled topic
-  %(prog)s lint                         Check wiki metadata quality
-  %(prog)s add-experiment --name ...    Append row to docs/knowledge/EXPERIMENT_LOG.md
-  %(prog)s update-state --phase ...     Update a phase row in docs/knowledge/CURRENT_STATE.md
-
-Non-interactive flags on add-experiment / update-state exist so AI workflows
-can call them without prompting the user.
+  %(prog)s build                  Compile docs/raw/ into docs/knowledge/ + index/log
+  %(prog)s refresh Topic_Name     Rebuild one topic, then update index/log
+  %(prog)s refresh all            Rebuild every compiled topic
+  %(prog)s lint                   Check wiki metadata quality
         """,
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -718,39 +577,6 @@ can call them without prompting the user.
 
     subparsers.add_parser("lint", help="Validate raw/wiki metadata and links.")
 
-    p_add = subparsers.add_parser(
-        "add-experiment",
-        help="Append an experiment row to EXPERIMENT_LOG.md (non-interactive).",
-    )
-    p_add.add_argument("--name", required=True, help="Experiment short name.")
-    p_add.add_argument(
-        "--status", required=True,
-        choices=["accepted", "rejected", "running", "blocked", "inconclusive"],
-        help="Outcome status.",
-    )
-    p_add.add_argument("--result", default="", help="One-line metric / observation.")
-    p_add.add_argument("--conclusion", default="", help="One-line decision / next step.")
-    p_add.add_argument("--date", default=None, help="Override date (YYYY-MM-DD).")
-    p_add.add_argument(
-        "--dir", default=None,
-        help="Override knowledge dir (default: docs/knowledge/).",
-    )
-
-    p_state = subparsers.add_parser(
-        "update-state",
-        help="Update CURRENT_STATE.md phase row and annotation (non-interactive).",
-    )
-    p_state.add_argument("--phase", default=None, help="Phase id / label (matches first column).")
-    p_state.add_argument(
-        "--status", default=None,
-        help="New phase status (e.g. '✅ done', '🔄 in progress', '⏳ queued').",
-    )
-    p_state.add_argument("--note", default=None, help="Annotation line appended under AI Annotations.")
-    p_state.add_argument(
-        "--dir", default=None,
-        help="Override knowledge dir (default: docs/knowledge/).",
-    )
-
     args = parser.parse_args()
 
     try:
@@ -760,22 +586,6 @@ can call them without prompting the user.
             refresh(args.topic)
         elif args.command == "lint":
             raise SystemExit(lint())
-        elif args.command == "add-experiment":
-            add_experiment(
-                name=args.name,
-                status=args.status,
-                result=args.result,
-                conclusion=args.conclusion,
-                exp_date=args.date,
-                dir_path=args.dir,
-            )
-        elif args.command == "update-state":
-            update_state(
-                phase=args.phase,
-                status=args.status,
-                note=args.note,
-                dir_path=args.dir,
-            )
     except ValueError as exc:
         print(f"❌ {exc}")
         raise SystemExit(1) from exc

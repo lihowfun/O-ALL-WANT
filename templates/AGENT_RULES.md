@@ -84,39 +84,10 @@
 - Which tests were run + results
 - If no tests: write **"Not verified"**
 
-### 3. Wiki / Knowledge Update — **AI Responsibility, Not User's**
-
-> The user will **not** remind you to update the wiki. Any tool that relies on
-> "the user will invoke it" becomes stale within a few sessions. Before closing
-> the session, the AI **must** run the relevant non-interactive update itself.
-
-Run the commands that apply to this session's work — no user interaction needed:
-
-```bash
-# Phase or milestone status changed
-python3 scripts/wiki_sync.py update-state \
-  --phase "${phase_id}" --status "${done|in_progress|queued}" \
-  --note "${one-line summary}"
-
-# Experiment concluded (accepted/rejected/new data point)
-python3 scripts/wiki_sync.py add-experiment \
-  --name "${exp_name}" --status "${accepted|rejected|running}" \
-  --result "${one-line metric}" --conclusion "${one-line decision}"
-
-# Touched any raw source note
-python3 scripts/wiki_sync.py refresh "${topic_id}"
-
-# Final lint — must pass
-python3 scripts/wiki_sync.py lint
-```
-
-Then tick the doc checklist:
-
-- [ ] `docs/knowledge/CURRENT_STATE.md` → refreshed via `update-state` if phase/experiment changed
-- [ ] `docs/knowledge/EXPERIMENT_LOG.md` → appended via `add-experiment` if an experiment concluded
+### 3. Were Docs Updated?
 - [ ] `ROADMAP.md` → updated if phase status changed
 - [ ] `README.md` → updated if CLI flags / defaults changed
-- [ ] `VERSION.json` → bumped version / added `do_not_rerun`
+- [ ] `VERSION.json` → bumped version / added do_not_rerun
 - [ ] `.agents/memory.md` → added `[BUG]`/`[DECISION]`/`[FINDING]` entry
 
 ### 4. What Comes Next
