@@ -35,9 +35,9 @@
 
 OAW 的 `--compact` 已把「輸出也要壓短」的概念融進來。若想要 Rust 原生的極致 token 壓縮，請直接看 [rtk-ai/rtk](https://github.com/rtk-ai/rtk)。
 
-## 架構一頁看懂
+## 🏗️ 架構設計
 
-`CLAUDE.md` 決定走哪條 lane，skills 和 scripts 接手重複工——每次只讀當下需要的部分，不在一開始就把整個 repo 塞進 context。
+OAW 的核心是 **Context Routing**：`CLAUDE.md` 作為 Master Router，依當下任務動態決定要載入哪條 lane；skills 和 scripts 接手執行層的重複動作。每個 session 只注入**當下真正需要**的 context，而不是把整個 repo 塞給 LLM 慢慢翻。
 
 ```mermaid
 flowchart LR
@@ -50,7 +50,21 @@ flowchart LR
     Y --> W
 ```
 
-## 快速上手
+---
+
+### 🛡️ 駕馭工程（Harness Engineering）三大支柱
+
+這不是一個便利工具合集，而是三個工程原則撐起來的系統性設計：
+
+| 設計原則 | 實作方式 | 解決的問題 |
+|---------|---------|-----------|
+| **Context Fragmentation**<br/>上下文分流 | Lane 動態路由，按任務類型只載入相關檔案 | 避免 LLM 在長代碼中出現 **Lost in the Middle** 現象 |
+| **Deterministic State Control**<br/>確定性狀態控制 | `VERSION.json` + `do_not_rerun` 構成開發狀態機 | 防止 Agent 在自主修復時重跑已完成任務或陷入無限循環 |
+| **Knowledge Synthesis**<br/>知識蒸餾 | `memory.md`（短期決策）→ `knowledge/`（長期知識）的自動編譯 pipeline | 把 Agentic Workflow 產生的碎片洞察沉澱為可重用資產 |
+
+---
+
+## ⚡ 快速上手
 
 ```bash
 # 既有專案：直接進你的 repo
@@ -83,25 +97,29 @@ Router 永遠叫 `CLAUDE.md`，但不同 agent 預設讀不同的規則檔：
 
 嫌麻煩也可以直接跟 agent 說「先讀 CLAUDE.md」，效果一樣。
 
-## 🧭 你講人話，Agent 做事
+## 💬 一句話調度 SOP
 
-核心原則很簡單：你主要只要跟 agent 講話。前提是它會讀 `CLAUDE.md`，並遵守 Skills-First Principle。
+OAW 的操作哲學很簡單：**你只負責描述意圖，Agent 負責找到對應的 SOP 並執行**。
 
-| 你跟 Agent 說... | Agent 通常會做... |
-|-----------------|------------------|
+這背後的機制叫 **Skills-First Principle**——Agent 在回應前會先比對 `.agents/skills/`，有 match 就走預寫好的 workflow，沒 match 才臨場發揮。好處是：**可重現的流程不受 LLM 隨機性影響，一次性的問題保留創造空間**。
+
+| 你說什麼 | Agent 觸發的 SOP |
+|---------|-----------------|
 | 「我剛決定改用 Redis 當 cache」 | 寫入 `.agents/memory.md` → `[DECISION] 改用 Redis` |
-| 「這個 bug 是 N+1 query 造成的」 | 寫入 memory；累積多條時主動提議提煉到 wiki |
-| 「幫我整理一下 `docs/raw/` 的筆記」 | 比對到 `/wiki-refresh` skill → `wiki_sync.py refresh` → 產 knowledge 頁 |
-| 「跑一下 benchmark」 | 比對到 `/benchmark` skill → 讀 baselines → 執行 → 產報告 |
-| 「準備 release v1.2.0」 | 比對到 `/version-release` skill → 完整 checklist |
-| 「這東西壞了，幫我 debug」 | 比對到 `/debug-pipeline` skill → 逐層排查 → 記錄 root cause |
+| 「這個 bug 是 N+1 query 造成的」 | 寫入 memory；累積多條時主動提議蒸餾到 wiki |
+| 「幫我整理一下 `docs/raw/` 的筆記」 | 觸發 `/wiki-refresh` → `wiki_sync.py refresh` → 產出 knowledge 頁 |
+| 「跑一下 benchmark」 | 觸發 `/benchmark` → 讀 baselines → 執行 → 產報告 |
+| 「準備 release v1.2.0」 | 觸發 `/version-release` → 跑完整 checklist |
+| 「這東西壞了，幫我 debug」 | 觸發 `/debug-pipeline` → 逐層排查 → 記錄 root cause |
 | 「目前專案什麼狀態?」 | `context_hub.py status` → 版本 + 最近決策 + 知識主題 |
 
 細節請看：[Skill Guide](docs/Skill_Guide.md)。
 
-### 想直接下指令（不透過 agent）？
+---
 
-如果你偏好手動跑工具，而不是讓 agent 自己調度，可以直接用這些指令：
+### 🔧 想直接下指令（Bypass Agent）
+
+偏好手動調度而不透過 agent 的話，這些是直通底層的 CLI：
 
 | 指令 | 用途 |
 |------|------|
@@ -114,11 +132,15 @@ Router 永遠叫 `CLAUDE.md`，但不同 agent 預設讀不同的規則檔：
 
 完整列表：[CLI Reference](docs/CLI_Reference.md)。
 
+---
+
 ## 🐕 Self-Hosting：repo 自己是自己的第一個用戶
 
 Root 的 `CLAUDE.md` / `AI_CONTEXT.md` 等是 **OAW 團隊自用**的版本，不是給你的 template。你的 template 住在 `templates/`，`install.sh` 會幫你裝進專案。
 
 **Public memory policy**：`.agents/memory.md` 已 gitignore(memory 是本地日記)。公開分享的是提煉後的 `docs/knowledge/`(教科書)。
+
+---
 
 ## Source Lineage (站在巨人肩膀上)
 
