@@ -4,6 +4,10 @@
   "last_updated": "2026-04-17",
   "current_phase": "development",
   "next_phase": "v1.0.0-release",
+  "task_state": {
+    "in_progress": [],
+    "blocked": []
+  },
   "benchmark_snapshot": {
     "summary": "Install time < 5s, 15 template files, 6 skills",
     "date": "2026-04-17"

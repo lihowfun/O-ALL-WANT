@@ -2,29 +2,26 @@
 
 ## Current Focus
 
-- Phase: **Stable + Community Feedback**
-- Goal: Polish documentation, accept community feedback
-- Definition of done: 
-  - Self-hosting harness merged to main ✅
-  - README improvements (post-install, decision table, self-hosting) ✅
-  - Skills alignment between templates/ and example/
+- Phase: **dev — 準備 v1.0.0 正式發布**
+- Goal: 文件精修到位、知識頁補齊、確認 README 英文為主後正式 tag v1.0.0
+- Definition of done:
+  - ✅ README 英文為主（README.md = English）
+  - ✅ Harness Engineering 三大支柱知識頁建立
+  - ✅ 敏感資訊（PRIVATE_PROJECT ref）從 git history 清除
+  - [ ] example/minimal-project skills 與 templates/ 對齊
+  - [ ] 正式 tag v1.0.0 並發布
 
 ## Active Work
 
 | Priority | Workstream | Status | Notes |
 |----------|------------|--------|-------|
-| P0 | Self-harness on main | ✅ Done | Merged to main |
-| P0 | README improvements | ✅ Done | Added 3 new sections (zh + en) |
-| P1 | Skills alignment | Planned | Sync `templates/` and `example/minimal-project/` |
-| P1 | Design docs update | Planned | Add naming evolution note ("Fat Skills" → "Hybrid Router") |
+| P0 | README 英文主頁 + 多語言 | ✅ Done | README.md=EN, README.zh.md=ZH, readme-i18n 其他語言 |
+| P0 | Harness Engineering 三大支柱 | ✅ Done | README + 3 knowledge 頁 |
+| P0 | Git history 清理 | ✅ Done | filter-repo 移除敏感 ref |
+| P1 | Skills alignment | Pending | Sync `templates/` 和 `example/minimal-project/` |
+| P1 | Design docs update | Pending | `Design_Principles.md` 補充 Hybrid Router 命名演進 |
+| P1 | 正式 tag v1.0.0 | Pending | 確認 P1 Pending 都清完後執行 |
 | P2 | Community feedback | Ongoing | Monitor issues and PRs |
-
-## Remaining P1 Items
-
-### Cross-File Consistency
-
-- [ ] Align skills list between `templates/` and `example/minimal-project/`
-- [ ] Add naming evolution note to `Design_Principles.md`
 
 ## Next Milestones
 
@@ -34,9 +31,12 @@
 4. ✅ README improvements shipped (2026-04-15)
 5. ✅ Cross-agent compatibility table (2026-04-16)
 6. ✅ Pre-release build complete (2026-04-16)
+7. ✅ README 大改版：EN 主頁、Harness Engineering、SOP Dispatch (2026-04-18)
+8. [ ] Skills alignment + tag v1.0.0
 
 ## Completed
 
+- ✅ 2026-04-18: README 英文主頁化，Harness Engineering 三大支柱、wiki_sync 工作流說明、readme-i18n 多語言
 - ✅ 2026-04-16: Pre-release build — cross-agent table, CHANGELOG, review validation
 - ✅ 2026-04-15: Harness testing (17/17 passed)
 - ✅ 2026-04-15: Repo health review & sanitization
