@@ -17,6 +17,8 @@
 
 本專案是我在數個下班後的夜晚，透過瘋狂奴役 Claude Code 與 Codex，把市面上幾個最火熱的 Harness Repo 與大神概念整合重構而成的結晶。我把 Self-improving、Context Hub、MemPalace、Karpathy Wiki、thin harness / fat skills 這些精華全部塞進來，目的只有一個：讓你的每一顆高級 Token 都花在真正重要的邏輯輸出，而不是浪費在「重跑已完成的內容」或「重新解釋專案架構」上。
 
+我自己的用法其實很固定：只要有新的 agentic coding 專案要開，或某個目錄準備長期丟給 AI 協作，我就先拿 OAW 這套骨架幫它把 harness 架好。這樣就算中途因為額度、排隊、多人共用而被迫重開 session，新 agent 也能快速接手，不用每次從零重新講一次。
+
 **只需要其中一樣?** 請直接 fork 對應的原作(列在最下面的 Source Lineage)；但如果你跟我一樣全都要，這鍋就是煮給你吃的。
 
 ## 🍲 內容大雜燴清單
@@ -27,7 +29,7 @@
 - 🧠 **記憶宮殿 (Memory Palace)** — 讓 Agent 擁有跨 Session 的持久化記憶，解決「不同對話不能傳承」的斷片問題。OAW 用 `.agents/memory.md` 和 wrap-up discipline 承接這件事。
 - 📚 **自動演進 LLM Wiki (Karpathy Concept)** — 奴役 AI 把開發碎筆記從 `docs/raw/` 慢慢編進 `docs/knowledge/`，讓 Agent 不只是會看筆記，而是會自己整理知識。
 
-這份大雜燴不是封閉清單；之後看到真的好用、而且能融進 OAW 的做法，也會持續補進來。
+這個 repo 會持續更新；之後看到真的好用、而且能融進 OAW 的做法，我就會繼續往這鍋裡加料。
 
 ### 🤝 可選搭配：RTK (Rust Token Killer)
 

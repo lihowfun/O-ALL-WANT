@@ -18,6 +18,8 @@ This project came out of several late nights spent pushing Claude Code and Codex
 
 The goal is simple: every expensive token should go toward real reasoning and useful output, not toward replaying finished work or re-explaining your project structure from scratch.
 
+My own use case is pretty consistent: whenever I start a new agentic coding project, or even just a directory I know I will keep handing to AI, I bootstrap it with the OAW harness first. That way, when limits, queue pressure, or shared usage force a fresh session, the next agent can pick up quickly instead of making me restate the whole project again.
+
 **Only want one piece of this?** Fork the original project that does that one thing best (listed below in Source Lineage). This repo is for people who want the whole hot pot.
 
 ## 🍲 What's in the hot pot?
@@ -28,7 +30,7 @@ The goal is simple: every expensive token should go toward real reasoning and us
 - 🧠 **Memory Palace** — the agent gets durable cross-session memory instead of snapping back to zero every conversation. OAW uses `.agents/memory.md` and structured wrap-up discipline to support that.
 - 📚 **Auto-evolving LLM Wiki (Karpathy concept)** — raw notes in `docs/raw/` can be compiled into durable knowledge pages in `docs/knowledge/`, so the agent is not just reading notes; it is learning to organize them.
 
-This list is not closed. If we keep finding genuinely useful ideas that fit OAW cleanly, we will keep folding them in.
+This repo will keep evolving. Whenever we find something genuinely useful that fits OAW cleanly, we will keep adding it to the pot.
 
 ### 🤝 Optional companion: RTK (Rust Token Killer)
 
