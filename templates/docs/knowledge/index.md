@@ -12,6 +12,15 @@ related_topics: []
 > This file is generated or refreshed by `python3 scripts/wiki_sync.py build`.
 > Read it only when you need the wiki map.
 
+## Primary Entries (read these first)
+
+| Topic ID | Title | Purpose |
+|----------|-------|---------|
+| `CURRENT_STATE` | Current State | Single compiled entry point — read this first for any fresh session |
+| `EXPERIMENT_LOG` | Experiment Log | Append-only index of every experiment — search by name or date |
+
+## Topic Pages
+
 | Topic ID | Title | Source Count | Last Updated | Related Topics |
 |----------|-------|--------------|--------------|----------------|
 | `Architecture_Decisions` | Architecture Decisions | 1 | YYYY-MM-DD | Known_Limitations, Performance_Baselines |
