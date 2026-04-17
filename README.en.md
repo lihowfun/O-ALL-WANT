@@ -12,7 +12,7 @@
 
 This is a harness for unapologetically greedy agentic coders.
 
-If you bounce between AI coding platforms, obsess over token efficiency, and have zero patience for goldfish-brain agents, this repo is for you. If you are tired of agents forgetting the project every session, re-reading the whole codebase, and burning through an expensive context window before you even reach the real task, OAW is meant to be the armor layer between you and that chaos.
+If you bounce between AI coding platforms, obsess over token efficiency, and have zero patience for goldfish-brain agents, this repo is for you. If you are tired of agents forgetting the project every session, re-reading the whole codebase, and burning through expensive tokens before you even reach the real task, OAW is meant to be the armor layer between you and that chaos.
 
 This project came out of several late nights spent pushing Claude Code and Codex far past reasonable working hours, then remixing ideas from self-improving harnesses, Context Hub, MemPalace, Karpathy-style LLM Wiki workflows, and Garry Tan's thin harness / fat skills framing into one deliberately overloaded setup.
 
@@ -24,7 +24,7 @@ My own use case is pretty consistent: whenever I start a new agentic coding proj
 
 ## 🍲 What's in the hot pot?
 
-- 🔄 **Self-improving logic** — `VERSION.json`, `ROADMAP.md`, and `do_not_rerun` give the agent a sense of progress so it does not spin in circles or rerun finished work. This comes from the broader family of self-managing harness patterns.
+- 🔄 **Self-improving logic** — `VERSION.json`, `ROADMAP.md`, and `do_not_rerun` give the agent a sense of progress so it does not spin in circles or rerun finished work, and OAW also borrows the `self-improving-agent` / ClawHub-style workflow of logging mistakes, preserving corrections, and learning over time.
 - 📉 **Token optimizer (Context Hub + RTK-inspired output trimming)** — `CLAUDE.md` routes by lane and only loads the context that matters, while `context_hub.py` handles search, annotate, and memory operations; `--compact` carries the extra idea that the output should be shortened too when full prose is unnecessary. The core inspiration is Andrew Ng's Context Hub plus the RTK-style idea of output-side token reduction.
 - ⚡ **thin harness / fat skills (Garry Tan)** — repeated workflows live in `.agents/skills/*.md`, not in one giant prompt blob. OAW keeps that spirit, then layers routing on top.
 - 🧠 **Memory Palace** — the agent gets durable cross-session memory instead of snapping back to zero every conversation. OAW uses `.agents/memory.md` and structured wrap-up discipline to support that.
@@ -152,7 +152,7 @@ The root `CLAUDE.md`, `AI_CONTEXT.md`, and related files are the **OAW team's ow
 
 OAW does not copy source code from these projects or ideas directly, but its design is heavily shaped by them:
 
-- 🔄 **Self-improving harness patterns** — version / roadmap / do_not_rerun discipline so agents understand progress and avoid rerunning finished work
+- 🔄 **[self-improving-agent / ClawHub skill pattern](https://clawhub.ai/skills/self-improver)** — version / roadmap / do_not_rerun discipline plus the workflow idea of logging errors, preserving corrections, and learning over time so agents do not keep spinning on the same mistakes
 - 📉 **[andrewyng/context-hub](https://github.com/andrewyng/context-hub)** (MIT) — searchable knowledge, annotations, and routing
 - ⚡ **[thin harness / fat skills (Garry Tan)](https://x.com/garrytan/status/2042925773300908103)** — keep the router light, push repeated work into skills
 - 🧠 **[Memory Palace / MemPalace](https://github.com/MemPalace/mempalace)** (MIT) — mid-task amnesia, structured wrap-up, and durable memory ideas
