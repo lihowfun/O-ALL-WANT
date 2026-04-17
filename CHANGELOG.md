@@ -2,6 +2,57 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0] — 2026-04-17
+
+Implements the five P0/P1 recommendations from `FEEDBACK_REPORT.md` (PRIVATE_PROJECT
+integration feedback). Core insight driving the change:
+**tools that require user memory get forgotten — only AI-workflow-triggered
+updates are reliable.**
+
+### Added
+- `templates/docs/knowledge/CURRENT_STATE.md` — WORLD_MODEL template. Single
+  compiled entry point so a fresh agent session can orient by reading one file.
+  Includes §9 "Common Commands" copy-paste block.
+- `scripts/wiki_sync.py add-experiment` — non-interactive subcommand that
+  appends rows to `docs/knowledge/EXPERIMENT_LOG.md` (newest first, auto-creates
+  file with header if missing). Designed for AI workflows, no user prompt.
+- `scripts/wiki_sync.py update-state` — non-interactive subcommand that rewrites
+  a phase row in `CURRENT_STATE.md`, bumps `last_updated`, and appends an
+  annotation.
+- Example project (`example/minimal-project/`) picked up the new skills
+  (`wiki-refresh.md`), knowledge pages (`CURRENT_STATE.md`, `Experiment_Findings.md`,
+  `index.md`, `log.md`), `docs/raw/` starter files, and `scripts/wiki_sync.py`
+  so it stays in sync with `templates/`.
+
+### Changed
+- `templates/AGENT_RULES.md` Session End §3 rewritten: **"Wiki / Knowledge
+  Update — AI Responsibility, Not User's"** with the exact non-interactive
+  commands to run before closing the session.
+- `templates/.agents/skills/experiment-report.md`: Step 5 is now auto wiki
+  update (`add-experiment` + optional `update-state` + `lint`); the old ROADMAP
+  check moves to Step 6. `outputs:` frontmatter now lists EXPERIMENT_LOG and
+  CURRENT_STATE updates.
+- `templates/docs/knowledge/index.md`: `CURRENT_STATE` and `EXPERIMENT_LOG`
+  promoted to a new "Primary Entries" section at the top.
+
+### Verified
+- End-to-end install: `install.sh` into fresh tempdir → `wiki_sync.py
+  add-experiment` + `update-state` → rows land correctly in
+  `EXPERIMENT_LOG.md` and `CURRENT_STATE.md`.
+- Multi-insert newest-on-top ordering verified.
+- `example/minimal-project/` file parity against `templates/` confirmed for all
+  new additions (placeholder drift on pre-filled topic pages is intentional).
+
+### Follow-ups (tracked in ROADMAP)
+- P1: `wiki_sync.py lint` should detect unreplaced placeholders
+  (`${...}`, `YYYY-MM-DD`) in knowledge pages.
+- P1: Regression test harness for CURRENT_STATE / EXPERIMENT_LOG templates.
+- P1: README — document the `CURRENT_STATE.md` entry-point pattern.
+- P2: Skill dispatch mechanism (`context_hub.py skill-match "..."`).
+- P2: Multi-worktree memory sync protocol.
+- P2: `wiki_sync.py build-world-model` — auto-compile CURRENT_STATE from topic
+  pages.
+
 ## [1.0.0] — 2026-04-16
 
 ### Added

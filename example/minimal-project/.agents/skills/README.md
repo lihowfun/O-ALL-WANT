@@ -18,6 +18,7 @@
 | `benchmark.md` | Run benchmarks + auto-generate structured report + compare baselines | ✅ Example |
 | `experiment-report.md` | Structured experiment report → memory + knowledge annotation | ✅ Example |
 | `debug-pipeline.md` | Systematic pipeline debug checklist (layered diagnosis) | ✅ Example |
+| `wiki-refresh.md` | Refresh a compiled wiki topic from `docs/raw/` and run lint | ✅ Example |
 | `version-release.md` | Pre-release verification checklist + execution | ✅ Example |
 
 ---
@@ -41,6 +42,7 @@ requires:
   - VERSION.json
 optional_reads:
   - docs/knowledge/relevant_topic.md
+  - docs/raw/relevant_source.md
 outputs:
   - memory.md entry
   - knowledge annotation
@@ -88,8 +90,9 @@ When receiving a task:
 1. Scan the task description, match skill `triggers`
 2. If matched, **follow the skill workflow first** (per `CLAUDE.md` Skills-First Principle)
 3. Read the skill's `requires` files
-4. Execute steps in order
-5. Record results per the skill's `outputs` spec
+4. Read any `docs/raw/` note only if the skill explicitly needs source material
+5. Execute steps in order
+6. Record results per the skill's `outputs` spec
 
 ### For Humans
 
@@ -140,3 +143,4 @@ Skills are **executable Standard Operating Procedures (SOPs)**:
 3. **Frontmatter must be accurate** (triggers, requires) — this is how the resolver auto-matches
 4. **Outputs must be structured** (memory entry format, knowledge annotation) — maintain consistency
 5. **Obey lazy-read protocol** (don't bulk-read unnecessary files inside skills) — token efficiency
+6. **Use `docs/raw/` sparingly** — only when a wiki topic is missing or needs refresh
