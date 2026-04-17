@@ -22,7 +22,7 @@
 ## 🍲 內容大雜燴清單
 
 - 🔄 **自我演進邏輯 (Self-improving)** — 用 `VERSION.json`、`ROADMAP.md`、`do_not_rerun` 讓 Agent 知道目前進度在哪，不要原地打轉或重跑已完成的內容。靈感來自各種自我管理型 harness / agent workflow 的累積做法。
-- 📉 **Token 優化器 (Context Hub)** — 讓 `CLAUDE.md` 當 router，只把當下需要的 lane 和檔案送進 context，再用 `context_hub.py` 補搜尋、annotate、memory 操作。靈感核心來自 Andrew Ng 的 Context Hub。
+- 📉 **Token 優化器 (Context Hub + RTK-inspired output trimming)** — 讓 `CLAUDE.md` 當 router，只把當下需要的 lane 和檔案送進 context，再用 `context_hub.py` 補搜尋、annotate、memory 操作；而 `--compact` 則吸收了 RTK 那種「回來的東西也要壓短」的思路。靈感核心來自 Andrew Ng 的 Context Hub，加上 RTK 類型的 output-side token reduction 概念。
 - ⚡ **thin harness / fat skills (Garry Tan)** — 把高頻流程丟進 `.agents/skills/*.md`，不要把所有 SOP 都塞回一份超肥 prompt。OAW 沿用這個方向，但再加上 lane routing。
 - 🧠 **記憶宮殿 (Memory Palace)** — 讓 Agent 擁有跨 Session 的持久化記憶，解決「不同對話不能傳承」的斷片問題。OAW 用 `.agents/memory.md` 和 wrap-up discipline 承接這件事。
 - 📚 **自動演進 LLM Wiki (Karpathy Concept)** — 奴役 AI 把開發碎筆記從 `docs/raw/` 慢慢編進 `docs/knowledge/`，讓 Agent 不只是會看筆記，而是會自己整理知識。
@@ -31,9 +31,9 @@
 
 ### 🤝 可選搭配：RTK (Rust Token Killer)
 
-RTK 是 [rtk-ai/rtk](https://github.com/rtk-ai/rtk) 提供的 shell output 壓縮工具。OAW 管「讀什麼」，RTK 管「回多少」；兩者在不同層，搭起來通常更順。
+RTK 是 [rtk-ai/rtk](https://github.com/rtk-ai/rtk) 提供的 shell output 壓縮工具。OAW 管「讀什麼」，RTK 管「回多少」；兩者在不同層，概念上很互補。
 
-它不是 OAW 的必要依賴，也不是透過 OAW 安裝。OAW 本身只參考了「把 shell output 另外壓縮」這個 companion tooling 思路；如果你真的想用 RTK，請直接依照 RTK upstream 的官方方式另外安裝與初始化。
+它不是 OAW 的必要依賴，也不是透過 OAW 安裝。OAW 真正吸收進來的，是 RTK 那種「除了控制讀進來的 context，也要控制吐回來的 output」的概念；這件事現在主要反映在 OAW 內建的 `--compact` 輸出模式上。換句話說，OAW 有借這個思路，但沒有把 RTK 本體打包進來。
 
 如果你只是想用 OAW 內建的 token-friendly 摘要模式，不用裝 RTK，直接用：
 
@@ -43,29 +43,7 @@ python3 scripts/context_hub.py search "keyword" --compact
 python3 scripts/context_hub.py bootstrap --compact
 ```
 
-常見安裝方式（請以 RTK 官方 README 為準）：
-
-```bash
-# macOS (Homebrew)
-brew install rtk
-
-# Linux / macOS quick install
-curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh
-
-# Cargo
-cargo install --git https://github.com/rtk-ai/rtk
-```
-
-裝好後，再依你的 Agent 初始化 RTK：
-
-```bash
-rtk init -g               # Claude Code / Copilot
-rtk init -g --codex       # Codex
-rtk init -g --gemini      # Gemini
-rtk init --agent cursor   # Cursor
-```
-
-Windows 與更多平台請直接看 RTK upstream README / release 說明。OAW 自己不會幫你安裝或管理 RTK。
+如果你真的想另外裝 RTK，請直接看 RTK upstream README / release 說明。OAW 自己不會幫你安裝或管理 RTK。
 
 ## 架構一頁看懂
 
@@ -176,7 +154,7 @@ OAW 沒複製這些 repo / concept 的原始碼，但設計理念深受以下影
 - ⚡ **[thin harness / fat skills (Garry Tan)](https://x.com/garrytan/status/2042925773300908103)** — 把高頻操作收進 skill，讓 router 保持精簡
 - 🧠 **[Memory Palace / MemPalace](https://github.com/MemPalace/mempalace)** (MIT) — 中途失憶 + structured wrap-up
 - 📚 **[Karpathy-style LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)** — 隨手筆記 vs 編譯後 wiki 的分離哲學
-- 🤝 **[RTK (rtk-ai/rtk)](https://github.com/rtk-ai/rtk)** — shell output 壓縮 companion tool，和 OAW 的知識路由互補
+- 🤝 **[RTK (rtk-ai/rtk)](https://github.com/rtk-ai/rtk)** — output-side token reduction 的概念參考；OAW 沒有內建 RTK，但 `--compact` 吸收了「回傳內容也要壓短」這個思路
 
 這份來源清單也會持續更新；之後如果遇到真的好用、而且能自然融進 OAW 的做法，也會補進來。
 

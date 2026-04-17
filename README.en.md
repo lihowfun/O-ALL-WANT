@@ -23,7 +23,7 @@ The goal is simple: every expensive token should go toward real reasoning and us
 ## 🍲 What's in the hot pot?
 
 - 🔄 **Self-improving logic** — `VERSION.json`, `ROADMAP.md`, and `do_not_rerun` give the agent a sense of progress so it does not spin in circles or rerun finished work. This comes from the broader family of self-managing harness patterns.
-- 📉 **Token optimizer (Context Hub)** — `CLAUDE.md` routes by lane and only loads the context that matters, while `context_hub.py` handles search, annotate, and memory operations. The core inspiration here is Andrew Ng's Context Hub.
+- 📉 **Token optimizer (Context Hub + RTK-inspired output trimming)** — `CLAUDE.md` routes by lane and only loads the context that matters, while `context_hub.py` handles search, annotate, and memory operations; `--compact` carries the extra idea that the output should be shortened too when full prose is unnecessary. The core inspiration is Andrew Ng's Context Hub plus the RTK-style idea of output-side token reduction.
 - ⚡ **thin harness / fat skills (Garry Tan)** — repeated workflows live in `.agents/skills/*.md`, not in one giant prompt blob. OAW keeps that spirit, then layers routing on top.
 - 🧠 **Memory Palace** — the agent gets durable cross-session memory instead of snapping back to zero every conversation. OAW uses `.agents/memory.md` and structured wrap-up discipline to support that.
 - 📚 **Auto-evolving LLM Wiki (Karpathy concept)** — raw notes in `docs/raw/` can be compiled into durable knowledge pages in `docs/knowledge/`, so the agent is not just reading notes; it is learning to organize them.
@@ -32,9 +32,9 @@ This list is not closed. If we keep finding genuinely useful ideas that fit OAW 
 
 ### 🤝 Optional companion: RTK (Rust Token Killer)
 
-RTK is the shell-output compression tool from [rtk-ai/rtk](https://github.com/rtk-ai/rtk). OAW decides **what** the agent should read; RTK helps control **how much** noisy terminal output comes back. Different layers, good complement.
+RTK is the shell-output compression tool from [rtk-ai/rtk](https://github.com/rtk-ai/rtk). OAW decides **what** the agent should read; RTK focuses on **how much** noisy terminal output comes back. Different layers, conceptually complementary.
 
-It is not an OAW dependency, and OAW does not install it for you. OAW only borrows the companion-tooling idea here: keep knowledge routing in the harness, and let a separate tool compress shell output if you want that extra layer.
+It is not an OAW dependency, and OAW does not install it for you. What OAW actually absorbed is the RTK-style idea that token savings are not only about routing input context, but also about trimming output when a compact answer is enough. In OAW, that idea mainly shows up in the built-in `--compact` modes. So the concept made it in; the RTK binary did not.
 
 If all you want is OAW's built-in token-friendly summary mode, you do **not** need RTK. Just use:
 
@@ -44,29 +44,7 @@ python3 scripts/context_hub.py search "keyword" --compact
 python3 scripts/context_hub.py bootstrap --compact
 ```
 
-Common install paths (always defer to the RTK upstream README as the source of truth):
-
-```bash
-# macOS (Homebrew)
-brew install rtk
-
-# Linux / macOS quick install
-curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh
-
-# Cargo
-cargo install --git https://github.com/rtk-ai/rtk
-```
-
-Then initialize RTK for the agent you use:
-
-```bash
-rtk init -g               # Claude Code / Copilot
-rtk init -g --codex       # Codex
-rtk init -g --gemini      # Gemini
-rtk init --agent cursor   # Cursor
-```
-
-For Windows and other install paths, check the RTK upstream README and releases. OAW does not manage RTK installation for you.
+If you want RTK itself, follow the RTK upstream README and releases directly. OAW does not install or manage RTK for you.
 
 ## Architecture in one page
 
@@ -177,7 +155,7 @@ OAW does not copy source code from these projects or ideas directly, but its des
 - ⚡ **[thin harness / fat skills (Garry Tan)](https://x.com/garrytan/status/2042925773300908103)** — keep the router light, push repeated work into skills
 - 🧠 **[Memory Palace / MemPalace](https://github.com/MemPalace/mempalace)** (MIT) — mid-task amnesia, structured wrap-up, and durable memory ideas
 - 📚 **[Karpathy-style LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)** — separate raw notes from compiled knowledge
-- 🤝 **[RTK (rtk-ai/rtk)](https://github.com/rtk-ai/rtk)** — optional shell-output compression companion that pairs well with OAW's knowledge routing
+- 🤝 **[RTK (rtk-ai/rtk)](https://github.com/rtk-ai/rtk)** — concept-level inspiration for output-side token reduction; OAW does not bundle RTK, but `--compact` follows the same "shorten what comes back" philosophy
 
 This list will keep evolving too. When we find something that is genuinely useful and fits OAW cleanly, we will add it.
 
