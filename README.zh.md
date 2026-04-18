@@ -27,7 +27,7 @@
 
 這專案是我在數個燃燒肝臟的下班夜晚，瘋狂奴役 Claude Code 與 Codex，然後把 self-improving、Context Hub、MemPalace、Karpathy-style LLM Wiki、thin harness / fat skills 這些大神github repo或文章精華全摻在一起煮的撒尿牛丸鍋。目的只有一個：**讓昂貴 token 用在真的值得的推理與輸出上**，而不是浪費在「重跑已完成的內容」或「重新解釋專案架構」上。
 
-我自己的用法很固定：只要是新的 agentic coding 專案，或某個我準備長期交給 AI 協作的目錄，我就先把 OAW 裝上去。這樣就算中途因為額度、排隊、多人共用帳號，甚至只是被迫換個 session，下一個 agent 也能快速接手，不用每次從零重新講一次。
+我自己的用法很固定：只要是新的 agentic coding 專案，或某個我準備長期交給 AI 協作的目錄，我就先把 OAW 裝上去。這樣就算中途因為額度、排隊、多代理人協作切換，甚至只是被迫換個 session，下一個 agent 也能快速接手，不用每次從零重新講一次。
 
 > **只需要其中一樣?** 請直接 fork 對應的原作（列在最下面的 Source Lineage）。但如果你跟我一樣全都要，這鍋就是煮給你吃的。
 
