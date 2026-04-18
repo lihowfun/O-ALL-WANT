@@ -1,6 +1,16 @@
 # 🍲 O-ALL-WANT (OAW) Framework
 
 <div align="center">
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![GitHub stars](https://img.shields.io/github/stars/lihowfun/O-ALL-WANT?style=social)](https://github.com/lihowfun/O-ALL-WANT/stargazers)
+[![Last commit](https://img.shields.io/github/last-commit/lihowfun/O-ALL-WANT)](https://github.com/lihowfun/O-ALL-WANT/commits/main)
+[![Issues](https://img.shields.io/github/issues/lihowfun/O-ALL-WANT)](https://github.com/lihowfun/O-ALL-WANT/issues)
+[![Tested](https://img.shields.io/badge/tested-Claude%20Code%20%7C%20Codex-blue)](docs/knowledge/OAW_Session_Continuity_Test.md)
+
+</div>
+
+<div align="center">
   <a href="README.md">English</a> |
   <a href="README.zh.md">中文</a> |
   <a href="https://www.readme-i18n.com/lihowfun/O-ALL-WANT?lang=ja">日本語</a> |
@@ -124,7 +134,7 @@ bash OAW/install.sh
 裝完對 agent 說：
 
 > 先讀 `CLAUDE.md`，再讀 `AI_CONTEXT.md`。
-> 我要做的是 ${在這裡陳述你的專案目的}。根據架構幫我把 `AI_CONTEXT.md` 骨架填好，再建議哪些重複流程可以收進 `.agents/skills/`。
+> 對照架構，把這個專案的真實狀況填進來，然後告訴我哪些重複流程可以收進 `.agents/skills/`。
 
 ### 📂 既有專案
 

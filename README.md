@@ -1,6 +1,16 @@
 # 🍲 O-ALL-WANT (OAW) Framework
 
 <div align="center">
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![GitHub stars](https://img.shields.io/github/stars/lihowfun/O-ALL-WANT?style=social)](https://github.com/lihowfun/O-ALL-WANT/stargazers)
+[![Last commit](https://img.shields.io/github/last-commit/lihowfun/O-ALL-WANT)](https://github.com/lihowfun/O-ALL-WANT/commits/main)
+[![Issues](https://img.shields.io/github/issues/lihowfun/O-ALL-WANT)](https://github.com/lihowfun/O-ALL-WANT/issues)
+[![Tested](https://img.shields.io/badge/tested-Claude%20Code%20%7C%20Codex-blue)](docs/knowledge/OAW_Session_Continuity_Test.md)
+
+</div>
+
+<div align="center">
   <a href="README.md">English</a> |
   <a href="README.zh.md">中文</a> |
   <a href="https://www.readme-i18n.com/lihowfun/O-ALL-WANT?lang=ja">日本語</a> |
@@ -119,7 +129,7 @@ bash OAW/install.sh
 Then paste to your agent:
 
 > Read `CLAUDE.md` first, then `AI_CONTEXT.md`.
-> I'm building ${describe what you're making}. Fill in the `AI_CONTEXT.md` scaffold accordingly, then suggest which repeated workflows belong in `.agents/skills/`.
+> Match the architecture, fill in this project's actual state, then tell me which repeated workflows belong in `.agents/skills/`.
 
 ### 📂 Existing project
 
