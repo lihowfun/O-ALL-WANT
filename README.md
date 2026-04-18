@@ -25,7 +25,7 @@ If you hop between AI coding platforms and treat token efficiency like a competi
 
 OAW is my answer to that waste.
 
-It came out of too many late nights pushing Claude Code and Codex harder than any reasonable coworker should, then remixing self-improving workflows, Context Hub, MemPalace, Karpathy-style LLM Wiki patterns, and Garry Tan's thin-harness / fat-skills framing into one unapologetically overloaded setup.
+It came out of too many late nights pushing Claude Code and Codex harder than any reasonable coworker should, then taking the sharpest bits from other people's public work — self-improving workflows, Context Hub, MemPalace, Karpathy-style LLM Wiki patterns, Garry Tan's thin-harness / fat-skills framing — and stewing them into one unapologetically overloaded hot pot.
 
 The goal is simple: **spend expensive tokens on real reasoning and real output** — not on replaying finished work or reteaching the project every time a session dies.
 
@@ -149,7 +149,10 @@ Prefer driving the tools manually? These go straight to the underlying layer:
 | Command | Purpose |
 |---------|---------|
 | `python3 scripts/context_hub.py status` | Version + recent decisions + knowledge topics |
+| `python3 scripts/context_hub.py setup` | Audit unfilled `${...}` placeholders in key files (run right after install) |
 | `python3 scripts/context_hub.py search "keyword"` | Search the knowledge base |
+| `python3 scripts/context_hub.py search "keyword" --include-memory` | Search knowledge + `memory.md` together |
+| `python3 scripts/context_hub.py context --lane [operational\|wiki\|execution\|debug]` | List the files that belong to one lane |
 | `python3 scripts/context_hub.py memory add "[TAG] content"` | Manually write to memory |
 | `python3 scripts/wiki_sync.py refresh topic_name` | Compile one wiki topic |
 | `python3 scripts/wiki_sync.py lint` | Check metadata consistency |
