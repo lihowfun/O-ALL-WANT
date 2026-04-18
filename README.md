@@ -17,6 +17,12 @@
   <img src="docs/assets/oboi_meme.png" width="400" alt="I want it all">
 </p>
 
+> **TL;DR** — OAW turns your repo's `CLAUDE.md` into an agent router: lane-based context loading + durable memory + auto-compiled wiki, so AI coding sessions **resume instead of restart**.
+>
+> **Built for** developers hopping between Claude Code / Codex / Copilot / Cursor who want context to survive rate limits, session resets, and multi-agent workflows.
+>
+> **3 steps**: `git clone` → `bash install.sh` → paste one line to your agent. Full Quick Start [below](#-quick-start).
+
 ## Why are you here?
 
 This is a harness for unapologetically greedy agentic coders.
@@ -87,6 +93,19 @@ Each one maps to a concrete file or script, and fixes a specific LLM failure mod
 
 ---
 
+## 🔁 What actually changes on a new session
+
+| On cold start, the agent… | Without OAW | With OAW |
+|---|---|---|
+| Knows what this repo does | ❌ You paste architecture recap each session | ✅ Reads `CLAUDE.md` + `AI_CONTEXT.md` baseline |
+| Knows recent decisions | ❌ You recap from memory | ✅ `.agents/memory.md` last 5 entries, loaded on demand |
+| Knows which workflows are repeatable SOPs | ❌ You re-explain each one | ✅ `.agents/skills/` triggered by intent keywords |
+| Avoids re-running finished work | ❌ Risk of loops in autonomous repair | ✅ `VERSION.json` `do_not_rerun` enforced |
+
+> **Measured**: lane routing loads only the files relevant to the current task — ~3k tokens per lane vs ~22.6k for loading everything, [**86–87% savings**](docs/knowledge/OAW_Session_Continuity_Test.md) in the session continuity test. The baseline (`CLAUDE.md` + `AI_CONTEXT.md`, ~2.3k tokens) is always loaded; lane-specific files add ~400–800 tokens on top.
+
+---
+
 ## ⚡ Quick Start
 
 ### 🆕 Brand-new project
@@ -118,6 +137,8 @@ Then paste to your agent:
 > Match the architecture to this project's real facts and fill them in, then tell me which repeated workflows belong in `.agents/skills/`.
 
 ### 🔌 Adapting to different agents / IDEs
+
+**Primary test targets**: Claude Code, OpenAI Codex (used daily to develop this repo). Everything else has an adapter shipped, field reports welcome.
 
 The router file is always `CLAUDE.md`, but different agents look for different startup files:
 

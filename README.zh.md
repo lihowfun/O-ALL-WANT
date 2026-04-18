@@ -17,6 +17,12 @@
   <img src="docs/assets/oboi_meme.png" width="400" alt="我全都要">
 </p>
 
+> **TL;DR** — OAW 把你 repo 裡的 `CLAUDE.md` 變成 agent router：lane 分流 context、持久 memory、自動編譯 wiki，讓 AI coding session **可以接續，不用從零重啟**。
+>
+> **寫給**在 Claude Code / Codex / Copilot / Cursor 之間橫跳、不想每次被 rate limit、session reset、多代理人協作切走 context 的開發者。
+>
+> **3 步就上手**：`git clone` → `bash install.sh` → 丟一句話給 agent。完整 Quick Start [往下看](#-快速上手)。
+
 ## 為什麼會在這?
 
 這是一套專為「極度貪心」的 agentic coding 使用者打造的專案裝甲（harness）。
@@ -92,6 +98,19 @@ flowchart LR
 
 ---
 
+## 🔁 新 Session 時，差在哪
+
+| 新 session 打開，agent 的狀態… | 沒有 OAW | 有 OAW |
+|---|---|---|
+| 知道這個 repo 在幹嘛 | ❌ 你自己貼架構、目標、技術棧 | ✅ 讀 `CLAUDE.md` + `AI_CONTEXT.md` baseline |
+| 知道最近做過什麼決策 | ❌ 你從記憶裡口述 | ✅ `.agents/memory.md` 最後 5 筆，按需載入 |
+| 知道哪些流程是可重複 SOP | ❌ 每次重講一次 | ✅ `.agents/skills/` 靠 intent 關鍵字觸發 |
+| 不會重跑已完成的工作 | ❌ 自主修復容易跑進迴圈 | ✅ `VERSION.json` `do_not_rerun` 強制 |
+
+> **實測數據**：lane routing 只載當下任務用到的檔案——每條 lane ~3k tokens vs 全載 ~22.6k tokens，[**節省 86–87%**](docs/knowledge/OAW_Session_Continuity_Test.md)（出自 session 連續性測試）。Baseline（`CLAUDE.md` + `AI_CONTEXT.md`，約 2.3k tokens）永遠載入；lane 專屬檔再加 ~400–800 tokens。
+
+---
+
 ## ⚡ 快速上手
 
 ### 🆕 全新專案
@@ -123,6 +142,8 @@ bash OAW/install.sh     # 跳「Overwrite?」時會列出每個衝突檔，按 N
 > 對照架構，把這個專案的真實狀況填進來，然後告訴我哪些重複流程可以收進 `.agents/skills/`。
 
 ### 🔌 不同 Agent / IDE 的對應方式
+
+**主力測試對象**：Claude Code 與 OpenAI Codex（OAW 本身就是每天用它們開發的）。其他 agent 都有 adapter 可用，歡迎實戰回報。
 
 Router 永遠叫 `CLAUDE.md`，但不同 agent 預設讀不同的規則檔：
 
