@@ -93,7 +93,7 @@ flowchart LR
 
 ### 🛡️ Harness Engineering — Three Load-Bearing Principles
 
-Each one maps to a concrete file or script, and fixes a specific LLM failure mode:
+Each one addresses a common pain point in agentic coding sessions:
 
 | Principle | Implementation | Problem Solved |
 |-----------|---------------|----------------|
