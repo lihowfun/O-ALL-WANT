@@ -89,16 +89,25 @@ Each one maps to a concrete file or script, and fixes a specific LLM failure mod
 
 ## ⚡ Quick Start
 
+**🆕 Brand-new project**
+
 ```bash
-# Existing project: go into your repo
-cd /path/to/your/project
-
-# Brand-new project: init first
-# mkdir my-project && cd my-project && git init
-
+mkdir my-project && cd my-project && git init
 git clone https://github.com/lihowfun/O-ALL-WANT.git OAW
 bash OAW/install.sh
 ```
+
+**📂 Existing project (may already have its own `CLAUDE.md` / `AI_CONTEXT.md`)**
+
+`install.sh` **lists every managed file it would write** and waits for explicit `y/N` confirmation — nothing is silently overwritten. Want to eyeball OAW before committing? Browse [`example/minimal-project/`](example/minimal-project/) or `OAW/templates/` first.
+
+```bash
+cd /path/to/your/project
+git clone https://github.com/lihowfun/O-ALL-WANT.git OAW
+bash OAW/install.sh     # at the "Overwrite?" prompt it prints each conflict; answer N to abort
+```
+
+---
 
 Then paste this to your agent:
 

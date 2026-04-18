@@ -94,16 +94,25 @@ flowchart LR
 
 ## ⚡ 快速上手
 
+**🆕 全新專案**
+
 ```bash
-# 既有專案：直接進你的 repo
-cd /path/to/your/project
-
-# 全新專案：先 init
-# mkdir my-project && cd my-project && git init
-
+mkdir my-project && cd my-project && git init
 git clone https://github.com/lihowfun/O-ALL-WANT.git OAW
 bash OAW/install.sh
 ```
+
+**📂 既有專案（可能已經有自己的 `CLAUDE.md` / `AI_CONTEXT.md`）**
+
+`install.sh` 會**先列出所有要寫入的 managed file**，等你按 `y/N` 確認才覆蓋——不會靜默蓋掉任何東西。想先看 OAW 長什麼樣再決定，可以先逛 [`example/minimal-project/`](example/minimal-project/) 或 `OAW/templates/`。
+
+```bash
+cd /path/to/your/project
+git clone https://github.com/lihowfun/O-ALL-WANT.git OAW
+bash OAW/install.sh     # 跳「Overwrite?」時會列出每個衝突檔，按 N 可中止
+```
+
+---
 
 裝完對 agent 講(直接複製)：
 
