@@ -37,35 +37,28 @@ My own use case: whenever I start a new agentic coding project — or even just 
 ## 🍲 What's in the hot pot?
 
 ### 🔄 Self-improving logic
-
 `VERSION.json` + `ROADMAP.md` + `do_not_rerun` give the agent a sense of progress so it doesn't spin in circles. Borrowed from the `self-improving-agent` / ClawHub workflow: log mistakes, preserve corrections, learn over time.
 
 ### 📉 Token optimizer — Context Hub + RTK-inspired output trimming
-
 `CLAUDE.md` routes by lane and only loads what matters right now. `context_hub.py` handles search, annotate, and memory. `--compact` extends the idea to output: shorten what comes back when full prose is unnecessary.
 
 ### ⚡ thin harness / fat skills (Garry Tan)
-
 Repeated workflows live in `.agents/skills/*.md`, not in one giant prompt blob. OAW keeps that spirit and layers dynamic routing on top.
 
 ### 🧠 Memory Palace
-
 Durable cross-session memory instead of snapping back to zero every conversation. `.agents/memory.md` + structured wrap-up discipline hold the state.
 
 ### 📚 Auto-evolving LLM Wiki (Karpathy concept)
-
 Raw notes in `docs/raw/` compile into durable pages in `docs/knowledge/`. After any meaningful session, just tell the agent _"sync today's findings to the wiki"_ — it calls `wiki_sync.py refresh` to distill memory entries into a structured knowledge page. No manual reorganization.
 
 ---
 
 ### 🤝 Optional companion: RTK (Rust Token Killer)
-
 OAW's `--compact` already bakes in the "shorten what comes back" idea. For Rust-native extreme token compression, go straight to [rtk-ai/rtk](https://github.com/rtk-ai/rtk).
 
 ---
 
 ## 🏗️ Architecture Design
-
 OAW's core is **Context Routing**: `CLAUDE.md` acts as a Master Router, dynamically deciding which lane to load based on the current task. Skills and scripts handle the repetitive execution layer. Each session only injects the context that is actually needed right now — not the entire repo.
 
 ```mermaid
