@@ -519,6 +519,11 @@ def lint(strict=False):
     warnings = []
     raw_sources = _discover_raw_sources()
     knowledge_pages = _load_knowledge_pages()
+    placeholder_scan_pages = knowledge_pages
+    if strict:
+        # Strict mode is the opt-in "everything still carrying placeholders"
+        # gate, so include template topics and meta pages on that path only.
+        placeholder_scan_pages = _load_knowledge_pages(include_meta=True)
     pages_by_id = defaultdict(list)
     raw_sources_by_ref = {source["relative_path"]: source for source in raw_sources}
 
@@ -583,11 +588,12 @@ def lint(strict=False):
             # not a hard error — a repo with one curated note is fine.
             warnings.append(f"orphan page '{page['id']}': no sources and no topic links")
 
-    # Placeholder scan — skip template pages (build_origin: template) since
-    # they intentionally carry ${...} markers for users to fill in.
+    # Placeholder scan — default lint stays quiet on shipped template pages,
+    # but strict mode should still fail on a fresh install until placeholders
+    # are filled in.
     scan_paths = [
-        page["path"] for page in knowledge_pages
-        if page.get("build_origin") != "template"
+        page["path"] for page in placeholder_scan_pages
+        if strict or page.get("build_origin") != "template"
     ]
     scan_paths.extend(source["path"] for source in raw_sources)
     for path, lineno, desc, snippet in _scan_placeholders(scan_paths):
