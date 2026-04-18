@@ -77,7 +77,7 @@ flowchart LR
 
 ### 🛡️ Harness Engineering — Three Load-Bearing Principles
 
-This is not a convenience toolbox. Three engineering principles hold it together:
+Each one maps to a concrete file or script, and fixes a specific LLM failure mode:
 
 | Principle | Implementation | Problem Solved |
 |-----------|---------------|----------------|
