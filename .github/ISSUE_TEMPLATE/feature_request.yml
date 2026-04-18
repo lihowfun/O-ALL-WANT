@@ -1,0 +1,52 @@
+name: ✨ Feature request / idea
+description: Propose a new skill, CLI flag, lane, or architectural change.
+labels: ["enhancement", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        OAW is deliberately opinionated — not every "why not add X" fits.
+        Please frame ideas in terms of the problem, not the solution.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What AI coding session pain point are you hitting that OAW doesn't already address?
+      placeholder: |
+        When I <workflow>, I have to <manual thing> every session because OAW doesn't <gap>.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed direction (optional)
+      description: If you already have a shape in mind — new skill file, new CLI flag, new knowledge page, adjustment to CLAUDE.md lane routing, etc.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: layer
+    attributes:
+      label: Which layer does this touch?
+      options:
+        - Skills (.agents/skills/*)
+        - Knowledge (docs/knowledge/*)
+        - CLI (context_hub.py / wiki_sync.py)
+        - CLAUDE.md routing / lanes
+        - Installer / adapter
+        - Docs / README
+        - Not sure
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: alignment
+    attributes:
+      label: Alignment check
+      options:
+        - label: I've checked `docs/Design_Principles.md` and think this fits the thin-harness / fat-skills philosophy.
+          required: false
+        - label: I've searched existing issues and skills for something similar.
+          required: true

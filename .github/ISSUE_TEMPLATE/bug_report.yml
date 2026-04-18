@@ -1,0 +1,57 @@
+name: 🐛 Bug report
+description: Something in OAW doesn't work as the README / CLI reference says it should.
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping OAW get better. A short, specific repro beats a long story.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What did you run, what did you expect, what did you actually get?
+      placeholder: |
+        Ran `bash OAW/install.sh` in a fresh project. Expected it to list conflicts and prompt, got <thing>.
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Minimal reproduction
+      description: Exact commands someone can paste into a fresh shell to see the bug.
+      render: bash
+      placeholder: |
+        mkdir /tmp/oaw-bug && cd /tmp/oaw-bug && git init
+        git clone https://github.com/lihowfun/O-ALL-WANT.git OAW
+        bash OAW/install.sh
+        python3 scripts/context_hub.py <command>
+    validations:
+      required: true
+
+  - type: input
+    id: agent
+    attributes:
+      label: Which agent / IDE
+      description: Claude Code, Codex, Copilot, Cursor, Windsurf, Gemini, or N/A for CLI-only
+      placeholder: Claude Code 2.0.x
+    validations:
+      required: false
+
+  - type: input
+    id: os
+    attributes:
+      label: OS + Python version
+      placeholder: macOS 14.5 / Python 3.11.7
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs or full error output
+      render: shell
+    validations:
+      required: false
