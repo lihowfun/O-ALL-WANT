@@ -208,8 +208,8 @@ def _raw_source_count():
 
 # ─── Search ───────────────────────────────────────────────────────────────────
 
-def search(query, compact=False):
-    """Search knowledge base topics by keyword."""
+def search(query, compact=False, include_memory=False):
+    """Search knowledge base topics by keyword, optionally including memory entries."""
     if not compact:
         print(f"Searching for '{query}' in {DOCS_DIR}...")
     if not os.path.exists(DOCS_DIR):
@@ -234,7 +234,8 @@ def search(query, compact=False):
             results.append((filename.replace(".md", ""), page["title"], annotations))
 
     if not results:
-        print("0 topics" if compact else "No matches found. Try broadening the search.")
+        if not compact:
+            print("No matches found in knowledge base.")
     elif compact:
         print(f"{len(results)} topics: {', '.join(t[0] for t in results)}")
     else:
@@ -247,6 +248,27 @@ def search(query, compact=False):
             ann_str = f"[{ann_count}]" if ann_count > 0 else ""
             print(f"  {topic:<30} | {ann_str:>5} | {title}")
         print()
+
+    if include_memory and os.path.exists(MEMORY_FILE):
+        with open(MEMORY_FILE, "r", encoding="utf-8") as f:
+            mem_content = f.read()
+        entries = re.split(r"(?=^## \[)", mem_content, flags=re.MULTILINE)
+        entries = [e for e in entries if e.startswith("## [")]
+        mem_hits = [e for e in entries if not query or query.lower() in e.lower()]
+        if mem_hits:
+            if compact:
+                print(f"{len(mem_hits)} memory: {', '.join(e.splitlines()[0][:50] for e in mem_hits)}")
+            else:
+                print(f"  MATCHING MEMORY ENTRIES ({len(mem_hits)} found)")
+                print(f"  {'-'*40}")
+                for entry in mem_hits:
+                    print(f"    {entry.strip().split(chr(10))[0]}")
+                print()
+        elif not compact and not results:
+            print("No matches found. Try broadening the search.")
+
+    if not include_memory and not results and compact:
+        print("0 topics")
 
 
 # ─── Get ──────────────────────────────────────────────────────────────────────
@@ -310,7 +332,11 @@ def memory_add(note):
     tag_match = re.match(r'^\[(\w+)\]', note)
     tag = tag_match.group(1) if tag_match else "NOTE"
 
-    entry = f"\n## [{timestamp}] [{tag}] {_strip_tag_prefix(note) if tag_match else note}\n"
+    note_body = _strip_tag_prefix(note) if tag_match else note
+    # Strip a duplicate leading date if the user already included today's date
+    note_body = re.sub(r'^\d{4}-\d{2}-\d{2}\s+', '', note_body)
+
+    entry = f"\n## [{timestamp}] [{tag}] {note_body}\n"
 
     os.makedirs(os.path.dirname(MEMORY_FILE), exist_ok=True)
 
@@ -484,6 +510,105 @@ def bootstrap(compact=False):
     search("")
 
 
+# ─── Setup ────────────────────────────────────────────────────────────────────
+
+_PLACEHOLDER_RE = re.compile(r'\$\{[A-Za-z0-9_]+\}')
+_SETUP_FILES = ["AI_CONTEXT.md", "CLAUDE.md", "VERSION.json", "ROADMAP.md"]
+
+
+def setup():
+    """Audit unfilled ${...} placeholders in key project files."""
+    found_any = False
+    for filename in _SETUP_FILES:
+        filepath = os.path.join(BASE_DIR, filename)
+        if not os.path.exists(filepath):
+            continue
+        with open(filepath, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+        hits = []
+        seen = set()
+        for lineno, line in enumerate(lines, 1):
+            for m in _PLACEHOLDER_RE.finditer(line):
+                ph = m.group()
+                if ph not in seen:
+                    seen.add(ph)
+                    hits.append((lineno, ph))
+        if hits:
+            found_any = True
+            print(f"\n  📄 {filename}")
+            for lineno, ph in hits:
+                print(f"     line {lineno}: {ph}")
+    if found_any:
+        print("\n  To fill a placeholder, tell your agent:")
+        print('  "Fill ${PROJECT_NAME} with MyProject in AI_CONTEXT.md"')
+        print("  or edit the files directly in your editor.\n")
+    else:
+        print("✅ No unfilled placeholders found in key project files.")
+
+
+# ─── Context Lane ─────────────────────────────────────────────────────────────
+
+_LANE_NAMES = ("operational", "wiki", "execution", "debug")
+
+
+def context_lane(lane):
+    """Output the context files for a specific routing lane."""
+    if lane not in _LANE_NAMES:
+        print(f"Unknown lane '{lane}'. Available: {', '.join(_LANE_NAMES)}")
+        return
+
+    def _print_file(filepath, label=None, max_lines=None):
+        if not os.path.exists(filepath):
+            return
+        with open(filepath, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+        if max_lines:
+            lines = lines[:max_lines]
+        print(f"\n{'─'*60}")
+        print(f"  {label or os.path.relpath(filepath, BASE_DIR)}")
+        print(f"{'─'*60}")
+        print("".join(lines))
+
+    if lane == "operational":
+        _print_file(os.path.join(BASE_DIR, "AI_CONTEXT.md"))
+        _print_file(os.path.join(BASE_DIR, "ROADMAP.md"), max_lines=60,
+                    label="ROADMAP.md (first 60 lines)")
+        _print_file(os.path.join(BASE_DIR, "VERSION.json"))
+        if os.path.exists(MEMORY_FILE):
+            print(f"\n{'─'*60}")
+            print("  .agents/memory.md (last 5 entries)")
+            print(f"{'─'*60}")
+            memory_show(5)
+
+    elif lane == "wiki":
+        _print_file(os.path.join(DOCS_DIR, "index.md"))
+        print(f"\n{'─'*60}")
+        print("  Available knowledge topics")
+        print(f"{'─'*60}")
+        search("")
+
+    elif lane == "execution":
+        skills_dir = os.path.join(BASE_DIR, ".agents", "skills")
+        print(f"\n{'─'*60}")
+        print("  Available skills (.agents/skills/)")
+        print(f"{'─'*60}")
+        if os.path.exists(skills_dir):
+            for fname in sorted(os.listdir(skills_dir)):
+                if fname.endswith(".md") and not fname.startswith("_") \
+                        and fname.lower() != "readme.md":
+                    print(f"  /{fname[:-3]}")
+        else:
+            print("  No skills directory found.")
+
+    elif lane == "debug":
+        _print_file(os.path.join(DOCS_DIR, "Known_Limitations.md"))
+        if os.path.exists(MEMORY_FILE):
+            print(f"\n{'─'*60}")
+            print("  .agents/memory.md (last 5 entries)")
+            print(f"{'─'*60}")
+            memory_show(5)
+
+
 # ─── Main ─────────────────────────────────────────────────────────────────────
 
 def main():
@@ -492,17 +617,20 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Commands:
-  %(prog)s search "query"              Search knowledge topics
-  %(prog)s search --compact            One-line topic list (saves tokens)
-  %(prog)s get Topic_Name              Fetch a topic's full content
-  %(prog)s annotate Topic "note"       Annotate a topic with a finding
-  %(prog)s memory add "[TAG] note"     Add a memory entry
-  %(prog)s memory show --last 5        Show recent decisions
-  %(prog)s lesson "mistake" "fix"      Record a lesson learned
-  %(prog)s status                      One-screen project status
-  %(prog)s status --compact            One-line status (saves tokens)
-  %(prog)s bootstrap                   Get new-session context dump
-  %(prog)s bootstrap --compact         Minimal bootstrap (saves tokens)
+  %(prog)s search "query"                   Search knowledge topics
+  %(prog)s search --include-memory          Also search .agents/memory.md
+  %(prog)s search --compact                 One-line topic list (saves tokens)
+  %(prog)s get Topic_Name                   Fetch a topic's full content
+  %(prog)s annotate Topic "note"            Annotate a topic with a finding
+  %(prog)s memory add "[TAG] note"          Add a memory entry
+  %(prog)s memory show --last 5             Show recent decisions
+  %(prog)s lesson "mistake" "fix"           Record a lesson learned
+  %(prog)s status                           One-screen project status
+  %(prog)s status --compact                 One-line status (saves tokens)
+  %(prog)s bootstrap                        Get new-session context dump
+  %(prog)s bootstrap --compact              Minimal bootstrap (saves tokens)
+  %(prog)s setup                            Audit unfilled placeholders
+  %(prog)s context --lane operational       Output context for a routing lane
         """
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -511,6 +639,8 @@ Commands:
     p_search = subparsers.add_parser("search", help="Search knowledge base topics.")
     p_search.add_argument("query", nargs="?", default="", help="Query to search for.")
     p_search.add_argument("--compact", action="store_true", help="One-line output (saves tokens).")
+    p_search.add_argument("--include-memory", action="store_true",
+                          help="Also search .agents/memory.md entries.")
 
     # Get
     p_get = subparsers.add_parser("get", help="Get full content of a topic.")
@@ -544,11 +674,22 @@ Commands:
     p_bootstrap = subparsers.add_parser("bootstrap", help="Output new-session bootstrap context.")
     p_bootstrap.add_argument("--compact", action="store_true", help="Minimal output (saves tokens).")
 
+    # Setup
+    subparsers.add_parser("setup", help="Audit unfilled ${...} placeholders in key project files.")
+
+    # Context lane
+    p_context = subparsers.add_parser("context", help="Output context files for a routing lane.")
+    p_context.add_argument(
+        "--lane", required=True,
+        choices=list(_LANE_NAMES),
+        help="Lane to load: operational, wiki, execution, or debug.",
+    )
+
     args = parser.parse_args()
     os.makedirs(DOCS_DIR, exist_ok=True)
 
     if args.command == "search":
-        search(args.query, compact=args.compact)
+        search(args.query, compact=args.compact, include_memory=args.include_memory)
     elif args.command == "get":
         get(args.topic)
     elif args.command == "annotate":
@@ -564,6 +705,10 @@ Commands:
         status(compact=args.compact)
     elif args.command == "bootstrap":
         bootstrap(compact=args.compact)
+    elif args.command == "setup":
+        setup()
+    elif args.command == "context":
+        context_lane(args.lane)
 
 
 if __name__ == "__main__":

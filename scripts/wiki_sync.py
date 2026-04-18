@@ -244,7 +244,9 @@ def _extract_ai_annotations(existing_content):
 
 def _render_topic_page(topic_id, sources, existing_annotations=""):
     """Compile all raw sources for a topic into one durable knowledge page."""
-    title = _topic_title(topic_id)
+    # Prefer the first raw source's title (preserves user's casing); fall back
+    # to deriving from the topic_id.
+    title = next((s["title"] for s in sources if s.get("title")), None) or _topic_title(topic_id)
     related_topics = sorted(
         topic
         for topic in set(
@@ -561,7 +563,7 @@ def lint(strict=False):
     for page in knowledge_pages:
         for related_topic in page["related_topics"]:
             if related_topic not in known_page_ids:
-                issues.append(f"broken related topic in {page['filename']}: {related_topic}")
+                warnings.append(f"unresolved related topic in {page['filename']}: {related_topic}")
             inbound_links[related_topic] += 1
 
         page_date = _parse_date(page["last_updated"])
@@ -581,9 +583,12 @@ def lint(strict=False):
             # not a hard error — a repo with one curated note is fine.
             warnings.append(f"orphan page '{page['id']}': no sources and no topic links")
 
-    # Placeholder scan — over knowledge pages and raw sources. Skip fixture
-    # files (leading underscore) since those intentionally carry placeholders.
-    scan_paths = [page["path"] for page in knowledge_pages]
+    # Placeholder scan — skip template pages (build_origin: template) since
+    # they intentionally carry ${...} markers for users to fill in.
+    scan_paths = [
+        page["path"] for page in knowledge_pages
+        if page.get("build_origin") != "template"
+    ]
     scan_paths.extend(source["path"] for source in raw_sources)
     for path, lineno, desc, snippet in _scan_placeholders(scan_paths):
         rel = os.path.relpath(path, BASE_DIR)

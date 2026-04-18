@@ -2,6 +2,7 @@
 id: Architecture_Decisions
 title: Architecture Decisions
 page_type: topic
+build_origin: template
 source_refs: []
 last_updated: YYYY-MM-DD
 related_topics:

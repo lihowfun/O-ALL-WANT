@@ -254,18 +254,18 @@ Running `wiki_sync.py lint` revealed:
 
 ## OAW Improvement Suggestions
 
-Based on test findings, prioritized list of improvements:
+Based on test findings, prioritized list of improvements. **Items marked ✅ were shipped in the 2026-04-18 follow-up commit.**
 
-| Priority | Issue | Suggested Fix | File |
-|----------|-------|--------------|------|
-| P0 | Fresh install: all files show `${VERSION}`, `${CURRENT_PHASE}` placeholders — agent cannot orient to actual project | Add a `context_hub.py setup` interactive command (or `--init` flag) that prompts for project name, language, version, phase and fills all `${...}` markers automatically | `scripts/context_hub.py` |
-| P0 | `search` only scans `docs/knowledge/` — decisions in `.agents/memory.md` are invisible to search | Add `--include-memory` flag to `search`, or make the default search span both memory and wiki | `scripts/context_hub.py` |
-| P1 | `wiki_sync lint` exits 1 on a fresh install due to 30 unfilled template placeholders in shipped knowledge files | Either ship knowledge templates without placeholder content (e.g., empty sections with comments), or add a `--strict` mode that skips uninitialized templates | `scripts/wiki_sync.py`, `templates/docs/knowledge/*.md` |
-| P1 | `related_topics` in raw notes treated as OAW topic IDs by lint — `security` and `session_management` fail even though they are valid free-form concepts | Downgrade broken-related-topic check from error to warning, or document that `related_topics` must only contain existing topic IDs | `scripts/wiki_sync.py` |
-| P1 | No CLI shortcut for lane-based context loading — routing is prose-only | Add `context_hub.py context --lane [operational|wiki|execution|debug]` that outputs the correct file set for that lane | `scripts/context_hub.py` |
-| P2 | Date redundancy in memory entries: `memory add "[DECISION] 2026-04-18 ..."` creates `## [2026-04-18] [DECISION] 2026-04-18 ...` with date appearing twice | Strip leading date from note body if it matches today's timestamp pattern | `scripts/context_hub.py` (`memory_add`) |
-| P2 | `wiki_sync.py refresh` compiled topic title is lowercased: `title: auth strategy` instead of `Auth Strategy Decisions` from the raw note's YAML `title` field | Preserve the raw note's `title` field verbatim in the compiled output | `scripts/wiki_sync.py` |
-| P2 | No lane audit trail — cannot verify which files an agent actually loaded | Add optional `context_hub.py audit log [lane]` command to record session lane usage | `scripts/context_hub.py` |
+| Priority | Issue | Fix | Status |
+|----------|-------|-----|--------|
+| P0 | Fresh install: every file shows `${VERSION}` / `${CURRENT_PHASE}` placeholders — agent cannot orient | `context_hub.py setup` — audits every unfilled `${...}` in CLAUDE.md, AI_CONTEXT.md, VERSION.json, ROADMAP.md with line numbers, prompts the agent to fill them | ✅ Shipped |
+| P0 | `search` only scans `docs/knowledge/` — decisions in `.agents/memory.md` invisible | `search --include-memory` flag scans memory entries alongside the wiki | ✅ Shipped |
+| P1 | `wiki_sync lint` exits 1 on fresh install due to 30 unfilled template placeholders | Shipped template pages now tagged `build_origin: template`; lint's placeholder scanner skips them | ✅ Shipped |
+| P1 | `related_topics` in raw notes treated as OAW topic IDs — fails with "broken related topic" for free-form concepts | Downgraded from error to warning (`unresolved related topic`) | ✅ Shipped |
+| P1 | No CLI shortcut for lane-based context loading — routing is prose-only | `context_hub.py context --lane [operational\|wiki\|execution\|debug]` outputs the correct file set for each lane | ✅ Shipped |
+| P2 | Date redundancy: `memory add "[DECISION] 2026-04-18 ..."` produced `## [2026-04-18] [DECISION] 2026-04-18 ...` with date duplicated | `memory_add` now strips leading `YYYY-MM-DD` from the note body | ✅ Shipped |
+| P2 | `wiki_sync refresh` lowercased the compiled title (`auth strategy` instead of `Auth Strategy Decisions`) | `_render_topic_page` now prefers the raw source's `title` field | ✅ Shipped |
+| P2 | No lane audit trail — cannot verify which files an agent actually loaded | Add optional `context_hub.py audit log [lane]` command | Open |
 
 ---
 
