@@ -20,25 +20,43 @@
 
 This is a harness for unapologetically greedy agentic coders.
 
-If you bounce between AI coding platforms, obsess over token efficiency, and have zero patience for goldfish-brain agents, this repo is for you. If you are tired of agents forgetting the project every session, re-reading the whole codebase, and burning through expensive tokens before you even reach the real task, OAW is meant to be the armor layer between you and that chaos.
+If you bounce between AI coding platforms, obsess over token efficiency, and have zero patience for goldfish-brain agents — this repo is for you.
 
-This project came out of several late nights spent pushing Claude Code and Codex far past reasonable working hours, then remixing ideas from self-improving harnesses, Context Hub, MemPalace, Karpathy-style LLM Wiki workflows, and Garry Tan's thin harness / fat skills framing into one deliberately overloaded setup.
+Tired of agents forgetting the project every session, re-reading the whole codebase, and burning expensive tokens before the real task even starts? OAW is meant to be the armor layer between you and that chaos.
 
-The goal is simple: every expensive token should go toward real reasoning and useful output — not toward replaying finished work or re-explaining your project structure from scratch.
+It came out of several late nights pushing Claude Code and Codex past reasonable working hours, then remixing ideas from self-improving harnesses, Context Hub, MemPalace, Karpathy-style LLM Wiki workflows, and Garry Tan's thin-harness / fat-skills framing into one deliberately overloaded setup.
 
-My own use case is pretty consistent: whenever I start a new agentic coding project, or even just a directory I know I will keep handing to AI, I bootstrap it with the OAW harness first. That way, when limits, queue pressure, or shared usage force a fresh session, the next agent can pick up quickly instead of making me restate the whole project again.
+The goal is simple: **every expensive token should go toward real reasoning and useful output** — not toward replaying finished work or re-explaining your project structure from scratch.
 
-**Only want one piece of this?** Fork the original project that does that one thing best (listed below in Source Lineage). This repo is for people who want the whole hot pot.
+My own use case: whenever I start a new agentic coding project — or even just a directory I know I'll keep handing to AI — I bootstrap it with OAW first. When limits, queue pressure, or shared usage force a fresh session, the next agent picks up quickly instead of making me restate the whole project again.
+
+> **Only want one piece of this?** Fork the original project that does that one thing best (see Source Lineage below). This repo is for people who want the whole hot pot.
+
+---
 
 ## 🍲 What's in the hot pot?
 
-- 🔄 **Self-improving logic** — `VERSION.json`, `ROADMAP.md`, and `do_not_rerun` give the agent a sense of progress so it does not spin in circles or rerun finished work. OAW also borrows the `self-improving-agent` / ClawHub workflow of logging mistakes, preserving corrections, and learning over time.
-- 📉 **Token optimizer (Context Hub + RTK-inspired output trimming)** — `CLAUDE.md` routes by lane and only loads the context that matters right now, while `context_hub.py` handles search, annotate, and memory operations. `--compact` carries the idea that output should be shortened too when full prose is unnecessary.
-- ⚡ **thin harness / fat skills (Garry Tan)** — repeated workflows live in `.agents/skills/*.md`, not in one giant prompt blob. OAW keeps that spirit, then layers dynamic routing on top.
-- 🧠 **Memory Palace** — the agent gets durable cross-session memory instead of snapping back to zero every conversation. OAW uses `.agents/memory.md` and structured wrap-up discipline to hold that state.
-- 📚 **Auto-evolving LLM Wiki (Karpathy concept)** — raw notes in `docs/raw/` get compiled into durable knowledge pages in `docs/knowledge/`. The wiki grows naturally with your work: after any meaningful session, just tell the agent "sync today's findings to the wiki" and it calls `wiki_sync.py refresh` to distill memory entries and raw notes into a structured knowledge page. No manual reorganization needed.
+### 🔄 Self-improving logic
 
-This repo will keep evolving. Whenever something genuinely useful fits OAW cleanly, it goes in the pot.
+`VERSION.json` + `ROADMAP.md` + `do_not_rerun` give the agent a sense of progress so it doesn't spin in circles. Borrowed from the `self-improving-agent` / ClawHub workflow: log mistakes, preserve corrections, learn over time.
+
+### 📉 Token optimizer — Context Hub + RTK-inspired output trimming
+
+`CLAUDE.md` routes by lane and only loads what matters right now. `context_hub.py` handles search, annotate, and memory. `--compact` extends the idea to output: shorten what comes back when full prose is unnecessary.
+
+### ⚡ thin harness / fat skills (Garry Tan)
+
+Repeated workflows live in `.agents/skills/*.md`, not in one giant prompt blob. OAW keeps that spirit and layers dynamic routing on top.
+
+### 🧠 Memory Palace
+
+Durable cross-session memory instead of snapping back to zero every conversation. `.agents/memory.md` + structured wrap-up discipline hold the state.
+
+### 📚 Auto-evolving LLM Wiki (Karpathy concept)
+
+Raw notes in `docs/raw/` compile into durable pages in `docs/knowledge/`. After any meaningful session, just tell the agent _"sync today's findings to the wiki"_ — it calls `wiki_sync.py refresh` to distill memory entries into a structured knowledge page. No manual reorganization.
+
+---
 
 ### 🤝 Optional companion: RTK (Rust Token Killer)
 
@@ -69,9 +87,9 @@ This is not a convenience toolbox. Three engineering principles hold it together
 
 | Principle | Implementation | Problem Solved |
 |-----------|---------------|----------------|
-| **Context Fragmentation**<br/>Dynamic context partitioning | Lane routing — only load files relevant to the current task type | Prevents **Lost in the Middle** degradation in long-context sessions |
-| **Deterministic State Control**<br/>State machine for agent progress | `VERSION.json` + `do_not_rerun` enforce a development state machine | Stops agents from rerunning finished work or looping in autonomous repair |
-| **Knowledge Synthesis**<br/>Short-term → long-term distillation | `memory.md` (decisions) → `knowledge/` (durable wiki) auto-compiled by `wiki_sync.py` | Turns ephemeral Agentic Workflow outputs into reusable institutional knowledge |
+| **[Context Fragmentation](docs/knowledge/Harness_Engineering_Context_Fragmentation.md)**<br/>Dynamic context partitioning | Lane routing — only load files relevant to the current task type | Prevents **Lost in the Middle** degradation in long-context sessions |
+| **[Deterministic State Control](docs/knowledge/Harness_Engineering_Deterministic_State.md)**<br/>State machine for agent progress | `VERSION.json` + `do_not_rerun` enforce a development state machine | Stops agents from rerunning finished work or looping in autonomous repair |
+| **[Knowledge Synthesis](docs/knowledge/Harness_Engineering_Knowledge_Synthesis.md)**<br/>Short-term → long-term distillation | `memory.md` (decisions) → `knowledge/` (durable wiki) auto-compiled by `wiki_sync.py` | Turns ephemeral Agentic Workflow outputs into reusable institutional knowledge |
 
 ---
 

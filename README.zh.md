@@ -21,27 +21,47 @@
 
 這是一個專為「極度貪心」的 Agentic Coding 使用者量身打造的專案裝甲 (Harness)。
 
-身為一個在不同 AI 平台間橫跳、追求 Tokenmaxxing 的「AI 渣男」，我最不能容忍的就是 Agent 的金魚腦。如果你也受夠了 Agent 動不動就失憶、瘋狂燃燒你昂貴的 Token，導致你還沒寫到核心功能就先看到那句令人崩潰的 `You have hit your limit`，那麼你大概也會想要這套裝甲。
+身為一個在不同 AI 平台間橫跳、追求 Tokenmaxxing 的「AI 渣男」，我最不能容忍的就是 Agent 的金魚腦。
 
-本專案是我在數個下班後的夜晚，透過瘋狂奴役 Claude Code 與 Codex，把市面上幾個最火熱的 Harness Repo 與大神概念整合重構而成的結晶。我把 Self-improving、Context Hub、MemPalace、Karpathy Wiki、thin harness / fat skills 這些精華全部塞進來，目的只有一個：讓你的每一顆高級 Token 都花在真正重要的邏輯輸出，而不是浪費在「重跑已完成的內容」或「重新解釋專案架構」上。
+如果你也受夠了 Agent 動不動就失憶、瘋狂燃燒你昂貴的 Token，還沒寫到核心功能就先看到 `You have hit your limit`——那麼你大概也會想要這套裝甲。
 
-我自己的用法其實很固定：只要有新的 agentic coding 專案要開，或某個目錄準備長期丟給 AI 協作，我就先拿 OAW 這套骨架幫它把 harness 架好。這樣就算中途因為額度、排隊、多人共用而被迫重開 session，新 agent 也能快速接手，不用每次從零重新講一次。
+本專案是我在數個下班後的夜晚，透過瘋狂奴役 Claude Code 與 Codex，把市面上幾個最火熱的 Harness Repo 與大神概念整合重構而成的結晶。Self-improving、Context Hub、MemPalace、Karpathy Wiki、thin harness / fat skills 全部塞進來，目的只有一個：**讓每一顆高級 Token 都花在真正重要的邏輯輸出**，而不是浪費在「重跑已完成的內容」或「重新解釋專案架構」上。
 
-**只需要其中一樣?** 請直接 fork 對應的原作(列在最下面的 Source Lineage)；但如果你跟我一樣全都要，這鍋就是煮給你吃的。
+我自己的用法很固定：新的 agentic coding 專案要開，或某個目錄準備長期丟給 AI 協作，我就先拿 OAW 把 harness 架好。就算中途因為額度、排隊、多人共用而被迫重開 session，新 agent 也能快速接手，不用每次從零重新講一次。
+
+> **只需要其中一樣?** 請直接 fork 對應的原作（列在最下面的 Source Lineage）。但如果你跟我一樣全都要，這鍋就是煮給你吃的。
+
+---
 
 ## 🍲 內容大雜燴清單
 
-- 🔄 **自我演進邏輯 (Self-improving)** — 用 `VERSION.json`、`ROADMAP.md`、`do_not_rerun` 讓 Agent 知道目前進度在哪，不要原地打轉或重跑已完成的內容；同時也整合了 `self-improving-agent` / ClawHub skill 那種「記錄錯誤、保留修正、持續學習」的 workflow 概念。
-- 📉 **Token 優化器 (Context Hub + RTK-inspired output trimming)** — 讓 `CLAUDE.md` 當 router，只把當下需要的 lane 和檔案送進 context，再用 `context_hub.py` 補搜尋、annotate、memory 操作；而 `--compact` 則吸收了 RTK 那種「回來的東西也要壓短」的思路。靈感核心來自 Andrew Ng 的 Context Hub，加上 RTK 類型的 output-side token reduction 概念。
-- ⚡ **thin harness / fat skills (Garry Tan)** — 把高頻流程丟進 `.agents/skills/*.md`，不要把所有 SOP 都塞回一份超肥 prompt。OAW 沿用這個方向，但再加上 lane routing。
-- 🧠 **記憶宮殿 (Memory Palace)** — 讓 Agent 擁有跨 Session 的持久化記憶，解決「不同對話不能傳承」的斷片問題。OAW 用 `.agents/memory.md` 和 wrap-up discipline 承接這件事。
-- 📚 **自動演進 LLM Wiki (Karpathy Concept)** — 奴役 AI 把開發碎筆記從 `docs/raw/` 編進 `docs/knowledge/`。wiki 跟著你的工作自然增長：每次有重要結論，直接跟 agent 說「把這次的發現同步到 wiki」，它就會跑 `wiki_sync.py refresh`，把 `memory.md` 的記錄和 `docs/raw/` 的筆記蒸餾成結構化知識頁——不需要另外安排整理時間。
+### 🔄 自我演進邏輯 (Self-improving)
 
-這個 repo 會持續更新；之後看到真的好用、而且能融進 OAW 的做法，我就會繼續往這鍋裡加料。
+`VERSION.json` + `ROADMAP.md` + `do_not_rerun` 讓 Agent 知道進度在哪，不會原地打轉或重跑已完成的內容。整合 `self-improving-agent` / ClawHub skill 的「記錄錯誤、保留修正、持續學習」workflow。
+
+### 📉 Token 優化器 — Context Hub + RTK-inspired output trimming
+
+`CLAUDE.md` 當 router，只把當下需要的 lane 和檔案送進 context；`context_hub.py` 補搜尋、annotate、memory 操作。`--compact` 吸收「回傳內容也要壓短」的思路。
+
+### ⚡ thin harness / fat skills (Garry Tan)
+
+把高頻流程丟進 `.agents/skills/*.md`，不要塞進一份超肥 prompt。OAW 沿用這個方向，再加上 lane routing。
+
+### 🧠 記憶宮殿 (Memory Palace)
+
+跨 Session 的持久化記憶，解決「不同對話不能傳承」的斷片問題。`.agents/memory.md` + wrap-up discipline 承接這件事。
+
+### 📚 自動演進 LLM Wiki (Karpathy Concept)
+
+把開發碎筆記從 `docs/raw/` 編進 `docs/knowledge/`。每次有重要結論，直接跟 agent 說 _「把這次的發現同步到 wiki」_，它就會跑 `wiki_sync.py refresh`，把 memory 和 raw 筆記蒸餾成結構化知識頁——不需要另外安排整理時間。
+
+---
 
 ### 🤝 可選搭配：RTK (Rust Token Killer)
 
 OAW 的 `--compact` 已把「輸出也要壓短」的概念融進來。若想要 Rust 原生的極致 token 壓縮，請直接看 [rtk-ai/rtk](https://github.com/rtk-ai/rtk)。
+
+---
 
 ## 🏗️ 架構設計
 
@@ -66,9 +86,9 @@ flowchart LR
 
 | 設計原則 | 實作方式 | 解決的問題 |
 |---------|---------|-----------|
-| **Context Fragmentation**<br/>上下文分流 | Lane 動態路由，按任務類型只載入相關檔案 | 避免 LLM 在長代碼中出現 **Lost in the Middle** 現象 |
-| **Deterministic State Control**<br/>確定性狀態控制 | `VERSION.json` + `do_not_rerun` 構成開發狀態機 | 防止 Agent 在自主修復時重跑已完成任務或陷入無限循環 |
-| **Knowledge Synthesis**<br/>知識蒸餾 | `memory.md`（短期決策）→ `knowledge/`（長期知識）的自動編譯 pipeline | 把 Agentic Workflow 產生的碎片洞察沉澱為可重用資產 |
+| **[Context Fragmentation](docs/knowledge/Harness_Engineering_Context_Fragmentation.md)**<br/>上下文分流 | Lane 動態路由，按任務類型只載入相關檔案 | 避免 LLM 在長代碼中出現 **Lost in the Middle** 現象 |
+| **[Deterministic State Control](docs/knowledge/Harness_Engineering_Deterministic_State.md)**<br/>確定性狀態控制 | `VERSION.json` + `do_not_rerun` 構成開發狀態機 | 防止 Agent 在自主修復時重跑已完成任務或陷入無限循環 |
+| **[Knowledge Synthesis](docs/knowledge/Harness_Engineering_Knowledge_Synthesis.md)**<br/>知識蒸餾 | `memory.md`（短期決策）→ `knowledge/`（長期知識）的自動編譯 pipeline | 把 Agentic Workflow 產生的碎片洞察沉澱為可重用資產 |
 
 ---
 
@@ -104,6 +124,8 @@ Router 永遠叫 `CLAUDE.md`，但不同 agent 預設讀不同的規則檔：
 | **Gemini** | `GEMINI.md` | 同上 |
 
 嫌麻煩也可以直接跟 agent 說「先讀 CLAUDE.md」，效果一樣。
+
+---
 
 ## 💬 一句話調度 SOP
 

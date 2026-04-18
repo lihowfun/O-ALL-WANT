@@ -1,8 +1,12 @@
 ---
+id: Harness_Engineering_Context_Fragmentation
 title: Harness Engineering — Context Fragmentation
-type: architecture
-tags: [harness, context-routing, lane, lost-in-the-middle]
-updated: 2026-04-18
+page_type: topic
+build_origin: manual
+last_updated: 2026-04-18
+related_topics:
+  - Harness_Engineering_Deterministic_State
+  - Harness_Engineering_Knowledge_Synthesis
 ---
 
 # Context Fragmentation (上下文分流)

@@ -1,8 +1,12 @@
 ---
+id: Harness_Engineering_Deterministic_State
 title: Harness Engineering — Deterministic State Control
-type: architecture
-tags: [harness, version-json, state-machine, do-not-rerun]
-updated: 2026-04-18
+page_type: topic
+build_origin: manual
+last_updated: 2026-04-18
+related_topics:
+  - Harness_Engineering_Context_Fragmentation
+  - Harness_Engineering_Knowledge_Synthesis
 ---
 
 # Deterministic State Control (確定性狀態控制)

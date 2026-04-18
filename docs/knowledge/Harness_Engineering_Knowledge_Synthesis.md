@@ -1,8 +1,12 @@
 ---
+id: Harness_Engineering_Knowledge_Synthesis
 title: Harness Engineering — Knowledge Synthesis
-type: architecture
-tags: [harness, wiki-sync, memory, knowledge-distillation]
-updated: 2026-04-18
+page_type: topic
+build_origin: manual
+last_updated: 2026-04-18
+related_topics:
+  - Harness_Engineering_Context_Fragmentation
+  - Harness_Engineering_Deterministic_State
 ---
 
 # Knowledge Synthesis (知識蒸餾)
