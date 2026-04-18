@@ -133,8 +133,7 @@ bash OAW/install.sh     # at the "Overwrite?" prompt it prints each conflict; an
 
 Then paste to your agent:
 
-> Read `CLAUDE.md` first, then `AI_CONTEXT.md`.
-> Match the architecture to this project's real facts and fill them in, then tell me which repeated workflows belong in `.agents/skills/`.
+> Read `CLAUDE.md` first, then `AI_CONTEXT.md`. Based on OAW's architecture, audit this project and suggest how to optimize it.
 
 ### 🔌 Adapting to different agents / IDEs
 

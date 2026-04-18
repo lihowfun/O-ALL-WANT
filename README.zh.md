@@ -138,8 +138,7 @@ bash OAW/install.sh     # 跳「Overwrite?」時會列出每個衝突檔，按 N
 
 裝完對 agent 說：
 
-> 先讀 `CLAUDE.md`，再讀 `AI_CONTEXT.md`。
-> 對照架構，把這個專案的真實狀況填進來，然後告訴我哪些重複流程可以收進 `.agents/skills/`。
+> 先讀 `CLAUDE.md`，再讀 `AI_CONTEXT.md`，照 OAW 架構幫這個專案做優化建議。
 
 ### 🔌 不同 Agent / IDE 的對應方式
 
