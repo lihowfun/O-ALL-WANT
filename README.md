@@ -89,7 +89,7 @@ Each one maps to a concrete file or script, and fixes a specific LLM failure mod
 
 ## ⚡ Quick Start
 
-**🆕 Brand-new project**
+### 🆕 Brand-new project
 
 ```bash
 mkdir my-project && cd my-project && git init
@@ -97,9 +97,14 @@ git clone https://github.com/lihowfun/O-ALL-WANT.git OAW
 bash OAW/install.sh
 ```
 
-**📂 Existing project (may already have its own `CLAUDE.md` / `AI_CONTEXT.md`)**
+Then paste to your agent:
 
-`install.sh` **lists every managed file it would write** and waits for explicit `y/N` confirmation — nothing is silently overwritten. Want to eyeball OAW before committing? Browse [`example/minimal-project/`](example/minimal-project/) or `OAW/templates/` first.
+> Read `CLAUDE.md` first, then `AI_CONTEXT.md`.
+> I'm building ${describe what you're making}. Fill in the `AI_CONTEXT.md` scaffold accordingly, then suggest which repeated workflows belong in `.agents/skills/`.
+
+### 📂 Existing project
+
+If you already have your own `CLAUDE.md` / `AI_CONTEXT.md`, `install.sh` **lists every managed file it would write** and waits for `y/N` confirmation — nothing is silently overwritten. Want to eyeball OAW first? Browse [`example/minimal-project/`](example/minimal-project/) or `OAW/templates/`.
 
 ```bash
 cd /path/to/your/project
@@ -107,9 +112,7 @@ git clone https://github.com/lihowfun/O-ALL-WANT.git OAW
 bash OAW/install.sh     # at the "Overwrite?" prompt it prints each conflict; answer N to abort
 ```
 
----
-
-Then paste this to your agent:
+Then paste to your agent:
 
 > Read `CLAUDE.md` first, then `AI_CONTEXT.md`.
 > Match the architecture to this project's real facts and fill them in, then tell me which repeated workflows belong in `.agents/skills/`.
