@@ -7,6 +7,10 @@ All notable changes to this project will be documented in this file.
 First public release. Bundles the pre-launch hardening pass into a single
 tagged release.
 
+The short-lived internal `v1.0.1` label used during pre-launch hardening was
+never shipped as a public release; those changes were consolidated back into
+`v1.0.0` before tagging.
+
 ### Added
 - **Cross-agent/IDE compatibility table** — pointer files for Codex
   (`AGENTS.md`), Cursor (`.cursorrules`), Windsurf (`.windsurfrules`),
