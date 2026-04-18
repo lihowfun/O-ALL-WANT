@@ -29,7 +29,7 @@ It came out of too many late nights pushing Claude Code and Codex harder than an
 
 The goal is simple: **spend expensive tokens on real reasoning and real output** — not on replaying finished work or reteaching the project every time a session dies.
 
-My rule is simple: if a repo is going to be touched by AI more than once, I bootstrap it with OAW first. Then when rate limits, queue pressure, multi-agent handoffs, or a forced session reset show up, the next agent can keep moving instead of making me retell the whole story.
+My rule is simple: if a repo is going to be touched by AI more than once, I bootstrap it with OAW first. Then when rate limits, queue pressure, multi-agent workflows, or a forced session reset show up, the next agent can keep moving instead of making me retell the whole story.
 
 > **Only want one piece of this?** Fork the original project that does that one thing best (see Source Lineage below). This repo is for people who want the whole hot pot.
 
