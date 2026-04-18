@@ -11,6 +11,7 @@
 </div>
 
 > Why choose when you can have it all?
+> Kids choose. Builders want the whole stack.
 
 <p align="center">
   <img src="docs/assets/oboi_meme.png" width="400" alt="I want it all">
@@ -20,15 +21,15 @@
 
 This is a harness for unapologetically greedy agentic coders.
 
-If you bounce between AI coding platforms, obsess over token efficiency, and have zero patience for goldfish-brain agents — this repo is for you.
+If you hop between AI coding platforms and treat token efficiency like a competitive sport, you probably know the heartbreak: the chat gets long, the agent gets stupid, the session resets, and suddenly you are paying premium tokens just to re-explain the repo before any real work happens. You do not even reach the hard part before seeing `You have hit your limit`.
 
-Tired of agents forgetting the project every session, re-reading the whole codebase, and burning expensive tokens before the real task even starts? OAW is meant to be the armor layer between you and that chaos.
+OAW is my answer to that waste.
 
-It came out of several late nights pushing Claude Code and Codex past reasonable working hours, then remixing ideas from self-improving harnesses, Context Hub, MemPalace, Karpathy-style LLM Wiki workflows, and Garry Tan's thin-harness / fat-skills framing into one deliberately overloaded setup.
+It came out of too many late nights pushing Claude Code and Codex harder than any reasonable coworker should, then remixing self-improving workflows, Context Hub, MemPalace, Karpathy-style LLM Wiki patterns, and Garry Tan's thin-harness / fat-skills framing into one unapologetically overloaded setup.
 
-The goal is simple: **every expensive token should go toward real reasoning and useful output** — not toward replaying finished work or re-explaining your project structure from scratch.
+The goal is simple: **spend expensive tokens on real reasoning and real output** — not on replaying finished work or reteaching the project every time a session dies.
 
-My own use case: whenever I start a new agentic coding project — or even just a directory I know I'll keep handing to AI — I bootstrap it with OAW first. When limits, queue pressure, or shared usage force a fresh session, the next agent picks up quickly instead of making me restate the whole project again.
+My rule is simple: if a repo is going to be touched by AI more than once, I bootstrap it with OAW first. Then when rate limits, queue pressure, shared accounts, or a forced session reset show up, the next agent can keep moving instead of making me retell the whole story.
 
 > **Only want one piece of this?** Fork the original project that does that one thing best (see Source Lineage below). This repo is for people who want the whole hot pot.
 

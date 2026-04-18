@@ -19,15 +19,15 @@
 
 ## 為什麼會在這?
 
-這是一個專為「極度貪心」的 Agentic Coding 使用者量身打造的專案裝甲 (Harness)。
+這是一套專為「極度貪心」的 agentic coding 使用者打造的專案裝甲（harness）。
 
-身為一個在不同 AI 平台間橫跳、追求 Tokenmaxxing 的「AI 渣男」，我最不能容忍的就是 Agent 的金魚腦。
+如果你也是那種會在不同 AI 平台間橫跳、腦中只想著怎麼把每一顆高級 token 榨到最大的開發者，那你大概很熟悉這種心碎：對話一長，agent 開始失憶；session 一換，對專案的掌握度瞬間歸零。你還沒寫到真正重要的邏輯，就先被迫花一大堆 token 重新解釋背景，最後看到那句讓人崩潰的 `You have hit your limit`。
 
-如果你也受夠了 Agent 動不動就失憶、瘋狂燃燒你昂貴的 Token，還沒寫到核心功能就先看到 `You have hit your limit`——那麼你大概也會想要這套裝甲。
+如果你也受夠了這種資源內耗，OAW 就是我替這件事做出來的解藥。
 
-本專案是我在數個下班後的夜晚，透過瘋狂奴役 Claude Code 與 Codex，把市面上幾個最火熱的 Harness Repo 與大神概念整合重構而成的結晶。Self-improving、Context Hub、MemPalace、Karpathy Wiki、thin harness / fat skills 全部塞進來，目的只有一個：**讓每一顆高級 Token 都花在真正重要的邏輯輸出**，而不是浪費在「重跑已完成的內容」或「重新解釋專案架構」上。
+這專案是我在數個燃燒肝臟的下班夜晚，瘋狂奴役 Claude Code 與 Codex，然後把 self-improving、Context Hub、MemPalace、Karpathy-style LLM Wiki、thin harness / fat skills 這些精華硬是煮成同一鍋的結果。目的只有一個：**讓昂貴 token 用在真的值得的推理與輸出上**，而不是浪費在「重跑已完成的內容」或「重新解釋專案架構」上。
 
-我自己的用法很固定：新的 agentic coding 專案要開，或某個目錄準備長期丟給 AI 協作，我就先拿 OAW 把 harness 架好。就算中途因為額度、排隊、多人共用而被迫重開 session，新 agent 也能快速接手，不用每次從零重新講一次。
+我自己的用法很固定：只要是新的 agentic coding 專案，或某個我準備長期交給 AI 協作的目錄，我就先把 OAW 裝上去。這樣就算中途因為額度、排隊、多人共用帳號，甚至只是被迫換個 session，下一個 agent 也能快速接手，不用每次從零重新講一次。
 
 > **只需要其中一樣?** 請直接 fork 對應的原作（列在最下面的 Source Lineage）。但如果你跟我一樣全都要，這鍋就是煮給你吃的。
 
