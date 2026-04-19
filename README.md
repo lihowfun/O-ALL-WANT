@@ -27,11 +27,26 @@
   <img src="docs/assets/oboi_meme.png" width="400" alt="I want it all">
 </p>
 
-> **TL;DR** — OAW turns your repo's `CLAUDE.md` into an agent router: lane-based context loading + durable memory + auto-compiled wiki, so AI coding sessions **resume instead of restart**.
->
-> **Built for** developers hopping between Claude Code / Codex / Copilot / Cursor who want context to survive rate limits, session resets, and multi-agent workflows.
->
-> **3 steps**: `git clone` → `bash install.sh` → paste one line to your agent. Full Quick Start [below](#-quick-start).
+## 20-second pitch
+
+OAW installs a small, local harness into your repo:
+
+- **Context router**: `CLAUDE.md` tells the agent which lane to read instead of loading every doc.
+- **Durable memory**: `.agents/memory.md` carries decisions, bugs, and findings across sessions.
+- **Compiled wiki**: `docs/raw/` notes become searchable `docs/knowledge/` pages.
+- **Repeatable skills**: `.agents/skills/` keeps recurring workflows from becoming random prompt improv.
+
+**Measured result**: lane routing loads ~3k tokens per task lane instead of ~22.6k for the whole project — [**86-87% less startup context**](docs/knowledge/OAW_Session_Continuity_Test.md).
+
+```bash
+mkdir my-project && cd my-project && git init
+git clone https://github.com/lihowfun/O-ALL-WANT.git OAW
+bash OAW/install.sh
+```
+
+Then tell your agent:
+
+> Read `CLAUDE.md` first, then `AI_CONTEXT.md`. Match the architecture, fill in this project's actual state, then tell me which repeated workflows belong in `.agents/skills/`.
 
 ## Why are you here?
 
@@ -47,7 +62,7 @@ The goal is simple: **spend expensive tokens on real reasoning and real output**
 
 My rule is simple: if a repo is going to be touched by AI more than once, I bootstrap it with OAW first. Then when rate limits, queue pressure, multi-agent workflows, or a forced session reset show up, the next agent can keep moving instead of making me retell the whole story.
 
-> **Only want one piece of this?** Fork the original project that does that one thing best (see Source Lineage below). This repo is for people who want the whole hot pot.
+> **Only want one piece of this?** Fork the original project that does that one thing best (see Source Lineage below). This repo is for people who want the whole hot pot. For a quick positioning map, see [How OAW differs](docs/COMPARISON.md).
 
 ---
 
@@ -235,7 +250,7 @@ Deeper reading: [Architecture Origins](docs/Architecture_Origins.md) · [Design 
 ## Examples + Docs
 
 - Examples: [`example/`](example/) (start with `minimal-project/`)
-- [CLI Reference](docs/CLI_Reference.md) · [Skill Guide](docs/Skill_Guide.md) · [Wiki Sync Guide](docs/Wiki_Sync_Guide.md)
+- [How OAW differs](docs/COMPARISON.md) · [CLI Reference](docs/CLI_Reference.md) · [Skill Guide](docs/Skill_Guide.md) · [Wiki Sync Guide](docs/Wiki_Sync_Guide.md)
 - [CONTRIBUTING.md](CONTRIBUTING.md) · [CHANGELOG.md](CHANGELOG.md)
 
 ## License

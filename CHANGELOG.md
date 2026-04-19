@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+- Star-growth positioning pass: clearer README first screen, comparison guide,
+  and CI coverage for `example/minimal-project/` fixture drift.
+- Installer now creates pointer files for Codex (`AGENTS.md`), Cursor
+  (`.cursorrules`), Windsurf (`.windsurfrules`), and Gemini (`GEMINI.md`) so
+  the adapter table matches shipped behavior.
+
+### Changed
+- `example/minimal-project/` now includes the same core files as a fresh
+  `install.sh` run, including `wiki_sync.py`, `docs/raw/`, and wiki meta pages.
+- Public-facing wording now uses OAW as the current product name; older
+  "Agent Memory Framework" references are kept only as history.
+
 ## [1.0.0] — 2026-04-17
 
 First public release. Bundles the pre-launch hardening pass into a single

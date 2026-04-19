@@ -1,14 +1,15 @@
-# ROADMAP — Agent Memory Framework
+# ROADMAP — OAW
 
 ## Current Focus
 
-- Phase: **stable — v1.0.0 已發布**
-- Goal: 維持 v1.0.0 敘事一致、吸收 community feedback、避免版本漂移
+- Phase: **star-growth polish**
+- Goal: 強化 GitHub 首屏轉換、修補 example 漂移、讓 adapter 支援與 README 敘事一致
 - Definition of done:
   - ✅ 所有 root operational files 指向已發布的 v1.0.0 狀態
   - ✅ CHANGELOG 明確標示 pre-launch hardening 已併回 v1.0.0
-  - [ ] example/minimal-project skills 與 templates/ 對齊
-  - [ ] community feedback 整理成下一輪 roadmap
+  - ✅ example/minimal-project 與 fresh install 必要檔案對齊
+  - ✅ README 首屏 outcome-first 化
+  - [ ] GitHub topics / description / Discussions settings 合併後再調整
 
 ## Active Work
 
@@ -21,6 +22,7 @@
 | P1 | Design docs update | ✅ Done | Design_Principles.md 已有 Hybrid Router 命名演進 |
 | P1 | 正式 tag v1.0.0 | ✅ Done | 2026-04-18 |
 | P1 | 版本敘事一致化 | ✅ Done | 已明確將短暫的 v1.0.1 內部標記併回 v1.0.0 |
+| P1 | Star-growth polish | In progress | README 首屏、comparison doc、minimal-project drift CI |
 | P2 | Community feedback | Ongoing | Monitor issues and PRs |
 
 ## Next Milestones
