@@ -46,10 +46,34 @@ jobs:
           echo y | "$GITHUB_WORKSPACE/install.sh"
           popd > /dev/null
           test -f "$target/CLAUDE.md"
+          test -f "$target/AGENTS.md"
           test -f "$target/AI_CONTEXT.md"
+          test -f "$target/GEMINI.md"
+          test -f "$target/.cursorrules"
+          test -f "$target/.windsurfrules"
           test -f "$target/scripts/wiki_sync.py"
           test -f "$target/.agents/memory.md"
           test -f "$target/docs/knowledge/index.md"
+
+      - name: minimal-project example tracks fresh-install file set
+        run: |
+          target=$(mktemp -d)
+          pushd "$target" > /dev/null
+          echo y | "$GITHUB_WORKSPACE/install.sh"
+          popd > /dev/null
+
+          find "$target" -type f | sed "s#^$target/##" | sort > "$RUNNER_TEMP/oaw-installed-files.txt"
+          find example/minimal-project -type f | sed 's#^example/minimal-project/##' | sort > "$RUNNER_TEMP/oaw-example-files.txt"
+
+          missing=$(comm -23 "$RUNNER_TEMP/oaw-installed-files.txt" "$RUNNER_TEMP/oaw-example-files.txt")
+          if [ -n "$missing" ]; then
+            echo "::error::example/minimal-project is missing fresh-install files"
+            echo "$missing"
+            exit 1
+          fi
+
+          diff -u scripts/context_hub.py example/minimal-project/scripts/context_hub.py
+          diff -u scripts/wiki_sync.py example/minimal-project/scripts/wiki_sync.py
 
       - name: Post-install wiki_sync.py lint passes on a fresh install
         run: |

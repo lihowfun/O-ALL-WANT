@@ -1,0 +1,663 @@
+#!/usr/bin/env python3
+"""
+Wiki Sync — deterministic compiler for docs/raw -> docs/knowledge.
+
+This tool keeps durable topic pages compact and searchable while letting teams
+store longer raw source notes separately. It is intentionally markdown-first
+and vector-DB-free.
+"""
+
+import argparse
+import os
+import re
+import sys
+from collections import defaultdict
+from datetime import date, datetime
+
+BASE_DIR = os.environ.get("AGENT_MEMORY_BASE_DIR") or os.path.dirname(
+    os.path.dirname(os.path.abspath(__file__))
+)
+RAW_DIR = os.path.join(BASE_DIR, "docs", "raw")
+KNOWLEDGE_DIR = os.path.join(BASE_DIR, "docs", "knowledge")
+META_FILES = {"index.md", "log.md"}
+
+
+def _parse_frontmatter(content):
+    """Parse a minimal YAML-like frontmatter block if present."""
+    if not content.startswith("---\n"):
+        return {}, content
+
+    lines = content.splitlines()
+    closing_index = None
+    for i in range(1, len(lines)):
+        if lines[i].strip() == "---":
+            closing_index = i
+            break
+
+    if closing_index is None:
+        return {}, content
+
+    metadata = {}
+    current_key = None
+    current_list = None
+
+    for raw_line in lines[1:closing_index]:
+        line = raw_line.rstrip()
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        if stripped.startswith("- ") and current_key:
+            if current_list is None:
+                current_list = []
+                metadata[current_key] = current_list
+            current_list.append(stripped[2:].strip())
+            continue
+        if ":" not in line:
+            continue
+        key, value = line.split(":", 1)
+        current_key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        if value:
+            metadata[current_key] = value
+            current_list = None
+        else:
+            current_list = []
+            metadata[current_key] = current_list
+
+    body = "\n".join(lines[closing_index + 1 :]).lstrip("\n")
+    return metadata, body
+
+
+def _normalize_list(value):
+    """Normalize a scalar or list-like value into a list of strings."""
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return [item for item in value if item]
+    if isinstance(value, str):
+        value = value.strip()
+        if not value:
+            return []
+        if value.startswith("[") and value.endswith("]"):
+            items = [item.strip().strip('"').strip("'") for item in value[1:-1].split(",")]
+            return [item for item in items if item]
+        return [value]
+    return [str(value)]
+
+
+def _topic_title(topic_id):
+    """Convert a topic id into a readable heading."""
+    return topic_id.replace("_", " ")
+
+
+def _today():
+    return date.today().isoformat()
+
+
+def _safe_read(path):
+    with open(path, "r", encoding="utf-8") as handle:
+        return handle.read()
+
+
+def _write(path, content):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as handle:
+        handle.write(content)
+
+
+def _body_without_h1(body):
+    """Drop a leading h1 from raw source notes to avoid duplicate page titles."""
+    lines = body.splitlines()
+    if lines and lines[0].startswith("# "):
+        return "\n".join(lines[1:]).lstrip("\n")
+    return body.strip()
+
+
+def _first_paragraph(body):
+    """Use the first non-heading paragraph as a fallback summary."""
+    paragraphs = []
+    current = []
+    for line in body.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            if current:
+                paragraphs.append(" ".join(current))
+                current = []
+            continue
+        if stripped.startswith("#"):
+            continue
+        current.append(stripped)
+    if current:
+        paragraphs.append(" ".join(current))
+    return paragraphs[0] if paragraphs else "No summary provided."
+
+
+def _discover_raw_sources():
+    """Load all raw source notes from docs/raw/."""
+    sources = []
+    if not os.path.exists(RAW_DIR):
+        return sources
+
+    for filename in sorted(os.listdir(RAW_DIR)):
+        if not filename.endswith(".md"):
+            continue
+        if filename.startswith("_") or filename.lower() == "readme.md":
+            continue
+
+        path = os.path.join(RAW_DIR, filename)
+        content = _safe_read(path)
+        metadata, body = _parse_frontmatter(content)
+        topic_id = metadata.get("topic_id") or os.path.splitext(filename)[0].replace(" ", "_")
+        source_id = metadata.get("source_id") or os.path.splitext(filename)[0]
+        title = metadata.get("title") or _topic_title(source_id)
+        summary = metadata.get("summary") or _first_paragraph(body)
+        last_updated = metadata.get("last_updated") or _today()
+        related_topics = sorted(
+            topic
+            for topic in set(_normalize_list(metadata.get("related_topics")))
+            if topic and topic != topic_id
+        )
+
+        sources.append(
+            {
+                "filename": filename,
+                "path": path,
+                "relative_path": os.path.join("docs", "raw", filename).replace("\\", "/"),
+                "source_id": source_id,
+                "topic_id": topic_id,
+                "title": title,
+                "summary": summary,
+                "last_updated": last_updated,
+                "related_topics": related_topics,
+                "body": _body_without_h1(body) or "_No additional source notes._",
+            }
+        )
+
+    return sources
+
+
+def _load_knowledge_pages(include_meta=False):
+    """Load current knowledge pages from docs/knowledge/."""
+    pages = []
+    if not os.path.exists(KNOWLEDGE_DIR):
+        return pages
+
+    for filename in sorted(os.listdir(KNOWLEDGE_DIR)):
+        if not filename.endswith(".md"):
+            continue
+        if not include_meta and filename in META_FILES:
+            continue
+
+        path = os.path.join(KNOWLEDGE_DIR, filename)
+        content = _safe_read(path)
+        metadata, body = _parse_frontmatter(content)
+        page_type = metadata.get("page_type", "topic")
+        if not include_meta and page_type == "meta":
+            continue
+
+        page_id = metadata.get("id") or os.path.splitext(filename)[0]
+        title = metadata.get("title")
+        if not title:
+            for line in body.splitlines():
+                if line.startswith("# "):
+                    title = line[2:].strip()
+                    break
+        pages.append(
+            {
+                "filename": filename,
+                "path": path,
+                "id": page_id,
+                "title": title or _topic_title(page_id),
+                "page_type": page_type,
+                "build_origin": metadata.get("build_origin", "manual"),
+                "source_refs": _normalize_list(metadata.get("source_refs")),
+                "related_topics": _normalize_list(metadata.get("related_topics")),
+                "last_updated": metadata.get("last_updated", ""),
+                "content": content,
+                "body": body,
+            }
+        )
+
+    return pages
+
+
+def _render_frontmatter(fields):
+    lines = ["---"]
+    for key, value in fields.items():
+        if isinstance(value, list):
+            lines.append(f"{key}:")
+            for item in value:
+                lines.append(f"  - {item}")
+        else:
+            lines.append(f"{key}: {value}")
+    lines.append("---")
+    return "\n".join(lines)
+
+
+def _extract_ai_annotations(existing_content):
+    """Preserve the AI Annotations section across deterministic rebuilds."""
+    marker = "\n## AI Annotations\n"
+    if marker not in existing_content:
+        return ""
+    return existing_content.split(marker, 1)[1].strip()
+
+
+def _render_topic_page(topic_id, sources, existing_annotations=""):
+    """Compile all raw sources for a topic into one durable knowledge page."""
+    # Prefer the first raw source's title (preserves user's casing); fall back
+    # to deriving from the topic_id.
+    title = next((s["title"] for s in sources if s.get("title")), None) or _topic_title(topic_id)
+    related_topics = sorted(
+        topic
+        for topic in set(
+            linked_topic
+            for source in sources
+            for linked_topic in source["related_topics"]
+        )
+        if topic and topic != topic_id
+    )
+    source_refs = sorted(source["relative_path"] for source in sources)
+    last_updated = max(source["last_updated"] for source in sources)
+
+    sections = [
+        _render_frontmatter(
+            {
+                "id": topic_id,
+                "title": title,
+                "page_type": "topic",
+                "build_origin": "wiki_sync",
+                "source_refs": source_refs,
+                "last_updated": last_updated,
+                "related_topics": related_topics,
+            }
+        ),
+        f"# {title}",
+        "",
+        "> Generated from `docs/raw/` notes by `python3 scripts/wiki_sync.py refresh "
+        f"{topic_id}`. Edit raw sources first, then rebuild.",
+        "",
+        "## Summary",
+    ]
+
+    for source in sources:
+        sections.append(f"- **{source['title']}**: {source['summary']}")
+
+    sections.extend(["", "## Compiled Source Notes"])
+    for source in sources:
+        sections.extend(
+            [
+                "",
+                f"### {source['title']}",
+                f"- Source ref: `{source['relative_path']}`",
+                f"- Source ID: `{source['source_id']}`",
+                f"- Last updated: {source['last_updated']}",
+            ]
+        )
+        if source["related_topics"]:
+            sections.append("- Related topics: " + ", ".join(f"`{item}`" for item in source["related_topics"]))
+        sections.extend(["", source["body"].strip()])
+
+    if related_topics:
+        sections.extend(["", "## Related Topics"])
+        for related_topic in related_topics:
+            sections.append(f"- `{related_topic}`")
+
+    sections.extend(["", "## AI Annotations", ""])
+    if existing_annotations:
+        sections.append(existing_annotations)
+    else:
+        sections.extend(
+            [
+                "<!-- Auto-appended by agents via: python3 scripts/context_hub.py annotate "
+                f"{topic_id} \"note\" -->",
+                "",
+            ]
+        )
+
+    return "\n".join(sections)
+
+
+def _render_index(pages):
+    """Render the generated knowledge index page."""
+    generated_at = _today()
+    lines = [
+        _render_frontmatter(
+            {
+                "id": "index",
+                "title": "Knowledge Index",
+                "page_type": "meta",
+                "build_origin": "wiki_sync",
+                "last_updated": generated_at,
+                "related_topics": [],
+            }
+        ),
+        "# Knowledge Index",
+        "",
+        "> Generated by `python3 scripts/wiki_sync.py build`. Read this only when you",
+        "> need the knowledge map; it is not a startup-default file.",
+        "",
+        "| Topic ID | Title | Source Count | Last Updated | Related Topics |",
+        "|----------|-------|--------------|--------------|----------------|",
+    ]
+
+    for page in sorted(pages, key=lambda item: item["id"].lower()):
+        related = ", ".join(page["related_topics"]) if page["related_topics"] else "—"
+        source_count = len(page["source_refs"])
+        lines.append(
+            f"| `{page['id']}` | {page['title']} | {source_count} | "
+            f"{page['last_updated'] or '—'} | {related} |"
+        )
+
+    lines.extend(
+        [
+            "",
+            "## Notes",
+            "",
+            "- Compiled topics list raw source refs in frontmatter.",
+            "- Manual pages can stay in `docs/knowledge/` if they still obey the same",
+            "  metadata contract (`id`, `last_updated`, `related_topics`).",
+            "",
+        ]
+    )
+    return "\n".join(lines)
+
+
+def _render_log(pages):
+    """Render the generated sync ledger."""
+    generated_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    lines = [
+        _render_frontmatter(
+            {
+                "id": "log",
+                "title": "Knowledge Sync Log",
+                "page_type": "meta",
+                "build_origin": "wiki_sync",
+                "last_updated": _today(),
+                "related_topics": [],
+            }
+        ),
+        "# Knowledge Sync Log",
+        "",
+        f"> Generated at {generated_at}. `refresh <topic>` should only touch the target",
+        "> topic plus this file and `index.md`.",
+        "",
+        "| Topic ID | Mode | Source Count | Last Updated |",
+        "|----------|------|--------------|--------------|",
+    ]
+
+    for page in sorted(pages, key=lambda item: item["id"].lower()):
+        mode = "compiled" if page["build_origin"] == "wiki_sync" else "manual"
+        lines.append(
+            f"| `{page['id']}` | {mode} | {len(page['source_refs'])} | "
+            f"{page['last_updated'] or '—'} |"
+        )
+
+    lines.append("")
+    return "\n".join(lines)
+
+
+def _build_meta_pages():
+    pages = _load_knowledge_pages()
+    _write(os.path.join(KNOWLEDGE_DIR, "index.md"), _render_index(pages))
+    _write(os.path.join(KNOWLEDGE_DIR, "log.md"), _render_log(pages))
+    return pages
+
+
+def _build_topic_pages(topic_filter=None):
+    """Compile all matching raw topics. Returns a list of written topic ids."""
+    os.makedirs(KNOWLEDGE_DIR, exist_ok=True)
+    grouped_sources = defaultdict(list)
+    for source in _discover_raw_sources():
+        grouped_sources[source["topic_id"]].append(source)
+
+    if topic_filter and topic_filter != "all" and topic_filter not in grouped_sources:
+        raise ValueError(f"No raw sources found for topic '{topic_filter}'.")
+
+    written = []
+    for topic_id, sources in sorted(grouped_sources.items()):
+        if topic_filter not in (None, "all") and topic_id != topic_filter:
+            continue
+
+        target_path = os.path.join(KNOWLEDGE_DIR, f"{topic_id}.md")
+        existing_annotations = ""
+        if os.path.exists(target_path):
+            existing_content = _safe_read(target_path)
+            metadata, _ = _parse_frontmatter(existing_content)
+            origin = metadata.get("build_origin", "manual")
+            if origin != "wiki_sync":
+                raise ValueError(
+                    f"Refusing to overwrite manual page '{topic_id}'. "
+                    "Rename the raw topic or migrate the page metadata first."
+                )
+            existing_annotations = _extract_ai_annotations(existing_content)
+
+        _write(target_path, _render_topic_page(topic_id, sources, existing_annotations=existing_annotations))
+        written.append(topic_id)
+
+    return written
+
+
+def build():
+    """Rebuild all compiled topic pages plus index/log."""
+    written = _build_topic_pages()
+    pages = _build_meta_pages()
+    print(f"✅ Wiki build complete. Compiled {len(written)} topic(s).")
+    print(f"📚 Knowledge pages indexed: {len(pages)}")
+
+
+def refresh(topic):
+    """Refresh one topic or all topics, then rebuild index/log."""
+    written = _build_topic_pages(topic_filter=topic)
+    _build_meta_pages()
+    if topic == "all":
+        print(f"✅ Refreshed all compiled topics ({len(written)} total).")
+    else:
+        print(f"✅ Refreshed topic '{topic}'.")
+
+
+def _relative_path(from_path, target):
+    """Resolve a repo-relative markdown link against the current file."""
+    if target.startswith(("http://", "https://", "mailto:", "#")):
+        return None
+    normalized = target.split("#", 1)[0]
+    if not normalized:
+        return None
+    if os.path.isabs(normalized):
+        return normalized
+    return os.path.normpath(os.path.join(os.path.dirname(from_path), normalized))
+
+
+def _extract_markdown_links(content):
+    """Return relative markdown targets mentioned in the document body."""
+    return re.findall(r"\[[^\]]+\]\(([^)]+)\)", content)
+
+
+def _parse_date(value):
+    if not value:
+        return None
+    try:
+        return date.fromisoformat(value)
+    except ValueError:
+        return None
+
+
+PLACEHOLDER_PATTERNS = (
+    (re.compile(r"\$\{[A-Za-z0-9_]+\}"), "unfilled `${...}` placeholder"),
+    # Match literal YYYY-MM-DD but not real ISO dates like 2026-04-17.
+    (re.compile(r"\bYYYY-MM-DD\b"), "literal `YYYY-MM-DD` date placeholder"),
+)
+PLACEHOLDER_SKIP_BASENAMES = {
+    "_TEMPLATE.md",
+    "_SOURCE_TEMPLATE.md",
+    "README.md",
+}
+
+
+def _scan_placeholders(paths):
+    """Yield (path, lineno, pattern_desc, snippet) for placeholder hits."""
+    for path in paths:
+        basename = os.path.basename(path)
+        if basename in PLACEHOLDER_SKIP_BASENAMES or basename.startswith("_"):
+            continue
+        try:
+            content = _safe_read(path)
+        except OSError:
+            continue
+        for lineno, line in enumerate(content.splitlines(), start=1):
+            for pattern, desc in PLACEHOLDER_PATTERNS:
+                if pattern.search(line):
+                    yield path, lineno, desc, line.strip()[:120]
+
+
+def lint(strict=False):
+    """Check metadata quality for docs/raw and docs/knowledge.
+
+    ``strict=True`` also flags unfilled placeholders (``${...}`` and literal
+    ``YYYY-MM-DD``). Default stays warn-only so existing users are not broken.
+    """
+    issues = []
+    warnings = []
+    raw_sources = _discover_raw_sources()
+    knowledge_pages = _load_knowledge_pages()
+    placeholder_scan_pages = knowledge_pages
+    if strict:
+        # Strict mode is the opt-in "everything still carrying placeholders"
+        # gate, so include template topics and meta pages on that path only.
+        placeholder_scan_pages = _load_knowledge_pages(include_meta=True)
+    pages_by_id = defaultdict(list)
+    raw_sources_by_ref = {source["relative_path"]: source for source in raw_sources}
+
+    raw_source_ids = defaultdict(list)
+    for source in raw_sources:
+        raw_source_ids[source["source_id"]].append(source["relative_path"])
+        if not source["topic_id"]:
+            issues.append(f"raw source missing topic_id: {source['relative_path']}")
+        if not source["summary"]:
+            issues.append(f"raw source missing summary: {source['relative_path']}")
+        for link in _extract_markdown_links(source["body"]):
+            resolved = _relative_path(source["path"], link)
+            if resolved and not os.path.exists(resolved):
+                issues.append(f"broken raw link in {source['relative_path']}: {link}")
+
+    for source_id, refs in raw_source_ids.items():
+        if len(refs) > 1:
+            issues.append(f"duplicate raw source_id '{source_id}': {', '.join(refs)}")
+
+    for page in knowledge_pages:
+        pages_by_id[page["id"]].append(page["filename"])
+        if page["page_type"] != "topic":
+            issues.append(f"non-topic page left outside meta set: {page['filename']}")
+        for source_ref in page["source_refs"]:
+            resolved = os.path.normpath(os.path.join(BASE_DIR, source_ref))
+            if not os.path.exists(resolved):
+                issues.append(f"missing source ref in {page['filename']}: {source_ref}")
+        for related_topic in page["related_topics"]:
+            if related_topic == page["id"]:
+                issues.append(f"self-referential related topic in {page['filename']}: {related_topic}")
+        for link in _extract_markdown_links(page["body"]):
+            resolved = _relative_path(page["path"], link)
+            if resolved and not os.path.exists(resolved):
+                issues.append(f"broken knowledge link in {page['filename']}: {link}")
+
+    for page_id, filenames in pages_by_id.items():
+        if len(filenames) > 1:
+            issues.append(f"duplicate topic id '{page_id}': {', '.join(filenames)}")
+
+    known_page_ids = set(pages_by_id.keys())
+    inbound_links = defaultdict(int)
+    for page in knowledge_pages:
+        for related_topic in page["related_topics"]:
+            if related_topic not in known_page_ids:
+                warnings.append(f"unresolved related topic in {page['filename']}: {related_topic}")
+            inbound_links[related_topic] += 1
+
+        page_date = _parse_date(page["last_updated"])
+        if page["source_refs"]:
+            source_dates = []
+            for source_ref in page["source_refs"]:
+                source = raw_sources_by_ref.get(source_ref)
+                if source:
+                    source_date = _parse_date(source["last_updated"])
+                    if source_date:
+                        source_dates.append(source_date)
+            if source_dates and page_date and page_date < max(source_dates):
+                issues.append(f"stale page '{page['id']}': raw source newer than page metadata")
+
+        if not page["source_refs"] and not page["related_topics"] and inbound_links[page["id"]] == 0:
+            # Singleton pages (no source refs, no cross-links) are a soft signal,
+            # not a hard error — a repo with one curated note is fine.
+            warnings.append(f"orphan page '{page['id']}': no sources and no topic links")
+
+    # Placeholder scan — default lint stays quiet on shipped template pages,
+    # but strict mode should still fail on a fresh install until placeholders
+    # are filled in.
+    scan_paths = [
+        page["path"] for page in placeholder_scan_pages
+        if strict or page.get("build_origin") != "template"
+    ]
+    scan_paths.extend(source["path"] for source in raw_sources)
+    for path, lineno, desc, snippet in _scan_placeholders(scan_paths):
+        rel = os.path.relpath(path, BASE_DIR)
+        warnings.append(f"{desc} in {rel}:{lineno}: {snippet}")
+
+    if warnings:
+        label = "❌" if strict else "⚠️"
+        verb = "errors" if strict else "warnings"
+        print(f"{label} wiki_sync lint {verb} — {len(warnings)} soft issue(s):")
+        for warning in warnings:
+            print(f"  - {warning}")
+        if strict:
+            issues.extend(warnings)
+
+    if issues:
+        print("❌ wiki_sync lint found unresolved issues:")
+        for issue in issues:
+            print(f"  - {issue}")
+        return 1
+
+    print("✅ wiki_sync lint passed — no unresolved issues found.")
+    return 0
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="OAW — deterministic wiki compiler",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Commands:
+  %(prog)s build                  Compile docs/raw/ into docs/knowledge/ + index/log
+  %(prog)s refresh Topic_Name     Rebuild one topic, then update index/log
+  %(prog)s refresh all            Rebuild every compiled topic
+  %(prog)s lint                   Check wiki metadata quality
+        """,
+    )
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    subparsers.add_parser("build", help="Compile all raw sources into the wiki.")
+
+    p_refresh = subparsers.add_parser("refresh", help="Refresh one topic or all topics.")
+    p_refresh.add_argument("topic", help="Topic ID or 'all'.")
+
+    p_lint = subparsers.add_parser("lint", help="Validate raw/wiki metadata and links.")
+    p_lint.add_argument(
+        "--strict",
+        action="store_true",
+        help="Treat unfilled `${...}` / `YYYY-MM-DD` placeholders as errors (default: warn only).",
+    )
+
+    args = parser.parse_args()
+
+    try:
+        if args.command == "build":
+            build()
+        elif args.command == "refresh":
+            refresh(args.topic)
+        elif args.command == "lint":
+            raise SystemExit(lint(strict=args.strict))
+    except ValueError as exc:
+        print(f"❌ {exc}")
+        raise SystemExit(1) from exc
+
+
+if __name__ == "__main__":
+    main()

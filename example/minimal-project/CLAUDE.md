@@ -1,5 +1,12 @@
 # Minimal Example App — Agent Rules
 
+## Router Contract
+
+- `CLAUDE.md` is the startup router
+- `AI_CONTEXT.md` stores project facts, not a second rulebook
+- If the two overlap, use `CLAUDE.md` for behavior and `AI_CONTEXT.md` for
+  project-specific facts and commands
+
 ## Response Language
 
 - **English** is the primary response language
@@ -7,34 +14,36 @@
 
 ## Session Startup (Read On Demand — NOT Everything)
 
-**Always read (every session)**:
-1. ✅ `AI_CONTEXT.md` — architecture, rules, baselines, tech stack
+**After opening this file, always read**:
+1. ✅ `AI_CONTEXT.md` — architecture, baselines, commands, tech stack
 2. ✅ `VERSION.json` → only check `version` + `do_not_rerun` fields
 
-**Read on demand (based on current task)**:
+**Route by lane (based on the current task)**:
 
-| Task Type | Also Read | Skip |
-|-----------|-----------|------|
-| Change code / run experiments | `ROADMAP.md` first 60 lines | knowledge/, docs/ |
-| Check past decisions | `.agents/memory.md` last 5 entries | ROADMAP |
-| Write docs / compare | `docs/knowledge/` relevant file | memory.md |
-| Plan direction | `ROADMAP.md` + latest `docs/ACTION_PLAN_*.md` | knowledge/ |
-| Debug / fix bugs | `docs/knowledge/Known_Limitations.md` | ROADMAP |
+| Lane | Use When | Read First | Fallback |
+|------|----------|------------|----------|
+| Operational | Current state, release status, branch scope, experiment execution | `ROADMAP.md` first 60 lines + `.agents/memory.md` last 5 entries | `docs/knowledge/Experiment_Findings.md` |
+| Wiki | Stable concepts, background knowledge, reusable domain facts | `docs/knowledge/index.md` + relevant topic page(s) | `docs/raw/` relevant sources, then `python3 scripts/wiki_sync.py refresh <topic>` |
+| Execution | Repeating workflows and SOPs | Matching file in `.agents/skills/` | Operational lane docs only if the skill asks for them |
+| Debug | Reproducing failures and workarounds | `docs/knowledge/Known_Limitations.md` | `.agents/memory.md` last 5 entries |
 
 **Skills-First Principle**:
-- If `.agents/skills/` has a matching skill (e.g., `/benchmark`, `/debug-pipeline`), **follow the skill workflow first**
+- If `.agents/skills/` has a matching skill (e.g., `/benchmark`, `/debug-pipeline`, `/wiki-refresh`), **follow the skill workflow first**
 - Skills still obey this file's lazy-read protocol
 - Only go ad-hoc when no matching skill exists
+- If a maintenance step can be done by `context_hub.py` or `wiki_sync.py`,
+  prefer the script over repeated prose instructions
 
 > ⚠️ **FORBIDDEN**: Reading all .md files at session start. Understand the task first, then read on demand.
 > ⚠️ **FORBIDDEN**: Re-running experiments listed in `VERSION.json` `do_not_rerun`.
+> ⚠️ **FORBIDDEN**: Treating `docs/raw/` as startup-default context. Raw notes are fallback-only.
 
 ## File Architecture — What Lives Where
 
 ```
 📁 root/
 ├── CLAUDE.md              ← You are reading this (agent rules)
-├── AI_CONTEXT.md          ← Architecture + baselines + rules (SSOT)
+├── AI_CONTEXT.md          ← Project facts, baselines, commands
 ├── VERSION.json           ← Version number + do_not_rerun
 ├── ROADMAP.md             ← Phase plan + progress
 ├── README.md              ← User quick-start
@@ -44,14 +53,18 @@
 │   └── skills/            ← Executable workflows (read by task type)
 │
 ├── docs/
-│   ├── knowledge/         ← Topic-indexed knowledge (read on demand)
-│   │   ├── Known_Limitations.md      Known issues & workarounds
-│   │   ├── Performance_Baselines.md  Score benchmarks
+│   ├── raw/               ← Source notes (fallback-only)
+│   ├── knowledge/         ← Compiled durable wiki (read on demand)
+│   │   ├── index.md                 Knowledge map (meta)
+│   │   ├── log.md                   Sync ledger (meta)
+│   │   ├── Known_Limitations.md     Known issues & workarounds
+│   │   ├── Performance_Baselines.md Score benchmarks
 │   │   └── ...
 │   └── archive/           ← Stale docs, do not read
 │
 └── scripts/
-    └── context_hub.py     ← CLI for knowledge management
+    ├── context_hub.py     ← CLI for knowledge management
+    └── wiki_sync.py       ← Deterministic raw→wiki compiler
 ```
 
 ## Session End — Mandatory Report (4 sections)

@@ -1,0 +1,4 @@
+Read CLAUDE.md first. It is the OAW router for project rules, lazy-read
+context loading, skills-first behavior, and session-end reporting.
+
+Then read AI_CONTEXT.md for project facts.

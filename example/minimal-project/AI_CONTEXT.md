@@ -1,6 +1,6 @@
 # Minimal Example App — AI Agent Context (Single Source of Truth)
 
-> Post-install sample project for validating the Agent Memory Framework |
+> Post-install sample project for validating OAW |
 > 0.1.0-example | Repo: https://github.com/lihowfun/O-ALL-WANT
 > Pipeline: **Install framework -> run CLI smoke tests -> document findings**
 
@@ -15,8 +15,10 @@
 README.md ───────────────→ onboarding + validation steps
 ROADMAP.md ──────────────→ current release tasks
 scripts/context_hub.py ──→ optional CLI for memory + knowledge management
+scripts/wiki_sync.py ────→ optional raw-note to wiki compiler
 .agents/memory.md ───────→ rolling decision log
 docs/knowledge/*.md ─────→ permanent project knowledge
+docs/raw/*.md ───────────→ fallback source notes for wiki refreshes
 .agents/skills/*.md ─────→ reusable workflows for common tasks
 ```
 
@@ -48,7 +50,7 @@ docs/knowledge/*.md ─────→ permanent project knowledge
 | Tier | When | Command |
 |------|------|---------|
 | 1 Smoke | After code change | `python3 scripts/context_hub.py status` |
-| 2 Regression | After CLI/doc changes | `python3 scripts/context_hub.py search "" && python3 scripts/context_hub.py memory show --last 3` |
+| 2 Regression | After CLI/doc changes | `python3 scripts/context_hub.py search "" && python3 scripts/wiki_sync.py lint` |
 | 3 Integration | Before release | `python3 scripts/context_hub.py bootstrap` |
 
 ## Tech Stack
