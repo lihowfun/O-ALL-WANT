@@ -6,7 +6,7 @@ Provides an interface for AI agents (and humans) to search, fetch,
 annotate knowledge, manage rolling decision memory, and bootstrap
 new sessions.
 
-Part of the Agent Memory Framework.
+Part of OAW.
 https://github.com/lihowfun/O-ALL-WANT
 """
 import argparse
@@ -613,7 +613,7 @@ def context_lane(lane):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Agent Memory Framework — Context Hub CLI",
+        description="OAW — Context Hub CLI",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Commands:

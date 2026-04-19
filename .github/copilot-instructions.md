@@ -1,4 +1,4 @@
-# Agent Memory Framework — Copilot Instructions
+# OAW — Copilot Instructions
 
 Read `AI_CONTEXT.md` at repo root for full project context.
 Read `CLAUDE.md` (or `AGENTS.md`) for session rules + lazy-read protocol.

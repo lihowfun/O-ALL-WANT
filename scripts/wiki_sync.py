@@ -621,7 +621,7 @@ def lint(strict=False):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Agent Memory Framework — deterministic wiki compiler",
+        description="OAW — deterministic wiki compiler",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Commands:
