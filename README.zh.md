@@ -160,10 +160,10 @@ Router 永遠叫 `CLAUDE.md`，但不同 agent 預設讀不同的規則檔：
 |-------------|---------|-------------|
 | **Claude Code** | `CLAUDE.md` | ✅ 安裝後直接對應 |
 | **GitHub Copilot** | `.github/copilot-instructions.md` | ✅ 安裝時自動建立，指向 `CLAUDE.md` |
-| **OpenAI Codex** | `AGENTS.md` | 建一行 pointer：`Read CLAUDE.md for project rules.` |
-| **Cursor** | `.cursorrules` | 同上 |
-| **Windsurf** | `.windsurfrules` | 同上 |
-| **Gemini** | `GEMINI.md` | 同上 |
+| **OpenAI Codex** | `AGENTS.md` | ✅ 安裝時自動建立，指向 `CLAUDE.md` |
+| **Cursor** | `.cursorrules` | ✅ 安裝時自動建立，指向 `CLAUDE.md` |
+| **Windsurf** | `.windsurfrules` | ✅ 安裝時自動建立，指向 `CLAUDE.md` |
+| **Gemini** | `GEMINI.md` | ✅ 安裝時自動建立，指向 `CLAUDE.md` |
 
 嫌麻煩也可以直接跟 agent 說「先讀 CLAUDE.md」，效果一樣。
 

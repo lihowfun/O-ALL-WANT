@@ -155,10 +155,10 @@ The router file is always `CLAUDE.md`, but different agents look for different s
 |-------------|-------------|-------------|
 | **Claude Code** | `CLAUDE.md` | ✅ Works out of the box |
 | **GitHub Copilot** | `.github/copilot-instructions.md` | ✅ Auto-created by installer, points to `CLAUDE.md` |
-| **OpenAI Codex** | `AGENTS.md` | One-line pointer: `Read CLAUDE.md for project rules.` |
-| **Cursor** | `.cursorrules` | Same |
-| **Windsurf** | `.windsurfrules` | Same |
-| **Gemini** | `GEMINI.md` | Same |
+| **OpenAI Codex** | `AGENTS.md` | ✅ Auto-created pointer to `CLAUDE.md` |
+| **Cursor** | `.cursorrules` | ✅ Auto-created pointer to `CLAUDE.md` |
+| **Windsurf** | `.windsurfrules` | ✅ Auto-created pointer to `CLAUDE.md` |
+| **Gemini** | `GEMINI.md` | ✅ Auto-created pointer to `CLAUDE.md` |
 
 If you do not want to think about it, just tell the agent: "read CLAUDE.md first."
 

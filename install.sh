@@ -41,9 +41,13 @@ fi
 # Build the exact list of managed files the installer may overwrite
 MANAGED_PATHS=(
     "CLAUDE.md"
+    "AGENTS.md"
     "AI_CONTEXT.md"
+    "GEMINI.md"
     "ROADMAP.md"
     "VERSION.json"
+    ".cursorrules"
+    ".windsurfrules"
     ".github/copilot-instructions.md"
     "scripts/context_hub.py"
     "scripts/wiki_sync.py"
@@ -86,9 +90,13 @@ echo "📋 Copying templates..."
 
 # Copy core files
 cp "$FRAMEWORK_DIR/templates/AGENT_RULES.md" "$PROJECT_ROOT/CLAUDE.md"
+cp "$FRAMEWORK_DIR/templates/AGENTS.md" "$PROJECT_ROOT/AGENTS.md"
 cp "$FRAMEWORK_DIR/templates/AI_CONTEXT.md" "$PROJECT_ROOT/AI_CONTEXT.md"
+cp "$FRAMEWORK_DIR/templates/GEMINI.md" "$PROJECT_ROOT/GEMINI.md"
 cp "$FRAMEWORK_DIR/templates/ROADMAP.md" "$PROJECT_ROOT/ROADMAP.md"
 cp "$FRAMEWORK_DIR/templates/VERSION.json" "$PROJECT_ROOT/VERSION.json"
+cp "$FRAMEWORK_DIR/templates/.cursorrules" "$PROJECT_ROOT/.cursorrules"
+cp "$FRAMEWORK_DIR/templates/.windsurfrules" "$PROJECT_ROOT/.windsurfrules"
 
 # Copy directories
 mkdir -p "$PROJECT_ROOT/.agents"
@@ -110,6 +118,7 @@ chmod +x "$PROJECT_ROOT/scripts/context_hub.py"
 chmod +x "$PROJECT_ROOT/scripts/wiki_sync.py"
 
 echo "✅ Files installed!"
+echo "🔌 Agent adapters created: AGENTS.md, GEMINI.md, .cursorrules, .windsurfrules, .github/copilot-instructions.md"
 echo ""
 
 # Check Python
