@@ -160,6 +160,7 @@ def _discover_raw_sources():
 
         sources.append(
             {
+                "metadata": metadata,
                 "filename": filename,
                 "path": path,
                 "relative_path": os.path.join("docs", "raw", filename).replace("\\", "/"),
@@ -204,6 +205,7 @@ def _load_knowledge_pages(include_meta=False):
                     break
         pages.append(
             {
+                "metadata": metadata,
                 "filename": filename,
                 "path": path,
                 "id": page_id,
@@ -492,6 +494,100 @@ PLACEHOLDER_SKIP_BASENAMES = {
     "README.md",
 }
 
+REQUIRED_RAW_FIELDS = ("source_id", "title", "topic_id", "summary", "last_updated")
+REQUIRED_KNOWLEDGE_FIELDS = ("id", "title", "page_type", "last_updated", "related_topics")
+HOLLOW_PHRASES = (
+    "best practice",
+    "enhance",
+    "ensure",
+    "improve",
+    "leverage",
+    "optimize",
+    "robust",
+    "seamless",
+    "streamline",
+)
+
+# Skill lint: at least one of `triggers` / `outputs` must be present in frontmatter,
+# and the body must have an execution-structure heading we recognise. `Rules` is
+# allowed so protocol-style skills (e.g. self-improving) without step-by-step
+# workflows still pass.
+SKILL_FRONTMATTER_REQUIRED_ANY = ("triggers", "outputs")
+SKILL_BODY_STRUCTURE_PATTERNS = (
+    re.compile(r"^##+\s+Steps\b", re.MULTILINE),
+    re.compile(r"^###+\s+Step\s+\d+", re.MULTILINE),
+    re.compile(r"^##+\s+Rules\b", re.MULTILINE),
+    re.compile(r"^###+\s+Rule\s+\d+", re.MULTILINE),
+    re.compile(r"^##+\s+Workflow\b", re.MULTILINE),
+    re.compile(r"^##+\s+Procedure\b", re.MULTILINE),
+)
+SKILL_SKIP_BASENAMES = {"README.md"}
+
+
+def _discover_skill_files():
+    """Locate `.agents/skills/*.md` — works for both self-hosting and user installs.
+
+    Returns a list of absolute paths. Prefers `templates/.agents/skills/` (canonical
+    for OAW itself) and falls back to `.agents/skills/` (how user installs look).
+    Skips `README.md` and any underscore-prefixed fixtures.
+    """
+    candidates = [
+        os.path.join(BASE_DIR, "templates", ".agents", "skills"),
+        os.path.join(BASE_DIR, ".agents", "skills"),
+    ]
+    seen = set()
+    files = []
+    for skill_dir in candidates:
+        if not os.path.isdir(skill_dir):
+            continue
+        for filename in sorted(os.listdir(skill_dir)):
+            if not filename.endswith(".md"):
+                continue
+            if filename in SKILL_SKIP_BASENAMES or filename.startswith("_"):
+                continue
+            full = os.path.join(skill_dir, filename)
+            if full in seen:
+                continue
+            seen.add(full)
+            files.append(full)
+    return files
+
+
+def _lint_skill_file(path):
+    """Return a list of issue strings for a single skill markdown file.
+
+    Empty list means the skill passed. Issues cover:
+      - missing frontmatter entirely
+      - neither `triggers` nor `outputs` present in frontmatter
+      - no execution-structure heading (Steps / Rule / Workflow / Procedure)
+    """
+    issues = []
+    try:
+        content = _safe_read(path)
+    except OSError as exc:
+        return [f"skill file unreadable: {exc}"]
+
+    metadata, body = _parse_frontmatter(content)
+    rel_path = os.path.relpath(path, BASE_DIR)
+
+    if not metadata:
+        issues.append(f"skill missing frontmatter block: {rel_path}")
+        return issues
+
+    if not any(metadata.get(field) for field in SKILL_FRONTMATTER_REQUIRED_ANY):
+        issues.append(
+            f"skill missing required frontmatter (need at least one of "
+            f"{', '.join(SKILL_FRONTMATTER_REQUIRED_ANY)}): {rel_path}"
+        )
+
+    if not any(pattern.search(body) for pattern in SKILL_BODY_STRUCTURE_PATTERNS):
+        issues.append(
+            f"skill body has no execution-structure heading "
+            f"(Steps / Rules / Workflow / Procedure): {rel_path}"
+        )
+
+    return issues
+
 
 def _scan_placeholders(paths):
     """Yield (path, lineno, pattern_desc, snippet) for placeholder hits."""
@@ -509,11 +605,65 @@ def _scan_placeholders(paths):
                     yield path, lineno, desc, line.strip()[:120]
 
 
+def _missing_metadata(metadata, required_fields):
+    """Return required metadata keys that are absent or empty."""
+    missing = []
+    for field in required_fields:
+        if field not in metadata:
+            missing.append(field)
+            continue
+        value = metadata.get(field)
+        if value is None or value == "":
+            missing.append(field)
+    return missing
+
+
+def _content_lines(body):
+    """Return prose-ish lines used by lightweight quality checks."""
+    lines = []
+    in_fence = False
+    for line in body.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("```"):
+            in_fence = not in_fence
+            continue
+        if in_fence or not stripped:
+            continue
+        if stripped.startswith(("#", "|", ">", "---")):
+            continue
+        lines.append(stripped)
+    return lines
+
+
+def _has_concrete_signal(body):
+    """Detect whether a page contains anchors beyond generic prose."""
+    return bool(
+        re.search(r"\b20\d{2}-\d{2}-\d{2}\b", body)
+        or re.search(r"\b20\d{2}\b", body)
+        or re.search(r"`[^`]+`", body)
+        or re.search(r"https?://", body)
+        or re.search(r"\[[^\]]+\]\([^)]+\)", body)
+        or re.search(r"\b\d+(?:\.\d+)?%?\b", body)
+    )
+
+
+def _hollow_phrase_hits(body):
+    """Return hollow prose phrases found in the page body."""
+    hits = []
+    lowered = body.lower()
+    for phrase in HOLLOW_PHRASES:
+        count = lowered.count(phrase)
+        if count:
+            hits.append((phrase, count))
+    return hits
+
+
 def lint(strict=False):
     """Check metadata quality for docs/raw and docs/knowledge.
 
     ``strict=True`` also flags unfilled placeholders (``${...}`` and literal
-    ``YYYY-MM-DD``). Default stays warn-only so existing users are not broken.
+    ``YYYY-MM-DD``). Default keeps quality smells warn-only so existing users
+    get guidance without breaking docs-only PRs.
     """
     issues = []
     warnings = []
@@ -529,6 +679,20 @@ def lint(strict=False):
 
     raw_source_ids = defaultdict(list)
     for source in raw_sources:
+        missing_raw_fields = _missing_metadata(source["metadata"], REQUIRED_RAW_FIELDS)
+        if missing_raw_fields:
+            issues.append(
+                f"raw source missing required metadata in {source['relative_path']}: "
+                + ", ".join(missing_raw_fields)
+            )
+
+        raw_date = _parse_date(source["last_updated"])
+        if source["last_updated"] and raw_date is None:
+            issues.append(
+                f"raw source has invalid last_updated in {source['relative_path']}: "
+                f"{source['last_updated']}"
+            )
+
         raw_source_ids[source["source_id"]].append(source["relative_path"])
         if not source["topic_id"]:
             issues.append(f"raw source missing topic_id: {source['relative_path']}")
@@ -544,6 +708,49 @@ def lint(strict=False):
             issues.append(f"duplicate raw source_id '{source_id}': {', '.join(refs)}")
 
     for page in knowledge_pages:
+        missing_page_fields = _missing_metadata(page["metadata"], REQUIRED_KNOWLEDGE_FIELDS)
+        if missing_page_fields:
+            issues.append(
+                f"knowledge page missing required metadata in {page['filename']}: "
+                + ", ".join(missing_page_fields)
+            )
+
+        page_date = _parse_date(page["last_updated"])
+        if page["last_updated"] and page_date is None:
+            message = (
+                f"knowledge page has invalid last_updated in {page['filename']}: "
+                f"{page['last_updated']}"
+            )
+            if page["build_origin"] == "template":
+                warnings.append(message)
+            else:
+                issues.append(message)
+
+        if page["page_type"] == "topic":
+            if page["build_origin"] == "manual" and not page["source_refs"] and not page["metadata"].get("source"):
+                warnings.append(
+                    f"manual topic has no source refs in {page['filename']}: "
+                    "add docs/raw source refs or stable source metadata when practical"
+                )
+
+            content_lines = _content_lines(page["body"])
+            if len(content_lines) < 4:
+                warnings.append(
+                    f"thin topic body in {page['filename']}: add durable facts or keep it in memory until ready"
+                )
+            elif len(page["body"]) > 600 and not _has_concrete_signal(page["body"]):
+                warnings.append(
+                    f"low-concrete topic body in {page['filename']}: add files, commands, dates, links, or measurements"
+                )
+
+            hollow_hits = _hollow_phrase_hits(page["body"])
+            hollow_total = sum(count for _, count in hollow_hits)
+            if hollow_total >= 5:
+                phrases = ", ".join(f"{phrase} ({count})" for phrase, count in hollow_hits)
+                warnings.append(
+                    f"possible generic prose in {page['filename']}: {phrases}"
+                )
+
         pages_by_id[page["id"]].append(page["filename"])
         if page["page_type"] != "topic":
             issues.append(f"non-topic page left outside meta set: {page['filename']}")
@@ -571,7 +778,6 @@ def lint(strict=False):
                 warnings.append(f"unresolved related topic in {page['filename']}: {related_topic}")
             inbound_links[related_topic] += 1
 
-        page_date = _parse_date(page["last_updated"])
         if page["source_refs"]:
             source_dates = []
             for source_ref in page["source_refs"]:
@@ -599,6 +805,13 @@ def lint(strict=False):
     for path, lineno, desc, snippet in _scan_placeholders(scan_paths):
         rel = os.path.relpath(path, BASE_DIR)
         warnings.append(f"{desc} in {rel}:{lineno}: {snippet}")
+
+    # Skill frontmatter lint — warn by default, promote to error under --strict.
+    # Skills are the surface users write most often, so catching "forgot triggers"
+    # or "no Steps section" early prevents a whole class of silent dispatch bugs.
+    for skill_path in _discover_skill_files():
+        for skill_issue in _lint_skill_file(skill_path):
+            warnings.append(skill_issue)
 
     if warnings:
         label = "❌" if strict else "⚠️"

@@ -4,6 +4,10 @@
 `docs/raw/` as the detailed source-of-truth layer and `docs/knowledge/` as the
 compact retrieval layer.
 
+For multi-person wiki maintenance, start with
+[`docs/wiki/CONTRIBUTING_WIKI.md`](wiki/CONTRIBUTING_WIKI.md) and the staged
+pipeline in [`docs/wiki/WIKI_PIPELINE.md`](wiki/WIKI_PIPELINE.md).
+
 ## When To Use It
 
 Use `wiki_sync.py` when:
@@ -62,12 +66,15 @@ so the visible topic list stays clean.
 
 `python3 scripts/wiki_sync.py lint` checks for:
 
+- missing required raw/source metadata
+- invalid `last_updated` dates
 - missing source refs
 - broken markdown links
 - duplicate topic IDs
 - broken `related_topics`
 - stale compiled pages
 - orphan topic pages with no source refs and no topic links
+- thin or generic topic pages as soft quality warnings
 
 ## Operating Rule
 

@@ -1,0 +1,63 @@
+name: Wiki topic proposal
+description: Propose durable knowledge that should live in the OAW LLM wiki.
+labels: ["wiki", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for durable project knowledge, not one-off support questions.
+        Good wiki topics help future agents resume work with less context.
+
+  - type: input
+    id: topic-id
+    attributes:
+      label: Proposed topic ID
+      description: Use the filename-style topic ID you expect in docs/knowledge/.
+      placeholder: Multi_Agent_Worktrees
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: Why this belongs in the wiki
+      description: What future agent task becomes easier if this topic exists?
+      placeholder: |
+        Agents keep rediscovering <thing>. This topic should preserve <facts/commands/decisions>.
+    validations:
+      required: true
+
+  - type: textarea
+    id: source-evidence
+    attributes:
+      label: Source evidence
+      description: Link files, PRs, issues, docs, experiments, logs, or notes that should back the topic.
+      placeholder: |
+        - docs/raw/<source>.md
+        - PR #123
+        - scripts/<tool>.py
+    validations:
+      required: true
+
+  - type: textarea
+    id: related-topics
+    attributes:
+      label: Related topics
+      description: Existing docs/knowledge/ topic IDs that should link to or from this page.
+      placeholder: |
+        - Harness_Engineering_Knowledge_Synthesis
+        - Release_Learnings
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: contribution-shape
+    attributes:
+      label: Contribution shape
+      options:
+        - label: This should start as docs/raw/ source evidence.
+          required: false
+        - label: This describes a repeated workflow and may become a .agents/skills/ candidate.
+          required: false
+        - label: I checked docs/wiki/TOPIC_BOARD.md for an existing entry.
+          required: true

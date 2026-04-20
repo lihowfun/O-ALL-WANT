@@ -1,0 +1,52 @@
+name: Wiki fact/source correction
+description: Report stale, wrong, missing, or unsourced OAW LLM-wiki knowledge.
+labels: ["wiki", "correction", "triage"]
+body:
+  - type: input
+    id: page
+    attributes:
+      label: Affected page or topic
+      placeholder: docs/knowledge/Release_Learnings.md
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What is wrong or stale?
+      description: Be specific about the sentence, date, link, source ref, or missing context.
+      placeholder: |
+        The page says <claim>, but <source> shows <correction>.
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Link a stable source, repo file, PR, issue, or raw note that supports the correction.
+      placeholder: |
+        - https://...
+        - docs/raw/<source>.md
+        - PR #123
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Impact
+      options:
+        - Blocks agent workflow or teaches the wrong command
+        - Important context drift
+        - Minor wording or source cleanup
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: This correction should update docs/raw/ first if the topic is compiled.
+          required: true

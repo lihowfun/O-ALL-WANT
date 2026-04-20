@@ -23,6 +23,15 @@ prompted this? Link the issue if there is one. -->
 
 <!-- If this is a docs-only or typo-fix, just write "docs only — not verified" -->
 
+## Wiki / skills impact
+
+- [ ] I updated `docs/raw/` before changing compiled wiki topics, or this PR is
+      manual docs-only work
+- [ ] New wiki topics include concrete sources, `last_updated`, and
+      `related_topics`
+- [ ] Repeated procedures were linked to an existing skill or noted as future
+      `.agents/skills/` candidates
+
 ## Related issues / context
 
 <!-- #123, link to docs/archive/, or "N/A" -->
