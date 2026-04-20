@@ -73,3 +73,68 @@ to verify it.
 - [ ] `python3 scripts/wiki_sync.py lint` passes.
 - [ ] Repeated procedures are either linked to an existing skill or proposed as
       future skill candidates.
+- [ ] If this change supersedes a prior entry, follow the **Deprecating an
+      entry** section below.
+
+## Deprecating an entry
+
+When a past finding, baseline, or decision is superseded (benchmark corrected,
+model retrained, paper retracted), mark the original entry instead of
+deleting it. The audit trail is itself valuable.
+
+### Template
+
+Prepend the deprecation marker to the original entry's heading, then append
+the three-line block:
+
+```text
+### [DEPRECATED 2026-04-17] Phase X — Finding Y
+
+**Why**: <one-line reason — corrected benchmark, retracted source, new evidence>
+**Replaced by**: <concrete pointer — e.g. "Phase Z" or "EXPERIMENT_LOG row 42">
+**Lesson**: <one sentence — what future work should do differently>
+
+<keep the original body below, unchanged>
+```
+
+### Rules
+
+- **Do not delete** the original entry. Preserving the audit trail is the
+  entire point.
+- **Date the deprecation**, not the original entry. `[DEPRECATED YYYY-MM-DD]`
+  is the date you marked it, not the date the original was written.
+- **Point to the replacement** with a concrete locator (file + section, or
+  EXPERIMENT_LOG row number).
+- **State the lesson** in one sentence. If there's no lesson, you probably
+  don't need to deprecate — just annotate.
+
+### When NOT to deprecate
+
+- Trivial updates (typo, stale date) → just edit.
+- Entries nobody references → delete, don't deprecate.
+- Failed experiments valuable as "we tried X, it didn't work" → keep with
+  `[FAILURE]` tag; don't deprecate.
+
+### Cross-reference updates
+
+If you reference the deprecated entry from other pages, update those
+references to the replacement at the same time. If you're uncertain whether
+you caught them all, ask `/harness-evaluator` to run a subagent review.
+
+## Evidence tiers (optional)
+
+For projects with inherent uncertainty (research, measurements, sourced
+claims), classify entries with one of the 5 evidence tiers from
+`.agents/skills/classify-evidence.md`:
+
+| Tier | Means | Typical home |
+|:----:|-------|--------------|
+| T1 | Hypothesis / work-in-progress | `.agents/memory.md` only |
+| T2 | Single observation (needs `[CAVEAT]`) | memory / experiment log |
+| T3 | Confirmed (≥ 2 independent reproductions/sources) | `docs/knowledge/` |
+| T4 | Baseline (measured, with method) | `VERSION.json` + knowledge |
+| T5 | Frozen (don't retest) | `VERSION.json.do_not_rerun` |
+
+Tiers are **not enforced**. They are vocabulary that slows writers down
+enough to pick the right word. If your project isn't claim-heavy (e.g. a
+CLI tool or a docs repo without measurements), skip this section entirely.

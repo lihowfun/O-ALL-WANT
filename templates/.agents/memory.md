@@ -2,7 +2,11 @@
 
 > **Format**: `## [YYYY-MM-DD] [TAG] Title`, then write a conclusion. Newest entries on top.
 >
-> **Available TAGs**: `[BUG]` `[INSIGHT]` `[DECISION]` `[WORKAROUND]` `[EXPERIMENT]` `[ARCHITECTURE]`
+> **Available TAGs**:
+> - Kind: `[BUG]` `[INSIGHT]` `[DECISION]` `[WORKAROUND]` `[EXPERIMENT]` `[ARCHITECTURE]` `[REVIEW]` `[FIX]` `[FEATURE]`
+> - Evidence tier (optional, see `.agents/skills/classify-evidence.md`):
+>   `[T1]` WIP · `[T2]` Observation · `[T3]` Confirmed · `[T4]` Baseline · `[T5]` Frozen
+> - Qualifier: `[CAVEAT: ...]` — e.g. `[CAVEAT: single seed]`, `[CAVEAT: one source]`, `[CAVEAT: one environment]`
 >
 > **How to write**:
 > - Edit this file directly, or
