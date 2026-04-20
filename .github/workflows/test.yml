@@ -16,46 +16,49 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Python syntax check on CLI tools
-        run: |
-          python3 -m py_compile scripts/context_hub.py
-          python3 -m py_compile scripts/wiki_sync.py
+      # Single source of truth: every smoke check is implemented in
+      # scripts/harness_check.py so contributors can run the same gate locally
+      # via `./scripts/harness_check.py`.
+      - name: OAW harness check
+        run: ./scripts/harness_check.py
 
-      - name: wiki_sync.py CLI surfaces expected subcommands
-        run: |
-          python3 scripts/wiki_sync.py --help | grep -q build
-          python3 scripts/wiki_sync.py --help | grep -q refresh
-          python3 scripts/wiki_sync.py --help | grep -q lint
-
-      - name: install.sh refuses self-install
-        run: |
-          set +e
-          out=$(./install.sh 2>&1)
-          rc=$?
-          echo "$out"
-          if [ $rc -eq 0 ]; then
-            echo "::error::install.sh should have refused when run from repo root"
-            exit 1
-          fi
-          echo "$out" | grep -q "Refusing to install"
-
-      - name: install.sh installs cleanly into a fresh directory
+      # harness_check covers the generic "fresh install passes lint" path,
+      # but this step specifically exercises that lint REJECTS a crafted page
+      # with missing required metadata. It's a targeted regression guard for
+      # the Taiwan.md-inspired metadata enforcement.
+      - name: wiki_sync.py rejects missing required metadata
         run: |
           target=$(mktemp -d)
-          pushd "$target" > /dev/null
-          echo y | "$GITHUB_WORKSPACE/install.sh"
-          popd > /dev/null
-          test -f "$target/CLAUDE.md"
-          test -f "$target/AGENTS.md"
-          test -f "$target/AI_CONTEXT.md"
-          test -f "$target/GEMINI.md"
-          test -f "$target/.cursorrules"
-          test -f "$target/.windsurfrules"
-          test -f "$target/scripts/wiki_sync.py"
-          test -f "$target/.agents/memory.md"
-          test -f "$target/docs/knowledge/index.md"
+          mkdir -p "$target/docs/knowledge"
+          cat > "$target/docs/knowledge/Broken_Topic.md" <<'EOF'
+          ---
+          id: Broken_Topic
+          title: Broken Topic
+          page_type: topic
+          related_topics: []
+          ---
 
-      - name: minimal-project example tracks fresh-install file set
+          # Broken Topic
+
+          This page is missing last_updated metadata.
+          EOF
+
+          set +e
+          AGENT_MEMORY_BASE_DIR="$target" python3 scripts/wiki_sync.py lint > "$RUNNER_TEMP/oaw-wiki-lint.txt" 2>&1
+          rc=$?
+          set -e
+          cat "$RUNNER_TEMP/oaw-wiki-lint.txt"
+          if [ $rc -eq 0 ]; then
+            echo "::error::wiki_sync.py lint should reject missing required metadata"
+            exit 1
+          fi
+          grep -q "knowledge page missing required metadata" "$RUNNER_TEMP/oaw-wiki-lint.txt"
+
+      # Example drift is also inside harness_check, but we keep an explicit
+      # file-set diff step so a failing CI log points directly at the offending
+      # files, not at a generic "drift detected" line.
+      - name: minimal-project example — full file-set diff on failure
+        if: failure()
         run: |
           target=$(mktemp -d)
           pushd "$target" > /dev/null
@@ -65,38 +68,11 @@ jobs:
           find "$target" -type f | sed "s#^$target/##" | sort > "$RUNNER_TEMP/oaw-installed-files.txt"
           find example/minimal-project -type f | sed 's#^example/minimal-project/##' | sort > "$RUNNER_TEMP/oaw-example-files.txt"
 
-          missing=$(comm -23 "$RUNNER_TEMP/oaw-installed-files.txt" "$RUNNER_TEMP/oaw-example-files.txt")
-          if [ -n "$missing" ]; then
-            echo "::error::example/minimal-project is missing fresh-install files"
-            echo "$missing"
-            exit 1
-          fi
+          echo "--- files in fresh install but missing from example/minimal-project ---"
+          comm -23 "$RUNNER_TEMP/oaw-installed-files.txt" "$RUNNER_TEMP/oaw-example-files.txt" || true
 
-          diff -u scripts/context_hub.py example/minimal-project/scripts/context_hub.py
-          diff -u scripts/wiki_sync.py example/minimal-project/scripts/wiki_sync.py
+          echo "--- context_hub.py diff ---"
+          diff -u scripts/context_hub.py example/minimal-project/scripts/context_hub.py || true
 
-      - name: Post-install wiki_sync.py lint passes on a fresh install
-        run: |
-          target=$(mktemp -d)
-          pushd "$target" > /dev/null
-          echo y | "$GITHUB_WORKSPACE/install.sh"
-          python3 scripts/wiki_sync.py lint
-          popd > /dev/null
-
-      - name: Lint is clean on the OAW repo itself
-        run: python3 scripts/wiki_sync.py lint
-
-      - name: --strict mode flags unfilled placeholders after install
-        run: |
-          target=$(mktemp -d)
-          pushd "$target" > /dev/null
-          echo y | "$GITHUB_WORKSPACE/install.sh"
-          set +e
-          python3 scripts/wiki_sync.py lint --strict
-          rc=$?
-          set -e
-          popd > /dev/null
-          if [ $rc -eq 0 ]; then
-            echo "::error::--strict should fail on a fresh install with unfilled placeholders"
-            exit 1
-          fi
+          echo "--- wiki_sync.py diff ---"
+          diff -u scripts/wiki_sync.py example/minimal-project/scripts/wiki_sync.py || true
