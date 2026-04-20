@@ -1,22 +1,29 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0-preview",
   "project": "O-ALL-WANT",
-  "last_updated": "2026-04-17",
-  "current_phase": "stable",
+  "last_updated": "2026-04-20",
+  "current_phase": "v1.1 preview — Taiwan.md wiki packet + harness quality gates",
   "next_phase": "community-feedback",
   "task_state": {
-    "in_progress": [],
+    "in_progress": [
+      "A-1 Taiwan.md wiki governance merge to main",
+      "A-2 harness_check one-command gate verification",
+      "A-3 skill frontmatter lint verification",
+      "R-1 harness-evaluator skill implementation (Week 4)"
+    ],
     "blocked": []
   },
   "benchmark_snapshot": {
-    "summary": "Install time < 5s, 15 template files, 6 skills",
-    "date": "2026-04-17"
+    "summary": "harness_check 8/8 green; lint default exit 0; strict fails on unfilled placeholders; 6 existing skills pass frontmatter lint",
+    "date": "2026-04-20"
   },
   "do_not_rerun": [
     "P0 validation 2026-04-14 (reason: full install matrix tested, results in docs/archive/Release_Checklist.md)",
-    "pre-launch smoke test 2026-04-17 (reason: CI workflow covers self-install-refuse, fresh-install lint, and --strict placeholder detection)"
+    "pre-launch smoke test 2026-04-17 (reason: CI workflow covers self-install-refuse, fresh-install lint, and --strict placeholder detection)",
+    "R-1 evaluator independence spike 2026-04-20 (reason: subagent context isolation verified — ~19k tokens, 13s per review, zero parent context bleed)",
+    "R-3 failure corpus analysis 2026-04-20 (reason: 9 cases analyzed, 0/9 fit Recovery framing, see Skill_Failure_Modes_2026-04-20.md)"
   ],
-  "notes": "This file tracks version and experiment control. Agents read 'version' and 'do_not_rerun' every session.",
+  "notes": "This file tracks version and experiment control. Agents read 'version' and 'do_not_rerun' every session. `1.1.0-preview` indicates the worktree has the pending v1.1.0 content but has not been merged to main yet.",
   "wiki_sync": {
     "default_mode": "optional",
     "raw_dir": "docs/raw",

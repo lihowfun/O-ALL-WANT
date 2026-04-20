@@ -29,18 +29,21 @@ way to help right now**.
 # 1. Fork + branch
 git checkout -b your-feature-branch
 
-# 2. Run the checks locally (same as CI)
-python3 -m py_compile scripts/context_hub.py scripts/wiki_sync.py
-python3 scripts/wiki_sync.py lint              # metadata + link check
-python3 scripts/wiki_sync.py lint --strict     # also catches unfilled placeholders
+# 2. Run the full local gate — same 8 checks CI runs
+./scripts/harness_check.py           # pycompile + CLI surface + install
+                                     # refusal + fresh install + wiki lint
+                                     # (repo + install) + strict placeholders
+                                     # + example drift
 
-# 3. If you touched install.sh, verify both paths:
-./install.sh                                     # should refuse (self-install)
-( cd "$(mktemp -d)" && echo y | /path/to/OAW/install.sh )  # should succeed
+# 3. Optional extras when touching skills / wikis:
+python3 scripts/wiki_sync.py lint --strict    # also flags unfilled placeholders
+                                              # + skill frontmatter issues
 ```
 
-CI runs the above automatically on every PR (see `.github/workflows/test.yml`).
-A green check is required before merge.
+CI runs `harness_check.py` as a single step. A green check is required before merge.
+
+Run `./scripts/harness_check.py --verbose` to see the raw output of each
+check, or `--json` for machine-readable output.
 
 ## Commit and PR style
 
@@ -63,8 +66,15 @@ Cadence rule-of-thumb — **not dogma, just recent learnings**:
   contracts
 
 Feature work driven by a single integrator's feedback should live on a
-`*-preview` branch until at least one more user confirms the pattern is
-useful. See `v1.1-preview` for the current example of that holding pattern.
+`study/*` or `*-preview` branch until at least one more user confirms the
+pattern is useful. A recent example: a draft `CURRENT_STATE.md` template
+was shelved from v1.1 until multi-user demand emerges.
+
+When a piece of proposed work depends on a downstream consumer that doesn't
+exist yet (e.g. "this audit log will be useful WHEN we have an evaluator"),
+defer it to research, not to implementation. See
+`docs/archive/Future_Optimization_Plan_Confirmed_2026-04-20.md` for the
+canonical example of accept / research / reject triage.
 
 ## Questions?
 
