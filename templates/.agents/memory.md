@@ -12,7 +12,10 @@
 > **Tag-picking notes**:
 > - A tier tag can stand alone for pure measurements (e.g. `[T4]` + the statistic + method). You do not need a Kind tag on every measurement.
 > - `[ARCHITECTURE]` is reserved for **design decisions**. For a measurement of existing behavior, use `[EXPERIMENT]` or tier-only.
-> - **Cross-project user preferences** (e.g. "don't use emojis", "prefer tabs") belong in **user-level memory** (Claude Code auto memory, `~/.claude/`), not here. This file records project-specific decisions, bugs, and findings.
+> - **Where does a preference belong?**
+>   - *Cross-project personal preference* ("don't use emojis", "prefer tabs", "2-space indent everywhere") → **user-level memory** (Claude Code auto memory, `~/.claude/`), not here.
+>   - *Project-team convention* ("use tensor-parallel format for multi-GPU runs", "always review migrations with DBA", "no merges Fridays") → this file, as a `[DECISION]`. A team lead / advisor stating a standard is a project decision, not a personal preference.
+>   - **Test**: would this apply to any other project you work on? If yes → user-level. If it's specific to this codebase / team → `[DECISION]` here.
 >
 > **How to write**:
 > - Edit this file directly, or

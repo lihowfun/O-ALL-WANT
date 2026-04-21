@@ -1129,12 +1129,19 @@ def _slugify_topic(title, max_words=5):
     """Slug-case a memory entry title into a candidate wiki topic ID.
 
     Pure string transformation — deliberately no LLM heuristics. The caller
-    (human) does the final topic naming.
+    (human) does the final topic naming. When the title has no Latin words
+    (e.g. pure CJK), falls back to `Topic_<8-char-hash>` so the output is
+    never empty.
     """
+    import hashlib
+
     words = re.findall(r"[A-Za-z0-9]+", title)[:max_words]
-    if not words:
+    if words:
+        return "_".join(w.capitalize() for w in words)
+    if not title.strip():
         return ""
-    return "_".join(w.capitalize() for w in words)
+    digest = hashlib.sha1(title.encode("utf-8")).hexdigest()[:8]
+    return f"Topic_{digest}"
 
 
 def _count_entry_citations(title, archive_dir):

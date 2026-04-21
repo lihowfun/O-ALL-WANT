@@ -50,6 +50,7 @@ Default SOURCES for OAW-harness-using projects:
 - `VERSION.json` — version + `do_not_rerun` + `task_state`
 - `.agents/memory.md` — **last 5 entries only**, not whole file
 - `ROADMAP.md` — **first 60 lines**
+- `docs/knowledge/CURRENT_STATE.md` — **if it exists** (optional compiled single-entry-point)
 
 Adjust per project. More is worse; the test is whether the **compiled cold-start set** is sufficient, not whether the whole repo is.
 
