@@ -1,29 +1,26 @@
 {
-  "version": "1.1.0-preview",
+  "version": "1.1.0",
   "project": "O-ALL-WANT",
-  "last_updated": "2026-04-20",
-  "current_phase": "v1.1 preview — Taiwan.md wiki packet + harness quality gates",
+  "last_updated": "2026-04-21",
+  "current_phase": "v1.1 — Taiwan.md wiki packet + harness gates + merge gate + evaluator scaffolds",
   "next_phase": "community-feedback",
   "task_state": {
     "in_progress": [
-      "A-1 Taiwan.md wiki governance merge to main",
-      "A-2 harness_check one-command gate verification",
-      "A-3 skill frontmatter lint verification",
-      "R-1 harness-evaluator skill implementation (Week 4)"
+      "Align Merge Gate parenthetical between CLAUDE.md and templates/AGENT_RULES.md (insight surfaced in 2026-04-21 dogfood)"
     ],
     "blocked": []
   },
   "benchmark_snapshot": {
-    "summary": "harness_check 8/8 green; lint default exit 0; strict fails on unfilled placeholders; 6 existing skills pass frontmatter lint",
-    "date": "2026-04-20"
+    "summary": "harness_check 8/8 green; lint default exit 0; strict fails on unfilled placeholders in OAW_Session_Continuity_Test.md; 8 skills pass frontmatter lint; harness-evaluator subagent review of commit 881cb25 returned 7/7 PASS (T2, single invocation)",
+    "date": "2026-04-21"
   },
   "do_not_rerun": [
     "P0 validation 2026-04-14 (reason: full install matrix tested, results in docs/archive/Release_Checklist.md)",
     "pre-launch smoke test 2026-04-17 (reason: CI workflow covers self-install-refuse, fresh-install lint, and --strict placeholder detection)",
-    "R-1 evaluator independence spike 2026-04-20 (reason: subagent context isolation verified — ~19k tokens, 13s per review, zero parent context bleed)",
+    "R-1 evaluator independence spike 2026-04-20 (reason: subagent context isolation verified — ~19k tokens, 13s per review, zero parent context bleed) [CAVEAT: classified T2 on 2026-04-21 — n=1 single spike, not a reproduced baseline]",
     "R-3 failure corpus analysis 2026-04-20 (reason: 9 cases analyzed, 0/9 fit Recovery framing, see Skill_Failure_Modes_2026-04-20.md)"
   ],
-  "notes": "This file tracks version and experiment control. Agents read 'version' and 'do_not_rerun' every session. `1.1.0-preview` indicates the worktree has the pending v1.1.0 content but has not been merged to main yet.",
+  "notes": "This file tracks version and experiment control. Agents read 'version' and 'do_not_rerun' every session. v1.1.0 bundles Taiwan.md wiki governance, harness health gates, the Merge Gate rule, and the classify-evidence + harness-evaluator skills.",
   "wiki_sync": {
     "default_mode": "optional",
     "raw_dir": "docs/raw",

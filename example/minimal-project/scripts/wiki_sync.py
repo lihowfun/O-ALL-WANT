@@ -832,16 +832,300 @@ def lint(strict=False):
     return 0
 
 
+EXPERIMENT_LOG_PATH = os.path.join(KNOWLEDGE_DIR, "EXPERIMENT_LOG.md")
+CURRENT_STATE_PATH = os.path.join(KNOWLEDGE_DIR, "CURRENT_STATE.md")
+
+
+def _ensure_experiment_log():
+    """Create EXPERIMENT_LOG.md with a default header if it does not exist."""
+    if os.path.exists(EXPERIMENT_LOG_PATH):
+        return
+    header = [
+        _render_frontmatter(
+            {
+                "id": "EXPERIMENT_LOG",
+                "title": "Experiment Log",
+                "page_type": "topic",
+                "build_origin": "wiki_sync",
+                "source_refs": [],
+                "last_updated": _today(),
+                "related_topics": ["CURRENT_STATE", "Performance_Baselines"],
+            }
+        ),
+        "# Experiment Log",
+        "",
+        "> Append-only ledger of experiments. Maintained by",
+        "> `python3 scripts/wiki_sync.py add-experiment`. Newest entries on top.",
+        "",
+        "| Date | Name | Status | Result | Conclusion |",
+        "|------|------|:------:|--------|------------|",
+        "",
+    ]
+    _write(EXPERIMENT_LOG_PATH, "\n".join(header))
+
+
+def _replace_frontmatter_field(content, key, value):
+    """Rewrite a scalar frontmatter field without reformatting the body."""
+    if not content.startswith("---\n"):
+        return content
+    lines = content.splitlines()
+    closing = None
+    for i in range(1, len(lines)):
+        if lines[i].strip() == "---":
+            closing = i
+            break
+    if closing is None:
+        return content
+    pattern = re.compile(rf"^{re.escape(key)}\s*:.*$")
+    replaced = False
+    for i in range(1, closing):
+        if pattern.match(lines[i]):
+            lines[i] = f"{key}: {value}"
+            replaced = True
+            break
+    if not replaced:
+        lines.insert(closing, f"{key}: {value}")
+        closing += 1
+    return "\n".join(lines) + ("\n" if content.endswith("\n") else "")
+
+
+def add_experiment(name, status, result, conclusion, exp_date=None, dir_path=None):
+    """Append a row to EXPERIMENT_LOG.md (non-interactive)."""
+    if dir_path:
+        global KNOWLEDGE_DIR, EXPERIMENT_LOG_PATH
+        KNOWLEDGE_DIR = dir_path
+        EXPERIMENT_LOG_PATH = os.path.join(KNOWLEDGE_DIR, "EXPERIMENT_LOG.md")
+
+    _ensure_experiment_log()
+    entry_date = exp_date or _today()
+    safe = lambda s: (s or "").replace("|", "\\|").replace("\n", " ").strip()
+    row = f"| {entry_date} | {safe(name)} | {safe(status)} | {safe(result)} | {safe(conclusion)} |"
+
+    existing = _safe_read(EXPERIMENT_LOG_PATH)
+    lines = existing.splitlines()
+    header_idx = None
+    for i, line in enumerate(lines):
+        if line.startswith("|------"):
+            header_idx = i
+            break
+    if header_idx is None:
+        raise ValueError("EXPERIMENT_LOG.md missing table header; delete the file to regenerate.")
+    lines.insert(header_idx + 1, row)
+    updated = "\n".join(lines)
+    updated = _replace_frontmatter_field(updated, "last_updated", _today())
+    if not updated.endswith("\n"):
+        updated += "\n"
+    _write(EXPERIMENT_LOG_PATH, updated)
+    print(f"✅ Experiment logged: {name} [{status}] → {EXPERIMENT_LOG_PATH}")
+
+
+def update_state(phase=None, status=None, note=None, dir_path=None):
+    """Update CURRENT_STATE.md phase row + append an AI annotation (non-interactive)."""
+    if dir_path:
+        global KNOWLEDGE_DIR, CURRENT_STATE_PATH
+        KNOWLEDGE_DIR = dir_path
+        CURRENT_STATE_PATH = os.path.join(KNOWLEDGE_DIR, "CURRENT_STATE.md")
+
+    if not os.path.exists(CURRENT_STATE_PATH):
+        raise ValueError(
+            f"CURRENT_STATE.md not found at {CURRENT_STATE_PATH}. "
+            "Copy it from templates/docs/knowledge/CURRENT_STATE.md first."
+        )
+
+    content = _safe_read(CURRENT_STATE_PATH)
+    content = _replace_frontmatter_field(content, "last_updated", _today())
+
+    if phase and status:
+        pattern = re.compile(
+            rf"^(\|\s*`?{re.escape(phase)}`?\s*\|)([^|]*)(\|)",
+            re.MULTILINE,
+        )
+        new_content, n = pattern.subn(
+            lambda m: f"{m.group(1)} {status} {m.group(3)}", content, count=1
+        )
+        if n:
+            content = new_content
+        else:
+            print(f"⚠️  Phase row '{phase}' not found in CURRENT_STATE.md — appending annotation only.")
+
+    if note:
+        stamp = datetime.now().strftime("%Y-%m-%d %H:%M")
+        annotation = f"- [{stamp}] {note}"
+        marker = "## AI Annotations"
+        if marker in content:
+            head, tail = content.split(marker, 1)
+            tail_stripped = tail.lstrip("\n")
+            tail_stripped = re.sub(r"^<!--[^>]*-->\s*", "", tail_stripped)
+            content = f"{head}{marker}\n\n{annotation}\n{tail_stripped}"
+        else:
+            content = content.rstrip() + f"\n\n## AI Annotations\n\n{annotation}\n"
+
+    if not content.endswith("\n"):
+        content += "\n"
+    _write(CURRENT_STATE_PATH, content)
+    print(f"✅ CURRENT_STATE updated: phase={phase or '—'} status={status or '—'}")
+
+
+def _resolve_ssot_value(spec, base_dir):
+    """Resolve a single `<file>:<locator>` spec into a comparable string.
+
+    Supported locator forms:
+      - JSON file (`VERSION.json`): dot-path into the object, e.g.
+        `benchmark_snapshot.summary` → nested value.
+      - Markdown file: literal section heading (`## Current Baselines`)
+        returns the paragraph-stripped body of that section until the next
+        heading of same or higher level.
+
+    Returns (value_or_None, error_or_None). value is a normalized string
+    (whitespace-collapsed); error is a human-readable reason if we can't
+    resolve it.
+    """
+    if ":" not in spec:
+        return None, f"ssot_mirror spec missing `:` — expected `<file>:<locator>`, got {spec!r}"
+    file_part, locator = spec.split(":", 1)
+    path = os.path.normpath(os.path.join(base_dir, file_part))
+    if not os.path.exists(path):
+        return None, f"file not found: {file_part}"
+
+    try:
+        raw = _safe_read(path)
+    except OSError as exc:
+        return None, f"unreadable {file_part}: {exc}"
+
+    if file_part.endswith(".json"):
+        try:
+            import json as _json
+            obj = _json.loads(raw)
+        except (_json.JSONDecodeError, ValueError) as exc:
+            return None, f"{file_part} not valid JSON: {exc}"
+        cursor = obj
+        for segment in locator.split("."):
+            if isinstance(cursor, dict) and segment in cursor:
+                cursor = cursor[segment]
+            else:
+                return None, f"path {locator!r} not found in {file_part}"
+        return _normalize_whitespace(str(cursor)), None
+
+    # Markdown path: locator is a section heading text; extract the body.
+    target = locator.strip()
+    lines = raw.splitlines()
+    start_idx = None
+    heading_level = 0
+    for idx, line in enumerate(lines):
+        m = re.match(r"^(#+)\s+(.+?)\s*$", line)
+        if m and m.group(2).strip() == target:
+            start_idx = idx + 1
+            heading_level = len(m.group(1))
+            break
+    if start_idx is None:
+        return None, f"markdown section {target!r} not found in {file_part}"
+
+    body_lines = []
+    for line in lines[start_idx:]:
+        m = re.match(r"^(#+)\s+", line)
+        if m and len(m.group(1)) <= heading_level:
+            break
+        body_lines.append(line)
+    return _normalize_whitespace(" ".join(body_lines)), None
+
+
+def _normalize_whitespace(text):
+    return re.sub(r"\s+", " ", (text or "").strip())
+
+
+def cross_check():
+    """Verify SSOT mirrors declared in knowledge-page frontmatter agree with their sources.
+
+    A knowledge page can declare `ssot_mirrors` in its frontmatter, each item a
+    `<file>:<locator>` spec. All declared mirrors must resolve to the same
+    normalized value; otherwise this function reports the mismatch.
+    """
+    pages = _load_knowledge_pages(include_meta=True)
+    mismatches = []
+    checked = 0
+
+    for page in pages:
+        mirrors = _normalize_list(page["metadata"].get("ssot_mirrors") if page.get("metadata") else [])
+        if not mirrors:
+            continue
+        checked += 1
+
+        resolved = []
+        for spec in mirrors:
+            value, err = _resolve_ssot_value(spec, BASE_DIR)
+            resolved.append((spec, value, err))
+
+        errs = [(spec, err) for spec, _v, err in resolved if err]
+        if errs:
+            for spec, err in errs:
+                mismatches.append(
+                    f"{page['filename']}: cannot resolve {spec} — {err}"
+                )
+            continue
+
+        values = {value for _spec, value, _err in resolved}
+        if len(values) > 1:
+            mismatches.append(
+                f"{page['filename']}: SSOT mirrors disagree — "
+                + "; ".join(f"{spec}={value!r}" for spec, value, _err in resolved)
+            )
+
+    if not mismatches:
+        print(f"✅ wiki_sync cross-check passed — {checked} page(s) with ssot_mirrors all agree.")
+        return 0
+
+    print(f"❌ wiki_sync cross-check found {len(mismatches)} mismatch(es):")
+    for issue in mismatches:
+        print(f"  - {issue}")
+    return 1
+
+
+def stale(threshold_days=30):
+    """List knowledge pages whose `last_updated` is older than threshold_days.
+
+    Informational only (exit 0). Reuses the same page loader and date parser
+    as `lint`, so staleness is measured identically everywhere.
+    """
+    today = date.today()
+    pages = _load_knowledge_pages(include_meta=True)
+    stale_pages = []
+    for page in pages:
+        last = _parse_date(page.get("last_updated"))
+        if last is None:
+            continue
+        age = (today - last).days
+        if age > threshold_days:
+            stale_pages.append((age, page))
+
+    if not stale_pages:
+        print(f"✅ No knowledge pages older than {threshold_days} days.")
+        return 0
+
+    stale_pages.sort(key=lambda item: item[0], reverse=True)
+    print(f"⏳ {len(stale_pages)} page(s) older than {threshold_days} days:")
+    for age, page in stale_pages:
+        rel = os.path.relpath(page["path"], BASE_DIR)
+        print(f"  - {rel} | {page['last_updated']} | {age} days")
+    return 0
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="OAW — deterministic wiki compiler",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Commands:
-  %(prog)s build                  Compile docs/raw/ into docs/knowledge/ + index/log
-  %(prog)s refresh Topic_Name     Rebuild one topic, then update index/log
-  %(prog)s refresh all            Rebuild every compiled topic
-  %(prog)s lint                   Check wiki metadata quality
+  %(prog)s build                        Compile docs/raw/ into docs/knowledge/ + index/log
+  %(prog)s refresh Topic_Name           Rebuild one topic, then update index/log
+  %(prog)s refresh all                  Rebuild every compiled topic
+  %(prog)s lint                         Check wiki metadata quality
+  %(prog)s stale [--threshold N]        Report knowledge pages older than N days
+  %(prog)s cross-check                  Verify frontmatter `ssot_mirrors` agree across files
+  %(prog)s add-experiment --name ...    Append row to docs/knowledge/EXPERIMENT_LOG.md
+  %(prog)s update-state --phase ...     Update a phase row in docs/knowledge/CURRENT_STATE.md
+
+Non-interactive flags on add-experiment / update-state exist so AI workflows
+can call them without prompting the user.
         """,
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -858,6 +1142,55 @@ Commands:
         help="Treat unfilled `${...}` / `YYYY-MM-DD` placeholders as errors (default: warn only).",
     )
 
+    p_stale = subparsers.add_parser(
+        "stale",
+        help="Report knowledge pages whose last_updated is older than a threshold.",
+    )
+    p_stale.add_argument(
+        "--threshold",
+        type=int,
+        default=30,
+        help="Age threshold in days (default: 30).",
+    )
+
+    subparsers.add_parser(
+        "cross-check",
+        help="Verify that frontmatter ssot_mirrors on knowledge pages agree across files.",
+    )
+
+    p_add = subparsers.add_parser(
+        "add-experiment",
+        help="Append an experiment row to EXPERIMENT_LOG.md (non-interactive).",
+    )
+    p_add.add_argument("--name", required=True, help="Experiment short name.")
+    p_add.add_argument(
+        "--status", required=True,
+        choices=["accepted", "rejected", "running", "blocked", "inconclusive"],
+        help="Outcome status.",
+    )
+    p_add.add_argument("--result", default="", help="One-line metric / observation.")
+    p_add.add_argument("--conclusion", default="", help="One-line decision / next step.")
+    p_add.add_argument("--date", default=None, help="Override date (YYYY-MM-DD).")
+    p_add.add_argument(
+        "--dir", default=None,
+        help="Override knowledge dir (default: docs/knowledge/).",
+    )
+
+    p_state = subparsers.add_parser(
+        "update-state",
+        help="Update CURRENT_STATE.md phase row and annotation (non-interactive).",
+    )
+    p_state.add_argument("--phase", default=None, help="Phase id / label (matches first column).")
+    p_state.add_argument(
+        "--status", default=None,
+        help="New phase status (e.g. '✅ done', '🔄 in progress', '⏳ queued').",
+    )
+    p_state.add_argument("--note", default=None, help="Annotation line appended under AI Annotations.")
+    p_state.add_argument(
+        "--dir", default=None,
+        help="Override knowledge dir (default: docs/knowledge/).",
+    )
+
     args = parser.parse_args()
 
     try:
@@ -867,6 +1200,26 @@ Commands:
             refresh(args.topic)
         elif args.command == "lint":
             raise SystemExit(lint(strict=args.strict))
+        elif args.command == "stale":
+            raise SystemExit(stale(threshold_days=args.threshold))
+        elif args.command == "cross-check":
+            raise SystemExit(cross_check())
+        elif args.command == "add-experiment":
+            add_experiment(
+                name=args.name,
+                status=args.status,
+                result=args.result,
+                conclusion=args.conclusion,
+                exp_date=args.date,
+                dir_path=args.dir,
+            )
+        elif args.command == "update-state":
+            update_state(
+                phase=args.phase,
+                status=args.status,
+                note=args.note,
+                dir_path=args.dir,
+            )
     except ValueError as exc:
         print(f"❌ {exc}")
         raise SystemExit(1) from exc
