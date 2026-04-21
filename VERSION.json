@@ -5,9 +5,7 @@
   "current_phase": "v1.1 — Taiwan.md wiki packet + harness gates + merge gate + evaluator scaffolds",
   "next_phase": "community-feedback",
   "task_state": {
-    "in_progress": [
-      "Align Merge Gate parenthetical between CLAUDE.md and templates/AGENT_RULES.md (insight surfaced in 2026-04-21 dogfood)"
-    ],
+    "in_progress": [],
     "blocked": []
   },
   "benchmark_snapshot": {

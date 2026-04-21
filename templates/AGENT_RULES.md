@@ -100,7 +100,7 @@
 > Infrastructure code (install scripts, CI, build tooling, scripts the harness
 > calls, anything that runs on every session) merges to `main` only if one of:
 
-1. **End-to-end test passes in the worktree** (not just `import ok` or `py_compile`)
+1. **End-to-end test passes in the worktree** (actual behavior exercised — not just `import ok` or `py_compile` — AND any affected skill runs its own acceptance criteria)
 2. **Quantified improvement vs current `main` baseline** (measured, not asserted)
 3. **Explicit user authorization for experimental scaffold** (clearly marked as such)
 
