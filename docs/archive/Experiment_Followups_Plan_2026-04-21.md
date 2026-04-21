@@ -25,9 +25,11 @@ related:
 | **S-1** | `read-discipline` skill | 🟢 | 1h | this branch | ✅ shipped |
 | **S-2** | memory.md TAG clarifications (Gap 1 + Gap 2) | 🟢 | 15m | this branch | ✅ shipped |
 | **M-3** | Re-run both experiments on non-synthetic data | 🟡 | 1–2h | future session (data-gated) | 📋 spec'd below |
-| **M-4** | Track over-refusal rate | 🟡 | 30m + ongoing | future session | 📋 spec'd below |
-| **L-5** | `inheritance-check` skill | 🔴 | 1–2h | worktree spike OK | 📋 spec'd below |
-| **L-6** | `wiki_sync promote-candidates` subcommand | 🔴 | 2–3h | worktree spike OK | 📋 spec'd below |
+| **M-4a** | `[OVER-REFUSE]` TAG convention + 3-in-2-weeks threshold | 🟡 | 10m | this branch | ✅ setup shipped |
+| **M-4b** | Longitudinal observation of over-refusal rate | 🟡 | ongoing | future sessions | 🔭 observing |
+| **L-5** | `inheritance-check` skill (+ first dogfood) | 🔴 | 1–2h | this branch | ✅ shipped |
+| **L-6** | `wiki_sync promote-candidates` subcommand | 🔴 | 2–3h | this branch | ✅ shipped |
+| **X-7** | v1.0.0 vs v1.1.0 regime comparison (unplanned — added for Merge Gate §1 cond 2) | 🟢 | 45m | this branch | ✅ shipped |
 
 ## M-3 — Reproduce on non-synthetic data
 

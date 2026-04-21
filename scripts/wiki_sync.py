@@ -1080,6 +1080,157 @@ def cross_check():
     return 1
 
 
+MEMORY_ENTRY_HEADER = re.compile(
+    r"^## \[(\d{4}-\d{2}-\d{2})\] "
+    r"((?:\[[^\]]+\] *)+)"
+    r"(.*)$"
+)
+TIER_IN_BLOCK = re.compile(r"\[T([1-5])\]")
+TIER_ORDER = {"T1": 1, "T2": 2, "T3": 3, "T4": 4, "T5": 5}
+
+
+def _parse_memory_entries(content):
+    """Parse .agents/memory.md into structured entries.
+
+    Returns a list of dicts: `{date, tags, tiers, title, body}`. Tags are the
+    raw labels between brackets in order of appearance; tiers is the subset
+    matching `[T1]`–`[T5]`.
+    """
+    lines = content.splitlines()
+    entries = []
+    current = None
+    body_buf = []
+    for line in lines:
+        m = MEMORY_ENTRY_HEADER.match(line)
+        if m:
+            if current is not None:
+                current["body"] = "\n".join(body_buf).strip()
+                entries.append(current)
+                body_buf = []
+            tag_block = m.group(2)
+            entry_tags = re.findall(r"\[([^\]]+)\]", tag_block)
+            entry_tiers = [f"T{n}" for n in TIER_IN_BLOCK.findall(tag_block)]
+            current = {
+                "date": m.group(1),
+                "tags": entry_tags,
+                "tiers": entry_tiers,
+                "title": m.group(3).strip(),
+                "body": "",
+            }
+        elif current is not None:
+            body_buf.append(line)
+    if current is not None:
+        current["body"] = "\n".join(body_buf).strip()
+        entries.append(current)
+    return entries
+
+
+def _slugify_topic(title, max_words=5):
+    """Slug-case a memory entry title into a candidate wiki topic ID.
+
+    Pure string transformation — deliberately no LLM heuristics. The caller
+    (human) does the final topic naming.
+    """
+    words = re.findall(r"[A-Za-z0-9]+", title)[:max_words]
+    if not words:
+        return ""
+    return "_".join(w.capitalize() for w in words)
+
+
+def _count_entry_citations(title, archive_dir):
+    """Count archive .md files that mention the entry's title (first 5 words) or its slug."""
+    if not os.path.isdir(archive_dir):
+        return 0
+    short = " ".join(title.split()[:5])
+    slug = _slugify_topic(title)
+    count = 0
+    for root, _dirs, files in os.walk(archive_dir):
+        for fname in files:
+            if not fname.endswith(".md"):
+                continue
+            try:
+                text = _safe_read(os.path.join(root, fname))
+            except Exception:
+                continue
+            if (short and short in text) or (slug and slug in text):
+                count += 1
+    return count
+
+
+def promote_candidates(
+    min_tier="T3", memory_file=None, min_citations=0, json_out=False, archive_dir=None
+):
+    """List memory entries with tier ≥ `min_tier` that are candidates for wiki promotion.
+
+    Output is advisory — this function does NOT modify `docs/knowledge/`.
+    """
+    import json as _json
+
+    memory_file = memory_file or os.path.join(BASE_DIR, ".agents", "memory.md")
+    archive_dir = archive_dir or os.path.join(BASE_DIR, "docs", "archive")
+
+    if not os.path.exists(memory_file):
+        print(f"❌ memory file not found: {memory_file}")
+        return 1
+
+    content = _safe_read(memory_file)
+    entries = _parse_memory_entries(content)
+    if not entries:
+        print(f"⚠️  no memory entries parsed from {memory_file}")
+        return 0
+
+    min_rank = TIER_ORDER.get(min_tier, 3)
+
+    candidates = []
+    for entry in entries:
+        if not entry["tiers"]:
+            continue
+        top_tier = max(entry["tiers"], key=lambda t: TIER_ORDER[t])
+        if TIER_ORDER[top_tier] < min_rank:
+            continue
+        citations = _count_entry_citations(entry["title"], archive_dir)
+        if citations < min_citations:
+            continue
+        kind_tags = [t for t in entry["tags"] if not TIER_IN_BLOCK.fullmatch(f"[{t}]") and not t.startswith("CAVEAT")]
+        candidates.append(
+            {
+                "date": entry["date"],
+                "tags": kind_tags,
+                "tier": top_tier,
+                "citations": citations,
+                "title": entry["title"],
+                "suggested_topic": _slugify_topic(entry["title"]),
+            }
+        )
+
+    if json_out:
+        print(_json.dumps(candidates, indent=2))
+        return 0
+
+    if not candidates:
+        print(
+            f"No promotion candidates found (min_tier={min_tier}, min_citations={min_citations})."
+        )
+        return 0
+
+    print(f"📋 {len(candidates)} promotion candidate(s) — min_tier={min_tier}:")
+    print()
+    print("| Date | Tags | Tier | Cites | Title | Suggested wiki topic |")
+    print("|------|------|:----:|:-----:|-------|----------------------|")
+    for c in candidates:
+        tags_str = " ".join(f"[{t}]" for t in c["tags"])
+        print(
+            f"| {c['date']} | {tags_str} | {c['tier']} | {c['citations']} | "
+            f"{c['title']} | {c['suggested_topic']} |"
+        )
+    print()
+    print(
+        "⚠️  Advisory output — this subcommand does NOT modify docs/knowledge/. "
+        "Human makes the final topic decision."
+    )
+    return 0
+
+
 def stale(threshold_days=30):
     """List knowledge pages whose `last_updated` is older than threshold_days.
 
@@ -1123,9 +1274,11 @@ Commands:
   %(prog)s cross-check                  Verify frontmatter `ssot_mirrors` agree across files
   %(prog)s add-experiment --name ...    Append row to docs/knowledge/EXPERIMENT_LOG.md
   %(prog)s update-state --phase ...     Update a phase row in docs/knowledge/CURRENT_STATE.md
+  %(prog)s promote-candidates           List T3+ memory entries suitable for wiki promotion
 
 Non-interactive flags on add-experiment / update-state exist so AI workflows
-can call them without prompting the user.
+can call them without prompting the user. `promote-candidates` is advisory —
+it never writes to docs/knowledge/.
         """,
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -1191,6 +1344,32 @@ can call them without prompting the user.
         help="Override knowledge dir (default: docs/knowledge/).",
     )
 
+    p_promote = subparsers.add_parser(
+        "promote-candidates",
+        help="List memory entries with tier ≥ --min-tier suitable for wiki promotion (advisory).",
+    )
+    p_promote.add_argument(
+        "--min-tier", default="T3",
+        choices=["T1", "T2", "T3", "T4", "T5"],
+        help="Minimum tier to include (default: T3).",
+    )
+    p_promote.add_argument(
+        "--memory-file", default=None,
+        help="Path to memory.md (default: .agents/memory.md relative to repo root).",
+    )
+    p_promote.add_argument(
+        "--min-citations", type=int, default=0,
+        help="Minimum archive-doc citations (default: 0, no filter).",
+    )
+    p_promote.add_argument(
+        "--archive-dir", default=None,
+        help="Directory for citation scanning (default: docs/archive/).",
+    )
+    p_promote.add_argument(
+        "--json", action="store_true", dest="json_out",
+        help="Emit machine-readable JSON instead of markdown table.",
+    )
+
     args = parser.parse_args()
 
     try:
@@ -1219,6 +1398,16 @@ can call them without prompting the user.
                 status=args.status,
                 note=args.note,
                 dir_path=args.dir,
+            )
+        elif args.command == "promote-candidates":
+            raise SystemExit(
+                promote_candidates(
+                    min_tier=args.min_tier,
+                    memory_file=args.memory_file,
+                    min_citations=args.min_citations,
+                    json_out=args.json_out,
+                    archive_dir=args.archive_dir,
+                )
             )
     except ValueError as exc:
         print(f"❌ {exc}")

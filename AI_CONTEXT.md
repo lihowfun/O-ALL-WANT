@@ -2,7 +2,7 @@
 
 > ⚠️ **FORBIDDEN**: Do NOT put agent operational instructions here. Use `CLAUDE.md` instead.
 
-> AI coding context harness | v1.0.0 | Repo: lihowfun/O-ALL-WANT
+> AI coding context harness | v1.1.0 | Repo: lihowfun/O-ALL-WANT
 > Pipeline: **Template repo → install.sh → Per-project harness**
 
 ## Language

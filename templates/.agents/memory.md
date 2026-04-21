@@ -7,6 +7,7 @@
 > - Evidence tier (optional, see `.agents/skills/classify-evidence.md`):
 >   `[T1]` WIP · `[T2]` Observation · `[T3]` Confirmed · `[T4]` Baseline · `[T5]` Frozen
 > - Qualifier: `[CAVEAT: ...]` — e.g. `[CAVEAT: single seed]`, `[CAVEAT: one source]`, `[CAVEAT: one environment]`
+> - Discipline log: `[OVER-REFUSE]` — logged when an agent answered "INSUFFICIENT EVIDENCE" on a question whose answer was in the given files. Threshold: ≥3 observations in 2 weeks → revisit `.agents/skills/read-discipline.md`.
 >
 > **Tag-picking notes**:
 > - A tier tag can stand alone for pure measurements (e.g. `[T4]` + the statistic + method). You do not need a Kind tag on every measurement.
