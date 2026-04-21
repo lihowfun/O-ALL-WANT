@@ -8,9 +8,16 @@
 >   `[T1]` WIP · `[T2]` Observation · `[T3]` Confirmed · `[T4]` Baseline · `[T5]` Frozen
 > - Qualifier: `[CAVEAT: ...]` — e.g. `[CAVEAT: single seed]`, `[CAVEAT: one source]`, `[CAVEAT: one environment]`
 >
+> **Tag-picking notes**:
+> - A tier tag can stand alone for pure measurements (e.g. `[T4]` + the statistic + method). You do not need a Kind tag on every measurement.
+> - `[ARCHITECTURE]` is reserved for **design decisions**. For a measurement of existing behavior, use `[EXPERIMENT]` or tier-only.
+> - **Cross-project user preferences** (e.g. "don't use emojis", "prefer tabs") belong in **user-level memory** (Claude Code auto memory, `~/.claude/`), not here. This file records project-specific decisions, bugs, and findings.
+>
 > **How to write**:
 > - Edit this file directly, or
 > - `python3 scripts/context_hub.py memory add "[TAG] Title - Details"`
+>
+> **How to read from this file**: `.agents/skills/read-discipline.md` — extract first, refuse last.
 
 ---
 
