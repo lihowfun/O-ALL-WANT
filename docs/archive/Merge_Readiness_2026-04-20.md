@@ -85,7 +85,7 @@ as explicit `[EXPERIMENTAL]` scaffold.
 - **Pre-merge edit**:
   - `version`: `1.1.0-preview` → `1.1.0`
   - `last_updated`: bump to merge date
-  - `current_phase`: `v1.1 preview — ...` → `v1.1 — Taiwan.md wiki packet + harness quality gates + merge gate + evaluator scaffolds`
+  - `current_phase`: `v1.1 preview — ...` → `v1.1 — LLM-wiki packet + harness quality gates + merge gate + evaluator scaffolds`
   - `task_state.in_progress`: drop A-1/A-2/A-3; keep `R-1 harness-evaluator dogfooding` if skills ship as experimental
   - `notes`: remove the "not been merged to main yet" sentence
   - `benchmark_snapshot.summary`: update to "harness_check 8/8 green" once B-1 fixed
@@ -142,7 +142,7 @@ git push
 
 # 7. Open draft PR so CI runs
 gh pr create --draft --base main --head study/future-optimization-plan-confirmed \
-  --title "v1.1.0: Taiwan.md wiki packet + harness gates + merge gate + evaluator scaffolds" \
+  --title "v1.1.0: LLM-wiki packet + harness gates + merge gate + evaluator scaffolds" \
   --body-file docs/archive/Merge_Readiness_2026-04-20.md
 
 # 8. When CI green + B-3 done, flip PR to ready-for-review; squash or merge
@@ -164,7 +164,7 @@ Before flipping PR from draft → ready:
 
 If §B-3 reveals that the new skills produce shallow or wrong output:
 
-- **Option A (scope down)**: revert commit `881cb25` from the merge, keep the first 5 commits (Taiwan.md wiki + harness_check + A-3 lint + v1.1.0 metadata + Amendment v2 docs). Ship v1.1.0 without the new skills. Re-introduce skills in v1.2.0 after redesign.
+- **Option A (scope down)**: revert commit `881cb25` from the merge, keep the first 5 commits (LLM-wiki + harness_check + A-3 lint + v1.1.0 metadata + Amendment v2 docs). Ship v1.1.0 without the new skills. Re-introduce skills in v1.2.0 after redesign.
 - **Option B (ship as experimental)**: keep the commit but add `status: experimental` to both skill frontmatters, document in CHANGELOG, invoke Merge Gate §3 with explicit authorization.
 - **Option C (iterate on this branch)**: rewrite the skills based on §B-3 feedback, recommit, re-dogfood. Stay on `study/*` until useful.
 

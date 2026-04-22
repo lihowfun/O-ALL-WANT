@@ -27,7 +27,7 @@
 | P1 | 正式 tag v1.0.0 | ✅ Done | 2026-04-18 |
 | P1 | 版本敘事一致化 | ✅ Done | 已明確將短暫的 v1.0.1 內部標記併回 v1.0.0 |
 | P1 | Star-growth polish | ✅ Done | README 首屏、comparison doc、minimal-project drift CI 已落地 |
-| P1 | LLM-wiki collaboration packet (A-1) | In progress | Taiwan.md-inspired 8 artifacts integrated in `study/future-optimization-plan-confirmed`, awaiting merge as v1.1.0 |
+| P1 | LLM-wiki collaboration packet (A-1) | ✅ Done | 8 LLM-wiki artifacts integrated in `study/future-optimization-plan-confirmed`, merged to main as v1.1.0 |
 | P1 | `harness_check` one-command gate (A-2) | In progress | `scripts/harness_check.py` 8-check harness; CI collapsed to single `harness_check` step |
 | P1 | Skill frontmatter lint (A-3) | In progress | `wiki_sync.py lint` extended — warn by default, strict fail; existing 6 skills all green |
 | P1 | Harness evaluator skill (from R-1) | Queued — spec ready | Subagent-based evaluator design decided; implement Week 4 per `Evaluator_Design_Decision_2026-04-20.md` |
@@ -49,7 +49,7 @@
 7. ✅ README 大改版：EN 主頁、Harness Engineering、SOP Dispatch (2026-04-18)
 8. ✅ Skills alignment + tag v1.0.0 (2026-04-18)
 9. ✅ Version narrative cleanup: keep pre-launch hardening under v1.0.0 (2026-04-18)
-10. ✅ Taiwan.md wiki packet + Harness Engineering audit triaged — see `docs/archive/Future_Optimization_Plan_Confirmed_2026-04-20.md` (2026-04-20)
+10. ✅ LLM-wiki packet + Harness Engineering audit triaged — see `docs/archive/Future_Optimization_Plan_Confirmed_2026-04-20.md` (2026-04-20)
 11. ✅ R-1 Evaluator design decision — subagent-based approach, empirically verified — see `docs/archive/Evaluator_Design_Decision_2026-04-20.md` (2026-04-20)
 12. ✅ R-3 Skill failure modes analysis — Recovery section deferred (0/9 cases fit) — see `docs/archive/Skill_Failure_Modes_2026-04-20.md` (2026-04-20)
 13. [ ] Merge `study/future-optimization-plan-confirmed` worktree → main as v1.1.0 (Week 1 target)
@@ -57,7 +57,7 @@
 
 ## Completed
 
-- ✅ 2026-04-20: Taiwan.md wiki governance packet integrated (8 artifacts) in `study/future-optimization-plan-confirmed` worktree
+- ✅ 2026-04-20: LLM-wiki governance packet integrated (8 artifacts) in `study/future-optimization-plan-confirmed` worktree
 - ✅ 2026-04-20: `scripts/harness_check.py` one-command health gate (8 checks, all green)
 - ✅ 2026-04-20: Skill frontmatter lint added to `wiki_sync.py` (triggers/outputs + execution-structure heading required)
 - ✅ 2026-04-20: R-1 evaluator design decision — subagent approach, empirically verified (19k tokens, 13s per review)

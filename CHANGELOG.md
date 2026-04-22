@@ -7,7 +7,7 @@ All notable changes to this project will be documented in this file.
 This release bundles three parallel investments completed on 2026-04-20
 and finalized on 2026-04-21:
 
-1. **Taiwan.md-inspired wiki governance layer** — a shipped LLM-wiki
+1. **LLM-wiki governance layer** — a shipped LLM-wiki
    contribution pipeline + public prompts + quality lint extensions.
 2. **Harness quality hardening** — `harness_check` one-command gate, skill
    frontmatter lint, and decision documents for the two research items
@@ -21,7 +21,7 @@ task-state CLI, lane audit log, JSON CLI output) are explicitly triaged in
 [`docs/archive/Future_Optimization_Plan_Confirmed_2026-04-20.md`](docs/archive/Future_Optimization_Plan_Confirmed_2026-04-20.md).
 
 ### Added
-- **Taiwan.md wiki governance packet** (8 artifacts):
+- **LLM-wiki governance packet** (8 artifacts):
   - `docs/wiki/CONTRIBUTING_WIKI.md` — wiki contribution guide
   - `docs/wiki/WIKI_PIPELINE.md` — staged gather → compile → verify → connect → promote pipeline
   - `docs/wiki/TOPIC_BOARD.md` — topic tracking board

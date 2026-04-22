@@ -25,7 +25,7 @@ jobs:
       # harness_check covers the generic "fresh install passes lint" path,
       # but this step specifically exercises that lint REJECTS a crafted page
       # with missing required metadata. It's a targeted regression guard for
-      # the Taiwan.md-inspired metadata enforcement.
+      # the required-metadata enforcement from the LLM-wiki governance layer.
       - name: wiki_sync.py rejects missing required metadata
         run: |
           target=$(mktemp -d)

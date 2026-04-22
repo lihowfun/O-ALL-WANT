@@ -145,7 +145,7 @@ verifier. Only check values explicitly declared in frontmatter. No NLP.
 
 ### ✅ B-5. `wiki_sync.py stale` subcommand (1h)
 
-**Why now**: Taiwan.md's lint already added stale-page warnings. GNN_explainer
+**Why now**: the A-1 lint already added stale-page warnings. GNN_explainer
 §3.3 asks for a **dedicated subcommand** that can be run ad-hoc with a
 configurable threshold. Low cost because the underlying check exists.
 
@@ -212,7 +212,7 @@ ceremonial. Want to see the workflow once before committing.
 
 | Confirmed Plan item | Previous decision | v2 feedback says | Still valid? |
 |---|---|---|---|
-| A-1 Taiwan.md merge | ✅ Accept | (silent — v2 doesn't comment) | ✅ Still valid |
+| A-1 LLM-wiki merge | ✅ Accept | (silent — v2 doesn't comment) | ✅ Still valid |
 | A-2 harness_check | ✅ Accept | (silent) | ✅ |
 | A-3 skill frontmatter lint | ✅ Accept | (silent) | ✅ |
 | R-1 evaluator skill | 🔬→ Accept | (silent; orthogonal) | ✅ |
@@ -232,7 +232,7 @@ Confirmed Plan was 6 weeks; v2 adds 4 weeks of B-work. Compress where possible:
 
 | Week | Work | Source | DoD |
 |:----:|------|:----:|-----|
-| 1 | A-1 Taiwan.md merge + **B-3 merge gate** (1h textual) | Confirmed + Amend | v1.1.0 tag + merge gate section in CLAUDE.md |
+| 1 | A-1 LLM-wiki merge + **B-3 merge gate** (1h textual) | Confirmed + Amend | v1.1.0 tag + merge gate section in CLAUDE.md |
 | 2 | A-2 harness_check + A-3 skill lint | Confirmed | CI green, external contributor can run one command |
 | 3 | R-1 decided (done today) + **B-2 non-interactive refresh** | Confirmed + Amend | All wiki subcommands non-interactive |
 | 4 | R-1 impl: `harness-evaluator.md` skill + first real use | Confirmed | Skill passes A-3 lint, used on v1.1.0 PR |
@@ -274,7 +274,7 @@ Add new rows to Active Work:
 | P1 | B-2 Non-interactive wiki full coverage | Queued (Week 3) | 2-user validated |
 | P1 | B-3 Merge gate convention             | Queued (Week 1) | 1 user + incident |
 | P2 | B-4 wiki_sync cross-check             | Queued (Week 6) | 1 user + incident |
-| P2 | B-5 wiki_sync stale subcommand        | Queued (Week 5) | low cost, Taiwan.md built foundation |
+| P2 | B-5 wiki_sync stale subcommand        | Queued (Week 5) | low cost, A-1 built foundation |
 | P2 | R-5 Evidence tiers                    | Research (Week 7) | 1 user, ML-specific |
 | P2 | R-6 Deprecation protocol              | Research (Week 8) | 1 user, design-dependent |
 | ❌ | X-4 install.sh --add-ci               | Rejected       | users can copy manually |
@@ -306,7 +306,7 @@ need the maintainer's call:
    OR 1 user + concrete incident > 2h impact"? Current stance: yes, codify
    it, but needs a vote.
 2. **Timing of un-revert**: B-1 (CURRENT_STATE un-revert) can be Week 1
-   (adjacent to Taiwan.md merge, re-ships v1.1-preview content together) or
+   (adjacent to the LLM-wiki merge, re-ships v1.1-preview content together) or
    Week 5 (as currently scheduled). Week 1 is lower cost but less demonstrably
    "we learned from the first attempt". Week 5 is more disciplined but
    artificially delays a validated win.
