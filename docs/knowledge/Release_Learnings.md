@@ -2,10 +2,13 @@
 id: Release_Learnings
 title: Release Learnings
 page_type: topic
-last_updated: 2026-04-16
+last_updated: 2026-04-21
 confidence: high
 source: v1.0.0 release reviews
 related_topics: []
+ssot_mirrors:
+  - VERSION.json:benchmark_snapshot.summary
+  - AI_CONTEXT.md:## Benchmark Snapshot
 ---
 
 # Release Learnings

@@ -29,6 +29,8 @@ python3 scripts/wiki_sync.py build
 python3 scripts/wiki_sync.py refresh Topic_Name
 python3 scripts/wiki_sync.py refresh all
 python3 scripts/wiki_sync.py lint
+python3 scripts/wiki_sync.py stale --threshold 30
+python3 scripts/wiki_sync.py cross-check
 ```
 
 ## Raw Source Format
@@ -75,6 +77,27 @@ so the visible topic list stays clean.
 - stale compiled pages
 - orphan topic pages with no source refs and no topic links
 - thin or generic topic pages as soft quality warnings
+
+## SSOT Cross-check
+
+Use `ssot_mirrors` when one fact is intentionally mirrored across multiple
+files and should stay byte-comparable after whitespace normalization.
+
+```yaml
+ssot_mirrors:
+  - VERSION.json:benchmark_snapshot.summary
+  - AI_CONTEXT.md:## Benchmark Snapshot
+```
+
+JSON locators use dot paths. Markdown locators name a section heading; both
+`Benchmark Snapshot` and `## Benchmark Snapshot` are accepted. Run:
+
+```bash
+python3 scripts/wiki_sync.py cross-check
+```
+
+The command exits 0 when all declared mirrors agree and exits non-zero with a
+specific mismatch when any declared mirror differs.
 
 ## Operating Rule
 

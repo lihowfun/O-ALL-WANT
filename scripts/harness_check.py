@@ -183,11 +183,38 @@ def check_strict_placeholder_on_fresh_install(report: Report) -> None:
 
 
 def check_example_drift(report: Report) -> None:
+    install_sh = REPO_ROOT / "install.sh"
+    with tempfile.TemporaryDirectory() as tmp:
+        setup = _run(["bash", str(install_sh)], cwd=tmp, input_="y\n")
+        if setup.returncode != 0:
+            report.record("example-drift", False, "install.sh failed before example drift check", setup.stdout, setup.stderr)
+            return
+
+        installed_files = {
+            str(path.relative_to(tmp))
+            for path in Path(tmp).rglob("*")
+            if path.is_file()
+        }
+    example_root = REPO_ROOT / "example" / "minimal-project"
+    example_files = {
+        str(path.relative_to(example_root))
+        for path in example_root.rglob("*")
+        if path.is_file()
+    }
+
     pairs = [
         (REPO_ROOT / "scripts" / "context_hub.py", REPO_ROOT / "example" / "minimal-project" / "scripts" / "context_hub.py"),
         (REPO_ROOT / "scripts" / "wiki_sync.py", REPO_ROOT / "example" / "minimal-project" / "scripts" / "wiki_sync.py"),
     ]
     drift = []
+    missing = sorted(installed_files - example_files)
+    extra = sorted(example_files - installed_files)
+    if missing:
+        drift.append("example/minimal-project missing fresh-install files: " + ", ".join(missing))
+    extra_allowed = {"README.md"}
+    unexpected_extra = [path for path in extra if path not in extra_allowed]
+    if unexpected_extra:
+        drift.append("example/minimal-project has unexpected extra files: " + ", ".join(unexpected_extra))
     for a, b in pairs:
         if not b.exists():
             drift.append(f"{b.relative_to(REPO_ROOT)} missing")
@@ -197,7 +224,11 @@ def check_example_drift(report: Report) -> None:
     if drift:
         report.record("example-drift", False, "; ".join(drift))
         return
-    report.record("example-drift", True, detail=f"{len(pairs)} file pair(s) byte-identical")
+    report.record(
+        "example-drift",
+        True,
+        detail=f"file set matches fresh install ({len(installed_files)} files; README.md allowed) and {len(pairs)} script pair(s) byte-identical",
+    )
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────

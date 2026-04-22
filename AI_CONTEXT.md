@@ -48,6 +48,10 @@
 | Template file count | 15 | 2026-04-14 | Core harness files |
 | Skills count | 6 | 2026-04-14 | Standard skill set |
 
+## Benchmark Snapshot
+
+harness_check 8/8 green; lint default exit 0; strict fails on unfilled placeholders in OAW_Session_Continuity_Test.md; 8 skills pass frontmatter lint; harness-evaluator subagent review of commit 881cb25 returned 7/7 PASS (T2, single invocation)
+
 ## Testing
 
 | Tier | When | Command |

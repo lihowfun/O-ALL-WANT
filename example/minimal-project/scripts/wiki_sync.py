@@ -972,7 +972,8 @@ def _resolve_ssot_value(spec, base_dir):
     Supported locator forms:
       - JSON file (`VERSION.json`): dot-path into the object, e.g.
         `benchmark_snapshot.summary` → nested value.
-      - Markdown file: literal section heading (`## Current Baselines`)
+      - Markdown file: literal section heading (`Current Baselines` or
+        `## Current Baselines`)
         returns the paragraph-stripped body of that section until the next
         heading of same or higher level.
 
@@ -1007,7 +1008,12 @@ def _resolve_ssot_value(spec, base_dir):
         return _normalize_whitespace(str(cursor)), None
 
     # Markdown path: locator is a section heading text; extract the body.
+    # Accept either "Current Baselines" or "## Current Baselines" so docs and
+    # frontmatter can use the form that is easiest to read.
     target = locator.strip()
+    heading_locator = re.match(r"^#+\s+(.+?)\s*$", target)
+    if heading_locator:
+        target = heading_locator.group(1).strip()
     lines = raw.splitlines()
     start_idx = None
     heading_level = 0
