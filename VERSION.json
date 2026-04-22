@@ -2,7 +2,7 @@
   "version": "1.1.0",
   "project": "O-ALL-WANT",
   "last_updated": "2026-04-21",
-  "current_phase": "v1.1 — Taiwan.md wiki packet + harness gates + merge gate + evaluator scaffolds",
+  "current_phase": "v1.1 — LLM-wiki packet + harness gates + merge gate + evaluator scaffolds",
   "next_phase": "community-feedback",
   "task_state": {
     "in_progress": [],
@@ -18,7 +18,7 @@
     "R-1 evaluator independence spike 2026-04-20 (reason: subagent context isolation verified — ~19k tokens, 13s per review, zero parent context bleed) [CAVEAT: classified T2 on 2026-04-21 — n=1 single spike, not a reproduced baseline]",
     "R-3 failure corpus analysis 2026-04-20 (reason: 9 cases analyzed, 0/9 fit Recovery framing, see Skill_Failure_Modes_2026-04-20.md)"
   ],
-  "notes": "This file tracks version and experiment control. Agents read 'version' and 'do_not_rerun' every session. v1.1.0 bundles Taiwan.md wiki governance, harness health gates, the Merge Gate rule, and the classify-evidence + harness-evaluator skills.",
+  "notes": "This file tracks version and experiment control. Agents read 'version' and 'do_not_rerun' every session. v1.1.0 bundles LLM-wiki governance, harness health gates, the Merge Gate rule, and the classify-evidence + harness-evaluator skills.",
   "wiki_sync": {
     "default_mode": "optional",
     "raw_dir": "docs/raw",

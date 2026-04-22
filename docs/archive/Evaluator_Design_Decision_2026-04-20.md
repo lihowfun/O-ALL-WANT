@@ -149,7 +149,7 @@ User says "review this change" → parent agent matches the trigger → reads sk
 
 ### Testing strategy
 
-- First real test target: the Taiwan.md wiki merge PR (Week 1 deliverable). Run evaluator against it before merging. Document subagent's verdict in the PR body.
+- First real test target: the LLM-wiki merge PR (Week 1 deliverable). Run evaluator against it before merging. Document subagent's verdict in the PR body.
 - Success criterion: subagent flags at least one thing the author didn't notice. If subagent only rubber-stamps, revisit the prompt template.
 
 ## Answers To The Original Research Questions
@@ -167,7 +167,7 @@ From the confirmed plan R-1 §"需要回答的三個問題":
 | Week | Original (confirmed plan) | After R-1 decision |
 |:---:|---------------------------|--------------------|
 | 3 | Evaluator design research (R-1) | **R-1 done (this doc)**; can start skill draft early |
-| 4 | R-1 結論執行 | **Implement `harness-evaluator.md` skill; first run against Taiwan.md merge** |
+| 4 | R-1 結論執行 | **Implement `harness-evaluator.md` skill; first run against LLM-wiki merge** |
 | — | R-2 (lane audit) was contingent on R-1 | **R-2 still contingent — deferred pending evaluator's actual usage pattern** |
 
 **R-2 (lane audit log) revisit note**: now that we've committed to Option A,

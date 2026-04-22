@@ -3,8 +3,8 @@
 Date: 2026-04-20
 
 Scope: Objective review of OAW against the supplied Harness Engineering article.
-This audit checks the current `taiwanmd-llm-wiki-study` worktree, including the
-Taiwan.md-inspired LLM-wiki collaboration changes.
+This audit checks the current `llm-wiki-study` worktree, including the
+LLM-wiki collaboration changes.
 
 ## Executive Summary
 
@@ -207,7 +207,7 @@ What is good:
 - The memory/state surfaces are explicitly separated.
 - `do_not_rerun` is a strong deterministic state-control primitive.
 - Memory can be searched with `--include-memory`.
-- The Taiwan.md-inspired wiki packet improves raw → knowledge → skill promotion.
+- The LLM-wiki packet improves raw → knowledge → skill promotion.
 
 Gaps:
 

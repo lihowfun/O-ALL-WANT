@@ -128,7 +128,7 @@ Until then, the skill template stays recovery-free.
 | Week | Original (confirmed plan) | After R-3 decision |
 |:---:|---------------------------|--------------------|
 | 5 | R-3 Recovery research | **R-3 done (this doc).** No new deliverable; redirect the slot. |
-| 5 | — | **Suggested new use of slot**: first real use of the evaluator skill from R-1, run against the Taiwan.md merge PR or any Week 4 work. |
+| 5 | — | **Suggested new use of slot**: first real use of the evaluator skill from R-1, run against the LLM-wiki merge PR or any Week 4 work. |
 | 6 | R-3 結論執行 OR 留白接 community feedback | **留白接 community feedback** (R-3 has nothing to execute). |
 
 This gives Week 5 + Week 6 back to the calendar as **slack** — which the

@@ -11,7 +11,7 @@ Cross-references:
 
 | # | 項目 | 決定 | 一句話理由 |
 |---|------|:---:|-----------|
-| §2 | Taiwan.md 8 artifacts merge | ✅ Accept | 已完成的 self-driven 投資,docs-first 近零風險 |
+| §2 | LLM-wiki 8 artifacts merge | ✅ Accept | 已完成的 self-driven 投資,docs-first 近零風險 |
 | P1-1 | `harness_check` 一鍵健檢 | ✅ Accept | 最低成本、最可見 ROI |
 | P1-2 | `harness-evaluator` skill | 🔬 Research | 同 session 評估 = theater,設計要先想清楚 |
 | P1-3 | Lane audit log | 🔬 Research | 沒下游 evaluator 就是孤兒 feature |
@@ -26,13 +26,13 @@ Cross-references:
 
 ## 1. Accepted — 排進 Sprint
 
-### A-1. Taiwan.md wiki governance merge → **v1.1.0**(Week 1)
+### A-1. LLM-wiki governance merge → **v1.1.0**(Week 1)
 
 全盤接受原報告 §2。
 
 - **範圍**:8 個 artifacts(3 wiki guides、3 prompts、`wiki_sync.py` lint 延伸、issue/PR templates)
 - **Pre-merge 必過**:預設 `wiki_sync.py lint` 綠;新增的 stale/thin/generic 檢查僅在 `--strict` 下 fail
-- **PR**:單一 `feat(wiki): Taiwan.md-inspired wiki governance layer`,CHANGELOG 明列 8 artifacts + 3 non-goals(不做 website / i18n dashboard / scoring engine)
+- **PR**:單一 `feat(wiki): LLM-wiki governance layer`,CHANGELOG 明列 8 artifacts + 3 non-goals(不做 website / i18n dashboard / scoring engine)
 - **版號**:`1.0.0 → 1.1.0`(新公開 surface 合理佔 minor)
 - **預估**:2–3h
 - **此項例外**:原本「不基於單一 feedback 跳 minor」的規則不適用 — 這是 self-driven architectural investment,不是 reactive feature
@@ -140,7 +140,7 @@ Cross-references:
 
 | Week | 工作 | DoD | 類別 |
 |:----:|------|-----|:----:|
-| 1 | Taiwan.md wiki governance merge → `v1.1.0` | Tag + release notes + CHANGELOG + README links 正確 | A-1 |
+| 1 | LLM-wiki governance merge → `v1.1.0` | Tag + release notes + CHANGELOG + README links 正確 | A-1 |
 | 2 | `harness_check` + skill frontmatter lint | 一鍵綠、CI 單步呼叫、CONTRIBUTING 更新 | A-2 + A-3 |
 | 3 | **Evaluator design research** (R-1) | `Evaluator_Design_Decision_2026-05-XX.md` 交付 | R-1 |
 | 4 | R-1 結論執行 | 根據 Week 3 結論實作 evaluator OR 改做靜態檢查 | R-1 → R-2 |
@@ -188,7 +188,7 @@ Cross-references:
 ## 8. Monday 第一件事
 
 1. 把**本文件**放進權威位置(建議合併入 main 時放 `docs/archive/`,作為 2026-04-20 的決策記錄,不會動到)
-2. 開始執行 **Week 1: Taiwan.md wiki governance merge**
+2. 開始執行 **Week 1: LLM-wiki governance merge**
 3. 為 R-1 / R-3 在 `ROADMAP.md` 建 placeholder 區(只寫「研究中,預計 Week 3/5 結論」,**不填 DoD**),避免未來看 roadmap 誤以為是 committed 工作
 
 ---

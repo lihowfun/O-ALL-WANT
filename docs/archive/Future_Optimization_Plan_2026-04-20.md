@@ -31,9 +31,9 @@ does not observably improve routing, evaluation, or repair, it drops in priority
 Strengths to protect: routing architecture, memory/state separation, deterministic
 scripts, session-continuity evidence (86–87% context reduction), CI smoke tests.
 
-## 2. Merge Decision — `taiwanmd-llm-wiki-study` worktree
+## 2. Merge Decision — `llm-wiki-study` worktree
 
-The worktree delivered all 8 artifacts listed in the Taiwan.md study:
+The worktree delivered all 8 artifacts listed in the LLM-wiki study:
 
 | Artifact | Purpose | Risk of merging |
 |----------|---------|-----------------|
@@ -52,7 +52,7 @@ The worktree delivered all 8 artifacts listed in the Taiwan.md study:
    - Run `python3 scripts/wiki_sync.py lint` on the worktree — must be exit 0.
    - Run `python3 scripts/wiki_sync.py lint --strict` — should match the strict behavior already on `main`; the new checks (stale/thin/generic) should be `--strict`-only *or* emit warnings, not break default lint.
    - Sanity-check `example/minimal-project/scripts/wiki_sync.py` is byte-identical to `scripts/wiki_sync.py` (CI already guards this, but confirm locally).
-2. **Single PR** titled `feat(wiki): Taiwan.md-inspired wiki governance layer`.
+2. **Single PR** titled `feat(wiki): LLM-wiki governance layer`.
    - Short summary + link to `Taiwan_MD_Collaboration_Study.md`.
    - Checklist in the PR description: "lint green", "`--strict` green", "example drift green", "preview the rendered `docs/wiki/` pages on GitHub".
 3. **Explicit non-goals in the PR description** (so future reviewers know):
@@ -206,7 +206,7 @@ Assuming 4–6 hours of OAW work per week (evenings / weekend).
 
 | Week | Target | Definition of done |
 |------|--------|-------------------|
-| 1 | Merge `taiwanmd-llm-wiki-study` as `v1.1.0` | Tag cut, CHANGELOG, release notes, README link to COMPARISON stays accurate |
+| 1 | Merge `llm-wiki-study` as `v1.1.0` | Tag cut, CHANGELOG, release notes, README link to COMPARISON stays accurate |
 | 2 | P1-1 `harness_check` + P1-4 skill frontmatter lint | One command green, CI uses it, CONTRIBUTING.md updated |
 | 3 | P1-2 `harness-evaluator` skill | New skill file, README table updated, one real PR reviewed by the skill |
 | 4 | P1-3 lane audit log | Command works, example in docs/CLI_Reference.md |
@@ -320,7 +320,7 @@ must have a non-empty `## Recovery` section; otherwise strict lint fails.
 
 ## Appendix B — Cross-References
 
-- Taiwan.md study (source of §2): [Taiwan_MD_Collaboration_Study.md](Taiwan_MD_Collaboration_Study.md)
+- LLM-wiki study (source of §2): [Taiwan_MD_Collaboration_Study.md](Taiwan_MD_Collaboration_Study.md)
 - Harness Engineering audit (source of §§3–5): [Harness_Engineering_Quality_Audit_2026-04-20.md](Harness_Engineering_Quality_Audit_2026-04-20.md)
 - Current roadmap (will need update when §2 merges): `ROADMAP.md` on main
 - Release cadence policy: `CONTRIBUTING.md` — especially the "don't bump minor on single-user feedback" rule
