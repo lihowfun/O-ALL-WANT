@@ -160,6 +160,7 @@ def _discover_raw_sources():
 
         sources.append(
             {
+                "metadata": metadata,
                 "filename": filename,
                 "path": path,
                 "relative_path": os.path.join("docs", "raw", filename).replace("\\", "/"),
@@ -204,6 +205,7 @@ def _load_knowledge_pages(include_meta=False):
                     break
         pages.append(
             {
+                "metadata": metadata,
                 "filename": filename,
                 "path": path,
                 "id": page_id,
@@ -492,6 +494,100 @@ PLACEHOLDER_SKIP_BASENAMES = {
     "README.md",
 }
 
+REQUIRED_RAW_FIELDS = ("source_id", "title", "topic_id", "summary", "last_updated")
+REQUIRED_KNOWLEDGE_FIELDS = ("id", "title", "page_type", "last_updated", "related_topics")
+HOLLOW_PHRASES = (
+    "best practice",
+    "enhance",
+    "ensure",
+    "improve",
+    "leverage",
+    "optimize",
+    "robust",
+    "seamless",
+    "streamline",
+)
+
+# Skill lint: at least one of `triggers` / `outputs` must be present in frontmatter,
+# and the body must have an execution-structure heading we recognise. `Rules` is
+# allowed so protocol-style skills (e.g. self-improving) without step-by-step
+# workflows still pass.
+SKILL_FRONTMATTER_REQUIRED_ANY = ("triggers", "outputs")
+SKILL_BODY_STRUCTURE_PATTERNS = (
+    re.compile(r"^##+\s+Steps\b", re.MULTILINE),
+    re.compile(r"^###+\s+Step\s+\d+", re.MULTILINE),
+    re.compile(r"^##+\s+Rules\b", re.MULTILINE),
+    re.compile(r"^###+\s+Rule\s+\d+", re.MULTILINE),
+    re.compile(r"^##+\s+Workflow\b", re.MULTILINE),
+    re.compile(r"^##+\s+Procedure\b", re.MULTILINE),
+)
+SKILL_SKIP_BASENAMES = {"README.md"}
+
+
+def _discover_skill_files():
+    """Locate `.agents/skills/*.md` — works for both self-hosting and user installs.
+
+    Returns a list of absolute paths. Prefers `templates/.agents/skills/` (canonical
+    for OAW itself) and falls back to `.agents/skills/` (how user installs look).
+    Skips `README.md` and any underscore-prefixed fixtures.
+    """
+    candidates = [
+        os.path.join(BASE_DIR, "templates", ".agents", "skills"),
+        os.path.join(BASE_DIR, ".agents", "skills"),
+    ]
+    seen = set()
+    files = []
+    for skill_dir in candidates:
+        if not os.path.isdir(skill_dir):
+            continue
+        for filename in sorted(os.listdir(skill_dir)):
+            if not filename.endswith(".md"):
+                continue
+            if filename in SKILL_SKIP_BASENAMES or filename.startswith("_"):
+                continue
+            full = os.path.join(skill_dir, filename)
+            if full in seen:
+                continue
+            seen.add(full)
+            files.append(full)
+    return files
+
+
+def _lint_skill_file(path):
+    """Return a list of issue strings for a single skill markdown file.
+
+    Empty list means the skill passed. Issues cover:
+      - missing frontmatter entirely
+      - neither `triggers` nor `outputs` present in frontmatter
+      - no execution-structure heading (Steps / Rule / Workflow / Procedure)
+    """
+    issues = []
+    try:
+        content = _safe_read(path)
+    except OSError as exc:
+        return [f"skill file unreadable: {exc}"]
+
+    metadata, body = _parse_frontmatter(content)
+    rel_path = os.path.relpath(path, BASE_DIR)
+
+    if not metadata:
+        issues.append(f"skill missing frontmatter block: {rel_path}")
+        return issues
+
+    if not any(metadata.get(field) for field in SKILL_FRONTMATTER_REQUIRED_ANY):
+        issues.append(
+            f"skill missing required frontmatter (need at least one of "
+            f"{', '.join(SKILL_FRONTMATTER_REQUIRED_ANY)}): {rel_path}"
+        )
+
+    if not any(pattern.search(body) for pattern in SKILL_BODY_STRUCTURE_PATTERNS):
+        issues.append(
+            f"skill body has no execution-structure heading "
+            f"(Steps / Rules / Workflow / Procedure): {rel_path}"
+        )
+
+    return issues
+
 
 def _scan_placeholders(paths):
     """Yield (path, lineno, pattern_desc, snippet) for placeholder hits."""
@@ -509,11 +605,65 @@ def _scan_placeholders(paths):
                     yield path, lineno, desc, line.strip()[:120]
 
 
+def _missing_metadata(metadata, required_fields):
+    """Return required metadata keys that are absent or empty."""
+    missing = []
+    for field in required_fields:
+        if field not in metadata:
+            missing.append(field)
+            continue
+        value = metadata.get(field)
+        if value is None or value == "":
+            missing.append(field)
+    return missing
+
+
+def _content_lines(body):
+    """Return prose-ish lines used by lightweight quality checks."""
+    lines = []
+    in_fence = False
+    for line in body.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("```"):
+            in_fence = not in_fence
+            continue
+        if in_fence or not stripped:
+            continue
+        if stripped.startswith(("#", "|", ">", "---")):
+            continue
+        lines.append(stripped)
+    return lines
+
+
+def _has_concrete_signal(body):
+    """Detect whether a page contains anchors beyond generic prose."""
+    return bool(
+        re.search(r"\b20\d{2}-\d{2}-\d{2}\b", body)
+        or re.search(r"\b20\d{2}\b", body)
+        or re.search(r"`[^`]+`", body)
+        or re.search(r"https?://", body)
+        or re.search(r"\[[^\]]+\]\([^)]+\)", body)
+        or re.search(r"\b\d+(?:\.\d+)?%?\b", body)
+    )
+
+
+def _hollow_phrase_hits(body):
+    """Return hollow prose phrases found in the page body."""
+    hits = []
+    lowered = body.lower()
+    for phrase in HOLLOW_PHRASES:
+        count = lowered.count(phrase)
+        if count:
+            hits.append((phrase, count))
+    return hits
+
+
 def lint(strict=False):
     """Check metadata quality for docs/raw and docs/knowledge.
 
     ``strict=True`` also flags unfilled placeholders (``${...}`` and literal
-    ``YYYY-MM-DD``). Default stays warn-only so existing users are not broken.
+    ``YYYY-MM-DD``). Default keeps quality smells warn-only so existing users
+    get guidance without breaking docs-only PRs.
     """
     issues = []
     warnings = []
@@ -529,6 +679,20 @@ def lint(strict=False):
 
     raw_source_ids = defaultdict(list)
     for source in raw_sources:
+        missing_raw_fields = _missing_metadata(source["metadata"], REQUIRED_RAW_FIELDS)
+        if missing_raw_fields:
+            issues.append(
+                f"raw source missing required metadata in {source['relative_path']}: "
+                + ", ".join(missing_raw_fields)
+            )
+
+        raw_date = _parse_date(source["last_updated"])
+        if source["last_updated"] and raw_date is None:
+            issues.append(
+                f"raw source has invalid last_updated in {source['relative_path']}: "
+                f"{source['last_updated']}"
+            )
+
         raw_source_ids[source["source_id"]].append(source["relative_path"])
         if not source["topic_id"]:
             issues.append(f"raw source missing topic_id: {source['relative_path']}")
@@ -544,6 +708,49 @@ def lint(strict=False):
             issues.append(f"duplicate raw source_id '{source_id}': {', '.join(refs)}")
 
     for page in knowledge_pages:
+        missing_page_fields = _missing_metadata(page["metadata"], REQUIRED_KNOWLEDGE_FIELDS)
+        if missing_page_fields:
+            issues.append(
+                f"knowledge page missing required metadata in {page['filename']}: "
+                + ", ".join(missing_page_fields)
+            )
+
+        page_date = _parse_date(page["last_updated"])
+        if page["last_updated"] and page_date is None:
+            message = (
+                f"knowledge page has invalid last_updated in {page['filename']}: "
+                f"{page['last_updated']}"
+            )
+            if page["build_origin"] == "template":
+                warnings.append(message)
+            else:
+                issues.append(message)
+
+        if page["page_type"] == "topic":
+            if page["build_origin"] == "manual" and not page["source_refs"] and not page["metadata"].get("source"):
+                warnings.append(
+                    f"manual topic has no source refs in {page['filename']}: "
+                    "add docs/raw source refs or stable source metadata when practical"
+                )
+
+            content_lines = _content_lines(page["body"])
+            if len(content_lines) < 4:
+                warnings.append(
+                    f"thin topic body in {page['filename']}: add durable facts or keep it in memory until ready"
+                )
+            elif len(page["body"]) > 600 and not _has_concrete_signal(page["body"]):
+                warnings.append(
+                    f"low-concrete topic body in {page['filename']}: add files, commands, dates, links, or measurements"
+                )
+
+            hollow_hits = _hollow_phrase_hits(page["body"])
+            hollow_total = sum(count for _, count in hollow_hits)
+            if hollow_total >= 5:
+                phrases = ", ".join(f"{phrase} ({count})" for phrase, count in hollow_hits)
+                warnings.append(
+                    f"possible generic prose in {page['filename']}: {phrases}"
+                )
+
         pages_by_id[page["id"]].append(page["filename"])
         if page["page_type"] != "topic":
             issues.append(f"non-topic page left outside meta set: {page['filename']}")
@@ -571,7 +778,6 @@ def lint(strict=False):
                 warnings.append(f"unresolved related topic in {page['filename']}: {related_topic}")
             inbound_links[related_topic] += 1
 
-        page_date = _parse_date(page["last_updated"])
         if page["source_refs"]:
             source_dates = []
             for source_ref in page["source_refs"]:
@@ -600,6 +806,13 @@ def lint(strict=False):
         rel = os.path.relpath(path, BASE_DIR)
         warnings.append(f"{desc} in {rel}:{lineno}: {snippet}")
 
+    # Skill frontmatter lint — warn by default, promote to error under --strict.
+    # Skills are the surface users write most often, so catching "forgot triggers"
+    # or "no Steps section" early prevents a whole class of silent dispatch bugs.
+    for skill_path in _discover_skill_files():
+        for skill_issue in _lint_skill_file(skill_path):
+            warnings.append(skill_issue)
+
     if warnings:
         label = "❌" if strict else "⚠️"
         verb = "errors" if strict else "warnings"
@@ -619,16 +832,466 @@ def lint(strict=False):
     return 0
 
 
+EXPERIMENT_LOG_PATH = os.path.join(KNOWLEDGE_DIR, "EXPERIMENT_LOG.md")
+CURRENT_STATE_PATH = os.path.join(KNOWLEDGE_DIR, "CURRENT_STATE.md")
+
+
+def _ensure_experiment_log():
+    """Create EXPERIMENT_LOG.md with a default header if it does not exist."""
+    if os.path.exists(EXPERIMENT_LOG_PATH):
+        return
+    header = [
+        _render_frontmatter(
+            {
+                "id": "EXPERIMENT_LOG",
+                "title": "Experiment Log",
+                "page_type": "topic",
+                "build_origin": "wiki_sync",
+                "source_refs": [],
+                "last_updated": _today(),
+                "related_topics": ["CURRENT_STATE", "Performance_Baselines"],
+            }
+        ),
+        "# Experiment Log",
+        "",
+        "> Append-only ledger of experiments. Maintained by",
+        "> `python3 scripts/wiki_sync.py add-experiment`. Newest entries on top.",
+        "",
+        "| Date | Name | Status | Result | Conclusion |",
+        "|------|------|:------:|--------|------------|",
+        "",
+    ]
+    _write(EXPERIMENT_LOG_PATH, "\n".join(header))
+
+
+def _replace_frontmatter_field(content, key, value):
+    """Rewrite a scalar frontmatter field without reformatting the body."""
+    if not content.startswith("---\n"):
+        return content
+    lines = content.splitlines()
+    closing = None
+    for i in range(1, len(lines)):
+        if lines[i].strip() == "---":
+            closing = i
+            break
+    if closing is None:
+        return content
+    pattern = re.compile(rf"^{re.escape(key)}\s*:.*$")
+    replaced = False
+    for i in range(1, closing):
+        if pattern.match(lines[i]):
+            lines[i] = f"{key}: {value}"
+            replaced = True
+            break
+    if not replaced:
+        lines.insert(closing, f"{key}: {value}")
+        closing += 1
+    return "\n".join(lines) + ("\n" if content.endswith("\n") else "")
+
+
+def add_experiment(name, status, result, conclusion, exp_date=None, dir_path=None):
+    """Append a row to EXPERIMENT_LOG.md (non-interactive)."""
+    if dir_path:
+        global KNOWLEDGE_DIR, EXPERIMENT_LOG_PATH
+        KNOWLEDGE_DIR = dir_path
+        EXPERIMENT_LOG_PATH = os.path.join(KNOWLEDGE_DIR, "EXPERIMENT_LOG.md")
+
+    _ensure_experiment_log()
+    entry_date = exp_date or _today()
+    safe = lambda s: (s or "").replace("|", "\\|").replace("\n", " ").strip()
+    row = f"| {entry_date} | {safe(name)} | {safe(status)} | {safe(result)} | {safe(conclusion)} |"
+
+    existing = _safe_read(EXPERIMENT_LOG_PATH)
+    lines = existing.splitlines()
+    header_idx = None
+    for i, line in enumerate(lines):
+        if line.startswith("|------"):
+            header_idx = i
+            break
+    if header_idx is None:
+        raise ValueError("EXPERIMENT_LOG.md missing table header; delete the file to regenerate.")
+    lines.insert(header_idx + 1, row)
+    updated = "\n".join(lines)
+    updated = _replace_frontmatter_field(updated, "last_updated", _today())
+    if not updated.endswith("\n"):
+        updated += "\n"
+    _write(EXPERIMENT_LOG_PATH, updated)
+    print(f"✅ Experiment logged: {name} [{status}] → {EXPERIMENT_LOG_PATH}")
+
+
+def update_state(phase=None, status=None, note=None, dir_path=None):
+    """Update CURRENT_STATE.md phase row + append an AI annotation (non-interactive)."""
+    if dir_path:
+        global KNOWLEDGE_DIR, CURRENT_STATE_PATH
+        KNOWLEDGE_DIR = dir_path
+        CURRENT_STATE_PATH = os.path.join(KNOWLEDGE_DIR, "CURRENT_STATE.md")
+
+    if not os.path.exists(CURRENT_STATE_PATH):
+        raise ValueError(
+            f"CURRENT_STATE.md not found at {CURRENT_STATE_PATH}. "
+            "Copy it from templates/docs/knowledge/CURRENT_STATE.md first."
+        )
+
+    content = _safe_read(CURRENT_STATE_PATH)
+    content = _replace_frontmatter_field(content, "last_updated", _today())
+
+    if phase and status:
+        pattern = re.compile(
+            rf"^(\|\s*`?{re.escape(phase)}`?\s*\|)([^|]*)(\|)",
+            re.MULTILINE,
+        )
+        new_content, n = pattern.subn(
+            lambda m: f"{m.group(1)} {status} {m.group(3)}", content, count=1
+        )
+        if n:
+            content = new_content
+        else:
+            print(f"⚠️  Phase row '{phase}' not found in CURRENT_STATE.md — appending annotation only.")
+
+    if note:
+        stamp = datetime.now().strftime("%Y-%m-%d %H:%M")
+        annotation = f"- [{stamp}] {note}"
+        marker = "## AI Annotations"
+        if marker in content:
+            head, tail = content.split(marker, 1)
+            tail_stripped = tail.lstrip("\n")
+            tail_stripped = re.sub(r"^<!--[^>]*-->\s*", "", tail_stripped)
+            content = f"{head}{marker}\n\n{annotation}\n{tail_stripped}"
+        else:
+            content = content.rstrip() + f"\n\n## AI Annotations\n\n{annotation}\n"
+
+    if not content.endswith("\n"):
+        content += "\n"
+    _write(CURRENT_STATE_PATH, content)
+    print(f"✅ CURRENT_STATE updated: phase={phase or '—'} status={status or '—'}")
+
+
+def _resolve_ssot_value(spec, base_dir):
+    """Resolve a single `<file>:<locator>` spec into a comparable string.
+
+    Supported locator forms:
+      - JSON file (`VERSION.json`): dot-path into the object, e.g.
+        `benchmark_snapshot.summary` → nested value.
+      - Markdown file: literal section heading (`Current Baselines` or
+        `## Current Baselines`)
+        returns the paragraph-stripped body of that section until the next
+        heading of same or higher level.
+
+    Returns (value_or_None, error_or_None). value is a normalized string
+    (whitespace-collapsed); error is a human-readable reason if we can't
+    resolve it.
+    """
+    if ":" not in spec:
+        return None, f"ssot_mirror spec missing `:` — expected `<file>:<locator>`, got {spec!r}"
+    file_part, locator = spec.split(":", 1)
+    path = os.path.normpath(os.path.join(base_dir, file_part))
+    if not os.path.exists(path):
+        return None, f"file not found: {file_part}"
+
+    try:
+        raw = _safe_read(path)
+    except OSError as exc:
+        return None, f"unreadable {file_part}: {exc}"
+
+    if file_part.endswith(".json"):
+        try:
+            import json as _json
+            obj = _json.loads(raw)
+        except (_json.JSONDecodeError, ValueError) as exc:
+            return None, f"{file_part} not valid JSON: {exc}"
+        cursor = obj
+        for segment in locator.split("."):
+            if isinstance(cursor, dict) and segment in cursor:
+                cursor = cursor[segment]
+            else:
+                return None, f"path {locator!r} not found in {file_part}"
+        return _normalize_whitespace(str(cursor)), None
+
+    # Markdown path: locator is a section heading text; extract the body.
+    # Accept either "Current Baselines" or "## Current Baselines" so docs and
+    # frontmatter can use the form that is easiest to read.
+    target = locator.strip()
+    heading_locator = re.match(r"^#+\s+(.+?)\s*$", target)
+    if heading_locator:
+        target = heading_locator.group(1).strip()
+    lines = raw.splitlines()
+    start_idx = None
+    heading_level = 0
+    for idx, line in enumerate(lines):
+        m = re.match(r"^(#+)\s+(.+?)\s*$", line)
+        if m and m.group(2).strip() == target:
+            start_idx = idx + 1
+            heading_level = len(m.group(1))
+            break
+    if start_idx is None:
+        return None, f"markdown section {target!r} not found in {file_part}"
+
+    body_lines = []
+    for line in lines[start_idx:]:
+        m = re.match(r"^(#+)\s+", line)
+        if m and len(m.group(1)) <= heading_level:
+            break
+        body_lines.append(line)
+    return _normalize_whitespace(" ".join(body_lines)), None
+
+
+def _normalize_whitespace(text):
+    return re.sub(r"\s+", " ", (text or "").strip())
+
+
+def cross_check():
+    """Verify SSOT mirrors declared in knowledge-page frontmatter agree with their sources.
+
+    A knowledge page can declare `ssot_mirrors` in its frontmatter, each item a
+    `<file>:<locator>` spec. All declared mirrors must resolve to the same
+    normalized value; otherwise this function reports the mismatch.
+    """
+    pages = _load_knowledge_pages(include_meta=True)
+    mismatches = []
+    checked = 0
+
+    for page in pages:
+        mirrors = _normalize_list(page["metadata"].get("ssot_mirrors") if page.get("metadata") else [])
+        if not mirrors:
+            continue
+        checked += 1
+
+        resolved = []
+        for spec in mirrors:
+            value, err = _resolve_ssot_value(spec, BASE_DIR)
+            resolved.append((spec, value, err))
+
+        errs = [(spec, err) for spec, _v, err in resolved if err]
+        if errs:
+            for spec, err in errs:
+                mismatches.append(
+                    f"{page['filename']}: cannot resolve {spec} — {err}"
+                )
+            continue
+
+        values = {value for _spec, value, _err in resolved}
+        if len(values) > 1:
+            mismatches.append(
+                f"{page['filename']}: SSOT mirrors disagree — "
+                + "; ".join(f"{spec}={value!r}" for spec, value, _err in resolved)
+            )
+
+    if not mismatches:
+        print(f"✅ wiki_sync cross-check passed — {checked} page(s) with ssot_mirrors all agree.")
+        return 0
+
+    print(f"❌ wiki_sync cross-check found {len(mismatches)} mismatch(es):")
+    for issue in mismatches:
+        print(f"  - {issue}")
+    return 1
+
+
+MEMORY_ENTRY_HEADER = re.compile(
+    r"^## \[(\d{4}-\d{2}-\d{2})\] "
+    r"((?:\[[^\]]+\] *)+)"
+    r"(.*)$"
+)
+TIER_IN_BLOCK = re.compile(r"\[T([1-5])\]")
+TIER_ORDER = {"T1": 1, "T2": 2, "T3": 3, "T4": 4, "T5": 5}
+
+
+def _parse_memory_entries(content):
+    """Parse .agents/memory.md into structured entries.
+
+    Returns a list of dicts: `{date, tags, tiers, title, body}`. Tags are the
+    raw labels between brackets in order of appearance; tiers is the subset
+    matching `[T1]`–`[T5]`.
+    """
+    lines = content.splitlines()
+    entries = []
+    current = None
+    body_buf = []
+    for line in lines:
+        m = MEMORY_ENTRY_HEADER.match(line)
+        if m:
+            if current is not None:
+                current["body"] = "\n".join(body_buf).strip()
+                entries.append(current)
+                body_buf = []
+            tag_block = m.group(2)
+            entry_tags = re.findall(r"\[([^\]]+)\]", tag_block)
+            entry_tiers = [f"T{n}" for n in TIER_IN_BLOCK.findall(tag_block)]
+            current = {
+                "date": m.group(1),
+                "tags": entry_tags,
+                "tiers": entry_tiers,
+                "title": m.group(3).strip(),
+                "body": "",
+            }
+        elif current is not None:
+            body_buf.append(line)
+    if current is not None:
+        current["body"] = "\n".join(body_buf).strip()
+        entries.append(current)
+    return entries
+
+
+def _slugify_topic(title, max_words=5):
+    """Slug-case a memory entry title into a candidate wiki topic ID.
+
+    Pure string transformation — deliberately no LLM heuristics. The caller
+    (human) does the final topic naming. When the title has no Latin words
+    (e.g. pure CJK), falls back to `Topic_<8-char-hash>` so the output is
+    never empty.
+    """
+    import hashlib
+
+    words = re.findall(r"[A-Za-z0-9]+", title)[:max_words]
+    if words:
+        return "_".join(w.capitalize() for w in words)
+    if not title.strip():
+        return ""
+    digest = hashlib.sha1(title.encode("utf-8")).hexdigest()[:8]
+    return f"Topic_{digest}"
+
+
+def _count_entry_citations(title, archive_dir):
+    """Count archive .md files that mention the entry's title (first 5 words) or its slug."""
+    if not os.path.isdir(archive_dir):
+        return 0
+    short = " ".join(title.split()[:5])
+    slug = _slugify_topic(title)
+    count = 0
+    for root, _dirs, files in os.walk(archive_dir):
+        for fname in files:
+            if not fname.endswith(".md"):
+                continue
+            try:
+                text = _safe_read(os.path.join(root, fname))
+            except Exception:
+                continue
+            if (short and short in text) or (slug and slug in text):
+                count += 1
+    return count
+
+
+def promote_candidates(
+    min_tier="T3", memory_file=None, min_citations=0, json_out=False, archive_dir=None
+):
+    """List memory entries with tier ≥ `min_tier` that are candidates for wiki promotion.
+
+    Output is advisory — this function does NOT modify `docs/knowledge/`.
+    """
+    import json as _json
+
+    memory_file = memory_file or os.path.join(BASE_DIR, ".agents", "memory.md")
+    archive_dir = archive_dir or os.path.join(BASE_DIR, "docs", "archive")
+
+    if not os.path.exists(memory_file):
+        print(f"❌ memory file not found: {memory_file}")
+        return 1
+
+    content = _safe_read(memory_file)
+    entries = _parse_memory_entries(content)
+    if not entries:
+        print(f"⚠️  no memory entries parsed from {memory_file}")
+        return 0
+
+    min_rank = TIER_ORDER.get(min_tier, 3)
+
+    candidates = []
+    for entry in entries:
+        if not entry["tiers"]:
+            continue
+        top_tier = max(entry["tiers"], key=lambda t: TIER_ORDER[t])
+        if TIER_ORDER[top_tier] < min_rank:
+            continue
+        citations = _count_entry_citations(entry["title"], archive_dir)
+        if citations < min_citations:
+            continue
+        kind_tags = [t for t in entry["tags"] if not TIER_IN_BLOCK.fullmatch(f"[{t}]") and not t.startswith("CAVEAT")]
+        candidates.append(
+            {
+                "date": entry["date"],
+                "tags": kind_tags,
+                "tier": top_tier,
+                "citations": citations,
+                "title": entry["title"],
+                "suggested_topic": _slugify_topic(entry["title"]),
+            }
+        )
+
+    if json_out:
+        print(_json.dumps(candidates, indent=2))
+        return 0
+
+    if not candidates:
+        print(
+            f"No promotion candidates found (min_tier={min_tier}, min_citations={min_citations})."
+        )
+        return 0
+
+    print(f"📋 {len(candidates)} promotion candidate(s) — min_tier={min_tier}:")
+    print()
+    print("| Date | Tags | Tier | Cites | Title | Suggested wiki topic |")
+    print("|------|------|:----:|:-----:|-------|----------------------|")
+    for c in candidates:
+        tags_str = " ".join(f"[{t}]" for t in c["tags"])
+        print(
+            f"| {c['date']} | {tags_str} | {c['tier']} | {c['citations']} | "
+            f"{c['title']} | {c['suggested_topic']} |"
+        )
+    print()
+    print(
+        "⚠️  Advisory output — this subcommand does NOT modify docs/knowledge/. "
+        "Human makes the final topic decision."
+    )
+    return 0
+
+
+def stale(threshold_days=30):
+    """List knowledge pages whose `last_updated` is older than threshold_days.
+
+    Informational only (exit 0). Reuses the same page loader and date parser
+    as `lint`, so staleness is measured identically everywhere.
+    """
+    today = date.today()
+    pages = _load_knowledge_pages(include_meta=True)
+    stale_pages = []
+    for page in pages:
+        last = _parse_date(page.get("last_updated"))
+        if last is None:
+            continue
+        age = (today - last).days
+        if age > threshold_days:
+            stale_pages.append((age, page))
+
+    if not stale_pages:
+        print(f"✅ No knowledge pages older than {threshold_days} days.")
+        return 0
+
+    stale_pages.sort(key=lambda item: item[0], reverse=True)
+    print(f"⏳ {len(stale_pages)} page(s) older than {threshold_days} days:")
+    for age, page in stale_pages:
+        rel = os.path.relpath(page["path"], BASE_DIR)
+        print(f"  - {rel} | {page['last_updated']} | {age} days")
+    return 0
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="OAW — deterministic wiki compiler",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Commands:
-  %(prog)s build                  Compile docs/raw/ into docs/knowledge/ + index/log
-  %(prog)s refresh Topic_Name     Rebuild one topic, then update index/log
-  %(prog)s refresh all            Rebuild every compiled topic
-  %(prog)s lint                   Check wiki metadata quality
+  %(prog)s build                        Compile docs/raw/ into docs/knowledge/ + index/log
+  %(prog)s refresh Topic_Name           Rebuild one topic, then update index/log
+  %(prog)s refresh all                  Rebuild every compiled topic
+  %(prog)s lint                         Check wiki metadata quality
+  %(prog)s stale [--threshold N]        Report knowledge pages older than N days
+  %(prog)s cross-check                  Verify frontmatter `ssot_mirrors` agree across files
+  %(prog)s add-experiment --name ...    Append row to docs/knowledge/EXPERIMENT_LOG.md
+  %(prog)s update-state --phase ...     Update a phase row in docs/knowledge/CURRENT_STATE.md
+  %(prog)s promote-candidates           List T3+ memory entries suitable for wiki promotion
+
+Non-interactive flags on add-experiment / update-state exist so AI workflows
+can call them without prompting the user. `promote-candidates` is advisory —
+it never writes to docs/knowledge/.
         """,
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -645,6 +1308,81 @@ Commands:
         help="Treat unfilled `${...}` / `YYYY-MM-DD` placeholders as errors (default: warn only).",
     )
 
+    p_stale = subparsers.add_parser(
+        "stale",
+        help="Report knowledge pages whose last_updated is older than a threshold.",
+    )
+    p_stale.add_argument(
+        "--threshold",
+        type=int,
+        default=30,
+        help="Age threshold in days (default: 30).",
+    )
+
+    subparsers.add_parser(
+        "cross-check",
+        help="Verify that frontmatter ssot_mirrors on knowledge pages agree across files.",
+    )
+
+    p_add = subparsers.add_parser(
+        "add-experiment",
+        help="Append an experiment row to EXPERIMENT_LOG.md (non-interactive).",
+    )
+    p_add.add_argument("--name", required=True, help="Experiment short name.")
+    p_add.add_argument(
+        "--status", required=True,
+        choices=["accepted", "rejected", "running", "blocked", "inconclusive"],
+        help="Outcome status.",
+    )
+    p_add.add_argument("--result", default="", help="One-line metric / observation.")
+    p_add.add_argument("--conclusion", default="", help="One-line decision / next step.")
+    p_add.add_argument("--date", default=None, help="Override date (YYYY-MM-DD).")
+    p_add.add_argument(
+        "--dir", default=None,
+        help="Override knowledge dir (default: docs/knowledge/).",
+    )
+
+    p_state = subparsers.add_parser(
+        "update-state",
+        help="Update CURRENT_STATE.md phase row and annotation (non-interactive).",
+    )
+    p_state.add_argument("--phase", default=None, help="Phase id / label (matches first column).")
+    p_state.add_argument(
+        "--status", default=None,
+        help="New phase status (e.g. '✅ done', '🔄 in progress', '⏳ queued').",
+    )
+    p_state.add_argument("--note", default=None, help="Annotation line appended under AI Annotations.")
+    p_state.add_argument(
+        "--dir", default=None,
+        help="Override knowledge dir (default: docs/knowledge/).",
+    )
+
+    p_promote = subparsers.add_parser(
+        "promote-candidates",
+        help="List memory entries with tier ≥ --min-tier suitable for wiki promotion (advisory).",
+    )
+    p_promote.add_argument(
+        "--min-tier", default="T3",
+        choices=["T1", "T2", "T3", "T4", "T5"],
+        help="Minimum tier to include (default: T3).",
+    )
+    p_promote.add_argument(
+        "--memory-file", default=None,
+        help="Path to memory.md (default: .agents/memory.md relative to repo root).",
+    )
+    p_promote.add_argument(
+        "--min-citations", type=int, default=0,
+        help="Minimum archive-doc citations (default: 0, no filter).",
+    )
+    p_promote.add_argument(
+        "--archive-dir", default=None,
+        help="Directory for citation scanning (default: docs/archive/).",
+    )
+    p_promote.add_argument(
+        "--json", action="store_true", dest="json_out",
+        help="Emit machine-readable JSON instead of markdown table.",
+    )
+
     args = parser.parse_args()
 
     try:
@@ -654,6 +1392,36 @@ Commands:
             refresh(args.topic)
         elif args.command == "lint":
             raise SystemExit(lint(strict=args.strict))
+        elif args.command == "stale":
+            raise SystemExit(stale(threshold_days=args.threshold))
+        elif args.command == "cross-check":
+            raise SystemExit(cross_check())
+        elif args.command == "add-experiment":
+            add_experiment(
+                name=args.name,
+                status=args.status,
+                result=args.result,
+                conclusion=args.conclusion,
+                exp_date=args.date,
+                dir_path=args.dir,
+            )
+        elif args.command == "update-state":
+            update_state(
+                phase=args.phase,
+                status=args.status,
+                note=args.note,
+                dir_path=args.dir,
+            )
+        elif args.command == "promote-candidates":
+            raise SystemExit(
+                promote_candidates(
+                    min_tier=args.min_tier,
+                    memory_file=args.memory_file,
+                    min_citations=args.min_citations,
+                    json_out=args.json_out,
+                    archive_dir=args.archive_dir,
+                )
+            )
     except ValueError as exc:
         print(f"❌ {exc}")
         raise SystemExit(1) from exc

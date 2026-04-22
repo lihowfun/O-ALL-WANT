@@ -2,11 +2,26 @@
 
 > **Format**: `## [YYYY-MM-DD] [TAG] Title`, then write a conclusion. Newest entries on top.
 >
-> **Available TAGs**: `[BUG]` `[INSIGHT]` `[DECISION]` `[WORKAROUND]` `[EXPERIMENT]` `[ARCHITECTURE]`
+> **Available TAGs**:
+> - Kind: `[BUG]` `[INSIGHT]` `[DECISION]` `[WORKAROUND]` `[EXPERIMENT]` `[ARCHITECTURE]` `[REVIEW]` `[FIX]` `[FEATURE]`
+> - Evidence tier (optional, see `.agents/skills/classify-evidence.md`):
+>   `[T1]` WIP · `[T2]` Observation · `[T3]` Confirmed · `[T4]` Baseline · `[T5]` Frozen
+> - Qualifier: `[CAVEAT: ...]` — e.g. `[CAVEAT: single seed]`, `[CAVEAT: one source]`, `[CAVEAT: one environment]`
+> - Discipline log: `[OVER-REFUSE]` — logged when an agent answered "INSUFFICIENT EVIDENCE" on a question whose answer was in the given files. Threshold: ≥3 observations in 2 weeks → revisit `.agents/skills/read-discipline.md`.
+>
+> **Tag-picking notes**:
+> - A tier tag can stand alone for pure measurements (e.g. `[T4]` + the statistic + method). You do not need a Kind tag on every measurement.
+> - `[ARCHITECTURE]` is reserved for **design decisions**. For a measurement of existing behavior, use `[EXPERIMENT]` or tier-only.
+> - **Where does a preference belong?**
+>   - *Cross-project personal preference* ("don't use emojis", "prefer tabs", "2-space indent everywhere") → **user-level memory** (Claude Code auto memory, `~/.claude/`), not here.
+>   - *Project-team convention* ("use tensor-parallel format for multi-GPU runs", "always review migrations with DBA", "no merges Fridays") → this file, as a `[DECISION]`. A team lead / advisor stating a standard is a project decision, not a personal preference.
+>   - **Test**: would this apply to any other project you work on? If yes → user-level. If it's specific to this codebase / team → `[DECISION]` here.
 >
 > **How to write**:
 > - Edit this file directly, or
 > - `python3 scripts/context_hub.py memory add "[TAG] Title - Details"`
+>
+> **How to read from this file**: `.agents/skills/read-discipline.md` — extract first, refuse last.
 
 ---
 

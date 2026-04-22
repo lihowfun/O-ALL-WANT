@@ -104,6 +104,19 @@ These are the canonical copies — do not duplicate them at root.
 ### 4. What Comes Next
 - P0/P1/P2 action items + estimated cost + dependencies
 
+## Merge Gate — Do Not Merge Untested Infrastructure
+
+> Infrastructure code (install scripts, CI, build tooling, scripts the harness
+> calls, anything that runs on every session) merges to `main` only if one of:
+
+1. **End-to-end test passes in the worktree** (`./scripts/harness_check.py` green, AND any affected skill runs its own acceptance criteria)
+2. **Quantified improvement vs current `main` baseline** (measured, not asserted)
+3. **Explicit user authorization for experimental scaffold** (clearly marked as such)
+
+"Smoke test passed" proves no crash, not benefit. A passing `harness_check` or
+`py_compile` is necessary, not sufficient. If none of the three conditions
+hold, the change stays on a `study/*` branch until one of them does.
+
 ## Project-Specific Forbidden Actions
 
 > The global prohibitions above already cover startup bulk-reads, `do_not_rerun`,

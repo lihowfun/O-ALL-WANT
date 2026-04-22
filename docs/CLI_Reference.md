@@ -1,26 +1,48 @@
 # CLI Reference
 
-`context_hub.py` is the optional command-line helper that ships with the Agent
-Memory Framework. It assumes the standard installed layout:
+OAW ships three command-line helpers:
+
+- **`scripts/harness_check.py`** — one-command local health gate (8 checks;
+  same as CI). Run before opening a PR.
+- **`scripts/context_hub.py`** — knowledge + memory management
+  (search / get / annotate / memory / status / bootstrap / lesson).
+- **`scripts/wiki_sync.py`** — deterministic raw → wiki compiler with
+  metadata and quality lint.
+
+All three assume the standard installed layout:
 
 - `AI_CONTEXT.md`
 - `VERSION.json`
-- `.agents/memory.md`
-- `docs/knowledge/*.md`
+- `.agents/memory.md` (+ `.agents/skills/*.md`)
+- `docs/knowledge/*.md` (+ `docs/raw/*.md` for raw-source compilation)
 
-`docs/knowledge/index.md` and `docs/knowledge/log.md` are treated as meta pages
-and are skipped by the topic listing commands. For the raw-source compiler, see
+`docs/knowledge/index.md` and `docs/knowledge/log.md` are meta pages and are
+skipped by topic listing commands. For the raw-source compiler, see
 `docs/Wiki_Sync_Guide.md`.
 
 If your machine does not provide a `python` alias, use `python3`.
 
-## Quick Use
+## `harness_check.py` — local CI equivalent
+
+```bash
+./scripts/harness_check.py              # all 8 checks, summary output
+./scripts/harness_check.py --verbose    # include raw stdout/stderr per check
+./scripts/harness_check.py --json       # machine-readable summary
+```
+
+Checks (in order): pycompile, CLI surface, self-install refusal, fresh-install
+file set, fresh-install lint, repo lint, strict placeholder detection, example
+drift. Exit 0 iff all pass.
+
+## `context_hub.py`
+
+### Quick Use
 
 ```bash
 python3 scripts/context_hub.py status
 ```
 
-## Command Summary
+### Command Summary
 
 | Command | Purpose | Example |
 |---------|---------|---------|
@@ -33,9 +55,9 @@ python3 scripts/context_hub.py status
 | `status [--compact]` | Show version, recent decisions, and topics | `python3 scripts/context_hub.py status --compact` |
 | `bootstrap [--compact]` | Dump startup context for a new session | `python3 scripts/context_hub.py bootstrap --compact` |
 
-## Commands
+### Commands
 
-### `search [query] [--compact]`
+#### `search [query] [--compact]`
 
 Searches `docs/knowledge/` by filename and content. An empty query lists every
 available topic. Add `--compact` when you only want a one-line topic summary.
@@ -45,7 +67,7 @@ python3 scripts/context_hub.py search ""
 python3 scripts/context_hub.py search "bug" --compact
 ```
 
-### `get TOPIC`
+#### `get TOPIC`
 
 Prints the complete contents of a topic file, where `TOPIC` is the filename
 without `.md`.
@@ -54,7 +76,7 @@ without `.md`.
 python3 scripts/context_hub.py get Performance_Baselines
 ```
 
-### `annotate TOPIC "NOTE"`
+#### `annotate TOPIC "NOTE"`
 
 Appends a timestamped note to the topic. Prefix the note with a tag such as
 `[BUG]`, `[EXPERIMENT]`, or `[INSIGHT]` when you want the annotation label to
@@ -64,7 +86,7 @@ stay structured.
 python3 scripts/context_hub.py annotate Known_Limitations "[BUG] Windows lock fallback still needs native QA"
 ```
 
-### `memory add "NOTE"`
+#### `memory add "NOTE"`
 
 Creates a newest-first entry in `.agents/memory.md`. Prefix the note with a tag
 to keep memory entries easy to scan.
@@ -73,7 +95,7 @@ to keep memory entries easy to scan.
 python3 scripts/context_hub.py memory add "[DECISION] Keep install.sh overwrite prompt explicit"
 ```
 
-### `memory show --last N`
+#### `memory show --last N`
 
 Shows the newest `N` entries from `.agents/memory.md`.
 
@@ -81,7 +103,7 @@ Shows the newest `N` entries from `.agents/memory.md`.
 python3 scripts/context_hub.py memory show --last 3
 ```
 
-### `lesson "MISTAKE" "CORRECTION"`
+#### `lesson "MISTAKE" "CORRECTION"`
 
 Shortcut for writing a structured lesson into rolling memory.
 
@@ -89,7 +111,7 @@ Shortcut for writing a structured lesson into rolling memory.
 python3 scripts/context_hub.py lesson "Used python examples on a python3-only machine" "Standardize docs on python3"
 ```
 
-### `status [--compact]`
+#### `status [--compact]`
 
 Shows the current version, the `do_not_rerun` count, the newest memory headers,
 and the list of knowledge topics. Add `--compact` for a one-line summary that is
@@ -100,7 +122,7 @@ python3 scripts/context_hub.py status
 python3 scripts/context_hub.py status --compact
 ```
 
-### `bootstrap [--compact]`
+#### `bootstrap [--compact]`
 
 Prints the contents of `AI_CONTEXT.md`, the latest memory entries, and the
 topic index. This is useful when starting a new agent session. Add `--compact`
@@ -110,6 +132,22 @@ when you want a minimal bootstrap instead of the full dump.
 python3 scripts/context_hub.py bootstrap
 python3 scripts/context_hub.py bootstrap --compact
 ```
+
+## `wiki_sync.py` — raw → wiki compiler + lint
+
+See [`Wiki_Sync_Guide.md`](Wiki_Sync_Guide.md) for the full compiler guide. The
+subcommands most often run interactively:
+
+```bash
+python3 scripts/wiki_sync.py build                 # compile docs/raw → docs/knowledge
+python3 scripts/wiki_sync.py refresh <Topic>       # recompile one topic
+python3 scripts/wiki_sync.py lint                  # metadata + links + soft quality
+python3 scripts/wiki_sync.py lint --strict         # also fails on unfilled
+                                                   # ${...} / YYYY-MM-DD and on
+                                                   # skill frontmatter violations
+```
+
+Default lint returns 0 with warnings; `--strict` promotes warnings to errors.
 
 ## Notes
 

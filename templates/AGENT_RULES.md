@@ -21,6 +21,8 @@
 **After opening this file, always read**:
 1. ✅ `AI_CONTEXT.md` — architecture, baselines, commands, tech stack
 2. ✅ `VERSION.json` → only check `version` + `do_not_rerun` fields
+3. ✅ **If `docs/knowledge/CURRENT_STATE.md` exists**, read it too — it's the
+      compiled entry point and replaces most of the per-lane first-read work.
 
 **Route by lane (based on the current task)**:
 
@@ -92,6 +94,19 @@
 
 ### 4. What Comes Next
 - P0/P1/P2 action items + estimated cost + dependencies
+
+## Merge Gate — Do Not Merge Untested Infrastructure
+
+> Infrastructure code (install scripts, CI, build tooling, scripts the harness
+> calls, anything that runs on every session) merges to `main` only if one of:
+
+1. **End-to-end test passes in the worktree** (actual behavior exercised — not just `import ok` or `py_compile` — AND any affected skill runs its own acceptance criteria)
+2. **Quantified improvement vs current `main` baseline** (measured, not asserted)
+3. **Explicit user authorization for experimental scaffold** (clearly marked as such)
+
+"Smoke test passed" proves no crash, not benefit. A passing `harness_check` or
+`py_compile` is necessary, not sufficient. If none of the three conditions
+hold, the change stays on a `study/*` branch until one of them does.
 
 ## Project-Specific Forbidden Actions
 

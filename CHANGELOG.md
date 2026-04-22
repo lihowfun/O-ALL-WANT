@@ -2,20 +2,103 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [1.1.0] — 2026-04-21
+
+This release bundles three parallel investments completed on 2026-04-20
+and finalized on 2026-04-21:
+
+1. **Taiwan.md-inspired wiki governance layer** — a shipped LLM-wiki
+   contribution pipeline + public prompts + quality lint extensions.
+2. **Harness quality hardening** — `harness_check` one-command gate, skill
+   frontmatter lint, and decision documents for the two research items
+   from the 2026-04-20 Harness Engineering audit.
+3. **Amendment v2 follow-through** — Merge Gate rule, evidence-tier
+   vocabulary, deprecation protocol, and two review skills
+   (`classify-evidence`, `harness-evaluator`).
+
+Audit findings that did **not** become shippable work (recovery pattern,
+task-state CLI, lane audit log, JSON CLI output) are explicitly triaged in
+[`docs/archive/Future_Optimization_Plan_Confirmed_2026-04-20.md`](docs/archive/Future_Optimization_Plan_Confirmed_2026-04-20.md).
 
 ### Added
-- Star-growth positioning pass: clearer README first screen, comparison guide,
-  and CI coverage for `example/minimal-project/` fixture drift.
-- Installer now creates pointer files for Codex (`AGENTS.md`), Cursor
-  (`.cursorrules`), Windsurf (`.windsurfrules`), and Gemini (`GEMINI.md`) so
-  the adapter table matches shipped behavior.
+- **Taiwan.md wiki governance packet** (8 artifacts):
+  - `docs/wiki/CONTRIBUTING_WIKI.md` — wiki contribution guide
+  - `docs/wiki/WIKI_PIPELINE.md` — staged gather → compile → verify → connect → promote pipeline
+  - `docs/wiki/TOPIC_BOARD.md` — topic tracking board
+  - `docs/prompts/WIKI_TOPIC_PROMPT.md` — public prompt to propose/create a wiki topic
+  - `docs/prompts/WIKI_REFRESH_PROMPT.md` — public prompt to refresh
+  - `docs/prompts/WIKI_SKILL_PROMOTION_PROMPT.md` — public prompt to promote a repeatable procedure to a skill
+  - `.github/ISSUE_TEMPLATE/wiki_topic_proposal.yml` + `wiki_fact_correction.yml`
+  - `scripts/wiki_sync.py` lint extensions: required-metadata enforcement, invalid-date detection, stale-page warnings, thin-topic warnings, hollow-prose warnings
+- **`scripts/harness_check.py`** — one-command local health gate covering
+  pycompile, CLI surface, install-refusal, fresh-install file set,
+  fresh-install lint, repo lint, strict placeholder detection, and
+  `example/minimal-project` drift. CI now calls it as a single step.
+- **Skill frontmatter lint** in `wiki_sync.py lint` — skills under
+  `templates/.agents/skills/*.md` must have `triggers` or `outputs` plus an
+  execution-structure heading (Steps / Rules / Workflow / Procedure). Warn
+  by default, `--strict` promotes to error. All 8 shipped skills pass.
+- **Merge Gate rule** in `CLAUDE.md` + `templates/AGENT_RULES.md` — three
+  conditions (e2e test + skill acceptance / quantified improvement /
+  explicit experimental authorization) gate any infra change reaching
+  `main`. "Smoke test passed" is necessary, not sufficient.
+- **`classify-evidence` skill** (`templates/.agents/skills/classify-evidence.md`)
+  — 30-second vocabulary gate for evidence tiers T1–T5 before writing to
+  memory or wiki; prevents single-run observations from being promoted to
+  "confirmed."
+- **`harness-evaluator` skill** (`templates/.agents/skills/harness-evaluator.md`)
+  — fresh-context subagent review against explicit acceptance criteria.
+  Records `[REVIEW]` verdict to `.agents/memory.md`.
+- **Deprecation protocol** in `docs/wiki/CONTRIBUTING_WIKI.md` —
+  `[DEPRECATED YYYY-MM-DD]` marker + Why / Replaced by / Lesson block,
+  with rules for when NOT to deprecate.
+- **Evidence-tier vocabulary** in `templates/.agents/memory.md` TAG list —
+  optional `[T1]`–`[T5]` tiers + `[CAVEAT: ...]` qualifier.
+- **`wiki_sync.py` non-interactive subcommands**:
+  - `add-experiment --name ... --status ... --result ... --conclusion ...`
+    appends a row to `docs/knowledge/EXPERIMENT_LOG.md`.
+  - `update-state --phase ... --status ... --note ...` updates a phase row
+    in `docs/knowledge/CURRENT_STATE.md` + appends a dated AI annotation.
+- **`templates/docs/knowledge/CURRENT_STATE.md`** — single compiled
+  cold-start entry point template; optional but recommended over
+  per-lane scatter reads.
+- **First dogfood audit trail** in `docs/archive/Dogfood_Session_2026-04-21.md`
+  — committed evidence that the new skills were invoked on this branch
+  per Merge Gate §1.
+- **Star-growth positioning pass**: clearer README first screen, comparison
+  guide, and CI coverage for `example/minimal-project/` fixture drift.
+- **Adapter files auto-created by installer** for Codex (`AGENTS.md`),
+  Cursor (`.cursorrules`), Windsurf (`.windsurfrules`), Gemini (`GEMINI.md`).
 
 ### Changed
-- `example/minimal-project/` now includes the same core files as a fresh
-  `install.sh` run, including `wiki_sync.py`, `docs/raw/`, and wiki meta pages.
-- Public-facing wording now uses OAW as the current product name; older
-  "Agent Memory Framework" references are kept only as history.
+- `example/minimal-project/` now tracks a fresh `install.sh` run, including
+  `wiki_sync.py`, `docs/raw/`, and wiki meta pages; CI enforces drift.
+- Public-facing wording now uses "OAW" as the product name; older "Agent
+  Memory Framework" references are kept only as history.
+- New-project agent prompt in `install.sh` and README now reads "Use OAW's
+  architecture as the harness, map this project's real state into
+  `AI_CONTEXT.md`" instead of merely "fill in the scaffold" — explicit per
+  the 2026-04-20 harness audit recommendation.
+- `ROADMAP.md` Active Work table reorganized to reflect the accept/research/
+  reject decisions from `Future_Optimization_Plan_Confirmed_2026-04-20.md`.
+
+### Research decisions (no code shipped from these, but documented)
+- [R-1 `Evaluator_Design_Decision_2026-04-20.md`](docs/archive/Evaluator_Design_Decision_2026-04-20.md)
+  — subagent-based evaluator is empirically feasible; spec ready for Week 4
+  implementation.
+- [R-3 `Skill_Failure_Modes_2026-04-20.md`](docs/archive/Skill_Failure_Modes_2026-04-20.md)
+  — 9 historical failures analyzed; 0 of 9 fit the Recovery/retry/rollback
+  framing. No skill-template change ships; revisit in 3 months.
+
+### Explicitly rejected or deferred
+- Task-state CLI (over `VERSION.json.task_state`): `memory.md` + `ROADMAP.md`
+  already cover the need; ROI too low.
+- Recovery skeleton in skill template: no matching failure cases (see R-3).
+- Worktree collaboration skill: maintains contingent status — rebuild only
+  when ≥3 people on a branch ≥2 weeks hits a real merge pain point.
+- `--json` CLI output, lane audit log: both contingent on the R-1 evaluator
+  skill actually needing structured input / loaded-file provenance; defer
+  until demand emerges.
 
 ## [1.0.0] — 2026-04-17
 

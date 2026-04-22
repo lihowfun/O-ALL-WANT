@@ -46,7 +46,7 @@ bash OAW/install.sh
 
 Then tell your agent:
 
-> Read `CLAUDE.md` first, then `AI_CONTEXT.md`. Match the architecture, fill in this project's actual state, then tell me which repeated workflows belong in `.agents/skills/`.
+> Read `CLAUDE.md` first, then `AI_CONTEXT.md`. I'm building [describe your project]. Use OAW's architecture as the harness, map this project's real state into `AI_CONTEXT.md`, then tell me which repeated workflows belong in `.agents/skills/`.
 
 ## Why are you here?
 
@@ -82,6 +82,8 @@ Durable cross-session memory instead of snapping back to zero every conversation
 
 ### 📚 Auto-evolving LLM Wiki (Karpathy concept)
 Raw notes in `docs/raw/` compile into durable pages in `docs/knowledge/`. After any meaningful session, just tell the agent _"sync today's findings to the wiki"_ — it calls `wiki_sync.py refresh` to distill memory entries into a structured knowledge page. No manual reorganization.
+
+For teams or public knowledge bases, use the [LLM wiki contribution guide](docs/wiki/CONTRIBUTING_WIKI.md), [wiki pipeline](docs/wiki/WIKI_PIPELINE.md), and copy-paste [wiki prompts](docs/prompts/WIKI_TOPIC_PROMPT.md) to keep raw evidence, compiled topics, and skill candidates aligned.
 
 ---
 
@@ -144,7 +146,7 @@ bash OAW/install.sh
 Then paste to your agent:
 
 > Read `CLAUDE.md` first, then `AI_CONTEXT.md`.
-> Match the architecture, fill in this project's actual state, then tell me which repeated workflows belong in `.agents/skills/`.
+> I'm building [describe your project]. Use OAW's architecture as the harness, map this project's real state into `AI_CONTEXT.md`, then tell me which repeated workflows belong in `.agents/skills/`.
 
 ### 📂 Existing project
 
@@ -212,7 +214,7 @@ Prefer driving the tools manually? These go straight to the underlying layer:
 | `python3 scripts/context_hub.py context --lane [operational\|wiki\|execution\|debug]` | List the files that belong to one lane |
 | `python3 scripts/context_hub.py memory add "[TAG] content"` | Manually write to memory |
 | `python3 scripts/wiki_sync.py refresh topic_name` | Compile one wiki topic |
-| `python3 scripts/wiki_sync.py lint` | Check metadata consistency |
+| `python3 scripts/wiki_sync.py lint` | Check wiki metadata, links, freshness, and soft quality signals |
 | `python3 scripts/wiki_sync.py lint --strict` | Also flag unfilled `${...}` / `YYYY-MM-DD` markers |
 
 Full list: [CLI Reference](docs/CLI_Reference.md).
