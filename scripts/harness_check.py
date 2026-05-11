@@ -233,6 +233,58 @@ def check_example_drift(report: Report) -> None:
     )
 
 
+def check_concurrent_memory_writes(report: Report) -> None:
+    """Spawn N concurrent `memory add` processes and verify all entries survive.
+
+    Guards against the read-modify-write race the original `memory_add` had,
+    where the read happened OUTSIDE the lock so concurrent writers
+    independently snapshotted the same content and the last writer overwrote
+    the rest. _locked_rmw fixes that. This check makes the fix non-regress.
+    """
+    install_sh = REPO_ROOT / "install.sh"
+    with tempfile.TemporaryDirectory() as tmp:
+        proc = _run(["bash", str(install_sh)], cwd=tmp, input_="y\n")
+        if proc.returncode != 0:
+            report.record("concurrent-memory", False, "install.sh failed before concurrency test",
+                          proc.stdout, proc.stderr)
+            return
+        N = 20
+        try:
+            harness_script = (
+                "import subprocess, threading\n"
+                f"N = {N}\n"
+                "def worker(i):\n"
+                "    subprocess.run(["
+                f"       'python3', 'scripts/context_hub.py', 'memory', 'add',"
+                "        f'[EXPERIMENT] concurrent-write-{i}'\n"
+                "    ], cwd='" + tmp + "', capture_output=True, check=True)\n"
+                "ts = [threading.Thread(target=worker, args=(i,)) for i in range(N)]\n"
+                "[t.start() for t in ts]\n"
+                "[t.join() for t in ts]\n"
+            )
+            spawn = _run(["python3", "-c", harness_script], cwd=tmp)
+            if spawn.returncode != 0:
+                report.record("concurrent-memory", False,
+                              f"worker harness failed (rc={spawn.returncode})",
+                              spawn.stdout, spawn.stderr)
+                return
+            memory_path = Path(tmp) / ".agents" / "memory.md"
+            text = memory_path.read_text(encoding="utf-8")
+            survivors = text.count("[EXPERIMENT] concurrent-write-")
+            if survivors != N:
+                report.record(
+                    "concurrent-memory", False,
+                    f"only {survivors}/{N} entries survived — read-modify-write is not atomic",
+                )
+                return
+            report.record(
+                "concurrent-memory", True,
+                detail=f"all {N}/{N} concurrent entries persisted",
+            )
+        except Exception as exc:
+            report.record("concurrent-memory", False, f"exception: {exc}")
+
+
 # ── Entry point ───────────────────────────────────────────────────────────────
 
 ALL_CHECKS = [
@@ -244,6 +296,7 @@ ALL_CHECKS = [
     ("repo-lint", check_repo_lint),
     ("strict-placeholder", check_strict_placeholder_on_fresh_install),
     ("example-drift", check_example_drift),
+    ("concurrent-memory", check_concurrent_memory_writes),
 ]
 
 

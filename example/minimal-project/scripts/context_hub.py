@@ -42,6 +42,10 @@ META_PAGE_TYPES = {"meta"}
 
 # Skill audit thresholds (env-overridable)
 SKILL_STALE_DAYS = int(os.environ.get("OAW_SKILL_STALE_DAYS", "30"))
+# Grace period (days since the .md file was created) during which an
+# unused skill is shown as 🌱 fresh instead of ⚠️ stale. Stops day-1
+# audits from yelling "everything is stale" on a freshly installed repo.
+SKILL_STALE_GRACE_DAYS = int(os.environ.get("OAW_SKILL_STALE_GRACE_DAYS", "7"))
 
 # ─── Utilities ────────────────────────────────────────────────────────────────
 
@@ -89,6 +93,65 @@ def _locked_write(filepath, content, os_name=None, fcntl_module=fcntl, msvcrt_mo
             f.flush()
         finally:
             if backend == "posix":
+                lock_module.flock(f, lock_module.LOCK_UN)
+
+
+def _locked_rmw(filepath, mutate, default_initial="", os_name=None,
+                fcntl_module=fcntl, msvcrt_module=msvcrt):
+    """Atomic read-modify-write under an exclusive lock.
+
+    `mutate(current_content) -> new_content` is called with the file's current
+    text (or `default_initial` if the file is missing/empty). The file is then
+    truncated and rewritten with the result. The lock spans **both** the read
+    and the write, so two concurrent writers cannot independently snapshot the
+    same state and overwrite each other's edits.
+
+    Use this instead of read-then-`_locked_write` whenever the new content
+    depends on the existing content (append, increment, JSON merge, etc.).
+    """
+    backend, lock_module = _resolve_lock_backend(
+        os_name=os_name,
+        fcntl_module=fcntl_module,
+        msvcrt_module=msvcrt_module,
+    )
+    parent = os.path.dirname(filepath)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
+
+    # "a+" gives us read access AND creates the file if missing. After
+    # truncate() the file size is 0; subsequent write() lands at offset 0
+    # because that is current EOF.
+    with open(filepath, "a+", encoding="utf-8") as f:
+        # Acquire exclusive lock BEFORE the read so no other writer can sneak
+        # in between our read and our write.
+        if backend == "windows":
+            f.seek(0)
+            lock_module.locking(f.fileno(), lock_module.LK_LOCK, 1)
+        elif backend == "posix":
+            lock_module.flock(f, lock_module.LOCK_EX)
+
+        try:
+            f.seek(0)
+            content = f.read()
+            if not content:
+                content = default_initial
+            new_content = mutate(content)
+            f.seek(0)
+            f.truncate()
+            f.write(new_content)
+            f.flush()
+            try:
+                os.fsync(f.fileno())  # durability — survives a process kill
+            except OSError:
+                pass
+        finally:
+            if backend == "windows":
+                f.seek(0)
+                try:
+                    lock_module.locking(f.fileno(), lock_module.LK_UNLCK, 1)
+                except OSError:
+                    pass
+            elif backend == "posix":
                 lock_module.flock(f, lock_module.LOCK_UN)
 
 
@@ -300,10 +363,10 @@ def annotate(topic, note):
         print(f"Topic '{topic}' not found. Cannot annotate.")
         return
 
+    # Pre-flight read to bail on meta pages before taking the lock.
     with open(file_path, "r", encoding="utf-8") as f:
-        content = f.read()
-
-    metadata, _body = _parse_frontmatter(content)
+        preview = f.read()
+    metadata, _body = _parse_frontmatter(preview)
     if metadata.get("page_type") in META_PAGE_TYPES:
         print(f"Topic '{topic}' is a meta page and should not be annotated directly.")
         return
@@ -318,20 +381,25 @@ def annotate(topic, note):
 
     annotation_block = f"\n\n> **[AI Annotation{tag}]** ({timestamp}): {note}\n"
 
-    # Append before the last section or at the end
-    if "## AI Annotations" in content:
-        content = content + annotation_block
-    else:
-        content = content + f"\n\n## AI Annotations\n{annotation_block}"
+    def _append(content: str) -> str:
+        if "## AI Annotations" in content:
+            return content + annotation_block
+        return content + f"\n\n## AI Annotations\n{annotation_block}"
 
-    _locked_write(file_path, content)
+    _locked_rmw(file_path, _append, default_initial=preview)
     print(f"✅ Annotated '{topic}' with: {note[:60]}...")
 
 
 # ─── Memory ───────────────────────────────────────────────────────────────────
 
 def memory_add(note):
-    """Add a structured entry to the rolling memory."""
+    """Add a structured entry to the rolling memory.
+
+    Atomic w.r.t. concurrent writers: 20 processes calling this in parallel
+    will all 20 entries survive (verified by a concurrency test in
+    harness_check.py). Implementation uses _locked_rmw so the read and the
+    write happen under the same exclusive lock.
+    """
     timestamp = datetime.now().strftime("%Y-%m-%d")
 
     # Auto-detect tag
@@ -344,23 +412,19 @@ def memory_add(note):
 
     entry = f"\n## [{timestamp}] [{tag}] {note_body}\n"
 
-    os.makedirs(os.path.dirname(MEMORY_FILE), exist_ok=True)
+    def _insert(content: str) -> str:
+        # Insert after the first "---" separator (after header).
+        separator_pos = content.find("---")
+        if separator_pos != -1:
+            insert_pos = content.find("\n", separator_pos) + 1
+            return content[:insert_pos] + entry + content[insert_pos:]
+        return content + entry
 
-    if os.path.exists(MEMORY_FILE):
-        with open(MEMORY_FILE, "r", encoding="utf-8") as f:
-            content = f.read()
-    else:
-        content = "# Agent Memory — Decision & Finding Log\n\n---\n"
-
-    # Insert after the first "---" separator (after header)
-    separator_pos = content.find("---")
-    if separator_pos != -1:
-        insert_pos = content.find("\n", separator_pos) + 1
-        content = content[:insert_pos] + entry + content[insert_pos:]
-    else:
-        content = content + entry
-
-    _locked_write(MEMORY_FILE, content)
+    _locked_rmw(
+        MEMORY_FILE,
+        _insert,
+        default_initial="# Agent Memory — Decision & Finding Log\n\n---\n",
+    )
     print(f"✅ Memory entry added: [{tag}] {note[:60]}...")
 
 
@@ -421,16 +485,32 @@ def memory_recall(query, limit=8, context_lines=2):
                 lines = f.readlines()
         except OSError:
             return
-        for i, line in enumerate(lines):
-            if pattern.search(line):
-                start = max(0, i - context_lines)
-                end = min(len(lines), i + context_lines + 1)
-                hits.append({
-                    "file": label,
-                    "line_no": i + 1,
-                    "match_line": line.rstrip(),
-                    "context": [l.rstrip() for l in lines[start:end]],
-                })
+        # Collect all matching line indices in this file.
+        match_idxs = [i for i, line in enumerate(lines) if pattern.search(line)]
+        if not match_idxs:
+            return
+        # Merge matches whose context windows overlap so adjacent hits don't
+        # produce near-duplicate output blocks. Each merged hit lists the
+        # union of match line_nos and the union of context lines.
+        groups: list[list[int]] = []
+        for i in match_idxs:
+            if groups and i - groups[-1][-1] <= 2 * context_lines + 1:
+                groups[-1].append(i)
+            else:
+                groups.append([i])
+        for grp in groups:
+            start = max(0, grp[0] - context_lines)
+            end = min(len(lines), grp[-1] + context_lines + 1)
+            match_set = set(grp)
+            ctx = []
+            for j in range(start, end):
+                ctx.append({"line": lines[j].rstrip(), "is_match": j in match_set})
+            hits.append({
+                "file": label,
+                "line_no": grp[0] + 1,
+                "match_line_nos": [j + 1 for j in grp],
+                "context": ctx,
+            })
 
     # Memory first (chronological signal), then knowledge wiki.
     _scan(MEMORY_FILE, ".agents/memory.md")
@@ -447,10 +527,16 @@ def memory_recall(query, limit=8, context_lines=2):
     print(f"  RECALL: {query!r} — {len(hits)} hit(s) (showing top {min(limit, len(hits))})")
     print(f"{'='*70}\n")
     for h in hits[:limit]:
-        print(f"📍 {h['file']}:{h['line_no']}")
+        # When a group merges multiple match lines, show all of them.
+        line_repr = (
+            f"{h['line_no']}"
+            if len(h["match_line_nos"]) == 1
+            else f"{h['line_no']} (+{len(h['match_line_nos']) - 1} more)"
+        )
+        print(f"📍 {h['file']}:{line_repr}")
         for cl in h["context"]:
-            marker = "│ " if cl != h["match_line"] else "▶ "
-            print(f"  {marker}{cl}")
+            marker = "▶ " if cl["is_match"] else "│ "
+            print(f"  {marker}{cl['line']}")
         print()
 
 
@@ -465,6 +551,7 @@ def memory_recall(query, limit=8, context_lines=2):
 #   - State machine: active → stale → archived. `pinned: true` exempts a skill.
 
 def _load_skill_usage():
+    """Read-only load — fine for audit / display where we don't write back."""
     if not os.path.exists(SKILLS_USAGE_FILE):
         return {}
     try:
@@ -474,9 +561,24 @@ def _load_skill_usage():
         return {}
 
 
-def _save_skill_usage(data):
+def _update_skill_usage(mutate):
+    """Atomic load → mutate(dict) → save under one exclusive lock.
+
+    Two processes calling skills use/patch/pin concurrently will NOT
+    overwrite each other's increments. Use this for any operation that
+    needs the post-read value to be still-valid at write time.
+    """
     os.makedirs(SKILLS_DIR, exist_ok=True)
-    _locked_write(SKILLS_USAGE_FILE, json.dumps(data, indent=2, ensure_ascii=False) + "\n")
+
+    def _do(text: str) -> str:
+        try:
+            data = json.loads(text) if text.strip() else {}
+        except json.JSONDecodeError:
+            data = {}
+        mutate(data)
+        return json.dumps(data, indent=2, ensure_ascii=False) + "\n"
+
+    _locked_rmw(SKILLS_USAGE_FILE, _do, default_initial="{}\n")
 
 
 def _list_skill_files(include_archive=False):
@@ -497,24 +599,37 @@ def _list_skill_files(include_archive=False):
     return out
 
 
+def _ensure_entry(data, name):
+    """In-place: make sure data[name] has the standard fields."""
+    entry = data.get(name, {})
+    now = datetime.now().isoformat(timespec="seconds")
+    entry.setdefault("first_seen", now)
+    entry.setdefault("use_count", 0)
+    entry.setdefault("patch_count", 0)
+    entry.setdefault("pinned", False)
+    entry.setdefault("state", "active")
+    data[name] = entry
+    return entry
+
+
 def skill_use(name):
     """Record that a skill was used this session (+1 to use_count, refresh ts)."""
     skill_path = os.path.join(SKILLS_DIR, f"{name}.md")
     if not os.path.exists(skill_path):
         print(f"❌ Skill {name!r} not found at {skill_path}")
         return
-    data = _load_skill_usage()
-    entry = data.get(name, {})
-    now = datetime.now().isoformat(timespec="seconds")
-    entry.setdefault("first_seen", now)
-    entry["use_count"] = int(entry.get("use_count", 0)) + 1
-    entry["last_used"] = now
-    entry.setdefault("patch_count", 0)
-    entry.setdefault("pinned", False)
-    entry.setdefault("state", "active")
-    data[name] = entry
-    _save_skill_usage(data)
-    print(f"✓ {name}: use_count={entry['use_count']} last_used={entry['last_used']}")
+    new_count = [0]
+    last = [""]
+
+    def _bump(data):
+        entry = _ensure_entry(data, name)
+        entry["use_count"] = int(entry["use_count"]) + 1
+        entry["last_used"] = datetime.now().isoformat(timespec="seconds")
+        new_count[0] = entry["use_count"]
+        last[0] = entry["last_used"]
+
+    _update_skill_usage(_bump)
+    print(f"✓ {name}: use_count={new_count[0]} last_used={last[0]}")
 
 
 def skill_patch(name):
@@ -523,36 +638,36 @@ def skill_patch(name):
     if not os.path.exists(skill_path):
         print(f"❌ Skill {name!r} not found")
         return
-    data = _load_skill_usage()
-    entry = data.get(name, {})
-    now = datetime.now().isoformat(timespec="seconds")
-    entry.setdefault("first_seen", now)
-    entry.setdefault("use_count", 0)
-    entry["patch_count"] = int(entry.get("patch_count", 0)) + 1
-    entry["last_patched"] = now
-    entry.setdefault("pinned", False)
-    entry.setdefault("state", "active")
-    data[name] = entry
-    _save_skill_usage(data)
-    print(f"✓ {name}: patch_count={entry['patch_count']}")
+    new_count = [0]
+
+    def _bump(data):
+        entry = _ensure_entry(data, name)
+        entry["patch_count"] = int(entry["patch_count"]) + 1
+        entry["last_patched"] = datetime.now().isoformat(timespec="seconds")
+        new_count[0] = entry["patch_count"]
+
+    _update_skill_usage(_bump)
+    print(f"✓ {name}: patch_count={new_count[0]}")
 
 
 def skill_pin(name, pinned=True):
     """Toggle the pinned flag so the audit will not flag a skill as stale."""
-    data = _load_skill_usage()
-    entry = data.setdefault(name, {
-        "first_seen": datetime.now().isoformat(timespec="seconds"),
-        "use_count": 0,
-        "patch_count": 0,
-        "state": "active",
-    })
-    entry["pinned"] = bool(pinned)
-    _save_skill_usage(data)
+
+    def _toggle(data):
+        entry = _ensure_entry(data, name)
+        entry["pinned"] = bool(pinned)
+
+    _update_skill_usage(_toggle)
     print(f"{'📌 pinned' if pinned else 'unpinned'}: {name}")
 
 
 def skills_audit():
-    """List skills, flag stale ones (no use in SKILL_STALE_DAYS, not pinned)."""
+    """List skills, flag stale ones (no use in SKILL_STALE_DAYS, not pinned).
+
+    Skills installed within SKILL_STALE_GRACE_DAYS are shown as 🌱 fresh
+    instead of ⚠️ stale, so a Day-1 audit on a freshly installed repo
+    doesn't blanket-flag everything.
+    """
     files = _list_skill_files()
     usage = _load_skill_usage()
     if not files:
@@ -560,7 +675,10 @@ def skills_audit():
         return
     now = datetime.now()
     print(f"\n{'='*70}")
-    print(f"  SKILLS AUDIT — {len(files)} skills, stale threshold {SKILL_STALE_DAYS} days")
+    print(
+        f"  SKILLS AUDIT — {len(files)} skills, stale={SKILL_STALE_DAYS}d, "
+        f"grace={SKILL_STALE_GRACE_DAYS}d"
+    )
     print(f"{'='*70}\n")
     rows = []
     for name in files:
@@ -576,22 +694,39 @@ def skills_audit():
                 age_days = (now - datetime.fromisoformat(last)).days
             except ValueError:
                 pass
-        stale = (
-            not pinned and uc == 0 and pc == 0
-        ) or (
-            not pinned and age_days is not None and age_days >= SKILL_STALE_DAYS
+
+        # File mtime gives a robust "how long has this skill been here" signal
+        # that survives missing usage entries.
+        skill_path = os.path.join(SKILLS_DIR, f"{name}.md")
+        install_age_days = None
+        try:
+            mtime = datetime.fromtimestamp(os.path.getmtime(skill_path))
+            install_age_days = (now - mtime).days
+        except OSError:
+            pass
+
+        fresh = (
+            uc == 0 and pc == 0
+            and install_age_days is not None
+            and install_age_days < SKILL_STALE_GRACE_DAYS
         )
-        rows.append((name, uc, pc, last or "(never recorded)", pinned, stale, state))
+        stale = not pinned and not fresh and (
+            (uc == 0 and pc == 0)
+            or (age_days is not None and age_days >= SKILL_STALE_DAYS)
+        )
+        rows.append((name, uc, pc, last or "(never recorded)", pinned, stale, fresh, state))
 
-    # Sort: stale candidates first, then by use_count ascending
-    rows.sort(key=lambda r: (not r[5], r[1]))
+    # Sort: stale first, then fresh, then by use_count ascending
+    rows.sort(key=lambda r: (not r[5], not r[6], r[1]))
 
-    for name, uc, pc, last, pinned, stale, state in rows:
+    for name, uc, pc, last, pinned, stale, fresh, state in rows:
         flags = []
         if pinned:
             flags.append("📌pinned")
         if stale:
             flags.append("⚠️stale")
+        elif fresh:
+            flags.append("🌱fresh")
         if state != "active":
             flags.append(f"[{state}]")
         marker = " ".join(flags)
@@ -618,11 +753,13 @@ def skills_archive(name):
         print(f"❌ {dst} already exists — rename or delete first")
         return
     os.rename(src, dst)
-    data = _load_skill_usage()
-    entry = data.setdefault(name, {})
-    entry["state"] = "archived"
-    entry["archived_at"] = datetime.now().isoformat(timespec="seconds")
-    _save_skill_usage(data)
+
+    def _mark(data):
+        entry = _ensure_entry(data, name)
+        entry["state"] = "archived"
+        entry["archived_at"] = datetime.now().isoformat(timespec="seconds")
+
+    _update_skill_usage(_mark)
     print(f"📦 archived: {name}.md → .archive/{name}.md")
 
 
@@ -637,11 +774,13 @@ def skills_unarchive(name):
         print(f"❌ {dst} already present — refusing to overwrite")
         return
     os.rename(src, dst)
-    data = _load_skill_usage()
-    entry = data.setdefault(name, {})
-    entry["state"] = "active"
-    entry.pop("archived_at", None)
-    _save_skill_usage(data)
+
+    def _mark(data):
+        entry = _ensure_entry(data, name)
+        entry["state"] = "active"
+        entry.pop("archived_at", None)
+
+    _update_skill_usage(_mark)
     print(f"✓ restored: .archive/{name}.md → {name}.md")
 
 
