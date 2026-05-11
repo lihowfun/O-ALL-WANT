@@ -132,6 +132,7 @@ def check_fresh_install(report: Report) -> None:
             "docs/knowledge/index.md",
             "scripts/wiki_sync.py",
             "scripts/context_hub.py",
+            "scripts/memory_nudge.py",
         ]
         missing = [p for p in required if not (Path(tmp) / p).exists()]
         if missing:
@@ -205,6 +206,7 @@ def check_example_drift(report: Report) -> None:
     pairs = [
         (REPO_ROOT / "scripts" / "context_hub.py", REPO_ROOT / "example" / "minimal-project" / "scripts" / "context_hub.py"),
         (REPO_ROOT / "scripts" / "wiki_sync.py", REPO_ROOT / "example" / "minimal-project" / "scripts" / "wiki_sync.py"),
+        (REPO_ROOT / "scripts" / "memory_nudge.py", REPO_ROOT / "example" / "minimal-project" / "scripts" / "memory_nudge.py"),
     ]
     drift = []
     missing = sorted(installed_files - example_files)

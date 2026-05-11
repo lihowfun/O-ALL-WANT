@@ -32,6 +32,9 @@ Thumbs.db
 # Project-specific
 # Personal development log — not shared across team
 .agents/memory.md
+# Skill usage telemetry + archived skills are per-installation, not framework state
+.agents/skills/.usage.json
+.agents/skills/.archive/
 
 # Codex / AI tools
 .codex

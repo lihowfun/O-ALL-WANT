@@ -51,6 +51,7 @@ MANAGED_PATHS=(
     ".github/copilot-instructions.md"
     "scripts/context_hub.py"
     "scripts/wiki_sync.py"
+    "scripts/memory_nudge.py"
 )
 
 while IFS= read -r relative_path; do
@@ -114,8 +115,10 @@ cp "$FRAMEWORK_DIR/templates/.github/copilot-instructions.md" "$PROJECT_ROOT/.gi
 mkdir -p "$PROJECT_ROOT/scripts"
 cp "$FRAMEWORK_DIR/scripts/context_hub.py" "$PROJECT_ROOT/scripts/"
 cp "$FRAMEWORK_DIR/scripts/wiki_sync.py" "$PROJECT_ROOT/scripts/"
+cp "$FRAMEWORK_DIR/scripts/memory_nudge.py" "$PROJECT_ROOT/scripts/"
 chmod +x "$PROJECT_ROOT/scripts/context_hub.py"
 chmod +x "$PROJECT_ROOT/scripts/wiki_sync.py"
+chmod +x "$PROJECT_ROOT/scripts/memory_nudge.py"
 
 echo "✅ Files installed!"
 echo "🔌 Agent adapters created: AGENTS.md, GEMINI.md, .cursorrules, .windsurfrules, .github/copilot-instructions.md"

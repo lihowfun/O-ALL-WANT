@@ -35,7 +35,13 @@ DOCS_DIR = os.path.join(BASE_DIR, "docs", "knowledge")
 RAW_DIR = os.path.join(BASE_DIR, "docs", "raw")
 MEMORY_FILE = os.path.join(BASE_DIR, ".agents", "memory.md")
 AI_CONTEXT_FILE = os.path.join(BASE_DIR, "AI_CONTEXT.md")
+SKILLS_DIR = os.path.join(BASE_DIR, ".agents", "skills")
+SKILLS_USAGE_FILE = os.path.join(SKILLS_DIR, ".usage.json")
+SKILLS_ARCHIVE_DIR = os.path.join(SKILLS_DIR, ".archive")
 META_PAGE_TYPES = {"meta"}
+
+# Skill audit thresholds (env-overridable)
+SKILL_STALE_DAYS = int(os.environ.get("OAW_SKILL_STALE_DAYS", "30"))
 
 # ─── Utilities ────────────────────────────────────────────────────────────────
 
@@ -391,6 +397,254 @@ def lesson(mistake, correction):
     memory_add(note)
 
 
+# ─── Memory recall ────────────────────────────────────────────────────────────
+#
+# Inspired by Hermes Agent's session_search (FTS5 + LLM summary). OAW is
+# markdown-first so we use Python regex over memory.md + docs/knowledge/*.md
+# and return the top hits with surrounding context, leaving any summarization
+# to the calling LLM. Cheap, predictable, no extra deps.
+
+def memory_recall(query, limit=8, context_lines=2):
+    """Find query across memory.md + knowledge pages; show top hits with context."""
+    if not query.strip():
+        print("Empty query — provide at least one word.")
+        return
+
+    pattern = re.compile(re.escape(query), re.IGNORECASE)
+    hits = []
+
+    def _scan(filepath, label):
+        if not os.path.exists(filepath):
+            return
+        try:
+            with open(filepath, "r", encoding="utf-8") as f:
+                lines = f.readlines()
+        except OSError:
+            return
+        for i, line in enumerate(lines):
+            if pattern.search(line):
+                start = max(0, i - context_lines)
+                end = min(len(lines), i + context_lines + 1)
+                hits.append({
+                    "file": label,
+                    "line_no": i + 1,
+                    "match_line": line.rstrip(),
+                    "context": [l.rstrip() for l in lines[start:end]],
+                })
+
+    # Memory first (chronological signal), then knowledge wiki.
+    _scan(MEMORY_FILE, ".agents/memory.md")
+    if os.path.isdir(DOCS_DIR):
+        for fname in sorted(os.listdir(DOCS_DIR)):
+            if fname.endswith(".md"):
+                _scan(os.path.join(DOCS_DIR, fname), f"docs/knowledge/{fname}")
+
+    if not hits:
+        print(f"No matches for {query!r} across memory.md + docs/knowledge/.")
+        return
+
+    print(f"\n{'='*70}")
+    print(f"  RECALL: {query!r} — {len(hits)} hit(s) (showing top {min(limit, len(hits))})")
+    print(f"{'='*70}\n")
+    for h in hits[:limit]:
+        print(f"📍 {h['file']}:{h['line_no']}")
+        for cl in h["context"]:
+            marker = "│ " if cl != h["match_line"] else "▶ "
+            print(f"  {marker}{cl}")
+        print()
+
+
+# ─── Skills lifecycle (usage tracking + audit + archive) ─────────────────────
+#
+# Inspired by Hermes Agent's curator (agent/curator.py) — every skill carries
+# usage metadata in a sidecar so we can spot dead weight and archive it.
+# Differences from Hermes:
+#   - One shared JSON (.usage.json) instead of per-skill sidecars — easier to
+#     hand-edit and audit at a glance.
+#   - No background daemon; archive is opt-in via `skills archive <name>`.
+#   - State machine: active → stale → archived. `pinned: true` exempts a skill.
+
+def _load_skill_usage():
+    if not os.path.exists(SKILLS_USAGE_FILE):
+        return {}
+    try:
+        with open(SKILLS_USAGE_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def _save_skill_usage(data):
+    os.makedirs(SKILLS_DIR, exist_ok=True)
+    _locked_write(SKILLS_USAGE_FILE, json.dumps(data, indent=2, ensure_ascii=False) + "\n")
+
+
+def _list_skill_files(include_archive=False):
+    if not os.path.isdir(SKILLS_DIR):
+        return []
+    out = []
+    for fname in sorted(os.listdir(SKILLS_DIR)):
+        if fname.startswith("_") or fname.startswith("."):
+            continue
+        if fname.lower() == "readme.md":
+            continue
+        if fname.endswith(".md"):
+            out.append(fname[:-3])  # strip .md
+    if include_archive and os.path.isdir(SKILLS_ARCHIVE_DIR):
+        for fname in sorted(os.listdir(SKILLS_ARCHIVE_DIR)):
+            if fname.endswith(".md"):
+                out.append(f".archive/{fname[:-3]}")
+    return out
+
+
+def skill_use(name):
+    """Record that a skill was used this session (+1 to use_count, refresh ts)."""
+    skill_path = os.path.join(SKILLS_DIR, f"{name}.md")
+    if not os.path.exists(skill_path):
+        print(f"❌ Skill {name!r} not found at {skill_path}")
+        return
+    data = _load_skill_usage()
+    entry = data.get(name, {})
+    now = datetime.now().isoformat(timespec="seconds")
+    entry.setdefault("first_seen", now)
+    entry["use_count"] = int(entry.get("use_count", 0)) + 1
+    entry["last_used"] = now
+    entry.setdefault("patch_count", 0)
+    entry.setdefault("pinned", False)
+    entry.setdefault("state", "active")
+    data[name] = entry
+    _save_skill_usage(data)
+    print(f"✓ {name}: use_count={entry['use_count']} last_used={entry['last_used']}")
+
+
+def skill_patch(name):
+    """Record that a skill was modified (e.g. via /skill-review). +1 patch_count."""
+    skill_path = os.path.join(SKILLS_DIR, f"{name}.md")
+    if not os.path.exists(skill_path):
+        print(f"❌ Skill {name!r} not found")
+        return
+    data = _load_skill_usage()
+    entry = data.get(name, {})
+    now = datetime.now().isoformat(timespec="seconds")
+    entry.setdefault("first_seen", now)
+    entry.setdefault("use_count", 0)
+    entry["patch_count"] = int(entry.get("patch_count", 0)) + 1
+    entry["last_patched"] = now
+    entry.setdefault("pinned", False)
+    entry.setdefault("state", "active")
+    data[name] = entry
+    _save_skill_usage(data)
+    print(f"✓ {name}: patch_count={entry['patch_count']}")
+
+
+def skill_pin(name, pinned=True):
+    """Toggle the pinned flag so the audit will not flag a skill as stale."""
+    data = _load_skill_usage()
+    entry = data.setdefault(name, {
+        "first_seen": datetime.now().isoformat(timespec="seconds"),
+        "use_count": 0,
+        "patch_count": 0,
+        "state": "active",
+    })
+    entry["pinned"] = bool(pinned)
+    _save_skill_usage(data)
+    print(f"{'📌 pinned' if pinned else 'unpinned'}: {name}")
+
+
+def skills_audit():
+    """List skills, flag stale ones (no use in SKILL_STALE_DAYS, not pinned)."""
+    files = _list_skill_files()
+    usage = _load_skill_usage()
+    if not files:
+        print("No skills present.")
+        return
+    now = datetime.now()
+    print(f"\n{'='*70}")
+    print(f"  SKILLS AUDIT — {len(files)} skills, stale threshold {SKILL_STALE_DAYS} days")
+    print(f"{'='*70}\n")
+    rows = []
+    for name in files:
+        entry = usage.get(name, {})
+        uc = entry.get("use_count", 0)
+        pc = entry.get("patch_count", 0)
+        last = entry.get("last_used") or entry.get("first_seen")
+        pinned = bool(entry.get("pinned"))
+        state = entry.get("state", "active")
+        age_days = None
+        if last:
+            try:
+                age_days = (now - datetime.fromisoformat(last)).days
+            except ValueError:
+                pass
+        stale = (
+            not pinned and uc == 0 and pc == 0
+        ) or (
+            not pinned and age_days is not None and age_days >= SKILL_STALE_DAYS
+        )
+        rows.append((name, uc, pc, last or "(never recorded)", pinned, stale, state))
+
+    # Sort: stale candidates first, then by use_count ascending
+    rows.sort(key=lambda r: (not r[5], r[1]))
+
+    for name, uc, pc, last, pinned, stale, state in rows:
+        flags = []
+        if pinned:
+            flags.append("📌pinned")
+        if stale:
+            flags.append("⚠️stale")
+        if state != "active":
+            flags.append(f"[{state}]")
+        marker = " ".join(flags)
+        print(f"  {name:<28}  use={uc:>3}  patch={pc:>2}  last={last}  {marker}")
+    print()
+    stale_count = sum(1 for r in rows if r[5])
+    if stale_count:
+        print(f"  → {stale_count} stale skill(s). Review and consider:")
+        print('    python3 scripts/context_hub.py skills archive <name>')
+        print('    python3 scripts/context_hub.py skills pin <name>     # if still relevant')
+    else:
+        print("  → no stale skills.")
+
+
+def skills_archive(name):
+    """Move <name>.md into .archive/ and mark its usage entry archived."""
+    src = os.path.join(SKILLS_DIR, f"{name}.md")
+    if not os.path.exists(src):
+        print(f"❌ Skill {name!r} not found")
+        return
+    os.makedirs(SKILLS_ARCHIVE_DIR, exist_ok=True)
+    dst = os.path.join(SKILLS_ARCHIVE_DIR, f"{name}.md")
+    if os.path.exists(dst):
+        print(f"❌ {dst} already exists — rename or delete first")
+        return
+    os.rename(src, dst)
+    data = _load_skill_usage()
+    entry = data.setdefault(name, {})
+    entry["state"] = "archived"
+    entry["archived_at"] = datetime.now().isoformat(timespec="seconds")
+    _save_skill_usage(data)
+    print(f"📦 archived: {name}.md → .archive/{name}.md")
+
+
+def skills_unarchive(name):
+    """Move <name>.md back from .archive/ to the live skill set."""
+    src = os.path.join(SKILLS_ARCHIVE_DIR, f"{name}.md")
+    if not os.path.exists(src):
+        print(f"❌ {src} not found")
+        return
+    dst = os.path.join(SKILLS_DIR, f"{name}.md")
+    if os.path.exists(dst):
+        print(f"❌ {dst} already present — refusing to overwrite")
+        return
+    os.rename(src, dst)
+    data = _load_skill_usage()
+    entry = data.setdefault(name, {})
+    entry["state"] = "active"
+    entry.pop("archived_at", None)
+    _save_skill_usage(data)
+    print(f"✓ restored: .archive/{name}.md → {name}.md")
+
+
 # ─── Status ───────────────────────────────────────────────────────────────────
 
 def status(compact=False):
@@ -661,6 +915,36 @@ Commands:
     p_mem_show = mem_sub.add_parser("show", help="Show recent memory entries.")
     p_mem_show.add_argument("--last", type=int, default=10, help="Number of entries to show.")
 
+    p_mem_recall = mem_sub.add_parser(
+        "recall",
+        help="Find query across memory.md + docs/knowledge with surrounding context.",
+    )
+    p_mem_recall.add_argument("query", help="Substring (case-insensitive).")
+    p_mem_recall.add_argument("--limit", type=int, default=8, help="Max hits to show.")
+    p_mem_recall.add_argument("--context", type=int, default=2, help="Lines of context per hit.")
+
+    # Skills
+    p_skills = subparsers.add_parser("skills", help="Skill lifecycle: usage, audit, archive.")
+    sk_sub = p_skills.add_subparsers(dest="sk_action", required=True)
+
+    p_sk_use = sk_sub.add_parser("use", help="Record a skill was used (+1 use_count).")
+    p_sk_use.add_argument("name", help="Skill name (filename without .md).")
+
+    p_sk_patch = sk_sub.add_parser("patch", help="Record a skill was modified (+1 patch_count).")
+    p_sk_patch.add_argument("name", help="Skill name.")
+
+    p_sk_pin = sk_sub.add_parser("pin", help="Pin a skill (exempt from stale audit).")
+    p_sk_pin.add_argument("name", help="Skill name.")
+    p_sk_unpin = sk_sub.add_parser("unpin", help="Unpin a skill.")
+    p_sk_unpin.add_argument("name", help="Skill name.")
+
+    sk_sub.add_parser("audit", help="List skills with usage + flag stale candidates.")
+
+    p_sk_arch = sk_sub.add_parser("archive", help="Move skill into .archive/ subdir.")
+    p_sk_arch.add_argument("name", help="Skill name (without .md).")
+    p_sk_unarch = sk_sub.add_parser("unarchive", help="Restore a skill from .archive/.")
+    p_sk_unarch.add_argument("name", help="Skill name.")
+
     # Lesson
     p_lesson = subparsers.add_parser("lesson", help="Record a lesson learned (mistake + correction).")
     p_lesson.add_argument("mistake", help="What went wrong.")
@@ -699,6 +983,23 @@ Commands:
             memory_add(args.note)
         elif args.mem_action == "show":
             memory_show(args.last)
+        elif args.mem_action == "recall":
+            memory_recall(args.query, limit=args.limit, context_lines=args.context)
+    elif args.command == "skills":
+        if args.sk_action == "use":
+            skill_use(args.name)
+        elif args.sk_action == "patch":
+            skill_patch(args.name)
+        elif args.sk_action == "pin":
+            skill_pin(args.name, pinned=True)
+        elif args.sk_action == "unpin":
+            skill_pin(args.name, pinned=False)
+        elif args.sk_action == "audit":
+            skills_audit()
+        elif args.sk_action == "archive":
+            skills_archive(args.name)
+        elif args.sk_action == "unarchive":
+            skills_unarchive(args.name)
     elif args.command == "lesson":
         lesson(args.mistake, args.correction)
     elif args.command == "status":

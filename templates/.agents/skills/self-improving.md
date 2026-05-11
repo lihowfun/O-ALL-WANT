@@ -65,6 +65,37 @@ When the user says "don't do that" or "always use X from now on", immediately:
 > **Note**: Both built-in memory AND memory.md must be updated.
 > Built-in memory works within the same session; memory.md persists across sessions.
 
+### Rule 4: Memory nudge at session end
+
+Before declaring a task done:
+
+```bash
+python3 scripts/memory_nudge.py check
+```
+
+- Silent → nothing to log; you're done.
+- Output → activity since the last memory entry suggests something is worth
+  recording. Open `.agents/memory.md` and add one entry covering the listed
+  commits / dirty files. Then re-run the check; it should fall silent.
+
+### Rule 5: Skill review after non-trivial tasks
+
+After a task with ≥3 steps, new tooling, or a workflow you'd repeat,
+**invoke the `skill-review` skill** (`/skill-review` or follow
+`.agents/skills/skill-review.md`).
+
+Outcomes (one of):
+- `PATCH <name>: <reason>` — update an existing skill +
+  `python3 scripts/context_hub.py skills patch <name>`
+- `ADD <new-name>: <reason>` — create a new skill file from `_TEMPLATE.md` +
+  `python3 scripts/context_hub.py skills use <new-name>`
+- `NOACTION: <reason>` — honest non-action; optionally add a `[INSIGHT]`
+  memory entry instead.
+
+When you **applied** an existing skill during the task (without changing it),
+also run `python3 scripts/context_hub.py skills use <name>` so the audit
+later reflects real usage.
+
 ---
 
 ## 📋 Report Templates

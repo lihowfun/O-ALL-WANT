@@ -91,6 +91,9 @@
 - [ ] `README.md` → updated if CLI flags / defaults changed
 - [ ] `VERSION.json` → bumped version / added do_not_rerun
 - [ ] `.agents/memory.md` → added `[BUG]`/`[DECISION]`/`[FINDING]` entry
+      ↳ Always run `python3 scripts/memory_nudge.py check` before ending —
+        silent = nothing to log, any output = open `.agents/memory.md` and
+        add an entry covering the listed commits / dirty files.
 
 ### 4. What Comes Next
 - P0/P1/P2 action items + estimated cost + dependencies
