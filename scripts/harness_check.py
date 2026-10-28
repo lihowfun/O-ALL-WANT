@@ -15,6 +15,13 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def configure_stdio():
+    # Redirected Windows runners can otherwise use cp1252 for Unicode diagnostics.
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="backslashreplace")
+
+
 @dataclass
 class Check:
     name: str
@@ -91,6 +98,7 @@ def version_check():
 
 
 def main(argv=None):
+    configure_stdio()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--verbose", "-v", action="store_true")

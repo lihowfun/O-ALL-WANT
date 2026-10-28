@@ -20,7 +20,7 @@ python3 scripts/harness_check.py --verbose
 python3 scripts/sync_examples.py
 ```
 
-The author ran 78 behavioral tests and 8/8 gate groups on Windows/Python 3.12.14. Actual source-package installs for both hosts and the Bash wrapper were exercised. Skill-creator schema checks passed for three packages. CI is configured for Ubuntu/macOS/Windows with Python 3.10/3.13; inspect PR checks for current results.
+The author ran 82 behavioral tests and 8/8 gate groups on Windows/Python 3.12.14. Actual source-package installs for both hosts and the Bash wrapper were exercised. Skill-creator schema checks passed for three packages. CI is configured for Ubuntu/macOS/Windows with Python 3.10/3.13; inspect PR checks for current results.
 
 Historical v1 wiki reports intentionally retain example placeholders and produce 22 soft lint warnings. Native schema failures and substantive broken metadata/link/freshness issues are hard errors. Native Opus 5.5/Sol 6.1 A/B tasks and real host skill listing remain unverified; the optional comparison workflow is tested with explicitly synthetic fixtures.
 

@@ -49,6 +49,9 @@ is published by this PR. See [migration](docs/UPGRADING.md) and the
 - False-positive gates for malformed skills, stale example content and arbitrary
   expected-failure exits; installer type conflicts and write-failure rollback.
 - Recall truncation retains the actual match, including escaped/long-prefix content.
+- Legitimate macOS system ancestor aliases are canonicalized without allowing
+  symlinks inside project-managed paths; redirected Windows gate diagnostics use UTF-8.
+- CI Actions are pinned to verified Node 24 releases instead of deprecated Node 20 actions.
 
 ### Validation limits
 

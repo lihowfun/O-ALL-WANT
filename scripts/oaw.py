@@ -58,15 +58,26 @@ def joined(root: Path, relative: str) -> Path:
     return root.joinpath(*relative_path(relative).parts)
 
 
+def is_path_alias(path: Path) -> bool:
+    """Recognize a selected symlink or Windows junction without following it."""
+    info = path.lstat()
+    return stat.S_ISLNK(info.st_mode) or bool(
+        getattr(info, "st_file_attributes", 0) & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0)
+    )
+
+
+def framework_root() -> Path:
+    # __file__ is normally canonical already; keep explicit/test source roots so
+    # too. OS aliases above this selected root are not project descendants.
+    return FRAMEWORK_ROOT.resolve()
+
+
 def check_path(path: Path, *, kind: str | None = None) -> None:
     """Reject symlink/junction traversal and type conflicts before any mutation."""
     for part in [*reversed(path.parents), path]:
         if not os.path.lexists(part):
             continue
-        info = part.lstat()
-        if stat.S_ISLNK(info.st_mode) or (
-            getattr(info, "st_file_attributes", 0) & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0)
-        ):
+        if is_path_alias(part):
             raise InstallError(f"Symlink/junction traversal refused: {part}")
         if part != path and not part.is_dir():
             raise InstallError(f"Parent path is not a directory: {part}")
@@ -78,9 +89,15 @@ def check_path(path: Path, *, kind: str | None = None) -> None:
 
 
 def target_path(value: str | Path) -> Path:
-    target = Path(os.path.abspath(value))
+    selected = Path(os.path.abspath(value))
+    # Resolve ancestry such as macOS /var -> /private/var, but never hide an
+    # explicitly selected symlink/junction project root with resolve(). Managed
+    # descendant paths remain lexical joins and check_path still rejects them.
+    if os.path.lexists(selected) and is_path_alias(selected):
+        raise InstallError(f"Symlink/junction traversal refused: {selected}")
+    target = selected.parent.resolve() / selected.name
     check_path(target, kind="dir")
-    if target == FRAMEWORK_ROOT:
+    if target == framework_root():
         raise InstallError("Refusing to install into the OAW framework repository itself.")
     check_path(target / ".oaw", kind="dir")
     return target
@@ -133,6 +150,7 @@ def read_manifest(target: Path) -> dict | None:
 def source_files(profile: str, with_improve: bool, hosts: list[str] | None = None) -> dict[str, bytes]:
     """Read every selected source first, so missing packages cannot partially install."""
     hosts = selected_hosts(hosts)
+    source_root = framework_root()
     mappings = {"AGENTS.md": "templates/AGENTS.md", "CLAUDE.md": "templates/CLAUDE.md",
                 "scripts/context_hub.py": "scripts/context_hub.py", "scripts/oaw_common.py": "scripts/oaw_common.py"}
     trees = [".agents/skills/oaw-evidence"]
@@ -143,7 +161,7 @@ def source_files(profile: str, with_improve: bool, hosts: list[str] | None = Non
         mappings["scripts/improvement.py"] = "scripts/improvement.py"
         trees.append(".agents/skills/oaw-improve")
     for tree in trees:
-        source = joined(FRAMEWORK_ROOT / "templates", tree)
+        source = joined(source_root / "templates", tree)
         check_path(source, kind="dir")
         if not source.is_dir():
             raise InstallError(f"Required source directory is missing: {source}")
@@ -153,20 +171,20 @@ def source_files(profile: str, with_improve: bool, hosts: list[str] | None = Non
             if item.is_dir():
                 continue
             check_path(item, kind="file")
-            relative = item.relative_to(FRAMEWORK_ROOT / "templates").as_posix()
+            relative = item.relative_to(source_root / "templates").as_posix()
             if relative.startswith(".agents/skills/"):
                 for host in hosts:
                     destination = relative if host == "codex" else ".claude/" + relative.removeprefix(".agents/")
-                    mappings[destination] = item.relative_to(FRAMEWORK_ROOT).as_posix()
+                    mappings[destination] = item.relative_to(source_root).as_posix()
             else:
-                mappings[relative] = item.relative_to(FRAMEWORK_ROOT).as_posix()
+                mappings[relative] = item.relative_to(source_root).as_posix()
             found.append(item)
         if not found or (tree.startswith(".agents/skills/") and not (source / "SKILL.md").is_file()):
             raise InstallError(f"Required source tree is empty or lacks SKILL.md: {source}")
     files = {}
     for relative, source_relative in sorted(mappings.items()):
         relative_path(relative)
-        source = joined(FRAMEWORK_ROOT, source_relative)
+        source = joined(source_root, source_relative)
         check_path(source, kind="file")
         if not source.is_file():
             raise InstallError(f"Required source file is missing: {source}")
@@ -175,7 +193,7 @@ def source_files(profile: str, with_improve: bool, hosts: list[str] | None = Non
 
 
 def legacy_hashes() -> dict[str, list[str]]:
-    path = FRAMEWORK_ROOT / "scripts" / "legacy_manifest.json"
+    path = framework_root() / "scripts" / "legacy_manifest.json"
     check_path(path, kind="file")
     data = read_json(path)
     if data.get("schema_version") != 1 or not isinstance(data.get("files"), dict):
@@ -189,6 +207,7 @@ def legacy_hashes() -> dict[str, list[str]]:
 
 def plan_install(target: Path, profile: str, with_improve: bool, *, migrate: bool = False,
                  keep_custom: list[str] | None = None, hosts: list[str] | None = None) -> dict:
+    target = target_path(target)
     previous = read_manifest(target)
     hosts = selected_hosts(hosts)
     # Additive profiles: a default re-init never drops installed optional features.
@@ -414,7 +433,7 @@ def apply_plan(plan: dict, *, migrate: bool) -> dict:
 
 
 def skill_issues(path: Path) -> list[str]:
-    validator = FRAMEWORK_ROOT / "scripts" / "validate_skills.py"
+    validator = framework_root() / "scripts" / "validate_skills.py"
     if validator.is_file():
         check_path(validator, kind="file")
         spec = importlib.util.spec_from_file_location("oaw_doctor_skill_validator", validator)
@@ -441,6 +460,7 @@ def skill_issues(path: Path) -> list[str]:
 
 
 def doctor(target: Path) -> dict:
+    target = target_path(target)
     checks = []
     manifest = read_manifest(target)
     if manifest is None:

@@ -23,7 +23,7 @@ class InstallTests(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory(prefix="oaw-install-test-")
         self.addCleanup(self.temporary.cleanup)
-        self.base = Path(self.temporary.name)
+        self.base = Path(self.temporary.name).resolve()
         self.framework = self.base / "framework"
         self.target = self.base / "project"
         self.framework.mkdir()
@@ -197,6 +197,48 @@ class InstallTests(unittest.TestCase):
         self.assertIn("traversal refused", result["error"])
         self.assertEqual(list(outside.iterdir()), [])
         self.assertFalse((self.target / "AGENTS.md").exists())
+
+    def test_system_alias_ancestor_is_canonicalized_for_source_and_target(self):
+        alias = self.base / "system-alias"
+        try:
+            alias.symlink_to(self.base, target_is_directory=True)
+        except OSError as exc:
+            self.skipTest(f"Host cannot create symlinks: {exc}")
+        canonical_target = self.target
+        with patch.object(oaw, "FRAMEWORK_ROOT", alias / "framework"), patch.object(self, "target", alias / "project"):
+            code, result = self.invoke("init")
+            self.assertEqual(code, 0, result)
+            self.assertEqual(Path(result["target"]), canonical_target)
+            self.assertEqual(self.invoke("doctor")[0], 0)
+            self.assertEqual(self.invoke("migrate")[0], 0)
+        self.assertTrue((canonical_target / "AGENTS.md").is_file())
+
+    def test_explicit_symlink_project_root_is_refused(self):
+        outside = self.base / "outside-project"
+        outside.mkdir()
+        try:
+            self.target.symlink_to(outside, target_is_directory=True)
+        except OSError as exc:
+            self.skipTest(f"Host cannot create symlinks: {exc}")
+        code, result = self.invoke("init")
+        self.assertEqual(code, 2, result)
+        self.assertIn("traversal refused", result["error"])
+        self.assertEqual(list(outside.iterdir()), [])
+
+    def test_managed_file_symlink_is_refused_after_root_canonicalization(self):
+        outside = self.base / "outside-policy.md"
+        outside.write_bytes(b"# Outside project policy\n")
+        self.target.mkdir()
+        try:
+            (self.target / "AGENTS.md").symlink_to(outside)
+        except OSError as exc:
+            self.skipTest(f"Host cannot create symlinks: {exc}")
+        code, result = self.invoke("init")
+        self.assertEqual(code, 2, result)
+        self.assertIn("traversal refused", result["error"])
+        self.assertEqual(outside.read_bytes(), b"# Outside project policy\n")
+        self.assertFalse((self.target / "CLAUDE.md").exists())
+        self.assertFalse((self.target / ".oaw").exists())
 
     def test_manifest_traversal_is_refused(self):
         self.invoke("init")
