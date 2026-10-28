@@ -9,6 +9,8 @@ related_topics:
   - Harness_Engineering_Knowledge_Synthesis
 ---
 
+> Historical v1 material from April 2026. This is not the current v2 runtime or performance contract; see [v2 design](../Design_Principles.md).
+
 # Context Fragmentation (上下文分流)
 
 ## 核心問題

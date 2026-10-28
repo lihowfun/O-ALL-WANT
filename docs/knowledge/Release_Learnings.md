@@ -11,6 +11,8 @@ ssot_mirrors:
   - AI_CONTEXT.md:## Benchmark Snapshot
 ---
 
+> Historical v1 material from April 2026. This is not the current v2 runtime or performance contract; see [v2 design](../Design_Principles.md).
+
 # Release Learnings
 
 Distilled patterns from OAW release reviews. Agent should read this before any version-release task.

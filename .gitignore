@@ -36,3 +36,10 @@ Thumbs.db
 # Codex / AI tools
 .codex
 .claude/
+
+# Project-local framework state and stable writer lock sidecars
+/.oaw/
+.*.oaw.lock
+.oaw/backups/
+.oaw/proposals/
+.oaw/improvements/

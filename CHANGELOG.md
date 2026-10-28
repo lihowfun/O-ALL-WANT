@@ -2,6 +2,60 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.0] — Proposed, 2026-10-28
+
+Breaking native-first upgrade prepared for independent review. No tag or release
+is published by this PR. See [migration](docs/UPGRADING.md) and the
+[execution plan](docs/plans/v2.0.0-execution.md).
+
+### Added
+
+- Safe Python 3.10+ `init`, preview-first `migrate`, and read-only `doctor`.
+  Manifest ownership, recognized v1 hashes, recoverable backups, conflict
+  proposals and rollback protect existing project content.
+- Native `oaw-evidence`, `oaw-wiki` and optional `oaw-improve` SKILL.md packages.
+  The minimal install contains five framework files; knowledge/improvement are additive.
+- Explicit `--host codex|claude|both` routes native skill folders from a single
+  source; reviewed migration conflicts can remain project-owned with `--keep-custom`.
+- Bounded record-oriented recall with complete JSON/text budgets, source positions,
+  truncation and continuation that detects changed query/source state.
+- Optional improvement proposals with concrete diffs, fixed matched-run contracts,
+  regression/resource gates, evidence hashes and explicit immutable decisions.
+  Acceptance records a decision; it never applies a patch.
+- Focused behavioral regression tests, deterministic example regeneration and one
+  local/CI entry point. CI covers Ubuntu/macOS/Windows and Python 3.10/3.13.
+
+### Changed
+
+- AGENTS.md is the short canonical project policy; CLAUDE.md is a compatibility import.
+  The host owns execution, sessions, compaction, personal memory and permissions.
+- Installer defaults no longer create memory or placeholder architecture/state files.
+  Project VERSION.json, roadmap, custom policies and accumulated notes stay project-owned.
+- Python 3.10+ is required. Runtime dependencies remain standard-library-only.
+- Examples are generated from actual installer payloads rather than manually copied scripts.
+
+### Removed from defaults
+
+- Flat trigger-scanned skills, always-active self-improving rules, mandatory memory
+  writes/reports, step-count skill creation, frozen evidence tiers and permanent
+  do-not-rerun instructions. Customized legacy files remain recoverable/preserved.
+- No mandatory Hermes nudge or hand-reported skill usage loop is introduced.
+
+### Fixed
+
+- Topic traversal/symlink escapes; complete locked read-modify-write with atomic commits.
+- Per-page freshness checks; annotation marker collisions and rebuild growth;
+  relative source-link relocation; meaningful nonzero errors.
+- False-positive gates for malformed skills, stale example content and arbitrary
+  expected-failure exits; installer type conflicts and write-failure rollback.
+- Recall truncation retains the actual match, including escaped/long-prefix content.
+
+### Validation limits
+
+- Local fixtures and package/skill validation are not a model benchmark or proof of
+  live native skill discovery. Representative Opus 5.5/Sol 6.1 A/B runs are not claimed.
+- The v1 86–87% estimate remains a historical selected-vs-all-Markdown illustration.
+
 ## [1.1.0] — 2026-04-21
 
 This release bundles three parallel investments completed on 2026-04-20

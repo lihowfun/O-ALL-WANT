@@ -1,3 +1,5 @@
+> Historical v1 architecture and source lineage. Current behavior is described in [Design Principles](Design_Principles.md) and [UPGRADING](UPGRADING.md).
+
 # Agent Memory Architecture — Design Origins
 
 > This document explains the architectural influences behind the Agent Memory

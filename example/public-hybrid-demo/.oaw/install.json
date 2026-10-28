@@ -1,0 +1,30 @@
+{
+  "custom_files": [],
+  "framework_version": "2.0.0",
+  "hosts": [
+    "codex"
+  ],
+  "installation_id": "generated-example-public-hybrid-demo",
+  "managed_files": {
+    ".agents/skills/oaw-evidence/SKILL.md": "d3e44753f509bb70d938bb664eaf54df8dfec691a0d1e7397af2bf1a0488b894",
+    ".agents/skills/oaw-improve/SKILL.md": "5692768f86432816526a480d663d1b0ea57d7d73189ed7d2f9f65fad45ad7ae7",
+    ".agents/skills/oaw-wiki/SKILL.md": "c9ff50ae53ed94094e44ba104ef451fdf1e8a99d1addad86d5ab6bb4c26de4ed",
+    "AGENTS.md": "07f37c25774fb07b0a14be85f26f07e7d5d93483846ced195503197f02df1387",
+    "CLAUDE.md": "336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49",
+    "scripts/context_hub.py": "c0582010bc92edd75c02afb6d98527eeba6b1b94a600cc825a5fa1daaa2c1066",
+    "scripts/improvement.py": "0eb2275ad04666967e7de6cfe477bda59ef7ae27af632e38e5b89b5807514e87",
+    "scripts/oaw_common.py": "f56dbe91f32273af6890eca75af2eacea07e84357a5c43216f434448ddd104f3",
+    "scripts/validate_skills.py": "f241e781f29f3f680a4e514361de6febd2a5531c4b6098234aa41ff5da6b41e4",
+    "scripts/wiki_sync.py": "7895974b5ca5fce3de29d2f42a7196c90a3f6cee9a3ea7c75df942400945b20e"
+  },
+  "pending_conflicts": [],
+  "profile": "knowledge",
+  "runtime": {
+    "host_settings": "not configured",
+    "minimum_python": "3.10",
+    "state": "project files"
+  },
+  "schema_version": 1,
+  "status": "installed",
+  "with_improve": true
+}

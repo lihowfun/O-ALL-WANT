@@ -1,164 +1,65 @@
-# CLI Reference
+# OAW CLI reference
 
-OAW ships three command-line helpers:
+Requires Python 3.10+. All runtime tools use the Python standard library. Replace `python3` with your Python executable when appropriate.
 
-- **`scripts/harness_check.py`** — one-command local health gate (8 checks;
-  same as CI). Run before opening a PR.
-- **`scripts/context_hub.py`** — knowledge + memory management
-  (search / get / annotate / memory / status / bootstrap / lesson).
-- **`scripts/wiki_sync.py`** — deterministic raw → wiki compiler with
-  metadata and quality lint.
+## Framework lifecycle
 
-All three assume the standard installed layout:
-
-- `AI_CONTEXT.md`
-- `VERSION.json`
-- `.agents/memory.md` (+ `.agents/skills/*.md`)
-- `docs/knowledge/*.md` (+ `docs/raw/*.md` for raw-source compilation)
-
-`docs/knowledge/index.md` and `docs/knowledge/log.md` are meta pages and are
-skipped by topic listing commands. For the raw-source compiler, see
-`docs/Wiki_Sync_Guide.md`.
-
-If your machine does not provide a `python` alias, use `python3`.
-
-## `harness_check.py` — local CI equivalent
+Run these from the OAW source checkout; `oaw.py` is not copied into target projects.
 
 ```bash
-./scripts/harness_check.py              # all 8 checks, summary output
-./scripts/harness_check.py --verbose    # include raw stdout/stderr per check
-./scripts/harness_check.py --json       # machine-readable summary
+python3 scripts/oaw.py init --target PROJECT [--profile minimal|knowledge] [--host codex|claude|both] [--with-improve] [--json]
+python3 scripts/oaw.py migrate --target PROJECT [--profile minimal|knowledge] [--host codex|claude|both] [--with-improve] [--apply] [--keep-custom PATH] [--json]
+python3 scripts/oaw.py doctor --target PROJECT [--json]
 ```
 
-Checks (in order): pycompile, CLI surface, self-install refusal, fresh-install
-file set, fresh-install lint, repo lint, strict placeholder detection, example
-drift. Exit 0 iff all pass.
+Init protects different existing content. Profile/host additions are cumulative; codex is the default host. Migrate without `--apply` only previews. Applied migration backs up known changes and stages custom conflicts under `.oaw/proposals/`; unresolved conflicts return exit 3. Use repeatable `--keep-custom PATH` with `--apply` only after reviewing a relevant conflict to retain it as project-owned. Preflight errors/init conflicts return 2. Doctor returns 1 for an unhealthy install and 2 for invalid paths/manifests; support does not imply host features are enabled.
 
-## `context_hub.py`
+The Bash wrapper invokes init on the current directory. Set `OAW_PYTHON` to select an explicit Python executable.
 
-### Quick Use
+## Installed Context Hub
 
 ```bash
-python3 scripts/context_hub.py status
+python3 scripts/context_hub.py status [--compact]
+python3 scripts/context_hub.py search QUERY [--compact] [--include-memory]
+python3 scripts/context_hub.py get TOPIC
+python3 scripts/context_hub.py annotate TOPIC NOTE
+python3 scripts/context_hub.py memory add NOTE
+python3 scripts/context_hub.py memory show [--last N]
+python3 scripts/context_hub.py memory recall QUERY [--limit N] [--cursor TOKEN] [--max-chars N] [--json]
 ```
 
-### Command Summary
+Recall bounds the complete rendered output and returns continuation when records or excerpts remain. Keep the same query/options for continuation. Source positions and revisions identify evidence, not verified truth. The legacy `bootstrap`, `setup`, `context --lane ...`, and `lesson` conveniences remain available through `--help`; v2 policy does not require them.
 
-| Command | Purpose | Example |
-|---------|---------|---------|
-| `search [query] [--compact]` | List matching knowledge topics | `python3 scripts/context_hub.py search "bug"` |
-| `get TOPIC` | Print a topic's full markdown | `python3 scripts/context_hub.py get Known_Limitations` |
-| `annotate TOPIC "NOTE"` | Append a dated annotation to a topic | `python3 scripts/context_hub.py annotate Known_Limitations "[BUG] Reproduced on Windows"` |
-| `memory add "NOTE"` | Insert a newest-first memory entry | `python3 scripts/context_hub.py memory add "[DECISION] Use python3 in docs"` |
-| `memory show --last N` | Show recent memory entries | `python3 scripts/context_hub.py memory show --last 5` |
-| `lesson "MISTAKE" "CORRECTION"` | Record a lesson-learned note | `python3 scripts/context_hub.py lesson "Used stale baseline" "Always read VERSION.json first"` |
-| `status [--compact]` | Show version, recent decisions, and topics | `python3 scripts/context_hub.py status --compact` |
-| `bootstrap [--compact]` | Dump startup context for a new session | `python3 scripts/context_hub.py bootstrap --compact` |
+Topic identifiers cannot contain path separators/traversal or reserved output names. Missing topics and invalid operations return nonzero. Source and state paths are confined to the project, including symlink boundaries. Writer locks cover the complete read-modify-write transaction. Stable `.NAME.oaw.lock` sidecars are synchronization state; do not delete them while writers are running.
 
-### Commands
-
-#### `search [query] [--compact]`
-
-Searches `docs/knowledge/` by filename and content. An empty query lists every
-available topic. Add `--compact` when you only want a one-line topic summary.
+## Knowledge profile
 
 ```bash
-python3 scripts/context_hub.py search ""
-python3 scripts/context_hub.py search "bug" --compact
+python3 scripts/wiki_sync.py refresh TOPIC
+python3 scripts/wiki_sync.py build
+python3 scripts/wiki_sync.py lint [--strict]
+python3 scripts/wiki_sync.py stale [--threshold DAYS]
+python3 scripts/wiki_sync.py cross-check
 ```
 
-#### `get TOPIC`
+Raw source notes are rendered deterministically into topic pages. Manual pages are not overwritten. Generated source content and annotations use separate boundaries. Local Markdown links are relocated to the output directory. Metadata freshness checks run per page. Unchanged source inputs produce stable generated content.
 
-Prints the complete contents of a topic file, where `TOPIC` is the filename
-without `.md`.
+Existing experiment/state convenience commands remain in `--help` for older projects; they are not required state mirrors. Native skills use name/description and do not require custom triggers or heading conventions. The validator deliberately supports a documented subset of YAML, not every native extension field.
+
+## Optional improvement workflow
 
 ```bash
-python3 scripts/context_hub.py get Performance_Baselines
+python3 scripts/improvement.py --base-dir PROJECT propose --title TITLE --hypothesis TEXT --target PATH --patch DIFF --evaluation SPEC.json --snapshot BASE_REV
+python3 scripts/improvement.py --base-dir PROJECT compare ID --baseline BASELINE.json --candidate CANDIDATE.json
+python3 scripts/improvement.py --base-dir PROJECT decide ID --decision accept|reject --reason TEXT
 ```
 
-#### `annotate TOPIC "NOTE"`
+Paths are project-relative. A proposal stores its concrete git text diff and fixed evaluation contract. Comparison returns eligible (exit 0), rejected (1) or inconclusive (3); malformed/mismatched inputs return 2. Eligible means ready for explicit review, not automatic approval, deployment, statistical proof, or patch application. See [SELF_IMPROVEMENT](SELF_IMPROVEMENT.md).
 
-Appends a timestamped note to the topic. Prefix the note with a tag such as
-`[BUG]`, `[EXPERIMENT]`, or `[INSIGHT]` when you want the annotation label to
-stay structured.
+## Repository validation
 
 ```bash
-python3 scripts/context_hub.py annotate Known_Limitations "[BUG] Windows lock fallback still needs native QA"
+python3 scripts/harness_check.py [--json] [--verbose]
+python3 scripts/validate_skills.py [--help]
+python3 scripts/sync_examples.py [--write]
 ```
-
-#### `memory add "NOTE"`
-
-Creates a newest-first entry in `.agents/memory.md`. Prefix the note with a tag
-to keep memory entries easy to scan.
-
-```bash
-python3 scripts/context_hub.py memory add "[DECISION] Keep install.sh overwrite prompt explicit"
-```
-
-#### `memory show --last N`
-
-Shows the newest `N` entries from `.agents/memory.md`.
-
-```bash
-python3 scripts/context_hub.py memory show --last 3
-```
-
-#### `lesson "MISTAKE" "CORRECTION"`
-
-Shortcut for writing a structured lesson into rolling memory.
-
-```bash
-python3 scripts/context_hub.py lesson "Used python examples on a python3-only machine" "Standardize docs on python3"
-```
-
-#### `status [--compact]`
-
-Shows the current version, the `do_not_rerun` count, the newest memory headers,
-and the list of knowledge topics. Add `--compact` for a one-line summary that is
-friendlier to agent token budgets.
-
-```bash
-python3 scripts/context_hub.py status
-python3 scripts/context_hub.py status --compact
-```
-
-#### `bootstrap [--compact]`
-
-Prints the contents of `AI_CONTEXT.md`, the latest memory entries, and the
-topic index. This is useful when starting a new agent session. Add `--compact`
-when you want a minimal bootstrap instead of the full dump.
-
-```bash
-python3 scripts/context_hub.py bootstrap
-python3 scripts/context_hub.py bootstrap --compact
-```
-
-## `wiki_sync.py` — raw → wiki compiler + lint
-
-See [`Wiki_Sync_Guide.md`](Wiki_Sync_Guide.md) for the full compiler guide. The
-subcommands most often run interactively:
-
-```bash
-python3 scripts/wiki_sync.py build                 # compile docs/raw → docs/knowledge
-python3 scripts/wiki_sync.py refresh <Topic>       # recompile one topic
-python3 scripts/wiki_sync.py lint                  # metadata + links + soft quality
-python3 scripts/wiki_sync.py lint --strict         # also fails on unfilled
-                                                   # ${...} / YYYY-MM-DD and on
-                                                   # skill frontmatter violations
-```
-
-Default lint returns 0 with warnings; `--strict` promotes warnings to errors.
-
-## Notes
-
-- File writes use the best available local file lock:
-  - POSIX: `fcntl.flock`
-  - Windows: `msvcrt.locking`
-  - Fallback: unlocked write if neither backend exists
-- `memory add` keeps the newest entries at the top of `.agents/memory.md`.
-- `annotate` creates an `## AI Annotations` section automatically if a topic
-  does not already have one.
-- `search`, `status`, and `bootstrap` support `--compact` for token-friendly
-  summaries without changing the default full output.
-- `status` also reports how many raw source notes exist in `docs/raw/` when the
-  hybrid wiki layer is enabled.
