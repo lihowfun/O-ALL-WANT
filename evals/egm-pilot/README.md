@@ -6,6 +6,18 @@ a pre-registered evaluation contract, fixtures, and offline tooling for comparin
 three arms on Claude Code 2.1.309. **F0 made no model calls.** F1 and later
 phases spend model quota and need the user's approval.
 
+**Status (2026-10-29): no live run has completed. F1 is halted by the user;
+no paid run will start without new approval.** One F1 attempt was made with
+the spec frozen at `27d99f9160d9…`. All 9 runs stopped at authentication
+("OAuth session expired") before any model call, so each reported
+`total_cost_usd` 0 and produced no scores. The harness is handed to an
+independent static review first.
+
+The attempt also showed what the init event of a "native" arm contains on this
+machine: the build's bundled skills and tools (for example `plugin-authoring`
+and `Artifact`) are loaded in every arm. The arms stay comparable, but arm A is
+"Claude Code 2.1.309 as shipped", not an empty agent.
+
 | Arm | Contents |
 |---|---|
 | A native | Claude Code only |
