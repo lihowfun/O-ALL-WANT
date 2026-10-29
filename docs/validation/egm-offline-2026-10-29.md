@@ -9,7 +9,7 @@ progress, with no accepted quality result yet.
 
 ## Completed offline work
 
-- Windows / CPython 3.12.14: full OAW gate, **125 tests, zero skips, 8/8 groups**.
+- Windows / CPython 3.12.14: full OAW gate, **132 tests, zero skips, 8/8 groups**.
   This includes both-host installation, external-skill coexistence, original
   migration/recall/wiki/improvement regressions and the pilot/local tests.
 - Failed reviews cannot win on lower cost; missing per-invocation init/model
@@ -28,7 +28,7 @@ progress, with no accepted quality result yet.
   hashes / 30 converted scenarios and the official Claude runtime's 64-file tree
   match the pinned source. Runtime is not vendored or installed by OAW.
 
-## Real experiment prepared, not executed
+## Real experiment registered; collection in progress
 
 [Local experiment](../../evals/egm-local/README.md): three independent cases,
 three repeats, A native / B EGM / C EGM+OAW, **27 primary reviews**. Fresh contexts,
@@ -64,7 +64,8 @@ all 27 reviews restart in fresh workspaces and contexts.
 
 Candidate remains OAW **2.0.0 proposed**. Existing main
 `5df531372330f6b0e1c9a81aee0c1c45f2f283ff` and existing `v1.0.0` are retained.
-No history is rewritten. On a later accepted merge, preserve an annotated
-pre-upgrade version point and use a normal merge commit; rollback should revert
+Annotated recovery tag `backup/oaw-v1.1.0-20261029` has been pushed at that exact
+main commit. It is a recovery point, not a new GitHub release. No history is
+rewritten. On a later accepted merge, use a normal merge commit; rollback should revert
 that merge, rather than force-reset shared history. User project data remains
 subject to the installer's backup/receipt/ownership rules.

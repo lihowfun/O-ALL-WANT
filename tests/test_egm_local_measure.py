@@ -10,6 +10,9 @@ sys.path.insert(0, str(SOURCE))
 SPEC = importlib.util.spec_from_file_location("egm_local_measure", SOURCE / "measure.py")
 measurement = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(measurement)
+ANON_SPEC = importlib.util.spec_from_file_location("egm_local_anonymize", SOURCE / "anonymize.py")
+anonymizer = importlib.util.module_from_spec(ANON_SPEC)
+ANON_SPEC.loader.exec_module(anonymizer)
 sys.path.pop(0)
 
 
@@ -90,6 +93,15 @@ class LocalMeasurementTests(unittest.TestCase):
         self.assertTrue(result["index_attribution_controls_required"])
         # B's loss still blocks overall acceptance despite C recovering it.
         self.assertEqual(result["quality_gate"], "regression")
+
+    def test_anonymization_preserves_claims_and_uncertainties(self):
+        report = {"claim": "Atomicity is missing", "location": "C:\\fixture\\orders-r1-C\\docs/design.md:10",
+                  "uncertainties": ["Question: is another transaction intended?", "Uses literal \\n."]}
+        changed = anonymizer.normalize(report, [{"workspace": "C:/fixture/orders-r1-C"}])
+        self.assertEqual(changed["location"], "docs/design.md:10")
+        self.assertEqual(changed["claim"], report["claim"])
+        self.assertEqual(changed["uncertainties"], report["uncertainties"])
+        self.assertEqual(report["location"], "C:\\fixture\\orders-r1-C\\docs/design.md:10")
 
 
 if __name__ == "__main__":

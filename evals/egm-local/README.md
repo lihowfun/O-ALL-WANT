@@ -81,8 +81,16 @@ implementation was added during collection, before blind grading; the acceptance
 rules remain those already frozen in the specification. Reviewers do not read it.
 
 ```sh
+python3 evals/egm-local/anonymize.py /outside/the/repo/completed-run --out /fresh/grading
 python3 evals/egm-local/measure.py adjudicated-evidence.json --out aggregate.json
 ```
+
+Anonymous export requires all 27 completed reviews and intact inputs. It keeps
+all findings and uncertainties, assigns stable finding IDs, removes execution
+metadata and normalizes known workspace prefixes. Two graders receive identical
+case sources and anonymous content, without the private mapping. Language/style
+and citations to project guidance may still reveal the treatment; this is not
+a claim of perfect blinding. Preserve the original reports outside the repo.
 
 EGM source: [full pinned commit](https://github.com/google/elephant-goldfish-model/tree/f0ba151b252c9abf1318d9fe857a43265d06de89),
 manifest **0.1.0**, Apache-2.0. Use the complete official package. No skill text,
