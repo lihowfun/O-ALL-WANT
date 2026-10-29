@@ -1,0 +1,234 @@
+{
+  "schema_version": 1,
+  "id": "oaw-egm-pilot-v1",
+  "status": "pre-registered at F0 (2026-10-29). Before F2/F3 only the fields in fill_at_F1 may change; any change yields a new spec.sha256 and new approval tokens. Results seen in F1 are calibration only.",
+  "plan": "docs/plans/skill-catalog-execution.md: EGM 快速通道; 測試標準：齊平是底線，贏了才叫進化; 版本引用與移除說明",
+  "upstream": {
+    "repository": "https://github.com/google/elephant-goldfish-model",
+    "commit": "f0ba151b252c9abf1318d9fe857a43265d06de89",
+    "license": "Apache-2.0",
+    "plugin_name": "egm",
+    "plugin_subdir": "distributions/claude",
+    "plugin_tree_sha256": "1b6f5d7c5d7348fd4f4ccadb3aeb08c12d9260c99f285d6a759bfdd0a236afa0",
+    "why_plugin_subdir": "EGM's packaged Claude runtime at the same commit: the same skills, agents, resources and docs as the repository root, without TEST.md and test_scenarios.yaml, so no run can read the expected patterns from the plugin directory. It is copied into each run directory and passed with --plugin-dir; nothing is installed into the user's Claude settings."
+  },
+  "host": {
+    "name": "claude-code",
+    "version": "2.1.309",
+    "codex": "untested: no Codex CLI on this machine. Decision 2 requires live Codex evidence before any core claim; fixture or Claude results never stand in for it."
+  },
+  "model": "claude-opus-5-5",
+  "effort": null,
+  "fill_at_F1": [
+    "model",
+    "effort",
+    "budget.max_budget_usd_per_invocation"
+  ],
+  "budget": {
+    "max_budget_usd_per_invocation": 1.5,
+    "note": "Passed as --max-budget-usd to every claude -p invocation. The one two-turn scenario makes two invocations, so its run can spend up to twice the cap."
+  },
+  "timeouts_s": {
+    "protocol": 900,
+    "outcome": 3600
+  },
+  "invocation": {
+    "output_format": "stream-json",
+    "output_format_reason": "The final stream-json event is the same result object that --output-format json prints (cost, usage, duration, result text). The stream adds the system/init event, which is the per-run isolation evidence (loaded plugins, skills, MCP servers, model), and the parent Agent tool calls, which give the sub-agent count the plan asks for. score.py also accepts plain json output.",
+    "setting_sources": "project,local",
+    "permission_mode": "acceptEdits",
+    "permission_prompts": "none",
+    "strict_mcp_config": true,
+    "mcp_config": {
+      "mcpServers": {}
+    },
+    "settings": {
+      "disableAllHooks": true,
+      "plugin_read_allow": [
+        "agents",
+        "docs",
+        "resources",
+        "skills"
+      ]
+    },
+    "session": "single-turn runs: --no-session-persistence. The two-turn scenario: --session-id on turn 1 and --resume on turn 2 in the same workspace, so only that scenario leaves a transcript under the user's Claude projects directory.",
+    "slash_command": "/egm:{skill}",
+    "env": {
+      "DISABLE_AUTOUPDATER": "1"
+    },
+    "rejected_options": {
+      "--bare": "Disables OAuth and keychain login (only ANTHROPIC_API_KEY or an apiKeyHelper) and skips CLAUDE.md auto-discovery, which would remove arm C's treatment.",
+      "--safe-mode": "Disables CLAUDE.md, project skills and plugins, which would remove arm C's treatment.",
+      "--restricted": "Ignores project settings, removes Bash, and confines file tools to the working directory, so reviewers could not read the plugin's personas outside the workspace.",
+      "CLAUDE_CONFIG_DIR": "Moving the config directory would also move the stored login; credentials are never copied."
+    }
+  },
+  "arms": {
+    "A": {
+      "label": "native",
+      "egm_plugin": false,
+      "oaw": null
+    },
+    "B": {
+      "label": "native + EGM plugin",
+      "egm_plugin": true,
+      "oaw": null
+    },
+    "C": {
+      "label": "OAW + EGM plugin",
+      "egm_plugin": true,
+      "oaw": {
+        "command": "scripts/oaw.py init --target <workspace> --host claude",
+        "profile": "minimal",
+        "overlay": {
+          "outcome": "outcome/overlay-oaw"
+        }
+      }
+    }
+  },
+  "suites": {
+    "protocol": {
+      "proves": "Whether OAW interferes with EGM's own flow (C vs B parity gate). It measures conformance to EGM's protocol, so B beating A is expected and is not a quality claim.",
+      "source": "scenarios.json",
+      "fixture": "protocol/project",
+      "cases": 30,
+      "repeats": {
+        "A": 1,
+        "B": 5,
+        "C": 5
+      },
+      "prompt": "Arm A sends each turn's user_input as written. Arms B and C prefix turn 1 with the scenario skill's slash command (/egm:<skill> <user_input>); every EGM skill is manual-only (disable-model-invocation: true). Later turns are sent as written.",
+      "comparisons": [
+        {
+          "candidate": "C",
+          "baseline": "B",
+          "verdict": true
+        },
+        {
+          "candidate": "B",
+          "baseline": "A",
+          "verdict": false,
+          "note": "A ran once as a baseline sanity check; reported as pass rates only."
+        }
+      ]
+    },
+    "outcome": {
+      "proves": "Whether EGM finds more planted design defects than native (B vs A), and whether OAW + EGM finds more than EGM alone (C vs B). D5 is the pre-registered place where OAW evidence recall may win, because EGM's reviewers deliberately work without project context.",
+      "fixture": "outcome/project",
+      "defects": "outcome/defects.json",
+      "cases": [
+        {
+          "case_id": "design_review",
+          "target": "docs/design_draft.md"
+        }
+      ],
+      "repeats": {
+        "A": 5,
+        "B": 5,
+        "C": 5
+      },
+      "prompt": {
+        "skill": "egm-review",
+        "native_prefix": "Review this design document. ",
+        "body": "TargetFile: docs/design_draft.md. Step: uninterrupted. GoldfishContext: none; proceed with no additional context. Review the whole document end to end without stopping for questions, and report every problem you find with the section it is in."
+      },
+      "decision_evidence": "The decision that D5 violates is in docs/decisions/0007-postgresql-only.md in every arm and is not linked from the draft. Arm C additionally has the OAW evidence entry in .agents/memory.md (source and revision) that an OAW project would keep. All arms can reach the same fact; only C has OAW's recall layer, which is the treatment under test. Removing the fact from A/B would measure information asymmetry instead of OAW, and linking it from the draft would let every arm find it trivially.",
+      "comparisons": [
+        {
+          "candidate": "B",
+          "baseline": "A",
+          "verdict": true
+        },
+        {
+          "candidate": "C",
+          "baseline": "B",
+          "verdict": true
+        }
+      ]
+    }
+  },
+  "phases": {
+    "F1": {
+      "purpose": "calibration: cost, time, tokens and isolation evidence; excluded from verdicts",
+      "cases": [
+        {
+          "suite": "protocol",
+          "case_id": "egm-review/intake_preset_selection_before_split_discovery"
+        },
+        {
+          "suite": "protocol",
+          "case_id": "egm-draft/owner_delegates_architecture_choice"
+        },
+        {
+          "suite": "outcome",
+          "case_id": "design_review"
+        }
+      ],
+      "arms": [
+        "A",
+        "B",
+        "C"
+      ],
+      "repeats": 1
+    },
+    "F2": {
+      "suite": "protocol"
+    },
+    "F3": {
+      "suite": "outcome"
+    }
+  },
+  "scoring": {
+    "protocol_corpus": "Per turn: parent-session assistant text blocks, the string fields of AskUserQuestion tool inputs, and the result event's text when it is not already included. Sub-agent output and tool results are excluded.",
+    "outcome_corpus": "See outcome/defects.json (matching.corpus, matching.echo_guard).",
+    "assertion_semantics": "scenarios.json assertion_semantics",
+    "failed_run": "A run with any failed invocation (timeout, nonzero exit, no result event, error result or non-success subtype, including hitting the budget cap) fails every assertion of that run, including forbidden patterns and the decoy.",
+    "unit": "Pass count per (case x assertion) over one arm's repeats; never repeat i against repeat i.",
+    "required_checks": {
+      "runs_complete": "Every planned (case, repeat) of the arm has a recorded attempt.",
+      "isolation_verified": "At least one init event per arm, and every init event shows: egm loaded exactly in arms B and C, oaw-evidence offered exactly in arm C, no MCP servers, the same non-EGM plugin set and the same model across both compared arms."
+    }
+  },
+  "resources": {
+    "label": "operator-reported: numbers come from the host's result event and the runner's wall clock, not from a model-certified measurement",
+    "metrics": [
+      "tokens",
+      "latency_ms",
+      "cost_usd"
+    ],
+    "tokens": "sum of input, output, cache-read and cache-creation tokens over modelUsage (all models) when present, else over usage",
+    "latency_ms": "runner wall-clock time around each invocation, summed per run",
+    "cost_usd": "total_cost_usd of each invocation, summed per run",
+    "subagents": "parent Agent/Task tool calls per run; recorded, not part of the verdict",
+    "minimum_improvement": 0.05,
+    "maximum_resource_regression": 0.1
+  },
+  "tolerance": {
+    "deterministic": 0,
+    "live": 1,
+    "note": "live = 1 of 5 per (case x assertion); deterministic applies to replayed or synthetic outputs"
+  },
+  "verdict_rules": {
+    "regressed": [
+      "some (case x assertion) has candidate passes < baseline passes - tolerance",
+      "candidate total passes < baseline total passes",
+      "a required check is false for the candidate",
+      "a resource metric total rises by more than maximum_resource_regression, or from 0 to above 0"
+    ],
+    "evolved": "not regressed, and candidate total passes > baseline total passes, or some resource metric total falls by at least minimum_improvement",
+    "parity": "neither regressed nor evolved",
+    "invalid": "the baseline fails a required check, repeat counts or assertion sets differ, a metric is missing, or the two arms come from different run manifests",
+    "improvement_py": {
+      "evolved": "eligible",
+      "parity": "inconclusive",
+      "regressed": "rejected"
+    },
+    "official_gate": "score.py --emit-gate writes improvement.py run artifacts per verdict comparison. Rows are ordered passes-first within each (case x assertion), so improvement.py's per-row comparison equals a pass-count comparison with tolerance 0: a strict cross-check until P4 adds tolerance to improvement.py."
+  },
+  "inputs": {
+    "scenarios.json": "5b2111e4eb2b6548ec7f98326650f30108737ddae72553284f61d8ab380e6eea",
+    "outcome/defects.json": "1c7a1f97694b49eb2572a1f5407f6dcd725bf0bc97f5aed8b81ccbe4c9afa127",
+    "fixtures": "29ebc27d40f550c8201c1f2b5b690f3e135860c022425f61c9bc1e369b9fff12",
+    "scorer": "77548b3b00d9e951fb4e3e16f579c8ccea4fdd4b5f75d444a2fca967b98c2ada"
+  }
+}
