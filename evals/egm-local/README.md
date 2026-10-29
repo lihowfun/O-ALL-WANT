@@ -70,6 +70,8 @@ statistical equivalence or general superiority. Reading EGM workflow files
 through Codex agents also does not certify native plugin auto-discovery, Claude
 compatibility or OS-enforced isolation. These limits stay explicit even if the
 quality gate passes. Main must not be merged on synthetic tests alone.
+The C reviewer explicitly reads installed OAW guidance; this does not certify
+that a newly launched native host automatically discovers or triggers it.
 
 `measure.py` applies the registered arithmetic to completed, independently
 graded/adjudicated evidence. It rejects missing trials, invalid stages, input
@@ -79,6 +81,9 @@ separately; a higher total cannot hide a critical regression. Its synthetic unit
 tests validate bookkeeping only. They are not model results. The arithmetic
 implementation was added during collection, before blind grading; the acceptance
 rules remain those already frozen in the specification. Reviewers do not read it.
+Additional grounded findings are recorded without changing the registered parity
+gate. A C-arm gain in that metric also requires the declared controls before
+an OAW-indexing attribution; extra findings alone do not establish causality.
 
 ```sh
 python3 evals/egm-local/anonymize.py /outside/the/repo/completed-run --out /fresh/grading
@@ -91,6 +96,15 @@ metadata and normalizes known workspace prefixes. Two graders receive identical
 case sources and anonymous content, without the private mapping. Language/style
 and citations to project guidance may still reveal the treatment; this is not
 a claim of perfect blinding. Preserve the original reports outside the repo.
+
+These are small authored cases, with visible domain identifiers (including
+`clean`), not representative production repositories. That case name may cue
+reviewers and weaken generalization of the false-alarm control. All arms see
+the same case identifiers. Reviewers know their assigned workflow; only the
+graders' arm metadata is blinded. The coordinator authored the cases and is not
+a grader. Two fresh graders use the same inherited configuration, not two
+independent human assessments. Ceiling effects, long-context behavior and
+sampling uncertainty must be discussed even if every registered gate passes.
 
 EGM source: [full pinned commit](https://github.com/google/elephant-goldfish-model/tree/f0ba151b252c9abf1318d9fe857a43265d06de89),
 manifest **0.1.0**, Apache-2.0. Use the complete official package. No skill text,

@@ -118,6 +118,16 @@ class LocalMeasurementTests(unittest.TestCase):
         evidence["trials"][1]["stages_completed"][2] = "7 unspecified"
         self.assertEqual(measurement.measure(evidence, "synthetic")["quality_gate"], "inconclusive")
 
+    def test_additional_findings_do_not_change_gate_but_need_attribution_controls(self):
+        evidence = synthetic_evidence()
+        evidence["trials"][2]["grade"]["valid_additional_findings"] = [
+            {"finding_id": "F05", "reason": "Synthetic extra grounded issue"}]
+        result = measurement.measure(evidence, "synthetic")
+        self.assertEqual(result["quality_gate"], "pass")
+        self.assertTrue(result["index_attribution_controls_required"])
+        self.assertEqual(result["comparisons"][1]["gains"], [])
+        self.assertEqual(len(result["comparisons"][1]["additional_finding_count_gains"]), 1)
+
 
 if __name__ == "__main__":
     unittest.main()

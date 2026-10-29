@@ -106,7 +106,7 @@ def measure(evidence, spec_sha256):
                 baseline_problems.append(f"{name}: native clean review contradicts explicit source")
     comparisons = []
     for baseline, treatment in (("A", "B"), ("B", "C")):
-        regressions, gains = [], []
+        regressions, gains, additional_gains = [], [], []
         for case in CASES:
             before, after = counts[case][baseline], counts[case][treatment]
             for key in IDS[case]:
@@ -120,8 +120,12 @@ def measure(evidence, spec_sha256):
                 regressions.append(f"{case}: unsupported claims +{delta}")
             elif delta < 0:
                 gains.append(f"{case}: unsupported claims {delta}")
+            extra_delta = after["valid_additional_findings"] - before["valid_additional_findings"]
+            if extra_delta > 0:
+                additional_gains.append(f"{case}: additional grounded findings +{extra_delta}")
         comparisons.append({"baseline": baseline, "treatment": treatment,
                             "regressions": regressions, "gains": gains,
+                            "additional_finding_count_gains": additional_gains,
                             "observed_non_regression": not regressions})
     complete = not problems and not baseline_problems
     accepted = complete and all(row["observed_non_regression"] for row in comparisons)
@@ -129,7 +133,8 @@ def measure(evidence, spec_sha256):
             "problems": problems, "baseline_problems": baseline_problems,
             "counts": counts, "comparisons": comparisons,
             "quality_gate": "pass" if accepted else ("regression" if complete else "inconclusive"),
-            "index_attribution_controls_required": bool(comparisons[1]["gains"]),
+            "index_attribution_controls_required": bool(comparisons[1]["gains"]
+                                                        or comparisons[1]["additional_finding_count_gains"]),
             "scope": "Observed fixed-suite non-regression only; no statistical equivalence, general superiority, cost or native-host discovery claim."}
 
 
