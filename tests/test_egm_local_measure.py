@@ -139,18 +139,32 @@ class LocalMeasurementTests(unittest.TestCase):
                 runs = [run for run in manifest["runs"] if run["case"] == case]
                 mapping[case] = {f"R{i:02d}": run["id"] for i, run in enumerate(runs, 1)}
             (target / "blind-map-private.json").write_text(json.dumps(mapping), encoding="utf-8")
+            runtime = Path(temporary) / "synthetic-method"
+            runtime.mkdir()
+            method_text = b"Synthetic method standard requires alternatives analysis."
+            for name in anonymizer.REQUIRED_METHOD_FILES:
+                path = runtime / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(method_text)
+            registration, _ = anonymizer.prepare.verify()
+            (target / "runtime-integrity.json").write_text(json.dumps({
+                "commit": registration["upstream"]["commit"],
+                "files": [{"path": name, "sha256": anonymizer.prepare.digest(method_text)}
+                          for name in sorted(anonymizer.REQUIRED_METHOD_FILES)],
+                "synthetic_unit_fixture": True,
+            }), encoding="utf-8")
             for run in manifest["runs"]:
                 Path(run["report"]).write_text(json.dumps({
                     "completed": True, "findings": [], "uncertainties": ["Synthetic conditional risk"],
                     "reviewer_agent_ids": ["private-execution-label"], "audit": {"never_export": True},
                 }), encoding="utf-8")
             output = Path(temporary) / "blinded"
-            result = anonymizer.export(target, output)
+            result = anonymizer.export(target, output, runtime)
             self.assertEqual(result["anonymous_reviews"], 27)
             for case in measurement.CASES:
                 first = output / case / "grader1"
                 second = output / case / "grader2"
-                for filename in ("reviews.json", "auxiliary_sources.json", "rubric.json"):
+                for filename in ("reviews.json", "auxiliary_sources.json", "rubric.json", "method_sources.json"):
                     self.assertEqual((first / filename).read_bytes(), (second / filename).read_bytes())
                 reports = (first / "reviews.json").read_text(encoding="utf-8")
                 self.assertNotIn("private-execution-label", reports)
@@ -159,8 +173,20 @@ class LocalMeasurementTests(unittest.TestCase):
                 auxiliary = json.loads((first / "auxiliary_sources.json").read_text(encoding="utf-8"))
                 note = auxiliary["sources"][".agents/memory.md"]
                 self.assertEqual(note, (target / f"{case}-r1-C/.agents/memory.md").read_text(encoding="utf-8"))
+                name = "resources/document_standards/feature-spec-standard.md"
+                self.assertEqual((first / "method_sources" / (name + ".txt")).read_bytes(), method_text)
+                self.assertFalse((first / "method_sources" / name).exists())
             with self.assertRaisesRegex(ValueError, "fresh grading"):
-                anonymizer.export(target, output)
+                anonymizer.export(target, output, runtime)
+            (runtime / name).write_bytes(b"changed")
+            with self.assertRaisesRegex(ValueError, "method source changed"):
+                anonymizer.export(target, Path(temporary) / "drifted", runtime)
+            record = target / "runtime-integrity.json"
+            index = json.loads(record.read_text(encoding="utf-8"))
+            index["files"] = [entry for entry in index["files"] if entry["path"] != name]
+            record.write_text(json.dumps(index), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "required reviewer method context"):
+                anonymizer.export(target, Path(temporary) / "incomplete", runtime)
 
 
 if __name__ == "__main__":

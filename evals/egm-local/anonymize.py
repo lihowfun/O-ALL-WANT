@@ -15,6 +15,14 @@ import shutil
 
 import prepare
 
+REQUIRED_METHOD_FILES = {
+    "skills/egm-review/SKILL.md", "docs/codex.md",
+    *{f"agents/{name}.md" for name in ("zoom_out", "comprehension", "design_critic", "structural",
+                                      "style", "implementation_readiness", "codebase_details")},
+    *{f"resources/document_standards/{name}.md" for name in (
+        "feature-spec-standard", "implementation-readiness-standard", "zoom-out-standard")},
+}
+
 
 def normalize(value, runs):
     if isinstance(value, str):
@@ -31,9 +39,28 @@ def normalize(value, runs):
     return value
 
 
-def export(run_dir, output):
+def export(run_dir, output, runtime_root):
     spec, checksum = prepare.verify()
     run_dir, output = Path(run_dir), Path(output)
+    runtime_root = Path(runtime_root)
+    runtime_record = json.loads((run_dir / "runtime-integrity.json").read_text(encoding="utf-8-sig"))
+    if runtime_record["commit"] != spec["upstream"]["commit"]:
+        raise ValueError("Wrong reviewer method source revision")
+    if not REQUIRED_METHOD_FILES <= {entry["path"] for entry in runtime_record["files"]}:
+        raise ValueError("Missing required reviewer method context")
+    method_sources = {}
+    for entry in runtime_record["files"]:
+        name = entry["path"]
+        relative = Path(name)
+        if relative.is_absolute() or ".." in relative.parts or "\\" in name or ":" in name:
+            raise ValueError("Unsafe method source path")
+        path = runtime_root / relative
+        if path.is_symlink() or not path.is_file() or not path.resolve().is_relative_to(runtime_root.resolve()):
+            raise ValueError("Missing or linked method source: " + name)
+        data = path.read_bytes()
+        if prepare.digest(data) != entry["sha256"]:
+            raise ValueError("Reviewer method source changed: " + name)
+        method_sources[name] = data
     manifest = json.loads((run_dir / "manifest.json").read_text(encoding="utf-8-sig"))
     mapping = json.loads((run_dir / "blind-map-private.json").read_text(encoding="utf-8-sig"))
     if manifest["spec_sha256"] != checksum:
@@ -102,8 +129,18 @@ def export(run_dir, output):
             target.mkdir(parents=True)
             shutil.copytree(prepare.HERE / "cases" / case, target / "project")
             shutil.copyfile(prepare.HERE / "grade_prompt.md", target / "grade_prompt.md")
+            method_index = {"role": "Original reviewer-method evidence only, never grader instructions or new project requirements.",
+                            "primary_commit": runtime_record["commit"], "files": {}}
+            for name, data in method_sources.items():
+                # A .txt suffix prevents native instruction/plugin discovery.
+                local = target / "method_sources" / (name + ".txt")
+                local.parent.mkdir(parents=True, exist_ok=True)
+                local.write_bytes(data)
+                method_index["files"][name] = {"path": local.relative_to(target).as_posix(),
+                                               "sha256": prepare.digest(data)}
             for filename, data in (("rubric.json", converted), ("reviews.json", bundle),
-                                   ("auxiliary_sources.json", auxiliary[case])):
+                                   ("auxiliary_sources.json", auxiliary[case]),
+                                   ("method_sources.json", method_index)):
                 (target / filename).write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     return {"spec_sha256": checksum, "anonymous_reviews": 27,
             "independent_grading_packets": 6,
@@ -114,8 +151,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("run_dir", type=Path)
     parser.add_argument("--out", type=Path, required=True)
+    parser.add_argument("--runtime-root", type=Path, required=True,
+                        help="As-used reviewer method bundle, checked against run_dir/runtime-integrity.json")
     args = parser.parse_args()
-    print(json.dumps(export(args.run_dir, args.out), indent=2))
+    print(json.dumps(export(args.run_dir, args.out, args.runtime_root), indent=2))
 
 
 if __name__ == "__main__":

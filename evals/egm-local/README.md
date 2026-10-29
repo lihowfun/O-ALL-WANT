@@ -1,8 +1,11 @@
 # Local Codex / EGM workflow experiment
 
-This is a frozen experiment design, not a result. The contract was frozen before any independent trial output. The user has
-now authorized Codex independent subagents; collection is in progress, and
-there is no acceptance result yet. Claude
+The contract was frozen before any independent trial output. The authorized
+27-review study and corrected complete-source grading are finished. The
+[result](../../docs/validation/egm-codex-2026-10-29.md) records 24/24 detections in
+all arms, with unsupported claims A=0/B=1/C=0. C matches native on the fixed
+suite; B fails the registered false-claim gate, so no overall promotion/merge
+pass is claimed. Claude
 CLI and its F1/F2/F3 phases are not used here; model calls use Codex quota.
 
 ## The comparison
@@ -90,7 +93,7 @@ gate. A C-arm gain in that metric also requires the declared controls before
 an OAW-indexing attribution; extra findings alone do not establish causality.
 
 ```sh
-python3 evals/egm-local/anonymize.py /outside/the/repo/completed-run --out /fresh/grading
+python3 evals/egm-local/anonymize.py /outside/the/repo/completed-run --out /fresh/grading --runtime-root /as-used/egm
 python3 evals/egm-local/measure.py adjudicated-evidence.json --out aggregate.json
 ```
 
@@ -106,6 +109,24 @@ verify any cited note rather than calling real input nonexistent. Current
 accepted ADRs still determine project facts; auxiliary guidance does not change
 the grading instructions or supply new authority. This source-completeness
 clarification was implemented before any grades, without changing the rubric.
+
+The first grading packet later proved incomplete: it omitted the actual EGM
+method standards supplied to reviewers. A judge and adjudicator consequently
+called true descriptions of those standards unsupported because the standards
+were absent from their packet. That grading round is invalid, including its
+provisional regression aggregate; preserve every vote and its exclusion reason.
+The corrected packet supplies all as-used method files as non-executable `.txt`
+evidence, indexed by original path and verified against `runtime-integrity.json`.
+Required workflow/persona/standard coverage is checked, including the feature,
+implementation-readiness and zoom-out standards. Source drift or missing method
+context rejects export. Method standards remain distinct from product
+requirements, and style preferences retain the same treatment in the rubric.
+
+All six graders restart in fresh contexts after this packet correction, grading
+all 27 unchanged reports; cases, reports, rubric, grade prompt and parity rules
+are byte-identical to the earlier packet. No primary review is rerun or replaced.
+This correction follows seeing provisional results and is a study limitation,
+not a hidden favorable subset selection. Keep both grading rounds available.
 
 These are small authored cases, with visible domain identifiers (including
 `clean`), not representative production repositories. That case name may cue
