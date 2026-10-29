@@ -519,17 +519,18 @@ def doctor(target: Path) -> dict:
         if claude.is_file() and not imports_agents(claude.read_bytes()):
             checks.append({"status": "WARN", "path": "CLAUDE.md",
                            "detail": "CLAUDE.md does not import @AGENTS.md; Claude and Codex may follow different policy."})
-    for prefix in (".agents", ".claude"):
-        skills_root = target / prefix / "skills"
-        check_path(skills_root, kind="dir")
-        if skills_root.is_dir():
-            for path in sorted(skills_root.rglob("*")):
-                check_path(path)
-                if path.name == "SKILL.md":
-                    check_path(path, kind="file")
-                    for issue in skill_issues(path):
-                        checks.append({"status": "FAIL", "path": path.relative_to(target).as_posix(), "detail": str(issue)})
+    if manifest:
+        inventory = set(manifest["managed_files"]) | set(manifest.get("custom_files", [])) | set(required)
+        for relative in sorted(inventory):
+            if not re.fullmatch(r"\.(?:agents|claude)/skills/[^/]+/SKILL\.md", relative):
+                continue
+            path = joined(target, relative)
+            check_path(path, kind="file")
+            if path.is_file():
+                for issue in skill_issues(path):
+                    checks.append({"status": "FAIL", "path": relative, "detail": str(issue)})
     capabilities = [
+        {"capability": "Third-party skill/plugin validation", "support": "HOST", "enabled": "UNKNOWN", "reason": "Doctor validates OAW's declared packages only; other packages need their host/upstream checks."},
         {"capability": "Codex AGENTS.md and native skills", "support": "YES", "enabled": "UNKNOWN", "reason": "Artifacts are packaged; host discovery/settings were not inspected."},
         {"capability": "Claude @AGENTS.md adapter and native skills", "support": "YES", "enabled": "UNKNOWN", "reason": "Adapter is packaged; host skill paths/settings were not inspected."},
         {"capability": "Sandbox, approvals, compaction, execution checkpoints", "support": "HOST", "enabled": "UNKNOWN", "reason": "Owned by the host runtime, not configured by OAW."},

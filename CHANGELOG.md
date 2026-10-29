@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2.0.0] — Proposed, 2026-10-28
+## [2.0.0] — Proposed, updated 2026-10-29
 
 Breaking native-first upgrade prepared for independent review. No tag or release
 is published by this PR. See [migration](docs/UPGRADING.md) and the
@@ -52,6 +52,15 @@ is published by this PR. See [migration](docs/UPGRADING.md) and the
 - Legitimate macOS system ancestor aliases are canonicalized without allowing
   symlinks inside project-managed paths; redirected Windows gate diagnostics use UTF-8.
 - CI Actions are pinned to verified Node 24 releases instead of deprecated Node 20 actions.
+- Installed doctor/wiki lint no longer impose OAW's portable YAML subset on
+  unrelated host/plugin skills. OAW-managed/custom packages remain checked;
+  `validate_skills.py --all-packages` opts into a broader portable-subset audit.
+- `oaw-evidence` now describes its actual bounded recall/write CLI instead of
+  generic evidence-handling advice.
+- [Versioned source ledger](docs/releases/2.0.0-sources.md) and
+  [EGM review](docs/reviews/2026-10-29-pr4-egm.md): EGM manifest 0.1.0 at full
+  commit `f0ba151b252c9abf1318d9fe857a43265d06de89` is evaluated-only. No EGM
+  plugin, catalog, scenario conversion or model-quality claim ships here.
 
 ### Validation limits
 

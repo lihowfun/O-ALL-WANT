@@ -6,7 +6,7 @@
   ],
   "installation_id": "generated-example-minimal-project",
   "managed_files": {
-    ".agents/skills/oaw-evidence/SKILL.md": "3ec4935468138e12e121d861ed0f9caf4886a950a2332c8672e124cd9e084f35",
+    ".agents/skills/oaw-evidence/SKILL.md": "e1a0c9f4739f860f8b610e3a900fbb5999fc06c03fc1eeba9e9a1bb8d4ca0b30",
     "AGENTS.md": "07f37c25774fb07b0a14be85f26f07e7d5d93483846ced195503197f02df1387",
     "CLAUDE.md": "336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49",
     "scripts/context_hub.py": "c0582010bc92edd75c02afb6d98527eeba6b1b94a600cc825a5fa1daaa2c1066",

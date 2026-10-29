@@ -44,7 +44,7 @@ python3 scripts/wiki_sync.py cross-check
 
 Raw source notes are rendered deterministically into topic pages. Manual pages are not overwritten. Generated source content and annotations use separate boundaries. Local Markdown links are relocated to the output directory. Metadata freshness checks run per page. Unchanged source inputs produce stable generated content.
 
-Existing experiment/state convenience commands remain in `--help` for older projects; they are not required state mirrors. Native skills use name/description and do not require custom triggers or heading conventions. The validator deliberately supports a documented subset of YAML, not every native extension field.
+Existing experiment/state convenience commands remain in `--help` for older projects; they are not required state mirrors. Native skills use name/description and do not require custom triggers or heading conventions. The validator deliberately supports a documented subset of YAML, not every native extension field. Installed doctor/wiki lint check OAW's declared packages, including project-owned custom versions of those packages; unrelated host/plugin skills need their own host/upstream validation. This is not a certification of external packages.
 
 ## Optional improvement workflow
 
@@ -60,7 +60,7 @@ Paths are project-relative. A proposal stores its concrete git text diff and fix
 
 ```bash
 python3 scripts/harness_check.py [--json] [--verbose]
-python3 scripts/validate_skills.py [--help]
+python3 scripts/validate_skills.py [PROJECT] [--all-packages]
 python3 scripts/sync_examples.py [--write]
 ```
 

@@ -3,7 +3,10 @@
 import importlib.util
 import contextlib
 import io
+import json
 from pathlib import Path
+import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -112,6 +115,53 @@ class SkillValidationTests(unittest.TestCase):
         self.write_skill("name: sample-skill\ndescription: [bad]")
         with contextlib.redirect_stdout(io.StringIO()):
             self.assertEqual(validator.main([str(self.root)]), 1)
+
+    def test_managed_scope_keeps_missing_and_custom_oaw_packages(self):
+        manifest = self.root / ".oaw/install.json"
+        manifest.parent.mkdir()
+        manifest.write_text(json.dumps({"schema_version": 1,
+            "managed_files": {".agents/skills/oaw-evidence/SKILL.md": "unused-hash"},
+            "custom_files": [".claude/skills/oaw-wiki/SKILL.md"]}), encoding="utf-8")
+        paths = validator.find_skill_files(self.root, managed_only=True)
+        self.assertEqual({Path(path).relative_to(self.root).as_posix() for path in paths},
+                         {".agents/skills/oaw-evidence/SKILL.md", ".claude/skills/oaw-wiki/SKILL.md"})
+        self.assertTrue(all(validator.lint_skill_file(path) for path in paths))
+        manifest.write_text('{"schema_version": 1, "managed_files": {"../escape": "x"}}', encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "Unsafe path"):
+            validator.find_skill_files(self.root, managed_only=True)
+
+    def test_installed_doctor_and_wiki_coexist_with_host_specific_skills(self):
+        target = self.root / "installed"
+
+        def run(*command):
+            return subprocess.run([sys.executable, *map(str, command)], capture_output=True,
+                                  text=True, encoding="utf-8", timeout=30)
+
+        result = run(ROOT / "scripts/oaw.py", "init", "--target", target,
+                     "--host", "both", "--profile", "knowledge", "--json")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        external = target / ".claude/skills/third-party-review/SKILL.md"
+        external.parent.mkdir(parents=True)
+        external.write_text("---\nname: third-party-review\ndescription: Review a requested design.\n"
+                            "disable-model-invocation: true\n---\n\nReview the requested design.\n", encoding="utf-8")
+        before = external.read_bytes()
+        doctor = run(ROOT / "scripts/oaw.py", "doctor", "--target", target, "--json")
+        self.assertEqual(doctor.returncode, 0, doctor.stdout + doctor.stderr)
+        self.assertIn('"Third-party skill/plugin validation"', doctor.stdout)
+        for script in ("wiki_sync.py", "validate_skills.py"):
+            command = [target / "scripts" / script] + (["lint"] if script == "wiki_sync.py" else [])
+            result = run(*command)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        explicit = run(target / "scripts/validate_skills.py", "--all-packages")
+        self.assertNotEqual(explicit.returncode, 0)
+        self.assertIn("disable-model-invocation", explicit.stdout)
+        self.assertEqual(external.read_bytes(), before)
+        owned = target / ".agents/skills/oaw-evidence/SKILL.md"
+        owned.write_text("# Broken OAW package\n", encoding="utf-8")
+        doctor = run(ROOT / "scripts/oaw.py", "doctor", "--target", target, "--json")
+        self.assertNotEqual(doctor.returncode, 0)
+        self.assertIn("missing opening YAML", doctor.stdout)
+        self.assertNotEqual(run(target / "scripts/wiki_sync.py", "lint").returncode, 0)
 
 
 class TemplateDefaultsTests(unittest.TestCase):

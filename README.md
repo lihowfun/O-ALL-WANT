@@ -228,10 +228,16 @@ See [CONTRIBUTING](CONTRIBUTING.md) and [CHANGELOG](CHANGELOG.md).
 
 ## Source lineage (standing on the shoulders of giants)
 
-**Used in v2.0.0**
+Exact versions and usage status: [v2.0.0 source ledger](docs/releases/2.0.0-sources.md).
+EGM **0.1.0** at [`f0ba151b252c9abf1318d9fe857a43265d06de89`](https://github.com/google/elephant-goldfish-model/tree/f0ba151b252c9abf1318d9fe857a43265d06de89)
+was statically evaluated for design review; it is not bundled or installed by OAW.
+See the [review and replacement decisions](docs/reviews/2026-10-29-pr4-egm.md).
 
-- 📉 **[andrewyng/context-hub](https://github.com/andrewyng/context-hub)** (MIT) — the architecture of `context_hub.py`: searchable knowledge, annotations, retrieval
-- 🧠 **[MemPalace](https://github.com/MemPalace/mempalace)** (MIT) — the tagged entry format of `.agents/memory.md`
+**Historical conceptual influences retained in v2** (upstream versions were not
+recorded; these links are reading pointers, not pinned runtime dependencies)
+
+- 📉 **[andrewyng/context-hub](https://github.com/andrewyng/context-hub)** — the architecture of `context_hub.py`: searchable knowledge, annotations, retrieval
+- 🧠 **[MemPalace](https://github.com/MemPalace/mempalace)** — the tagged entry format of `.agents/memory.md`
 - 📚 **[Karpathy-style LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)** — the raw-notes-versus-compiled-wiki split behind `docs/raw/` → `docs/knowledge/`
 - ⚡ **[thin harness / fat skills (Garry Tan)](https://x.com/garrytan/status/2042925773300908103)** — a short policy with work pushed into skills, now native `SKILL.md` packages
 - 🤝 **[RTK (rtk-ai/rtk)](https://github.com/rtk-ai/rtk)** — concept reference for shortening tool output (`--compact`); OAW does not bundle RTK

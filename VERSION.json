@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "project": "O-ALL-WANT",
-  "last_updated": "2026-10-28",
+  "last_updated": "2026-10-29",
   "release_status": "proposed",
   "notes": "Breaking native-first upgrade proposed in a pull request. No tag or release has been published."
 }
