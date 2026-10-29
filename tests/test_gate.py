@@ -1,5 +1,6 @@
 import contextlib
 import io
+import json
 import os
 from pathlib import Path
 import subprocess
@@ -14,6 +15,33 @@ import sync_examples
 
 
 class GateTests(unittest.TestCase):
+    def test_source_ledger_rejects_version_and_immutable_pin_drift(self):
+        original = json.loads((harness_check.ROOT / "docs/releases/2.0.0-sources.json").read_text(encoding="utf-8"))
+        with tempfile.TemporaryDirectory(prefix="oaw-citations-") as temporary:
+            root = Path(temporary)
+            (root / "docs/releases").mkdir(parents=True)
+            (root / ".github/workflows").mkdir(parents=True)
+            for relative in ("VERSION.json", ".github/workflows/test.yml"):
+                (root / relative).write_bytes((harness_check.ROOT / relative).read_bytes())
+            path = root / "docs/releases/2.0.0-sources.json"
+            with patch.object(harness_check, "ROOT", root):
+                path.write_text(json.dumps(original), encoding="utf-8")
+                self.assertTrue(harness_check.version_check().passed)
+                for mutation in ("version", "mutable-source", "ci-drift", "comment-only"):
+                    value = json.loads(json.dumps(original))
+                    if mutation == "version":
+                        value["oaw_version"] = "999.0.0"
+                    elif mutation == "mutable-source":
+                        value["sources"][0]["commit"] = "main"
+                    elif mutation == "ci-drift":
+                        next(source for source in value["sources"] if source["usage"] == "ci-action")["commit"] = "f" * 40
+                    else:
+                        workflow = root / ".github/workflows/test.yml"
+                        workflow.write_text(workflow.read_text(encoding="utf-8").replace("- uses:", "# - uses:"), encoding="utf-8")
+                    path.write_text(json.dumps(value), encoding="utf-8")
+                    with self.subTest(mutation=mutation):
+                        self.assertFalse(harness_check.version_check().passed)
+
     def test_complete_example_content_detects_broken_router(self):
         with tempfile.TemporaryDirectory(prefix="oaw-example-") as temporary:
             root = Path(temporary)

@@ -228,10 +228,15 @@ python3 scripts/sync_examples.py --write
 
 ## Source lineage（站在巨人肩膀上）
 
-**v2.0.0 有用到的**
+確切版本與使用狀態見 [v2.0.0 來源版本表](docs/releases/2.0.0-sources.md)。
+EGM **0.1.0**、commit [`f0ba151b252c9abf1318d9fe857a43265d06de89`](https://github.com/google/elephant-goldfish-model/tree/f0ba151b252c9abf1318d9fe857a43265d06de89)
+已做設計審查用途的靜態評估；OAW 尚未內建或安裝 EGM。
+採用、替換與淘汰建議見 [review](docs/reviews/2026-10-29-pr4-egm.md)。
 
-- 📉 **[andrewyng/context-hub](https://github.com/andrewyng/context-hub)**（MIT）— `context_hub.py` 的架構：可搜尋的知識、annotation、回想
-- 🧠 **[MemPalace](https://github.com/MemPalace/mempalace)**（MIT）— `.agents/memory.md` 的標籤式條目格式
+**v2 保留的歷史概念來源**（當時未記錄上游版本；以下是閱讀入口，並非固定版本的 runtime 相依）
+
+- 📉 **[andrewyng/context-hub](https://github.com/andrewyng/context-hub)** — `context_hub.py` 的架構：可搜尋的知識、annotation、回想
+- 🧠 **[MemPalace](https://github.com/MemPalace/mempalace)** — `.agents/memory.md` 的標籤式條目格式
 - 📚 **[Karpathy-style LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)** — `docs/raw/` → `docs/knowledge/` 背後「原始筆記和編譯後 wiki 分開」的想法
 - ⚡ **[thin harness / fat skills (Garry Tan)](https://x.com/garrytan/status/2042925773300908103)** — policy 保持精簡、工作推進 skills，現在變成原生 `SKILL.md` 套件
 - 🤝 **[RTK (rtk-ai/rtk)](https://github.com/rtk-ai/rtk)** — 縮短工具輸出的概念參考（`--compact`）；OAW 沒有內建 RTK

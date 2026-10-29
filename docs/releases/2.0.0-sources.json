@@ -1,0 +1,195 @@
+{
+  "schema_version": 1,
+  "oaw_version": "2.0.0",
+  "release_status": "proposed",
+  "reviewed_on": "2026-10-29",
+  "reviewed_pr_head": "dafb17918ba59b6c485668cfa11d1c92aa3a49c6",
+  "sources": [
+    {
+      "id": "egm",
+      "repository": "https://github.com/google/elephant-goldfish-model",
+      "commit": "f0ba151b252c9abf1318d9fe857a43265d06de89",
+      "author_time": "2026-10-28T10:06:43-07:00",
+      "commit_time": "2026-10-28T10:06:43-07:00",
+      "version": "0.1.0",
+      "version_kind": "manifest",
+      "license": "Apache-2.0",
+      "usage": "evaluated-only",
+      "bundled": false,
+      "installed_by_oaw": false,
+      "live_host_validation": "not-run",
+      "files": [
+        {
+          "path": "plugin.json",
+          "sha256": "227c4a9e4c337c6f43941287af5e6a09e6a247372ec6b98cca03f8ac0cf166e7",
+          "url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/plugin.json"
+        },
+        {
+          "path": ".claude-plugin/plugin.json",
+          "sha256": "b57b690c962e00bac6979e3788083a9c8120dc09beaac49b2abff1991d0ab4cc",
+          "url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/.claude-plugin/plugin.json"
+        },
+        {
+          "path": ".codex-plugin/plugin.json",
+          "sha256": "3ab8abb44a4d13f8c390309fba14683593952c37ef9ced4e5ea7c1fa8afac070",
+          "url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/.codex-plugin/plugin.json"
+        },
+        {
+          "path": "docs/harnesses.md",
+          "sha256": "12b1e70adb6dec4edcf0d5a129806ba09135f243c545a4c9b42d87edd57dbd48",
+          "url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/docs/harnesses.md"
+        },
+        {
+          "path": "docs/releases.md",
+          "sha256": "d5dbaf5638079ce63a01517078760618688cf00913287a5163f2855b0a4ad05d",
+          "url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/docs/releases.md"
+        },
+        {
+          "path": "tests/unit/test_skill_load_limits.py",
+          "sha256": "b3ca4f70c83d045d73553a94b6d7e2b5b4729819d8ea193a3ef3083b066a1fa2",
+          "url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/tests/unit/test_skill_load_limits.py"
+        },
+        {
+          "path": "LICENSE",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/LICENSE"
+        },
+        {
+          "path": "skills/egm-bootstrap/SKILL.md",
+          "sha256": "ac86aae69c782b67ebb96d1dae5bcef675745e3f57cca99196038bb5e350fc4c",
+          "url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-bootstrap/SKILL.md"
+        },
+        {
+          "path": "skills/egm-bootstrap/agents/openai.yaml",
+          "sha256": "e5f83ece63fce8c73329efedd990f912ab395e1e8339f89f83f9e6efef00fb27",
+          "url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-bootstrap/agents/openai.yaml"
+        },
+        {
+          "path": "skills/egm-bootstrap/test_scenarios.yaml",
+          "sha256": "9ea91ed9fc8763b1e95a2ecf9f529be2a2c1b9b7190816b97963ec932c1bdc17",
+          "url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-bootstrap/test_scenarios.yaml"
+        },
+        {
+          "path": "skills/egm-brainstorm/SKILL.md",
+          "sha256": "fb594315b47dca4bbea878fc77cec42a1a3ef8c75a8b903b1812260391a13ed9",
+          "url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-brainstorm/SKILL.md"
+        },
+        {
+          "path": "skills/egm-brainstorm/agents/openai.yaml",
+          "sha256": "2b858c20f9d3b54cc1e02410a4fd6f7989b36d6d5d152cc87cd0d1082ce3bfc9",
+          "url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-brainstorm/agents/openai.yaml"
+        },
+        {
+          "path": "skills/egm-brainstorm/test_scenarios.yaml",
+          "sha256": "b8b136dfc81ba52ffe65db79ec57da6f1214501dad9bdbe0be664cb05928177f",
+          "url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-brainstorm/test_scenarios.yaml"
+        },
+        {
+          "path": "skills/egm-draft/SKILL.md",
+          "sha256": "7908cb6d6b9ab82fef416211988ab9abd6681d4c783b2c31b1a8c40f97009ab0",
+          "url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-draft/SKILL.md"
+        },
+        {
+          "path": "skills/egm-draft/agents/openai.yaml",
+          "sha256": "eafc643897b5a4ea7a849bd4211acaf8f3bc31a079f199ef5d04d08b410705b7",
+          "url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-draft/agents/openai.yaml"
+        },
+        {
+          "path": "skills/egm-draft/test_scenarios.yaml",
+          "sha256": "6c2ae95dfa40469169d65d20a8a16a7e2f8608f4c1a081c01b1f54b2e2ff7e1a",
+          "url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-draft/test_scenarios.yaml"
+        },
+        {
+          "path": "skills/egm-drift-report/SKILL.md",
+          "sha256": "c000ffe2e77a9fe74ee6915b314e1547337c95c79a19014c44fd976dc6511476",
+          "url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-drift-report/SKILL.md"
+        },
+        {
+          "path": "skills/egm-drift-report/agents/openai.yaml",
+          "sha256": "b54c32c1badc9a73e507f097377324dc31f2839cfef9c426d4dba1c622d5673c",
+          "url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-drift-report/agents/openai.yaml"
+        },
+        {
+          "path": "skills/egm-drift-report/test_scenarios.yaml",
+          "sha256": "e688d8129d32bc90ad23a86da017175036695fa0872a04dbce591a890ea70788",
+          "url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-drift-report/test_scenarios.yaml"
+        },
+        {
+          "path": "skills/egm-resolve/SKILL.md",
+          "sha256": "6bb1909b42b815e074bd486c6244b56eef8d61669abb3302c764a16be05af472",
+          "url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-resolve/SKILL.md"
+        },
+        {
+          "path": "skills/egm-resolve/agents/openai.yaml",
+          "sha256": "7ad63dc69777e6e8b2e3d33cf4105149043038ffb489e750b3f483be7836cf30",
+          "url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-resolve/agents/openai.yaml"
+        },
+        {
+          "path": "skills/egm-resolve/test_scenarios.yaml",
+          "sha256": "6d667608097ff4c80fb861da2c7580cf7b7f5d01290895ea74422890254a0570",
+          "url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-resolve/test_scenarios.yaml"
+        },
+        {
+          "path": "skills/egm-review-loop/SKILL.md",
+          "sha256": "d99803ad5bf99900e9548491f6ad1ab58a9488bbf7af79f67ead033bb48b7023",
+          "url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-review-loop/SKILL.md"
+        },
+        {
+          "path": "skills/egm-review-loop/agents/openai.yaml",
+          "sha256": "2073f27ed2c084c8db710f72dac367d26cb8cbc16aa2195546feb732b47a23ce",
+          "url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-review-loop/agents/openai.yaml"
+        },
+        {
+          "path": "skills/egm-review-loop/test_scenarios.yaml",
+          "sha256": "75c0a3811c3acb0084969f95b63806837f81c117873a05fc55c3b3327d5e36be",
+          "url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-review-loop/test_scenarios.yaml"
+        },
+        {
+          "path": "skills/egm-review/SKILL.md",
+          "sha256": "5e96e3b586a086c7c87b4f0185303a49adc9486028134d258827e9bbfb89e986",
+          "url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-review/SKILL.md"
+        },
+        {
+          "path": "skills/egm-review/agents/openai.yaml",
+          "sha256": "780d8877443f704ee27d504c13d08f304f0bca4c4418f5703f61ae40416fca74",
+          "url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-review/agents/openai.yaml"
+        },
+        {
+          "path": "skills/egm-review/test_scenarios.yaml",
+          "sha256": "bca74669372112c5aa31c7a71e1fef76ccedd7a17169e6d3f64c2a2686dcce97",
+          "url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-review/test_scenarios.yaml"
+        }
+      ]
+    },
+    {
+      "id": "actions-checkout",
+      "repository": "https://github.com/actions/checkout",
+      "commit": "3d3c42e5aac5ba805825da76410c181273ba90b1",
+      "version": "v7.0.1",
+      "usage": "ci-action",
+      "used_in": [
+        ".github/workflows/test.yml"
+      ]
+    },
+    {
+      "id": "actions-setup-python",
+      "repository": "https://github.com/actions/setup-python",
+      "commit": "6d4fd22b20465ccc0f7354476588e8df7c9ca0e0",
+      "version": "v7.1.0",
+      "usage": "ci-action",
+      "used_in": [
+        ".github/workflows/test.yml"
+      ]
+    }
+  ],
+  "historical_influences": {
+    "upstream_revisions": null,
+    "status": "historical-unpinned",
+    "references": [
+      "docs/Architecture_Origins.md",
+      "CHANGELOG.md"
+    ],
+    "note": "Conceptual lineage only. Historical upstream versions were not recorded; no retroactive pin is claimed."
+  },
+  "model_benchmarks": "not-run"
+}

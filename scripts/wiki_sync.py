@@ -595,9 +595,9 @@ HOLLOW_PHRASES = (
 )
 
 def _discover_skill_files():
-    """Use the same native package contract as the standalone skill gate."""
+    """Lint OAW packages without imposing our portable subset on other plugins."""
     from validate_skills import find_skill_files
-    return find_skill_files(BASE_DIR)
+    return find_skill_files(BASE_DIR, managed_only=True)
 
 
 def _lint_skill_file(path):
@@ -833,9 +833,8 @@ def lint(strict=False):
         rel = os.path.relpath(path, BASE_DIR)
         warnings.append(f"{desc} in {rel}:{lineno}: {snippet}")
 
-    # Skill frontmatter lint — warn by default, promote to error under --strict.
-    # Skills are the surface users write most often, so catching "forgot triggers"
-    # or "no Steps section" early prevents a whole class of silent dispatch bugs.
+    # OAW-owned skill schema failures are hard errors. Native host/plugin skills
+    # outside the install inventory have their own schemas and validators.
     for skill_path in _discover_skill_files():
         for skill_issue in _lint_skill_file(skill_path):
             issues.append(skill_issue)

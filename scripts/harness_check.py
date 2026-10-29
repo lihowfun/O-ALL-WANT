@@ -8,13 +8,14 @@ import json
 import os
 from pathlib import Path
 import py_compile
+import re
 import subprocess
 import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_TEST_MODULES = ("test_context_hub", "test_gate", "test_improvement", "test_install", "test_skills", "test_wiki_sync")
-MINIMUM_TESTS = 95  # POSIX count; Windows adds junction cases.
+MINIMUM_TESTS = 98  # POSIX count; Windows adds junction cases.
 SUMMARY_MARKER = "OAW-TEST-SUMMARY "
 
 
@@ -137,7 +138,21 @@ def version_check():
         return Check("version", False, "VERSION.json differs from installer version")
     if version.get("release_status") not in ("proposed", "released"):
         return Check("version", False, "release_status must be explicit")
-    return Check("version", True, f"{version['version']} ({version['release_status']})")
+    ledger = json.loads((ROOT / "docs/releases" / f"{version['version']}-sources.json").read_text(encoding="utf-8"))
+    if (ledger.get("schema_version") != 1 or ledger.get("oaw_version") != version["version"]
+            or ledger.get("release_status") != version["release_status"] or not ledger.get("sources")):
+        return Check("version", False, "Source ledger differs from proposed/released version")
+    for source in ledger["sources"]:
+        commit = source.get("commit", "")
+        if not re.fullmatch(r"[0-9a-f]{40}", commit):
+            return Check("version", False, f"Unpinned source: {source.get('id')}")
+        if source.get("usage") == "ci-action":
+            reference = source["repository"].removeprefix("https://github.com/") + "@" + commit
+            pattern = r"(?m)^\s*-\s+uses:\s*[\"']?" + re.escape(reference) + r"[\"']?\s*(?:#.*)?$"
+            if not source.get("used_in") or any(not re.search(pattern, (ROOT / path).read_text(encoding="utf-8"))
+                                                 for path in source["used_in"]):
+                return Check("version", False, f"CI source citation drift: {source['id']}")
+    return Check("version", True, f"{version['version']} ({version['release_status']}); source ledger and CI pins agree")
 
 
 def main(argv=None):

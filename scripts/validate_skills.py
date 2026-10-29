@@ -106,15 +106,37 @@ def _frontmatter(content):
     return fields, "\n".join(lines[end + 1:])
 
 
-def find_skill_files(base_dir):
+def find_skill_files(base_dir, *, managed_only=False):
     """Find canonical framework packages, or installed native skill packages.
 
     Return expected SKILL.md paths for directories even when missing, so empty
     or malformed packages cannot silently disappear from lint. Legacy flat
     Markdown files are included so lint reports their unsupported location.
+    With managed_only, an installed project's manifest defines the scope;
+    unrelated host/plugin skills are not subject to OAW's portable YAML subset.
     """
     base = Path(base_dir)
     canonical = base / "templates" / ".agents" / "skills"
+    if managed_only and not canonical.is_dir():
+        manifest = base / ".oaw" / "install.json"
+        if not manifest.is_file():
+            return []
+        data = json.loads(manifest.read_text(encoding="utf-8"))
+        if not isinstance(data, dict) or data.get("schema_version") != 1:
+            raise ValueError("Invalid OAW installation manifest")
+        managed, custom = data.get("managed_files"), data.get("custom_files", [])
+        if not isinstance(managed, dict) or not isinstance(custom, list):
+            raise ValueError("Invalid managed/custom file inventory")
+        if any(not isinstance(path, str) for path in [*managed, *custom]):
+            raise ValueError("Invalid path in OAW installation manifest")
+        found = []
+        for relative in sorted(set(managed) | set(custom)):
+            if not isinstance(relative, str) or "\\" in relative or ":" in relative or any(
+                    part in ("", ".", "..") for part in relative.split("/")):
+                raise ValueError("Unsafe path in OAW installation manifest")
+            if re.fullmatch(r"\.(?:agents|claude)/skills/[^/]+/SKILL\.md", relative):
+                found.append(str((base / relative).absolute()))
+        return found
     roots = [canonical] if canonical.is_dir() else [
         base / ".agents" / "skills", base / ".claude" / "skills"
     ]
@@ -235,8 +257,15 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("base_dir", nargs="?", default=str(Path(__file__).resolve().parent.parent),
                         help="project or framework root (default: this script's project)")
+    parser.add_argument("--all-packages", action="store_true",
+                        help="apply OAW's portable subset to all local packages, including third-party skills; not host certification")
     args = parser.parse_args(argv)
-    paths = find_skill_files(args.base_dir)
+    installed = (Path(args.base_dir) / ".oaw/install.json").is_file()
+    try:
+        paths = find_skill_files(args.base_dir, managed_only=installed and not args.all_packages)
+    except (OSError, ValueError, TypeError) as exc:
+        print("ERROR: %s" % exc)
+        return 1
     failed = False
     for path in paths:
         for issue in lint_skill_file(path):

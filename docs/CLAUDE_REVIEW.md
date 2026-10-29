@@ -2,6 +2,12 @@
 
 Review the PR against main without merging, tagging or releasing. The version is proposed, not published. Reproduce important failure cases independently rather than relying on the author's green gate.
 
+Start with the [2026-10-29 PR/EGM findings](reviews/2026-10-29-pr4-egm.md)
+and [source ledger](releases/2.0.0-sources.md). EGM was evaluated statically at a
+fixed source revision; the future catalog and native EGM integration are not
+implemented in this PR. Review the external-skill coexistence fix separately
+from claims about native EGM installation or quality.
+
 ## Main questions
 
 1. **Native-first scope.** Do the default AGENTS.md and three native skills add non-obvious OAW value without duplicating native reasoning, memory, compaction or generic task procedure? Are the removed v1 rules truly absent from installed defaults?
@@ -20,7 +26,10 @@ python3 scripts/harness_check.py --verbose
 python3 scripts/sync_examples.py
 ```
 
-The author ran 82 behavioral tests and 8/8 gate groups on Windows/Python 3.12.14. Actual source-package installs for both hosts and the Bash wrapper were exercised. Skill-creator schema checks passed for three packages. CI is configured for Ubuntu/macOS/Windows with Python 3.10/3.13; inspect PR checks for current results.
+The earlier 82-test result describes the initial revision, not the current suite.
+See the dated [validation record](validation/v2.0.0-local.md) and current PR
+checks. CI is configured for Ubuntu/macOS/Windows with Python 3.10/3.13. Actual
+native host discovery and model experiments are separate from artifact installs.
 
 Historical v1 wiki reports intentionally retain example placeholders and produce 22 soft lint warnings. Native schema failures and substantive broken metadata/link/freshness issues are hard errors. Native Opus 5.5/Sol 6.1 A/B tasks and real host skill listing remain unverified; the optional comparison workflow is tested with explicitly synthetic fixtures.
 
