@@ -10,6 +10,10 @@ is published by this PR. See [migration](docs/UPGRADING.md) and the
 
 ### Added
 
+- Frozen EGM evaluation fixtures and a separate three-arm Codex workflow
+  experiment: three cases, three repeats, blinded independent grading and
+  explicit non-regression criteria. No model-quality/parity gain is claimed
+  until real trials pass. See [current status](docs/validation/egm-offline-2026-10-29.md).
 - Safe Python 3.10+ `init`, preview-first `migrate`, and read-only `doctor`.
   Manifest ownership, recognized v1 hashes, recoverable backups, conflict
   proposals and rollback protect existing project content.
@@ -43,6 +47,10 @@ is published by this PR. See [migration](docs/UPGRADING.md) and the
 
 ### Fixed
 
+- Pilot false-positive evolution on failed reviews, incomplete isolation
+  metadata, unfrozen execution/OAW source and mutable resume identities.
+  Outcome regex matches are triage-only; failed auth attempts cannot calibrate
+  spend. Windows subprocess mocking no longer intercepts OS version discovery.
 - Topic traversal/symlink escapes; complete locked read-modify-write with atomic commits.
 - Per-page freshness checks; annotation marker collisions and rebuild growth;
   relative source-link relocation; meaningful nonzero errors.

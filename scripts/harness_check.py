@@ -14,8 +14,9 @@ import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-REQUIRED_TEST_MODULES = ("test_context_hub", "test_gate", "test_improvement", "test_install", "test_skills", "test_wiki_sync")
-MINIMUM_TESTS = 98  # POSIX count; Windows adds junction cases.
+REQUIRED_TEST_MODULES = ("test_context_hub", "test_gate", "test_improvement", "test_install", "test_skills", "test_wiki_sync",
+                         "test_egm_pilot", "test_egm_local", "test_status")
+MINIMUM_TESTS = 123  # POSIX count; Windows adds junction cases.
 SUMMARY_MARKER = "OAW-TEST-SUMMARY "
 
 

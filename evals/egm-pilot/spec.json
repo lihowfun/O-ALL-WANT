@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "id": "oaw-egm-pilot-v1",
-  "status": "pre-registered at F0 (2026-10-29). Before F2/F3 only the fields in fill_at_F1 may change; any change yields a new spec.sha256 and new approval tokens. Results seen in F1 are calibration only.",
+  "id": "oaw-egm-pilot-v2",
+  "status": "Offline revision after the 2026-10-29 static review. No valid model results. Live execution remains paused pending separate user authorization and working CLI authentication. A changed frozen contract invalidates old approval tokens.",
   "plan": "docs/plans/skill-catalog-execution.md: EGM 快速通道; 測試標準：齊平是底線，贏了才叫進化; 版本引用與移除說明",
   "upstream": {
     "repository": "https://github.com/google/elephant-goldfish-model",
@@ -10,7 +10,9 @@
     "plugin_name": "egm",
     "plugin_subdir": "distributions/claude",
     "plugin_tree_sha256": "1b6f5d7c5d7348fd4f4ccadb3aeb08c12d9260c99f285d6a759bfdd0a236afa0",
-    "why_plugin_subdir": "EGM's packaged Claude runtime at the same commit: the same skills, agents, resources and docs as the repository root, without TEST.md and test_scenarios.yaml, so no run can read the expected patterns from the plugin directory. It is copied into each run directory and passed with --plugin-dir; nothing is installed into the user's Claude settings."
+    "why_plugin_subdir": "Official complete Claude runtime at the pinned commit, without upstream scenario/TEST files. Copied read-only under each workspace/.egm-runtime/egm. This excludes packaged answer files; actual host isolation remains unverified until an authorized calibration.",
+    "manifest_version": "0.1.0",
+    "version_kind": "manifest, not a verified published release"
   },
   "host": {
     "name": "claude-code",
@@ -59,9 +61,28 @@
     "rejected_options": {
       "--bare": "Disables OAuth and keychain login (only ANTHROPIC_API_KEY or an apiKeyHelper) and skips CLAUDE.md auto-discovery, which would remove arm C's treatment.",
       "--safe-mode": "Disables CLAUDE.md, project skills and plugins, which would remove arm C's treatment.",
-      "--restricted": "Ignores project settings, removes Bash, and confines file tools to the working directory, so reviewers could not read the plugin's personas outside the workspace.",
       "CLAUDE_CONFIG_DIR": "Moving the config directory would also move the stored login; credentials are never copied."
-    }
+    },
+    "restricted": true,
+    "tools": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Write",
+      "Edit",
+      "Agent",
+      "Skill",
+      "AskUserQuestion"
+    ],
+    "disallowed_tools": [
+      "Bash",
+      "PowerShell",
+      "WebFetch",
+      "WebSearch",
+      "NotebookEdit",
+      "mcp__*"
+    ],
+    "isolation_status": "Configured, not live-verified. Restricted mode must still expose C project guidance and skill; missing init metadata or treatment fails closed. This read-tool pilot does not benchmark executing context_hub.py."
   },
   "arms": {
     "A": {
@@ -88,7 +109,7 @@
   },
   "suites": {
     "protocol": {
-      "proves": "Whether OAW interferes with EGM's own flow (C vs B parity gate). It measures conformance to EGM's protocol, so B beating A is expected and is not a quality claim.",
+      "proves": "Offline protocol-conformance probes only until per-scenario file/conversation preconditions are supplied. Equal failures do not establish interoperability.",
       "source": "scenarios.json",
       "fixture": "protocol/project",
       "cases": 30,
@@ -110,10 +131,12 @@
           "verdict": false,
           "note": "A ran once as a baseline sanity check; reported as pass rates only."
         }
-      ]
+      ],
+      "live_ready": false,
+      "minimum_baseline_assertion_rate": 0.8
     },
     "outcome": {
-      "proves": "Whether EGM finds more planted design defects than native (B vs A), and whether OAW + EGM finds more than EGM alone (C vs B). D5 is the pre-registered place where OAW evidence recall may win, because EGM's reviewers deliberately work without project context.",
+      "proves": "Regex screening on one fixture only. No automatic quality verdict or promotion; blinded independent review of findings, unsupported claims and costs is required before any effect claim.",
       "fixture": "outcome/project",
       "defects": "outcome/defects.json",
       "cases": [
@@ -130,35 +153,27 @@
       "prompt": {
         "skill": "egm-review",
         "native_prefix": "Review this design document. ",
-        "body": "TargetFile: docs/design_draft.md. Step: uninterrupted. GoldfishContext: none; proceed with no additional context. Review the whole document end to end without stopping for questions, and report every problem you find with the section it is in."
+        "body": "TargetFile: docs/design_draft.md. Step: uninterrupted. GoldfishContext: README.md, docs/decisions/0007-postgresql-only.md. Review the design against the same accepted repository decisions and referenced source in every arm. Review end to end without questions. Report findings with section, concrete evidence and rationale; distinguish actual defects from uncertain questions."
       },
-      "decision_evidence": "The decision that D5 violates is in docs/decisions/0007-postgresql-only.md in every arm and is not linked from the draft. Arm C additionally has the OAW evidence entry in .agents/memory.md (source and revision) that an OAW project would keep. All arms can reach the same fact; only C has OAW's recall layer, which is the treatment under test. Removing the fact from A/B would measure information asymmetry instead of OAW, and linking it from the draft would let every arm find it trivially.",
+      "decision_evidence": "All arms receive the same explicit accepted ADR in the reading list. C additionally has the OAW memory index; this tests the whole configured stack, not an isolated memory-engine effect. A plain-index control and memory-removal ablation are required before attributing a benefit to OAW indexing.",
       "comparisons": [
         {
           "candidate": "B",
           "baseline": "A",
-          "verdict": true
+          "verdict": false
         },
         {
           "candidate": "C",
           "baseline": "B",
-          "verdict": true
+          "verdict": false
         }
       ]
     }
   },
   "phases": {
     "F1": {
-      "purpose": "calibration: cost, time, tokens and isolation evidence; excluded from verdicts",
+      "purpose": "Three-arm smoke/calibration only: one outcome call per arm, maximum USD 4.50 at the current cap. No effect verdict; excluded from F3.",
       "cases": [
-        {
-          "suite": "protocol",
-          "case_id": "egm-review/intake_preset_selection_before_split_discovery"
-        },
-        {
-          "suite": "protocol",
-          "case_id": "egm-draft/owner_delegates_architecture_choice"
-        },
         {
           "suite": "outcome",
           "case_id": "design_review"
@@ -180,13 +195,14 @@
   },
   "scoring": {
     "protocol_corpus": "Per turn: parent-session assistant text blocks, the string fields of AskUserQuestion tool inputs, and the result event's text when it is not already included. Sub-agent output and tool results are excluded.",
-    "outcome_corpus": "See outcome/defects.json (matching.corpus, matching.echo_guard).",
+    "outcome_corpus": "Regex triage only (including generated reports). A human/independent blinded review must grade concrete findings and all false alarms; no quality verdict or official improvement artifact is emitted from these matches.",
     "assertion_semantics": "scenarios.json assertion_semantics",
     "failed_run": "A run with any failed invocation (timeout, nonzero exit, no result event, error result or non-success subtype, including hitting the budget cap) fails every assertion of that run, including forbidden patterns and the decoy.",
     "unit": "Pass count per (case x assertion) over one arm's repeats; never repeat i against repeat i.",
     "required_checks": {
       "runs_complete": "Every planned (case, repeat) of the arm has a recorded attempt.",
-      "isolation_verified": "At least one init event per arm, and every init event shows: egm loaded exactly in arms B and C, oaw-evidence offered exactly in arm C, no MCP servers, the same non-EGM plugin set and the same model across both compared arms."
+      "isolation_verified": "Every invocation has complete init model/plugins/skills/commands/tools/MCP metadata. Native capability sets match after subtracting the intended EGM/OAW treatment, banned tools are absent, model identities match and every treatment is present exactly where expected.",
+      "runs_succeeded": "Every recorded run completed all planned turns successfully; failed attempts cannot earn an efficiency win."
     }
   },
   "resources": {
@@ -217,18 +233,21 @@
     ],
     "evolved": "not regressed, and candidate total passes > baseline total passes, or some resource metric total falls by at least minimum_improvement",
     "parity": "neither regressed nor evolved",
-    "invalid": "the baseline fails a required check, repeat counts or assertion sets differ, a metric is missing, or the two arms come from different run manifests",
+    "invalid": "Baseline required checks fail, baseline assertion floor is not met, identities/metrics differ or are missing. Failed baseline attempts never establish parity or evolution.",
     "improvement_py": {
       "evolved": "eligible",
       "parity": "inconclusive",
       "regressed": "rejected"
     },
-    "official_gate": "score.py --emit-gate writes improvement.py run artifacts per verdict comparison. Rows are ordered passes-first within each (case x assertion), so improvement.py's per-row comparison equals a pass-count comparison with tolerance 0: a strict cross-check until P4 adds tolerance to improvement.py."
+    "official_gate": "Only valid protocol comparisons may be exported. F2 live is blocked until fixtures exist and baseline reaches the per-assertion floor. Outcome regex screening never emits official improvement artifacts.",
+    "quality_status": "Outcome comparisons are screening-only and never exported as improvement evidence. No semantic quality, parity or evolution claim follows from regex counts."
   },
   "inputs": {
     "scenarios.json": "5b2111e4eb2b6548ec7f98326650f30108737ddae72553284f61d8ab380e6eea",
-    "outcome/defects.json": "1c7a1f97694b49eb2572a1f5407f6dcd725bf0bc97f5aed8b81ccbe4c9afa127",
+    "outcome/defects.json": "aec9217c19f451ed007c34a0c8c89d8a2094210edc6766b9e28092dc5d4f5a84",
     "fixtures": "29ebc27d40f550c8201c1f2b5b690f3e135860c022425f61c9bc1e369b9fff12",
-    "scorer": "77548b3b00d9e951fb4e3e16f579c8ccea4fdd4b5f75d444a2fca967b98c2ada"
+    "scorer": "7c76eed6278ad04e2964bcb9c8c7a4ef8d38e86a8d442dae098c346fc7cd6b0f",
+    "execution": "524376dac7683b4d208f8c3b5a670879d6ba4ea9bec19935d0dec2eab868d4ab",
+    "oaw_source": "a4ee3c46ac5fd15b45cd7218959bd4ea6d420da7c48b7493e3446a936705f0c7"
   }
 }

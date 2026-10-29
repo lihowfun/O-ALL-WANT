@@ -33,8 +33,9 @@ REPO = HERE.parents[1]
 sys.path.insert(0, str(HERE))
 import pilot_common as pc  # noqa: E402
 
-DEFAULT_CLAUDE = os.environ.get(
-    "OAW_EGM_CLAUDE", "C:/Users/User/AppData/Roaming/Claude/claude-code/2.1.309/9078b9c1d466/claude.exe")
+DEFAULT_CLAUDE = (os.environ.get("OAW_EGM_CLAUDE")
+                  or shutil.which("claude.exe" if os.name == "nt" else "claude")
+                  or ("claude.exe" if os.name == "nt" else "claude"))
 PHASES = ("F1", "F2", "F3")
 MAX_ARTIFACT_BYTES = 1_000_000
 CLOCK = time.monotonic  # wall clock for latency_ms; replaceable in tests
@@ -110,7 +111,9 @@ def settings(spec: dict, plugin_dir: Path | None) -> dict:
     if plugin_dir is not None:
         allow = [f"Read({permission_path(plugin_dir / folder)}/**)"
                  for folder in spec["invocation"]["settings"]["plugin_read_allow"]]
-    return {"disableAllHooks": spec["invocation"]["settings"]["disableAllHooks"], "permissions": {"allow": allow}}
+    return {"disableAllHooks": spec["invocation"]["settings"]["disableAllHooks"],
+            "permissions": {"allow": allow, "deny": [*spec["invocation"]["disallowed_tools"], "Edit(./.egm-runtime/**)"],
+                            "blockReadsOutsideWorkingDirectories": True}}
 
 
 def command(spec: dict, binary, run: dict, turn: int, *, config_dir, plugin_dir, session_id: str) -> list[str]:
@@ -124,6 +127,9 @@ def command(spec: dict, binary, run: dict, turn: int, *, config_dir, plugin_dir,
         cmd += ["--effort", spec["effort"]]
     cmd += ["--setting-sources", invocation["setting_sources"], "--settings", str(Path(config_dir) / "settings.json"),
             "--permission-mode", invocation["permission_mode"], "--permission-prompts", invocation["permission_prompts"]]
+    if invocation["restricted"]:
+        cmd.append("--restricted")
+    cmd += ["--tools", ",".join(invocation["tools"]), "--disallowedTools", ",".join(invocation["disallowed_tools"])]
     if len(run["turns"]) == 1:
         cmd.append("--no-session-persistence")
     else:
@@ -137,7 +143,7 @@ def command(spec: dict, binary, run: dict, turn: int, *, config_dir, plugin_dir,
 
 def planned_commands(spec: dict, run: dict, binary, run_dir) -> list[list[str]]:
     run_dir = Path(run_dir)
-    plugin = run_dir / "plugin" / spec["upstream"]["plugin_name"] if spec["arms"][run["arm"]]["egm_plugin"] else None
+    plugin = run_dir / "workspace" / ".egm-runtime" / spec["upstream"]["plugin_name"] if spec["arms"][run["arm"]]["egm_plugin"] else None
     return [command(spec, binary, run, turn, config_dir=run_dir / "config", plugin_dir=plugin,
                     session_id="<session-uuid>") for turn in range(len(run["turns"]))]
 
@@ -223,6 +229,8 @@ def guard_live(root: Path, spec: dict, args) -> dict:
         raise Refused("pre-registered contract changed: " + "; ".join(problems))
     if not spec.get("model"):
         raise Refused("spec.json model is unset; fill it at F1 and re-freeze before any live run")
+    if args.phase == "F2" and not spec["suites"]["protocol"].get("live_ready", False):
+        raise Refused("F2 protocol fixtures are not complete; this suite is offline-only")
     if not args.egm_src:
         raise Refused("--egm-src (EGM checkout at the pinned commit) is required for live runs")
     plugin = Path(args.egm_src) / spec["upstream"]["plugin_subdir"]
@@ -235,11 +243,20 @@ def guard_live(root: Path, spec: dict, args) -> dict:
     version = subprocess.run([str(binary), "--version"], capture_output=True, text=True, timeout=60)
     if version.returncode != 0 or spec["host"]["version"] not in version.stdout:
         raise Refused(f"host version differs from spec ({spec['host']['version']}): {version.stdout.strip()!r}")
+    auth = subprocess.run([str(binary), "auth", "status"], capture_output=True, text=True, timeout=30)
+    try:
+        logged_in = auth.returncode == 0 and json.loads(auth.stdout).get("loggedIn") is True
+    except (ValueError, AttributeError):
+        logged_in = False
+    if not logged_in:
+        raise Refused("Claude CLI is not authenticated; no model was called. Run claude auth login separately.")
     return {"plugin": plugin, "host_version": version.stdout.strip(), "spec_sha256": recorded}
 
 
 def execute(root: Path, spec: dict, runs: list[dict], args, checked: dict) -> int:
-    out = Path(args.out) / args.phase
+    out = Path(args.out).resolve() / args.phase
+    if out.is_relative_to(REPO.resolve()):
+        raise Refused("Raw run artifacts must stay outside the repository")
     manifest_path = out / "manifest.json"
     if manifest_path.is_file() and pc.load_json(manifest_path).get("spec_sha256") != checked["spec_sha256"]:
         raise Refused(f"{out} holds runs of another spec version; choose a new --out")
@@ -251,14 +268,22 @@ def execute(root: Path, spec: dict, runs: list[dict], args, checked: dict) -> in
         "host": {"name": spec["host"]["name"], "binary": str(args.claude), "version": spec["host"]["version"],
                  "version_output": checked["host_version"]},
         "model": spec["model"], "effort": spec.get("effort") or "host-default",
-        "oaw": {"head": head, "dirty": bool(status) if status is not None else None},
+        "oaw": {"head": head, "dirty": bool(status) if status is not None else None, "source_sha256": spec["inputs"]["oaw_source"]},
         "egm": {"commit": spec["upstream"]["commit"], "plugin_tree_sha256": spec["upstream"]["plugin_tree_sha256"]},
         "environment": f"{platform.system()} {platform.release()}; setting-sources={spec['invocation']['setting_sources']}; fresh temp fixture per run",
         "env_overrides": overrides, "anthropic_api_key_env_present": bool(os.environ.get("ANTHROPIC_API_KEY")),
         "runs_planned": len(runs), "metrics_label": "operator-reported",
+        "inputs": spec["inputs"], "invocation": spec["invocation"],
     }
     out.mkdir(parents=True, exist_ok=True)
-    manifest_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    if manifest_path.exists():
+        previous = pc.load_json(manifest_path)
+        identity = ("spec_sha256", "host", "model", "effort", "egm", "environment", "env_overrides", "inputs", "invocation", "runs_planned")
+        if any(previous.get(key) != manifest[key] for key in identity) or previous.get("oaw") != manifest["oaw"]:
+            raise Refused("Run identity changed; choose a new --out rather than relabel existing records")
+    else:
+        with manifest_path.open("x", encoding="utf-8") as stream:
+            stream.write(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n")
     environment = {**os.environ, **overrides}
     for number, run in enumerate(runs, 1):
         run_dir = out / "runs" / run["key"]
@@ -266,14 +291,16 @@ def execute(root: Path, spec: dict, runs: list[dict], args, checked: dict) -> in
             continue
         if run_dir.exists():
             shutil.rmtree(run_dir)
+        if pc.spec_problems(root):
+            raise Refused("Frozen inputs changed during execution; no next model call was made")
         workspace = run_dir / "workspace"
         run_dir.mkdir(parents=True)
         built = build_workspace(root, spec, run["suite"], run["arm"], workspace)
-        before = snapshot(workspace)
         plugin_dir = None
         if spec["arms"][run["arm"]]["egm_plugin"]:
-            plugin_dir = run_dir / "plugin" / spec["upstream"]["plugin_name"]
+            plugin_dir = workspace / ".egm-runtime" / spec["upstream"]["plugin_name"]
             shutil.copytree(checked["plugin"], plugin_dir)
+        before = snapshot(workspace)
         config = run_dir / "config"
         config.mkdir()
         (config / "settings.json").write_text(json.dumps(settings(spec, plugin_dir), indent=2), encoding="utf-8")
@@ -337,7 +364,9 @@ def estimate(spec: dict, plans: dict, calibration: Path) -> list[dict]:
     for path in Path(calibration).rglob("run.json"):
         record = pc.load_json(path)
         for invocation in record.get("invocations", []):
-            if isinstance(invocation.get("cost_usd"), (int, float)):
+            if (not invocation.get("failure") and invocation.get("exit_code") == 0 and not invocation.get("timed_out")
+                    and isinstance(invocation.get("cost_usd"), (int, float)) and invocation["cost_usd"] > 0
+                    and isinstance(invocation.get("tokens"), int) and invocation["tokens"] > 0):
                 samples.setdefault((record["suite"], record["arm"]), []).append(invocation["cost_usd"])
     rows = []
     for row in summary_rows(spec, {phase: runs for phase, runs in plans.items() if phase != "F1"}):

@@ -9,7 +9,8 @@
     "planted": "assertion passes when the defect is detected",
     "decoy": "assertion passes when the decoy is NOT detected (a false alarm fails it)",
     "echo_guard": "corpus lines equal to a line (12+ characters, compared without markdown markers, case or extra spaces) of any fixture file in outcome/project or outcome/overlay-oaw are removed first, so quoting the draft, the decision record or the memory entry is not a detection",
-    "corpus": "parent-session assistant text and question-tool options of every turn, plus text files the run created or changed in the workspace except the review target and .claude/ or .oaw/ paths"
+    "corpus": "parent-session assistant text and question-tool options of every turn, plus text files the run created or changed in the workspace except the review target and .claude/ or .oaw/ paths",
+    "status": "Triage candidates only, not semantic correctness or a quality gate."
   },
   "defects": [
     {
@@ -81,7 +82,7 @@
       "detect": [
         {
           "all": [
-            "(?:\\b(?:tasks?|steps?|implementation plan|plan items?|milestones?|production[- ]ready|properly|run verification|verification steps?|build the fan-?out))\\w*\\W+(?:\\w+\\W+){0,10}?(?:\\b(?:vague|non-?actionable|not actionable|unactionable|under-?specified|ambiguous|not specific|unspecific|too (?:broad|generic|high[- ]level|coarse)|(?:no|lacks?|without) (?:acceptance|exit|done|success|completion) criteri\\w*|acceptance criteri\\w*|definition of done|not testable|untestable|not measurable|unmeasurable|not verifiable|unverifiable))|(?:\\b(?:vague|non-?actionable|not actionable|unactionable|under-?specified|ambiguous|not specific|unspecific|too (?:broad|generic|high[- ]level|coarse)|(?:no|lacks?|without) (?:acceptance|exit|done|success|completion) criteri\\w*|acceptance criteri\\w*|definition of done|not testable|untestable|not measurable|unmeasurable|not verifiable|unverifiable))\\w*\\W+(?:\\w+\\W+){0,10}?(?:\\b(?:tasks?|steps?|implementation plan|plan items?|milestones?|production[- ]ready|properly|run verification|verification steps?|build the fan-?out))"
+            "(?:\\b(?:tasks?|steps?|implementation plan|plan items?|milestones?|production[- ]ready|properly|run verification|verification steps?|build the fan-?out))\\w*\\W+(?:\\w+\\W+){0,10}?(?:\\b(?:vague|non-?actionable|not actionable|unactionable|under-?specified|ambiguous|not specific|unspecific|too (?:broad|generic|high[- ]level|coarse)|(?:no|lacks?|without) (?:acceptance|exit|done|success|completion) criteri\\w*|not testable|untestable|not measurable|unmeasurable|not verifiable|unverifiable))|(?:\\b(?:vague|non-?actionable|not actionable|unactionable|under-?specified|ambiguous|not specific|unspecific|too (?:broad|generic|high[- ]level|coarse)|(?:no|lacks?|without) (?:acceptance|exit|done|success|completion) criteri\\w*|not testable|untestable|not measurable|unmeasurable|not verifiable|unverifiable))\\w*\\W+(?:\\w+\\W+){0,10}?(?:\\b(?:tasks?|steps?|implementation plan|plan items?|milestones?|production[- ]ready|properly|run verification|verification steps?|build the fan-?out))"
           ]
         }
       ],
@@ -96,7 +97,8 @@
         ],
         "ignore": [
           "The implementation steps are clear and specific.",
-          "Run verification after each step."
+          "Run verification after each step.",
+          "The implementation steps already have acceptance criteria."
         ]
       }
     },
@@ -108,13 +110,14 @@
       "detect": [
         {
           "all": [
-            "(?:\\b(?:7|seven)[- ]days?\\b)\\w*\\W+(?:\\w+\\W+){0,25}?(?:\\b(?:30|thirty)[- ]days?\\b)|(?:\\b(?:30|thirty)[- ]days?\\b)\\w*\\W+(?:\\w+\\W+){0,25}?(?:\\b(?:7|seven)[- ]days?\\b)",
+            "(?:\\b(?:(?:7|seven)[- ]days?|a week)\\b)\\w*\\W+(?:\\w+\\W+){0,25}?(?:\\b(?:(?:30|thirty)[- ]days?|month[- ]old)\\b)|(?:\\b(?:(?:30|thirty)[- ]days?|month[- ]old)\\b)\\w*\\W+(?:\\w+\\W+){0,25}?(?:\\b(?:(?:7|seven)[- ]days?|a week)\\b)",
             "\\b(?:contradict\\w*|inconsisten\\w*|conflict\\w*|mismatch\\w*|disagree\\w*|incompatible|irreconcil\\w*|cannot|can't|impossible|but|whereas|however|versus|vs\\.?|exceeds?|longer than|beyond|only (?:kept|retained|stored))"
           ]
         },
         {
           "all": [
-            "(?:\\b(?:retention|retain(?:ed)?|kept|delet(?:ed|ion)|look ?ups?|look[- ]?back|(?:7|seven|30|thirty)[- ]days?))\\w*\\W+(?:\\w+\\W+){0,12}?(?:\\b(?:contradict\\w*|inconsisten\\w*|conflict\\w*|mismatch\\w*|incompatible|irreconcil\\w*|disagree\\w*))|(?:\\b(?:contradict\\w*|inconsisten\\w*|conflict\\w*|mismatch\\w*|incompatible|irreconcil\\w*|disagree\\w*))\\w*\\W+(?:\\w+\\W+){0,12}?(?:\\b(?:retention|retain(?:ed)?|kept|delet(?:ed|ion)|look ?ups?|look[- ]?back|(?:7|seven|30|thirty)[- ]days?))"
+            "(?:\\b(?:retention|retain(?:ed)?|kept|delet(?:ed|ion)|look ?ups?|look[- ]?back|(?:7|seven|30|thirty)[- ]days?))\\w*\\W+(?:\\w+\\W+){0,12}?(?:\\b(?:contradict\\w*|inconsisten\\w*|conflict\\w*|mismatch\\w*|incompatible|irreconcil\\w*|disagree\\w*))|(?:\\b(?:contradict\\w*|inconsisten\\w*|conflict\\w*|mismatch\\w*|incompatible|irreconcil\\w*|disagree\\w*))\\w*\\W+(?:\\w+\\W+){0,12}?(?:\\b(?:retention|retain(?:ed)?|kept|delet(?:ed|ion)|look ?ups?|look[- ]?back|(?:7|seven|30|thirty)[- ]days?))",
+            "\\b(?:operations|support|look[- ]?ups?|look[- ]?back)\\b"
           ]
         }
       ],
@@ -126,11 +129,13 @@
         "detect": [
           "Records are deleted after 7 days, but support expects to look up 30 days of history.",
           "Retention contradicts the operations section.",
-          "Inconsistent retention: seven days vs thirty days."
+          "Inconsistent retention: seven days vs thirty days.",
+          "Only a week of records survives, so month-old support requests cannot be answered."
         ],
         "ignore": [
           "I found no contradictions between sections 5 and 6.",
-          "Records are kept for 7 days."
+          "Records are kept for 7 days.",
+          "Retention conflicts with regional deployment timing."
         ]
       }
     },
@@ -142,12 +147,14 @@
       "detect": [
         {
           "all": [
-            "(?:\\bmongo\\w*)\\w*\\W+(?:\\w+\\W+){0,25}?(?:\\bADR[- ]?0*7\\b|\\b0007\\b|\\b(?:prior|previous|earlier|recorded|existing|past|documented|accepted) (?:architecture |design |project |team )?decisions?\\b|\\bdecision records?\\b|\\barchitecture decisions?\\b|\\bretired\\b|\\bretirement\\b|\\bdecommission\\w*|\\bpostgres\\w*[- ]only\\b|\\bonly (?:approved |allowed |sanctioned )?(?:data ?store|database)\\b|\\bstandardi[sz]ed on postgres\\w*|\\bpostgres\\w* (?:is|as) the (?:only|single|sole)\\b|docs/decisions)|(?:\\bADR[- ]?0*7\\b|\\b0007\\b|\\b(?:prior|previous|earlier|recorded|existing|past|documented|accepted) (?:architecture |design |project |team )?decisions?\\b|\\bdecision records?\\b|\\barchitecture decisions?\\b|\\bretired\\b|\\bretirement\\b|\\bdecommission\\w*|\\bpostgres\\w*[- ]only\\b|\\bonly (?:approved |allowed |sanctioned )?(?:data ?store|database)\\b|\\bstandardi[sz]ed on postgres\\w*|\\bpostgres\\w* (?:is|as) the (?:only|single|sole)\\b|docs/decisions)\\w*\\W+(?:\\w+\\W+){0,25}?(?:\\bmongo\\w*)"
+            "(?:\\bmongo\\w*)\\w*\\W+(?:\\w+\\W+){0,25}?(?:\\bADR[- ]?0*7\\b|\\b0007\\b|\\b(?:prior|previous|earlier|recorded|existing|past|documented|accepted) (?:architecture |design |project |team )?decisions?\\b|\\bdecision records?\\b|\\barchitecture decisions?\\b|\\bretired\\b|\\bretirement\\b|\\bdecommission\\w*|\\bpostgres\\w*[- ]only\\b|\\bonly (?:approved |allowed |sanctioned )?(?:data ?store|database)\\b|\\bstandardi[sz]ed on postgres\\w*|\\bpostgres\\w* (?:is|as) the (?:only|single|sole)\\b|docs/decisions)|(?:\\bADR[- ]?0*7\\b|\\b0007\\b|\\b(?:prior|previous|earlier|recorded|existing|past|documented|accepted) (?:architecture |design |project |team )?decisions?\\b|\\bdecision records?\\b|\\barchitecture decisions?\\b|\\bretired\\b|\\bretirement\\b|\\bdecommission\\w*|\\bpostgres\\w*[- ]only\\b|\\bonly (?:approved |allowed |sanctioned )?(?:data ?store|database)\\b|\\bstandardi[sz]ed on postgres\\w*|\\bpostgres\\w* (?:is|as) the (?:only|single|sole)\\b|docs/decisions)\\w*\\W+(?:\\w+\\W+){0,25}?(?:\\bmongo\\w*)",
+            "\\b(?:contradict\\w*|conflict\\w*|violat\\w*|inconsistent|against|breaks?|forbids?|yet|but|however)\\b"
           ]
         },
         {
           "all": [
-            "(?:\\bADR[- ]?0*7\\b|0007-postgresql-only|decisions/0007|\\bdecision 0*7\\b)\\w*\\W+(?:\\w+\\W+){0,25}?(?:\\b(?:mongo\\w*|new (?:data ?store|database)|another (?:data ?store|database)|contradict\\w*|conflict\\w*|violat\\w*|inconsistent|against|breaks?))|(?:\\b(?:mongo\\w*|new (?:data ?store|database)|another (?:data ?store|database)|contradict\\w*|conflict\\w*|violat\\w*|inconsistent|against|breaks?))\\w*\\W+(?:\\w+\\W+){0,25}?(?:\\bADR[- ]?0*7\\b|0007-postgresql-only|decisions/0007|\\bdecision 0*7\\b)"
+            "(?:\\bADR[- ]?0*7\\b|0007-postgresql-only|decisions/0007|\\bdecision 0*7\\b)\\w*\\W+(?:\\w+\\W+){0,25}?(?:\\b(?:mongo\\w*|new (?:data ?store|database)|another (?:data ?store|database)|contradict\\w*|conflict\\w*|violat\\w*|inconsistent|against|breaks?))|(?:\\b(?:mongo\\w*|new (?:data ?store|database)|another (?:data ?store|database)|contradict\\w*|conflict\\w*|violat\\w*|inconsistent|against|breaks?))\\w*\\W+(?:\\w+\\W+){0,25}?(?:\\bADR[- ]?0*7\\b|0007-postgresql-only|decisions/0007|\\bdecision 0*7\\b)",
+            "\\b(?:contradict\\w*|conflict\\w*|violat\\w*|inconsistent|against|breaks?|forbids?|yet|but|however)\\b"
           ]
         }
       ],
@@ -164,7 +171,8 @@
         "ignore": [
           "Why MongoDB instead of PostgreSQL? The choice is not justified.",
           "Check whether a prior decision exists about MongoDB.",
-          "The decision to use MongoDB needs a rationale."
+          "The decision to use MongoDB needs a rationale.",
+          "I read ADR-0007 and the MongoDB proposal."
         ]
       }
     },

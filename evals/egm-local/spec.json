@@ -1,0 +1,145 @@
+{
+  "schema_version": 1,
+  "id": "oaw-egm-local-v3",
+  "status": "pre-registered; no model outputs collected; delegation authorization pending",
+  "upstream": {
+    "repository": "https://github.com/google/elephant-goldfish-model",
+    "commit": "f0ba151b252c9abf1318d9fe857a43265d06de89",
+    "manifest_version": "0.1.0",
+    "license": "Apache-2.0",
+    "runtime": "official complete plugin, read as workflow instructions; not a CLI discovery certification"
+  },
+  "host": {
+    "runtime": "Codex collaboration agents",
+    "model": "same inherited parent configuration; record exposed metadata, never infer a provider revision",
+    "effort": "inherited, no per-arm override",
+    "claude_cli": "not used"
+  },
+  "arms": {
+    "A": "native project review; same task, source access and tools",
+    "B": "native plus complete upstream EGM review workflow with fresh Goldfish contexts",
+    "C": "B plus OAW minimal project guidance/evidence; additional notes must be verified against the same current ADRs"
+  },
+  "cases": [
+    "orders",
+    "events",
+    "clean"
+  ],
+  "repeats": 3,
+  "source_access": "All arms explicitly receive README, design, source and all current ADRs. No arm receives gold labels, other outputs or grader materials.",
+  "memory_treatment": {
+    "orders": "Index of the existing PostgreSQL/idempotency ADR, without naming design defects",
+    "events": "Index of the existing ordering/logging ADR, without naming design defects",
+    "clean": "Dated old storage note that must be revalidated against superseding ADR-012"
+  },
+  "review_output": {
+    "format": "JSON findings array: location, claim, evidence, rationale, severity; uncertainty listed separately",
+    "maximum_words": 900,
+    "method_names": "Do not include arm names, EGM/OAW labels or Goldfish narration in findings"
+  },
+  "grading": {
+    "method": "Fresh blinded independent grader sees anonymized reports, source and frozen rubric; no regex quality verdict",
+    "metrics": [
+      "critical planted defects correctly detected",
+      "other planted defects correctly detected",
+      "unsupported concrete defect claims",
+      "factually wrong claims contradicting explicit source",
+      "valid additional findings"
+    ],
+    "uncertainty": "Questions and explicitly conditional risks are recorded separately; they do not earn detection credit and are not automatically false positives",
+    "new_valid_findings": "Grade against source; do not mark every non-gold finding wrong",
+    "independent_graders_per_case": 2,
+    "disagreement": "Any critical-detection or unsupported-concrete-claim disagreement blocks acceptance pending explicit adjudication."
+  },
+  "acceptance": {
+    "model_runs_complete": "Every planned review and requested fresh-context stage must complete; missing runs are inconclusive, never cheap wins",
+    "baseline_floor": "Every baseline review must be valid and detect at least one planted critical defect on the two defective cases; clean case requires no false explicit contradictions",
+    "parity": "Both B vs A and C vs B: no per-case/per-defect detection-count regression (critical and major); total grounded planted detections do not fall; unsupported concrete claims per case do not rise. All planned reviews/stages complete.",
+    "claim_scope": "Observed non-regression on this fixed small suite only; not statistical equivalence, model superiority, Claude compatibility or native plugin discovery",
+    "if_C_beats_B": "Before attributing improvement to OAW indexing, run a plain-index B control and C-without-memory ablation on the affected cases",
+    "merge": "No automatic merge or runtime adoption on synthetic checks; user-requested parity evidence and CI must both pass",
+    "immutable_inputs": "Check every initial workspace file hash after each trial; source, guidance or memory changes invalidate that trial."
+  },
+  "resources": {
+    "time": "Record observable wall time and agent counts. Same instructions and response cap; no unavailable token/cost estimates invented. No efficiency claim without comparable metrics.",
+    "maximum_fresh_child_reviews_per_trial": 9,
+    "same_native_budget": "A may use independent reviewers too; B/C use nine direct fresh reviewers across all five official stages, without an extra synthesizer. At most two reviewers concurrently under host slot limits."
+  },
+  "rubric": {
+    "orders": {
+      "critical": [
+        "lost update / oversell from non-atomic check-and-reserve",
+        "repeat order can reserve twice under fresh UUID"
+      ],
+      "major": [
+        "MongoDB contradicts accepted storage ADR",
+        "7-day only ledger cannot answer 30-day support lookups"
+      ],
+      "hard_negatives": [
+        "p99 and throughput targets are explicitly present",
+        "planned tests are not falsely claimed completed"
+      ]
+    },
+    "events": {
+      "critical": [
+        "older/redelivered event can overwrite a newer shipment version",
+        "complete authorization header in logs violates accepted rule"
+      ],
+      "major": [
+        "Flux shim is undefined",
+        "implementation plan lacks actionable scope/done criteria"
+      ],
+      "no_double_credit": "Replay without version checks belongs to the same monotonic-state defect, not a second independent planted issue"
+    },
+    "clean": {
+      "critical": [],
+      "major": [],
+      "hard_negatives": [
+        "Redis is explicitly approved by accepted ADR-012 for this service",
+        "ADR-002 is superseded; historical note cannot overrule ADR-012",
+        "7-day hot retention and 90-day archive satisfy 30-day support lookups",
+        "cache miss and consistency bound are defined",
+        "latency/load/outage/rollout/rollback acceptance criteria are present"
+      ]
+    }
+  },
+  "case_hashes": {
+    "cases/clean/docs/adr-002-storage.md": "8aa6cf37d45afa3f77bf024dffe8eaf954d6750a402e5f77eefdae21838630e2",
+    "cases/clean/docs/adr-012-lookup-exception.md": "42b0293363a50089c10d1c9cfb19907f96a5374187f82dd1ceebb319316ee189",
+    "cases/clean/docs/design.md": "8ea27019de88f1553ea3a21220f2f39e4906bf021cdc1f3d1024240201d5437b",
+    "cases/clean/README.md": "1d805ebfa9b8720d37b14e89b72e49360adeac58d16362ddab490f37e9887167",
+    "cases/clean/src/lookup.py": "f7dea1a9ef4f9a700e6852b5b96686a7287748d8855a9790edfb13f9940dedd5",
+    "cases/events/docs/adr-004-events.md": "840cb6af46d0ae9a62814631d9d24e833e608a4990f3b7b0c2054925462b3d95",
+    "cases/events/docs/design.md": "96c57cf1b46d3105713a9e7589aca9108794cb3f007de9ad657727f798a8e483",
+    "cases/events/README.md": "6f1d9b9a96299f2a77c2aa2c296d0d1730149b63edef3c17d15c1d8bd7b4ea1b",
+    "cases/events/src/projector.py": "7b0d222f26d9092405c217fb1153e060c36930540d65ffaed964beb35a758084",
+    "cases/orders/docs/adr-001-storage.md": "b584b1de3c70a8a305fda60b3b3b57758dbdab18a4eae7c4650ab31403a41df3",
+    "cases/orders/docs/design.md": "68160a6074e9dd7c565e8aae00839a2911e8899c218896b937dd08ea56b0cd72",
+    "cases/orders/README.md": "c24dded06df19f67d700cf4f7f2abedac3224bbfa3ccc312ee24b2cc2d6b3459",
+    "cases/orders/src/reserve.py": "87c7568af4f57a0a1e561fc822adee4444f6fe0d12dee9bf1dd605b437986e80"
+  },
+  "inputs": {
+    "prepare.py": "d21d7cffcd2c53f41cbc28007bed299e968523e1c9d8ae82fd1d81a8556e0bf1",
+    "oaw_source": "a4ee3c46ac5fd15b45cd7218959bd4ea6d420da7c48b7493e3446a936705f0c7"
+  },
+  "registration_history": [
+    {
+      "spec_sha256": "ecaa9e2908d7f8523c371f5fca927cfb171419f778434d6bd2e5521d6c06fba1",
+      "status": "offline preparation only, zero model outputs; increased repeats from two to three before execution"
+    },
+    {
+      "spec_sha256": "fdf1b7a8ea19930348bb2ea42a8dfae9081f83fcbe78b5e09ff67d2e821d96bb",
+      "status": "offline preparation only, zero model outputs; clarified explicit ADR conflict and clean-case cache error/expiry contract before execution"
+    },
+    {
+      "spec_sha256": "ddf71e35d9de7ae6dd92902ddea474a8e1dae80956c0f643b912a84a719a3c85",
+      "status": "zero model outputs; exact upstream full-flow inspection requires nine direct reviewers (1+1+3+1+3), so equal arm cap corrected from eight to nine before first dispatch"
+    }
+  ],
+  "prompt_hashes": {
+    "review_prompt.md": "7c9b0c6715db8686690e5929610290008cee20fd6856d64025e0d9f1fd48f184",
+    "grade_prompt.md": "7fde3fd0a76ff4c9c9c20ec338950b5b805048b3a7002384c1ed11f11d24c22f"
+  },
+  "dispatch_seed": 20261029,
+  "dispatch_order": "Shuffle case/repeat blocks with the fixed seed; balanced A/B/C Latin-square order within each block. Each arm goes first once per case over three repeats."
+}

@@ -30,14 +30,15 @@ import score  # noqa: E402
 SCENARIOS = pc.load_json(PILOT / pc.SCENARIOS_FILE)
 SPEC = pc.load_json(PILOT / pc.SPEC_FILE)
 DEFECTS = pc.load_json(PILOT / pc.DEFECTS_FILE)
-PILOT_FILES = ("spec.json", "spec.sha256", "scenarios.json", "pilot_common.py", "score.py", "outcome", "protocol")
+PILOT_FILES = ("spec.json", "spec.sha256", "scenarios.json", "pilot_common.py", "score.py", "run_pilot.py", "convert_scenarios.py", "outcome", "protocol")
 
 
 def stream(text, *, egm=False, oaw=False, cost=0.01, failed=False):
     """A minimal stream-json transcript in the shape score.py reads."""
     init = {"type": "system", "subtype": "init", "model": "fixture-model", "mcp_servers": [],
             "plugins": [{"name": "egm", "path": "plugin"}] if egm else [],
-            "slash_commands": ["egm:egm-review"] if egm else [], "skills": ["oaw-evidence"] if oaw else []}
+            "slash_commands": ["egm:egm-review"] if egm else [], "skills": ["oaw-evidence"] if oaw else [],
+            "tools": SPEC["invocation"]["tools"]}
     events = [init, {"type": "assistant", "parent_tool_use_id": None,
                      "message": {"content": [{"type": "text", "text": text}]}},
               {"type": "result", "subtype": "error_max_budget_usd" if failed else "success", "is_error": failed,
@@ -151,7 +152,7 @@ class MatchingTests(unittest.TestCase):
         fixture = score.fixture_text(PILOT)
         d5 = next(d for d in DEFECTS["defects"] if d["id"].startswith("D5"))
         quoted = "> The separate MongoDB delivery-log cluster was retired after the November 2025\n> replica-election incident"
-        self.assertIsNotNone(pc.detection(d5, quoted))
+        self.assertIsNone(pc.detection(d5, quoted))  # merely recalling a retired store is not a conflict finding
         self.assertIsNone(pc.detection(d5, pc.strip_echo(quoted, fixture)))
         own_words = quoted + "\nThe MongoDB choice conflicts with ADR-0007."
         self.assertIsNotNone(pc.detection(d5, pc.strip_echo(own_words, fixture)))
@@ -174,7 +175,7 @@ class VerdictTests(unittest.TestCase):
 
     def group(self, counts, tokens=1000, checks=None):
         return {"counts": {key: [passes, 5] for key, passes in counts.items()}, "repeats": 5,
-                "checks": checks or {"runs_complete": True, "isolation_verified": True},
+                 "checks": checks or {"runs_complete": True, "runs_succeeded": True, "isolation_verified": True},
                 "metrics": {"tokens": tokens, "latency_ms": 1000, "cost_usd": 1.0}}
 
     def verdict(self, base, cand, tolerance):
@@ -264,10 +265,10 @@ class ScoreEndToEndTests(unittest.TestCase):
         arms = live["suites"]["protocol"]["arms"]
         self.assertEqual((arms["B"]["counts"][x], arms["C"]["counts"][x], arms["A"]["counts"][x]), ([5, 5], [4, 5], [1, 1]))
         self.assertTrue(all(arms[arm]["checks"]["isolation_verified"] for arm in "ABC"))
-        self.assertEqual(comparisons[("C", "B", "protocol")]["verdict"], "parity")
+        self.assertEqual(comparisons[("C", "B", "protocol")]["verdict"], "invalid")  # incomplete baseline is not parity
         self.assertEqual(comparisons[("B", "A", "protocol")]["verdict"], "sanity-only")
-        self.assertEqual(comparisons[("B", "A", "outcome")]["verdict"], "evolved")
-        self.assertEqual(comparisons[("C", "B", "outcome")]["verdict"], "evolved")
+        self.assertEqual(comparisons[("B", "A", "outcome")]["verdict"], "screening-only")
+        self.assertEqual(comparisons[("C", "B", "outcome")]["verdict"], "screening-only")
         outcome_counts = live["suites"]["outcome"]["arms"]["A"]["counts"]
         self.assertEqual(outcome_counts["design_review#N1-defined-term-decoy"], [4, 5])
         self.assertEqual(outcome_counts["design_review#D5-prior-decision-conflict"], [0, 5])
@@ -276,20 +277,35 @@ class ScoreEndToEndTests(unittest.TestCase):
         strict = score.score(PILOT, [protocol, outcome], tolerance_mode="deterministic", gate_dir=gate)
         verdicts = {(c["candidate"], c["baseline"], s): c["verdict"] for s, section in strict["suites"].items()
                     for c in section["comparisons"]}
-        self.assertEqual(verdicts[("C", "B", "protocol")], "regressed")
-        self.assertEqual(len(strict["gate"]), 3)
-        for directory, expected in (("protocol-C-vs-B", "rejected"), ("outcome-C-vs-B", "eligible"),
-                                    ("outcome-B-vs-A", "eligible")):
-            base = gate / directory
-            snapshot = (base / "snapshot.txt").read_text(encoding="utf-8").strip()
-            proposal = improvement.propose(base, SimpleNamespace(
-                title="arm comparison", hypothesis="pilot", target="arm.txt", patch="arm.diff",
-                evaluation="evaluation.json", snapshot=snapshot))
-            result = improvement.compare(base, SimpleNamespace(id=proposal["id"], baseline="baseline.json",
-                                                               candidate="candidate.json"))
-            self.assertEqual(result["verdict"], expected, directory)
-            self.assertEqual(json.loads((base / "candidate.json").read_text(encoding="utf-8"))["metrics_label"],
-                             "operator-reported")
+        self.assertEqual(verdicts[("C", "B", "protocol")], "invalid")
+        self.assertEqual(strict["gate"], [])  # no official artifacts from regex screening or invalid protocol
+
+    def test_valid_synthetic_protocol_export_cross_checks_official_gate(self):
+        protocol, _ = self.build()
+        ids = {"egm-review-loop/missing_reviewer_status_not_clean", "egm-resolve/escalate_uncheckable_contest"}
+        context = {"spec": SPEC, "scenarios": {s["case_id"]: s for s in SCENARIOS["scenarios"] if s["case_id"] in ids}}
+        loaded, manifests = score.load_runs([protocol], self.digest)
+        scored = []
+        for manifest_dir, run_dir, record in loaded:
+            if record["case_id"] in ids:
+                run = score.score_run(context, run_dir, record)
+                scored.append({**run, "manifest": manifest_dir})
+        before, after = [score.aggregate(context, scored, "protocol", arm, 5) for arm in ("B", "C")]
+        verified = score.isolation(SPEC, [before, after])
+        for group in (before, after):
+            group["checks"]["isolation_verified"] = verified[group["arm"]]
+        verdict = score.judge(before, after, tolerance=0, rules=SPEC["resources"])
+        base = score.emit_gate(self.base / "gate", "protocol", before, after, scored,
+                               manifests[str(protocol)], verdict, SPEC["resources"])
+        snapshot = (base / "snapshot.txt").read_text(encoding="utf-8").strip()
+        proposal = improvement.propose(base, SimpleNamespace(
+            title="arm comparison", hypothesis="pilot", target="arm.txt", patch="arm.diff",
+            evaluation="evaluation.json", snapshot=snapshot))
+        result = improvement.compare(base, SimpleNamespace(id=proposal["id"], baseline="baseline.json",
+                                                           candidate="candidate.json"))
+        self.assertEqual(result["verdict"], "rejected")
+        self.assertEqual(json.loads((base / "candidate.json").read_text(encoding="utf-8"))["metrics_label"],
+                         "operator-reported")
 
     def test_refuses_runs_from_another_spec_version(self):
         directory = self.manifest("F3")
@@ -298,6 +314,32 @@ class ScoreEndToEndTests(unittest.TestCase):
         (directory / "manifest.json").write_text(json.dumps(data), encoding="utf-8")
         with self.assertRaisesRegex(score.ScoreError, "spec"):
             score.score(PILOT, [directory])
+
+    def test_failed_or_unverified_outcome_never_claims_evolution(self):
+        for mode in ("all-failed", "missing-init", "missing-model", "extra-native-skill", "banned-tool"):
+            directory = self.manifest(mode)
+            for arm in "ABC":
+                for repeat in range(1, 6):
+                    self.write_run(directory, "outcome", arm, "design_review", repeat, ["No review."])
+                    path = directory / "runs" / f"outcome/{arm}/design_review/r{repeat}/raw/turn1.out"
+                    raw = stream("No review.", egm=arm != "A", oaw=arm == "C",
+                                 failed=mode == "all-failed", cost=0.008 if arm == "C" else 0.01)
+                    events = [json.loads(line) for line in raw.splitlines()]
+                    if mode == "missing-init" and repeat > 1:
+                        events = events[1:]
+                    elif mode == "missing-model":
+                        events[0].pop("model")
+                    elif mode == "extra-native-skill" and arm == "C":
+                        events[0]["skills"].append("uncontrolled-review")
+                    elif mode == "banned-tool":
+                        events[0]["tools"].append("Bash")
+                    path.write_text("\n".join(json.dumps(e) for e in events) + "\n", encoding="utf-8")
+            report = score.score(PILOT, [directory], gate_dir=self.base / ("gate-" + mode))
+            comparison = report["suites"]["outcome"]["comparisons"][-1]
+            with self.subTest(mode=mode):
+                self.assertEqual(comparison["verdict"], "invalid")
+                self.assertFalse(comparison["quality_claim"])
+                self.assertEqual(report["gate"], [])
 
 
 class RunPilotTests(unittest.TestCase):
@@ -337,7 +379,7 @@ class RunPilotTests(unittest.TestCase):
         for arm, repeats in {"A": 1, "B": 5, "C": 5}.items():
             self.assertEqual(totals[("F2", "protocol", arm)], [cases * repeats, (cases + extra_turns) * repeats])
             self.assertEqual(totals[("F3", "outcome", arm)], [5, 5])
-        self.assertEqual(sum(v[0] for k, v in totals.items() if k[0] == "F1"), 9)
+        self.assertEqual(sum(v[0] for k, v in totals.items() if k[0] == "F1"), 3)
         self.assertEqual(sum(v[0] for k, v in totals.items() if k[0] == "F2"), 330)
         commands = {(r["suite"], r["arm"]): r["commands"][0] for r in plan["runs"] if r["phase"] == "F3"}
         self.assertNotIn("--plugin-dir", commands[("outcome", "A")])
@@ -374,6 +416,28 @@ class RunPilotTests(unittest.TestCase):
         defects.write_text(defects.read_text(encoding="utf-8").replace("D1-missing-slo", "D1-renamed"), encoding="utf-8")
         self.assert_refused(["--live", "--phase", "F1", "--i-have-approval", token], root, "outcome/defects.json")
 
+    def test_freeze_pins_runner_and_oaw_source(self):
+        root = self.copy_pilot()
+        runner = root / "run_pilot.py"
+        runner.write_text(runner.read_text(encoding="utf-8") + "\n# changed runner\n", encoding="utf-8")
+        self.assertTrue(any("execution" in issue for issue in pc.spec_problems(root)))
+        source = self.base / "source"
+        for name in ("scripts", "templates"):
+            (source / name).mkdir(parents=True)
+            (source / name / "source.txt").write_text("new payload", encoding="utf-8")
+        with mock.patch.object(pc, "REPO", source):
+            self.assertTrue(any("oaw_source" in issue for issue in pc.spec_problems(root)))
+
+    def test_failed_auth_is_not_zero_cost_calibration(self):
+        path = self.base / "run.json"
+        path.write_text(json.dumps({"suite": "outcome", "arm": "C", "invocations": [
+            {"cost_usd": 0, "tokens": 0, "exit_code": 1, "failure": "auth expired"}]}), encoding="utf-8")
+        rows = run_pilot.estimate(SPEC, {"F3": run_pilot.plan(SPEC, SCENARIOS["scenarios"], "F3")}, self.base)
+        candidate = next(row for row in rows if row["arm"] == "C")
+        self.assertEqual(candidate["samples"], 0)
+        self.assertIsNone(candidate["expected_usd"])
+        self.assertIsNone(candidate["high_usd"])
+
     def test_live_execution_records_runs_with_a_mocked_binary(self):
         root = self.copy_pilot()
         egm = self.base / "egm"
@@ -395,6 +459,8 @@ class RunPilotTests(unittest.TestCase):
                 return subprocess.CompletedProcess(cmd, 0, stdout="abc\n" if "rev-parse" in cmd else "", stderr="")
             if cmd[1:] == ["--version"]:
                 return subprocess.CompletedProcess(cmd, 0, stdout="2.1.309 (Claude Code)\n", stderr="")
+            if cmd[1:] == ["auth", "status"]:
+                return subprocess.CompletedProcess(cmd, 0, stdout='{"loggedIn": true}', stderr="")
             oaw = (Path(kwargs["cwd"]) / "CLAUDE.md").is_file()
             text = "Missing SLOs: no latency target." if "--plugin-dir" in cmd else "Looks fine."
             kwargs["stdout"].write(stream(text, egm="--plugin-dir" in cmd, oaw=oaw).encode("utf-8"))
@@ -405,9 +471,35 @@ class RunPilotTests(unittest.TestCase):
         argv = ["--live", "--phase", "F3", "--i-have-approval", token, "--egm-src", str(egm),
                 "--claude", str(binary), "--out", str(out)]
         with mock.patch.object(subprocess, "run", side_effect=fake_run), \
-                mock.patch.object(run_pilot, "CLOCK", side_effect=itertools.count()):
+                mock.patch.object(run_pilot, "CLOCK", side_effect=itertools.count()), \
+                mock.patch.object(run_pilot.platform, "system", return_value="Windows"), \
+                mock.patch.object(run_pilot.platform, "release", return_value="11"):
             code, _, error = self.call(argv, root)
-        self.assertEqual(code, 0, error)
+            self.assertEqual(code, 0, error)
+            manifest_path = out / "F3/manifest.json"
+            original_manifest = manifest_path.read_bytes()
+            before_calls = len(calls)
+            code, _, error = self.call(argv, root)
+            self.assertEqual(code, 0, error)
+            self.assertEqual(manifest_path.read_bytes(), original_manifest)
+            self.assertTrue(all("-p" not in cmd for cmd in calls[before_calls:]))
+            changed = json.loads(original_manifest)
+            changed["oaw"]["head"] = "different-checkout"
+            manifest_path.write_text(json.dumps(changed), encoding="utf-8")
+            code, _, error = self.call(argv, root)
+            self.assertEqual(code, 2)
+            self.assertIn("Run identity changed", error)
+            manifest_path.write_bytes(original_manifest)
+            def logged_out(cmd, **kwargs):
+                if cmd[1:] == ["auth", "status"]:
+                    return subprocess.CompletedProcess(cmd, 1, stdout='{"loggedIn": false}', stderr="")
+                return fake_run(cmd, **kwargs)
+            with mock.patch.object(subprocess, "run", side_effect=logged_out):
+                before_calls = len(calls)
+                code, _, error = self.call(argv, root)
+                self.assertEqual(code, 2)
+                self.assertIn("not authenticated", error)
+                self.assertTrue(all("-p" not in cmd for cmd in calls[before_calls:]))
         records = [pc.load_json(path) for path in sorted((out / "F3" / "runs").rglob("run.json"))]
         self.assertEqual(len(records), 15)
         self.assertEqual(sum(1 for cmd in calls if cmd[0] == str(binary) and "-p" in cmd), 15)
@@ -422,7 +514,7 @@ class RunPilotTests(unittest.TestCase):
         self.assertTrue(all(rule.startswith("Read(/") for rule in settings["permissions"]["allow"]))
         report = score.score(root, [out / "F3"])
         verdicts = {(c["candidate"], c["baseline"]): c["verdict"] for c in report["suites"]["outcome"]["comparisons"]}
-        self.assertEqual(verdicts, {("B", "A"): "evolved", ("C", "B"): "parity"})
+        self.assertEqual(verdicts, {("B", "A"): "screening-only", ("C", "B"): "screening-only"})
 
 
 if __name__ == "__main__":

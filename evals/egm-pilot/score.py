@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 from pathlib import Path
 import sys
 
@@ -21,7 +22,7 @@ sys.path.insert(0, str(HERE))
 import pilot_common as pc  # noqa: E402
 
 IMPROVEMENT_VERDICT = {"evolved": "eligible", "parity": "inconclusive", "regressed": "rejected"}
-REQUIRED_CHECKS = ("runs_complete", "isolation_verified")
+REQUIRED_CHECKS = ("runs_complete", "runs_succeeded", "isolation_verified")
 CLAIM = ("Operator-reported pilot artifacts on one host (Claude Code); not statistical proof and not evidence for "
          "Codex, which stays untested. Protocol-suite wins over native measure EGM-flow conformance, not quality.")
 
@@ -61,7 +62,8 @@ def score_run(context: dict, run_dir: Path, record: dict) -> dict:
         failure = failure or pc.failure(parsed, invocation)
         texts.append(pc.response_text(parsed))
         used = pc.usage(parsed)
-        if used["tokens"] is None or used["cost_usd"] is None or not isinstance(invocation.get("wall_ms"), (int, float)):
+        values = (used["tokens"], used["cost_usd"], invocation.get("wall_ms"))
+        if any(isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v) or v < 0 for v in values):
             metrics_missing = True
         else:
             metrics["tokens"] += used["tokens"]
@@ -71,7 +73,8 @@ def score_run(context: dict, run_dir: Path, record: dict) -> dict:
         if summary:
             inits.append(summary)
         subagents += pc.subagent_count(parsed)
-    if len(texts) < len(record.get("prompts", [])) and failure is None:
+    expected_invocations = len(context["scenarios"][record["case_id"]]["turns"]) if record["suite"] == "protocol" else 1
+    if len(texts) != expected_invocations and failure is None:
         failure = "missing turns"
     case_id = record["case_id"]
     if record["suite"] == "protocol":
@@ -89,7 +92,8 @@ def score_run(context: dict, run_dir: Path, record: dict) -> dict:
                    for defect in context["defects"]["defects"]}
     return {"key": record["key"], "suite": record["suite"], "arm": record["arm"], "case_id": case_id,
             "repeat": record["repeat"], "failure": failure, "assertions": results,
-            "metrics": None if metrics_missing else metrics, "subagents": subagents, "inits": inits, "corpus": corpus}
+            "metrics": None if metrics_missing else metrics, "subagents": subagents, "inits": inits, "corpus": corpus,
+            "invocations": len(texts), "expected_invocations": expected_invocations}
 
 
 def expected_keys(context: dict, suite: str) -> dict:
@@ -115,23 +119,35 @@ def aggregate(context: dict, scored: list[dict], suite: str, arm: str, repeats: 
         metrics = {name: sum(run["metrics"][name] for run in runs) for name in pc.METRICS}
         metrics["cost_usd"] = round(metrics["cost_usd"], 6)
     return {"arm": arm, "repeats": repeats, "runs": len(runs), "counts": counts,
-            "checks": {"runs_complete": set(seen) == expected and len(seen) == len(expected)},
+            "checks": {"runs_complete": set(seen) == expected and len(seen) == len(expected),
+                       "runs_succeeded": bool(runs) and all(run["failure"] is None for run in runs)},
             "metrics": metrics, "failures": sum(run["failure"] is not None for run in runs),
             "subagents": sum(run["subagents"] for run in runs), "inits": [i for run in runs for i in run["inits"]],
-            "manifests": sorted({run["manifest"] for run in runs})}
+            "manifests": sorted({run["manifest"] for run in runs}),
+            "expected_inits": sum(run["expected_invocations"] for run in runs)}
 
 
 def isolation(spec: dict, groups: list[dict]) -> dict:
     """Required check isolation_verified for each arm in one comparison."""
     shared = {tuple(i["other_plugins"]) for group in groups for i in group["inits"] if i["other_plugins"] is not None}
     models = {i["model"] for group in groups for i in group["inits"]}
+    def native(names):
+        return tuple(name for name in (names or [])
+                     if not name.startswith("egm:") and name != "oaw-evidence" and not name.endswith(":oaw-evidence"))
+    signatures = {(native(i.get("skills")), native(i.get("commands")), tuple(i.get("tools") or []))
+                  for group in groups for i in group["inits"]}
+    banned = set(spec["invocation"].get("disallowed_tools", [])) - {"mcp__*"}
     result = {}
     for group in groups:
         arm = spec["arms"][group["arm"]]
         inits = group["inits"]
-        ok = bool(inits) and len(shared) <= 1 and len(models) <= 1 and all(
+        ok = (bool(inits) and len(inits) == group["expected_inits"]
+              and len(shared) == 1 and len(models) == 1 and all(isinstance(m, str) and m.strip() for m in models)
+              and len(signatures) == 1 and all(
             i["plugins"] is not None and i["mcp_servers"] is not None and not i["mcp_servers"]
-            and i["egm_loaded"] == arm["egm_plugin"] and i["oaw_loaded"] == bool(arm["oaw"]) for i in inits)
+            and i.get("skills") is not None and i.get("commands") is not None and i.get("tools") is not None
+            and not (set(i["tools"]) & banned)
+            and i["egm_loaded"] == arm["egm_plugin"] and i["oaw_loaded"] == bool(arm["oaw"]) for i in inits))
         result[group["arm"]] = ok
     return result
 
@@ -150,6 +166,9 @@ def judge(baseline: dict, candidate: dict, *, tolerance: int, rules: dict) -> di
         invalid.append("resource metrics are missing for some run")
     if invalid:
         return {"verdict": "invalid", "reasons": invalid, "tolerance": tolerance}
+    floor = rules.get("minimum_baseline_assertion_rate", 0)
+    if any(not n or passed / n < floor for passed, n in baseline["counts"].values()):
+        return {"verdict": "invalid", "reasons": ["baseline below pre-registered assertion floor"], "tolerance": tolerance}
     regressions = [f"{key}: {candidate['counts'][key][0]} vs {passes}" for key, (passes, _) in sorted(baseline["counts"].items())
                    if candidate["counts"][key][0] < passes - tolerance]
     total_baseline = sum(passes for passes, _ in baseline["counts"].values())
@@ -301,13 +320,19 @@ def score(root: Path, run_dirs, *, tolerance_mode: str | None = None, gate_dir: 
             cand = {**cand, "checks": {**cand["checks"], "isolation_verified": verified[cand["arm"]]}}
             if calibration or not item["verdict"]:
                 rates = {key: {"baseline": base["counts"][key], "candidate": cand["counts"][key]} for key in base["counts"]}
-                section["comparisons"].append({**item, "verdict": "calibration-only" if calibration else "sanity-only",
+                label = "calibration-only" if calibration else ("screening-only" if suite == "outcome" else "sanity-only")
+                if not calibration and (not all(base["checks"].values()) or not all(cand["checks"].values())):
+                    label = "invalid"
+                section["comparisons"].append({**item, "verdict": label,
+                                               "quality_claim": False,
+                                               "checks": {"baseline": base["checks"], "candidate": cand["checks"]},
                                                "pass_counts": rates})
                 continue
             if len(base["manifests"]) != 1 or base["manifests"] != cand["manifests"]:
                 result = {"verdict": "invalid", "reasons": ["arms come from different run manifests"]}
             else:
-                result = judge(base, cand, tolerance=tolerance, rules=rules)
+                result = judge(base, cand, tolerance=tolerance,
+                               rules={**rules, "minimum_baseline_assertion_rate": spec["suites"][suite].get("minimum_baseline_assertion_rate", 0)})
             section["comparisons"].append({**item, **result})
             if gate_dir is not None and result["verdict"] != "invalid" and base["repeats"] >= 3:
                 manifest = manifests[base["manifests"][0]]
@@ -315,7 +340,7 @@ def score(root: Path, run_dirs, *, tolerance_mode: str | None = None, gate_dir: 
         for arm, group in groups.items():
             section["arms"][arm] = {name: group[name] for name in ("repeats", "runs", "counts", "checks", "metrics",
                                                                    "failures", "subagents")}
-            section["arms"][arm]["checks"] = {**group["checks"], "isolation_verified": isolation(spec, [group])[arm]}
+            section["arms"][arm]["checks"] = {**group["checks"], "isolation_verified": isolation(spec, list(groups.values()))[arm]}
         report["suites"][suite] = section
     return report
 

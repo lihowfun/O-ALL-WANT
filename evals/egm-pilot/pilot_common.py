@@ -13,6 +13,7 @@ from pathlib import Path
 import re
 
 HERE = Path(__file__).resolve().parent
+REPO = HERE.parents[1]
 SPEC_FILE = "spec.json"
 SPEC_HASH_FILE = "spec.sha256"
 SCENARIOS_FILE = "scenarios.json"
@@ -20,6 +21,7 @@ DEFECTS_FILE = "outcome/defects.json"
 DRAFT_FILE = "outcome/project/docs/design_draft.md"
 FIXTURE_DIRS = ("protocol/project", "outcome/project", "outcome/overlay-oaw")
 SCORER_FILES = ("pilot_common.py", "score.py")
+EXECUTION_FILES = (*SCORER_FILES, "run_pilot.py", "convert_scenarios.py")
 ARMS = ("A", "B", "C")
 METRICS = ("tokens", "latency_ms", "cost_usd")  # the names scripts/improvement.py validates
 QUESTION_TOOLS = ("AskUserQuestion",)
@@ -83,6 +85,8 @@ def input_digests(root: Path) -> dict:
         DEFECTS_FILE: json_digest(root / DEFECTS_FILE),
         "fixtures": tree_digest(root, FIXTURE_DIRS),
         "scorer": sha256("\n".join(f"{name}\0{file_digest(root / name)}" for name in SCORER_FILES).encode("utf-8")),
+        "execution": sha256("\n".join(f"{name}\0{file_digest(root / name)}" for name in EXECUTION_FILES).encode("utf-8")),
+        "oaw_source": tree_digest(REPO, ("scripts", "templates")),
     }
 
 
@@ -244,6 +248,7 @@ def init_summary(parsed: dict) -> dict | None:
         return sorted({str(item.get("name") if isinstance(item, dict) else item) for item in value})
 
     plugins, commands, skills, servers = names("plugins"), names("slash_commands"), names("skills"), names("mcp_servers")
+    tools = names("tools")
     offered = (commands or []) + (skills or [])
     return {
         "model": init.get("model"),
@@ -252,7 +257,8 @@ def init_summary(parsed: dict) -> dict | None:
         "egm_loaded": (plugins is not None and "egm" in plugins) or any(name.startswith("egm:") for name in offered),
         "oaw_loaded": any(name == "oaw-evidence" or name.endswith(":oaw-evidence") for name in offered),
         "mcp_servers": servers,
-        "fields_present": sorted(field for field in ("plugins", "slash_commands", "skills", "mcp_servers") if field in init),
+        "skills": skills, "commands": commands, "tools": tools,
+        "fields_present": sorted(field for field in ("plugins", "slash_commands", "skills", "mcp_servers", "tools") if field in init),
     }
 
 

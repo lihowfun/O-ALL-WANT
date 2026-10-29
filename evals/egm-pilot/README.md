@@ -1,190 +1,86 @@
-# EGM fast-track pilot
+# EGM pilot tooling (revised offline contract)
 
-Phase F0 of the EGM fast track in
-[docs/plans/skill-catalog-execution.md](../../docs/plans/skill-catalog-execution.md):
-a pre-registered evaluation contract, fixtures, and offline tooling for comparing
-three arms on Claude Code 2.1.309. **F0 made no model calls.** F1 and later
-phases spend model quota and need the user's approval.
+No successful live result exists. The earlier F1 runner attempt at spec
+`27d99f9160d974dd26360e07013ab3a574423d479e910e22cbb3894fae6c2bde`
+failed authentication before model calls and reported $0. It is not a quality
+result or valid cost calibration. Claude CLI runs remain paused.
 
-**Status (2026-10-29): no live run has completed. F1 is halted by the user;
-no paid run will start without new approval.** One F1 attempt was made with
-the spec frozen at `27d99f9160d9…`. All 9 runs stopped at authentication
-("OAuth session expired") before any model call, so each reported
-`total_cost_usd` 0 and produced no scores. The harness is handed to an
-independent static review first.
+The revision addresses [the static review](../../docs/reviews/2026-10-29-pr4-egm.md)
+and the later pilot findings. For the separately registered Codex workflow
+experiment, see [egm-local](../egm-local/README.md). Never treat a synthetic
+fixture result, package validator or dry run as an EGM benefit.
 
-The attempt also showed what the init event of a "native" arm contains on this
-machine: the build's bundled skills and tools (for example `plugin-authoring`
-and `Artifact`) are loaded in every arm. The arms stay comparable, but arm A is
-"Claude Code 2.1.309 as shipped", not an empty agent.
-
-| Arm | Contents |
-|---|---|
-| A native | Claude Code only |
-| B EGM | Claude Code plus EGM's packaged plugin (`f0ba151`) via `--plugin-dir` |
-| C OAW + EGM | B plus `scripts/oaw.py init --host claude` in the fixture (and, in the outcome suite, the OAW evidence entry) |
-
-## Files
-
-| Path | Purpose |
-|---|---|
-| `spec.json`, `spec.sha256` | Pre-registered contract: arms, suites, repeats, tolerances, budget cap, isolation flags, verdict rules, and hashes of every input. |
-| `scenarios.json` | EGM's 30 scenarios converted from YAML, with provenance. See [NOTICE.md](NOTICE.md) and [LICENSE.egm](LICENSE.egm). |
-| `convert_scenarios.py` | The converter; rejects any YAML construct or key it does not understand. |
-| `protocol/project/` | Near-empty workspace for the protocol suite. |
-| `outcome/project/` | Fixture project with `docs/design_draft.md` (planted defects) and decision record `docs/decisions/0007-postgresql-only.md`. |
-| `outcome/overlay-oaw/` | Arm C only: `.agents/memory.md`, the OAW evidence entry for decision 0007. |
-| `outcome/defects.json` | Defect IDs, case-insensitive detection regexes, false-positive guards, and examples. |
-| `run_pilot.py` | Dry-run planner (default) and the approval-gated live runner. |
-| `score.py` | Pass counts per (case × assertion), verdicts, and `improvement.py` artifacts. |
-| `pilot_common.py` | Shared parsing and matching; its hash is pinned with `score.py`. |
-
-## What each suite proves, and what it does not
-
-**Protocol suite (EGM's 30 scenarios).** It checks whether arm C stays at parity
-with arm B, which would mean OAW does not interfere with EGM's flow (for example
-through trigger confusion or context growth). The scenarios check whether a run
-follows EGM's protocol, such as its modal wording and its refusal to choose for
-the owner. They do not measure design quality, so B beating A is expected and
-**is not a quality claim**. Arm A runs once per scenario only as a sanity
-baseline. Most scenarios name files that do not exist in any arm, because the
-upstream suite ships no fixtures for them.
-
-**Outcome suite (planted defects).** It counts how many known defects each arm
-reports in `docs/design_draft.md`:
-
-| ID | Defect |
-|---|---|
-| D1 | No latency, availability or throughput targets for a multi-region design |
-| D2 | Undefined jargon (`Kestrel shim`, `BRV pass`) |
-| D3 | Non-actionable implementation steps |
-| D4 | Contradiction: records deleted after 7 days, but looked up over 30 days |
-| D5 | MongoDB contradicts accepted decision 0007 (PostgreSQL only; MongoDB retired) |
-| N1 | Decoy: `fan-out worker` is defined; calling it undefined is a false alarm |
-
-B vs A asks whether EGM finds more than native, and C vs B whether OAW + EGM
-finds more than EGM alone. D5 is the place the plan registered in advance where
-OAW might win, because EGM's reviewers work without project context on purpose.
-The decision record is in `docs/decisions/` in **every** arm and is not linked
-from the draft. Arm C also has the OAW memory entry with source and revision.
-This keeps the test fair. Removing the fact from A and B would only measure an
-information gap, not OAW. Linking it from the draft would let every arm find it
-without any recall. A single fixture with one defect of each kind is a small
-sample. A win on it is evidence for this fixture, not a general benchmark.
-
-**Not proven anywhere here:** Codex behavior. This machine has no Codex CLI, so
-Codex stays `untested`, and Claude or fixture results never stand in for it
-(decision 2). Every metric is **operator-reported**: it comes from the host's
-result event and the runner's clock, not from a model-certified measurement.
-
-## Headless isolation and its trade-offs
-
-Every invocation uses `claude -p --output-format stream-json --verbose
---max-budget-usd <cap> --model <spec model> --setting-sources project,local
---settings <run>/config/settings.json --permission-mode acceptEdits
---permission-prompts none --strict-mcp-config --mcp-config <empty>`. Arms B and C
-add `--plugin-dir <run>/plugin/egm` and start turn 1 with `/egm:<skill>`. All seven
-EGM skills are manual-only, and EGM's `docs/claude.md` documents the
-`/egm:egm-review` form.
-
-- **No `--bare`.** It never reads OAuth or the keychain (only `ANTHROPIC_API_KEY`
-  or an `apiKeyHelper`), so it would break this machine's OAuth login. It also
-  skips CLAUDE.md discovery, which would remove arm C's treatment. `--safe-mode`
-  and `--restricted` were rejected for the same kind of reason (see `spec.json`
-  `invocation.rejected_options`).
-- **`--setting-sources project,local`** keeps `~/.claude/settings.json`
-  (hooks, enabled plugins, permissions) out of every arm without editing it.
-  Project files still load, so arm C's `CLAUDE.md` and `.claude/skills` apply.
-  The cost of this choice is that arm A is "native minus the user's personal
-  settings", and nothing here proves that user-level memory or skills stay out.
-  On this machine `~/.claude` has no `CLAUDE.md`, skills, agents or plugins.
-- **`--settings`** turns hooks off and allows reads only of the copied plugin's
-  `agents/`, `docs/`, `resources/` and `skills/` folders, as EGM's Claude guide
-  asks for headless runs. Bash and other prompting tools are denied in every arm
-  (`--permission-prompts none`); edits are accepted inside the workspace only.
-- **`--strict-mcp-config` with an empty config** loads no MCP servers in any arm.
-- **The plugin comes from `distributions/claude`**: EGM's packaged runtime, the
-  same skills, agents and resources but without `test_scenarios.yaml`, so a run
-  cannot read the expected answers. It is copied per run; nothing is installed.
-- **Sessions:** single-turn runs use `--no-session-persistence`. The one
-  two-turn scenario needs `--session-id` and then `--resume`, so it leaves a
-  transcript under `~/.claude/projects/` (not settings).
-- **Output:** stream-json ends with the same result object that
-  `--output-format json` prints, and adds the `system/init` event (the per-run
-  isolation evidence) and parent `Agent` calls (sub-agent counts).
-  `score.py` accepts either format.
-- `DISABLE_AUTOUPDATER=1` keeps the host version fixed during a run set.
-  The manifest records whether `ANTHROPIC_API_KEY` was set, but never its value.
-
-## Running
+## Free checks
 
 ```sh
-# dry-run (default): planned commands and run counts; calls nothing
-python evals/egm-pilot/run_pilot.py
-python evals/egm-pilot/run_pilot.py --phase F2 --show-all
-python evals/egm-pilot/run_pilot.py --json
-
-# contract integrity (add --egm-src <checkout> to check the plugin tree hash too)
-python evals/egm-pilot/run_pilot.py --verify
-
-# regenerate scenarios.json/LICENSE.egm from an EGM checkout (read as data only)
-python -I -X utf8 evals/egm-pilot/convert_scenarios.py --source <egm-checkout> --check
+python3 evals/egm-pilot/run_pilot.py --dry-run --phase all
+python3 evals/egm-pilot/run_pilot.py --verify
+python3 -m unittest tests.test_egm_pilot
 ```
 
-Planned runs: F1 has 9 runs (12 invocations), F2 has 330 runs (A 30, B 150,
-C 150; 341 invocations), and F3 has 15 runs (5 per arm).
+Dry-run is the default and starts no subprocess. Verify checks the frozen
+contract, case data, runner/converter/scorer and OAW scripts/templates.
+`--freeze` records intentional pre-experiment changes; preserve the old identity
+in Git and obtain separate user authorization before any model invocation.
 
-`--live` refuses unless all of the following hold:
+## What was fixed
 
-- `--i-have-approval <phase>-<first 12 hex of spec.sha256>` is given for that
-  phase.
-- `spec.json` matches `spec.sha256`, and every pinned input hash matches
-  (scenarios, defects, fixtures, scorer code, EGM plugin tree).
-- `model` is set.
-- `claude --version` reports 2.1.309.
+- Every invocation needs complete init metadata. Models, native skills/commands,
+  tools and non-treatment plugins must match. Missing metadata fails closed.
+- Every baseline run must complete successfully; failed reviews cannot win
+  through lower costs. Failed/zero-token/zero-cost attempts are not calibration.
+- Resume preserves the original manifest and refuses changed identities. Raw
+  artifacts must remain outside the repository.
+- Restricted mode, explicit tool selection and denied command/network tools
+  replace the mistaken assumption that `permission-prompts none` disables Bash.
+  The complete official plugin is inside the workspace under `.egm-runtime`,
+  with edits denied. Actual host enforcement/discovery is still unverified.
+- Both baseline and candidate get the same explicit current ADR reading list.
+  A memory-index difference cannot be called a superior memory engine without
+  a plain-index control and a memory-removal ablation.
+- Regex output is **triage only**. Outcome comparisons cannot emit evolution,
+  parity, or official improvement artifacts. Independent blinded grading of
+  concrete findings, unsupported claims and costs is required.
 
-At F1, fill `model`/`effort` (and, if needed, the cap), then run
-`run_pilot.py --freeze --egm-src <checkout>`. The new hash produces a new token.
-Raw runs go to `<temp>/oaw-egm-pilot/<phase>/` by default, outside the
-repository. Do not commit them.
+## Protocol and outcome have different purposes
 
-```sh
-python evals/egm-pilot/score.py --runs <out>/F2 --runs <out>/F3 --emit-gate <dir>
-```
+The 30 EGM scenarios / 53 assertions are protocol conformance probes, not design
+quality measurements. Their original file/conversation preconditions are not
+fully instantiated here. F2 live is blocked until those fixtures exist. An
+otherwise valid protocol comparison additionally requires baseline passes of
+at least 4/5 per assertion; equal failures never prove non-interference.
 
-`--emit-gate` writes `evaluation.json`, `baseline.json`, `candidate.json`,
-`arm.diff` and `snapshot.txt` for each verdict comparison. Then
-`scripts/improvement.py --base-dir <dir>/<comparison> propose --target arm.txt
---patch arm.diff --evaluation evaluation.json --snapshot "$(cat snapshot.txt)" ...`
-followed by `compare` reruns the official gate. Rows are passes-first within each
-(case × assertion), so `improvement.py` judges with tolerance 0: a strict
-cross-check until P4 adds tolerance. The pilot verdict applies the
-pre-registered live tolerance (1 of 5).
+Outcome has one design fixture with known defects and a decoy. Its regexes now
+reject several demonstrated false positives, but remain an incomplete semantic
+grader. Broader, separately frozen cases and hard negatives are in egm-local.
 
-## Cost estimate once F1 calibrates
+## Retained optional Claude runner
 
-With `c̄(suite, arm)` = mean `total_cost_usd` per invocation in F1 and `S = 30`
-scenarios (31 turns):
+The program retains explicit `--live` with a matching phase/spec authorization
+token, pinned runtime tree, exact host version and a free auth-status preflight.
+**This does not authorize a run. No paid execution is requested by the current
+workflow.** F1 is now only three outcome smoke calls (one per A/B/C), capped at
+$1.50 each, $4.50 total; this would calibrate setup, not establish quality.
+F3 is 15 calls, at most $22.50 at that cap. F2 remains blocked. Dry-run derives
+counts and ceilings from spec.json; these are caps, not expected spend.
 
-- `E[F2] ≈ 31 × (1·c̄(protocol,A) + 5·c̄(protocol,B) + 5·c̄(protocol,C))`
-- `E[F3] ≈ 5 × (c̄(outcome,A) + c̄(outcome,B) + c̄(outcome,C))`
-- Hard ceiling = invocations × cap: F2 341 × $2 = $682, F3 15 × $2 = $30.
+Claude Code 2.1.309 also exposes native `plugin eval` with a no-plugin baseline.
+Prefer evaluating that native facility before growing a second general live
+runner. Nothing here changes user login/configuration or installs a plugin.
+The Codex experiment uses the current host's independently authorized agents,
+not Claude CLI. Bundled native skills belong in the baseline, with the same
+capability set across arms.
 
-`run_pilot.py --estimate-from <out>/F1` prints the expected cost and a high
-estimate (worst F1 sample × invocations) per phase, suite and arm. F1 has only
-one or two samples per cell, so prefer the high estimate.
+## Upstream identity and licensing
 
-## Open until F1 (needs a live call)
+EGM manifest **0.1.0**, commit
+`f0ba151b252c9abf1318d9fe857a43265d06de89`, Apache-2.0. The source commit
+is the immutable identity; manifest version alone is not a published-release
+or compatibility claim. `distributions/claude` is the complete official runtime,
+not seven copied skill files. The source package is never bundled with OAW.
+Converted scenario JSON is redistributed with [NOTICE](NOTICE.md) and
+[LICENSE.egm](LICENSE.egm), including source-file hashes and modification notes.
 
-- The init event's field names (`plugins`, `slash_commands`, `skills`,
-  `mcp_servers`). The isolation check depends on them, and arm C must show
-  `oaw-evidence` under `--setting-sources project,local`.
-- Whether `/egm:<skill>` expands in `-p` mode with `--plugin-dir`, and how EGM's
-  modals render headless (`AskUserQuestion` inputs or plain text). Protocol
-  assertions read both.
-- Whether reviewer reads of the copied plugin pass the `Read(//c/...)` rules, and
-  whether `Agent` needs approval under `--permission-prompts none`.
-- Whether `usage` includes sub-agents (the tokens metric prefers `modelUsage`).
-  Also the result subtype when the budget cap is hit (scored as a failed run).
-- Whether $2 covers an uninterrupted EGM review: it spawns many reviewers. If it
-  does not, raise the cap at F1 and re-freeze before F3.
+`score.py --emit-gate` remains available only for valid protocol comparisons.
+Exports are synthetic/observational artifact checks and not statistical proof.
+There are no exported outcome-quality gates from regex matches.

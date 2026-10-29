@@ -14,7 +14,7 @@
       "version": "0.1.0",
       "version_kind": "manifest",
       "license": "Apache-2.0",
-      "usage": "evaluated-only",
+      "usage": "evaluation-fixtures",
       "bundled": false,
       "installed_by_oaw": false,
       "live_host_validation": "not-run",
@@ -159,7 +159,17 @@
           "sha256": "bca74669372112c5aa31c7a71e1fef76ccedd7a17169e6d3f64c2a2686dcce97",
           "url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-review/test_scenarios.yaml"
         }
-      ]
+      ],
+      "runtime_bundled": false,
+      "derived_artifacts": [
+        "evals/egm-pilot/scenarios.json"
+      ],
+      "license_notice": [
+        "evals/egm-pilot/NOTICE.md",
+        "evals/egm-pilot/LICENSE.egm"
+      ],
+      "static_claude_validation": "Claude Code 2.1.309 manifest validation passed; all skill/agent components passed --strict. Not live discovery or a model result.",
+      "codex_workflow_experiment": "pre-registered, not run"
     },
     {
       "id": "actions-checkout",

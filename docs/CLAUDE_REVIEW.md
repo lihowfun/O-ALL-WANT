@@ -8,6 +8,14 @@ fixed source revision; the future catalog and native EGM integration are not
 implemented in this PR. Review the external-skill coexistence fix separately
 from claims about native EGM installation or quality.
 
+The later feature integration adds licensed evaluation fixtures and fixes the
+pilot's false-positive gates. It still ships no general catalog runtime. Review
+the [new frozen experiment](../evals/egm-local/README.md) and
+[verification status](validation/egm-offline-2026-10-29.md): synthetic checks do
+not meet the user's required real parity condition, and main must remain
+unmerged until the actual evidence passes. Verify that all initial trial inputs
+stay immutable and that two independent graders receive anonymous reports.
+
 ## Main questions
 
 1. **Native-first scope.** Do the default AGENTS.md and three native skills add non-obvious OAW value without duplicating native reasoning, memory, compaction or generic task procedure? Are the removed v1 rules truly absent from installed defaults?
