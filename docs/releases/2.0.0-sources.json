@@ -18,6 +18,15 @@
       "bundled": false,
       "installed_by_oaw": false,
       "live_host_validation": "not-run",
+      "local_experiment_materialization": {
+        "files": 64,
+        "line_endings": "CRLF",
+        "files_matching_primary_commit_after_lf_normalization": 63,
+        "all_assigned_workflow_inputs_match": true,
+        "readme_commit": "e45f640cc3799cf2a19c1dfb88aa850c021231ac",
+        "readme_assigned_to_reviewers": false,
+        "deviation": "One older command-prefix sentence in README; discovered during collection before grading; as-used files preserved unchanged."
+      },
       "files": [
         {
           "path": "plugin.json",

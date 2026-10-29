@@ -9,7 +9,7 @@ progress, with no accepted quality result yet.
 
 ## Completed offline work
 
-- Windows / CPython 3.12.14: full OAW gate, **132 tests, zero skips, 8/8 groups**.
+- Windows / CPython 3.12.14: full OAW gate, **133 tests, zero skips, 8/8 groups**.
   This includes both-host installation, external-skill coexistence, original
   migration/recall/wiki/improvement regressions and the pilot/local tests.
 - Failed reviews cannot win on lower cost; missing per-invocation init/model
@@ -25,8 +25,14 @@ progress, with no accepted quality result yet.
   schemas/components, not discovery, execution or quality.
 - Source: EGM manifest **0.1.0** at full commit
   `f0ba151b252c9abf1318d9fe857a43265d06de89`, Apache-2.0. Seven upstream YAML
-  hashes / 30 converted scenarios and the official Claude runtime's 64-file tree
-  match the pinned source. Runtime is not vendored or installed by OAW.
+  hashes / 30 converted scenarios match the pinned source. A collection-time
+  recheck corrected the earlier runtime-tree claim: 63 of its 64 files match
+  that commit after CRLF normalization, including all assigned workflow inputs.
+  Its README has one older command-prefix sentence, exactly matching upstream
+  `e45f640cc3799cf2a19c1dfb88aa850c021231ac`. The README is not an assigned review
+  input. Preserve this as-used deviation and both raw/normalized hashes; do not
+  silently replace the runtime during collection or call the tree byte-identical.
+  Runtime is not vendored or installed by OAW.
 
 ## Real experiment registered; collection in progress
 
