@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "id": "oaw-egm-local-v3",
-  "status": "pre-registered; no model outputs collected; delegation authorization pending",
+  "id": "oaw-egm-local-v4",
+  "status": "User authorized Codex independent subagents. Earlier calibration is invalid setup, not quality evidence; no findings or grades were inspected by the root before this scope correction. Fresh 27-trial registration.",
   "upstream": {
     "repository": "https://github.com/google/elephant-goldfish-model",
     "commit": "f0ba151b252c9abf1318d9fe857a43265d06de89",
@@ -134,10 +134,14 @@
     {
       "spec_sha256": "ddf71e35d9de7ae6dd92902ddea474a8e1dae80956c0f643b912a84a719a3c85",
       "status": "zero model outputs; exact upstream full-flow inspection requires nine direct reviewers (1+1+3+1+3), so equal arm cap corrected from eight to nine before first dispatch"
+    },
+    {
+      "spec_sha256": "675703e17644cd4873c06deb1864428ac424909e9891447cc217ed0a00f0661c",
+      "status": "invalid setup: report-read ban ambiguously blocked official within-trial Stage 8 input; five primary trials started (four completed, one interrupted); no quality grading, no acceptance use; raw artifacts preserved"
     }
   ],
   "prompt_hashes": {
-    "review_prompt.md": "7c9b0c6715db8686690e5929610290008cee20fd6856d64025e0d9f1fd48f184",
+    "review_prompt.md": "17099cbbca87eb531ce9d76b1544f60cbaa44d758bd0e8039a4c7b618e9bf5f6",
     "grade_prompt.md": "7fde3fd0a76ff4c9c9c20ec338950b5b805048b3a7002384c1ed11f11d24c22f"
   },
   "dispatch_seed": 20261029,

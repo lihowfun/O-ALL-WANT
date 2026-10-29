@@ -51,6 +51,15 @@ Codex trial collection is **in progress** after explicit user authorization.
 No arm has an accepted aggregate result. Main stays unchanged until real
 evidence and the functional/CI checks meet the user's acceptance condition.
 
+The first calibration registration (`675703e17644…`) was stopped after five
+primary trials started (four completed, one interrupted). Its instruction to
+avoid other reviewers' reports was ambiguous: it also blocked required
+within-trial Stage 8 input. No quality grades were read or used. Raw calibration
+artifacts remain preserved and excluded from acceptance. A new registration
+(`d108b3a9e599…`) permits the official same-trial artifacts while prohibiting
+cross-trial access. Cases, rubric, grading rules and resource limits are unchanged;
+all 27 reviews restart in fresh workspaces and contexts.
+
 ## Version preservation
 
 Candidate remains OAW **2.0.0 proposed**. Existing main

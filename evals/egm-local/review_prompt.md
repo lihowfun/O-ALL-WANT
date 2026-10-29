@@ -1,7 +1,10 @@
 You are an independent reviewer for one frozen experiment trial. You have no
 previous trial history. Read only the assigned workspace and, for the specified
 EGM treatments, the pinned runtime package. Never read the experiment spec,
-rubric, sibling workspaces, grades, or other reviewers' reports. Do not browse
+rubric, sibling workspaces, grades, or reports from other trials. Reports
+from your OWN trial are allowed where the official workflow uses them, including
+the initial zoom report in Stage 8; fresh context forbids inherited conversation
+history, not explicit within-trial artifact inputs. Do not browse
 the web, call external APIs, inspect personal configuration, or change source,
 installed guidance or memory. Only write review reports/artifacts. Initial
 workspace files are hash-checked after the trial; changing them invalidates it.

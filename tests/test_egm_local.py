@@ -20,6 +20,10 @@ class LocalExperimentTests(unittest.TestCase):
         self.assertEqual(spec["repeats"], 3)
         self.assertEqual(set(spec["cases"]), {"orders", "events", "clean"})
         self.assertEqual(len(checksum), 64)
+        prompt = (SOURCE / "review_prompt.md").read_text(encoding="utf-8")
+        self.assertIn("reports from other trials", prompt)
+        self.assertIn("OWN trial", prompt)
+        self.assertNotIn("other reviewers' reports", prompt)
 
     def test_case_or_preparation_drift_is_rejected(self):
         with tempfile.TemporaryDirectory(prefix="egm-local-integrity-") as temporary:
