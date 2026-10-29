@@ -137,14 +137,18 @@ flowchart LR
 
 ---
 
-## 🔁 What changes on a new session
+## 🔁 What OAW adds on top of a native host
 
-| On cold start, the agent… | Without OAW | With OAW v2 |
+v1 was built when coding agents forgot everything between sessions. Today Claude Code and Codex read project instruction files, keep their own memory and discover skills natively. So the honest comparison is not "with or without OAW" but "native host alone" versus "native host + OAW".
+
+| When the agent needs… | Native host alone | Native host + OAW v2 |
 |---|---|---|
-| Knows non-obvious constraints and the real test commands | You repeat them | `AGENTS.md`, short and written by you |
-| Recalls why a decision was made | You re-explain it | `memory recall` returns bounded excerpts with source locations |
-| Handles an old note | Treats it as an instruction | Treats it as evidence and checks it against current code |
-| Proposes a new rule or skill | Adds it freely | `oaw-improve` needs a diff, matched A/B evidence and your accept |
+| Project rules and real verification commands | Reads its own instruction file (`AGENTS.md` for Codex, `CLAUDE.md` for Claude Code) | One short `AGENTS.md` shared by both hosts; `CLAUDE.md` just imports it |
+| Your personal preferences across sessions | The host's own memory, where enabled | Left to the host; OAW adds nothing here on purpose |
+| Why the project made a decision | Personal memory or chat history: not in the repo, not shared with the team or the other host | Project evidence in the repo with its source, revision and scope; `memory recall` returns bounded excerpts |
+| To trust an old note | Up to the agent's judgment | The evidence skill says to check it against current code and mark superseded conclusions |
+| The same skills in both hosts | A separate folder and copy per host | One authored source installs `.agents/skills` and `.claude/skills`; `doctor` checks them |
+| A new rule or skill | Added whenever someone writes it | Optional `oaw-improve`: a diff, matched A/B evidence and your explicit accept |
 
 > No v2 token-savings number is claimed. Native Claude Code / Codex A/B runs and live skill discovery are not yet measured; see [local validation](docs/validation/v2.0.0-local.md).
 

@@ -137,14 +137,18 @@ flowchart LR
 
 ---
 
-## 🔁 新 Session 時，差在哪
+## 🔁 原生 host 之上，OAW 還多做什麼
 
-| 冷啟動時，agent… | 沒有 OAW | 有 OAW v2 |
+v1 誕生的時代，coding agent 每換一個 session 就全部忘光。現在 Claude Code 和 Codex 原生就會讀專案規則檔、有自己的記憶，也會自己發現 skill。所以誠實的比較不是「有沒有 OAW」，而是「只有原生 host」對上「原生 host 加 OAW」。
+
+| 當 agent 需要… | 只有原生 host | 原生 host + OAW v2 |
 |---|---|---|
-| 知道不明顯的限制和真正的測試指令 | 你每次重講 | `AGENTS.md`，短短一份，由你撰寫 |
-| 記得某個決策為什麼這樣做 | 你重新解釋 | `memory recall` 回傳附來源位置的精簡摘錄 |
-| 看到一則舊筆記 | 當成指令照做 | 當成證據，對照現行程式碼檢查 |
-| 想新增規則或 skill | 直接加 | `oaw-improve` 要有 diff、對照組 A/B 證據，並經過你同意 |
+| 專案規則和真正的驗證指令 | 各讀各的規則檔（Codex 讀 `AGENTS.md`、Claude Code 讀 `CLAUDE.md`） | 一份短短的 `AGENTS.md` 兩個 host 共用，`CLAUDE.md` 只負責引用它 |
+| 你個人的跨 session 偏好 | host 自己的記憶（有啟用的話） | 交給 host，OAW 刻意不重做 |
+| 專案某個決策的來龍去脈 | 個人記憶或對話紀錄：不在 repo 裡，團隊和另一個 host 都看不到 | 存在 repo 裡的專案證據，附來源、版本和適用範圍；`memory recall` 有上限地取回 |
+| 判斷一則舊筆記能不能信 | 看 agent 自己判斷 | evidence skill 明確要求對照現行程式碼，並標記已被取代的結論 |
+| 兩個 host 用同一套 skill | 每個 host 各放一份、各自維護 | 同一份來源產生 `.agents/skills` 和 `.claude/skills`，`doctor` 會檢查 |
+| 新增規則或 skill | 誰寫了就加 | 選配 `oaw-improve`：要有 diff、對照組 A/B 證據，並經過你明確同意 |
 
 > v2 沒有宣稱任何 token 節省數字。Claude Code／Codex 的實機 A/B 和實際 skill discovery 都還沒量測；見[本機驗證紀錄](docs/validation/v2.0.0-local.md)。
 
