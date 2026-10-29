@@ -6,7 +6,7 @@ Install with `python3 scripts/oaw.py init --target PROJECT --with-improve`. In a
 
 ## Propose a concrete change
 
-Write a focused git text diff and a falsifiable hypothesis. A target can be one file or a directory scope; paths in the diff must stay within it. Binary, rename-only and quoted-path diffs are not supported by this first version. Keep source files unchanged while collecting the proposal; run the candidate in an isolated branch/worktree.
+Write a focused git text diff and a falsifiable hypothesis. A target can be one file or a directory scope; paths in the diff must stay within it. Binary, rename, copy, symlink/submodule and quoted-path diffs are not supported by this first version; the patch must be plain `git diff` output (a/ b/ prefixes, no email preamble or trailing text). Keep source files unchanged while collecting the proposal; run the candidate in an isolated branch/worktree.
 
 Create a fixed evaluation JSON, for example:
 
@@ -76,7 +76,7 @@ python3 scripts/improvement.py decide ID --decision accept --reason "Reviewed ar
 
 The comparator checks complete/matched cases and metadata, evidence availability, finite measurements, and patch identity. Any previously passing assertion that fails in the candidate is a quality regression even if the overall pass count is unchanged. Required candidate checks must pass. Resource regressions beyond the predeclared limit reject the candidate. Otherwise, increased complete-case passes or a sufficient efficiency gain makes it eligible; no demonstrated gain is inconclusive.
 
-Acceptance requires an eligible comparison and an explicit reason. It revalidates artifact hashes, evidence and the comparison before recording the decision. A rejected candidate can be recorded with `--decision reject`. Decided proposals are immutable; create a new proposal for another attempt. Decisions never apply code, publish, merge or expand permission.
+Acceptance requires an explicit reason and that every recorded comparison for the proposal is eligible; any rejected or inconclusive comparison means a new proposal is required. It revalidates artifact hashes, evidence and the comparison before recording the decision. A rejected candidate can be recorded with `--decision reject`. Decided proposals are immutable; create a new proposal for another attempt. Decisions never apply code, publish, merge or expand permission.
 
 The tool validates operator-supplied measurements and hashed evidence. It cannot certify the truth of a trace, independence of graders, statistical significance, or future applicability. Files can change after a decision, so preserve the reviewed artifacts and hashes. A human/independent reviewer still evaluates the patch and provenance; applying it is a separate development action.
 
@@ -84,4 +84,4 @@ The tool validates operator-supplied measurements and hashed evidence. It cannot
 
 Keep `.oaw/improvements/`, native transcripts and sensitive run artifacts out of public Git history. Use a project-approved artifact location and retention policy. Do not extract private user preferences into shared project knowledge. Promote a durable lesson only when its scope, sources and current applicability are clear.
 
-If native-only behavior is already adequate, stop. If evidence is inconclusive, gather a targeted missing observation or reject the change; do not keep adding instructions until a grader agrees.
+If native-only behavior is already adequate, stop. If evidence is inconclusive, gather a targeted missing observation under a new proposal or reject the change; do not keep adding instructions until a grader agrees.

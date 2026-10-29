@@ -28,9 +28,9 @@ python3 scripts/oaw.py doctor --target /path/to/project --json
 
 Use `--profile knowledge` to add wiki tools/stubs and `--with-improve` to add the optional improvement workflow. `--host codex` is the default; choose `--host claude` or `--host both` for the corresponding native skill folders. Profile and host additions persist on later operations; a default command does not remove them.
 
-The preview makes no changes. Applied migration recognizes committed v1 template/script hashes in LF or CRLF form, or unchanged files from the previous v2 manifest. Only those known framework files can be replaced automatically. Unchanged legacy flat skills and old adapters can be retired to backup. Unknown/custom files remain in place.
+The preview makes no changes. Applied migration recognizes committed v1 template/script hashes in LF or CRLF form, or unchanged files from the previous v2 manifest. Only those known framework files can be replaced automatically. Unchanged legacy flat skills and old adapters can be retired to backup. Unknown/custom files remain in place. Your edits to a managed file are kept while the framework copy is unchanged; doctor warns, and a later framework change to that file becomes a conflict proposal.
 
-Existing `.agents/memory.md`, raw/knowledge pages, AI_CONTEXT.md, ROADMAP.md and root VERSION.json are preserved. Wiki stubs are seed-only, never replacement-managed. An existing custom CLAUDE.md may still contain v1 rules; review its proposal before assuming the old behavior is gone.
+Existing `.agents/memory.md`, raw/knowledge pages, AI_CONTEXT.md, ROADMAP.md and root VERSION.json are preserved. Wiki stubs are seed-only, never replacement-managed. An existing custom CLAUDE.md may still contain v1 rules. If it does not import `@AGENTS.md`, migration also keeps the v1 AGENTS.md pointer and stages both as paired conflicts, so Claude and Codex keep following the same policy until you resolve them.
 
 ## Resolve a custom policy conflict
 
@@ -43,7 +43,7 @@ Conflicts return exit 3 after safe changes/proposals are recorded; doctor stays 
 python3 scripts/oaw.py migrate --target /path/to/project --apply --keep-custom CLAUDE.md
 ```
 
-Repeat `--keep-custom` for additional reviewed conflict paths. It does not edit those files or claim they match framework policy; future migration preserves them. It is only valid with `--apply` and for relevant package conflicts/custom paths. Keep the file type and any native skill schema valid.
+Repeat `--keep-custom` for additional reviewed conflict paths. It does not edit those files or claim they match framework policy; future migration preserves them. It is only valid with `--apply` and for relevant package conflicts, edited managed files or custom paths. Keeping a CLAUDE.md without an `@AGENTS.md` import also requires a decision on its paired AGENTS.md (adopt the proposal or `--keep-custom AGENTS.md`); doctor then warns that Claude and Codex may follow different policy. Keep the file type and any native skill schema valid.
 
 ## Backups and recovery
 

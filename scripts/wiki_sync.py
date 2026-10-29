@@ -16,7 +16,7 @@ from datetime import date, datetime
 from urllib.parse import quote, unquote, urlsplit, urlunsplit
 
 from oaw_common import (
-    atomic_write, confined_path, extract_annotations, locked_update,
+    atomic_write, close_fence, confined_path, extract_annotations, locked_update,
     render_annotations, validate_topic_id,
 )
 
@@ -310,7 +310,9 @@ def _render_topic_page(topic_id, sources, existing_annotations=""):
         )
         if source["related_topics"]:
             sections.append("- Related topics: " + ", ".join(f"`{item}`" for item in source["related_topics"]))
-        sections.extend(["", _rebase_markdown_links(source["body"].strip(), source["path"], target_path)])
+        # An unterminated raw fence would hide the next source and the annotation block.
+        body = _rebase_markdown_links(source["body"].strip(), source["path"], target_path)
+        sections.extend(["", close_fence(body)])
 
     if related_topics:
         sections.extend(["", "## Related Topics"])
@@ -463,7 +465,8 @@ def refresh(topic):
 
 _LINK_DESTINATION = r"(?:\\.|[^\s()\\]|\((?:\\.|[^()\\])*\))+"
 _INLINE_LINK = re.compile(r"(!?\[[^\]\n]*\]\()(<[^>\n]+>|" + _LINK_DESTINATION + r")(\s+[^)\n]*)?(\))")
-_REFERENCE_LINK = re.compile(r"^(\s{0,3}\[[^\]\n]+\]:\s*)(<[^>\n]+>|\S+)", re.MULTILINE)
+# `[^note]: text` is a footnote definition, not a link reference.
+_REFERENCE_LINK = re.compile(r"^(\s{0,3}\[(?!\^)[^\]\n]+\]:\s*)(<[^>\n]+>|\S+)", re.MULTILINE)
 
 
 def _map_markdown_links(content, transform):
@@ -498,7 +501,10 @@ def _rebase_markdown_links(content, source_path, target_path):
     def transform(destination):
         angular = destination.startswith("<") and destination.endswith(">")
         raw = destination[1:-1] if angular else destination
-        resolved = _relative_path(source_path, raw)
+        try:
+            resolved = _relative_path(source_path, raw)
+        except ValueError:
+            return destination  # Out-of-project targets stay as written.
         if resolved is None:
             return destination
         parsed = urlsplit(raw)
@@ -512,7 +518,10 @@ def _rebase_markdown_links(content, source_path, target_path):
 
 
 def _relative_path(from_path, target):
-    """Resolve a repo-relative markdown link against the current file."""
+    """Resolve a markdown link against the current file; a leading '/' is the repo root.
+
+    Raises ValueError for targets outside the project boundary.
+    """
     target = target.strip("<>")
     parsed = urlsplit(target)
     if parsed.scheme or parsed.netloc or target.startswith("#"):
@@ -520,8 +529,11 @@ def _relative_path(from_path, target):
     normalized = unquote(re.sub(r"\\([\\() ])", r"\1", parsed.path))
     if not normalized:
         return None
-    if os.path.isabs(normalized):
-        return confined_path(BASE_DIR, normalized)
+    if normalized.startswith("/"):
+        try:  # An absolute in-project path, else GitHub-style root-relative.
+            return confined_path(BASE_DIR, normalized)
+        except ValueError:
+            return confined_path(BASE_DIR, normalized.lstrip("/"))
     return confined_path(BASE_DIR, os.path.dirname(from_path), normalized)
 
 
@@ -530,6 +542,18 @@ def _extract_markdown_links(content):
     links = []
     _map_markdown_links(content, lambda target: links.append(target) or target)
     return links
+
+
+def _check_links(path, content, kind, where, issues, warnings):
+    """Broken local links are errors; links leaving the project cannot be checked."""
+    for link in _extract_markdown_links(content):
+        try:
+            resolved = _relative_path(path, link)
+        except ValueError:
+            warnings.append(f"{kind} link outside the project in {where}: {link}")
+            continue
+        if resolved and not os.path.exists(resolved):
+            issues.append(f"broken {kind} link in {where}: {link}")
 
 
 def _parse_date(value):
@@ -690,10 +714,7 @@ def lint(strict=False):
             issues.append(f"raw source missing topic_id: {source['relative_path']}")
         if not source["summary"]:
             issues.append(f"raw source missing summary: {source['relative_path']}")
-        for link in _extract_markdown_links(source["body"]):
-            resolved = _relative_path(source["path"], link)
-            if resolved and not os.path.exists(resolved):
-                issues.append(f"broken raw link in {source['relative_path']}: {link}")
+        _check_links(source["path"], source["body"], "raw", source["relative_path"], issues, warnings)
 
     for source_id, refs in raw_source_ids.items():
         if len(refs) > 1:
@@ -753,16 +774,14 @@ def lint(strict=False):
         for related_topic in page["related_topics"]:
             if related_topic == page["id"]:
                 issues.append(f"self-referential related topic in {page['filename']}: {related_topic}")
-        for link in _extract_markdown_links(page["body"]):
-            resolved = _relative_path(page["path"], link)
-            if resolved and not os.path.exists(resolved):
-                issues.append(f"broken knowledge link in {page['filename']}: {link}")
+        _check_links(page["path"], page["body"], "knowledge", page["filename"], issues, warnings)
 
     for page_id, filenames in pages_by_id.items():
         if len(filenames) > 1:
             issues.append(f"duplicate topic id '{page_id}': {', '.join(filenames)}")
 
     known_page_ids = set(pages_by_id.keys())
+    raw_topic_ids = {source["topic_id"] for source in raw_sources}
     inbound_links = defaultdict(int)
     for page in knowledge_pages:
         page_date = _parse_date(page["last_updated"])
@@ -770,6 +789,21 @@ def lint(strict=False):
             if related_topic not in known_page_ids:
                 warnings.append(f"unresolved related topic in {page['filename']}: {related_topic}")
             inbound_links[related_topic] += 1
+
+        # Compiled pages list their raw sources; ledgers like EXPERIMENT_LOG list none.
+        if page["build_origin"] == "wiki_sync" and page["source_refs"]:
+            moved = [ref for ref in page["source_refs"]
+                     if ref in raw_sources_by_ref and raw_sources_by_ref[ref]["topic_id"] != page["id"]]
+            if page["id"] not in raw_topic_ids:
+                issues.append(
+                    f"orphaned compiled page '{page['id']}': no raw source has this topic_id; "
+                    f"delete docs/knowledge/{page['filename']} or restore its raw source, then rebuild"
+                )
+            elif moved:
+                issues.append(
+                    f"stale page '{page['id']}': {', '.join(moved)} moved to another topic; "
+                    "run `python3 scripts/wiki_sync.py build`"
+                )
 
         if page["source_refs"]:
             source_dates = []

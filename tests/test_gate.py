@@ -41,6 +41,36 @@ class GateTests(unittest.TestCase):
         self.assertFalse(check.passed)
         self.assertEqual(check.detail, "exit 42")
 
+    def regression_fixture(self, root, files):
+        for name, body in files.items():
+            (root / name).write_text("import unittest\n\n" + body, encoding="utf-8")
+        return root
+
+    def test_regression_inventory_requires_modules_count_and_no_skips(self):
+        passing = "class A(unittest.TestCase):\n    def test_ok(self):\n        pass\n"
+        skipped = "class B(unittest.TestCase):\n    def test_skip(self):\n        self.skipTest('fixture')\n"
+        with tempfile.TemporaryDirectory(prefix="oaw-gate-") as temporary:
+            root = self.regression_fixture(Path(temporary), {"test_a.py": passing})
+            self.assertTrue(harness_check.regression_check(root, ("test_a",), 1).passed)
+            missing = harness_check.regression_check(root, ("test_a", "test_b"), 1)
+            self.assertFalse(missing.passed)
+            self.assertIn("missing test modules: test_b", missing.detail)
+            self.assertFalse(harness_check.regression_check(root, ("test_a",), 2).passed)
+            self.regression_fixture(root, {"test_b.py": skipped})
+            with patch.dict(os.environ, {"OAW_ALLOW_SKIPS": ""}):
+                result = harness_check.regression_check(root, ("test_a", "test_b"), 2)
+            self.assertFalse(result.passed)
+            self.assertIn("1 skipped test(s)", result.detail)
+            with patch.dict(os.environ, {"OAW_ALLOW_SKIPS": "1"}):
+                self.assertTrue(harness_check.regression_check(root, ("test_a", "test_b"), 2).passed)
+
+    def test_regression_import_failure_fails_gate(self):
+        with tempfile.TemporaryDirectory(prefix="oaw-gate-") as temporary:
+            root = self.regression_fixture(Path(temporary), {"test_a.py": "raise RuntimeError('import fixture')\n"})
+            result = harness_check.regression_check(root, (), 0)
+            self.assertFalse(result.passed)
+            self.assertIn("exit 1", result.detail)
+
     def test_redirected_cp1252_output_is_configured_as_utf8(self):
         scripts = str(Path(__file__).resolve().parents[1] / "scripts")
         code = f"import sys; sys.path.insert(0, {scripts!r}); import harness_check; harness_check.configure_stdio(); print('\\u26a0 wiki \\u4e2d\\u6587')"

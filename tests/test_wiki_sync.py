@@ -168,6 +168,60 @@ class WikiSyncTests(unittest.TestCase):
         result, output = self.quiet(wiki.lint)
         self.assertEqual(result, 0, output)
 
+    def test_unclosed_raw_fences_cannot_swallow_annotations(self):
+        self.raw(body="Example:\n\n```python\nprint('unterminated')")
+        self.raw(body="~~~~\n```\nstill inside the tilde fence", name="second.md")
+        self.quiet(wiki.build)
+        page = self.knowledge / "Topic.md"
+        page.write_text(common.append_annotation(page.read_text(encoding="utf-8"), "keep this note"), encoding="utf-8")
+        self.quiet(wiki.build)
+        built = page.read_text(encoding="utf-8")
+        self.assertIn("keep this note", common.extract_annotations(built))
+        self.assertEqual(built.count("keep this note"), 1)
+        self.quiet(wiki.build)
+        self.assertEqual(page.read_text(encoding="utf-8"), built)
+
+    def test_root_relative_and_out_of_repo_links_do_not_abort(self):
+        self.raw("Bee", name="b.md")
+        self.raw("Ay", "See [b](/docs/raw/b.md) and [spec](../../../upstream/SPEC.md).", name="a.md")
+        self.quiet(wiki.build)
+        page = (self.knowledge / "Ay.md").read_text(encoding="utf-8")
+        self.assertIn("[b](../raw/b.md)", page)
+        self.assertIn("[spec](../../../upstream/SPEC.md)", page)
+        result, output = self.quiet(wiki.lint)
+        self.assertEqual(result, 0, output)
+        self.assertIn("outside the project", output)
+
+    def test_footnote_definitions_are_not_rebased_as_links(self):
+        self.raw(body="Latency fell 30%.[^bench]\n\n[^bench]: Measured on the nightly runner.")
+        self.quiet(wiki.build)
+        page = (self.knowledge / "Topic.md").read_text(encoding="utf-8")
+        self.assertIn("[^bench]: Measured on the nightly runner.", page)
+        result, output = self.quiet(wiki.lint)
+        self.assertEqual(result, 0, output)
+
+    def test_moved_raw_source_cannot_leave_a_passing_stale_page(self):
+        self.raw("OldTopic", "Retry limit is 3.")
+        self.quiet(wiki.build)
+        self.raw("NewTopic", "Retry limit is 5.")
+        self.quiet(wiki.build)
+        result, output = self.quiet(wiki.lint)
+        self.assertEqual(result, 1)
+        self.assertIn("orphaned compiled page 'OldTopic'", output)
+        self.assertTrue((self.knowledge / "OldTopic.md").exists())
+        (self.knowledge / "OldTopic.md").unlink()
+        self.raw("NewTopic", "Second fact 2.", name="other.md")
+        self.quiet(wiki.build)
+        self.raw("Split", "Moved fact 4.", name="other.md")
+        self.quiet(wiki.refresh, "Split")
+        result, output = self.quiet(wiki.lint)
+        self.assertEqual(result, 1)
+        self.assertIn("stale page 'NewTopic'", output)
+        self.quiet(wiki.build)
+        self.quiet(wiki.add_experiment, "experiment", "accepted", "result", "conclusion")
+        result, output = self.quiet(wiki.lint)
+        self.assertEqual(result, 0, output)
+
     def test_repeated_build_is_byte_stable_including_meta_pages(self):
         self.raw()
         self.quiet(wiki.build)

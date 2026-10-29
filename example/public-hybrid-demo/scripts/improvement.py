@@ -119,28 +119,74 @@ def record(base, candidate_id, mutate, initial=None):
     locked_update(path, update, default="", root=base)
 
 
+HUNK = re.compile(r"@@ -[0-9]+(?:,([0-9]+))? \+[0-9]+(?:,([0-9]+))? @@")
+EXTENDED = re.compile(r"index [0-9a-f]+\.\.[0-9a-f]+(?: 100(?:644|755))?|(?:old|new|new file|deleted file) mode 100(?:644|755)")
+
+
+def patch_name(value, prefix):
+    value = value.split("\t", 1)[0]
+    if value == "/dev/null":
+        return None
+    if not value.startswith(prefix):
+        raise ValueError(f"Patch file header must be /dev/null or start with {prefix}: {value!r}")
+    return relative_path(value[len(prefix):])
+
+
 def patch_paths(text):
-    paths = set()
-    sections = re.split(r"(?m)^diff --git ", text)
-    if len(sections) < 2:
+    lines = text.split("\n")
+    if lines.pop():
+        raise ValueError("Patch must end with a newline")
+    lines = [line[:-1] if line.endswith("\r") else line for line in lines]
+    index = next((number for number, line in enumerate(lines) if line.strip()), len(lines))
+    if index == len(lines):
         raise ValueError("Patch must be a git text diff with diff --git headers")
-    for section in sections[1:]:
-        if not re.search(r"^@@ ", section, re.MULTILINE):
+    paths = set()
+    while index < len(lines):
+        header = lines[index]
+        if not header.startswith("diff --git "):
+            raise ValueError(f"Unexpected patch line {index + 1}: {header[:80]!r}")
+        start = index = index + 1
+        while index < len(lines) and EXTENDED.fullmatch(lines[index]):
+            index += 1
+        extended = lines[start:index]
+        if index + 1 >= len(lines) or not lines[index].startswith("--- ") or not lines[index + 1].startswith("+++ "):
+            raise ValueError(f"Unsupported patch header at line {index + 1}; only regular-file text edits without renames or copies are allowed")
+        old, new = patch_name(lines[index][4:], "a/"), patch_name(lines[index + 1][4:], "b/")
+        path = old or new
+        if (not path or (old and new and old != new) or header != f"diff --git a/{path} b/{path}"
+                or (old is None) != any(line.startswith("new file ") for line in extended)
+                or (new is None) != any(line.startswith("deleted file ") for line in extended)):
+            raise ValueError(f"Inconsistent patch file headers at line {start}")
+        index += 2
+        hunks = 0
+        while index < len(lines) and lines[index].startswith("@@"):
+            match = HUNK.match(lines[index])
+            if not match:
+                raise ValueError(f"Invalid hunk header at line {index + 1}")
+            old_count, new_count, changed = int(match[1] or 1), int(match[2] or 1), False
+            index += 1
+            while old_count or new_count:
+                if index == len(lines):
+                    raise ValueError("Patch ends inside a hunk")
+                line = lines[index]
+                index += 1
+                if line.startswith("\\ "):
+                    continue
+                if line[:1] not in ("", " ", "-", "+"):
+                    raise ValueError(f"Corrupt hunk line {index}: {line[:80]!r}")
+                old_count -= line[:1] != "+"
+                new_count -= line[:1] != "-"
+                changed |= line[:1] in ("-", "+")
+                if old_count < 0 or new_count < 0:
+                    raise ValueError(f"Hunk line counts do not match at line {index}")
+            if index < len(lines) and lines[index].startswith("\\ "):
+                index += 1
+            if not changed:
+                raise ValueError(f"Patch hunk ending at line {index} changes no lines")
+            hunks += 1
+        if not hunks:
             raise ValueError("Every patch section must contain a text hunk")
-        headers = re.split(r"(?m)^@@ ", section, maxsplit=1)[0]
-        old = re.findall(r"(?m)^--- (.+)$", headers)
-        new = re.findall(r"(?m)^\+\+\+ (.+)$", headers)
-        if len(old) != 1 or len(new) != 1:
-            raise ValueError("Every patch section requires old and new file headers")
-        for value in (old[0], new[0]):
-            value = value.split("\t", 1)[0].rstrip("\r")
-            if value == "/dev/null":
-                continue
-            if value.startswith(("a/", "b/")):
-                value = value[2:]
-            paths.add(relative_path(value))
-    if not paths:
-        raise ValueError("Patch contains no target paths")
+        paths.add(path)
     return paths
 
 
@@ -312,8 +358,10 @@ def decide(base, args):
         if current["status"] in ("accepted", "rejected"):
             raise ValueError("Decided proposals are immutable")
         if args.decision == "accept":
-            if not current["comparisons"] or current["comparisons"][-1]["verdict"] != "eligible":
+            if not current["comparisons"]:
                 raise ValueError("Acceptance requires an eligible matched comparison")
+            if any(item["verdict"] != "eligible" for item in current["comparisons"]):
+                raise ValueError("Every recorded comparison must be eligible; a new proposal is required")
             latest = current["comparisons"][-1]
             for variant in ("baseline", "candidate"):
                 artifact = latest[variant]
@@ -335,7 +383,9 @@ def decide(base, args):
                 raise ValueError("Evidence changed while acceptance was being validated")
         current["status"] = "accepted" if args.decision == "accept" else "rejected"
         current["decisions"].append({"at": timestamp(), "decision": args.decision, "reason": args.reason})
-        result.update({"id": args.id, "status": current["status"], "reason": args.reason, "patch_applied": False})
+        verdicts = [{"compared_at": item["compared_at"], "verdict": item["verdict"]} for item in current["comparisons"]]
+        result.update({"id": args.id, "status": current["status"], "reason": args.reason, "verdicts": verdicts,
+                       "patch_applied": False})
 
     record(base, args.id, save)
     return result

@@ -13,6 +13,9 @@ import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
+REQUIRED_TEST_MODULES = ("test_context_hub", "test_gate", "test_improvement", "test_install", "test_skills", "test_wiki_sync")
+MINIMUM_TESTS = 95  # POSIX count; Windows adds junction cases.
+SUMMARY_MARKER = "OAW-TEST-SUMMARY "
 
 
 def configure_stdio():
@@ -43,6 +46,46 @@ def run(command, *, cwd=ROOT, env=None):
 def command_check(name, command):
     process = run(command)
     return Check(name, process.returncode == 0, f"exit {process.returncode}", process.stdout, process.stderr)
+
+
+def unittest_summary(start=None):
+    import unittest
+    suite = unittest.defaultTestLoader.discover(str(start or ROOT / "tests"))
+
+    def flatten(item):
+        if isinstance(item, unittest.TestSuite):
+            for child in item:
+                yield from flatten(child)
+        else:
+            yield item
+
+    modules = sorted({test.id().split(".", 1)[0] for test in flatten(suite)})
+    result = unittest.TextTestRunner(stream=sys.stderr, verbosity=1).run(suite)
+    print(SUMMARY_MARKER + json.dumps({"run": result.testsRun, "skipped": len(result.skipped),
+                                       "successful": result.wasSuccessful(), "modules": modules}))
+    return 0 if result.wasSuccessful() else 1
+
+
+def regression_check(start=None, required=REQUIRED_TEST_MODULES, minimum=MINIMUM_TESTS):
+    code = (f"import sys; sys.path.insert(0, {str(ROOT / 'scripts')!r}); import harness_check; "
+            f"raise SystemExit(harness_check.unittest_summary({str(start) if start else None!r}))")
+    process = run([sys.executable, "-c", code])
+    lines = [line for line in process.stdout.splitlines() if line.startswith(SUMMARY_MARKER)]
+    if not lines:
+        return Check("behavior-regressions", False, f"exit {process.returncode}; no test summary", process.stdout, process.stderr)
+    summary = json.loads(lines[-1][len(SUMMARY_MARKER):])
+    problems = []
+    if process.returncode or not summary["successful"]:
+        problems.append(f"exit {process.returncode}")
+    missing = sorted(set(required) - set(summary["modules"]))
+    if missing:
+        problems.append("missing test modules: " + ", ".join(missing))
+    if summary["run"] < minimum:
+        problems.append(f"{summary['run']} tests ran; at least {minimum} required")
+    if summary["skipped"] and os.environ.get("OAW_ALLOW_SKIPS") != "1":
+        problems.append(f"{summary['skipped']} skipped test(s); set OAW_ALLOW_SKIPS=1 only where a platform cannot run them")
+    detail = "; ".join(problems) or f"{summary['run']} tests, {summary['skipped']} skipped"
+    return Check("behavior-regressions", not problems, detail, process.stdout, process.stderr)
 
 
 def syntax_check():
@@ -108,7 +151,7 @@ def main(argv=None):
         ("syntax", syntax_check),
         ("cli-contracts", cli_check),
         ("native-skills", lambda: command_check("native-skills", [sys.executable, "scripts/validate_skills.py"])),
-        ("behavior-regressions", lambda: command_check("behavior-regressions", [sys.executable, "-m", "unittest", "discover", "-s", "tests", "-q"])),
+        ("behavior-regressions", regression_check),
         ("installed-lifecycle", install_check),
         ("example-content", lambda: command_check("example-content", [sys.executable, "scripts/sync_examples.py"])),
         ("repo-wiki", lambda: command_check("repo-wiki", [sys.executable, "scripts/wiki_sync.py", "lint"])),

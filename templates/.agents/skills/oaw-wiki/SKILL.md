@@ -6,7 +6,8 @@ description: Build, refresh, or inspect a project's optional raw-to-wiki knowled
 # Optional project wiki
 
 Inspect the requested topic and its sources. Use
-`python scripts/wiki_sync.py --help` for the available operations, then build or
+`python3 scripts/wiki_sync.py --help` (Python 3.10+; `py -3` on Windows) for the
+available operations, then build or
 refresh the requested scope and run its lint check.
 
 The compiler performs deterministic rendering; it does not establish truth or

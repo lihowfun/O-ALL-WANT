@@ -12,7 +12,7 @@ python3 scripts/oaw.py migrate --target PROJECT [--profile minimal|knowledge] [-
 python3 scripts/oaw.py doctor --target PROJECT [--json]
 ```
 
-Init protects different existing content. Profile/host additions are cumulative; codex is the default host. Migrate without `--apply` only previews. Applied migration backs up known changes and stages custom conflicts under `.oaw/proposals/`; unresolved conflicts return exit 3. Use repeatable `--keep-custom PATH` with `--apply` only after reviewing a relevant conflict to retain it as project-owned. Preflight errors/init conflicts return 2. Doctor returns 1 for an unhealthy install and 2 for invalid paths/manifests; support does not imply host features are enabled.
+Init protects different existing content; edits to a managed file are kept while its framework copy is unchanged. Profile/host additions are cumulative; codex is the default host. Migrate without `--apply` only previews. Applied migration backs up known changes and stages custom conflicts under `.oaw/proposals/`; unresolved conflicts return exit 3. Use repeatable `--keep-custom PATH` with `--apply` only after reviewing a relevant conflict to retain it as project-owned. Preflight errors/init conflicts return 2. Doctor returns 1 for an unhealthy install and 2 for invalid paths/manifests; WARN checks (edited managed files, a CLAUDE.md without `@AGENTS.md`) keep exit 0. Support does not imply host features are enabled.
 
 The Bash wrapper invokes init on the current directory. Set `OAW_PYTHON` to select an explicit Python executable.
 
@@ -63,3 +63,5 @@ python3 scripts/harness_check.py [--json] [--verbose]
 python3 scripts/validate_skills.py [--help]
 python3 scripts/sync_examples.py [--write]
 ```
+
+The regression group fails when a required `tests/test_*.py` module is missing, fewer tests run than the recorded minimum, or any test is skipped. Set `OAW_ALLOW_SKIPS=1` only on a platform that cannot run a skipped case, such as a Windows host without symlink privilege.

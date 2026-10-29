@@ -61,9 +61,29 @@ def _checked(path, root):
     return confined_path(root, path) if root is not None else str(Path(path).resolve())
 
 
+def _unopened(path, root):
+    """Confine like _checked without opening the target before its lock is held.
+
+    On Windows resolve() opens the file, and any open handle makes the lock
+    holder's os.replace fail. Resolve the parent and lstat the name instead.
+    """
+    path = os.path.join(Path(root).resolve(), path) if root is not None else os.path.abspath(path)
+    name = os.path.basename(path)
+    candidate = os.path.join(_checked(os.path.dirname(path), root), name)
+    try:
+        info = os.lstat(candidate)
+        linked = stat.S_ISLNK(info.st_mode) or getattr(info, "st_reparse_tag", 0)
+    except FileNotFoundError:
+        linked = False
+    # Links, junctions, 8.3 aliases and trailing dots need full canonicalization.
+    if linked or not name or "~" in name or name.rstrip(". ") != name:
+        return _checked(candidate, root)
+    return candidate
+
+
 @contextmanager
 def _exclusive_lock(path, root=None, timeout=30):
-    path = _checked(path, root)
+    path = _unopened(path, root)
     parent = os.path.dirname(path)
     os.makedirs(parent, exist_ok=True)
     lock_path = _checked(os.path.join(parent, "." + os.path.basename(path) + ".oaw.lock"), root)
@@ -113,15 +133,28 @@ def _replace(path, text, root=None):
         checked = _checked(path, root)
         if checked != path:
             raise ValueError("The write target changed while it was locked.")
-        os.replace(temporary, path)
+        _commit(temporary, path)
     finally:
         if os.path.exists(temporary):
             os.unlink(temporary)
 
 
+def _commit(temporary, path, timeout=3):
+    """os.replace, retrying while a Windows reader briefly holds the target open."""
+    deadline, delay = time.monotonic() + timeout, 0.002
+    while True:
+        try:
+            return os.replace(temporary, path)
+        except PermissionError as exc:
+            # ERROR_ACCESS_DENIED / ERROR_SHARING_VIOLATION; POSIX errors carry no winerror.
+            if getattr(exc, "winerror", None) not in (5, 32) or time.monotonic() >= deadline:
+                raise
+        time.sleep(delay)
+        delay = min(delay * 2, 0.05)
+
+
 def locked_update(path, mutate, default="", *, root=None):
     """Apply mutate(text) under a process lock and atomically commit its result."""
-    path = _checked(path, root)
     with _exclusive_lock(path, root=root):
         path = _checked(path, root)
         try:
@@ -174,20 +207,34 @@ def _annotation_parts(content):
     return content[:heading[0]], remainder.strip(), ""
 
 
+def _fence_after(line, fence):
+    """Fence state after line: only the opener's character, at least as long, closes it."""
+    marker = re.match(r"^\s{0,3}(`{3,}|~{3,})", line)
+    if not marker:
+        return fence
+    token = marker.group(1)
+    if fence is None:
+        return token
+    return None if token[0] == fence[0] and len(token) >= len(fence) else fence
+
+
 def _markdown_lines(content):
     """Yield offsets and fence state so code examples cannot delimit live notes."""
     offset, fence = 0, None
     for line in content.splitlines(keepends=True):
-        marker = re.match(r"^\s{0,3}(`{3,}|~{3,})", line)
-        in_code = fence is not None or marker is not None
-        if marker:
-            token = marker.group(1)
-            if fence is None:
-                fence = token
-            elif token[0] == fence[0] and len(token) >= len(fence):
-                fence = None
-        yield offset, line, in_code
-        offset += len(line)
+        after = _fence_after(line, fence)
+        yield offset, line, fence is not None or after is not None
+        offset, fence = offset + len(line), after
+
+
+def close_fence(text):
+    """Terminate a fence text leaves open so following generated markers stay live."""
+    fence = None
+    for line in text.splitlines(keepends=True):
+        fence = _fence_after(line, fence)
+    if fence:
+        text += ("" if text.endswith("\n") else "\n") + fence
+    return text
 
 
 def extract_annotations(content):
@@ -196,22 +243,12 @@ def extract_annotations(content):
 
 def render_annotations(notes=""):
     safe = []
-    fence = None
     for _offset, line, in_code in _markdown_lines(notes.strip()):
-        marker = re.match(r"^\s{0,3}(`{3,}|~{3,})", line)
-        if marker:
-            token = marker.group(1)
-            if fence is None:
-                fence = token
-            elif token[0] == fence[0] and len(token) >= len(fence):
-                fence = None
         if not in_code and line.strip() in {ANNOTATIONS_START, ANNOTATIONS_END}:
             line = line.replace("<", "&lt;", 1)
         safe.append(line)
-    if fence:
-        # A partially pasted example must not swallow the structural end marker.
-        safe.append("\n" + fence)
-    return "## AI Annotations\n\n" + ANNOTATIONS_START + "\n" + "".join(safe) + "\n" + ANNOTATIONS_END + "\n"
+    # A partially pasted example must not swallow the structural end marker.
+    return "## AI Annotations\n\n" + ANNOTATIONS_START + "\n" + close_fence("".join(safe)) + "\n" + ANNOTATIONS_END + "\n"
 
 
 def append_annotation(content, annotation):

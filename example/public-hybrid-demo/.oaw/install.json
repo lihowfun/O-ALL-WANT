@@ -6,16 +6,16 @@
   ],
   "installation_id": "generated-example-public-hybrid-demo",
   "managed_files": {
-    ".agents/skills/oaw-evidence/SKILL.md": "d3e44753f509bb70d938bb664eaf54df8dfec691a0d1e7397af2bf1a0488b894",
-    ".agents/skills/oaw-improve/SKILL.md": "5692768f86432816526a480d663d1b0ea57d7d73189ed7d2f9f65fad45ad7ae7",
-    ".agents/skills/oaw-wiki/SKILL.md": "c9ff50ae53ed94094e44ba104ef451fdf1e8a99d1addad86d5ab6bb4c26de4ed",
+    ".agents/skills/oaw-evidence/SKILL.md": "3ec4935468138e12e121d861ed0f9caf4886a950a2332c8672e124cd9e084f35",
+    ".agents/skills/oaw-improve/SKILL.md": "afa1477fb57822637c6baea2dd846e6d4f03f836ab8bf3b9fccf849757625729",
+    ".agents/skills/oaw-wiki/SKILL.md": "04246a795b6820ff3cf15f5a81c954ac18184bd0ef07c5bb3655977b8167b38e",
     "AGENTS.md": "07f37c25774fb07b0a14be85f26f07e7d5d93483846ced195503197f02df1387",
     "CLAUDE.md": "336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49",
     "scripts/context_hub.py": "c0582010bc92edd75c02afb6d98527eeba6b1b94a600cc825a5fa1daaa2c1066",
-    "scripts/improvement.py": "0eb2275ad04666967e7de6cfe477bda59ef7ae27af632e38e5b89b5807514e87",
-    "scripts/oaw_common.py": "f56dbe91f32273af6890eca75af2eacea07e84357a5c43216f434448ddd104f3",
+    "scripts/improvement.py": "01fe8010b98bcc0d1b4799c4c55a9045f59f866add0cb5f773b0c03166dda015",
+    "scripts/oaw_common.py": "9ef30bd087693332837ebf705ba40186a9daaf6e347b6dc72f52aaaf4a27f9d1",
     "scripts/validate_skills.py": "f241e781f29f3f680a4e514361de6febd2a5531c4b6098234aa41ff5da6b41e4",
-    "scripts/wiki_sync.py": "7895974b5ca5fce3de29d2f42a7196c90a3f6cee9a3ea7c75df942400945b20e"
+    "scripts/wiki_sync.py": "fc182bea51afe185f8d2c12bb4bc1313a08e2a9363117f840d305d1473a1de96"
   },
   "pending_conflicts": [],
   "profile": "knowledge",

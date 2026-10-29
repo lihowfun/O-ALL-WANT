@@ -9,4 +9,4 @@ related_topics: []
 # Knowledge Index
 
 No compiled topics yet. This optional index is maintained by
-`python scripts/wiki_sync.py build` when source notes are compiled.
+`python3 scripts/wiki_sync.py build` when source notes are compiled.

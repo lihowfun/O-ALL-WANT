@@ -10,6 +10,8 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import threading
+import time
 import unittest
 from unittest.mock import patch
 
@@ -126,6 +128,43 @@ class ContextHubTests(unittest.TestCase):
         common.locked_update(path, lambda text: text + " after", root=self.base)
         self.assertEqual(path.read_text(encoding="utf-8"), "before after")
         self.assertTrue((self.base / ".state.txt.oaw.lock").exists())
+
+    def test_concurrent_readers_cannot_fail_locked_replace(self):
+        path = self.base / "shared.md"
+        path.write_text("", encoding="utf-8")
+        stop = threading.Event()
+
+        def read():
+            # Windows refuses os.replace while any handle is open; hold one most of the time.
+            while not stop.is_set():
+                try:
+                    with open(path, encoding="utf-8") as handle:
+                        handle.read()
+                        time.sleep(0.002)
+                except OSError:
+                    pass
+                time.sleep(0.001)
+
+        reader = threading.Thread(target=read)
+        reader.start()
+        try:
+            for number in range(30):
+                common.locked_update(path, lambda text: text + f"{number}\n", root=self.base)
+        finally:
+            stop.set()
+            reader.join()
+        self.assertEqual(path.read_text(encoding="utf-8").split(), [str(number) for number in range(30)])
+
+    def test_locked_update_refuses_symlinked_target_escape(self):
+        outside = self.top / "outside.md"
+        outside.write_text("outside sentinel", encoding="utf-8")
+        try:
+            (self.base / "linked.md").symlink_to(outside)
+        except OSError as exc:
+            self.skipTest(f"Symlink creation unavailable: {exc}")
+        with self.assertRaises(ValueError):
+            common.locked_update(self.base / "linked.md", lambda _text: "changed", root=self.base)
+        self.assertEqual(outside.read_text(encoding="utf-8"), "outside sentinel")
 
     def test_annotation_migrates_legacy_notes_and_refuses_meta(self):
         page = self.docs / "Topic.md"

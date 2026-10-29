@@ -10,8 +10,9 @@ Check the native host's current capabilities and try deleting redundant guidance
 before adding another rule or workflow.
 
 Propose a reviewable candidate diff and a falsifiable improvement hypothesis.
-Use `python scripts/improvement.py --help` for proposal, comparison, and decision
-commands. Keep the proposal separate from active policy.
+Use `python3 scripts/improvement.py --help` (Python 3.10+; `py -3` on Windows)
+for proposal, comparison, and decision commands. Keep the proposal separate from
+active policy.
 
 Compare baseline and candidate on matched tasks with the same model, effort,
 host version, environment, repository state, and permissions. Retain outputs and

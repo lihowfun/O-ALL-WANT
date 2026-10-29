@@ -4,6 +4,7 @@ import hashlib
 import importlib.util
 import io
 import json
+import os
 from pathlib import Path
 import tempfile
 import unittest
@@ -240,6 +241,38 @@ class InstallTests(unittest.TestCase):
         self.assertFalse((self.target / "CLAUDE.md").exists())
         self.assertFalse((self.target / ".oaw").exists())
 
+    if os.name == "nt":
+        # Junctions need no privilege, so these always run on Windows; POSIX has no such test.
+        def assert_junction_refused(self, name, *args):
+            import _winapi
+            outside = self.base / f"outside-{name}"
+            outside.mkdir()
+            (outside / "keep.md").write_bytes(b"# Outside\n")
+            self.target.mkdir()
+            link = self.target / name
+            _winapi.CreateJunction(str(outside), str(link))
+            self.addCleanup(os.rmdir, link)
+            code, result = self.invoke("init", *args)
+            self.assertEqual(code, 2, result)
+            self.assertIn("traversal refused", result["error"])
+            self.assertEqual(os.listdir(self.target), [name])
+            for relative, content in self.legacy.items():
+                if not relative.startswith(name + "/"):
+                    self.write(self.target, relative, content)
+            before = {k: v for k, v in self.snapshot().items() if not k.startswith(name + "/")}
+            code, result = self.invoke("migrate", "--apply", *args)
+            self.assertEqual(code, 2, result)
+            self.assertIn("traversal refused", result["error"])
+            self.assertEqual({k: v for k, v in self.snapshot().items() if not k.startswith(name + "/")}, before)
+            self.assertFalse((self.target / ".oaw").exists())
+            self.assertEqual({p.name: p.read_bytes() for p in outside.iterdir()}, {"keep.md": b"# Outside\n"})
+
+        def test_windows_junction_at_agents_is_refused(self):
+            self.assert_junction_refused(".agents")
+
+        def test_windows_junction_at_docs_is_refused(self):
+            self.assert_junction_refused("docs", "--profile", "knowledge")
+
     def test_manifest_traversal_is_refused(self):
         self.invoke("init")
         path = self.target / ".oaw/install.json"
@@ -281,26 +314,76 @@ class InstallTests(unittest.TestCase):
         self.assertEqual(result["status"], "conflicts")
         self.assertEqual((self.target / "CLAUDE.md").read_bytes(), b"# User customized policy\n")
         self.assertEqual((self.target / ".agents/skills/benchmark.md").read_bytes(), b"# User customized skill\n")
-        self.assertEqual(len(result["proposals"]), 1)
-        self.assertEqual((self.target / result["proposals"][0]).read_bytes(), b"@AGENTS.md\n")
+        # The v1 AGENTS.md only points at the custom router, so the policy pair stays together.
+        self.assertEqual(result["pending_conflicts"], ["AGENTS.md", "CLAUDE.md"])
+        self.assertEqual((self.target / "AGENTS.md").read_bytes(), self.legacy["AGENTS.md"])
+        proposals = {Path(p).name: (self.target / p).read_bytes() for p in result["proposals"]}
+        self.assertEqual(proposals, {"AGENTS.md": (self.framework / "templates/AGENTS.md").read_bytes(), "CLAUDE.md": b"@AGENTS.md\n"})
         self.assertEqual(self.invoke("doctor")[0], 1)
         # Explicit manual resolution is recognized; no force-overwrite flag exists.
         self.write(self.target, "CLAUDE.md", b"@AGENTS.md\n")
         self.assertEqual(self.invoke("migrate", "--apply")[0], 0)
+        self.assertEqual((self.target / "AGENTS.md").read_bytes(), (self.framework / "templates/AGENTS.md").read_bytes())
         self.assertEqual(self.invoke("doctor")[0], 0)
+
+    def test_kept_v1_router_keeps_policy_pair_and_doctor_warns(self):
+        self.seed_legacy()
+        self.write(self.target, "CLAUDE.md", b"# User customized v1 router\n")
+        code, result = self.invoke("migrate", "--apply", "--keep-custom", "CLAUDE.md")
+        self.assertEqual(code, 3, result)
+        self.assertEqual(result["pending_conflicts"], ["AGENTS.md"])
+        self.assertEqual((self.target / "AGENTS.md").read_bytes(), self.legacy["AGENTS.md"])
+        self.assertEqual(self.invoke("doctor")[0], 1)
+        code, result = self.invoke("migrate", "--apply", "--keep-custom", "AGENTS.md")
+        self.assertEqual(code, 0, result)
+        self.assertEqual(result["custom_files"], ["AGENTS.md", "CLAUDE.md"])
+        self.assertEqual((self.target / "AGENTS.md").read_bytes(), self.legacy["AGENTS.md"])
+        code, health = self.invoke("doctor")
+        self.assertEqual(code, 0, health)
+        self.assertTrue(any(c["status"] == "WARN" and c["path"] == "CLAUDE.md" and "different policy" in c["detail"]
+                            for c in health["checks"]), health)
 
     def test_modified_v2_managed_file_is_never_overwritten(self):
         self.invoke("init")
         self.write(self.target, "AGENTS.md", b"# Edited policy\n")
+        self.write(self.framework, "templates/AGENTS.md", b"# Framework revision\n")
+        self.assertEqual(self.invoke("init")[0], 2)
         code, result = self.invoke("migrate", "--apply")
         self.assertEqual(code, 3, result)
+        self.assertEqual(result["pending_conflicts"], ["AGENTS.md"])
         self.assertEqual((self.target / "AGENTS.md").read_bytes(), b"# Edited policy\n")
+        self.assertEqual((self.target / result["proposals"][0]).read_bytes(), b"# Framework revision\n")
+
+    def test_user_edit_to_current_policy_does_not_block_host_or_profile_addition(self):
+        self.assertEqual(self.invoke("init")[0], 0)
+        installed = (self.target / "AGENTS.md").read_bytes()
+        edited = installed + b"Run the project test suite before commits.\n"
+        self.write(self.target, "AGENTS.md", edited)
+        code, result = self.invoke("init", "--host", "claude")
+        self.assertEqual(code, 0, result)
+        self.assertIn({"path": "AGENTS.md", "action": "preserve-edit", "before": checksum(edited), "after": checksum(installed)},
+                      result["actions"])
+        self.assertTrue((self.target / ".claude/skills/oaw-evidence/SKILL.md").is_file())
+        code, result = self.invoke("migrate", "--apply", "--with-improve")
+        self.assertEqual(code, 0, result)
+        self.assertEqual(result["pending_conflicts"], [])
+        self.assertEqual((self.target / "AGENTS.md").read_bytes(), edited)
+        manifest = json.loads((self.target / ".oaw/install.json").read_text())
+        self.assertEqual(manifest["managed_files"]["AGENTS.md"], checksum(installed))
+        self.assertEqual(manifest["custom_files"], [])
+        code, health = self.invoke("doctor")
+        self.assertEqual(code, 0, health)
+        detail = next(c["detail"] for c in health["checks"] if c["path"] == "AGENTS.md" and c["status"] == "WARN")
+        self.assertIn("conflict", detail)
+        self.assertNotIn("will preserve your changes", detail)
 
     def test_explicit_keep_custom_resolves_reviewed_policy_and_stays_protected(self):
         self.seed_legacy()
         merged = b"@AGENTS.md\n\n# Reviewed project-specific rules\n"
         self.write(self.target, "CLAUDE.md", merged)
         self.assertEqual(self.invoke("migrate", "--apply")[0], 3)
+        # A custom adapter that imports AGENTS.md lets the v1 pointer be replaced.
+        self.assertEqual((self.target / "AGENTS.md").read_bytes(), (self.framework / "templates/AGENTS.md").read_bytes())
         code, result = self.invoke("migrate", "--apply", "--keep-custom", "CLAUDE.md")
         self.assertEqual(code, 0, result)
         self.assertEqual(result["custom_files"], ["CLAUDE.md"])
@@ -310,6 +393,7 @@ class InstallTests(unittest.TestCase):
         code, health = self.invoke("doctor")
         self.assertEqual(code, 0, health)
         self.assertTrue(any(c["path"] == "CLAUDE.md" and "Project-owned custom" in c["detail"] for c in health["checks"]))
+        self.assertFalse(any(c["status"] == "WARN" for c in health["checks"]), health)
         self.write(self.framework, "templates/CLAUDE.md", b"# Future framework adapter\n")
         self.assertEqual(self.invoke("migrate", "--apply")[0], 0)
         self.assertEqual((self.target / "CLAUDE.md").read_bytes(), merged)

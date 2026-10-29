@@ -37,6 +37,11 @@ def digest(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+def imports_agents(data: bytes) -> bool:
+    """Whether a Claude adapter imports the shared AGENTS.md policy."""
+    return re.search(rb"(?m)(?:^|\s)@(?:\./)?AGENTS\.md(?![\w/-])", data) is not None
+
+
 def selected_hosts(hosts: list[str] | None = None) -> list[str]:
     hosts = ["codex"] if hosts is None else hosts
     if (not isinstance(hosts, list) or not hosts or any(host not in HOSTS for host in hosts)
@@ -243,6 +248,9 @@ def plan_install(target: Path, profile: str, with_improve: bool, *, migrate: boo
         elif expected == after:
             operation = "unchanged"
             managed[relative] = after
+        elif owned.get(relative) == after:
+            # The package is unchanged since install; keep the user's edit under the installed hash.
+            operation = "preserve-edit"
         elif migrate and (owned.get(relative) == expected or expected in legacy.get(relative, [])):
             operation = "replace"
             managed[relative] = after
@@ -250,10 +258,19 @@ def plan_install(target: Path, profile: str, with_improve: bool, *, migrate: boo
             operation = "conflict"
         actions.append({"path": relative, "action": operation, "before": expected, "after": after})
     by_path = {action["path"]: action for action in actions}
+    agents, claude = by_path.get("AGENTS.md"), by_path.get("CLAUDE.md")
+    # A v1 AGENTS.md only points at CLAUDE.md; keep it while a retained CLAUDE.md does not import AGENTS.md.
+    if (agents and claude and agents["action"] == "replace" and owned.get("AGENTS.md") != agents["before"]
+            and claude["action"] not in ("add", "replace", "unchanged")
+            and not imports_agents(joined(target, "CLAUDE.md").read_bytes())):
+        agents["action"] = "conflict"
+        managed.pop("AGENTS.md")
+        if "AGENTS.md" in owned:
+            managed["AGENTS.md"] = owned["AGENTS.md"]
     for relative in requested_custom:
         action = by_path.get(relative)
-        if relative not in custom and (action is None or action["action"] != "conflict"):
-            raise InstallError(f"--keep-custom requires a current package conflict or already declared custom path: {relative}")
+        if relative not in custom and (action is None or action["action"] not in ("conflict", "preserve-edit")):
+            raise InstallError(f"--keep-custom requires a current package conflict, edited managed file or declared custom path: {relative}")
         destination = joined(target, relative)
         check_path(destination, kind="file")
         if not destination.is_file():
@@ -473,7 +490,7 @@ def doctor(target: Path) -> dict:
             if not path.is_file():
                 status, detail = "FAIL", "Managed file is missing."
             elif digest(path.read_bytes()) != expected:
-                status, detail = "WARN", "Modified managed file; migration will preserve your changes."
+                status, detail = "WARN", "Modified managed file; your edit is kept, and a framework update to it becomes a migration conflict."
             else:
                 status, detail = "PASS", "Managed hash matches."
             checks.append({"status": status, "path": relative, "detail": detail})
@@ -498,6 +515,10 @@ def doctor(target: Path) -> dict:
             declared = relative in manifest["managed_files"] or relative in manifest.get("custom_files", [])
             if not joined(target, relative).is_file() or not declared:
                 checks.append({"status": "FAIL", "path": relative, "detail": "Required policy/skill/helper is missing or unmanaged."})
+        claude = joined(target, "CLAUDE.md")
+        if claude.is_file() and not imports_agents(claude.read_bytes()):
+            checks.append({"status": "WARN", "path": "CLAUDE.md",
+                           "detail": "CLAUDE.md does not import @AGENTS.md; Claude and Codex may follow different policy."})
     for prefix in (".agents", ".claude"):
         skills_root = target / prefix / "skills"
         check_path(skills_root, kind="dir")
