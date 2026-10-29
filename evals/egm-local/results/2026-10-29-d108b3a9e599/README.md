@@ -33,4 +33,6 @@ python3 evals/egm-local/measure.py evals/egm-local/results/2026-10-29-d108b3a9e5
 
 Exit 1 is expected: it truthfully reports the failed quality gate. Functional
 unit tests and CI are separate from the model quality decision. Artifact hashes
-cover this directory except the self-referential hash manifest itself.
+cover LF-normalized UTF-8 bytes in this directory, matching Git's text policy,
+except the self-referential hash manifest itself. Raw as-used upstream file
+identities are recorded separately in `method-source-identity.json`.
