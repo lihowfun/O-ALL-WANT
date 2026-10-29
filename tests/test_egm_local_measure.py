@@ -111,6 +111,10 @@ class LocalMeasurementTests(unittest.TestCase):
             "8 Intermediate Zoom Out: intermediate_zoom",
             "9 Implementation Readiness: readiness_implementation, readiness_codebase, readiness_style"]
         self.assertEqual(measurement.measure(evidence, "synthetic")["quality_gate"], "pass")
+        evidence["trials"][1]["stages_completed"][2] = "7 design/structural/style critique"
+        evidence["trials"][0]["reviewer_count"] = 0
+        evidence["trials"][0]["unique_reviewer_count"] = 0
+        self.assertEqual(measurement.measure(evidence, "synthetic")["quality_gate"], "pass")
         evidence["trials"][1]["stages_completed"][2] = "7 unspecified"
         self.assertEqual(measurement.measure(evidence, "synthetic")["quality_gate"], "inconclusive")
 

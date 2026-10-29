@@ -20,7 +20,7 @@ CASES = ("orders", "events", "clean")
 IDS = {case: (() if case == "clean" else ("C1", "C2", "M1", "M2")) for case in CASES}
 STAGES = ("Initial Zoom Out", "Comprehension", "Design Critique",
           "Intermediate Zoom Out", "Implementation Readiness")
-STAGE_ALIASES = (("initial zoom",), ("comprehension",), ("design critique", "critic"),
+STAGE_ALIASES = (("initial zoom",), ("comprehension",), ("critique", "critic"),
                  ("intermediate zoom",), ("implementation readiness", "readiness"))
 
 
