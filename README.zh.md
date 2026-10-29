@@ -29,6 +29,11 @@
 
 > **v2.0.0 目前是 PR 中的提案版本，尚未發布 release。** [升級指南](docs/UPGRADING.md) · [CLI](docs/CLI_Reference.md) · [執行計畫](docs/plans/v2.0.0-execution.md)
 
+EGM 實測已完成 27 份 Codex review：A／B／C 皆抓到 **24/24** 埋缺陷，
+無根據指控為 **0／1／0**。整合組與原生在此固定 suite 持平，單用 EGM
+未通過嚴格門檻，因此 PR 保持 Draft，EGM 不進預設 runtime。
+[完整證據、限制與版本來源](docs/validation/egm-codex-2026-10-29.md)。
+
 ## 20 秒看懂
 
 OAW 只補 agent 從程式碼看不出來的東西，其他都交給 agent 本身：
@@ -150,7 +155,7 @@ v1 誕生的時代，coding agent 每換一個 session 就全部忘光。現在 
 | 兩個 host 用同一套 skill | 每個 host 各放一份、各自維護 | 同一份來源產生 `.agents/skills` 和 `.claude/skills`，`doctor` 會檢查 |
 | 新增規則或 skill | 誰寫了就加 | 選配 `oaw-improve`：要有 diff、對照組 A/B 證據，並經過你明確同意 |
 
-> v2 沒有宣稱任何 token 節省數字。Claude Code／Codex 的實機 A/B 和實際 skill discovery 都還沒量測；見[本機驗證紀錄](docs/validation/v2.0.0-local.md)。
+> v2 沒有宣稱 token 節省數字。已完成[固定案例的 Codex 手動流程比較](docs/validation/egm-codex-2026-10-29.md)；Claude CLI 模型測試、具名模型版本驗證與原生 skill 自動 discovery 仍未驗證。
 
 ---
 
@@ -230,7 +235,7 @@ python3 scripts/sync_examples.py --write
 
 確切版本與使用狀態見 [v2.0.0 來源版本表](docs/releases/2.0.0-sources.md)。
 EGM **0.1.0**、commit [`f0ba151b252c9abf1318d9fe857a43265d06de89`](https://github.com/google/elephant-goldfish-model/tree/f0ba151b252c9abf1318d9fe857a43265d06de89)
-已做設計審查用途的靜態評估；OAW 尚未內建或安裝 EGM。
+已做靜態評估與固定案例的 Codex 手動 review 實測；OAW 尚未內建或安裝 EGM。
 採用、替換與淘汰建議見 [review](docs/reviews/2026-10-29-pr4-egm.md)。
 
 **v2 保留的歷史概念來源**（當時未記錄上游版本；以下是閱讀入口，並非固定版本的 runtime 相依）

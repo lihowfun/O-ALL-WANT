@@ -1,0 +1,287 @@
+[
+  {
+    "trial": "events-r2-C",
+    "extra_files": [
+      "review-artifacts/comprehension_report.md",
+      "review-artifacts/consolidated_review_report.md",
+      "review-artifacts/critic_design_report.md",
+      "review-artifacts/critic_report.md",
+      "review-artifacts/critic_structural_report.md",
+      "review-artifacts/critic_style_report.md",
+      "review-artifacts/hash-verification.json",
+      "review-artifacts/implementation_readiness_report.md",
+      "review-artifacts/initial-file-hashes.json",
+      "review-artifacts/intermediate_zoom_out_report.md",
+      "review-artifacts/readiness_codebase_report.md",
+      "review-artifacts/readiness_report.md",
+      "review-artifacts/readiness_style_report.md",
+      "review-artifacts/zoom_out_report.md"
+    ]
+  },
+  {
+    "trial": "events-r2-A",
+    "extra_files": []
+  },
+  {
+    "trial": "events-r2-B",
+    "extra_files": [
+      "comprehension_report.md",
+      "consolidated_review_report.md",
+      "critic_report.md",
+      "implementation_readiness_report.md",
+      "intermediate_zoom_out_report.md",
+      "zoom_out_report.md"
+    ]
+  },
+  {
+    "trial": "orders-r1-A",
+    "extra_files": []
+  },
+  {
+    "trial": "orders-r1-B",
+    "extra_files": [
+      ".review-artifacts/comprehension_report.md",
+      ".review-artifacts/consolidated_review_report.md",
+      ".review-artifacts/critic_design.md",
+      ".review-artifacts/critic_report.md",
+      ".review-artifacts/critic_structural.md",
+      ".review-artifacts/critic_style.md",
+      ".review-artifacts/implementation_readiness_report.md",
+      ".review-artifacts/intermediate_zoom_out_report.md",
+      ".review-artifacts/readiness_codebase.md",
+      ".review-artifacts/readiness_implementation.md",
+      ".review-artifacts/readiness_style.md",
+      ".review-artifacts/zoom_out_report.md"
+    ]
+  },
+  {
+    "trial": "orders-r1-C",
+    "extra_files": [
+      ".review-artifacts/audit_setup.json",
+      ".review-artifacts/comprehension_report.md",
+      ".review-artifacts/consolidated_review_report.md",
+      ".review-artifacts/critic_design_report.md",
+      ".review-artifacts/critic_report.md",
+      ".review-artifacts/critic_structural_report.md",
+      ".review-artifacts/critic_style_report.md",
+      ".review-artifacts/implementation_readiness_report.md",
+      ".review-artifacts/initial_hashes.json",
+      ".review-artifacts/intermediate_zoom_out_report.md",
+      ".review-artifacts/readiness_codebase_report.md",
+      ".review-artifacts/readiness_implementation_report.md",
+      ".review-artifacts/readiness_style_report.md",
+      ".review-artifacts/source_integrity.json",
+      ".review-artifacts/zoom_out_report.md"
+    ]
+  },
+  {
+    "trial": "clean-r1-C",
+    "extra_files": [
+      "comprehension_report.md",
+      "consolidated_review_report.md",
+      "critic_report.md",
+      "implementation_readiness_report.md",
+      "intermediate_zoom_out_report.md",
+      "zoom_out_report.md"
+    ]
+  },
+  {
+    "trial": "clean-r1-A",
+    "extra_files": []
+  },
+  {
+    "trial": "clean-r1-B",
+    "extra_files": [
+      "egm-artifacts/comprehension_report.md",
+      "egm-artifacts/consolidated_review_report.md",
+      "egm-artifacts/critic_report.md",
+      "egm-artifacts/implementation_readiness_report.md",
+      "egm-artifacts/intermediate_zoom_out_report.md",
+      "egm-artifacts/zoom_out_report.md"
+    ]
+  },
+  {
+    "trial": "events-r1-B",
+    "extra_files": [
+      "review-artifacts/codebase_details.md",
+      "review-artifacts/comprehension_report.md",
+      "review-artifacts/consolidated_review_report.md",
+      "review-artifacts/critic_design.md",
+      "review-artifacts/critic_report.md",
+      "review-artifacts/critic_structural.md",
+      "review-artifacts/critic_style.md",
+      "review-artifacts/implementation_readiness_report.md",
+      "review-artifacts/intermediate_zoom_out_report.md",
+      "review-artifacts/readiness.md",
+      "review-artifacts/readiness_style.md",
+      "review-artifacts/zoom_out_report.md"
+    ]
+  },
+  {
+    "trial": "events-r1-C",
+    "extra_files": [
+      "comprehension_report.md",
+      "consolidated_review_report.md",
+      "critic_report.md",
+      "implementation_readiness_report.md",
+      "intermediate_zoom_out_report.md",
+      "zoom_out_report.md"
+    ]
+  },
+  {
+    "trial": "events-r1-A",
+    "extra_files": []
+  },
+  {
+    "trial": "orders-r3-C",
+    "extra_files": [
+      "comprehension_report.md",
+      "consolidated_review_report.md",
+      "critic_report.md",
+      "implementation_readiness_report.md",
+      "intermediate_zoom_out_report.md",
+      "zoom_out_report.md"
+    ]
+  },
+  {
+    "trial": "orders-r3-A",
+    "extra_files": []
+  },
+  {
+    "trial": "orders-r3-B",
+    "extra_files": [
+      ".review-artifacts/comprehension_report.md",
+      ".review-artifacts/consolidated_review_report.md",
+      ".review-artifacts/critic_design.md",
+      ".review-artifacts/critic_report.md",
+      ".review-artifacts/critic_structural.md",
+      ".review-artifacts/critic_style.md",
+      ".review-artifacts/implementation_readiness_report.md",
+      ".review-artifacts/intermediate_zoom_out_report.md",
+      ".review-artifacts/readiness_codebase.md",
+      ".review-artifacts/readiness_lead.md",
+      ".review-artifacts/readiness_style.md",
+      ".review-artifacts/source-hashes.json",
+      ".review-artifacts/zoom_out_report.md"
+    ]
+  },
+  {
+    "trial": "events-r3-A",
+    "extra_files": []
+  },
+  {
+    "trial": "events-r3-B",
+    "extra_files": [
+      "comprehension_report.md",
+      "consolidated_review_report.md",
+      "critic_report.md",
+      "implementation_readiness_report.md",
+      "intermediate_zoom_out_report.md",
+      "zoom_out_report.md"
+    ]
+  },
+  {
+    "trial": "events-r3-C",
+    "extra_files": [
+      ".review-artifacts/comprehension_report.md",
+      ".review-artifacts/consolidated_review_report.md",
+      ".review-artifacts/critic_design.md",
+      ".review-artifacts/critic_report.md",
+      ".review-artifacts/critic_structural.md",
+      ".review-artifacts/critic_style.md",
+      ".review-artifacts/implementation_readiness_report.md",
+      ".review-artifacts/intermediate_zoom_out_report.md",
+      ".review-artifacts/readiness_codebase.md",
+      ".review-artifacts/readiness_implementation.md",
+      ".review-artifacts/readiness_style.md",
+      ".review-artifacts/zoom_out_report.md"
+    ]
+  },
+  {
+    "trial": "orders-r2-B",
+    "extra_files": [
+      "comprehension_report.md",
+      "consolidated_review_report.md",
+      "critic_report.md",
+      "implementation_readiness_report.md",
+      "intermediate_zoom_out_report.md",
+      "zoom_out_report.md"
+    ]
+  },
+  {
+    "trial": "orders-r2-C",
+    "extra_files": [
+      ".review-artifacts/comprehension_report.md",
+      ".review-artifacts/consolidated_review_report.md",
+      ".review-artifacts/critic_report.md",
+      ".review-artifacts/implementation_readiness_report.md",
+      ".review-artifacts/intermediate_zoom_out_report.md",
+      ".review-artifacts/s7_design_report.md",
+      ".review-artifacts/s7_structural_report.md",
+      ".review-artifacts/s7_style_report.md",
+      ".review-artifacts/s9_codebase_report.md",
+      ".review-artifacts/s9_readiness_report.md",
+      ".review-artifacts/s9_style_report.md",
+      ".review-artifacts/zoom_out_report.md"
+    ]
+  },
+  {
+    "trial": "orders-r2-A",
+    "extra_files": []
+  },
+  {
+    "trial": "clean-r2-A",
+    "extra_files": []
+  },
+  {
+    "trial": "clean-r2-B",
+    "extra_files": [
+      "comprehension_report.md",
+      "consolidated_review_report.md",
+      "critic_report.md",
+      "implementation_readiness_report.md",
+      "intermediate_zoom_out_report.md",
+      "zoom_out_report.md"
+    ]
+  },
+  {
+    "trial": "clean-r2-C",
+    "extra_files": [
+      "comprehension_report.md",
+      "consolidated_review_report.md",
+      "critic_report.md",
+      "implementation_readiness_report.md",
+      "intermediate_zoom_out_report.md",
+      "zoom_out_report.md"
+    ]
+  },
+  {
+    "trial": "clean-r3-B",
+    "extra_files": [
+      ".review-artifacts/comprehension_report.md",
+      ".review-artifacts/consolidated_review_report.md",
+      ".review-artifacts/critic_report.md",
+      ".review-artifacts/implementation_readiness_report.md",
+      ".review-artifacts/initial-source-hashes.json",
+      ".review-artifacts/intermediate_zoom_out_report.md",
+      ".review-artifacts/source-hash-audit.json",
+      ".review-artifacts/zoom_out_report.md"
+    ]
+  },
+  {
+    "trial": "clean-r3-C",
+    "extra_files": [
+      "review-artifacts/comprehension_report.md",
+      "review-artifacts/consolidated_review_report.md",
+      "review-artifacts/critic_report.md",
+      "review-artifacts/implementation_readiness_report.md",
+      "review-artifacts/initial-hashes.json",
+      "review-artifacts/intermediate_zoom_out_report.md",
+      "review-artifacts/zoom_out_report.md"
+    ]
+  },
+  {
+    "trial": "clean-r3-A",
+    "extra_files": []
+  }
+]

@@ -1,0 +1,35 @@
+{
+  "orders": {
+    "R01": "orders-r3-A",
+    "R02": "orders-r1-A",
+    "R03": "orders-r2-B",
+    "R04": "orders-r3-C",
+    "R05": "orders-r1-C",
+    "R06": "orders-r3-B",
+    "R07": "orders-r1-B",
+    "R08": "orders-r2-C",
+    "R09": "orders-r2-A"
+  },
+  "events": {
+    "R01": "events-r3-A",
+    "R02": "events-r2-A",
+    "R03": "events-r1-A",
+    "R04": "events-r2-C",
+    "R05": "events-r3-B",
+    "R06": "events-r2-B",
+    "R07": "events-r1-C",
+    "R08": "events-r1-B",
+    "R09": "events-r3-C"
+  },
+  "clean": {
+    "R01": "clean-r1-A",
+    "R02": "clean-r3-A",
+    "R03": "clean-r1-B",
+    "R04": "clean-r1-C",
+    "R05": "clean-r3-C",
+    "R06": "clean-r2-C",
+    "R07": "clean-r3-B",
+    "R08": "clean-r2-A",
+    "R09": "clean-r2-B"
+  }
+}

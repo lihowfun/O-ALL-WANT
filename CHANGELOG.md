@@ -12,8 +12,11 @@ is published by this PR. See [migration](docs/UPGRADING.md) and the
 
 - Frozen EGM evaluation fixtures and a separate three-arm Codex workflow
   experiment: three cases, three repeats, blinded independent grading and
-  explicit non-regression criteria. No model-quality/parity gain is claimed
-  until real trials pass. See [current status](docs/validation/egm-offline-2026-10-29.md).
+  explicit non-regression criteria. Completed 27 real reviews: all arms detect
+  24/24 defects, unsupported claims A=0/B=1/C=0. C matches native on this suite;
+  standalone EGM fails the fixed gate, so the PR remains Draft. Full source
+  evidence, independent grades, adjudication and invalid grading corrections
+  are preserved. See [result](docs/validation/egm-codex-2026-10-29.md).
 - Safe Python 3.10+ `init`, preview-first `migrate`, and read-only `doctor`.
   Manifest ownership, recognized v1 hashes, recoverable backups, conflict
   proposals and rollback protect existing project content.
@@ -47,6 +50,9 @@ is published by this PR. See [migration](docs/UPGRADING.md) and the
 
 ### Fixed
 
+- Blind grading exports now require actual reviewer workflow/persona/standard
+  coverage and matching content hashes. Omitted method sources cannot silently
+  turn legitimate style/standard observations into unsupported factual claims.
 - Pilot false-positive evolution on failed reviews, incomplete isolation
   metadata, unfrozen execution/OAW source and mutable resume identities.
   Outcome regex matches are triage-only; failed auth attempts cannot calibrate

@@ -2,7 +2,8 @@
 
 Review the PR against main without merging, tagging or releasing. The version is proposed, not published. Reproduce important failure cases independently rather than relying on the author's green gate.
 
-Start with the [2026-10-29 PR/EGM findings](reviews/2026-10-29-pr4-egm.md)
+Start with the [real Codex experiment](validation/egm-codex-2026-10-29.md),
+[2026-10-29 PR/EGM findings](reviews/2026-10-29-pr4-egm.md)
 and [source ledger](releases/2.0.0-sources.md). EGM was evaluated statically at a
 fixed source revision; the future catalog and native EGM integration are not
 implemented in this PR. Review the external-skill coexistence fix separately
@@ -10,11 +11,14 @@ from claims about native EGM installation or quality.
 
 The later feature integration adds licensed evaluation fixtures and fixes the
 pilot's false-positive gates. It still ships no general catalog runtime. Review
-the [new frozen experiment](../evals/egm-local/README.md) and
-[verification status](validation/egm-offline-2026-10-29.md): synthetic checks do
-not meet the user's required real parity condition, and main must remain
-unmerged until the actual evidence passes. Verify that all initial trial inputs
-stay immutable and that two independent graders receive anonymous reports.
+the [frozen experiment](../evals/egm-local/README.md) and
+[verification status](validation/egm-offline-2026-10-29.md). The real study found
+24/24 detections for A/B/C and false claims 0/1/0; standalone B fails the fixed
+gate, so main remains unmerged. Challenge the single adjudicated absence claim,
+the full-source regrading correction, per-defect counts and zero-regression rule.
+Verify that all initial trial inputs stayed immutable, original bad grading is
+preserved/excluded, and current graders received all actually supplied method
+standards as evidence without new project requirements or arm mapping.
 
 ## Main questions
 

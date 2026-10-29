@@ -1,15 +1,16 @@
 # EGM verification status — 2026-10-29
 
-**No quality/parity claim and no authorization to merge from this record.**
+**Real Codex study completed; the strict overall quality gate failed. Keep Draft.**
 The user requires real experimental non-regression, not synthetic test passes.
 Claude CLI model calls remain paused; its free auth-status check reports logged
 out. Preparation and offline checks made no experimental model calls. The user
-subsequently authorized Codex independent subagents; collection is now in
-progress, with no accepted quality result yet.
+subsequently authorized Codex independent subagents. All 27 primary reviews and
+the complete-source grading round are finished. See the
+[full result and preserved corrections](egm-codex-2026-10-29.md).
 
 ## Completed offline work
 
-- Windows / CPython 3.12.14: full OAW gate, **133 tests, zero skips, 8/8 groups**.
+- Windows / CPython 3.12.14: full OAW gate, **135 tests, zero skips, 8/8 groups**.
   This includes both-host installation, external-skill coexistence, original
   migration/recall/wiki/improvement regressions and the pilot/local tests.
 - Failed reviews cannot win on lower cost; missing per-invocation init/model
@@ -34,7 +35,7 @@ progress, with no accepted quality result yet.
   silently replace the runtime during collection or call the tree byte-identical.
   Runtime is not vendored or installed by OAW.
 
-## Real experiment registered; collection in progress
+## Real experiment completed; promotion condition not met
 
 [Local experiment](../../evals/egm-local/README.md): three independent cases,
 three repeats, A native / B EGM / C EGM+OAW, **27 primary reviews**. Fresh contexts,
@@ -53,9 +54,19 @@ official workflow files through Codex agents. Any result is scoped to this fixed
 suite/model configuration, not statistical equivalence or general superiority.
 Unavailable token/cost metadata will not be fabricated.
 
-Codex trial collection is **in progress** after explicit user authorization.
-No arm has an accepted aggregate result. Main stays unchanged until real
-evidence and the functional/CI checks meet the user's acceptance condition.
+All three arms detected 24/24 planted defects. A had 0 unsupported concrete
+claims, B had 1, C had 0. C matched native and did not regress against B in this
+suite. B versus A failed the fixed zero-increase false-claim rule. No general
+superiority, indexing causality or efficiency claim follows. Main remains
+unchanged; passing functional checks cannot override this quality gate.
+
+The initial grading packet omitted the actual EGM method standards. All of its
+grades/adjudication and provisional regression aggregate were excluded after
+source verification exposed false unsupported-standard attributions. Full
+as-used method evidence was added, and six fresh contexts regraded every
+unchanged report with the same rubric/prompt. One genuine factual-assertion
+disagreement was explicitly adjudicated in the corrected round. Both grading
+rounds and the correction chronology are preserved in the full result.
 
 The first calibration registration (`675703e17644…`) was stopped after five
 primary trials started (four completed, one interrupted). Its instruction to

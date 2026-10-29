@@ -14,10 +14,22 @@
       "version": "0.1.0",
       "version_kind": "manifest",
       "license": "Apache-2.0",
-      "usage": "evaluation-fixtures",
+      "usage": "evaluation-fixtures-and-manual-workflow-study",
       "bundled": false,
       "installed_by_oaw": false,
       "live_host_validation": "not-run",
+      "manual_codex_workflow_study": {
+        "spec_sha256": "d108b3a9e5993ef7aceabb9a790b3bad3e1d749bfe0ffe8336e2ff6454c66ad2",
+        "primary_reviews": 27,
+        "planted_detections_per_arm": "24/24",
+        "unsupported_claims": {"A": 0, "B": 1, "C": 0},
+        "overall_registered_gate": "regression",
+        "combined_C_vs_native_A": "observed parity on this fixed suite",
+        "provider_model_revision": "not exposed",
+        "native_plugin_discovery": "not-run",
+        "default_promotion": false,
+        "evidence": "evals/egm-local/results/2026-10-29-d108b3a9e599/aggregate.json"
+      },
       "local_experiment_materialization": {
         "files": 64,
         "line_endings": "CRLF",

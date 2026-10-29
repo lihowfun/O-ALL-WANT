@@ -29,6 +29,11 @@
 
 > **v2.0.0 is proposed in a pull request; it is not a published release.** [Upgrade guide](docs/UPGRADING.md) · [CLI reference](docs/CLI_Reference.md) · [Execution plan](docs/plans/v2.0.0-execution.md)
 
+EGM study: 27 real Codex reviews, detections A/B/C **24/24 each**, unsupported
+claims **0/1/0**. OAW+EGM matched native on this fixed suite; standalone EGM failed
+the strict gate. PR remains Draft; EGM is not a default runtime.
+[Evidence, limitations and source versions](docs/validation/egm-codex-2026-10-29.md).
+
 ## 20-second pitch
 
 OAW adds what your coding agent cannot reconstruct from code alone, and leaves everything else to the agent:
@@ -150,7 +155,7 @@ v1 was built when coding agents forgot everything between sessions. Today Claude
 | The same skills in both hosts | A separate folder and copy per host | One authored source installs `.agents/skills` and `.claude/skills`; `doctor` checks them |
 | A new rule or skill | Added whenever someone writes it | Optional `oaw-improve`: a diff, matched A/B evidence and your explicit accept |
 
-> No v2 token-savings number is claimed. Native Claude Code / Codex A/B runs and live skill discovery are not yet measured; see [local validation](docs/validation/v2.0.0-local.md).
+> No v2 token-savings number is claimed. A [fixed-suite manual Codex workflow comparison](docs/validation/egm-codex-2026-10-29.md) is complete. Claude CLI model runs, named-model revision validation and native automatic skill discovery remain unverified.
 
 ---
 
@@ -230,7 +235,7 @@ See [CONTRIBUTING](CONTRIBUTING.md) and [CHANGELOG](CHANGELOG.md).
 
 Exact versions and usage status: [v2.0.0 source ledger](docs/releases/2.0.0-sources.md).
 EGM **0.1.0** at [`f0ba151b252c9abf1318d9fe857a43265d06de89`](https://github.com/google/elephant-goldfish-model/tree/f0ba151b252c9abf1318d9fe857a43265d06de89)
-was statically evaluated for design review; it is not bundled or installed by OAW.
+was assessed statically and in a fixed-suite manual Codex review study; it is not bundled or installed by OAW.
 See the [review and replacement decisions](docs/reviews/2026-10-29-pr4-egm.md).
 
 **Historical conceptual influences retained in v2** (upstream versions were not
