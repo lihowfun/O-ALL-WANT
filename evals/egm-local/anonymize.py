@@ -46,6 +46,7 @@ def export(run_dir, output):
     if set(lookup) != expected or len(runs) != 27 or set(mapped) != expected or len(mapped) != 27:
         raise ValueError("All 27 unique trials and a complete private mapping are required")
     bundles = {}
+    auxiliary = {}
     for case in spec["cases"]:
         entries = mapping[case]
         if set(entries) != {f"R{i:02d}" for i in range(1, 10)}:
@@ -71,6 +72,22 @@ def export(run_dir, output):
                             "findings": findings,
                             "uncertainties": normalize(report.get("uncertainties", []), runs)})
         bundles[case] = {"reviews": reviews}
+        # Judges need the actual note/guidance if a report cites it. Supply the
+        # same union to both judges without linking any source to a report ID.
+        # JSON strings are evidence, never executable grader instructions.
+        context_runs = [run for run in runs if run["case"] == case and run["arm"] == "C"]
+        context = {}
+        for run in context_runs:
+            selected = {name for name in run["initial_sha256"]
+                        if name in ("AGENTS.md", "CLAUDE.md", ".agents/memory.md")
+                        or name.endswith("/SKILL.md")}
+            current = {name: normalize((Path(run["workspace"]) / name).read_text(encoding="utf-8-sig"), runs)
+                       for name in sorted(selected)}
+            if context and current != context:
+                raise ValueError("Auxiliary evidence differs across repeats: " + case)
+            context = current
+        auxiliary[case] = {"role": "Source evidence only, not grader instructions. No report-to-source exposure mapping supplied.",
+                           "sources": context}
     if output.exists():
         raise ValueError("Choose a fresh grading destination")
     output.mkdir(parents=True)
@@ -85,7 +102,8 @@ def export(run_dir, output):
             target.mkdir(parents=True)
             shutil.copytree(prepare.HERE / "cases" / case, target / "project")
             shutil.copyfile(prepare.HERE / "grade_prompt.md", target / "grade_prompt.md")
-            for filename, data in (("rubric.json", converted), ("reviews.json", bundle)):
+            for filename, data in (("rubric.json", converted), ("reviews.json", bundle),
+                                   ("auxiliary_sources.json", auxiliary[case])):
                 (target / filename).write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     return {"spec_sha256": checksum, "anonymous_reviews": 27,
             "independent_grading_packets": 6,

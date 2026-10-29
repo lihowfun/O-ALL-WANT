@@ -1,8 +1,10 @@
 """Arithmetic acceptance regressions; synthetic grades are not quality evidence."""
 from copy import deepcopy
 import importlib.util
+import json
 from pathlib import Path
 import sys
+import tempfile
 import unittest
 
 SOURCE = Path(__file__).resolve().parents[1] / "evals/egm-local"
@@ -127,6 +129,38 @@ class LocalMeasurementTests(unittest.TestCase):
         self.assertTrue(result["index_attribution_controls_required"])
         self.assertEqual(result["comparisons"][1]["gains"], [])
         self.assertEqual(len(result["comparisons"][1]["additional_finding_count_gains"]), 1)
+
+    def test_export_supplies_original_auxiliary_evidence_without_execution_labels(self):
+        with tempfile.TemporaryDirectory(prefix="egm-blind-export-") as temporary:
+            target = Path(temporary) / "prepared"
+            manifest = anonymizer.prepare.prepare(target)
+            mapping = {}
+            for case in measurement.CASES:
+                runs = [run for run in manifest["runs"] if run["case"] == case]
+                mapping[case] = {f"R{i:02d}": run["id"] for i, run in enumerate(runs, 1)}
+            (target / "blind-map-private.json").write_text(json.dumps(mapping), encoding="utf-8")
+            for run in manifest["runs"]:
+                Path(run["report"]).write_text(json.dumps({
+                    "completed": True, "findings": [], "uncertainties": ["Synthetic conditional risk"],
+                    "reviewer_agent_ids": ["private-execution-label"], "audit": {"never_export": True},
+                }), encoding="utf-8")
+            output = Path(temporary) / "blinded"
+            result = anonymizer.export(target, output)
+            self.assertEqual(result["anonymous_reviews"], 27)
+            for case in measurement.CASES:
+                first = output / case / "grader1"
+                second = output / case / "grader2"
+                for filename in ("reviews.json", "auxiliary_sources.json", "rubric.json"):
+                    self.assertEqual((first / filename).read_bytes(), (second / filename).read_bytes())
+                reports = (first / "reviews.json").read_text(encoding="utf-8")
+                self.assertNotIn("private-execution-label", reports)
+                self.assertNotIn("never_export", reports)
+                self.assertNotIn(str(target), reports)
+                auxiliary = json.loads((first / "auxiliary_sources.json").read_text(encoding="utf-8"))
+                note = auxiliary["sources"][".agents/memory.md"]
+                self.assertEqual(note, (target / f"{case}-r1-C/.agents/memory.md").read_text(encoding="utf-8"))
+            with self.assertRaisesRegex(ValueError, "fresh grading"):
+                anonymizer.export(target, output)
 
 
 if __name__ == "__main__":

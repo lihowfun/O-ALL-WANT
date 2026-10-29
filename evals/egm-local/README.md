@@ -50,6 +50,10 @@ These commands never dispatch agents, call models, or run subprocesses.
 Preparation installs real OAW files only in C and adds source-linked notes.
 It refuses an existing output directory. Keep raw execution evidence outside
 the repository; publish only reviewed fixture-derived reports and aggregates.
+The preparation manifest's `model_calls: 0` describes this Python program only,
+not the later Codex experiment. Record primary reviews and fresh reviewer
+contexts separately in the execution journal. One agent context can involve
+many model turns; agent counts are not API-request, token or billing counts.
 
 ## Grading and merge condition
 
@@ -96,6 +100,12 @@ metadata and normalizes known workspace prefixes. Two graders receive identical
 case sources and anonymous content, without the private mapping. Language/style
 and citations to project guidance may still reveal the treatment; this is not
 a claim of perfect blinding. Preserve the original reports outside the repo.
+Both graders also receive the same union of original guidance/memory text as
+non-executable JSON evidence, with no link to anonymous reports. This lets them
+verify any cited note rather than calling real input nonexistent. Current
+accepted ADRs still determine project facts; auxiliary guidance does not change
+the grading instructions or supply new authority. This source-completeness
+clarification was implemented before any grades, without changing the rubric.
 
 These are small authored cases, with visible domain identifiers (including
 `clean`), not representative production repositories. That case name may cue
