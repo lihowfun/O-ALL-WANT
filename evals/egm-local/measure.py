@@ -20,6 +20,8 @@ CASES = ("orders", "events", "clean")
 IDS = {case: (() if case == "clean" else ("C1", "C2", "M1", "M2")) for case in CASES}
 STAGES = ("Initial Zoom Out", "Comprehension", "Design Critique",
           "Intermediate Zoom Out", "Implementation Readiness")
+STAGE_ALIASES = (("initial zoom",), ("comprehension",), ("design critique", "critic"),
+                 ("intermediate zoom",), ("implementation readiness", "readiness"))
 
 
 def measure(evidence, spec_sha256):
@@ -63,7 +65,9 @@ def measure(evidence, spec_sha256):
             if count != 9:
                 problems.append(f"{name}: nine fresh reviewers are required")
             stages = trial.get("stages_completed", [])
-            if len(stages) != 5 or any(not any(stage in str(value) for value in stages) for stage in STAGES):
+            labels = [str(value).lower().replace("_", " ") for value in stages]
+            if len(stages) != 5 or any(not any(alias in value for alias in aliases for value in labels)
+                                       for aliases in STAGE_ALIASES):
                 problems.append(f"{name}: five official stages are required")
         words = trial.get("words")
         if type(words) is not int or not 0 < words <= 900:

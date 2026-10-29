@@ -103,6 +103,17 @@ class LocalMeasurementTests(unittest.TestCase):
         self.assertEqual(changed["uncertainties"], report["uncertainties"])
         self.assertEqual(report["location"], "C:\\fixture\\orders-r1-C\\docs/design.md:10")
 
+    def test_official_stage_label_variants_preserve_same_five_stages(self):
+        evidence = synthetic_evidence()
+        evidence["trials"][1]["stages_completed"] = [
+            "5 Initial Zoom Out: initial_zoom", "6 Comprehension: comprehension",
+            "7 Critic: critic_design, critic_structural, critic_style",
+            "8 Intermediate Zoom Out: intermediate_zoom",
+            "9 Implementation Readiness: readiness_implementation, readiness_codebase, readiness_style"]
+        self.assertEqual(measurement.measure(evidence, "synthetic")["quality_gate"], "pass")
+        evidence["trials"][1]["stages_completed"][2] = "7 unspecified"
+        self.assertEqual(measurement.measure(evidence, "synthetic")["quality_gate"], "inconclusive")
+
 
 if __name__ == "__main__":
     unittest.main()
