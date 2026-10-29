@@ -1,75 +1,245 @@
-# O-ALL-WANT (OAW)
+# 🍲 O-ALL-WANT (OAW) Framework
 
-給 coding agents 的專案證據與原生 skills 套件。**v2.0.0 目前是 PR 中的提案版本，尚未發布 release。**
+<div align="center">
 
-[English](README.md) · [升級指南](docs/UPGRADING.md) · [CLI](docs/CLI_Reference.md) · [執行計畫](docs/plans/v2.0.0-execution.md)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![GitHub stars](https://img.shields.io/github/stars/lihowfun/O-ALL-WANT?style=social)](https://github.com/lihowfun/O-ALL-WANT/stargazers)
+[![Last commit](https://img.shields.io/github/last-commit/lihowfun/O-ALL-WANT)](https://github.com/lihowfun/O-ALL-WANT/commits/main)
+[![Issues](https://img.shields.io/github/issues/lihowfun/O-ALL-WANT)](https://github.com/lihowfun/O-ALL-WANT/issues)
+[![test](https://github.com/lihowfun/O-ALL-WANT/actions/workflows/test.yml/badge.svg)](https://github.com/lihowfun/O-ALL-WANT/actions/workflows/test.yml)
 
-OAW 保存程式碼無法完整解釋的專案知識：決策原因、外部限制、實驗與來源證據。agent loop、session、compaction、個人記憶、權限與 skills discovery 交給 Claude Code、Codex 或你選擇的 host。
+</div>
 
-## 最小安裝
+<div align="center">
+  <a href="README.md">English</a> |
+  <a href="README.zh.md">中文</a> |
+  <a href="https://www.readme-i18n.com/lihowfun/O-ALL-WANT?lang=ja">日本語</a> |
+  <a href="https://www.readme-i18n.com/lihowfun/O-ALL-WANT?lang=ko">한국어</a> |
+  <a href="https://www.readme-i18n.com/lihowfun/O-ALL-WANT?lang=de">Deutsch</a> |
+  <a href="https://www.readme-i18n.com/lihowfun/O-ALL-WANT?lang=fr">Français</a> |
+  <a href="https://www.readme-i18n.com/lihowfun/O-ALL-WANT?lang=es">Español</a>
+</div>
+
+> Why choose when you can have it all?
+> 「小孩子才做選擇，身為一個開發者，我～全、都、要！」
+
+<p align="center">
+  <img src="docs/assets/oboi_meme.png" width="400" alt="Harness engineering：我全都要">
+</p>
+
+> **v2.0.0 目前是 PR 中的提案版本，尚未發布 release。** [升級指南](docs/UPGRADING.md) · [CLI](docs/CLI_Reference.md) · [執行計畫](docs/plans/v2.0.0-execution.md)
+
+## 20 秒看懂
+
+OAW 只補 agent 從程式碼看不出來的東西，其他都交給 agent 本身：
+
+- **專案證據**：決策原因、外部限制、實驗結果。任務需要時連同來源一起找回來。
+- **原生 skills**：標準 `SKILL.md` 套件，同一份來源同時裝給 Claude Code 和 Codex。
+- **選配 wiki**：把原始筆記編譯成可搜尋的知識頁。
+- **有證據才改進**：任何規則或 skill 的改動，都要有具體 diff 和對照組 A/B 證據，由你決定是否採用。
+
+agent loop、session、compaction、個人記憶、權限和 skill discovery 都由 Claude Code 或 Codex 負責。
+
+```bash
+git clone https://github.com/lihowfun/O-ALL-WANT.git OAW
+python3 OAW/scripts/oaw.py init --target /path/to/project --host both
+python3 OAW/scripts/oaw.py doctor --target /path/to/project
+```
+
+## 為什麼會在這?
+
+這是一套專為「極度貪心」的 agentic coding 使用者打造的專案裝甲（harness）。
+
+如果你也是那種會在不同 AI 平台間橫跳、腦中只想著怎麼把每一顆高級 token 榨到最大的開發者，那你大概很熟悉這種心碎：對話一長，agent 開始失憶；session 一換，對專案的掌握度瞬間歸零。你還沒寫到真正重要的邏輯，就先被迫花一大堆 token 重新解釋背景，最後看到那句讓人崩潰的 `You have hit your limit`。
+
+如果你也受夠了這種資源內耗，OAW 就是我替這件事做出來的解藥。
+
+這專案是我在數個燃燒肝臟的下班夜晚，瘋狂奴役 Claude Code 與 Codex，然後把 Context Hub、MemPalace、Karpathy-style LLM Wiki、thin harness / fat skills 這些大神 github repo 或文章精華全摻在一起煮的撒尿牛丸鍋。
+
+**v2 是同一鍋，但徹底洗過一次鍋。** 現在 Claude Code 和 Codex 自己就會熬高湯：session、compaction、記憶和 skill discovery 都是原生的。所以 OAW 不再重煮一次，只加 host 不知道的料：這個專案為什麼長這樣，以及任何「改進」在留下來之前都要先拿出證據。
+
+目的還是只有一個：**讓昂貴 token 用在真的值得的推理與輸出上**，而不是浪費在「重跑已完成的內容」或「重新解釋專案架構」上。
+
+> **只需要其中一樣?** 請直接 fork 對應的原作（列在最下面的 Source lineage）。但如果你跟我一樣全都要，這鍋就是煮給你吃的。想快速比較定位可以看：[OAW 和其他工具差在哪](docs/COMPARISON.md)。
+
+---
+
+## 🍲 這版鍋裡有什麼？（v2.0.0）
+
+| | 料 | 在 v2 做什麼 | 怎麼拿到 |
+|---|---|---|---|
+| 🧭 | **原生優先的核心** | 短短的 `AGENTS.md`，只寫不明顯的限制和真正的驗證指令；`CLAUDE.md` 只負責引用它。沒有 router，也沒有強制開場閱讀 | 預設 |
+| 🧾 | **證據回想（Context Hub）** | `context_hub.py memory recall` 回傳有上限的 JSON 或文字，附來源位置、截斷標記和續讀 cursor。筆記是要對照現行程式碼檢查的證據，不會蓋過你的指令 | 預設 |
+| 🧩 | **原生 skills** | 三個標準 `SKILL.md` 套件。`--host codex\|claude\|both` 從同一份來源產生 `.agents/skills` 和／或 `.claude/skills` | 預設裝 `oaw-evidence`，其他見下 |
+| 📚 | **LLM Wiki** | `wiki_sync.py` 把 `docs/raw/` 確定性地編譯成 `docs/knowledge/`，並檢查連結、metadata 和新鮮度。它是 renderer，不是 LLM 摘要器 | `--profile knowledge` |
+| 🔬 | **有證據的自我改進** | 假設＋具體 diff → 固定案例的 baseline／candidate 對照 → 你明確採用或拒絕。品質退步、證據缺失或被改動都會擋下；永遠不會自動套用 | `--with-improve` |
+| 🛟 | **安全的安裝與升級** | `init` 保護既有內容；`migrate` 預設只預覽，`--apply` 會留下備份、收據、可回復，衝突變成 proposal；`doctor` 回報健康狀態 | 一律 |
+| 🔒 | **安全寫入** | 加鎖的讀改寫、原子替換，拒絕 symlink／junction 和路徑逃逸 | 一律 |
+| 📉 | **精簡輸出** | `search --compact` 和 `--max-chars` 上限讓工具輸出保持精簡 | 預設 |
+| ✅ | **證明閘門** | `harness_check.py`：8 組檢查，要求所有測試模組都在、達到最低測試數、零 skip；CI 跑 Ubuntu、macOS、Windows × Python 3.10、3.13 | 本 repo |
+
+### 🥄 這版從鍋裡撈掉的料
+
+| 撈掉 | 原因 |
+|---|---|
+| `CLAUDE.md` Master Router 和各條 lane | 讀什麼由 host 自己決定，原生 skill 也由 host 自己發現 |
+| 佔位用的 `AI_CONTEXT.md`、`ROADMAP.md`、根目錄 `VERSION.json` | 狀態鏡像很容易過期。不再建立；你已經有的檔案會保留 |
+| `do_not_rerun` 狀態機 | 歷史筆記是歷史，不是永久的執行限制 |
+| 平鋪、靠關鍵字觸發的 skills 和「Skills-First」調度 | 換成原生 `SKILL.md` discovery |
+| 強制寫記憶、收尾報告、skill review 提醒 | 個人記憶已經是原生功能；只記錄可重用的專案證據 |
+| Copilot／Cursor／Windsurf／Gemini 指向檔 | v2 以 Claude Code 和 Codex 為目標；未改動的舊 adapter 會在 migrate 時移進備份 |
+| 「startup context 省 86–87%」的標語 | 那是 v1「挑選 Markdown」對「全部讀進來」的比較，保留當歷史，不是 v2 的 benchmark |
+
+---
+
+## 🏗️ 架構
+
+**執行時**：agent 由 host 負責。OAW 提供一份短 policy、三個原生 skill，以及讀寫專案檔案的小型標準函式庫工具。
+
+```mermaid
+flowchart TB
+    subgraph HOST["Claude Code / Codex — agent loop、session、compaction、個人記憶、權限"]
+        CL["CLAUDE.md<br/>@AGENTS.md"] --> AG["AGENTS.md<br/>短專案 policy"]
+        SK["原生 skill discovery<br/>.agents/skills · .claude/skills"]
+    end
+    SK --> E["oaw-evidence<br/>預設"]
+    SK --> W["oaw-wiki<br/>--profile knowledge"]
+    SK --> I["oaw-improve<br/>--with-improve"]
+    E --> CH["context_hub.py<br/>memory recall · add · get · search"]
+    CH --> MEM[".agents/memory.md"]
+    CH --> KN["docs/knowledge/"]
+    W --> WS["wiki_sync.py<br/>build · refresh · lint"]
+    RAW["docs/raw/<br/>原始筆記"] --> WS --> KN
+    I --> IM["improvement.py<br/>propose · compare · decide"]
+    IM --> IR[".oaw/improvements/<br/>假設 · diff · A/B 證據"]
+    CH & WS & IM -.-> COM["oaw_common.py<br/>鎖 · 原子寫入 · 路徑邊界"]
+```
+
+**安裝與升級時**：每一次寫入都會先預覽、留備份，或直接拒絕。
+
+```mermaid
+flowchart LR
+    NEW["新專案"] --> INIT["oaw.py init<br/>--profile · --host · --with-improve"]
+    OLD["v1 或較舊的 v2 專案"] --> MIG["oaw.py migrate<br/>只預覽"]
+    MIG -->|"--apply"| APPLY["備份 · 收據 · 可回復<br/>衝突 proposal"]
+    INIT --> MAN[".oaw/install.json<br/>受管檔案雜湊"]
+    APPLY --> MAN
+    MAN --> DOC["oaw.py doctor<br/>健康 · 不健康"]
+```
+
+### 🛡️ 三大支柱（v2）
+
+| 支柱 | 實作 | 解決的問題 |
+|---|---|---|
+| **原生優先** | 短 `AGENTS.md`；skill 需要時才載入；不另起一套 agent runtime | 兩套系統搶 session、記憶和 startup context |
+| **證據，不是指令** | 回想時附來源和版本；筆記要對照現行程式碼檢查；取回的文字不會蓋過使用者 | 過期或被注入的筆記把 agent 帶偏 |
+| **先證明再採用** | 改進要有 diff 和對照組 A/B 證據；安裝器變更要過 gate；沒有任何東西會自己套用 | 所謂「自我改進」只是一直疊規則 |
+
+---
+
+## 🔁 新 Session 時，差在哪
+
+| 冷啟動時，agent… | 沒有 OAW | 有 OAW v2 |
+|---|---|---|
+| 知道不明顯的限制和真正的測試指令 | 你每次重講 | `AGENTS.md`，短短一份，由你撰寫 |
+| 記得某個決策為什麼這樣做 | 你重新解釋 | `memory recall` 回傳附來源位置的精簡摘錄 |
+| 看到一則舊筆記 | 當成指令照做 | 當成證據，對照現行程式碼檢查 |
+| 想新增規則或 skill | 直接加 | `oaw-improve` 要有 diff、對照組 A/B 證據，並經過你同意 |
+
+> v2 沒有宣稱任何 token 節省數字。Claude Code／Codex 的實機 A/B 和實際 skill discovery 都還沒量測；見[本機驗證紀錄](docs/validation/v2.0.0-local.md)。
+
+---
+
+## ⚡ 快速上手
 
 需要 Python 3.10+，runtime 只用標準函式庫。在 OAW checkout 執行：
 
 ```bash
-python3 scripts/oaw.py init --target /path/to/project
+python3 scripts/oaw.py init --target /path/to/project            # 裝給 Codex（預設）
+python3 scripts/oaw.py init --target /path/to/project --host both
 python3 scripts/oaw.py doctor --target /path/to/project
 ```
 
-預設安裝到 Codex skill 目錄。加 `--host claude` 或 `--host both`，即可安裝 Claude Code 或兩者的原生 skill folders。
+預設只安裝五個 framework 檔：短 `AGENTS.md`、Claude 相容 import、一個 evidence skill、Context Hub 和共用 helper。不建立記憶檔、不塞佔位架構，也沒有強制的 session 流程。遇到既有的不同內容會保留。
 
-預設只安裝五個 framework files：短 AGENTS.md、Claude 相容 import、一個原生 evidence skill、Context Hub 與共用 helper。不建立 memory、不塞 placeholder 架構與 roadmap、不改專案 VERSION.json，也沒有每次結束都要做的強制流程。遇到既有不同內容會保留並停止 init。
-
-既有 Bash 入口仍可用；在目標專案執行 `bash /path/to/O-ALL-WANT/install.sh`。
+選配功能可以在已安裝的專案上累加：
 
 ```bash
-# 選配 wiki renderer 與 wiki skill
-python3 scripts/oaw.py init --target /path/to/project --profile knowledge
-
-# 選配有證據的改善流程，不會啟動背景 agent
-python3 scripts/oaw.py init --target /path/to/project --with-improve
+python3 scripts/oaw.py init --target /path/to/project --profile knowledge   # wiki renderer + wiki skill
+python3 scripts/oaw.py init --target /path/to/project --with-improve        # 有證據的改進流程
 ```
 
-選配功能會累加，不會隱含降級。[最小範例](example/minimal-project/) · [knowledge 與 improvement 範例](example/public-hybrid-demo/)
+Bash 捷徑：在目標專案執行 `bash /path/to/O-ALL-WANT/install.sh`。範例：[最小安裝](example/minimal-project/) · [knowledge 與 improvement](example/public-hybrid-demo/)
 
-## 從 v1 升級
+### 📂 升級既有的 OAW 專案
 
 ```bash
-python3 scripts/oaw.py migrate --target /path/to/project          # 只預覽
-python3 scripts/oaw.py migrate --target /path/to/project --apply  # 備份後套用
+python3 scripts/oaw.py migrate --target /path/to/project           # 只預覽
+python3 scripts/oaw.py migrate --target /path/to/project --apply   # 備份 + proposal
 ```
 
-只有可識別且未客製的 framework 檔能直接更新。客製 policy／skill 衝突會產生 proposal；既有 memory、knowledge、raw notes、AI_CONTEXT.md、ROADMAP.md、專案 VERSION.json 都保留。未改動的舊 flat skills／adapters 可移入可回復的備份。衝突未解決時不會宣稱升級完成。細節見 [UPGRADING](docs/UPGRADING.md)。
+可識別且未改動的 framework 檔會直接更新。客製的 policy 和 skill 會變成 proposal，不會被覆寫。記憶、knowledge、原始筆記、`AI_CONTEXT.md`、`ROADMAP.md` 和根目錄 `VERSION.json` 都歸你所有。proposal 處理完之前，不要把升級當成完成。見 [UPGRADING](docs/UPGRADING.md)。
 
-## 在需要時使用證據
+### 🔌 Host 對應
+
+| Host | Policy 檔 | Skills 目錄 |
+|---|---|---|
+| **OpenAI Codex** | `AGENTS.md` | `.agents/skills/`（`--host codex`，預設） |
+| **Claude Code** | `CLAUDE.md` → `@AGENTS.md` | `.claude/skills/`（`--host claude`） |
+| 兩者 | 同一份 policy | 從同一份來源產生兩個目錄（`--host both`） |
+
+OAW 不會偷改 host 設定。`doctor` 會把「支援」和「已啟用」分開回報。本機 schema 測試不能證明兩個 host 實際載入得到 skill。見 [Skill Guide](docs/Skill_Guide.md)。
+
+---
+
+## 🔧 直接下指令
 
 在已安裝的專案執行：
 
-```bash
-python3 scripts/context_hub.py memory recall "快取決策" --json --max-chars 12000
-python3 scripts/context_hub.py memory add "[DECISION] 保留本機快取 — 證據：docs/experiment.md"
-```
+| 指令 | 用途 |
+|---|---|
+| `python3 scripts/context_hub.py memory recall "快取決策" --json --max-chars 12000` | 有上限的回想，附來源和續讀 |
+| `python3 scripts/context_hub.py memory add "[DECISION] 保留本機快取 — 證據：docs/experiment.md"` | 記錄可長期使用的證據 |
+| `python3 scripts/context_hub.py get Cache_Decision` | 讀一頁知識頁 |
+| `python3 scripts/context_hub.py search "keyword" --compact` | 一行一個主題的搜尋 |
+| `python3 scripts/wiki_sync.py refresh Topic` · `lint` | 編譯和檢查 wiki（knowledge profile） |
+| `python3 scripts/improvement.py --help` | 提案、比較、決定改進（`--with-improve`） |
 
-recall 有輸出上限、來源位置、截斷與分頁。專案筆記是需要比對目前 code／來源的資訊，不會自動成為更高權限的指令。只保存會影響未來工作的資訊，個人記憶仍由 host 管理。
+完整清單：[CLI Reference](docs/CLI_Reference.md) · [Self-improvement 指南](docs/SELF_IMPROVEMENT.md)
 
-knowledge profile 提供 `python3 scripts/wiki_sync.py refresh Topic` 與 `lint`。它是 deterministic renderer，不是 LLM 自動摘要或背景知識服務。
+---
 
-## 改善 self-improving
+## 🐕 Self-Hosting：repo 自己是自己的第一個用戶
 
-選配流程改為「假設＋候選 diff → 固定案例 A/B → 明確採用或拒絕」。工具會核對 model／effort、host／version、環境、base snapshot、cases、重複次數與 evidence hashes，拒絕品質退步、過大的資源退步、證據缺失或不匹配的 runs。accept 只記錄決定，不會自動套用 patch。
-
-[Self-improvement 指南](docs/SELF_IMPROVEMENT.md) · [Ablation contract](evals/native-ablation/spec.json)
-
-淘汰預設 memory nudge、手動 skills 計數、每三步就 skill-review、每個失敗寫永久記憶，以及強制四段報告。沒有可重用收穫的任務可以直接結束。
-
-## 原生整合與驗證範圍
-
-採用 `<skill>/SKILL.md` 格式；`--host codex` 安裝到 `.agents/skills`，`--host claude` 到 `.claude/skills`，`--host both` 由同一份來源產生兩種目錄。OAW 不暗改 host settings；doctor 將支援能力與是否啟用分開說明。見 [Skill Guide](docs/Skill_Guide.md)。
-
-設計以目前 Claude Code／Opus 5.5 與 Codex／GPT-6.1 Sol 為基準，不把模型名稱寫死在工具裡。本地 schema 測試不等於兩個 host 的實機載入驗證，也尚未宣稱模型 A/B 收益。舊版 86–87% 是「挑選 Markdown」與「全讀」的比較，屬歷史示例。
+根目錄的 `AGENTS.md` 和 `CLAUDE.md` 是 OAW 團隊自己在用的版本，不是你安裝的模板。可安裝的版本在 `templates/`，產生的範例會和安裝器逐位元組比對。
 
 ```bash
 python3 scripts/harness_check.py
-python3 scripts/harness_check.py --json
+python3 scripts/sync_examples.py --write
 ```
 
-完整變更見 [CHANGELOG](CHANGELOG.md)，來源沿革見 [Architecture Origins](docs/Architecture_Origins.md)。MIT License。
+見 [CONTRIBUTING](CONTRIBUTING.md) 和 [CHANGELOG](CHANGELOG.md)。
+
+---
+
+## Source lineage（站在巨人肩膀上）
+
+**v2.0.0 有用到的**
+
+- 📉 **[andrewyng/context-hub](https://github.com/andrewyng/context-hub)**（MIT）— `context_hub.py` 的架構：可搜尋的知識、annotation、回想
+- 🧠 **[MemPalace](https://github.com/MemPalace/mempalace)**（MIT）— `.agents/memory.md` 的標籤式條目格式
+- 📚 **[Karpathy-style LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)** — `docs/raw/` → `docs/knowledge/` 背後「原始筆記和編譯後 wiki 分開」的想法
+- ⚡ **[thin harness / fat skills (Garry Tan)](https://x.com/garrytan/status/2042925773300908103)** — policy 保持精簡、工作推進 skills，現在變成原生 `SKILL.md` 套件
+- 🤝 **[RTK (rtk-ai/rtk)](https://github.com/rtk-ai/rtk)** — 縮短工具輸出的概念參考（`--compact`）；OAW 沒有內建 RTK
+- 🧰 **[Pi](https://github.com/earendil-works/pi)**、**[Deep Agents](https://docs.langchain.com/oss/python/deepagents/overview)**、**[Hermes](https://hermes-agent.nousresearch.com/docs/)** — 工具輸出上限和生命週期邊界；沒有內嵌它們的 runtime
+
+**v2 不再使用的**
+
+- 🔄 **[self-improving-agent / ClawHub](https://clawhub.ai/skills/self-improver)** — v1 的 `do_not_rerun`、session 收尾報告和失敗紀錄來自這個模式；v2 改成「先證明再採用」的改進流程
+- 🧠 MemPalace 的收尾紀律 — 隨著強制 session 流程一起移除，只保留它的條目格式
+
+延伸閱讀：[Architecture Origins](docs/Architecture_Origins.md) · [Design Principles](docs/Design_Principles.md)
+
+## License
+
+MIT License.
