@@ -2,7 +2,10 @@
 
 Review the PR against main without merging, tagging or releasing. The version is proposed, not published. Reproduce important failure cases independently rather than relying on the author's green gate.
 
-The next study compares **OAW v1 versus OAW v2**, as specified in the
+The current acceptance study includes **EGM, OAW v1 and OAW v2**; see the
+[three-arm protocol](plans/egm-oaw-three-way-acceptance.md) and
+[Claude independent rerun instructions](CLAUDE_ACCEPTANCE.md).
+It supersedes the two-arm scope in the earlier
 [2026-10-30 evaluation plan](plans/oaw-v1-v2-evaluation.md). Review task quality,
 false claims, complete token accounting and memory across fresh sessions.
 The previous study's host-only A arm did not install OAW and is not OAW v1.
