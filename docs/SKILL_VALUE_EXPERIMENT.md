@@ -92,6 +92,12 @@ Claude 後續依同份 fixture／gold／endpoints 與母體，另建自己的 co
 
 Codex 及 Claude 各交一張，不把尚未完成當成0錯誤。
 
+準備／啟動紀錄：v1–v3 為免費準備版本，未派模型。v4 的兩個 CLI invocations
+在 argument parsing 就因 `--sandbox` 與 `--approve-for-me` 互斥而拒絕，events 為空；
+未達模型呼叫，不作品質或效率樣本。原始記錄保留，不重試原 trial；改用新 cohort。
+修正只移除重複 sandbox flag；`--approve-for-me` 本身仍使用 workspace-write＋automatic review，
+沒有放寬權限或 bypass。Facts、gold、60-call母體與保留門檻保持不變。
+
 | Skill | EGM 正確且有來源支持 | V2 off | V2 on | 三條件token與完整性 | 保留／選配／淘汰判定 |
 |---|---|---|---|---|---|
 | evidence | 未測 | 未測 | 未測 | 未彙總 | 待實測 |

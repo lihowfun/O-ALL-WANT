@@ -228,6 +228,12 @@ def boundary_issues(commands, workspace, cohort):
     return sorted(set(problems))
 
 
+def cli_command(cli, spec, workspace):
+    # --approve-for-me already selects workspace-write. The native parser
+    # rejects combining it with an explicit --sandbox argument.
+    return [cli, "exec", "--ignore-user-config", "--ephemeral", "--skip-git-repo-check", "--json", "--approve-for-me", "--model", spec["requested_model"], "-c", 'model_reasoning_effort="' + spec["requested_effort"] + '"', "-C", str(workspace), "-"]
+
+
 class Engine:
     def __init__(self, out, cli, bucket):
         self.out, self.cli, self.bucket = Path(out).resolve(), cli, bucket
@@ -263,7 +269,7 @@ class Engine:
         prompt += f"\nIO health: before task work, read {probe}, copy its actual contents to {observed}, and return it as answers.io_nonce. Do not guess it. Python if needed: {sys.executable}.\n"
         prompt += "\n" + (GRADER_FORMAT if grader else FORMAT)
         write(dest / "prompt.txt", prompt)
-        command = [self.cli, "exec", "--ignore-user-config", "--ephemeral", "--skip-git-repo-check", "--json", "--sandbox", "workspace-write", "--approve-for-me", "--model", self.spec["requested_model"], "-c", 'model_reasoning_effort="' + self.spec["requested_effort"] + '"', "-C", str(workspace), "-"]
+        command = cli_command(self.cli, self.spec, workspace)
         start = time.monotonic()
         row = {"id": ident, "status": "incomplete", "usage": None}
         try:

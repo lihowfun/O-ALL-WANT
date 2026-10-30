@@ -19,6 +19,12 @@ def group(tokens=100):
 
 
 class ExperimentTests(unittest.TestCase):
+    def test_native_approval_shortcut_is_not_combined_with_conflicting_sandbox_flag(self):
+        command = experiment.cli_command("codex", {"requested_model": "fixture", "requested_effort": "medium"}, "workspace")
+        self.assertIn("--approve-for-me", command)
+        self.assertNotIn("--sandbox", command)
+        self.assertNotIn("--dangerously-bypass-approvals-and-sandbox", command)
+
     def test_registered_population_and_no_source_name_leak_in_ids(self):
         spec = experiment.read(experiment.HERE / "protocol.json")
         calls = sum(len(experiment.bundle(module, case)["prompts"]) * spec["repeats"] * len(spec["conditions"])
