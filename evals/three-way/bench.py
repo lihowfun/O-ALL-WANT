@@ -234,6 +234,7 @@ class Runner:
         if self.manifest["source_files"] != tree(self.out / "sources"):
             raise ValueError("Frozen source drift")
         self.cli = args.codex
+        write(self.out / "runtime.json", {"cli_version": subprocess.check_output([self.cli, "--version"], text=True).strip(), "requested_model": self.spec["model"], "requested_effort": self.spec["effort"], "provider_revision": None, "auth_mode_preflight": "ChatGPT login; separate login-status check", "subagents": "controller-dispatched independent processes; no inherited transcript"})
         self.started = time.monotonic()
         self.lock = threading.Lock()
         self.total = self.output = 0
@@ -320,12 +321,14 @@ class Runner:
             if stage == 3:
                 n = 17 if name == "larch" else 29
                 write(workspace / "docs/decisions/044.md", f"# ADR-044 accepted r2, supersedes ADR-040\nScope: export-{name} only. Retry delay is {n + 7} seconds, maximum batch {n * 11} records, audit history {n + 55} days. Deduplication stays tenant_id + request_id. Approval ticket is now EX-{name.upper()}-942, replacing the earlier approval. No encryption key is documented.\n")
+                protected["docs/decisions/044.md"] = sha(workspace / "docs/decisions/044.md")
             answer = self.call(item["id"] + f"-s{stage}", workspace, base + prompt)
             for path, expected in protected.items():
                 if not (workspace / path).is_file() or sha(workspace / path) != expected:
                     raise ValueError("Protected memory input mutated: " + item["id"] + "/" + path)
             write(self.out / "reports" / (item["id"] + f"-s{stage}.json"), answer)
             write(self.out / "snapshots" / (item["id"] + f"-s{stage}.json"), tree(workspace))
+            shutil.copytree(workspace, self.out / "snapshot-files" / (item["id"] + f"-s{stage}"), ignore=shutil.ignore_patterns("__pycache__"))
 
     def run(self):
         try:
