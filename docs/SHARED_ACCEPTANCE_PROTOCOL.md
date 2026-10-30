@@ -2,6 +2,11 @@
 
 日期：2026-10-30。協議 ID：`oaw-integrated-v2-acceptance-v1`。狀態：**產品來源已凍結，本機 gate 通過；擴充效能驗收的 fixture／oracle／runner 尚未完成，禁止派送該新批次**。
 
+2026-10-30 新增獨立聚焦協議 `oaw-retained-skill-value-v1`：專門測 evidence/wiki/improve
+相對 EGM 與 V2 技能關閉配置的增量。新 fixtures/oracles、60 candidate/12 grader及明確
+保留/選配規則在 `docs/SKILL_VALUE_EXPERIMENT.md` 和 `evals/skill-value/`；它不混用本文件的
+110-call母體、不重標歷史分數，也不宣稱本文件所有擴充項已完成。
+
 **V2 指目前完整的 OAW 產品，已包含 EGM。** 主比較只有 EGM／OAW v1／OAW v2；
 不能把 EGM 另加在 V2 名稱後，也不能把舊的手動組裝 profile 代表目前產品。
 本文件是 Codex、Claude controller 共用的完整任務、評分、資源及執行規則入口。

@@ -26,3 +26,5 @@ jobs:
         run: python scripts/harness_check.py --verbose
       - name: Offline three-arm measurement contracts
         run: python -m unittest discover -s evals/three-way -p "test_bench.py" -v
+      - name: Offline retained-skill experiment contracts
+        run: python -m unittest discover -s evals/skill-value -p "test_*.py" -v
