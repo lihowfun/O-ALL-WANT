@@ -35,6 +35,11 @@ Claude 的 adapter／host manifest 要先登記、免費 smoke-check 後才派�
 
 ## 實際派送
 
+先用未知 canary 做真正讀檔、寫入、回傳核對；單純拿到 CLI exit 0／JSON／usage
+不能算 preflight。Codex 第一批因此整批失效，紀錄在
+[invalid-environment-v1.md](../evals/three-way/invalid-environment-v1.md)。每次候選
+回合也需真實 IO 證據；無法讀取來源就停止，不以空 findings 算通過。
+
 - Review：讀 manifest 的 12 個 trial，保持 case／repeat／輪序與輸入。
   OAW v1 讀實際啟動 policy，用自己的正常流程。
   EGM／OAW v2 明確指定官方 `implementation` preset，分別派

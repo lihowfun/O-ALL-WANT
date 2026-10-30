@@ -88,16 +88,20 @@ raw trace、gold、其他 trials 都在候選工作區外；提示禁止越界�
   本次涵蓋 M1–M3、A1–A2 的小型版本；A4、500 筆、長期真實專案與 S1–S4
   仍是正式擴充，不能把規格表所有列都標為已完成。
 
-上限：同時 2 個 process；單次 240 秒；整體 3000 秒；累計 input＋output 250 萬、
-output 10 萬 token。每次派送前檢查；這不是 provider 的硬 token cap，至多兩個
+目前 v2 protocol 上限：同時 2 個 process；單次 300 秒；整體 4800 秒；累計 input＋output 2000 萬、
+output 25 萬 token。每次派送前檢查；這不是 provider 的硬 token cap，至多兩個
 已在執行的請求仍可能超過上限。無自動重試；保留全部失敗與未完成，不更換不利樣本。
 資源值是本輪 quota 管理上限，不是模型價格／花費宣告。
 
-執行中只檢查 status／usage 後，原上限已讓新派送停止；完整工具回合的累計 input
+歷史第一批執行中只檢查 status／usage 後，原上限已讓新派送停止；完整工具回合的累計 input
 高於無工具 probe 的估計。[純預算追加紀錄](../../evals/three-way/budget-amendment.md)
 將整輪 input＋output 上限改為 1200 萬。完成的呼叫原樣沿用，未派送的補完；沒有
 重試失敗模型、改題／prompt／rubric、增加 repeats 或重置原始時間上限。
-這是明列的 protocol amendment，不能說全部在最初預算下完成。
+後續盲評揭露那批全部被 CLI policy 擋住實際讀檔，詳見
+[無效環境紀錄](../../evals/three-way/invalid-environment-v1.md)。整批品質輸出排除，
+成本留作 setup overhead；**目前健康設定下的全新 cohort 不沿用那些成果**。
+每次回合強制驗證未知 nonce 的真實讀取、寫入、回傳及 successful command event。
+這是明列的 setup correction，不能說第一批原本就有效或已通過品質驗收。
 
 另登記 [A3 固定快照重現對照](../../evals/three-way/replication-protocol.json)：
 全部 6 份 S1 snapshot，各用原 S2 加兩個額外 fresh receiver，共 18 receiver observations、

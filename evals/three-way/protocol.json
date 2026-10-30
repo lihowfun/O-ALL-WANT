@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "id": "egm-oaw-acceptance-pilot-20261030-v1",
+  "id": "egm-oaw-acceptance-pilot-20261030-v2",
   "status": "registered-before-task-runs",
   "arms": ["EGM", "OAW v1", "OAW v2"],
   "sources": {
@@ -18,10 +18,10 @@
   "egm_preset": "implementation; three direct fresh reviewers, then synthesis",
   "limits": {
     "concurrent_model_processes": 2,
-    "per_process_seconds": 240,
-    "total_seconds": 3000,
-    "input_plus_output_tokens": 2500000,
-    "output_tokens": 100000,
+    "per_process_seconds": 300,
+    "total_seconds": 4800,
+    "input_plus_output_tokens": 20000000,
+    "output_tokens": 250000,
     "automatic_retries": 0
   },
   "acceptance": {
@@ -34,5 +34,7 @@
     "statistical_equivalence_claim_allowed": false,
     "automatic_merge": false
   },
+  "execution": "Codex --approve-for-me, same sandbox and automatic review for all arms; per-call unknown nonce read, persisted write, successful command and returned nonce required. Stop dispatch on any failed IO proof.",
+  "prior_cohort": "v1 registration/cohort-v4 is invalid environment evidence: default CLI approval policy blocked all reads. All old quality outputs excluded, all costs preserved separately. New cohort starts from clean installs with unchanged cases, gold, repeats and model.",
   "scope": "Controlled source-loaded design-review and persisted-file handoff pilot. Not native plugin discovery, calendar-time memory, production coding, or proof of general superiority. All pairwise results must be reported; no outcome-dependent case selection."
 }

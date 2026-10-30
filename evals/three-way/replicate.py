@@ -33,20 +33,22 @@ def main():
         if bench.tree(source) != expected:
             raise ValueError("Saved S1 snapshot drift")
         prompt = (cohort / "raw" / original_id / "prompt.txt").read_text(encoding="utf-8")
-        suffix = f"\nAvailable Python executable (if needed): {bench.sys.executable}\n\n" + bench.FINAL_FORMAT
-        if not prompt.endswith(suffix):
+        marker = "\nBefore substantive work, read artifacts/io-"
+        if prompt.count(marker) != 1 or not prompt.endswith(bench.FINAL_FORMAT):
             raise ValueError("Cannot preserve exact original receiver prompt")
+        base_prompt = prompt.split(marker, 1)[0]
         for repeat in (2, 3):
             ident = item["id"] + f"-receiver{repeat}"
             target = out / "work" / ident
             shutil.copytree(source, target)
-            tasks.append({"id": ident, "arm": item["arm"], "name": item["name"], "original_s2": original_id, "workspace": str(target), "snapshot_sha256": expected, "prompt": prompt[:-len(suffix)]})
+            tasks.append({"id": ident, "arm": item["arm"], "name": item["name"], "original_s2": original_id, "workspace": str(target), "snapshot_sha256": expected, "prompt": base_prompt})
     random.Random(20261101).shuffle(tasks)
     bench.write(out / "protocol.json", spec)
     bench.write(out / "manifest.json", {"tasks": tasks, "runner_sha256": bench.sha(bench.__file__), "replication_runner_sha256": bench.sha(__file__)})
     runner = bench.Runner.__new__(bench.Runner)
     runner.out, runner.cli, runner.spec = out, args.codex, spec
     runner.started, runner.lock = time.monotonic(), threading.Lock()
+    runner.abort = threading.Event()
     runner.total = runner.output = 0
     runner.rows = []
 

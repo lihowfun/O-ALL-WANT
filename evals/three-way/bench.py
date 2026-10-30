@@ -7,13 +7,14 @@ or summarize. Run is an explicit, quota-consuming action. Python 3.10+ stdlib.
 from __future__ import annotations
 
 import argparse
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import hashlib
 import io
 import json
 import os
 from pathlib import Path
 import random
+import secrets
 import shutil
 import subprocess
 import sys
@@ -237,10 +238,13 @@ class Runner:
         write(self.out / "runtime.json", {"cli_version": subprocess.check_output([self.cli, "--version"], text=True).strip(), "requested_model": self.spec["model"], "requested_effort": self.spec["effort"], "provider_revision": None, "auth_mode_preflight": "ChatGPT login; separate login-status check", "subagents": "controller-dispatched independent processes; no inherited transcript"})
         self.started = time.monotonic()
         self.lock = threading.Lock()
+        self.abort = threading.Event()
         self.total = self.output = 0
         self.rows = []
 
     def call(self, ident, workspace, prompt):
+        if self.abort.is_set():
+            raise RuntimeError("Prior incomplete call stopped dispatch")
         dest = self.out / "raw" / ident
         if dest.exists():
             raise ValueError("Refusing overwrite/retry: " + ident)
@@ -249,9 +253,13 @@ class Runner:
         with self.lock:
             if self.total >= limits["input_plus_output_tokens"] or self.output >= limits["output_tokens"] or time.monotonic() - self.started > limits["total_seconds"]:
                 raise RuntimeError("Experiment budget exhausted; preserve incomplete trials")
-        prompt += f"\nAvailable Python executable (if needed): {sys.executable}\n"
+        nonce = secrets.token_hex(16)
+        probe = Path(workspace) / "artifacts" / ("io-" + ident + ".txt")
+        observed = Path(workspace) / "artifacts" / ("observed-" + ident + ".txt")
+        write(probe, nonce + "\n")
+        prompt += f"\nBefore substantive work, read artifacts/{probe.name} and copy its actual nonce to artifacts/{observed.name}; include it in answers.io_nonce. This is a harness IO health check, not a business fact. If any required reads/writes are blocked, stop immediately without trying alternate shells. Batch independent reads where policy permits, and keep reports concise.\nAvailable Python executable (if needed): {sys.executable}\n"
         write(dest / "prompt.txt", prompt + "\n" + FINAL_FORMAT)
-        command = [self.cli, "exec", "--ignore-user-config", "--ephemeral", "--skip-git-repo-check", "--json", "--sandbox", "workspace-write", "--model", self.spec["model"], "-c", 'model_reasoning_effort="' + self.spec["effort"] + '"', "-C", str(workspace), "-"]
+        command = [self.cli, "exec", "--ignore-user-config", "--ephemeral", "--skip-git-repo-check", "--json", "--approve-for-me", "--model", self.spec["model"], "-c", 'model_reasoning_effort="' + self.spec["effort"] + '"', "-C", str(workspace), "-"]
         start = time.monotonic()
         row = {"id": ident, "status": "incomplete", "usage": None}
         try:
@@ -263,10 +271,17 @@ class Runner:
             messages = [e["item"]["text"] for e in events if e.get("type") == "item.completed" and e.get("item", {}).get("type") == "agent_message"]
             if proc.returncode or not messages:
                 raise ValueError("Process failed or missing final response")
-            write(dest / "answer.json", parse_answer(messages[-1]))
+            answer = parse_answer(messages[-1])
+            commands = [e for e in events if e.get("type") == "item.completed" and e.get("item", {}).get("type") == "command_execution" and e["item"].get("exit_code") == 0]
+            row["io_verified"] = bool(commands) and observed.is_file() and observed.read_text(encoding="utf-8-sig").strip() == nonce and answer["answers"].get("io_nonce") == nonce
+            row["successful_commands"] = len(commands)
+            if not row["io_verified"]:
+                raise ValueError("Required real read/write proof missing; process completion is not task completion")
+            write(dest / "answer.json", answer)
             row["status"] = "complete"
         except (ValueError, KeyError, subprocess.TimeoutExpired) as exc:
             row["error"] = str(exc)
+            self.abort.set()
         finally:
             row["elapsed_seconds"] = round(time.monotonic() - start, 3)
             with self.lock:
@@ -335,7 +350,7 @@ class Runner:
             for label, items, method in (("reviews", self.manifest["runs"], self.review), ("memory", self.manifest["trajectories"], self.memory)):
                 with ThreadPoolExecutor(max_workers=2) as pool:
                     futures = [pool.submit(method, item) for item in items]
-                    for future in futures:
+                    for future in as_completed(futures):
                         future.result()
                 print(label + " complete", flush=True)
         finally:

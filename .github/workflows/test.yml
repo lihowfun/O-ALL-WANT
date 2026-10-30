@@ -24,3 +24,5 @@ jobs:
           python-version: ${{ matrix.python }}
       - name: OAW behavioral and installation contracts
         run: python scripts/harness_check.py --verbose
+      - name: Offline three-arm measurement contracts
+        run: python -m unittest discover -s evals/three-way -p "test_bench.py" -v

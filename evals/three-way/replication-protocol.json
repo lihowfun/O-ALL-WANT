@@ -6,7 +6,7 @@
   "arms": ["EGM", "OAW v1", "OAW v2"],
   "snapshots": "All two-trajectory by three-arm S1 snapshots from the original cohort",
   "receivers": "Original S2 plus two additional fresh processes on independent copies of the exact S1 snapshot; 18 total receiver observations, 12 new calls",
-  "prompt": "Exact original S2 prompt for the corresponding trajectory/arm; no original S1 prompt, ticket or grader data supplied",
+  "prompt": "Exact original S2 task prompt for the corresponding trajectory/arm; IO-health nonce/path is independently generated for each receiver. No original S1 prompt, ticket or grader data supplied.",
   "model": "gpt-6.1-sol",
   "effort": "medium",
   "limits": {
