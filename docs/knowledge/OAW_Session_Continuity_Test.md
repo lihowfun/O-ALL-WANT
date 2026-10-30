@@ -10,6 +10,8 @@ related_topics:
   - Harness_Engineering_Knowledge_Synthesis
 ---
 
+> Historical v1 material from April 2026. This is not the current v2 runtime or performance contract; see [v2 design](../Design_Principles.md).
+
 # OAW Session Continuity — Test Report
 
 > Tested: 2026-04-18 | Environment: macOS Darwin 24.6.0, fresh git repo, OAW install.sh

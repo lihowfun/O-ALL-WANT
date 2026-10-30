@@ -6,7 +6,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/lihowfun/O-ALL-WANT?style=social)](https://github.com/lihowfun/O-ALL-WANT/stargazers)
 [![Last commit](https://img.shields.io/github/last-commit/lihowfun/O-ALL-WANT)](https://github.com/lihowfun/O-ALL-WANT/commits/main)
 [![Issues](https://img.shields.io/github/issues/lihowfun/O-ALL-WANT)](https://github.com/lihowfun/O-ALL-WANT/issues)
-[![Tested](https://img.shields.io/badge/tested-Claude%20Code%20%7C%20Codex-blue)](docs/knowledge/OAW_Session_Continuity_Test.md)
+[![test](https://github.com/lihowfun/O-ALL-WANT/actions/workflows/test.yml/badge.svg)](https://github.com/lihowfun/O-ALL-WANT/actions/workflows/test.yml)
 
 </div>
 
@@ -24,29 +24,34 @@
 > 「小孩子才做選擇，身為一個開發者，我～全、都、要！」
 
 <p align="center">
-  <img src="docs/assets/oboi_meme.png" width="400" alt="我全都要">
+  <img src="docs/assets/oboi_meme.png" width="400" alt="Harness engineering：我全都要">
 </p>
+
+> **v2.0.0 目前是 PR 中的提案版本，尚未發布 release。** [升級指南](docs/UPGRADING.md) · [CLI](docs/CLI_Reference.md) · [執行計畫](docs/plans/v2.0.0-execution.md)
+
+**OAW v2 就是整套 OAW，包含已整合的 EGM**。預設提供七個固定版本的 EGM
+skills 與 `oaw-evidence`；wiki、improve 和要啟用哪些 skills 可自行選擇。
+EGM 沿用上游的明確呼叫方式，不會每個任務都強制跑完整流程。
+安裝完成與效果提升分開驗證。
+[Codex 分數與完整說明](docs/validation/egm-oaw-codex-2026-10-30.md) ·
+[Codex／Claude 共用驗收協議](docs/SHARED_ACCEPTANCE_PROTOCOL.md)。
 
 ## 20 秒看懂
 
-OAW 會在你的 repo 裡裝一套小型、本地優先的 agent harness：
+OAW 只補 agent 從程式碼看不出來的東西，其他都交給 agent 本身：
 
-- **Context router**：`CLAUDE.md` 指揮 agent 只讀當下需要的 lane，不整包 docs 硬塞。
-- **持久 memory**：`.agents/memory.md` 保存決策、bug、發現，session reset 後還能接續。
-- **自動 wiki**：`docs/raw/` 筆記可編譯成可搜尋的 `docs/knowledge/`。
-- **可重複 skills**：`.agents/skills/` 讓常見 workflow 不再每次靠 prompt 臨場發揮。
+- **專案證據**：決策原因、外部限制、實驗結果。任務需要時連同來源一起找回來。
+- **原生 skills**：標準 `SKILL.md` 套件，同一份來源同時裝給 Claude Code 和 Codex。
+- **選配 wiki**：把原始筆記編譯成可搜尋的知識頁。
+- **有證據才改進**：任何規則或 skill 的改動，都要有具體 diff 和對照組 A/B 證據，由你決定是否採用。
 
-**實測效果**：lane routing 每次任務約載入 3k tokens，不是整包 22.6k tokens；在 session continuity test 裡節省 [**86-87% startup context**](docs/knowledge/OAW_Session_Continuity_Test.md)。
+agent loop、session、compaction、個人記憶、權限和 skill discovery 都由 Claude Code 或 Codex 負責。
 
 ```bash
-mkdir my-project && cd my-project && git init
 git clone https://github.com/lihowfun/O-ALL-WANT.git OAW
-bash OAW/install.sh
+python3 OAW/scripts/oaw.py init --target /path/to/project --host both
+python3 OAW/scripts/oaw.py doctor --target /path/to/project
 ```
-
-然後丟給 agent：
-
-> 先讀 `CLAUDE.md`，再讀 `AI_CONTEXT.md`。我正在打造 [描述你的專案]；請用 OAW 架構當 harness，把專案真實狀態整理進 `AI_CONTEXT.md`，再告訴我哪些重複流程可以收進 `.agents/skills/`。
 
 ## 為什麼會在這?
 
@@ -56,210 +61,201 @@ bash OAW/install.sh
 
 如果你也受夠了這種資源內耗，OAW 就是我替這件事做出來的解藥。
 
-這專案是我在數個燃燒肝臟的下班夜晚，瘋狂奴役 Claude Code 與 Codex，然後把 self-improving、Context Hub、MemPalace、Karpathy-style LLM Wiki、thin harness / fat skills 這些大神github repo或文章精華全摻在一起煮的撒尿牛丸鍋。目的只有一個：**讓昂貴 token 用在真的值得的推理與輸出上**，而不是浪費在「重跑已完成的內容」或「重新解釋專案架構」上。
+這專案是我在數個燃燒肝臟的下班夜晚，瘋狂奴役 Claude Code 與 Codex，然後把 Context Hub、MemPalace、Karpathy-style LLM Wiki、thin harness / fat skills 這些大神 github repo 或文章精華全摻在一起煮的撒尿牛丸鍋。
 
-我自己的用法很固定：只要是新的 agentic coding 專案，或某個我準備長期交給 AI 協作的目錄，我就先把 OAW 裝上去。這樣就算中途因為額度、排隊、多代理人協作切換，甚至只是被迫換個 session，下一個 agent 也能快速接手，不用每次從零重新講一次。
+**v2 是同一鍋，但徹底洗過一次鍋。** 現在 Claude Code 和 Codex 自己就會熬高湯：session、compaction、記憶和 skill discovery 都是原生的。所以 OAW 不再重煮一次，只加 host 不知道的料：這個專案為什麼長這樣，以及任何「改進」在留下來之前都要先拿出證據。
 
-> **只需要其中一樣?** 請直接 fork 對應的原作（列在最下面的 Source Lineage）。但如果你跟我一樣全都要，這鍋就是煮給你吃的。想快速比較定位可以看：[OAW 和其他工具差在哪](docs/COMPARISON.md)。
+目的還是只有一個：**讓昂貴 token 用在真的值得的推理與輸出上**，而不是浪費在「重跑已完成的內容」或「重新解釋專案架構」上。
 
----
-
-## 🍲 內容大雜燴清單
-
-### 🔄 自我演進邏輯 (Self-improving)
-
-`VERSION.json` + `ROADMAP.md` + `do_not_rerun` 讓 Agent 知道進度在哪，不會原地打轉或重跑已完成的內容。整合 `self-improving-agent` / ClawHub skill 的「記錄錯誤、保留修正、持續學習」workflow。
-
-### 📉 Token 優化器 — Context Hub + RTK-inspired output trimming
-
-`CLAUDE.md` 當 router，只把當下需要的 lane 和檔案送進 context；`context_hub.py` 補搜尋、annotate、memory 操作。`--compact` 吸收「回傳內容也要壓短」的思路。
-
-### ⚡ thin harness / fat skills (Garry Tan)
-
-把高頻流程丟進 `.agents/skills/*.md`，不要塞進一份超肥 prompt。OAW 沿用這個方向，再加上 lane routing。
-
-### 🧠 記憶宮殿 (Memory Palace)
-
-跨 Session 的持久化記憶，解決「不同對話不能傳承」的斷片問題。`.agents/memory.md` + wrap-up discipline 承接這件事。
-
-### 📚 自動演進 LLM Wiki (Karpathy Concept)
-
-把開發碎筆記從 `docs/raw/` 編進 `docs/knowledge/`。每次有重要結論，直接跟 agent 說 _「把這次的發現同步到 wiki」_，它就會跑 `wiki_sync.py refresh`，把 memory 和 raw 筆記蒸餾成結構化知識頁——不需要另外安排整理時間。
-
-多人維護或公開知識庫時，先看 [LLM wiki 貢獻指南](docs/wiki/CONTRIBUTING_WIKI.md)、[wiki pipeline](docs/wiki/WIKI_PIPELINE.md)，也可以直接使用 [wiki prompt](docs/prompts/WIKI_TOPIC_PROMPT.md) 讓 agent 把 raw evidence、compiled topics、skill candidates 對齊。
+> **只需要其中一樣?** 請直接 fork 對應的原作（列在最下面的 Source lineage）。但如果你跟我一樣全都要，這鍋就是煮給你吃的。想快速比較定位可以看：[OAW 和其他工具差在哪](docs/COMPARISON.md)。
 
 ---
 
-### 🤝 可選搭配：RTK (Rust Token Killer)
+## 🍲 這版鍋裡有什麼？（v2.0.0）
 
-OAW 的 `--compact` 已把「輸出也要壓短」的概念融進來。若想要 Rust 原生的極致 token 壓縮，請直接看 [rtk-ai/rtk](https://github.com/rtk-ai/rtk)。
+| | 料 | 在 v2 做什麼 | 怎麼拿到 |
+|---|---|---|---|
+| 🧭 | **原生優先的核心** | 短短的 `AGENTS.md`，只寫不明顯的限制和真正的驗證指令；`CLAUDE.md` 只負責引用它。沒有 router，也沒有強制開場閱讀 | 預設 |
+| 🧾 | **證據回想（Context Hub）** | `context_hub.py memory recall` 回傳有上限的 JSON 或文字，附來源位置、截斷標記和續讀 cursor。筆記是要對照現行程式碼檢查的證據，不會蓋過你的指令 | 預設 |
+| 🧩 | **原生 skills** | 七個 EGM 與三個 OAW `SKILL.md` 套件，可選擇啟用配方。`--host codex\|claude\|both` 從同一份來源產生 `.agents/skills` 和／或 `.claude/skills` | 預設七個 EGM＋`oaw-evidence`，wiki/improve 見下 |
+| 📚 | **LLM Wiki** | `wiki_sync.py` 把 `docs/raw/` 確定性地編譯成 `docs/knowledge/`，並檢查連結、metadata 和新鮮度。它是 renderer，不是 LLM 摘要器 | `--profile knowledge` |
+| 🔬 | **有證據的自我改進** | 假設＋具體 diff → 固定案例的 baseline／candidate 對照 → 你明確採用或拒絕。品質退步、證據缺失或被改動都會擋下；永遠不會自動套用 | `--with-improve` |
+| 🛟 | **安全的安裝與升級** | `init` 保護既有內容；`migrate` 預設只預覽，`--apply` 會留下備份、收據、可回復，衝突變成 proposal；`doctor` 回報健康狀態 | 一律 |
+| 🔒 | **安全寫入** | 加鎖的讀改寫、原子替換，拒絕 symlink／junction 和路徑逃逸 | 一律 |
+| 📉 | **精簡輸出** | `search --compact` 和 `--max-chars` 上限讓工具輸出保持精簡 | 預設 |
+| ✅ | **證明閘門** | `harness_check.py`：9 組檢查，要求所有測試模組都在、達到最低測試數、零 skip；CI 跑 Ubuntu、macOS、Windows × Python 3.10、3.13 | 本 repo |
+
+### 🥄 這版從鍋裡撈掉的料
+
+| 撈掉 | 原因 |
+|---|---|
+| `CLAUDE.md` Master Router 和各條 lane | 讀什麼由 host 自己決定，原生 skill 也由 host 自己發現 |
+| 佔位用的 `AI_CONTEXT.md`、`ROADMAP.md`、根目錄 `VERSION.json` | 狀態鏡像很容易過期。不再建立；你已經有的檔案會保留 |
+| `do_not_rerun` 狀態機 | 歷史筆記是歷史，不是永久的執行限制 |
+| 平鋪、靠關鍵字觸發的 skills 和「Skills-First」調度 | 換成原生 `SKILL.md` discovery |
+| 強制寫記憶、收尾報告、skill review 提醒 | 個人記憶已經是原生功能；只記錄可重用的專案證據 |
+| Copilot／Cursor／Windsurf／Gemini 指向檔 | v2 以 Claude Code 和 Codex 為目標；未改動的舊 adapter 會在 migrate 時移進備份 |
+| 「startup context 省 86–87%」的標語 | 那是 v1「挑選 Markdown」對「全部讀進來」的比較，保留當歷史，不是 v2 的 benchmark |
 
 ---
 
-## 🏗️ 架構設計
+## 🏗️ 架構
 
-OAW 的核心是 **Context Routing**：`CLAUDE.md` 作為 Master Router，依當下任務動態決定要載入哪條 lane；skills 和 scripts 接手執行層的重複動作。每個 session 只注入**當下真正需要**的 context，而不是把整個 repo 塞給 LLM 慢慢翻。
+**執行時**：agent 由 host 負責。OAW 提供一份短 policy、固定版本 EGM 與可選原生 skills，以及讀寫專案檔案的小型標準函式庫工具。
+
+```mermaid
+flowchart TB
+    subgraph HOST["Claude Code / Codex — agent loop、session、compaction、個人記憶、權限"]
+        CL["CLAUDE.md<br/>@AGENTS.md"] --> AG["AGENTS.md<br/>短專案 policy"]
+        SK["原生 skill discovery<br/>.agents/skills · .claude/skills"]
+    end
+    SK --> E["oaw-evidence<br/>預設"]
+    SK --> W["oaw-wiki<br/>--profile knowledge"]
+    SK --> I["oaw-improve<br/>--with-improve"]
+    E --> CH["context_hub.py<br/>memory recall · add · get · search"]
+    CH --> MEM[".agents/memory.md"]
+    CH --> KN["docs/knowledge/"]
+    W --> WS["wiki_sync.py<br/>build · refresh · lint"]
+    RAW["docs/raw/<br/>原始筆記"] --> WS --> KN
+    I --> IM["improvement.py<br/>propose · compare · decide"]
+    IM --> IR[".oaw/improvements/<br/>假設 · diff · A/B 證據"]
+    CH & WS & IM -.-> COM["oaw_common.py<br/>鎖 · 原子寫入 · 路徑邊界"]
+```
+
+**安裝與升級時**：每一次寫入都會先預覽、留備份，或直接拒絕。
 
 ```mermaid
 flowchart LR
-    U["User / Agent"] --> R["CLAUDE.md<br/>Master Router"]
-    R --> O["Operational Lane<br/>AI_CONTEXT.md / ROADMAP.md / VERSION.json / recent memory"]
-    R --> W["Wiki Lane<br/>docs/knowledge/*.md + index/log"]
-    R --> X["Execution Lane<br/>.agents/skills/*.md"]
-    W --> C["scripts/context_hub.py<br/>search / get / annotate / memory"]
-    S["docs/raw/*.md<br/>fallback-only source notes"] --> Y["scripts/wiki_sync.py<br/>invoked build / refresh / lint"]
-    Y --> W
+    NEW["新專案"] --> INIT["oaw.py init<br/>--profile · --host · --with-improve"]
+    OLD["v1 或較舊的 v2 專案"] --> MIG["oaw.py migrate<br/>只預覽"]
+    MIG -->|"--apply"| APPLY["備份 · 收據 · 可回復<br/>衝突 proposal"]
+    INIT --> MAN[".oaw/install.json<br/>受管檔案雜湊"]
+    APPLY --> MAN
+    MAN --> DOC["oaw.py doctor<br/>健康 · 不健康"]
 ```
 
----
+### 🛡️ 三大支柱（v2）
 
-### 🛡️ 駕馭工程（Harness Engineering）三大支柱
-
-三個支柱各自對應一個 agentic coding 時的可能痛點：
-
-| 設計原則 | 實作方式 | 解決的問題 |
-|---------|---------|-----------|
-| **[Context Fragmentation](docs/knowledge/Harness_Engineering_Context_Fragmentation.md)**<br/>上下文分流 | Lane 動態路由，按任務類型只載入相關檔案 | 避免 LLM 在長代碼中出現 **Lost in the Middle** 現象 |
-| **[Deterministic State Control](docs/knowledge/Harness_Engineering_Deterministic_State.md)**<br/>確定性狀態控制 | `VERSION.json` + `do_not_rerun` 構成開發狀態機 | 防止 Agent 在自主修復時重跑已完成任務或陷入無限循環 |
-| **[Knowledge Synthesis](docs/knowledge/Harness_Engineering_Knowledge_Synthesis.md)**<br/>知識蒸餾 | `memory.md`（短期決策）→ `knowledge/`（長期知識）的自動編譯 pipeline | 把 Agentic Workflow 產生的碎片洞察沉澱為可重用資產 |
-
----
-
-## 🔁 新 Session 時，差在哪
-
-| 新 session 打開，agent 的狀態… | 沒有 OAW | 有 OAW |
+| 支柱 | 實作 | 解決的問題 |
 |---|---|---|
-| 知道這個 repo 在幹嘛 | ❌ 你自己貼架構、目標、技術棧 | ✅ 讀 `CLAUDE.md` + `AI_CONTEXT.md` baseline |
-| 知道最近做過什麼決策 | ❌ 你從記憶裡口述 | ✅ `.agents/memory.md` 最後 5 筆，按需載入 |
-| 知道哪些流程是可重複 SOP | ❌ 每次重講一次 | ✅ `.agents/skills/` 靠 intent 關鍵字觸發 |
-| 不會重跑已完成的工作 | ❌ 自主修復容易跑進迴圈 | ✅ `VERSION.json` `do_not_rerun` 強制 |
+| **原生優先** | 短 `AGENTS.md`；skill 需要時才載入；不另起一套 agent runtime | 兩套系統搶 session、記憶和 startup context |
+| **證據，不是指令** | 回想時附來源和版本；筆記要對照現行程式碼檢查；取回的文字不會蓋過使用者 | 過期或被注入的筆記把 agent 帶偏 |
+| **先證明再採用** | 改進要有 diff 和對照組 A/B 證據；安裝器變更要過 gate；沒有任何東西會自己套用 | 所謂「自我改進」只是一直疊規則 |
 
-> **實測數據**：lane routing 只載當下任務用到的檔案——每條 lane ~3k tokens vs 全載 ~22.6k tokens，[**節省 86–87%**](docs/knowledge/OAW_Session_Continuity_Test.md)（出自 session 連續性測試）。Baseline（`CLAUDE.md` + `AI_CONTEXT.md`，約 2.3k tokens）永遠載入；lane 專屬檔再加 ~400–800 tokens。
+---
+
+## 🔁 原生 host 之上，OAW 還多做什麼
+
+v1 誕生的時代，coding agent 每換一個 session 就全部忘光。現在 Claude Code 和 Codex 原生就會讀專案規則檔、有自己的記憶，也會自己發現 skill。所以誠實的比較不是「有沒有 OAW」，而是「只有原生 host」對上「原生 host 加 OAW」。
+
+| 當 agent 需要… | 只有原生 host | 原生 host + OAW v2 |
+|---|---|---|
+| 專案規則和真正的驗證指令 | 各讀各的規則檔（Codex 讀 `AGENTS.md`、Claude Code 讀 `CLAUDE.md`） | 一份短短的 `AGENTS.md` 兩個 host 共用，`CLAUDE.md` 只負責引用它 |
+| 你個人的跨 session 偏好 | host 自己的記憶（有啟用的話） | 交給 host，OAW 刻意不重做 |
+| 專案某個決策的來龍去脈 | 個人記憶或對話紀錄：不在 repo 裡，團隊和另一個 host 都看不到 | 存在 repo 裡的專案證據，附來源、版本和適用範圍；`memory recall` 有上限地取回 |
+| 判斷一則舊筆記能不能信 | 看 agent 自己判斷 | evidence skill 明確要求對照現行程式碼，並標記已被取代的結論 |
+| 兩個 host 用同一套 skill | 每個 host 各放一份、各自維護 | 同一份來源產生 `.agents/skills` 和 `.claude/skills`，`doctor` 會檢查 |
+| 新增規則或 skill | 誰寫了就加 | 選配 `oaw-improve`：要有 diff、對照組 A/B 證據，並經過你明確同意 |
+
+> v2 沒有宣稱 token 節省數字。已完成[固定案例的 Codex 手動流程比較](docs/validation/egm-codex-2026-10-29.md)；Claude CLI 模型測試、具名模型版本驗證與原生 skill 自動 discovery 仍未驗證。
 
 ---
 
 ## ⚡ 快速上手
 
-### 🆕 全新專案
+需要 Python 3.10+，runtime 只用標準函式庫。在 OAW checkout 執行：
 
 ```bash
-mkdir my-project && cd my-project && git init
-git clone https://github.com/lihowfun/O-ALL-WANT.git OAW
-bash OAW/install.sh
+python3 scripts/oaw.py init --target /path/to/project            # 裝給 Codex（預設）
+python3 scripts/oaw.py init --target /path/to/project --host both
+python3 scripts/oaw.py doctor --target /path/to/project
 ```
 
-裝完對 agent 說：
+預設安裝短 `AGENTS.md`、Claude 相容 import、完整固定版本 EGM、七個 EGM skill 入口、evidence skill、Context Hub 和共用 helper。不建立記憶檔、不塞佔位架構，也沒有強制的 session 流程。遇到既有的不同內容會保留。
 
-> 先讀 `CLAUDE.md`，再讀 `AI_CONTEXT.md`。
-> 我正在打造 [描述你的專案]；請用 OAW 架構當 harness，把專案真實狀態整理進 `AI_CONTEXT.md`，再告訴我哪些重複流程可以收進 `.agents/skills/`。
-
-### 📂 既有專案
-
-若你已經有自己的 `CLAUDE.md` / `AI_CONTEXT.md`，`install.sh` 會**先列出所有要寫入的 managed file**，等你按 `y/N` 確認才覆蓋——不會靜默蓋掉任何東西。想先看 OAW 長什麼樣再決定，可以先逛 [`example/minimal-project/`](example/minimal-project/) 或 `OAW/templates/`。
+選配功能可以在已安裝的專案上累加：
 
 ```bash
-cd /path/to/your/project
-git clone https://github.com/lihowfun/O-ALL-WANT.git OAW
-bash OAW/install.sh     # 跳「Overwrite?」時會列出每個衝突檔，按 N 可中止
+python3 scripts/oaw.py init --target /path/to/project --profile knowledge   # wiki renderer + wiki skill
+python3 scripts/oaw.py init --target /path/to/project --with-improve        # 有證據的改進流程
 ```
 
-裝完對 agent 說：
+Bash 捷徑：在目標專案執行 `bash /path/to/O-ALL-WANT/install.sh`。範例：[最小安裝](example/minimal-project/) · [knowledge 與 improvement](example/public-hybrid-demo/)
 
-> 先讀 `CLAUDE.md`，再讀 `AI_CONTEXT.md`，照 OAW 架構幫這個專案做優化建議。
+### 📂 升級既有的 OAW 專案
 
-### 🔌 不同 Agent / IDE 的對應方式
+```bash
+python3 scripts/oaw.py migrate --target /path/to/project           # 只預覽
+python3 scripts/oaw.py migrate --target /path/to/project --apply   # 備份 + proposal
+```
 
-**主力測試對象**：Claude Code 與 OpenAI Codex（OAW 本身就是每天用它們開發的）。其他 agent 都有 adapter 可用，歡迎實戰回報。
+可識別且未改動的 framework 檔會直接更新。客製的 policy 和 skill 會變成 proposal，不會被覆寫。記憶、knowledge、原始筆記、`AI_CONTEXT.md`、`ROADMAP.md` 和根目錄 `VERSION.json` 都歸你所有。proposal 處理完之前，不要把升級當成完成。見 [UPGRADING](docs/UPGRADING.md)。
 
-Router 永遠叫 `CLAUDE.md`，但不同 agent 預設讀不同的規則檔：
+### 🔌 Host 對應
 
-| Agent / IDE | 預設讀取 | OAW 對應方式 |
-|-------------|---------|-------------|
-| **Claude Code** | `CLAUDE.md` | ✅ 安裝後直接對應 |
-| **GitHub Copilot** | `.github/copilot-instructions.md` | ✅ 安裝時自動建立，指向 `CLAUDE.md` |
-| **OpenAI Codex** | `AGENTS.md` | ✅ 安裝時自動建立，指向 `CLAUDE.md` |
-| **Cursor** | `.cursorrules` | ✅ 安裝時自動建立，指向 `CLAUDE.md` |
-| **Windsurf** | `.windsurfrules` | ✅ 安裝時自動建立，指向 `CLAUDE.md` |
-| **Gemini** | `GEMINI.md` | ✅ 安裝時自動建立，指向 `CLAUDE.md` |
+| Host | Policy 檔 | Skills 目錄 |
+|---|---|---|
+| **OpenAI Codex** | `AGENTS.md` | `.agents/skills/`（`--host codex`，預設） |
+| **Claude Code** | `CLAUDE.md` → `@AGENTS.md` | `.claude/skills/`（`--host claude`） |
+| 兩者 | 同一份 policy | 從同一份來源產生兩個目錄（`--host both`） |
 
-嫌麻煩也可以直接跟 agent 說「先讀 CLAUDE.md」，效果一樣。
+OAW 不會偷改 host 設定。`doctor` 會把「支援」和「已啟用」分開回報。本機 schema 測試不能證明兩個 host 實際載入得到 skill。見 [Skill Guide](docs/Skill_Guide.md)。
 
 ---
 
-## 💬 一句話調度 SOP
+## 🔧 直接下指令
 
-OAW 的操作哲學很簡單：**你只負責描述意圖，Agent 負責找到對應的 SOP 並執行**。
-
-這背後的機制叫 **Skills-First Principle**——Agent 在回應前會先比對 `.agents/skills/`，有 match 就走預寫好的 workflow，沒 match 才臨場發揮。好處是：**可重現的流程不受 LLM 隨機性影響，一次性的問題保留創造空間**。
-
-| 你說什麼 | Agent 觸發的 SOP |
-|---------|-----------------|
-| 「我剛決定改用 Redis 當 cache」 | 寫入 `.agents/memory.md` → `[DECISION] 改用 Redis` |
-| 「這個 bug 是 N+1 query 造成的」 | 寫入 memory；累積多條時主動提議蒸餾到 wiki |
-| 「幫我整理一下 `docs/raw/` 的筆記」 | 觸發 `/wiki-refresh` → `wiki_sync.py refresh` → 產出 knowledge 頁 |
-| 「跑一下 benchmark」 | 觸發 `/benchmark` → 讀 baselines → 執行 → 產報告 |
-| 「準備 release v1.2.0」 | 觸發 `/version-release` → 跑完整 checklist |
-| 「這東西壞了，幫我 debug」 | 觸發 `/debug-pipeline` → 逐層排查 → 記錄 root cause |
-| 「目前專案什麼狀態?」 | `context_hub.py status` → 版本 + 最近決策 + 知識主題 |
-
-細節請看：[Skill Guide](docs/Skill_Guide.md)。
-
----
-
-### 🔧 想直接下指令（Bypass Agent）
-
-偏好手動調度而不透過 agent 的話，這些是直通底層的 CLI：
+在已安裝的專案執行：
 
 | 指令 | 用途 |
-|------|------|
-| `python3 scripts/context_hub.py status` | 版本 + 近期決策 + 知識主題 |
-| `python3 scripts/context_hub.py setup` | 掃描還沒填完的 `${...}` placeholder（裝完第一件該跑的事）|
-| `python3 scripts/context_hub.py search "關鍵字"` | 搜尋知識庫 |
-| `python3 scripts/context_hub.py search "關鍵字" --include-memory` | 搜尋時把 `memory.md` 一起拉進來 |
-| `python3 scripts/context_hub.py context --lane [operational\|wiki\|execution\|debug]` | 列出某條 lane 底下的檔案 |
-| `python3 scripts/context_hub.py memory add "[TAG] 內容"` | 手動記到 memory |
-| `python3 scripts/wiki_sync.py refresh topic_name` | 編譯某個 wiki 主題 |
-| `python3 scripts/wiki_sync.py lint` | 檢查 wiki metadata、links、freshness 與 soft quality signals |
-| `python3 scripts/wiki_sync.py lint --strict` | 另外抓未填的 `${...}` / `YYYY-MM-DD` |
+|---|---|
+| `python3 scripts/context_hub.py memory recall "快取決策" --json --max-chars 12000` | 有上限的回想，附來源和續讀 |
+| `python3 scripts/context_hub.py memory add "[DECISION] 保留本機快取 — 證據：docs/experiment.md"` | 記錄可長期使用的證據 |
+| `python3 scripts/context_hub.py get Cache_Decision` | 讀一頁知識頁 |
+| `python3 scripts/context_hub.py search "keyword" --compact` | 一行一個主題的搜尋 |
+| `python3 scripts/wiki_sync.py refresh Topic` · `lint` | 編譯和檢查 wiki（knowledge profile） |
+| `python3 scripts/improvement.py --help` | 提案、比較、決定改進（`--with-improve`） |
 
-完整列表：[CLI Reference](docs/CLI_Reference.md)。
+完整清單：[CLI Reference](docs/CLI_Reference.md) · [Self-improvement 指南](docs/SELF_IMPROVEMENT.md)
 
 ---
 
 ## 🐕 Self-Hosting：repo 自己是自己的第一個用戶
 
-Root 的 `CLAUDE.md` / `AI_CONTEXT.md` 等是 **OAW 團隊自用**的版本，不是給你的 template。你的 template 住在 `templates/`，`install.sh` 會幫你裝進專案。
+根目錄的 `AGENTS.md` 和 `CLAUDE.md` 是 OAW 團隊自己在用的版本，不是你安裝的模板。可安裝的版本在 `templates/`，產生的範例會和安裝器逐位元組比對。
 
-**Public memory policy**：`.agents/memory.md` 已 gitignore(memory 是本地日記)。公開分享的是提煉後的 `docs/knowledge/`(教科書)。
+```bash
+python3 scripts/harness_check.py
+python3 scripts/sync_examples.py --write
+```
+
+見 [CONTRIBUTING](CONTRIBUTING.md) 和 [CHANGELOG](CHANGELOG.md)。
 
 ---
 
-## Source Lineage (站在巨人肩膀上)
+## Source lineage（站在巨人肩膀上）
 
-以下是 OAW 的靈感與參考來源。有些有深入研究原始碼，有些只是概念層面的啟發：
+確切版本與使用狀態見 [v2.0.0 來源版本表](docs/releases/2.0.0-sources.md)。
+EGM **0.1.0**、commit [`f0ba151b252c9abf1318d9fe857a43265d06de89`](https://github.com/google/elephant-goldfish-model/tree/f0ba151b252c9abf1318d9fe857a43265d06de89)
+完整 runtime 已內建於 V2，安裝至 `.oaw/integrations/egm/`。上游檔案保留原文、Apache-2.0 授權與逐檔雜湊；入口轉接變更另列於來源紀錄。
+採用、替換與淘汰建議見 [review](docs/reviews/2026-10-29-pr4-egm.md)。
 
-**原始碼參考（有實際研究實作）**
+**v2 保留的歷史概念來源**（當時未記錄上游版本；以下是閱讀入口，並非固定版本的 runtime 相依）
 
-- 📉 **[andrewyng/context-hub](https://github.com/andrewyng/context-hub)** (MIT) — `context_hub.py` 的核心架構直接參考此 repo，searchable knowledge + annotate + routing
-- 🧠 **[Memory Palace / MemPalace](https://github.com/MemPalace/mempalace)** (MIT) — `.agents/memory.md` 的結構與 wrap-up discipline 來自此 repo
+- 📉 **[andrewyng/context-hub](https://github.com/andrewyng/context-hub)** — `context_hub.py` 的架構：可搜尋的知識、annotation、回想
+- 🧠 **[MemPalace](https://github.com/MemPalace/mempalace)** — `.agents/memory.md` 的標籤式條目格式
+- 📚 **[Karpathy-style LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)** — `docs/raw/` → `docs/knowledge/` 背後「原始筆記和編譯後 wiki 分開」的想法
+- ⚡ **[thin harness / fat skills (Garry Tan)](https://x.com/garrytan/status/2042925773300908103)** — policy 保持精簡、工作推進 skills，現在變成原生 `SKILL.md` 套件
+- 🤝 **[RTK (rtk-ai/rtk)](https://github.com/rtk-ai/rtk)** — 縮短工具輸出的概念參考（`--compact`）；OAW 沒有內建 RTK
+- 🧰 **[Pi](https://github.com/earendil-works/pi)**、**[Deep Agents](https://docs.langchain.com/oss/python/deepagents/overview)**、**[Hermes](https://hermes-agent.nousresearch.com/docs/)** — 工具輸出上限和生命週期邊界；沒有內嵌它們的 runtime
 
-**概念靈感（文章／推文／skill 頁面啟發，非原始碼）**
+**v2 不再使用的**
 
-- 🔄 **[self-improving-agent / ClawHub skill pattern](https://clawhub.ai/skills/self-improver)** — `do_not_rerun`、session 結束強制報告、failure logging 的概念來源；OAW 自己重寫了實作
-- 📚 **[Karpathy-style LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)** — 隨手筆記 vs 編譯後 wiki 的分離哲學，啟發了 `docs/raw/` → `docs/knowledge/` 的架構
-- ⚡ **[thin harness / fat skills (Garry Tan)](https://x.com/garrytan/status/2042925773300908103)** — 推文概念：把高頻操作收進 skill，讓 router 保持精簡
-- 🤝 **[RTK (rtk-ai/rtk)](https://github.com/rtk-ai/rtk)** — output-side token reduction 的概念參考；OAW 沒有內建 RTK，但 `--compact` 吸收了「回傳內容也要壓短」這個思路
+- 🔄 **[self-improving-agent / ClawHub](https://clawhub.ai/skills/self-improver)** — v1 的 `do_not_rerun`、session 收尾報告和失敗紀錄來自這個模式；v2 改成「先證明再採用」的改進流程
+- 🧠 MemPalace 的收尾紀律 — 隨著強制 session 流程一起移除，只保留它的條目格式
 
-這份來源清單也會持續更新；之後如果遇到真的好用、而且能自然融進 OAW 的做法，也會補進來。
-
-深入閱讀：[Architecture Origins](docs/Architecture_Origins.md) · [Design Principles](docs/Design_Principles.md)
-
-## Examples + Docs
-
-- 範例：[example/](example/)（從 `minimal-project/` 開始）
-- [OAW 和其他工具差在哪](docs/COMPARISON.md) · [CLI Reference](docs/CLI_Reference.md) · [Skill Guide](docs/Skill_Guide.md) · [Wiki Sync Guide](docs/Wiki_Sync_Guide.md)
-- [CONTRIBUTING.md](CONTRIBUTING.md) · [CHANGELOG.md](CHANGELOG.md)
+延伸閱讀：[Architecture Origins](docs/Architecture_Origins.md) · [Design Principles](docs/Design_Principles.md)
 
 ## License
 
-MIT
+MIT License.

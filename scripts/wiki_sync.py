@@ -13,10 +13,16 @@ import re
 import sys
 from collections import defaultdict
 from datetime import date, datetime
+from urllib.parse import quote, unquote, urlsplit, urlunsplit
 
-BASE_DIR = os.environ.get("AGENT_MEMORY_BASE_DIR") or os.path.dirname(
-    os.path.dirname(os.path.abspath(__file__))
+from oaw_common import (
+    atomic_write, close_fence, confined_path, extract_annotations, locked_update,
+    render_annotations, validate_topic_id,
 )
+
+BASE_DIR = os.path.abspath(os.environ.get("AGENT_MEMORY_BASE_DIR") or os.path.dirname(
+    os.path.dirname(os.path.abspath(__file__))
+))
 RAW_DIR = os.path.join(BASE_DIR, "docs", "raw")
 KNOWLEDGE_DIR = os.path.join(BASE_DIR, "docs", "knowledge")
 META_FILES = {"index.md", "log.md"}
@@ -100,9 +106,7 @@ def _safe_read(path):
 
 
 def _write(path, content):
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w", encoding="utf-8") as handle:
-        handle.write(content)
+    atomic_write(path, content, root=BASE_DIR)
 
 
 def _body_without_h1(body):
@@ -135,23 +139,29 @@ def _first_paragraph(body):
 def _discover_raw_sources():
     """Load all raw source notes from docs/raw/."""
     sources = []
-    if not os.path.exists(RAW_DIR):
+    raw_dir = confined_path(BASE_DIR, RAW_DIR)
+    if not os.path.exists(raw_dir):
         return sources
 
-    for filename in sorted(os.listdir(RAW_DIR)):
+    for filename in sorted(os.listdir(raw_dir)):
         if not filename.endswith(".md"):
             continue
         if filename.startswith("_") or filename.lower() == "readme.md":
             continue
 
-        path = os.path.join(RAW_DIR, filename)
+        path = confined_path(BASE_DIR, raw_dir, filename)
+        if not os.path.isfile(path):
+            continue
         content = _safe_read(path)
         metadata, body = _parse_frontmatter(content)
         topic_id = metadata.get("topic_id") or os.path.splitext(filename)[0].replace(" ", "_")
+        validate_topic_id(topic_id)
         source_id = metadata.get("source_id") or os.path.splitext(filename)[0]
         title = metadata.get("title") or _topic_title(source_id)
         summary = metadata.get("summary") or _first_paragraph(body)
-        last_updated = metadata.get("last_updated") or _today()
+        last_updated = metadata.get("last_updated") or ""
+        if not isinstance(last_updated, str):
+            raise ValueError(f"Raw source {filename!r} requires a scalar last_updated.")
         related_topics = sorted(
             topic
             for topic in set(_normalize_list(metadata.get("related_topics")))
@@ -180,16 +190,19 @@ def _discover_raw_sources():
 def _load_knowledge_pages(include_meta=False):
     """Load current knowledge pages from docs/knowledge/."""
     pages = []
-    if not os.path.exists(KNOWLEDGE_DIR):
+    knowledge_dir = confined_path(BASE_DIR, KNOWLEDGE_DIR)
+    if not os.path.exists(knowledge_dir):
         return pages
 
-    for filename in sorted(os.listdir(KNOWLEDGE_DIR)):
+    for filename in sorted(os.listdir(knowledge_dir)):
         if not filename.endswith(".md"):
             continue
         if not include_meta and filename in META_FILES:
             continue
 
-        path = os.path.join(KNOWLEDGE_DIR, filename)
+        path = confined_path(BASE_DIR, knowledge_dir, filename)
+        if not os.path.isfile(path):
+            continue
         content = _safe_read(path)
         metadata, body = _parse_frontmatter(content)
         page_type = metadata.get("page_type", "topic")
@@ -238,16 +251,15 @@ def _render_frontmatter(fields):
 
 def _extract_ai_annotations(existing_content):
     """Preserve the AI Annotations section across deterministic rebuilds."""
-    marker = "\n## AI Annotations\n"
-    if marker not in existing_content:
-        return ""
-    return existing_content.split(marker, 1)[1].strip()
+    return extract_annotations(existing_content)
 
 
 def _render_topic_page(topic_id, sources, existing_annotations=""):
     """Compile all raw sources for a topic into one durable knowledge page."""
     # Prefer the first raw source's title (preserves user's casing); fall back
     # to deriving from the topic_id.
+    validate_topic_id(topic_id)
+    target_path = confined_path(BASE_DIR, KNOWLEDGE_DIR, f"{topic_id}.md")
     title = next((s["title"] for s in sources if s.get("title")), None) or _topic_title(topic_id)
     related_topics = sorted(
         topic
@@ -282,7 +294,8 @@ def _render_topic_page(topic_id, sources, existing_annotations=""):
     ]
 
     for source in sources:
-        sections.append(f"- **{source['title']}**: {source['summary']}")
+        summary = _rebase_markdown_links(source["summary"], source["path"], target_path)
+        sections.append(f"- **{source['title']}**: {summary}")
 
     sections.extend(["", "## Compiled Source Notes"])
     for source in sources:
@@ -297,31 +310,23 @@ def _render_topic_page(topic_id, sources, existing_annotations=""):
         )
         if source["related_topics"]:
             sections.append("- Related topics: " + ", ".join(f"`{item}`" for item in source["related_topics"]))
-        sections.extend(["", source["body"].strip()])
+        # An unterminated raw fence would hide the next source and the annotation block.
+        body = _rebase_markdown_links(source["body"].strip(), source["path"], target_path)
+        sections.extend(["", close_fence(body)])
 
     if related_topics:
         sections.extend(["", "## Related Topics"])
         for related_topic in related_topics:
             sections.append(f"- `{related_topic}`")
 
-    sections.extend(["", "## AI Annotations", ""])
-    if existing_annotations:
-        sections.append(existing_annotations)
-    else:
-        sections.extend(
-            [
-                "<!-- Auto-appended by agents via: python3 scripts/context_hub.py annotate "
-                f"{topic_id} \"note\" -->",
-                "",
-            ]
-        )
+    sections.extend(["", render_annotations(existing_annotations)])
 
     return "\n".join(sections)
 
 
 def _render_index(pages):
     """Render the generated knowledge index page."""
-    generated_at = _today()
+    generated_at = _snapshot_date(pages)
     lines = [
         _render_frontmatter(
             {
@@ -366,7 +371,6 @@ def _render_index(pages):
 
 def _render_log(pages):
     """Render the generated sync ledger."""
-    generated_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     lines = [
         _render_frontmatter(
             {
@@ -374,13 +378,13 @@ def _render_log(pages):
                 "title": "Knowledge Sync Log",
                 "page_type": "meta",
                 "build_origin": "wiki_sync",
-                "last_updated": _today(),
+                "last_updated": _snapshot_date(pages),
                 "related_topics": [],
             }
         ),
         "# Knowledge Sync Log",
         "",
-        f"> Generated at {generated_at}. `refresh <topic>` should only touch the target",
+        "> Generated from the current knowledge snapshot. `refresh <topic>` touches the target",
         "> topic plus this file and `index.md`.",
         "",
         "| Topic ID | Mode | Source Count | Last Updated |",
@@ -407,7 +411,9 @@ def _build_meta_pages():
 
 def _build_topic_pages(topic_filter=None):
     """Compile all matching raw topics. Returns a list of written topic ids."""
-    os.makedirs(KNOWLEDGE_DIR, exist_ok=True)
+    os.makedirs(confined_path(BASE_DIR, KNOWLEDGE_DIR), exist_ok=True)
+    if topic_filter not in (None, "all"):
+        validate_topic_id(topic_filter)
     grouped_sources = defaultdict(list)
     for source in _discover_raw_sources():
         grouped_sources[source["topic_id"]].append(source)
@@ -420,20 +426,20 @@ def _build_topic_pages(topic_filter=None):
         if topic_filter not in (None, "all") and topic_id != topic_filter:
             continue
 
-        target_path = os.path.join(KNOWLEDGE_DIR, f"{topic_id}.md")
-        existing_annotations = ""
-        if os.path.exists(target_path):
-            existing_content = _safe_read(target_path)
-            metadata, _ = _parse_frontmatter(existing_content)
-            origin = metadata.get("build_origin", "manual")
-            if origin != "wiki_sync":
-                raise ValueError(
-                    f"Refusing to overwrite manual page '{topic_id}'. "
-                    "Rename the raw topic or migrate the page metadata first."
-                )
-            existing_annotations = _extract_ai_annotations(existing_content)
+        target_path = confined_path(BASE_DIR, KNOWLEDGE_DIR, f"{topic_id}.md")
 
-        _write(target_path, _render_topic_page(topic_id, sources, existing_annotations=existing_annotations))
+        def mutate(existing_content):
+            if existing_content:
+                metadata, _ = _parse_frontmatter(existing_content)
+                if metadata.get("build_origin", "manual") != "wiki_sync":
+                    raise ValueError(
+                        f"Refusing to overwrite manual page '{topic_id}'. "
+                        "Rename the raw topic or migrate the page metadata first."
+                    )
+            annotations = _extract_ai_annotations(existing_content)
+            return _render_topic_page(topic_id, sources, existing_annotations=annotations)
+
+        locked_update(target_path, mutate, root=BASE_DIR)
         written.append(topic_id)
 
     return written
@@ -457,30 +463,110 @@ def refresh(topic):
         print(f"✅ Refreshed topic '{topic}'.")
 
 
+_LINK_DESTINATION = r"(?:\\.|[^\s()\\]|\((?:\\.|[^()\\])*\))+"
+_INLINE_LINK = re.compile(r"(!?\[[^\]\n]*\]\()(<[^>\n]+>|" + _LINK_DESTINATION + r")(\s+[^)\n]*)?(\))")
+# `[^note]: text` is a footnote definition, not a link reference.
+_REFERENCE_LINK = re.compile(r"^(\s{0,3}\[(?!\^)[^\]\n]+\]:\s*)(<[^>\n]+>|\S+)", re.MULTILINE)
+
+
+def _map_markdown_links(content, transform):
+    """Transform inline/image/reference destinations, leaving code examples alone."""
+    result = []
+    fence = None
+    for line in content.splitlines(keepends=True):
+        marker = re.match(r"^\s{0,3}(`{3,}|~{3,})", line)
+        if marker:
+            token = marker.group(1)
+            if fence is None:
+                fence = token
+            elif token[0] == fence[0] and len(token) >= len(fence):
+                fence = None
+            result.append(line)
+            continue
+        if fence:
+            result.append(line)
+            continue
+        # Inline code spans are display examples, not navigable Markdown links.
+        pieces = re.split(r"(`+[^`]*`+)", line)
+        for index in range(0, len(pieces), 2):
+            text = _INLINE_LINK.sub(
+                lambda m: m.group(1) + transform(m.group(2)) + (m.group(3) or "") + m.group(4), pieces[index]
+            )
+            pieces[index] = _REFERENCE_LINK.sub(lambda m: m.group(1) + transform(m.group(2)), text)
+        result.append("".join(pieces))
+    return "".join(result)
+
+
+def _rebase_markdown_links(content, source_path, target_path):
+    def transform(destination):
+        angular = destination.startswith("<") and destination.endswith(">")
+        raw = destination[1:-1] if angular else destination
+        try:
+            resolved = _relative_path(source_path, raw)
+        except ValueError:
+            return destination  # Out-of-project targets stay as written.
+        if resolved is None:
+            return destination
+        parsed = urlsplit(raw)
+        relative = os.path.relpath(resolved, os.path.dirname(target_path)).replace("\\", "/")
+        if not angular:
+            relative = quote(relative, safe="/-._~!$&'*,;=+@")
+        rewritten = urlunsplit(("", "", relative, parsed.query, parsed.fragment))
+        return "<" + rewritten + ">" if angular else rewritten
+
+    return _map_markdown_links(content, transform)
+
+
 def _relative_path(from_path, target):
-    """Resolve a repo-relative markdown link against the current file."""
-    if target.startswith(("http://", "https://", "mailto:", "#")):
+    """Resolve a markdown link against the current file; a leading '/' is the repo root.
+
+    Raises ValueError for targets outside the project boundary.
+    """
+    target = target.strip("<>")
+    parsed = urlsplit(target)
+    if parsed.scheme or parsed.netloc or target.startswith("#"):
         return None
-    normalized = target.split("#", 1)[0]
+    normalized = unquote(re.sub(r"\\([\\() ])", r"\1", parsed.path))
     if not normalized:
         return None
-    if os.path.isabs(normalized):
-        return normalized
-    return os.path.normpath(os.path.join(os.path.dirname(from_path), normalized))
+    if normalized.startswith("/"):
+        try:  # An absolute in-project path, else GitHub-style root-relative.
+            return confined_path(BASE_DIR, normalized)
+        except ValueError:
+            return confined_path(BASE_DIR, normalized.lstrip("/"))
+    return confined_path(BASE_DIR, os.path.dirname(from_path), normalized)
 
 
 def _extract_markdown_links(content):
     """Return relative markdown targets mentioned in the document body."""
-    return re.findall(r"\[[^\]]+\]\(([^)]+)\)", content)
+    links = []
+    _map_markdown_links(content, lambda target: links.append(target) or target)
+    return links
+
+
+def _check_links(path, content, kind, where, issues, warnings):
+    """Broken local links are errors; links leaving the project cannot be checked."""
+    for link in _extract_markdown_links(content):
+        try:
+            resolved = _relative_path(path, link)
+        except ValueError:
+            warnings.append(f"{kind} link outside the project in {where}: {link}")
+            continue
+        if resolved and not os.path.exists(resolved):
+            issues.append(f"broken {kind} link in {where}: {link}")
 
 
 def _parse_date(value):
-    if not value:
+    if not isinstance(value, str) or not value:
         return None
     try:
         return date.fromisoformat(value)
     except ValueError:
         return None
+
+
+def _snapshot_date(pages):
+    return max((page["last_updated"] for page in pages if _parse_date(page["last_updated"])), default="")
 
 
 PLACEHOLDER_PATTERNS = (
@@ -508,85 +594,15 @@ HOLLOW_PHRASES = (
     "streamline",
 )
 
-# Skill lint: at least one of `triggers` / `outputs` must be present in frontmatter,
-# and the body must have an execution-structure heading we recognise. `Rules` is
-# allowed so protocol-style skills (e.g. self-improving) without step-by-step
-# workflows still pass.
-SKILL_FRONTMATTER_REQUIRED_ANY = ("triggers", "outputs")
-SKILL_BODY_STRUCTURE_PATTERNS = (
-    re.compile(r"^##+\s+Steps\b", re.MULTILINE),
-    re.compile(r"^###+\s+Step\s+\d+", re.MULTILINE),
-    re.compile(r"^##+\s+Rules\b", re.MULTILINE),
-    re.compile(r"^###+\s+Rule\s+\d+", re.MULTILINE),
-    re.compile(r"^##+\s+Workflow\b", re.MULTILINE),
-    re.compile(r"^##+\s+Procedure\b", re.MULTILINE),
-)
-SKILL_SKIP_BASENAMES = {"README.md"}
-
-
 def _discover_skill_files():
-    """Locate `.agents/skills/*.md` — works for both self-hosting and user installs.
-
-    Returns a list of absolute paths. Prefers `templates/.agents/skills/` (canonical
-    for OAW itself) and falls back to `.agents/skills/` (how user installs look).
-    Skips `README.md` and any underscore-prefixed fixtures.
-    """
-    candidates = [
-        os.path.join(BASE_DIR, "templates", ".agents", "skills"),
-        os.path.join(BASE_DIR, ".agents", "skills"),
-    ]
-    seen = set()
-    files = []
-    for skill_dir in candidates:
-        if not os.path.isdir(skill_dir):
-            continue
-        for filename in sorted(os.listdir(skill_dir)):
-            if not filename.endswith(".md"):
-                continue
-            if filename in SKILL_SKIP_BASENAMES or filename.startswith("_"):
-                continue
-            full = os.path.join(skill_dir, filename)
-            if full in seen:
-                continue
-            seen.add(full)
-            files.append(full)
-    return files
+    """Lint OAW packages without imposing our portable subset on other plugins."""
+    from validate_skills import find_skill_files
+    return find_skill_files(BASE_DIR, managed_only=True)
 
 
 def _lint_skill_file(path):
-    """Return a list of issue strings for a single skill markdown file.
-
-    Empty list means the skill passed. Issues cover:
-      - missing frontmatter entirely
-      - neither `triggers` nor `outputs` present in frontmatter
-      - no execution-structure heading (Steps / Rule / Workflow / Procedure)
-    """
-    issues = []
-    try:
-        content = _safe_read(path)
-    except OSError as exc:
-        return [f"skill file unreadable: {exc}"]
-
-    metadata, body = _parse_frontmatter(content)
-    rel_path = os.path.relpath(path, BASE_DIR)
-
-    if not metadata:
-        issues.append(f"skill missing frontmatter block: {rel_path}")
-        return issues
-
-    if not any(metadata.get(field) for field in SKILL_FRONTMATTER_REQUIRED_ANY):
-        issues.append(
-            f"skill missing required frontmatter (need at least one of "
-            f"{', '.join(SKILL_FRONTMATTER_REQUIRED_ANY)}): {rel_path}"
-        )
-
-    if not any(pattern.search(body) for pattern in SKILL_BODY_STRUCTURE_PATTERNS):
-        issues.append(
-            f"skill body has no execution-structure heading "
-            f"(Steps / Rules / Workflow / Procedure): {rel_path}"
-        )
-
-    return issues
+    from validate_skills import lint_skill_file
+    return lint_skill_file(confined_path(BASE_DIR, path))
 
 
 def _scan_placeholders(paths):
@@ -698,10 +714,7 @@ def lint(strict=False):
             issues.append(f"raw source missing topic_id: {source['relative_path']}")
         if not source["summary"]:
             issues.append(f"raw source missing summary: {source['relative_path']}")
-        for link in _extract_markdown_links(source["body"]):
-            resolved = _relative_path(source["path"], link)
-            if resolved and not os.path.exists(resolved):
-                issues.append(f"broken raw link in {source['relative_path']}: {link}")
+        _check_links(source["path"], source["body"], "raw", source["relative_path"], issues, warnings)
 
     for source_id, refs in raw_source_ids.items():
         if len(refs) > 1:
@@ -755,28 +768,42 @@ def lint(strict=False):
         if page["page_type"] != "topic":
             issues.append(f"non-topic page left outside meta set: {page['filename']}")
         for source_ref in page["source_refs"]:
-            resolved = os.path.normpath(os.path.join(BASE_DIR, source_ref))
+            resolved = confined_path(BASE_DIR, source_ref)
             if not os.path.exists(resolved):
                 issues.append(f"missing source ref in {page['filename']}: {source_ref}")
         for related_topic in page["related_topics"]:
             if related_topic == page["id"]:
                 issues.append(f"self-referential related topic in {page['filename']}: {related_topic}")
-        for link in _extract_markdown_links(page["body"]):
-            resolved = _relative_path(page["path"], link)
-            if resolved and not os.path.exists(resolved):
-                issues.append(f"broken knowledge link in {page['filename']}: {link}")
+        _check_links(page["path"], page["body"], "knowledge", page["filename"], issues, warnings)
 
     for page_id, filenames in pages_by_id.items():
         if len(filenames) > 1:
             issues.append(f"duplicate topic id '{page_id}': {', '.join(filenames)}")
 
     known_page_ids = set(pages_by_id.keys())
+    raw_topic_ids = {source["topic_id"] for source in raw_sources}
     inbound_links = defaultdict(int)
     for page in knowledge_pages:
+        page_date = _parse_date(page["last_updated"])
         for related_topic in page["related_topics"]:
             if related_topic not in known_page_ids:
                 warnings.append(f"unresolved related topic in {page['filename']}: {related_topic}")
             inbound_links[related_topic] += 1
+
+        # Compiled pages list their raw sources; ledgers like EXPERIMENT_LOG list none.
+        if page["build_origin"] == "wiki_sync" and page["source_refs"]:
+            moved = [ref for ref in page["source_refs"]
+                     if ref in raw_sources_by_ref and raw_sources_by_ref[ref]["topic_id"] != page["id"]]
+            if page["id"] not in raw_topic_ids:
+                issues.append(
+                    f"orphaned compiled page '{page['id']}': no raw source has this topic_id; "
+                    f"delete docs/knowledge/{page['filename']} or restore its raw source, then rebuild"
+                )
+            elif moved:
+                issues.append(
+                    f"stale page '{page['id']}': {', '.join(moved)} moved to another topic; "
+                    "run `python3 scripts/wiki_sync.py build`"
+                )
 
         if page["source_refs"]:
             source_dates = []
@@ -806,12 +833,11 @@ def lint(strict=False):
         rel = os.path.relpath(path, BASE_DIR)
         warnings.append(f"{desc} in {rel}:{lineno}: {snippet}")
 
-    # Skill frontmatter lint — warn by default, promote to error under --strict.
-    # Skills are the surface users write most often, so catching "forgot triggers"
-    # or "no Steps section" early prevents a whole class of silent dispatch bugs.
+    # OAW-owned skill schema failures are hard errors. Native host/plugin skills
+    # outside the install inventory have their own schemas and validators.
     for skill_path in _discover_skill_files():
         for skill_issue in _lint_skill_file(skill_path):
-            warnings.append(skill_issue)
+            issues.append(skill_issue)
 
     if warnings:
         label = "❌" if strict else "⚠️"
@@ -836,10 +862,8 @@ EXPERIMENT_LOG_PATH = os.path.join(KNOWLEDGE_DIR, "EXPERIMENT_LOG.md")
 CURRENT_STATE_PATH = os.path.join(KNOWLEDGE_DIR, "CURRENT_STATE.md")
 
 
-def _ensure_experiment_log():
-    """Create EXPERIMENT_LOG.md with a default header if it does not exist."""
-    if os.path.exists(EXPERIMENT_LOG_PATH):
-        return
+def _experiment_log_header():
+    """Default ledger, also used inside a new file's first locked mutation."""
     header = [
         _render_frontmatter(
             {
@@ -861,7 +885,12 @@ def _ensure_experiment_log():
         "|------|------|:------:|--------|------------|",
         "",
     ]
-    _write(EXPERIMENT_LOG_PATH, "\n".join(header))
+    return "\n".join(header)
+
+
+def _ensure_experiment_log():
+    path = confined_path(BASE_DIR, KNOWLEDGE_DIR, "EXPERIMENT_LOG.md")
+    locked_update(path, lambda content: content or _experiment_log_header(), root=BASE_DIR)
 
 
 def _replace_frontmatter_field(content, key, value):
@@ -891,78 +920,57 @@ def _replace_frontmatter_field(content, key, value):
 
 def add_experiment(name, status, result, conclusion, exp_date=None, dir_path=None):
     """Append a row to EXPERIMENT_LOG.md (non-interactive)."""
-    if dir_path:
-        global KNOWLEDGE_DIR, EXPERIMENT_LOG_PATH
-        KNOWLEDGE_DIR = dir_path
-        EXPERIMENT_LOG_PATH = os.path.join(KNOWLEDGE_DIR, "EXPERIMENT_LOG.md")
-
-    _ensure_experiment_log()
+    directory = os.path.abspath(dir_path or KNOWLEDGE_DIR)
+    boundary = directory if dir_path else BASE_DIR
+    path = confined_path(boundary, directory, "EXPERIMENT_LOG.md")
     entry_date = exp_date or _today()
-    safe = lambda s: (s or "").replace("|", "\\|").replace("\n", " ").strip()
+    if _parse_date(entry_date) is None:
+        raise ValueError("Experiment date must be YYYY-MM-DD.")
+    safe = lambda s: (s or "").replace("|", "\\|").replace("\n", " ").replace("\r", " ").strip()
     row = f"| {entry_date} | {safe(name)} | {safe(status)} | {safe(result)} | {safe(conclusion)} |"
 
-    existing = _safe_read(EXPERIMENT_LOG_PATH)
-    lines = existing.splitlines()
-    header_idx = None
-    for i, line in enumerate(lines):
-        if line.startswith("|------"):
-            header_idx = i
-            break
-    if header_idx is None:
-        raise ValueError("EXPERIMENT_LOG.md missing table header; delete the file to regenerate.")
-    lines.insert(header_idx + 1, row)
-    updated = "\n".join(lines)
-    updated = _replace_frontmatter_field(updated, "last_updated", _today())
-    if not updated.endswith("\n"):
-        updated += "\n"
-    _write(EXPERIMENT_LOG_PATH, updated)
-    print(f"✅ Experiment logged: {name} [{status}] → {EXPERIMENT_LOG_PATH}")
+    def mutate(existing):
+        lines = (existing or _experiment_log_header()).splitlines()
+        header_idx = next((i for i, line in enumerate(lines) if line.startswith("|------")), None)
+        if header_idx is None:
+            raise ValueError("EXPERIMENT_LOG.md missing table header; repair the ledger before appending.")
+        lines.insert(header_idx + 1, row)
+        updated = _replace_frontmatter_field("\n".join(lines), "last_updated", _today())
+        return updated.rstrip("\n") + "\n"
+
+    locked_update(path, mutate, root=boundary)
+    print(f"✅ Experiment logged: {name} [{status}] → {path}")
 
 
 def update_state(phase=None, status=None, note=None, dir_path=None):
     """Update CURRENT_STATE.md phase row + append an AI annotation (non-interactive)."""
-    if dir_path:
-        global KNOWLEDGE_DIR, CURRENT_STATE_PATH
-        KNOWLEDGE_DIR = dir_path
-        CURRENT_STATE_PATH = os.path.join(KNOWLEDGE_DIR, "CURRENT_STATE.md")
-
-    if not os.path.exists(CURRENT_STATE_PATH):
+    directory = os.path.abspath(dir_path or KNOWLEDGE_DIR)
+    boundary = directory if dir_path else BASE_DIR
+    path = confined_path(boundary, directory, "CURRENT_STATE.md")
+    if bool(phase) != bool(status):
+        raise ValueError("Supply both --phase and --status, or use --note by itself.")
+    if not os.path.exists(path):
         raise ValueError(
-            f"CURRENT_STATE.md not found at {CURRENT_STATE_PATH}. "
+            f"CURRENT_STATE.md not found at {path}. "
             "Copy it from templates/docs/knowledge/CURRENT_STATE.md first."
         )
 
-    content = _safe_read(CURRENT_STATE_PATH)
-    content = _replace_frontmatter_field(content, "last_updated", _today())
+    def mutate(content):
+        if not content:
+            raise ValueError("CURRENT_STATE.md no longer exists or is empty.")
+        content = _replace_frontmatter_field(content, "last_updated", _today())
+        if phase and status:
+            pattern = re.compile(rf"^(\|\s*`?{re.escape(phase)}`?\s*\|)([^|]*)(\|)", re.MULTILINE)
+            content, count = pattern.subn(lambda m: f"{m.group(1)} {status} {m.group(3)}", content, count=1)
+            if not count:
+                raise ValueError(f"Phase row '{phase}' not found in CURRENT_STATE.md.")
+        if note:
+            from oaw_common import append_annotation
+            stamp = datetime.now().strftime("%Y-%m-%d %H:%M")
+            content = append_annotation(content, f"- [{stamp}] {note}")
+        return content.rstrip("\n") + "\n"
 
-    if phase and status:
-        pattern = re.compile(
-            rf"^(\|\s*`?{re.escape(phase)}`?\s*\|)([^|]*)(\|)",
-            re.MULTILINE,
-        )
-        new_content, n = pattern.subn(
-            lambda m: f"{m.group(1)} {status} {m.group(3)}", content, count=1
-        )
-        if n:
-            content = new_content
-        else:
-            print(f"⚠️  Phase row '{phase}' not found in CURRENT_STATE.md — appending annotation only.")
-
-    if note:
-        stamp = datetime.now().strftime("%Y-%m-%d %H:%M")
-        annotation = f"- [{stamp}] {note}"
-        marker = "## AI Annotations"
-        if marker in content:
-            head, tail = content.split(marker, 1)
-            tail_stripped = tail.lstrip("\n")
-            tail_stripped = re.sub(r"^<!--[^>]*-->\s*", "", tail_stripped)
-            content = f"{head}{marker}\n\n{annotation}\n{tail_stripped}"
-        else:
-            content = content.rstrip() + f"\n\n## AI Annotations\n\n{annotation}\n"
-
-    if not content.endswith("\n"):
-        content += "\n"
-    _write(CURRENT_STATE_PATH, content)
+    locked_update(path, mutate, root=boundary)
     print(f"✅ CURRENT_STATE updated: phase={phase or '—'} status={status or '—'}")
 
 
@@ -984,7 +992,10 @@ def _resolve_ssot_value(spec, base_dir):
     if ":" not in spec:
         return None, f"ssot_mirror spec missing `:` — expected `<file>:<locator>`, got {spec!r}"
     file_part, locator = spec.split(":", 1)
-    path = os.path.normpath(os.path.join(base_dir, file_part))
+    try:
+        path = confined_path(base_dir, file_part)
+    except ValueError:
+        return None, "ssot_mirror path is outside the project boundary"
     if not os.path.exists(path):
         return None, f"file not found: {file_part}"
 
@@ -1162,7 +1173,7 @@ def _count_entry_citations(title, archive_dir):
             if not fname.endswith(".md"):
                 continue
             try:
-                text = _safe_read(os.path.join(root, fname))
+                text = _safe_read(confined_path(archive_dir, root, fname))
             except Exception:
                 continue
             if (short and short in text) or (slug and slug in text):
@@ -1179,8 +1190,8 @@ def promote_candidates(
     """
     import json as _json
 
-    memory_file = memory_file or os.path.join(BASE_DIR, ".agents", "memory.md")
-    archive_dir = archive_dir or os.path.join(BASE_DIR, "docs", "archive")
+    memory_file = os.path.abspath(memory_file) if memory_file else confined_path(BASE_DIR, ".agents", "memory.md")
+    archive_dir = os.path.abspath(archive_dir) if archive_dir else confined_path(BASE_DIR, "docs", "archive")
 
     if not os.path.exists(memory_file):
         print(f"❌ memory file not found: {memory_file}")
@@ -1422,7 +1433,7 @@ it never writes to docs/knowledge/.
                     archive_dir=args.archive_dir,
                 )
             )
-    except ValueError as exc:
+    except (ValueError, OSError, RuntimeError) as exc:
         print(f"❌ {exc}")
         raise SystemExit(1) from exc
 

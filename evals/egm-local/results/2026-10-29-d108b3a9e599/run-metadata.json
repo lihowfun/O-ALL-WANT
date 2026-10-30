@@ -1,0 +1,29 @@
+{
+  "spec_id": "oaw-egm-local-v4",
+  "spec_sha256": "d108b3a9e5993ef7aceabb9a790b3bad3e1d749bfe0ffe8336e2ff6454c66ad2",
+  "oaw_source_sha256": "a4ee3c46ac5fd15b45cd7218959bd4ea6d420da7c48b7493e3446a936705f0c7",
+  "primary_reviews": 27,
+  "fresh_child_contexts": {
+    "A": 10,
+    "B": 81,
+    "C": 81
+  },
+  "requested_model": "same inherited Codex parent configuration; no per-arm override",
+  "provider_model_revision": "not exposed",
+  "primary_review_context_total": 199,
+  "valid_grading_contexts": 7,
+  "invalid_grading_contexts": 7,
+  "context_diagnostic_contexts": 2,
+  "model_api_request_count": "not exposed; not equal to agent count",
+  "comparable_tokens_cost_wall_time": "unavailable; no efficiency claim",
+  "accepted_grading_round": "v2, complete original method context",
+  "invalid_grading_round": "v1, omitted reviewer method standards; all six grades and adjudication excluded",
+  "coordinator_blinded": false,
+  "coordinator_note": "Case author and operator, not a grader. Some unsolicited findings reached operator; frozen cases, rubric and rules were not adapted.",
+  "grading_round_correction_after_provisional_results": true,
+  "regraded_all_reports": 27,
+  "reports_cases_rubric_grade_prompt_changed": false,
+  "source_deviation": "Windows CRLF; README matches earlier upstream e45f640cc3799cf2a19c1dfb88aa850c021231ac. All assigned workflow text matches f0ba151b252c9abf1318d9fe857a43265d06de89 after newline normalization; binary icon raw bytes match upstream.",
+  "quality_gate": "regression",
+  "merge_decision": "Keep Draft; preregistered B vs A condition fails. C matches A and is non-regressing vs B on this fixed suite, without causal attribution to indexing."
+}

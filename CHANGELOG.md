@@ -2,6 +2,95 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.0] — Proposed, updated 2026-10-30
+
+V2 includes the complete current OAW toolkit and pinned EGM, with selectable native skills. Breaking upgrade prepared for independent review. No tag or release
+is published by this PR. See [migration](docs/UPGRADING.md) and the
+[execution plan](docs/plans/v2.0.0-execution.md).
+
+### Added
+
+- Historical 2026-10-29 frozen EGM evaluation fixtures and a separate three-arm Codex workflow
+  experiment: three cases, three repeats, blinded independent grading and
+  explicit non-regression criteria. Completed 27 real reviews: all arms detect
+  24/24 defects, unsupported claims A=0/B=1/C=0. C matches native on this suite;
+  standalone EGM fails the fixed gate, so the PR remains Draft. Full source
+  evidence, independent grades, adjudication and invalid grading corrections
+  are preserved. See [result](docs/validation/egm-codex-2026-10-29.md).
+- Safe Python 3.10+ `init`, preview-first `migrate`, and read-only `doctor`.
+  Manifest ownership, recognized v1 hashes, recoverable backups, conflict
+  proposals and rollback protect existing project content.
+- Native `oaw-evidence`, `oaw-wiki` and optional `oaw-improve` SKILL.md packages.
+  V2 now includes the complete pinned EGM runtime and seven native EGM skill bridges; knowledge/improvement are additive.
+- `skills` inventory and exact `--skills LIST|none|default` recipes. Disabling
+  owned entrypoints previews and backs up removals; edited entrypoints remain
+  protected conflicts. The EGM source remains available for reactivation.
+- Nine Claude native agent adapters preserve upstream tools, inherited model and
+  fresh-context policy. EGM retains upstream manual invocation on both hosts.
+- Explicit `--host codex|claude|both` routes native skill folders from a single
+  source; reviewed migration conflicts can remain project-owned with `--keep-custom`.
+- Bounded record-oriented recall with complete JSON/text budgets, source positions,
+  truncation and continuation that detects changed query/source state.
+- Optional improvement proposals with concrete diffs, fixed matched-run contracts,
+  regression/resource gates, evidence hashes and explicit immutable decisions.
+  Acceptance records a decision; it never applies a patch.
+- Focused behavioral regression tests, deterministic example regeneration and one
+  local/CI entry point. CI covers Ubuntu/macOS/Windows and Python 3.10/3.13.
+
+### Changed
+
+- AGENTS.md is the short canonical project policy; CLAUDE.md is a compatibility import.
+  The host owns execution, sessions, compaction, personal memory and permissions.
+- Installer defaults no longer create memory or placeholder architecture/state files.
+  Project VERSION.json, roadmap, custom policies and accumulated notes stay project-owned.
+- Python 3.10+ is required. Runtime dependencies remain standard-library-only.
+- Examples are generated from actual installer payloads rather than manually copied scripts.
+
+### Removed from defaults
+
+- Flat trigger-scanned skills, always-active self-improving rules, mandatory memory
+  writes/reports, step-count skill creation, frozen evidence tiers and permanent
+  do-not-rerun instructions. Customized legacy files remain recoverable/preserved.
+- No mandatory Hermes nudge or hand-reported skill usage loop is introduced.
+
+### Fixed
+
+- Blind grading exports now require actual reviewer workflow/persona/standard
+  coverage and matching content hashes. Omitted method sources cannot silently
+  turn legitimate style/standard observations into unsupported factual claims.
+- Pilot false-positive evolution on failed reviews, incomplete isolation
+  metadata, unfrozen execution/OAW source and mutable resume identities.
+  Outcome regex matches are triage-only; failed auth attempts cannot calibrate
+  spend. Windows subprocess mocking no longer intercepts OS version discovery.
+- Topic traversal/symlink escapes; complete locked read-modify-write with atomic commits.
+- Per-page freshness checks; annotation marker collisions and rebuild growth;
+  relative source-link relocation; meaningful nonzero errors.
+- False-positive gates for malformed skills, stale example content and arbitrary
+  expected-failure exits; installer type conflicts and write-failure rollback.
+- Recall truncation retains the actual match, including escaped/long-prefix content.
+- Legitimate macOS system ancestor aliases are canonicalized without allowing
+  symlinks inside project-managed paths; redirected Windows gate diagnostics use UTF-8.
+- CI Actions are pinned to verified Node 24 releases instead of deprecated Node 20 actions.
+- Installed doctor/wiki lint no longer impose OAW's portable YAML subset on
+  unrelated host/plugin skills. OAW-managed/custom packages remain checked;
+  `validate_skills.py --all-packages` opts into a broader portable-subset audit.
+- `oaw-evidence` now describes its actual bounded recall/write CLI instead of
+  generic evidence-handling advice.
+- [Versioned source ledger](docs/releases/2.0.0-sources.md) and
+  [EGM review](docs/reviews/2026-10-29-pr4-egm.md): EGM manifest 0.1.0 at full
+  commit `f0ba151b252c9abf1318d9fe857a43265d06de89` is now bundled in V2.
+  All 65 runtime files, host manifests, personas, standards, icons and license
+  retain exact upstream bytes; generated native adapters are separately marked.
+  Automatic external-skill scouting/digestion remains an unimplemented plan.
+
+### Validation limits
+
+- Local fixtures and package/skill validation are not a model benchmark or proof of
+  live native skill discovery. The 2026-10-30 Codex pilot requested Sol 6.1;
+  provider revision was not exposed, and its V2 source predates this installer.
+  Do not use the historical scores to certify the newly bundled runtime.
+- The v1 86–87% estimate remains a historical selected-vs-all-Markdown illustration.
+
 ## [1.1.0] — 2026-04-21
 
 This release bundles three parallel investments completed on 2026-04-20

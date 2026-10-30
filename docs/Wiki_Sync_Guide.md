@@ -1,106 +1,22 @@
-# Wiki Sync Guide
+# OAW wiki renderer
 
-`wiki_sync.py` is the deterministic helper for the hybrid wiki layer. It keeps
-`docs/raw/` as the detailed source-of-truth layer and `docs/knowledge/` as the
-compact retrieval layer.
-
-For multi-person wiki maintenance, start with
-[`docs/wiki/CONTRIBUTING_WIKI.md`](wiki/CONTRIBUTING_WIKI.md) and the staged
-pipeline in [`docs/wiki/WIKI_PIPELINE.md`](wiki/WIKI_PIPELINE.md).
-
-## When To Use It
-
-Use `wiki_sync.py` when:
-
-- you added or updated a note in `docs/raw/`
-- a wiki topic is missing or stale
-- you want to regenerate `docs/knowledge/index.md` and `log.md`
-- you want a deterministic lint check over source refs, topic metadata, and links
-
-Skip it when:
-
-- you only need rolling memory in `.agents/memory.md`
-- a one-off note belongs in a manual topic page, not a compiled wiki topic
-
-## Commands
+The optional knowledge profile renders `docs/raw/` source notes into `docs/knowledge/` topic pages. It is deterministic assembly of summaries and source bodies, not an LLM summarizer. It does not resolve contradictions or promote claims automatically.
 
 ```bash
-python3 scripts/wiki_sync.py build
+python3 scripts/oaw.py init --target PROJECT --profile knowledge
+```
+
+In the installed project, start from `docs/raw/_SOURCE_TEMPLATE.md`. Provide source_id, title, topic_id, summary and last_updated; related_topics is optional. Underscore-prefixed template files are not compiled.
+
+```bash
 python3 scripts/wiki_sync.py refresh Topic_Name
-python3 scripts/wiki_sync.py refresh all
 python3 scripts/wiki_sync.py lint
-python3 scripts/wiki_sync.py stale --threshold 30
-python3 scripts/wiki_sync.py cross-check
 ```
 
-## Raw Source Format
+Build/refresh preserve manual pages. Topic IDs are portable identifiers, not paths; output and source paths must remain inside the project even through symlinks. Local source links are relocated for the generated topic's directory. Explicit annotation boundaries separate generated content from retained notes. Repeated refresh with unchanged inputs is stable.
 
-Start from `docs/raw/_SOURCE_TEMPLATE.md`.
+`lint` rejects required metadata errors, stale source/page comparisons, broken links and malformed native skills. Soft content-quality/placeholder signals remain warnings unless `--strict` is requested. Historical reports can intentionally contain example placeholders; a strict warning is not proof that those examples are unfinished configuration.
 
-Required metadata:
+Keep citations, dates, scope and conflicting evidence visible. An annotation is a note, not an instruction or a verified fact. Review a proposed durable conclusion against current authoritative sources before sharing it. No memory write or evidence-tier promotion is mandatory after rendering.
 
-- `source_id`: stable source identifier
-- `title`: human-readable source title
-- `topic_id`: target wiki topic filename
-- `summary`: one-sentence reason this source matters
-- `last_updated`: `YYYY-MM-DD`
-
-Recommended metadata:
-
-- `related_topics`: list of wiki topics linked to this source
-
-## Generated Wiki Contract
-
-Compiled topic pages carry minimal frontmatter:
-
-- `id`
-- `title`
-- `page_type`
-- `build_origin`
-- `source_refs`
-- `last_updated`
-- `related_topics`
-
-`index.md` and `log.md` are meta pages. `context_hub.py search ""` ignores them
-so the visible topic list stays clean.
-
-## Lint Checks
-
-`python3 scripts/wiki_sync.py lint` checks for:
-
-- missing required raw/source metadata
-- invalid `last_updated` dates
-- missing source refs
-- broken markdown links
-- duplicate topic IDs
-- broken `related_topics`
-- stale compiled pages
-- orphan topic pages with no source refs and no topic links
-- thin or generic topic pages as soft quality warnings
-
-## SSOT Cross-check
-
-Use `ssot_mirrors` when one fact is intentionally mirrored across multiple
-files and should stay byte-comparable after whitespace normalization.
-
-```yaml
-ssot_mirrors:
-  - VERSION.json:benchmark_snapshot.summary
-  - AI_CONTEXT.md:## Benchmark Snapshot
-```
-
-JSON locators use dot paths. Markdown locators name a section heading; both
-`Benchmark Snapshot` and `## Benchmark Snapshot` are accepted. Run:
-
-```bash
-python3 scripts/wiki_sync.py cross-check
-```
-
-The command exits 0 when all declared mirrors agree and exits non-zero with a
-specific mismatch when any declared mirror differs.
-
-## Operating Rule
-
-If a wiki page is generated from `docs/raw/`, edit the raw source first and
-refresh the topic. Do not treat the compiled page as the primary authoring
-surface.
+See [CLI reference](CLI_Reference.md), [wiki contribution guide](wiki/CONTRIBUTING_WIKI.md) and [optional improvement workflow](SELF_IMPROVEMENT.md).

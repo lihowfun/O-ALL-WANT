@@ -1,0 +1,144 @@
+{
+  "grades": [
+    {
+      "review_id": "R01",
+      "valid_review": true,
+      "detected_planted_ids": [],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        "The adapter, worker and archive implementations are not supplied. Their documented contracts remain unverified; the report correctly does not treat this as an implementation defect.",
+        "Performance, outage capacity, freshness, archive coverage and rollout validation remain release checks. No completed validation is asserted."
+      ],
+      "explanations": {
+        "assessment": "Completed, assessable zero-finding review. The clean rubric contains no planted IDs. docs/design.md:7 specifies failure normalization, version rejection and read-time-based expiry; line 10 specifies the independent archive; line 13 expressly describes release acceptance criteria. src/lookup.py:5-14 supplies only the lookup read path. Both uncertainties are supported and no concrete defect is asserted."
+      }
+    },
+    {
+      "review_id": "R02",
+      "valid_review": true,
+      "detected_planted_ids": [],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        "Adapter failure mapping, version rejection and expiry enforcement cannot be independently verified from the supplied lookup function; its fallback behavior agrees with the adapter contract.",
+        "The diagnostics and archive implementations are absent. Seven days of hot retention plus the independent 90-day archive support the specified 30-day lookups.",
+        "Performance, outage and rollout checks are stated acceptance criteria, with no supplied proof of successful execution."
+      ],
+      "explanations": {
+        "assessment": "Completed, assessable zero-finding review. There are no planted IDs. Each uncertainty follows the supplied scope: docs/design.md:7,10,13 state the relevant contracts and src/lookup.py:6-14 implements hit/miss and CacheUnavailable fallback. The report correctly separates unverified implementation and validation from defects."
+      }
+    },
+    {
+      "review_id": "R03",
+      "valid_review": true,
+      "detected_planted_ids": [],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        "No alternatives evaluation appears in the supplied design or ADRs. The cited feature-specification standard and other reviewers' assessments are not supplied, so their requirements cannot be independently established. This is presented as a documentation concern, not an architectural defect.",
+        "docs/design.md:13 names a 24-hour error-budget check without defining its metric, budget or passing threshold. A possible external operational procedure is explicitly left open.",
+        "Worker/version/expiry enforcement, archive behavior, capacity, latency and rollout implementation remain unverified by the read-path source; this is not evidence those contracts fail."
+      ],
+      "explanations": {
+        "assessment": "Completed, assessable zero-finding review with no planted IDs. The alternatives and error-budget observations accurately describe omissions in the supplied documents and are explicitly framed as completeness questions. No missing requirement is inferred from a preferred template. ADR-012 authorizes the cache; docs/design.md:7,10,13 define the implementation and release commitments that the lookup function alone cannot validate. No concrete factual defect is asserted."
+      }
+    },
+    {
+      "review_id": "R04",
+      "valid_review": true,
+      "detected_planted_ids": [],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        "The design and ADR-012 do not document rejected alternatives. The asserted feature-spec standard is not among the supplied sources; this remains a standard/template observation rather than a factual defect.",
+        "The design gives rollout percentages and acceptance targets, but no numerical error-budget passing rule, detailed performance-test procedure, file-by-file implementation list or implementation phases. These are explicitly execution/completeness questions.",
+        "The supplied code establishes hit/miss and CacheUnavailable fallback, while worker/version/expiry, archive implementation, outage capacity and achieved performance remain unverified."
+      ],
+      "explanations": {
+        "assessment": "Completed, assessable zero-finding review. No planted IDs exist. docs/design.md:13 contains load, latency, test-scenario, rollout and rollback criteria; its lack of an expanded implementation plan does not make those criteria absent. The report respects this distinction and does not claim tests passed or implementations fail. Its standard requirements cannot be verified from the assigned sources and are recorded separately as completeness observations."
+      }
+    },
+    {
+      "review_id": "R05",
+      "valid_review": true,
+      "detected_planted_ids": [],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        "Worker version/expiry, archive access, full-load fallback and achieved performance remain unverified by the lookup source; release criteria are not completed test results.",
+        "The supplied design and accepted ADR omit alternatives evaluation. The cited feature standard and critic judgments are unavailable for independent assessment; the report treats this as documentation completeness.",
+        "Splitting the flow paragraph is expressly an optional editorial preference.",
+        "A file-change list, detailed interfaces, implementation tasks and checkpoints are not laid out in the acceptance section. The cited readiness standard is unavailable; this is a template/actionability observation.",
+        "The 24-hour error-budget check has no numerical passing threshold or linked policy in docs/design.md:13, leaving an operational question.",
+        "src/lookup.py:5-14 always attempts cache.get, while docs/design.md:13 plans disabling cache reads for rollback. The integration/control is unspecified in the supplied material, and the report correctly does not assert a broken rollback."
+      ],
+      "explanations": {
+        "assessment": "Completed, assessable zero-finding review with no planted IDs. All six entries are explicitly limitations, execution questions or editorial observations. Source omissions are accurately described, but the unspecified standards cannot create additional project requirements. The rollback contract exists and can be implemented outside this function; no contrary runtime claim is made. docs/design.md:7,10,13 provide the unverified contracts."
+      }
+    },
+    {
+      "review_id": "R06",
+      "valid_review": true,
+      "detected_planted_ids": [],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        "No measured PostgreSQL-only baseline, alternatives evaluation or rejection rationale is supplied. The cited feature standard is unavailable; this is expressly a rationale/completeness observation rather than a claim that caching is defective.",
+        "No adapter failure timeout budget is specified. Slow failures could delay fallback beyond the outage target, but the report correctly frames this as a conditional risk and demonstrates no violation.",
+        "The supplied source establishes routing, not worker/version/expiry, archive independence, full-traffic provisioning or achieved latency. These contracts and validation remain unverified.",
+        "The acceptance section does not expand into per-file changes, implementation phases or detailed verification procedures. This is a readiness/template completeness uncertainty, not demonstrated implementation failure.",
+        "No numerical error-budget threshold or explicit rollback switch appears in the supplied source. An external control or alternate adapter remains possible, so rollback impossibility is not asserted."
+      ],
+      "explanations": {
+        "assessment": "Completed, assessable zero-finding review. No planted IDs exist. Even where labeled Major, the entries explicitly distinguish conditional risks and readiness uncertainty from concrete incorrect behavior. docs/design.md:7 defines CacheUnavailable normalization but no failure timeout; line 13 defines the outage target and rollback contract but no switch implementation or numerical promotion rule. The absence of additional implementation details does not contradict those contracts."
+      }
+    },
+    {
+      "review_id": "R07",
+      "valid_review": true,
+      "detected_planted_ids": [],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        "The documents contain no alternatives comparison. The referenced feature-standard ratings are not independently supported by the supplied source set; this remains a specification/template observation, with Redis authorization acknowledged.",
+        "The acceptance/rollout section is not a detailed per-file execution plan. Interfaces, phases and worker/archive/cache-disable implementation details are not expanded; the report treats this as readiness completeness.",
+        "The error-budget promotion threshold and detailed test fixtures/assertions are unspecified. Scenario coverage is present in docs/design.md:13, so this is an execution-detail question.",
+        "Freshness, archival access, full-outage capacity and achieved latency are unvalidated by the supplied read path and no test execution is claimed."
+      ],
+      "explanations": {
+        "assessment": "Completed, assessable zero-finding review. There are no planted IDs. All four entries are explicitly questions or completeness/validation limits, despite quoted reviewer severity. The report does not deny the cache exception, archive or release criteria. docs/design.md:7,10,13 supply those contracts; src/lookup.py supplies only read routing. Unavailable standards cannot independently establish defects."
+      }
+    },
+    {
+      "review_id": "R08",
+      "valid_review": true,
+      "detected_planted_ids": [],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        "The source shows lookup fallback but omits worker, adapter, diagnostics/archive implementations and performance results. Version ordering, expiry, archive retrieval and achieved performance remain unverified; the report explicitly does not equate this with a defect or infer passing tests."
+      ],
+      "explanations": {
+        "assessment": "Completed, assessable zero-finding review. No planted IDs exist. src/lookup.py:5-14 establishes cache hit, miss and CacheUnavailable routing. docs/design.md:7,10 state the worker/expiry/archive contracts and line 13 explicitly labels tests as acceptance criteria, supporting the reported uncertainty. No concrete defect is asserted."
+      }
+    },
+    {
+      "review_id": "R09",
+      "valid_review": true,
+      "detected_planted_ids": [],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        "Alternatives are not compared in the design. The cited feature-standard/critic rating is unavailable for verification; this is explicitly rationale/template completeness, with ADR-012 authorization recognized.",
+        "The acceptance section omits per-file implementation steps, phased checkpoints and detailed test setups/assertions, including explicit older-version and delayed-write fixtures. It still supplies acceptance scenarios and rollout stages. This is framed as an execution-detail question.",
+        "docs/design.md:13 does not define a metric or pass threshold for the 24-hour error-budget check, leaving promotion policy unspecified in the provided material.",
+        "The planned rollback disables cache reads, but src/lookup.py:5-14 supplies no explicit switch. The report correctly leaves integration/configuration open rather than claiming contradiction.",
+        "Worker/version/expiry/archive behavior, fallback provisioning and achieved latency cannot be validated from the lookup function. Release tests are not claimed to have passed. The scope/objective is identifiable in docs/design.md:3-4."
+      ],
+      "explanations": {
+        "assessment": "Completed, assessable zero-finding review with no planted IDs. Every entry is expressly a question, documentation/template concern or validation limit. The reported source omissions are accurate, while missing preferred detail is not promoted into a behavioral defect. ADR-012 and docs/design.md:7,10,13 establish the cache authorization, consistency/error contract, independent archive and acceptance/rollback requirements, all respected by this report."
+      }
+    }
+  ]
+}

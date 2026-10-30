@@ -1,307 +1,203 @@
 #!/usr/bin/env python3
-"""
-harness_check — one-command local health gate for OAW.
-
-Runs the same checks that CI runs, so an external contributor (or a returning
-maintainer) can answer "did I break anything?" before opening a PR.
-
-Exit code:
-  0 — all checks passed
-  non-zero — at least one check failed; see summary at the bottom
-
-Checks, in order:
-  1. pycompile         — syntax-check the two shipped CLI tools
-  2. cli-help          — wiki_sync.py --help surfaces build/refresh/lint
-  3. self-install-ref  — install.sh must refuse when run from the repo root
-  4. fresh-install     — install.sh into a clean tempdir succeeds and drops
-                          the expected file set
-  5. wiki-lint         — wiki_sync.py lint passes on a freshly installed project
-  6. repo-lint         — wiki_sync.py lint passes on the OAW repo itself
-  7. strict-placeholder — wiki_sync.py lint --strict correctly fails on a
-                          fresh install that still has template placeholders
-  8. example-drift     — example/minimal-project/scripts/*.py == scripts/*.py
-
-Usage:
-  ./scripts/harness_check.py              # run all, print summary
-  ./scripts/harness_check.py --verbose    # show each check's raw output
-  ./scripts/harness_check.py --json       # emit machine-readable JSON summary
-"""
-
+"""One local/CI entry point for OAW's executable contracts."""
 from __future__ import annotations
 
 import argparse
+from dataclasses import asdict, dataclass
 import json
 import os
-import shutil
+from pathlib import Path
+import py_compile
+import re
 import subprocess
 import sys
 import tempfile
-from dataclasses import dataclass, field, asdict
-from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[1]
+REQUIRED_TEST_MODULES = ("test_context_hub", "test_gate", "test_improvement", "test_install", "test_skills", "test_wiki_sync",
+                         "test_egm_pilot", "test_egm_local", "test_status", "test_egm_integration")
+MINIMUM_TESTS = 159  # POSIX count; Windows adds junction cases.
+SUMMARY_MARKER = "OAW-TEST-SUMMARY "
+
+
+def configure_stdio():
+    # Redirected Windows runners can otherwise use cp1252 for Unicode diagnostics.
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="backslashreplace")
 
 
 @dataclass
-class CheckResult:
+class Check:
     name: str
     passed: bool
-    detail: str = ""
+    detail: str
     stdout: str = ""
     stderr: str = ""
 
 
-@dataclass
-class Report:
-    checks: list = field(default_factory=list)
-
-    @property
-    def all_passed(self) -> bool:
-        return all(c.passed for c in self.checks)
-
-    def record(self, name: str, passed: bool, detail: str = "", stdout: str = "", stderr: str = "") -> None:
-        self.checks.append(CheckResult(name, passed, detail, stdout, stderr))
+def run(command, *, cwd=ROOT, env=None):
+    environment = os.environ.copy()
+    environment.update({"PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8", "PYTHONDONTWRITEBYTECODE": "1"})
+    if env:
+        environment.update(env)
+    return subprocess.run(command, cwd=cwd, env=environment, capture_output=True,
+                          text=True, encoding="utf-8", errors="replace", timeout=360)
 
 
-def _run(cmd: list[str], *, cwd: Path | None = None, env: dict | None = None, input_: str | None = None) -> subprocess.CompletedProcess:
-    return subprocess.run(
-        cmd,
-        cwd=cwd,
-        env=env,
-        input=input_,
-        capture_output=True,
-        text=True,
-    )
+def command_check(name, command):
+    process = run(command)
+    return Check(name, process.returncode == 0, f"exit {process.returncode}", process.stdout, process.stderr)
 
 
-# ── Individual checks ─────────────────────────────────────────────────────────
+def unittest_summary(start=None):
+    import unittest
+    suite = unittest.defaultTestLoader.discover(str(start or ROOT / "tests"))
 
-def check_pycompile(report: Report) -> None:
-    targets = [REPO_ROOT / "scripts" / "context_hub.py", REPO_ROOT / "scripts" / "wiki_sync.py"]
-    for path in targets:
-        proc = _run([sys.executable, "-m", "py_compile", str(path)])
-        if proc.returncode != 0:
-            report.record("pycompile", False, f"failed on {path.name}", proc.stdout, proc.stderr)
-            return
-    report.record("pycompile", True, detail=f"{len(targets)} file(s) compiled clean")
+    def flatten(item):
+        if isinstance(item, unittest.TestSuite):
+            for child in item:
+                yield from flatten(child)
+        else:
+            yield item
+
+    modules = sorted({test.id().split(".", 1)[0] for test in flatten(suite)})
+    result = unittest.TextTestRunner(stream=sys.stderr, verbosity=1).run(suite)
+    print(SUMMARY_MARKER + json.dumps({"run": result.testsRun, "skipped": len(result.skipped),
+                                       "successful": result.wasSuccessful(), "modules": modules}))
+    return 0 if result.wasSuccessful() else 1
 
 
-def check_cli_help(report: Report) -> None:
-    proc = _run([sys.executable, str(REPO_ROOT / "scripts" / "wiki_sync.py"), "--help"])
-    if proc.returncode != 0:
-        report.record("cli-help", False, "wiki_sync.py --help exited non-zero", proc.stdout, proc.stderr)
-        return
-    expected = ("build", "refresh", "lint")
-    missing = [name for name in expected if name not in proc.stdout]
+def regression_check(start=None, required=REQUIRED_TEST_MODULES, minimum=MINIMUM_TESTS):
+    code = (f"import sys; sys.path.insert(0, {str(ROOT / 'scripts')!r}); import harness_check; "
+            f"raise SystemExit(harness_check.unittest_summary({str(start) if start else None!r}))")
+    process = run([sys.executable, "-c", code])
+    lines = [line for line in process.stdout.splitlines() if line.startswith(SUMMARY_MARKER)]
+    if not lines:
+        return Check("behavior-regressions", False, f"exit {process.returncode}; no test summary", process.stdout, process.stderr)
+    summary = json.loads(lines[-1][len(SUMMARY_MARKER):])
+    problems = []
+    if process.returncode or not summary["successful"]:
+        problems.append(f"exit {process.returncode}")
+    missing = sorted(set(required) - set(summary["modules"]))
     if missing:
-        report.record("cli-help", False, f"missing subcommand(s): {', '.join(missing)}", proc.stdout, proc.stderr)
-        return
-    report.record("cli-help", True, detail=f"all expected subcommands present: {', '.join(expected)}")
+        problems.append("missing test modules: " + ", ".join(missing))
+    if summary["run"] < minimum:
+        problems.append(f"{summary['run']} tests ran; at least {minimum} required")
+    if summary["skipped"] and os.environ.get("OAW_ALLOW_SKIPS") != "1":
+        problems.append(f"{summary['skipped']} skipped test(s); set OAW_ALLOW_SKIPS=1 only where a platform cannot run them")
+    detail = "; ".join(problems) or f"{summary['run']} tests, {summary['skipped']} skipped"
+    return Check("behavior-regressions", not problems, detail, process.stdout, process.stderr)
 
 
-def check_self_install_refusal(report: Report) -> None:
-    install_sh = REPO_ROOT / "install.sh"
-    if not install_sh.exists():
-        report.record("self-install-ref", False, "install.sh not found")
-        return
-    proc = _run(["bash", str(install_sh)], cwd=REPO_ROOT)
-    if proc.returncode == 0:
-        report.record("self-install-ref", False, "install.sh unexpectedly succeeded from repo root", proc.stdout, proc.stderr)
-        return
-    if "Refusing to install" not in (proc.stdout + proc.stderr):
-        report.record("self-install-ref", False, "install.sh failed but did not explain with 'Refusing to install'", proc.stdout, proc.stderr)
-        return
-    report.record("self-install-ref", True, detail="install.sh refused with the expected message")
+def syntax_check():
+    targets = sorted((ROOT / "scripts").glob("*.py")) + sorted((ROOT / "tests").glob("test_*.py"))
+    with tempfile.TemporaryDirectory(prefix="oaw-compile-") as temporary:
+        for index, source in enumerate(targets):
+            py_compile.compile(str(source), cfile=str(Path(temporary) / f"{index}.pyc"), doraise=True)
+    return Check("syntax", True, f"{len(targets)} Python files compiled")
 
 
-def check_fresh_install(report: Report) -> None:
-    install_sh = REPO_ROOT / "install.sh"
-    with tempfile.TemporaryDirectory() as tmp:
-        proc = _run(["bash", str(install_sh)], cwd=tmp, input_="y\n")
-        if proc.returncode != 0:
-            report.record("fresh-install", False, "install.sh failed in a clean tempdir", proc.stdout, proc.stderr)
-            return
-        required = [
-            "CLAUDE.md",
-            "AI_CONTEXT.md",
-            "AGENTS.md",
-            "GEMINI.md",
-            ".cursorrules",
-            ".windsurfrules",
-            ".agents/memory.md",
-            "docs/knowledge/index.md",
-            "scripts/wiki_sync.py",
-            "scripts/context_hub.py",
+def cli_check():
+    required = {"oaw.py": ("init", "migrate", "doctor"),
+                "context_hub.py": ("memory", "search"), "wiki_sync.py": ("refresh", "lint"),
+                "improvement.py": ("propose", "compare", "decide")}
+    for script, commands in required.items():
+        process = run([sys.executable, str(ROOT / "scripts" / script), "--help"])
+        if process.returncode or any(command not in process.stdout for command in commands):
+            return Check("cli-contracts", False, f"{script} help is invalid", process.stdout, process.stderr)
+    return Check("cli-contracts", True, f"{len(required)} entry points expose expected operations")
+
+
+def install_check():
+    with tempfile.TemporaryDirectory(prefix="oaw-install-") as temporary:
+        target = Path(temporary) / "project with spaces"
+        commands = [
+            [sys.executable, str(ROOT / "scripts/oaw.py"), "init", "--target", str(target), "--json"],
+            [sys.executable, str(ROOT / "scripts/oaw.py"), "init", "--target", str(target), "--profile", "knowledge", "--with-improve", "--json"],
+            [sys.executable, str(ROOT / "scripts/oaw.py"), "init", "--target", str(target), "--host", "both", "--json"],
+            [sys.executable, str(ROOT / "scripts/oaw.py"), "doctor", "--target", str(target), "--json"],
+            [sys.executable, str(target / "scripts/context_hub.py"), "status", "--compact"],
+            [sys.executable, str(target / "scripts/wiki_sync.py"), "lint"],
+            [sys.executable, str(target / "scripts/improvement.py"), "--help"],
         ]
-        missing = [p for p in required if not (Path(tmp) / p).exists()]
-        if missing:
-            report.record("fresh-install", False, f"missing post-install files: {', '.join(missing)}", proc.stdout, proc.stderr)
-            return
-        report.record("fresh-install", True, detail=f"{len(required)} expected files present")
+        for command in commands:
+            process = run(command)
+            if process.returncode:
+                return Check("installed-lifecycle", False, "fresh/additive installation or installed helper failed",
+                             process.stdout, process.stderr)
+        preview = run([sys.executable, str(ROOT / "scripts/oaw.py"), "migrate", "--target", str(target), "--json"])
+        if preview.returncode or json.loads(preview.stdout).get("status") != "dry-run":
+            return Check("installed-lifecycle", False, "migrate default must be a preview", preview.stdout, preview.stderr)
+        return Check("installed-lifecycle", True, "minimal -> knowledge+improvement+both hosts; doctor and installed helpers; dry-run migration")
 
 
-def check_fresh_install_wiki_lint(report: Report) -> None:
-    install_sh = REPO_ROOT / "install.sh"
-    with tempfile.TemporaryDirectory() as tmp:
-        setup = _run(["bash", str(install_sh)], cwd=tmp, input_="y\n")
-        if setup.returncode != 0:
-            report.record("wiki-lint", False, "install.sh failed before lint could run", setup.stdout, setup.stderr)
-            return
-        proc = _run([sys.executable, "scripts/wiki_sync.py", "lint"], cwd=tmp)
-        if proc.returncode != 0:
-            report.record("wiki-lint", False, "wiki_sync.py lint failed on fresh install", proc.stdout, proc.stderr)
-            return
-        report.record("wiki-lint", True, detail="fresh-install lint exit 0")
+def version_check():
+    import oaw
+    version = json.loads((ROOT / "VERSION.json").read_text(encoding="utf-8"))
+    if version.get("version") != oaw.FRAMEWORK_VERSION:
+        return Check("version", False, "VERSION.json differs from installer version")
+    if version.get("release_status") not in ("proposed", "released"):
+        return Check("version", False, "release_status must be explicit")
+    ledger = json.loads((ROOT / "docs/releases" / f"{version['version']}-sources.json").read_text(encoding="utf-8"))
+    if (ledger.get("schema_version") != 1 or ledger.get("oaw_version") != version["version"]
+            or ledger.get("release_status") != version["release_status"] or not ledger.get("sources")):
+        return Check("version", False, "Source ledger differs from proposed/released version")
+    for source in ledger["sources"]:
+        commit = source.get("commit", "")
+        if not re.fullmatch(r"[0-9a-f]{40}", commit):
+            return Check("version", False, f"Unpinned source: {source.get('id')}")
+        if source.get("id") == "egm" and (commit != oaw.EGM_COMMIT
+                or not all(source.get(k) is True for k in ("bundled", "runtime_bundled", "installed_by_oaw"))
+                or source.get("source_lock", {}).get("sha256") != oaw.EGM_LOCK_SHA256):
+            return Check("version", False, "EGM citation differs from the integrated V2 runtime")
+        if source.get("usage") == "ci-action":
+            reference = source["repository"].removeprefix("https://github.com/") + "@" + commit
+            pattern = r"(?m)^\s*-\s+uses:\s*[\"']?" + re.escape(reference) + r"[\"']?\s*(?:#.*)?$"
+            if not source.get("used_in") or any(not re.search(pattern, (ROOT / path).read_text(encoding="utf-8"))
+                                                 for path in source["used_in"]):
+                return Check("version", False, f"CI source citation drift: {source['id']}")
+    return Check("version", True, f"{version['version']} ({version['release_status']}); source ledger and CI pins agree")
 
 
-def check_repo_lint(report: Report) -> None:
-    proc = _run([sys.executable, str(REPO_ROOT / "scripts" / "wiki_sync.py"), "lint"], cwd=REPO_ROOT)
-    if proc.returncode != 0:
-        report.record("repo-lint", False, "wiki_sync.py lint failed on the OAW repo", proc.stdout, proc.stderr)
-        return
-    report.record("repo-lint", True, detail="repo lint exit 0")
-
-
-def check_strict_placeholder_on_fresh_install(report: Report) -> None:
-    install_sh = REPO_ROOT / "install.sh"
-    with tempfile.TemporaryDirectory() as tmp:
-        setup = _run(["bash", str(install_sh)], cwd=tmp, input_="y\n")
-        if setup.returncode != 0:
-            report.record("strict-placeholder", False, "install.sh failed before strict lint could run", setup.stdout, setup.stderr)
-            return
-        proc = _run([sys.executable, "scripts/wiki_sync.py", "lint", "--strict"], cwd=tmp)
-        if proc.returncode == 0:
-            report.record(
-                "strict-placeholder",
-                False,
-                "--strict should fail on a fresh install that still has ${...} / YYYY-MM-DD placeholders",
-                proc.stdout,
-                proc.stderr,
-            )
-            return
-        report.record("strict-placeholder", True, detail="--strict correctly flagged fresh-install placeholders")
-
-
-def check_example_drift(report: Report) -> None:
-    install_sh = REPO_ROOT / "install.sh"
-    with tempfile.TemporaryDirectory() as tmp:
-        setup = _run(["bash", str(install_sh)], cwd=tmp, input_="y\n")
-        if setup.returncode != 0:
-            report.record("example-drift", False, "install.sh failed before example drift check", setup.stdout, setup.stderr)
-            return
-
-        installed_files = {
-            str(path.relative_to(tmp))
-            for path in Path(tmp).rglob("*")
-            if path.is_file()
-        }
-    example_root = REPO_ROOT / "example" / "minimal-project"
-    example_files = {
-        str(path.relative_to(example_root))
-        for path in example_root.rglob("*")
-        if path.is_file()
-    }
-
-    pairs = [
-        (REPO_ROOT / "scripts" / "context_hub.py", REPO_ROOT / "example" / "minimal-project" / "scripts" / "context_hub.py"),
-        (REPO_ROOT / "scripts" / "wiki_sync.py", REPO_ROOT / "example" / "minimal-project" / "scripts" / "wiki_sync.py"),
-    ]
-    drift = []
-    missing = sorted(installed_files - example_files)
-    extra = sorted(example_files - installed_files)
-    if missing:
-        drift.append("example/minimal-project missing fresh-install files: " + ", ".join(missing))
-    extra_allowed = {"README.md"}
-    unexpected_extra = [path for path in extra if path not in extra_allowed]
-    if unexpected_extra:
-        drift.append("example/minimal-project has unexpected extra files: " + ", ".join(unexpected_extra))
-    for a, b in pairs:
-        if not b.exists():
-            drift.append(f"{b.relative_to(REPO_ROOT)} missing")
-            continue
-        if a.read_bytes() != b.read_bytes():
-            drift.append(f"{b.relative_to(REPO_ROOT)} differs from {a.relative_to(REPO_ROOT)}")
-    if drift:
-        report.record("example-drift", False, "; ".join(drift))
-        return
-    report.record(
-        "example-drift",
-        True,
-        detail=f"file set matches fresh install ({len(installed_files)} files; README.md allowed) and {len(pairs)} script pair(s) byte-identical",
-    )
-
-
-# ── Entry point ───────────────────────────────────────────────────────────────
-
-ALL_CHECKS = [
-    ("pycompile", check_pycompile),
-    ("cli-help", check_cli_help),
-    ("self-install-ref", check_self_install_refusal),
-    ("fresh-install", check_fresh_install),
-    ("wiki-lint", check_fresh_install_wiki_lint),
-    ("repo-lint", check_repo_lint),
-    ("strict-placeholder", check_strict_placeholder_on_fresh_install),
-    ("example-drift", check_example_drift),
-]
-
-
-def format_human(report: Report, verbose: bool) -> str:
-    lines = []
-    for check in report.checks:
-        icon = "✅" if check.passed else "❌"
-        lines.append(f"  {icon} {check.name:22s} {check.detail}")
-        if verbose and (check.stdout or check.stderr):
-            if check.stdout.strip():
-                lines.append("      stdout:")
-                for stdout_line in check.stdout.rstrip().splitlines():
-                    lines.append(f"        {stdout_line}")
-            if check.stderr.strip():
-                lines.append("      stderr:")
-                for stderr_line in check.stderr.rstrip().splitlines():
-                    lines.append(f"        {stderr_line}")
-    passed = sum(1 for c in report.checks if c.passed)
-    total = len(report.checks)
-    verdict = "ALL GREEN" if report.all_passed else "FAILED"
-    lines.append("")
-    lines.append(f"  {verdict} — {passed}/{total} checks passed")
-    return "\n".join(lines)
-
-
-def format_json(report: Report) -> str:
-    payload = {
-        "all_passed": report.all_passed,
-        "passed_count": sum(1 for c in report.checks if c.passed),
-        "total": len(report.checks),
-        "checks": [asdict(c) for c in report.checks],
-    }
-    return json.dumps(payload, indent=2)
-
-
-def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(
-        description="OAW harness health check — the same gate CI runs, available locally.",
-    )
-    parser.add_argument("--verbose", "-v", action="store_true", help="show raw stdout/stderr for each check")
-    parser.add_argument("--json", action="store_true", help="emit a machine-readable JSON summary")
+def main(argv=None):
+    configure_stdio()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--json", action="store_true")
+    parser.add_argument("--verbose", "-v", action="store_true")
     args = parser.parse_args(argv)
-
-    if shutil.which("bash") is None:
-        print("❌ bash is required but not on PATH", file=sys.stderr)
-        return 2
-
-    report = Report()
-    header = "🔧 OAW harness check"
-    if not args.json:
-        print(header)
-        print("=" * len(header))
-    for _, fn in ALL_CHECKS:
-        fn(report)
-
+    checks = []
+    operations = [
+        ("syntax", syntax_check),
+        ("cli-contracts", cli_check),
+        ("native-skills", lambda: command_check("native-skills", [sys.executable, "scripts/validate_skills.py"])),
+        ("egm-integration", lambda: command_check("egm-integration", [sys.executable, "scripts/sync_egm.py", "--check-bundled"])),
+        ("behavior-regressions", regression_check),
+        ("installed-lifecycle", install_check),
+        ("example-content", lambda: command_check("example-content", [sys.executable, "scripts/sync_examples.py"])),
+        ("repo-wiki", lambda: command_check("repo-wiki", [sys.executable, "scripts/wiki_sync.py", "lint"])),
+        ("version", version_check),
+    ]
+    for name, operation in operations:
+        try:
+            checks.append(operation())
+        except Exception as exc:
+            checks.append(Check(name, False, f"{type(exc).__name__}: {exc}"))
+    passed = sum(check.passed for check in checks)
+    report = {"all_passed": bool(checks) and passed == len(checks), "passed_count": passed,
+              "total": len(checks), "checks": [asdict(check) for check in checks]}
     if args.json:
-        print(format_json(report))
+        print(json.dumps(report, indent=2, ensure_ascii=False))
     else:
-        print(format_human(report, args.verbose))
-    return 0 if report.all_passed else 1
+        for check in checks:
+            print(f"{'PASS' if check.passed else 'FAIL'} {check.name}: {check.detail}")
+            if args.verbose or not check.passed:
+                if check.stdout.strip():
+                    print(check.stdout.rstrip())
+                if check.stderr.strip():
+                    print(check.stderr.rstrip())
+        print(f"{passed}/{len(checks)} checks passed")
+    return 0 if report["all_passed"] else 1
 
 
 if __name__ == "__main__":
