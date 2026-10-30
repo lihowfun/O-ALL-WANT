@@ -18,19 +18,37 @@
 
 ## 已完成的品質與記憶分數
 
+主表採 `oaw-host-scorecard-v1`；2026-10-30 另以原始 result、雙評分和第三人 root audit
+離線交叉重算，數字一致，沒有啟動新模型呼叫。此表只屬於歷史 source `9ae4eba`。
+Host＝Codex CLI 0.164.0-alpha.11.1；requested model＝gpt-6.1-sol／medium；provider revision＝unknown。
+Review 配置＝EGM/v2 三 reviewers＋synthesis、v1 單次；試驗內調度為 Python。
+
 | 指標 | EGM | OAW v1 | OAW v2 |
 |---|---:|---:|---:|
-| 已知 critical 缺陷 | 6/6 | 6/6 | 6/6 |
-| 已知 major 缺陷 | 2/2 | 2/2 | 2/2 |
-| 無來源具體指控 | 0 | 0 | 0 |
-| 實作準備缺口覆蓋（事後稽核） | **14/14** | **2/14** | **14/14** |
-| 其中 major readiness 缺口 | 2/2 | 0/2 | 2/2 |
-| 主 memory 精確 business fields | 64/64 | 64/64 | 64/64 |
-| 新 agent 的 ticket 保留／更新 | 4/4 | 4/4 | 4/4 |
-| 同 snapshot receivers 精確 fields | 48/48 | 48/48 | 48/48 |
-| 同 snapshot receivers pairwise agreement | 48/48 | 48/48 | 48/48 |
-| 三名 receivers 一致且正確的 snapshot | 2/2 | 2/2 | 2/2 |
-| 引用與接手前證據支持 | 雙評分通過 | 雙評分通過 | 雙評分通過 |
+| Critical defects（planned 6） | 6/6 | 6/6 | 6/6 |
+| Major defects（planned 2） | 2/2 | 2/2 | 2/2 |
+| Unsupported claims（已完成雙盲評） | 0 | 0 | 0 |
+| Readiness（14，事後探索性） | **14/14** | **2/14** | **14/14** |
+| Major readiness（2，事後探索性） | 2/2 | 0/2 | 2/2 |
+| Actionability（15格×2） | NOT SCORED | NOT SCORED | NOT SCORED |
+| Memory field accuracy（64） | 64/64 | 64/64 | 64/64 |
+| Fresh receiver tickets（4） | 4/4 | 4/4 | 4/4 |
+| Snapshot receiver accuracy（48） | 48/48 | 48/48 | 48/48 |
+| Pairwise agreement（48） | 48/48 | 48/48 | 48/48 |
+| Unanimous-correct snapshots（2） | 2/2 | 2/2 | 2/2 |
+| Citation/before-receiver provenance | 雙評分通過 | 雙評分通過 | 雙評分通過 |
+| Review candidate/worker logical token subtotal | 2,768,257 | 706,537 | 2,789,909 |
+| Main memory logical token subtotal | 1,986,046 | 2,366,784 | 2,013,603 |
+| Additional receiver logical token subtotal | 902,355 | 1,229,922 | 1,144,718 |
+| 可歸屬模型 controller token（試驗內） | 0：Python調度 | 0：Python調度 | 0：Python調度 |
+| 已觀測 review workflow token（不含grading） | 2,768,257 | 706,537 | 2,789,909 |
+| Failed/invalid/canary/grading 用量 | 未全量歸屬，見下文 | 未全量歸屬，見下文 | 未全量歸屬，見下文 |
+| 候選 usage/母體/品質評分齊全性 | 齊全；28/28 calls | 齊全；16/16 calls | 齊全；28/28 calls |
+
+Token 範圍是試驗內已觀測的候選 workflow，不含試驗設計、主聊天、grader 或平台不可見開銷，
+不稱全部平台支出。Failed/invalid 等額外開銷未全量歸屬，不能當成零。
+Claude 請依自己的 transcripts/architecture 計算另一張同格式表；controller 無法歸屬時，
+其候選 subtotal 可列，但完整 workflow token 必須 N/A。兩 host 絕對 token 不直接排名。
 
 不是只有回答完就算：缺陷必須指出來源及失敗情境；記憶逐欄查 scope、revision 和 provenance。
 36 份 memory／receiver 報告的 288 個 business fields 由兩位獨立盲評者查核，無引用問題或捏造事實。
