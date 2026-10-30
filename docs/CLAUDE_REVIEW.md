@@ -2,10 +2,19 @@
 
 Review the PR against main without merging, tagging or releasing. The version is proposed, not published. Reproduce important failure cases independently rather than relying on the author's green gate.
 
-Start with the [real Codex experiment](validation/egm-codex-2026-10-29.md),
+The next study compares **OAW v1 versus OAW v2**, as specified in the
+[2026-10-30 evaluation plan](plans/oaw-v1-v2-evaluation.md). Review task quality,
+false claims, complete token accounting and memory across fresh sessions.
+The previous study's host-only A arm did not install OAW and is not OAW v1.
+EGM is a v2 component; its standalone performance is diagnostic, not an extra
+product release gate in the new plan. No new model experiment has run yet.
+See also the [repository cleanup record](reviews/2026-10-30-repository-cleanup.md).
+
+For historical evidence, read the [real Codex experiment](validation/egm-codex-2026-10-29.md),
 [2026-10-29 PR/EGM findings](reviews/2026-10-29-pr4-egm.md)
-and [source ledger](releases/2.0.0-sources.md). EGM was evaluated statically at a
-fixed source revision; the future catalog and native EGM integration are not
+and [source ledger](releases/2.0.0-sources.md). EGM was reviewed statically and
+subsequently tested in independent Codex contexts at a fixed source revision;
+the future catalog and automatic EGM installation are not
 implemented in this PR. Review the external-skill coexistence fix separately
 from claims about native EGM installation or quality.
 
@@ -14,7 +23,8 @@ pilot's false-positive gates. It still ships no general catalog runtime. Review
 the [frozen experiment](../evals/egm-local/README.md) and
 [verification status](validation/egm-offline-2026-10-29.md). The real study found
 24/24 detections for A/B/C and false claims 0/1/0; standalone B fails the fixed
-gate, so main remains unmerged. Challenge the single adjudicated absence claim,
+historical gate. This is not a v1-versus-v2 result. Main remains unmerged while
+the integration profile and new comparison are pending. Challenge the single adjudicated absence claim,
 the full-source regrading correction, per-defect counts and zero-regression rule.
 Verify that all initial trial inputs stayed immutable, original bad grading is
 preserved/excluded, and current graders received all actually supplied method
