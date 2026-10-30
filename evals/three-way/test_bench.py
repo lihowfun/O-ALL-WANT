@@ -10,6 +10,7 @@ from unittest.mock import patch
 import bench
 import continue_budget
 import summarize
+import replication_summary
 
 
 class MeasurementTests(unittest.TestCase):
@@ -92,6 +93,17 @@ class MeasurementTests(unittest.TestCase):
             self.assertTrue(runner.abort.is_set())
             self.assertEqual(runner.rows[0]["status"], "incomplete")
             self.assertEqual(runner.total, 120)
+
+    def test_identical_wrong_receivers_are_agreement_not_precision(self):
+        values = [{"retry_seconds": 3}] * 3
+        result = replication_summary.agreement(values, {"retry_seconds": 17})
+        self.assertEqual(result["pairwise_fields_agree"], 3)
+        self.assertEqual(result["complete_contracts_correct"], 0)
+        self.assertFalse(result["unanimous_correct"])
+
+    def test_missing_values_do_not_count_as_agreement(self):
+        result = replication_summary.agreement([{}, {}, {}], {"retry_seconds": 17})
+        self.assertEqual(result["pairwise_fields_agree"], 0)
 
 
 if __name__ == "__main__":

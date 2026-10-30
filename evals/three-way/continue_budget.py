@@ -41,6 +41,8 @@ def main():
     parser.add_argument("--total-token-limit", type=int, required=True)
     args = parser.parse_args()
     out = Path(args.out).resolve()
+    if bench.read(out / "protocol.json")["id"] != "egm-oaw-acceptance-pilot-20261030-v1":
+        raise ValueError("Historical v1 budget controller only; current cohorts are not resumable here")
     amendment = out / "budget-amendment.json"
     if amendment.exists():
         raise ValueError("One explicit amendment only; refusing repeat continuation")

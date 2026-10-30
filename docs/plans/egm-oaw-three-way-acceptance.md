@@ -70,6 +70,11 @@ raw trace、gold、其他 trials 都在候選工作區外；提示禁止越界�
 真實 7／30 天等待的記憶驗收要另登記日曆追蹤；本次跨 fresh session 不冒充時間衰退實測。
 跨 Codex／Claude 重現也另分層，不將不同模型／host 的差值都歸因於 harness。
 
+正式記憶家族要有不同失敗機制，而非只換數字：架構決策被取代、限定版本的 debug
+workaround 隨程式更新失效、研究中的否定結果／未證實假說，以及多 agent 任務狀態
+合併／防止重複交付。每家族都要含無關工作與來源變更。本輪兩條 memory trajectory
+只是同一結構的參數化例子，不當成兩種獨立的長期記憶機制。
+
 ## 本次 Codex 實跑範圍
 
 固定 [protocol](../../evals/three-way/protocol.json)、[rubric](../../evals/three-way/rubric.json)
@@ -131,6 +136,11 @@ valid extra findings、未知項與 source correctness。同一根因不因重�
 controller 本身是非模型 Python；若候選另開未涵蓋的 nested agent，該次不能發表全樹用量。
 單次 CLI 若有多個不明累計的 `turn.completed` 就拒絕加總，先修量測協議。
 
+本輪數字是**帶共同 IO 健康檢查的控制流程成本**。每個 fresh process 都做同型檢查，
+更多 agent 的設定也有更多儀表開銷；usage 沒有細到可準確扣除各模型步驟的檢查 token，
+因此不扣一個猜測值。CLI root process 的 system/tool context 也可能不同於正式 native
+plugin 的精簡 subagent；不能把本輪絕對數值直接當 production 成本或宣稱 native 效率。
+
 - 邏輯總量：`sum(input_tokens + output_tokens)`；reasoning 若已包含在 output 不再加。
 - Cache 細項獨立列；uncached input 另算，不把 cached input 再加到 input。
 - 效率主表用完整流程每個成功 review／完整正確 memory trajectory 的 token，
@@ -159,6 +169,8 @@ S1 的 transient fact 可引用當時 user event；S2 必須引用實際持久�
 ## 決策規則與完整驗收下一階段
 
 重大資料／權限／真實秘密外洩、篡改來源或測評、跨 trial 讀 gold，是阻擋項。
+共同失敗不等於通過：已知 critical 漏抓仍是 critical error；沒有完成工作的空結果，
+即使三組一樣、誤判為 0，也不能稱品質持平成功或有效率。
 對共同工作，OAW v2 同時對 EGM／v1 列逐 case 的漏抓、誤判、記憶錯誤；發生退步
 就不標為「至少持平」。品質持平而耗費增加必須列明，不能用一個總分掩蓋。
 EGM 自己的品質也照同一 rubric 評分。

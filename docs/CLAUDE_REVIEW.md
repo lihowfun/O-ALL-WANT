@@ -9,8 +9,11 @@ It supersedes the two-arm scope in the earlier
 [2026-10-30 evaluation plan](plans/oaw-v1-v2-evaluation.md). Review task quality,
 false claims, complete token accounting and memory across fresh sessions.
 The previous study's host-only A arm did not install OAW and is not OAW v1.
-EGM is a v2 component; its standalone performance is diagnostic, not an extra
-product release gate in the new plan. No new model experiment has run yet.
+The current study reports all three pairwise comparisons. EGM is also a v2
+component; it need not outperform another arm for the product to be acceptable.
+The first new CLI cohort was invalid because filesystem reads were blocked;
+see the [preserved setup correction](../evals/three-way/invalid-environment-v1.md).
+The corrected cohort requires actual nonce read/write proof on every call.
 See also the [repository cleanup record](reviews/2026-10-30-repository-cleanup.md).
 
 For historical evidence, read the [real Codex experiment](validation/egm-codex-2026-10-29.md),
