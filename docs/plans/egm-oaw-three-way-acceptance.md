@@ -85,13 +85,26 @@ raw trace、gold、其他 trials 都在候選工作區外；提示禁止越界�
   每組有相同 imported-message 干擾與 40 筆歷史，不只替 v2 植入有利記憶。
 - 計畫共 60 次獨立 Codex process：36 review workflow turns＋24 memory turns。
   兩組 memory scope 使用不同的非慣例值與 ticket，避免靠常識猜答案。
-  本次涵蓋 M1–M3、A1–A2 的小型版本；A3／A4、500 筆、長期真實專案與 S1–S4
+  本次涵蓋 M1–M3、A1–A2 的小型版本；A4、500 筆、長期真實專案與 S1–S4
   仍是正式擴充，不能把規格表所有列都標為已完成。
 
 上限：同時 2 個 process；單次 240 秒；整體 3000 秒；累計 input＋output 250 萬、
 output 10 萬 token。每次派送前檢查；這不是 provider 的硬 token cap，至多兩個
 已在執行的請求仍可能超過上限。無自動重試；保留全部失敗與未完成，不更換不利樣本。
 資源值是本輪 quota 管理上限，不是模型價格／花費宣告。
+
+執行中只檢查 status／usage 後，原上限已讓新派送停止；完整工具回合的累計 input
+高於無工具 probe 的估計。[純預算追加紀錄](../../evals/three-way/budget-amendment.md)
+將整輪 input＋output 上限改為 1200 萬。完成的呼叫原樣沿用，未派送的補完；沒有
+重試失敗模型、改題／prompt／rubric、增加 repeats 或重置原始時間上限。
+這是明列的 protocol amendment，不能說全部在最初預算下完成。
+
+另登記 [A3 固定快照重現對照](../../evals/three-way/replication-protocol.json)：
+全部 6 份 S1 snapshot，各用原 S2 加兩個額外 fresh receiver，共 18 receiver observations、
+12 個新呼叫，固定同一份 S2 prompt；不提供 S1 transcript 或 ticket。
+三者的來源檔案相同、各用獨立副本。分開算 gold accuracy、pairwise agreement、
+unanimous-correct、ticket retention 與額外 token。這不是新的 trajectory 家族／原試驗 repeat。
+另設 300 萬 token／3 萬 output／900 秒上限、同時 2 個 process、無自動重試。
 
 ## 指標的精確算法
 

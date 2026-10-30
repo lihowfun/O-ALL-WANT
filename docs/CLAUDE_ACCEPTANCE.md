@@ -44,6 +44,9 @@ Claude 的 adapter／host manifest 要先登記、免費 smoke-check 後才派�
 - Memory：兩條 trajectory，各 4 個新 Agent，順序執行；只共享該組實際專案檔案。
   S1 收到 prompt-only ticket；S2 不提供 S1 prompt、controller 摘要或 transcript。
   S3 新增相同 ADR-044；S4 再精確重建。正確值只在 gold／已授權 source，不能偷偷補。
+- 同快照重現：依 [獨立 protocol](../evals/three-way/replication-protocol.json)，全部 6 份
+  S1 snapshot 各再派 2 位新接手者，使用相同 S2 prompt／獨立 snapshot 副本。
+  加上原 S2 共三位；把對 gold 的精準度與彼此一致率分開，不能把共同錯答算準確。
 - 最終 JSON 結構、source boundary、read-only review、未知值與 write scope
   使用 bench.py 的同一 prompt；只改必要的 host integration 文字，先保存 exact prompts 與 hashes。
   不以 reviewer 數、token budget 或重試傾斜任一組。
