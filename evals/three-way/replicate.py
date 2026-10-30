@@ -54,6 +54,12 @@ def main():
 
     def call(item):
         answer = runner.call(item["id"], Path(item["workspace"]), item["prompt"])
+        workspace = Path(item["workspace"])
+        for name, expected in item["snapshot_sha256"].items():
+            protected = name.startswith(("docs/decisions/", "docs/history/", "method/", "scripts/", ".agents/skills/")) or name in ("AGENTS.md", "CLAUDE.md", "docs/imported-message.txt")
+            if protected and (not (workspace / name).is_file() or bench.sha(workspace / name) != expected):
+                runner.abort.set()
+                raise ValueError("Copied source mutated: " + item["id"] + "/" + name)
         bench.write(out / "reports" / (item["id"] + ".json"), answer)
         # Each receiver can write its own handoff, never another receiver's copy.
         bench.write(out / "after" / (item["id"] + ".json"), bench.tree(Path(item["workspace"])))

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "id": "egm-oaw-snapshot-replication-20261030-v1",
+  "id": "egm-oaw-snapshot-replication-20261030-v2",
   "status": "registered-before-replication-calls",
   "reason": "Directly test same-snapshot precision and agreement, beyond sequential handoff; all six original S1 snapshots selected, independent of outcomes.",
   "arms": ["EGM", "OAW v1", "OAW v2"],
@@ -12,12 +12,13 @@
   "input_boundary": "Read only the copied S1 project. Do not repair stored links or fetch an absolute provenance path from the original later-stage project. Such a path is evidence of a portability/boundary problem, not permission to import future facts. Audit external reads and report separately.",
   "limits": {
     "concurrent_model_processes": 2,
-    "per_process_seconds": 240,
+    "per_process_seconds": 300,
     "total_seconds": 900,
-    "input_plus_output_tokens": 3000000,
-    "output_tokens": 30000,
+    "input_plus_output_tokens": 5000000,
+    "output_tokens": 60000,
     "automatic_retries": 0
   },
+  "budget_calibration": "Before any replication calls, resource envelope calibrated from observed original S2 usage; endpoints, all six inputs, task prompts and receiver count unchanged. Per-call timeout aligned with original S2. This diagnostic has no outcomes yet.",
   "endpoints": ["8-field gold accuracy", "complete contract accuracy", "prompt-only ticket retention", "pairwise field agreement regardless of correctness", "unanimous correct contracts", "citation grounding", "all additional receiver tokens"],
   "scope": "Separate descriptive diagnostic, not extra independent trajectory families or a silent expansion of the original repeats; no equivalence or causal memory-index claim."
 }

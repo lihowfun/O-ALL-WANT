@@ -13,7 +13,13 @@ def agreement(answers, expected):
         for key in expected:
             possible += 1
             # A shared missing field is not an agreement on an actual answer.
-            agreed += int(key in a and key in b and a[key] == b[key])
+            if key not in a or key not in b:
+                continue
+            if key == "dedup_fields":
+                same = isinstance(a[key], list) and isinstance(b[key], list) and matches(key, a[key], b[key])
+            else:
+                same = type(a[key]) is type(b[key]) and a[key] == b[key]
+            agreed += int(same)
     correct = [all(key in a and matches(key, a[key], value) for key, value in expected.items()) for a in answers]
     return {"pairwise_fields_agree": agreed, "pairwise_fields_planned": possible,
             "complete_contracts_correct": sum(correct), "receivers_planned": len(answers),
