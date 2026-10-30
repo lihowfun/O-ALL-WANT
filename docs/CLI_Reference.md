@@ -7,14 +7,30 @@ Requires Python 3.10+. All runtime tools use the Python standard library. Replac
 Run these from the OAW source checkout; `oaw.py` is not copied into target projects.
 
 ```bash
-python3 scripts/oaw.py init --target PROJECT [--profile minimal|knowledge] [--host codex|claude|both] [--with-improve] [--json]
-python3 scripts/oaw.py migrate --target PROJECT [--profile minimal|knowledge] [--host codex|claude|both] [--with-improve] [--apply] [--keep-custom PATH] [--json]
+python3 scripts/oaw.py init --target PROJECT [--profile minimal|knowledge] [--host codex|claude|both] [--with-improve] [--skills LIST|none|default] [--json]
+python3 scripts/oaw.py migrate --target PROJECT [--profile minimal|knowledge] [--host codex|claude|both] [--with-improve] [--skills LIST|none|default] [--apply] [--keep-custom PATH] [--json]
 python3 scripts/oaw.py doctor --target PROJECT [--json]
+python3 scripts/oaw.py skills [--target PROJECT] [--json]
 ```
 
 Init protects different existing content; edits to a managed file are kept while its framework copy is unchanged. Profile/host additions are cumulative; codex is the default host. Migrate without `--apply` only previews. Applied migration backs up known changes and stages custom conflicts under `.oaw/proposals/`; unresolved conflicts return exit 3. Use repeatable `--keep-custom PATH` with `--apply` only after reviewing a relevant conflict to retain it as project-owned. Preflight errors/init conflicts return 2. Doctor returns 1 for an unhealthy install and 2 for invalid paths/manifests; WARN checks (edited managed files, a CLAUDE.md without `@AGENTS.md`) keep exit 0. Support does not imply host features are enabled.
 
 The Bash wrapper invokes init on the current directory. Set `OAW_PYTHON` to select an explicit Python executable.
+
+V2 includes the pinned EGM runtime. The default active recipe is seven EGM
+entrypoints plus `oaw-evidence`; EGM keeps upstream explicit invocation.
+`--skills egm-review,oaw-evidence,oaw-wiki` selects exactly those native skills.
+`none` disables all bundled skill entrypoints; `default` resets to the installed
+profile's defaults. Omit the flag to preserve an explicit recipe. Selecting wiki
+or improve also installs its helper. Profile/helper and host additions persist.
+
+Use `migrate` to preview a recipe that removes entrypoints, then `--apply` to
+back up and retire only owned, unchanged packages. Edited SKILL.md blocks the
+whole package's removal; an edited Claude agent also remains a pending conflict.
+Doctor fails until conflicts are resolved. Foreign skills and project evidence
+remain project-owned. Full EGM source stays installed even if its entrypoints
+are disabled; this is selection, not a new product named after a combination.
+`skills` lists installed files, not proven host discovery or successful activation.
 
 ## Installed Context Hub
 
@@ -62,6 +78,7 @@ Paths are project-relative. A proposal stores its concrete git text diff and fix
 python3 scripts/harness_check.py [--json] [--verbose]
 python3 scripts/validate_skills.py [PROJECT] [--all-packages]
 python3 scripts/sync_examples.py [--write]
+python3 scripts/sync_egm.py --check-bundled
 ```
 
 The regression group fails when a required `tests/test_*.py` module is missing, fewer tests run than the recorded minimum, or any test is skipped. Set `OAW_ALLOW_SKIPS=1` only on a platform that cannot run a skipped case, such as a Windows host without symlink privilege.

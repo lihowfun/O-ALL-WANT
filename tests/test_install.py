@@ -6,6 +6,7 @@ import io
 import json
 import os
 from pathlib import Path
+import shutil
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -43,6 +44,14 @@ class InstallTests(unittest.TestCase):
             files[f"templates/.agents/skills/{name}/SKILL.md"] = f"---\nname: {name}\ndescription: Use this workflow when relevant.\n---\n\n# Workflow\n"
         for relative, text in files.items():
             self.write(self.framework, relative, text.encode())
+        # The V2 default includes EGM. Keep the tiny OAW safety fixtures, but
+        # use the real pinned runtime and adapters for that dependency.
+        shutil.copytree(SOURCE_ROOT / "vendor/egm", self.framework / "vendor/egm")
+        for name in oaw.EGM_SKILLS:
+            shutil.copytree(SOURCE_ROOT / "templates/.agents/skills" / name,
+                            self.framework / "templates/.agents/skills" / name)
+        shutil.copytree(SOURCE_ROOT / "templates/.claude/agents",
+                        self.framework / "templates/.claude/agents")
         self.legacy = {
             "CLAUDE.md": b"# Old v1 policy\n",
             "AGENTS.md": b"Read CLAUDE.md first.\n",
@@ -87,7 +96,9 @@ class InstallTests(unittest.TestCase):
         self.assertEqual(code, 0, result)
         manifest = json.loads((self.target / ".oaw/install.json").read_text())
         self.assertEqual(manifest["framework_version"], "2.0.0")
-        self.assertEqual(len(manifest["managed_files"]), 5)
+        expected = oaw.source_files("minimal", False)
+        self.assertEqual(set(manifest["managed_files"]), set(expected))
+        self.assertTrue(set(oaw.EGM_SKILLS).issubset(manifest["skills"]))
         for relative, expected in manifest["managed_files"].items():
             self.assertEqual(checksum((self.target / relative).read_bytes()), expected)
         self.assertFalse((self.target / "scripts/oaw.py").exists())
@@ -458,6 +469,19 @@ class InstallTests(unittest.TestCase):
             oaw.apply_plan(plan, migrate=False)
         self.assertFalse((self.target / "CLAUDE.md").exists())
         self.assertEqual((self.target / "AGENTS.md").read_bytes(), b"# Arrived after preflight\n")
+
+    def test_preflight_snapshot_detects_manifest_only_ownership_change(self):
+        self.assertEqual(self.invoke("init")[0], 0)
+        plan = oaw.plan_install(self.target, "minimal", False, migrate=True)
+        path = self.target / ".oaw/install.json"
+        changed = json.loads(path.read_text(encoding="utf-8"))
+        changed["managed_files"].pop("AGENTS.md")
+        changed["custom_files"].append("AGENTS.md")
+        path.write_bytes(oaw.json_bytes(changed))
+        before = self.snapshot()
+        with self.assertRaisesRegex(oaw.InstallError, "manifest changed since preflight"):
+            oaw.apply_plan(plan, migrate=True)
+        self.assertEqual(self.snapshot(), before)
 
     def test_migration_write_failure_rolls_back_and_retains_backup(self):
         self.seed_legacy()

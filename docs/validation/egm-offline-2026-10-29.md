@@ -1,5 +1,8 @@
 # EGM verification status — 2026-10-29
 
+> Historical version-specific record. Current V2 includes EGM; current product acceptance uses
+> `docs/SHARED_ACCEPTANCE_PROTOCOL.md`. Original arm names, source pins and results below remain unchanged.
+
 **Real Codex study completed; the strict overall quality gate failed. Keep Draft.**
 The user requires real experimental non-regression, not synthetic test passes.
 Claude CLI model calls remain paused; its free auth-status check reports logged

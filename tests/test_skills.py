@@ -143,7 +143,7 @@ class SkillValidationTests(unittest.TestCase):
         external = target / ".claude/skills/third-party-review/SKILL.md"
         external.parent.mkdir(parents=True)
         external.write_text("---\nname: third-party-review\ndescription: Review a requested design.\n"
-                            "disable-model-invocation: true\n---\n\nReview the requested design.\n", encoding="utf-8")
+                            "context: fork\n---\n\nReview the requested design.\n", encoding="utf-8")
         before = external.read_bytes()
         doctor = run(ROOT / "scripts/oaw.py", "doctor", "--target", target, "--json")
         self.assertEqual(doctor.returncode, 0, doctor.stdout + doctor.stderr)
@@ -154,7 +154,7 @@ class SkillValidationTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         explicit = run(target / "scripts/validate_skills.py", "--all-packages")
         self.assertNotEqual(explicit.returncode, 0)
-        self.assertIn("disable-model-invocation", explicit.stdout)
+        self.assertIn("context", explicit.stdout)
         self.assertEqual(external.read_bytes(), before)
         owned = target / ".agents/skills/oaw-evidence/SKILL.md"
         owned.write_text("# Broken OAW package\n", encoding="utf-8")
@@ -168,7 +168,9 @@ class TemplateDefaultsTests(unittest.TestCase):
     def test_only_scoped_native_packages_are_shipped(self):
         packages = validator.find_skill_files(ROOT)
         self.assertEqual({Path(path).parent.name for path in packages},
-                         {"oaw-evidence", "oaw-wiki", "oaw-improve"})
+                         {"oaw-evidence", "oaw-wiki", "oaw-improve", "egm-bootstrap",
+                          "egm-brainstorm", "egm-draft", "egm-drift-report", "egm-resolve",
+                          "egm-review", "egm-review-loop"})
         for path in packages:
             with self.subTest(path=path):
                 self.assertEqual(validator.lint_skill_file(path), [])

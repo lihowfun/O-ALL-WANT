@@ -15,8 +15,8 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_TEST_MODULES = ("test_context_hub", "test_gate", "test_improvement", "test_install", "test_skills", "test_wiki_sync",
-                         "test_egm_pilot", "test_egm_local", "test_status")
-MINIMUM_TESTS = 123  # POSIX count; Windows adds junction cases.
+                         "test_egm_pilot", "test_egm_local", "test_status", "test_egm_integration")
+MINIMUM_TESTS = 159  # POSIX count; Windows adds junction cases.
 SUMMARY_MARKER = "OAW-TEST-SUMMARY "
 
 
@@ -42,7 +42,7 @@ def run(command, *, cwd=ROOT, env=None):
     if env:
         environment.update(env)
     return subprocess.run(command, cwd=cwd, env=environment, capture_output=True,
-                          text=True, encoding="utf-8", errors="replace", timeout=180)
+                          text=True, encoding="utf-8", errors="replace", timeout=360)
 
 
 def command_check(name, command):
@@ -147,6 +147,10 @@ def version_check():
         commit = source.get("commit", "")
         if not re.fullmatch(r"[0-9a-f]{40}", commit):
             return Check("version", False, f"Unpinned source: {source.get('id')}")
+        if source.get("id") == "egm" and (commit != oaw.EGM_COMMIT
+                or not all(source.get(k) is True for k in ("bundled", "runtime_bundled", "installed_by_oaw"))
+                or source.get("source_lock", {}).get("sha256") != oaw.EGM_LOCK_SHA256):
+            return Check("version", False, "EGM citation differs from the integrated V2 runtime")
         if source.get("usage") == "ci-action":
             reference = source["repository"].removeprefix("https://github.com/") + "@" + commit
             pattern = r"(?m)^\s*-\s+uses:\s*[\"']?" + re.escape(reference) + r"[\"']?\s*(?:#.*)?$"
@@ -167,6 +171,7 @@ def main(argv=None):
         ("syntax", syntax_check),
         ("cli-contracts", cli_check),
         ("native-skills", lambda: command_check("native-skills", [sys.executable, "scripts/validate_skills.py"])),
+        ("egm-integration", lambda: command_check("egm-integration", [sys.executable, "scripts/sync_egm.py", "--check-bundled"])),
         ("behavior-regressions", regression_check),
         ("installed-lifecycle", install_check),
         ("example-content", lambda: command_check("example-content", [sys.executable, "scripts/sync_examples.py"])),

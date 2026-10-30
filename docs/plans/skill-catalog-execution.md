@@ -1,6 +1,12 @@
 # OAW Skill Catalog 執行計畫：攝取、消化、吸收、排泄
 
-狀態：P0 完成，待決事項已於 2026-10-29 決定（見文末）。目標版本 v2.1.0（proposed）。尚未實作。前置條件是 [PR #4](https://github.com/lihowfun/O-ALL-WANT/pull/4)（v2.0.0）先 merge，再從 `main` 開 `feat/skill-catalog` 分支。
+狀態：2026-10-29 的 catalog 設計歷史，目標 v2.1.0（proposed）；完整 catalog 尚未實作。EGM runtime 與 bundled skill 配方已先整合進 V2。後文原定另開 feat/skill-catalog、只用外部 EGM 安裝的順序已被取代。
+
+> 2026-10-30 更正：**V2 本身已包含 EGM**，不是另一個附加產品。現行 installer
+> 已內建固定 runtime，支援 `--skills` 選配、受保護的停用與備份；本文件後文的
+> 「僅記錄版本、使用者另外安裝 EGM」決議已被取代。自動 Scout／queue／quarantine／
+> digestion／absorb 的 catalog runtime 仍未實作，不能把本計畫當成功能或驗收結果。
+> 效果驗收以 `docs/SHARED_ACCEPTANCE_PROTOCOL.md` 為準，舊 A/B/C 設計保留作歷史。
 
 ## 目標
 
@@ -284,7 +290,7 @@ EGM 的實測提前到 P1–P5 之前，不等 catalog 整套蓋完。證據先�
 | 測試套 | 內容 | 能證明什麼 |
 |---|---|---|
 | 流程套 | EGM 的 30 個情境（29 個單輪、1 個兩輪，全是文字斷言） | **C 對 B 是否齊平**：OAW 有沒有干擾 EGM。B 贏 A 是必然的，不能當成品質證據 |
-| 結果套 | 在設計文件中預先埋好已知缺陷：缺 SLO、未定義術語、模糊任務、內部矛盾，外加一個「和專案過去記錄的決策衝突」的缺陷。量測三組各抓到幾個 | EGM 是否比原生更會抓缺陷（B 對 A）；OAW+EGM 是否更好（C 對 B）。決策衝突那題是 OAW 證據回想可能贏的地方，因為 EGM 的金魚審查員刻意不看上下文 |
+| 結果套 | 在設計文件中預先埋好已知缺陷：缺 SLO、未定義術語、模糊任務、內部矛盾，外加一個「和專案過去記錄的決策衝突」的缺陷。量測三組各抓到幾個 | EGM 是否比原生更會抓缺陷（B 對 A）；當時的 C 組是否更好（C 對 B；歷史組名，不是目前產品名稱）。決策衝突那題是 OAW 證據回想可能贏的地方，因為 EGM 的金魚審查員刻意不看上下文 |
 
 **階段**
 

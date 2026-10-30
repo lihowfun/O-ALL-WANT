@@ -29,10 +29,12 @@
 
 > **v2.0.0 is proposed in a pull request; it is not a published release.** [Upgrade guide](docs/UPGRADING.md) · [CLI reference](docs/CLI_Reference.md) · [Execution plan](docs/plans/v2.0.0-execution.md)
 
-EGM study: 27 real Codex reviews, detections A/B/C **24/24 each**, unsupported
-claims **0/1/0**. OAW+EGM matched native on this fixed suite; standalone EGM failed
-the strict gate. PR remains Draft; EGM is not a default runtime.
-[Evidence, limitations and source versions](docs/validation/egm-codex-2026-10-29.md).
+**OAW v2 includes EGM**, project evidence, optional wiki and improvement gates.
+The default recipe exposes the seven pinned EGM skills and `oaw-evidence`;
+users can select their own recipe. EGM remains explicitly invoked, as upstream
+specifies. Bundling a workflow does not prove a quality or token advantage.
+[Codex results and limitations](docs/validation/egm-oaw-codex-2026-10-30.md) ·
+[Shared Codex/Claude acceptance protocol](docs/SHARED_ACCEPTANCE_PROTOCOL.md).
 
 ## 20-second pitch
 
@@ -75,13 +77,13 @@ The goal is still simple: **spend expensive tokens on real reasoning and real ou
 |---|---|---|---|
 | 🧭 | **Native-first core** | A short `AGENTS.md` for non-obvious constraints and real verification commands; `CLAUDE.md` only imports it. No router, no mandatory startup reads | default |
 | 🧾 | **Evidence recall (Context Hub)** | `context_hub.py memory recall` returns bounded JSON or text with source locations, truncation and a continuation cursor. Notes are evidence to check against current code, never instructions that override you | default |
-| 🧩 | **Native skills** | Three standard `SKILL.md` packages. `--host codex\|claude\|both` installs `.agents/skills` and/or `.claude/skills` from one authored source | `oaw-evidence` by default; the others below |
+| 🧩 | **Native skills** | Seven EGM and three OAW `SKILL.md` packages, with an explicitly selectable active recipe. `--host codex\|claude\|both` installs `.agents/skills` and/or `.claude/skills` from one authored source | seven EGM skills + `oaw-evidence` by default; wiki/improve below |
 | 📚 | **LLM Wiki** | `wiki_sync.py` deterministically renders `docs/raw/` into `docs/knowledge/` and lints links, metadata and freshness. It is a renderer, not an LLM summarizer | `--profile knowledge` |
 | 🔬 | **Evidence-driven self-improvement** | Hypothesis + concrete diff → fixed cases on matched baseline/candidate runs → your explicit accept or reject. Regressions, missing or changed evidence block acceptance; nothing is ever applied automatically | `--with-improve` |
 | 🛟 | **Safe lifecycle** | `init` protects existing content; `migrate` previews by default and `--apply` keeps backups, receipts, rollback and conflict proposals; `doctor` reports health | always |
 | 🔒 | **Safe writes** | Locked read-modify-write, atomic replacement, and refusal of symlink/junction or path escapes | always |
 | 📉 | **Compact output** | `search --compact` and `--max-chars` budgets keep tool output short | default |
-| ✅ | **Proof gate** | `harness_check.py`: 8 check groups, every required test module, a minimum test count and zero skips; CI on Ubuntu, macOS and Windows with Python 3.10 and 3.13 | this repo |
+| ✅ | **Proof gate** | `harness_check.py`: 9 check groups, every required test module, a minimum test count and zero skips; CI on Ubuntu, macOS and Windows with Python 3.10 and 3.13 | this repo |
 
 ### 🥄 Scooped out of the pot in v2
 
@@ -99,7 +101,7 @@ The goal is still simple: **spend expensive tokens on real reasoning and real ou
 
 ## 🏗️ Architecture
 
-**At work**: the host runs the agent. OAW contributes a short policy, three native skills and small standard-library tools that read and write project files.
+**At work**: the host runs the agent. OAW contributes a short policy, the pinned EGM runtime, selectable native skills and small standard-library tools that read and write project files.
 
 ```mermaid
 flowchart TB
@@ -169,7 +171,7 @@ python3 scripts/oaw.py init --target /path/to/project --host both
 python3 scripts/oaw.py doctor --target /path/to/project
 ```
 
-The default installs five framework files: a short `AGENTS.md`, the Claude compatibility import, one evidence skill, and Context Hub with its shared helper. It creates no memory log, placeholder architecture or mandatory session workflow. Existing different content is protected.
+The default installs a short `AGENTS.md`, the Claude compatibility import, the complete pinned EGM runtime with seven native skill entrypoints, the evidence skill, and Context Hub with its shared helper. It creates no memory log, placeholder architecture or mandatory session workflow. Existing different content is protected.
 
 Optional capabilities are additive on an existing installation:
 
@@ -235,7 +237,9 @@ See [CONTRIBUTING](CONTRIBUTING.md) and [CHANGELOG](CHANGELOG.md).
 
 Exact versions and usage status: [v2.0.0 source ledger](docs/releases/2.0.0-sources.md).
 EGM **0.1.0** at [`f0ba151b252c9abf1318d9fe857a43265d06de89`](https://github.com/google/elephant-goldfish-model/tree/f0ba151b252c9abf1318d9fe857a43265d06de89)
-was assessed statically and in a fixed-suite manual Codex review study; it is not bundled or installed by OAW.
+is bundled in V2 and installed to `.oaw/integrations/egm/`. Upstream runtime files
+retain exact bytes, Apache-2.0 licensing and individual hashes. Native entrypoint
+adapters are documented separately in the source ledger.
 See the [review and replacement decisions](docs/reviews/2026-10-29-pr4-egm.md).
 
 **Historical conceptual influences retained in v2** (upstream versions were not

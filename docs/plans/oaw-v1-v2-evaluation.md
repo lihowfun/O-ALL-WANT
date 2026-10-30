@@ -1,5 +1,8 @@
 # OAW v1 與 OAW v2：整體效益比較計畫
 
+> Historical version-specific record. Current V2 includes EGM; current product acceptance uses
+> `docs/SHARED_ACCEPTANCE_PROTOCOL.md`. Original arm names, source pins and results below remain unchanged.
+
 日期：2026-10-30。狀態：**設計草案，尚未啟動新模型試驗**。
 
 後續範圍更新：使用者要求三組全部比較並由 Codex 實跑。請以

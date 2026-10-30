@@ -3,7 +3,8 @@
 
 This is a deliberately small frontmatter validator, not a full YAML parser or a
 host compatibility certification. Supported fields are name, description,
-license, compatibility, allowed-tools (strings), and metadata (a string map).
+license, compatibility, allowed-tools (strings), disable-model-invocation (a
+boolean), and metadata (a string map).
 Strings may be plain, quoted, or indented literal/folded blocks. Host-specific
 frontmatter and other YAML constructs need the host's own validator.
 """
@@ -16,6 +17,7 @@ from urllib.parse import unquote, urlsplit
 
 
 SCALAR_FIELDS = {"name", "description", "license", "compatibility", "allowed-tools"}
+BOOLEAN_FIELDS = {"disable-model-invocation"}
 NAME_RE = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*\Z")
 FIELD_RE = re.compile(r"([A-Za-z][A-Za-z0-9_-]*):(?:[ \t]+(.*))?\Z")
 LINK_RE = re.compile(r"!?\[[^\]\n]*\]\((<[^>]+>|[^\s)]+)(?:\s+[^)]*)?\)")
@@ -69,14 +71,18 @@ def _frontmatter(content):
         key, value = match.group(1), (match.group(2) or "")
         if key in fields:
             raise ValueError("duplicate frontmatter field: %s" % key)
-        if key not in SCALAR_FIELDS | {"metadata"}:
+        if key not in SCALAR_FIELDS | BOOLEAN_FIELDS | {"metadata"}:
             raise ValueError("unsupported portable frontmatter field: %s" % key)
         index += 1
         nested = []
         while index < end and (not lines[index].strip() or lines[index].startswith(" ")):
             nested.append(lines[index])
             index += 1
-        if key == "metadata":
+        if key in BOOLEAN_FIELDS:
+            if value.strip() not in {"true", "false"} or any(item.strip() for item in nested):
+                raise ValueError("expected a boolean for %s" % key)
+            fields[key] = value.strip() == "true"
+        elif key == "metadata":
             if value.strip() == "{}" and not any(item.strip() for item in nested):
                 fields[key] = {}
                 continue

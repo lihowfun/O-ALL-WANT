@@ -27,7 +27,7 @@ class GateTests(unittest.TestCase):
             with patch.object(harness_check, "ROOT", root):
                 path.write_text(json.dumps(original), encoding="utf-8")
                 self.assertTrue(harness_check.version_check().passed)
-                for mutation in ("version", "mutable-source", "ci-drift", "comment-only"):
+                for mutation in ("version", "mutable-source", "ci-drift", "unbundled-egm", "egm-lock", "comment-only"):
                     value = json.loads(json.dumps(original))
                     if mutation == "version":
                         value["oaw_version"] = "999.0.0"
@@ -35,6 +35,10 @@ class GateTests(unittest.TestCase):
                         value["sources"][0]["commit"] = "main"
                     elif mutation == "ci-drift":
                         next(source for source in value["sources"] if source["usage"] == "ci-action")["commit"] = "f" * 40
+                    elif mutation == "unbundled-egm":
+                        value["sources"][0]["runtime_bundled"] = False
+                    elif mutation == "egm-lock":
+                        value["sources"][0]["source_lock"]["sha256"] = "f" * 64
                     else:
                         workflow = root / ".github/workflows/test.yml"
                         workflow.write_text(workflow.read_text(encoding="utf-8").replace("- uses:", "# - uses:"), encoding="utf-8")

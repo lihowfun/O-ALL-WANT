@@ -16,6 +16,7 @@ import tempfile
 from types import SimpleNamespace
 import unittest
 from unittest import mock
+from frozen_egm_source import registered_source, enter_context
 
 ROOT = Path(__file__).resolve().parents[1]
 PILOT = ROOT / "evals" / "egm-pilot"
@@ -207,10 +208,16 @@ class VerdictTests(unittest.TestCase):
 
 class ScoreEndToEndTests(unittest.TestCase):
     def setUp(self):
+        frozen = enter_context(self, registered_source())
+        enter_context(self, mock.patch.object(pc, "REPO", frozen))
         self.temporary = tempfile.TemporaryDirectory(prefix="oaw-egm-score-")
         self.addCleanup(self.temporary.cleanup)
         self.base = Path(self.temporary.name)
         self.digest = pc.recorded_spec_digest(PILOT)
+
+    def test_current_source_is_rejected_before_scoring(self):
+        with mock.patch.object(pc, "REPO", ROOT), self.assertRaisesRegex(score.ScoreError, "oaw_source"):
+            score.score(PILOT, [])
 
     def manifest(self, phase):
         directory = self.base / phase

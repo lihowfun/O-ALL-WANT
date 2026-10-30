@@ -36,6 +36,9 @@ Thumbs.db
 # Codex / AI tools
 .codex
 .claude/
+!templates/.claude/
+!templates/.claude/agents/
+!templates/.claude/agents/*.md
 
 # Project-local framework state and stable writer lock sidecars
 /.oaw/

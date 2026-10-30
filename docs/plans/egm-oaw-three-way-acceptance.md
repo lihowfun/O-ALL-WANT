@@ -1,5 +1,8 @@
 # EGM、OAW v1、OAW v2：共同驗收與 Codex 實跑規格
 
+> Historical version-specific record. Current V2 includes EGM; current product acceptance uses
+> `docs/SHARED_ACCEPTANCE_PROTOCOL.md`. Original arm names, source pins and results below remain unchanged.
+
 日期：2026-10-30。這是新的三組驗收；取代前份計畫「EGM 只作診斷」的範圍設定。
 前份 [OAW v1／v2 計畫](oaw-v1-v2-evaluation.md) 保留為設計歷史，舊實驗也不重標。
 本文件區分**本次有限樣本實跑**與**完整驗收待擴充的題庫**，不把設計當成已測結果。
@@ -10,7 +13,7 @@
 |---|---|---|
 | EGM | manifest 0.1.0；`f0ba151b252c9abf1318d9fe857a43265d06de89`；Apache-2.0 | 完整上游來源；設計 review 使用官方 implementation preset 的 Stage 9 |
 | OAW v1 | 1.1.0；`5df531372330f6b0e1c9a81aee0c1c45f2f283ff` | 執行當時的 install.sh；實際 AGENTS → CLAUDE、flat skills 與持久資料 |
-| OAW v2 | proposed；`9ae4eba01b948057efb8294df061dd995d03fc6e` | 實際 minimal installer／oaw-evidence，加上與 EGM 組同版本、同 preset 的 EGM |
+| OAW v2 | proposed；`9ae4eba01b948057efb8294df061dd995d03fc6e` | 歷史測試中的 V2（含與 EGM 組同版本、同 preset 的 EGM）；該來源早於完整安裝整合 |
 
 主表固定三欄 **EGM／OAW v1／OAW v2**，逐一列三組配對結果，不另外造一個模糊的「原生組」。
 OAW v2 對 EGM、OAW v2 對 OAW v1 是主比較；OAW v1 對 EGM 也完整報告。
@@ -20,6 +23,10 @@ OAW v2 對 EGM、OAW v2 對 OAW v1 是主比較；OAW v1 對 EGM 也完整報告
 安裝 EGM 的產品宣告。Stage 9 的三名 reviewer 各自使用新的 Codex process 和獨立
 專案副本，最後由另一個新 process 彙整。這不是前一輪九名 reviewer 的全流程，
 也不測迭代修復、收斂或 native plugin auto-discovery。
+
+上游 Goldfish persona 要求 read-only；本測試額外允許寫入 `artifacts/` 的 IO canary
+與測試報告，屬於儀表的明列例外。產品來源／policy／方法原文都以 hash 保持不變。
+這不認證 native named-agent 的 read-only 工具配置或 sandbox 真的禁止所有寫入。
 
 共同 host 為已登入 ChatGPT 的 Codex CLI，固定 `gpt-6.1-sol`／medium；所有
 角色、彙整與記憶 session 相同，不混模型。記錄 CLI 版本與要求的模型；provider
@@ -113,7 +120,9 @@ output 25 萬 token。每次派送前檢查；這不是 provider 的硬 token ca
 12 個新呼叫，固定同一份 S2 prompt；不提供 S1 transcript 或 ticket。
 三者的來源檔案相同、各用獨立副本。分開算 gold accuracy、pairwise agreement、
 unanimous-correct、ticket retention 與額外 token。這不是新的 trajectory 家族／原試驗 repeat。
-另設 300 萬 token／3 萬 output／900 秒上限、同時 2 個 process、無自動重試。
+依原 S2 的實際 usage，在任何重現對照呼叫前將資源 envelope 校準為
+500 萬 token／6 萬 output／900 秒上限，單回合 300 秒與原 S2 相同；
+同時 2 個 process、無自動重試。題目、全部 6 份輸入與 receiver 數未變。
 
 ## 指標的精確算法
 

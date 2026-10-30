@@ -6,6 +6,8 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
+from frozen_egm_source import registered_source, enter_context
 
 SOURCE = Path(__file__).resolve().parents[1] / "evals/egm-local"
 sys.path.insert(0, str(SOURCE))
@@ -131,6 +133,8 @@ class LocalMeasurementTests(unittest.TestCase):
         self.assertEqual(len(result["comparisons"][1]["additional_finding_count_gains"]), 1)
 
     def test_export_supplies_original_auxiliary_evidence_without_execution_labels(self):
+        frozen = enter_context(self, registered_source())
+        enter_context(self, patch.object(anonymizer.prepare, "REPO", frozen))
         with tempfile.TemporaryDirectory(prefix="egm-blind-export-") as temporary:
             target = Path(temporary) / "prepared"
             manifest = anonymizer.prepare.prepare(target)

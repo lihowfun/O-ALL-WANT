@@ -29,10 +29,12 @@
 
 > **v2.0.0 目前是 PR 中的提案版本，尚未發布 release。** [升級指南](docs/UPGRADING.md) · [CLI](docs/CLI_Reference.md) · [執行計畫](docs/plans/v2.0.0-execution.md)
 
-EGM 實測已完成 27 份 Codex review：A／B／C 皆抓到 **24/24** 埋缺陷，
-無根據指控為 **0／1／0**。整合組與原生在此固定 suite 持平，單用 EGM
-未通過嚴格門檻，因此 PR 保持 Draft，EGM 不進預設 runtime。
-[完整證據、限制與版本來源](docs/validation/egm-codex-2026-10-29.md)。
+**OAW v2 就是整套 OAW，包含已整合的 EGM**。預設提供七個固定版本的 EGM
+skills 與 `oaw-evidence`；wiki、improve 和要啟用哪些 skills 可自行選擇。
+EGM 沿用上游的明確呼叫方式，不會每個任務都強制跑完整流程。
+安裝完成與效果提升分開驗證。
+[Codex 分數與完整說明](docs/validation/egm-oaw-codex-2026-10-30.md) ·
+[Codex／Claude 共用驗收協議](docs/SHARED_ACCEPTANCE_PROTOCOL.md)。
 
 ## 20 秒看懂
 
@@ -75,13 +77,13 @@ python3 OAW/scripts/oaw.py doctor --target /path/to/project
 |---|---|---|---|
 | 🧭 | **原生優先的核心** | 短短的 `AGENTS.md`，只寫不明顯的限制和真正的驗證指令；`CLAUDE.md` 只負責引用它。沒有 router，也沒有強制開場閱讀 | 預設 |
 | 🧾 | **證據回想（Context Hub）** | `context_hub.py memory recall` 回傳有上限的 JSON 或文字，附來源位置、截斷標記和續讀 cursor。筆記是要對照現行程式碼檢查的證據，不會蓋過你的指令 | 預設 |
-| 🧩 | **原生 skills** | 三個標準 `SKILL.md` 套件。`--host codex\|claude\|both` 從同一份來源產生 `.agents/skills` 和／或 `.claude/skills` | 預設裝 `oaw-evidence`，其他見下 |
+| 🧩 | **原生 skills** | 七個 EGM 與三個 OAW `SKILL.md` 套件，可選擇啟用配方。`--host codex\|claude\|both` 從同一份來源產生 `.agents/skills` 和／或 `.claude/skills` | 預設七個 EGM＋`oaw-evidence`，wiki/improve 見下 |
 | 📚 | **LLM Wiki** | `wiki_sync.py` 把 `docs/raw/` 確定性地編譯成 `docs/knowledge/`，並檢查連結、metadata 和新鮮度。它是 renderer，不是 LLM 摘要器 | `--profile knowledge` |
 | 🔬 | **有證據的自我改進** | 假設＋具體 diff → 固定案例的 baseline／candidate 對照 → 你明確採用或拒絕。品質退步、證據缺失或被改動都會擋下；永遠不會自動套用 | `--with-improve` |
 | 🛟 | **安全的安裝與升級** | `init` 保護既有內容；`migrate` 預設只預覽，`--apply` 會留下備份、收據、可回復，衝突變成 proposal；`doctor` 回報健康狀態 | 一律 |
 | 🔒 | **安全寫入** | 加鎖的讀改寫、原子替換，拒絕 symlink／junction 和路徑逃逸 | 一律 |
 | 📉 | **精簡輸出** | `search --compact` 和 `--max-chars` 上限讓工具輸出保持精簡 | 預設 |
-| ✅ | **證明閘門** | `harness_check.py`：8 組檢查，要求所有測試模組都在、達到最低測試數、零 skip；CI 跑 Ubuntu、macOS、Windows × Python 3.10、3.13 | 本 repo |
+| ✅ | **證明閘門** | `harness_check.py`：9 組檢查，要求所有測試模組都在、達到最低測試數、零 skip；CI 跑 Ubuntu、macOS、Windows × Python 3.10、3.13 | 本 repo |
 
 ### 🥄 這版從鍋裡撈掉的料
 
@@ -99,7 +101,7 @@ python3 OAW/scripts/oaw.py doctor --target /path/to/project
 
 ## 🏗️ 架構
 
-**執行時**：agent 由 host 負責。OAW 提供一份短 policy、三個原生 skill，以及讀寫專案檔案的小型標準函式庫工具。
+**執行時**：agent 由 host 負責。OAW 提供一份短 policy、固定版本 EGM 與可選原生 skills，以及讀寫專案檔案的小型標準函式庫工具。
 
 ```mermaid
 flowchart TB
@@ -169,7 +171,7 @@ python3 scripts/oaw.py init --target /path/to/project --host both
 python3 scripts/oaw.py doctor --target /path/to/project
 ```
 
-預設只安裝五個 framework 檔：短 `AGENTS.md`、Claude 相容 import、一個 evidence skill、Context Hub 和共用 helper。不建立記憶檔、不塞佔位架構，也沒有強制的 session 流程。遇到既有的不同內容會保留。
+預設安裝短 `AGENTS.md`、Claude 相容 import、完整固定版本 EGM、七個 EGM skill 入口、evidence skill、Context Hub 和共用 helper。不建立記憶檔、不塞佔位架構，也沒有強制的 session 流程。遇到既有的不同內容會保留。
 
 選配功能可以在已安裝的專案上累加：
 
@@ -235,7 +237,7 @@ python3 scripts/sync_examples.py --write
 
 確切版本與使用狀態見 [v2.0.0 來源版本表](docs/releases/2.0.0-sources.md)。
 EGM **0.1.0**、commit [`f0ba151b252c9abf1318d9fe857a43265d06de89`](https://github.com/google/elephant-goldfish-model/tree/f0ba151b252c9abf1318d9fe857a43265d06de89)
-已做靜態評估與固定案例的 Codex 手動 review 實測；OAW 尚未內建或安裝 EGM。
+完整 runtime 已內建於 V2，安裝至 `.oaw/integrations/egm/`。上游檔案保留原文、Apache-2.0 授權與逐檔雜湊；入口轉接變更另列於來源紀錄。
 採用、替換與淘汰建議見 [review](docs/reviews/2026-10-29-pr4-egm.md)。
 
 **v2 保留的歷史概念來源**（當時未記錄上游版本；以下是閱讀入口，並非固定版本的 runtime 相依）

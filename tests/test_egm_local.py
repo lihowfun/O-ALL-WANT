@@ -6,6 +6,7 @@ import shutil
 import tempfile
 import unittest
 from unittest.mock import patch
+from frozen_egm_source import registered_source, TREE_SHA256, enter_context
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "evals/egm-local"
@@ -15,8 +16,20 @@ SPEC.loader.exec_module(prep)
 
 
 class LocalExperimentTests(unittest.TestCase):
+    def setUp(self):
+        self.frozen = enter_context(self, registered_source())
+        enter_context(self, patch.object(prep, "REPO", self.frozen))
+
+    def test_current_source_cannot_run_historical_contract(self):
+        with tempfile.TemporaryDirectory(prefix="egm-source-rejection-") as temporary:
+            target = Path(temporary) / "must-not-exist"
+            with patch.object(prep, "REPO", ROOT), self.assertRaisesRegex(ValueError, "OAW source changed"):
+                prep.prepare(target)
+            self.assertFalse(target.exists())
+
     def test_frozen_spec_and_cases_verify(self):
         spec, checksum = prep.verify()
+        self.assertEqual(spec["inputs"]["oaw_source"], TREE_SHA256)
         self.assertEqual(spec["repeats"], 3)
         self.assertEqual(set(spec["cases"]), {"orders", "events", "clean"})
         self.assertEqual(len(checksum), 64)

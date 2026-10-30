@@ -1,0 +1,10 @@
+interface:
+  display_name: "EGM Review"
+  short_description: "Stress-test a design with fresh reviewers"
+  icon_small: "./assets/icon.svg"
+  icon_large: "./assets/icon.svg"
+  brand_color: "#E86E00"
+
+# OAW adapter: preserve the upstream skill's invocation policy.
+policy:
+  allow_implicit_invocation: false

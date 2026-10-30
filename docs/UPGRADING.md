@@ -8,7 +8,7 @@ v2.0.0 is a proposed breaking upgrade. Review and merge happen separately; no ta
 |---|---|
 | CLAUDE.md master router, mandatory startup files and lanes | Short AGENTS.md plus a thin Claude compatibility import; task-relevant reads |
 | Flat `.agents/skills/*.md`, custom triggers | Native `<name>/SKILL.md` packages |
-| Broad template collection and manually maintained state mirrors | Minimal five-file framework; knowledge and improvement are explicit additions |
+| Broad template collection and manually maintained state mirrors | Short policy plus complete pinned EGM and evidence; wiki and improvement are explicit additions |
 | Mandatory memory/report/self-review instructions | Selective project evidence; native personal memory stays with the host |
 | Installer overwrite confirmation | Non-overwriting init; migration preview, backups and conflict proposals |
 | Framework metadata in project VERSION.json | Framework ownership lives in `.oaw/install.json`; project version stays yours |
@@ -52,6 +52,22 @@ Each applied migration keeps replacement/retirement bytes and a migration.json r
 Before manual recovery, stop installation/writers, inspect the receipt and preserve any work performed since migration. Restore only the intended files from that operation's backup; do not blindly copy a whole directory over a project. Init has no force-overwrite option. A stale install.lock after a killed operation requires inspection before removal.
 
 ## Native skills
+
+V2 includes EGM 0.1.0 at commit
+`f0ba151b252c9abf1318d9fe857a43265d06de89`, installed under
+`.oaw/integrations/egm/`. Seven EGM entrypoints and `oaw-evidence` are the default
+recipe. Upstream manual invocation is preserved; inclusion does not force a
+nine-stage review after ordinary tasks. Claude installs also receive the nine
+upstream native agent adapters with their original tool/context restrictions.
+
+Inspect available choices with `python3 scripts/oaw.py skills --target PROJECT`.
+For a custom recipe, preview
+`python3 scripts/oaw.py migrate --target PROJECT --skills egm-review,oaw-evidence`;
+apply with `--apply`. Unmodified owned entrypoints are backed up before removal.
+Edited entrypoints remain conflicts; they are never silently discarded. `none`
+selects no bundled native skills; `default` restores the profile defaults. An
+omitted flag preserves a prior custom recipe. Runtime source and project memory
+remain installed. This does not implement the future external skill catalog.
 
 Codex's project path is `.agents/skills`; Claude Code's native project skills path is `.claude/skills`. The Claude policy import does not register skills. Use `--host` to generate the selected native packages, then verify the actual listing in each host. See [Skill Guide](Skill_Guide.md).
 

@@ -1,6 +1,9 @@
 # Project guidance
 
 OAW adds portable project evidence and optional wiki tools to your native agent.
+OAW v2 includes the complete pinned EGM runtime and native skill entrypoints.
+Use the skills enabled in this project's recipe; EGM keeps its explicit invocation policy.
+Installing it does not require running its full review flow on unrelated tasks.
 
 Use the host's skills, session memory, context management, and permissions.
 Load project notes only when the current task needs them.

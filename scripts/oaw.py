@@ -25,6 +25,11 @@ FRAMEWORK_VERSION = "2.0.0"
 MANIFEST_PATH = ".oaw/install.json"
 PROFILES = ("minimal", "knowledge")
 HOSTS = ("codex", "claude")
+EGM_COMMIT = "f0ba151b252c9abf1318d9fe857a43265d06de89"
+EGM_LOCK_SHA256 = "c6ff4b7b56ce8187e842baa190c0b3fda2a37d112450931839e43bd7faf3d25e"
+EGM_RUNTIME = ".oaw/integrations/egm/"
+EGM_SKILLS = ("egm-bootstrap", "egm-brainstorm", "egm-draft", "egm-drift-report", "egm-resolve", "egm-review", "egm-review-loop")
+BUNDLED_SKILLS = (*EGM_SKILLS, "oaw-evidence", "oaw-wiki", "oaw-improve")
 ALWAYS_PRESERVE = {"AI_CONTEXT.md", "VERSION.json", "ROADMAP.md", ".agents/memory.md"}
 LEGACY_ADAPTERS = {"GEMINI.md", ".cursorrules", ".windsurfrules", ".github/copilot-instructions.md"}
 
@@ -131,12 +136,21 @@ def read_manifest(target: Path) -> dict | None:
     if not isinstance(data.get("hosts", ["codex"]), list):
         raise InstallError("Invalid hosts in install manifest.")
     selected_hosts(data.get("hosts", ["codex"]))
+    if "skills" in data:
+        selected_skills(data["skills"])
+        if not isinstance(data.get("skills_explicit", True), bool):
+            raise InstallError("Invalid skills_explicit in install manifest.")
+    integrations = data.get("integrations", {})
+    if not isinstance(integrations, dict):
+        raise InstallError("Invalid integrations in install manifest.")
+    if "egm" in integrations and integrations["egm"] != {"commit": EGM_COMMIT, "version": "0.1.0", "source_lock_sha256": EGM_LOCK_SHA256}:
+        raise InstallError("Unknown or modified EGM integration identity.")
     managed = data.get("managed_files")
     if not isinstance(managed, dict):
         raise InstallError("Invalid managed_files in install manifest.")
     for relative, checksum in managed.items():
         relative_path(relative)
-        if relative.startswith(".oaw/") or relative in ALWAYS_PRESERVE:
+        if (relative.startswith(".oaw/") and not relative.startswith(EGM_RUNTIME)) or relative in ALWAYS_PRESERVE:
             raise InstallError(f"Reserved/unmanaged path in install manifest: {relative}")
         if not isinstance(checksum, str) or not re.fullmatch(r"[0-9a-f]{64}", checksum):
             raise InstallError(f"Invalid SHA-256 for managed path: {relative}")
@@ -146,25 +160,86 @@ def read_manifest(target: Path) -> dict | None:
         raise InstallError("Invalid custom_files in install manifest.")
     for relative in custom:
         relative_path(relative)
-        if relative.startswith(".oaw/") or relative in ALWAYS_PRESERVE or relative in managed:
+        if (relative.startswith(".oaw/") and not relative.startswith(EGM_RUNTIME)) or relative in ALWAYS_PRESERVE or relative in managed:
             raise InstallError(f"Reserved or simultaneously managed/custom path: {relative}")
         check_path(joined(target, relative), kind="file")
     return data
 
 
-def source_files(profile: str, with_improve: bool, hosts: list[str] | None = None) -> dict[str, bytes]:
+def default_skills(profile: str, with_improve: bool) -> list[str]:
+    return [*EGM_SKILLS, "oaw-evidence", *(["oaw-wiki"] if profile == "knowledge" else []), *(["oaw-improve"] if with_improve else [])]
+
+
+def selected_skills(skills: list[str]) -> list[str]:
+    if not isinstance(skills, list) or any(not isinstance(s, str) or s not in BUNDLED_SKILLS for s in skills) or len(set(skills)) != len(skills):
+        raise InstallError("Skills must be a unique list of bundled skill names; inspect `oaw.py skills`.")
+    return sorted(skills)
+
+
+def egm_native_agents() -> dict[str, str]:
+    """Native Claude adapter paths declared by the pinned upstream manifest."""
+    package = egm_payload()
+    manifest = json.loads(package[EGM_RUNTIME + ".claude-plugin/plugin.json"].decode("utf-8"))
+    result = {}
+    for reference in manifest.get("agents", []):
+        relative = PurePosixPath(reference).as_posix().removeprefix("./")
+        text = package[EGM_RUNTIME + relative].decode("utf-8")
+        match = re.search(r"(?m)^name:\s*(egm-[a-z0-9-]+)\s*$", text)
+        if not match:
+            raise InstallError("Invalid native EGM agent identity.")
+        result[f".claude/agents/{match.group(1)}.md"] = f"templates/.claude/agents/{match.group(1)}.md"
+    return result
+
+
+def egm_payload(root: Path | None = None) -> dict[str, bytes]:
+    """Validate a complete immutable upstream runtime against an independent pin."""
+    root = framework_root() / "vendor/egm" if root is None else root
+    check_path(root, kind="dir")
+    lock_path = root / "OAW_SOURCE.json"
+    check_path(lock_path, kind="file")
+    if not lock_path.is_file() or digest(lock_path.read_bytes()) != EGM_LOCK_SHA256:
+        raise InstallError("Pinned EGM provenance is missing or changed.")
+    lock = read_json(lock_path)
+    if lock.get("commit") != EGM_COMMIT or lock.get("version") != "0.1.0" or lock.get("license") != "Apache-2.0" or set(lock.get("skills", [])) != set(EGM_SKILLS):
+        raise InstallError("Pinned EGM identity does not match V2.")
+    expected = lock["files"]
+    observed = set()
+    for path in root.rglob("*"):
+        check_path(path)
+        if path.is_file():
+            check_path(path, kind="file")
+            observed.add(path.relative_to(root).as_posix())
+    if observed != set(expected) | {"OAW_SOURCE.json"}:
+        raise InstallError("Pinned EGM runtime has missing or unlisted files.")
+    result = {EGM_RUNTIME + "OAW_SOURCE.json": lock_path.read_bytes()}
+    for relative, checksum in expected.items():
+        path = joined(root, relative)
+        check_path(path, kind="file")
+        content = path.read_bytes()
+        if digest(content) != checksum:
+            raise InstallError("Pinned EGM source changed: " + relative)
+        result[EGM_RUNTIME + relative] = content
+    return result
+
+
+def source_files(profile: str, with_improve: bool, hosts: list[str] | None = None,
+                 skills: list[str] | None = None) -> dict[str, bytes]:
     """Read every selected source first, so missing packages cannot partially install."""
     hosts = selected_hosts(hosts)
+    skills = selected_skills(default_skills(profile, with_improve) if skills is None else skills)
+    profile = "knowledge" if "oaw-wiki" in skills else profile
+    with_improve = with_improve or "oaw-improve" in skills
     source_root = framework_root()
     mappings = {"AGENTS.md": "templates/AGENTS.md", "CLAUDE.md": "templates/CLAUDE.md",
                 "scripts/context_hub.py": "scripts/context_hub.py", "scripts/oaw_common.py": "scripts/oaw_common.py"}
-    trees = [".agents/skills/oaw-evidence"]
+    trees = [".agents/skills/" + name for name in skills]
     if profile == "knowledge":
         mappings.update({"scripts/wiki_sync.py": "scripts/wiki_sync.py", "scripts/validate_skills.py": "scripts/validate_skills.py"})
-        trees.extend([".agents/skills/oaw-wiki", "docs/raw", "docs/knowledge"])
+        trees.extend(["docs/raw", "docs/knowledge"])
     if with_improve:
         mappings["scripts/improvement.py"] = "scripts/improvement.py"
-        trees.append(".agents/skills/oaw-improve")
+    if "claude" in hosts and any(name in EGM_SKILLS for name in skills):
+        mappings.update(egm_native_agents())
     for tree in trees:
         source = joined(source_root / "templates", tree)
         check_path(source, kind="dir")
@@ -186,7 +261,7 @@ def source_files(profile: str, with_improve: bool, hosts: list[str] | None = Non
             found.append(item)
         if not found or (tree.startswith(".agents/skills/") and not (source / "SKILL.md").is_file()):
             raise InstallError(f"Required source tree is empty or lacks SKILL.md: {source}")
-    files = {}
+    files = egm_payload()
     for relative, source_relative in sorted(mappings.items()):
         relative_path(relative)
         source = joined(source_root, source_relative)
@@ -211,16 +286,30 @@ def legacy_hashes() -> dict[str, list[str]]:
 
 
 def plan_install(target: Path, profile: str, with_improve: bool, *, migrate: bool = False,
-                 keep_custom: list[str] | None = None, hosts: list[str] | None = None) -> dict:
+                 keep_custom: list[str] | None = None, hosts: list[str] | None = None,
+                 skills: list[str] | None = None, reset_recipe: bool = False) -> dict:
     target = target_path(target)
+    manifest_path = joined(target, MANIFEST_PATH)
+    check_path(manifest_path, kind="file")
+    manifest_before = manifest_path.read_bytes() if manifest_path.exists() else None
     previous = read_manifest(target)
+    if (manifest_path.read_bytes() if manifest_path.exists() else None) != manifest_before:
+        raise InstallError("Install manifest changed during preflight; retry the command.")
     hosts = selected_hosts(hosts)
     # Additive profiles: a default re-init never drops installed optional features.
     if previous:
         profile = "knowledge" if previous["profile"] == "knowledge" else profile
         with_improve = with_improve or previous["with_improve"]
         hosts = [host for host in HOSTS if host in hosts or host in previous.get("hosts", ["codex"])]
-    package = source_files(profile, with_improve, hosts)
+    explicit_skills = skills is not None or bool(previous and previous.get("skills_explicit", "skills" in previous))
+    if reset_recipe:
+        skills, explicit_skills = None, False
+    elif skills is None and explicit_skills:
+        skills = previous["skills"]
+    skills = selected_skills(default_skills(profile, with_improve) if skills is None else skills)
+    profile = "knowledge" if "oaw-wiki" in skills else profile
+    with_improve = with_improve or "oaw-improve" in skills
+    package = source_files(profile, with_improve, hosts, skills=skills)
     legacy = legacy_hashes() if migrate else {}
     owned = previous["managed_files"] if previous else {}
     custom = set(previous.get("custom_files", [])) if previous else set()
@@ -257,6 +346,60 @@ def plan_install(target: Path, profile: str, with_improve: bool, *, migrate: boo
         else:
             operation = "conflict"
         actions.append({"path": relative, "action": operation, "before": expected, "after": after})
+    # Deactivation removes only owned native entry packages, never project data.
+    # Edited entrypoints block the entire package so no dangling bridge remains.
+    retiring = {}
+    for relative in set(owned) | custom:
+        match = re.fullmatch(r"(\.(?:agents|claude)/skills/([^/]+)/).+", relative)
+        if match and match.group(2) in BUNDLED_SKILLS and match.group(2) not in skills and match.group(1) + "SKILL.md" not in custom:
+            retiring.setdefault(match.group(1), []).append(relative)
+    if retiring and not migrate:
+        raise InstallError("Changing an installed recipe can retire native packages; use migrate to preview, then --apply.")
+    for prefix, relatives in retiring.items():
+        entry = prefix + "SKILL.md"
+        entry_path = joined(target, entry)
+        if entry in custom:
+            # An explicit acknowledgement retains a project-owned override,
+            # including its dependent assets. Recipe selection cannot delete it.
+            continue
+        blocked = entry_path.is_file() and digest(entry_path.read_bytes()) != owned.get(entry)
+        if blocked:
+            actions.append({"path": entry, "action": "retire-conflict", "before": digest(entry_path.read_bytes()) if entry_path.is_file() else None, "after": None})
+            continue
+        for relative in relatives:
+            destination = joined(target, relative)
+            check_path(destination, kind="file")
+            if not destination.exists():
+                managed.pop(relative, None)
+                continue
+            before = digest(destination.read_bytes())
+            if relative in custom or before != owned[relative]:
+                actions.append({"path": relative, "action": "preserve-retired-edit", "before": before, "after": None})
+                custom.add(relative)
+            else:
+                actions.append({"path": relative, "action": "retire", "before": before, "after": None})
+            managed.pop(relative, None)
+    retained_egm = any(
+        re.fullmatch(r"\.(?:agents|claude)/skills/(" + "|".join(EGM_SKILLS) + r")/SKILL\.md", path)
+        for path in custom | {a["path"] for a in actions if a["action"] == "retire-conflict"})
+    if not any(name in EGM_SKILLS for name in skills) and not retained_egm:
+        for relative in egm_native_agents():
+            if relative in custom:
+                continue
+            if relative not in owned and relative not in custom:
+                continue
+            if not migrate:
+                raise InstallError("Retiring native EGM agents requires migrate to preview, then --apply.")
+            destination = joined(target, relative)
+            check_path(destination, kind="file")
+            if not destination.exists():
+                managed.pop(relative, None)
+                continue
+            before = digest(destination.read_bytes())
+            operation = "retire" if relative in owned and owned[relative] == before else "retire-conflict"
+            actions.append({"path": relative, "action": operation, "before": before, "after": None})
+            if operation == "retire":
+                managed.pop(relative, None)
     by_path = {action["path"]: action for action in actions}
     agents, claude = by_path.get("AGENTS.md"), by_path.get("CLAUDE.md")
     # A v1 AGENTS.md only points at CLAUDE.md; keep it while a retained CLAUDE.md does not import AGENTS.md.
@@ -269,7 +412,7 @@ def plan_install(target: Path, profile: str, with_improve: bool, *, migrate: boo
             managed["AGENTS.md"] = owned["AGENTS.md"]
     for relative in requested_custom:
         action = by_path.get(relative)
-        if relative not in custom and (action is None or action["action"] not in ("conflict", "preserve-edit")):
+        if relative not in custom and (action is None or action["action"] not in ("conflict", "preserve-edit", "retire-conflict")):
             raise InstallError(f"--keep-custom requires a current package conflict, edited managed file or declared custom path: {relative}")
         destination = joined(target, relative)
         check_path(destination, kind="file")
@@ -279,6 +422,13 @@ def plan_install(target: Path, profile: str, with_improve: bool, *, migrate: boo
         managed.pop(relative, None)
         if action is not None:
             action["action"] = "preserve-custom"
+        if action and action["after"] is None and relative.endswith("/SKILL.md"):
+            # Keep a retired custom entry coherent with all its owned resources.
+            prefix = relative.removesuffix("SKILL.md")
+            for member in list(managed):
+                if member.startswith(prefix):
+                    custom.add(member)
+                    managed.pop(member)
     if migrate:
         for relative, hashes in sorted(legacy.items()):
             if relative in package or relative in ALWAYS_PRESERVE or relative.startswith("docs/"):
@@ -300,6 +450,8 @@ def plan_install(target: Path, profile: str, with_improve: bool, *, migrate: boo
     for relative in (".oaw/backups", ".oaw/proposals"):
         check_path(joined(target, relative), kind="dir")
     return {"target": target, "profile": profile, "with_improve": with_improve, "hosts": hosts, "previous": previous,
+            "manifest_before": manifest_before,
+            "skills": skills, "skills_explicit": explicit_skills,
             "package": package, "managed_files": managed, "custom_files": sorted(custom), "actions": actions}
 
 
@@ -347,7 +499,7 @@ def install_lock(target: Path):
 
 def apply_plan(plan: dict, *, migrate: bool) -> dict:
     target = plan["target"]
-    conflicts = [a["path"] for a in plan["actions"] if a["action"] == "conflict"]
+    conflicts = [a["path"] for a in plan["actions"] if a["action"] in ("conflict", "retire-conflict")]
     if conflicts and not migrate:
         raise InstallError("Existing content is protected; init made no changes. Use migrate to preview proposals: " + ", ".join(conflicts))
     operation_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ-") + uuid.uuid4().hex[:8]
@@ -362,11 +514,13 @@ def apply_plan(plan: dict, *, migrate: bool) -> dict:
                 "installation_id": previous.get("installation_id", uuid.uuid4().hex) if previous else uuid.uuid4().hex,
                 "profile": plan["profile"], "with_improve": plan["with_improve"], "managed_files": plan["managed_files"],
                 "hosts": plan["hosts"],
+                "skills": plan["skills"], "skills_explicit": plan["skills_explicit"],
+                "integrations": {"egm": {"commit": EGM_COMMIT, "version": "0.1.0", "source_lock_sha256": EGM_LOCK_SHA256}},
                 "custom_files": plan["custom_files"],
                 "runtime": {"minimum_python": "3.10", "state": "project files", "host_settings": "not configured"},
                 "status": "conflicts" if conflicts else "installed", "pending_conflicts": conflicts}
     manifest_path = joined(target, MANIFEST_PATH)
-    manifest_before = manifest_path.read_bytes() if manifest_path.exists() else None
+    manifest_before = plan["manifest_before"]
     applied, backups, proposals = [], [], []
     target.mkdir(parents=True, exist_ok=True)
     with install_lock(target):
@@ -445,6 +599,7 @@ def apply_plan(plan: dict, *, migrate: bool) -> dict:
             raise InstallError(f"Write failed; {recovery}: {exc}{suffix}") from exc
     return {"status": manifest["status"], "target": str(target), "profile": plan["profile"],
             "hosts": plan["hosts"],
+            "skills": plan["skills"],
             "with_improve": plan["with_improve"], "actions": plan["actions"], "backup": backup_relative if migrate else None,
             "proposals": proposals, "pending_conflicts": conflicts, "custom_files": plan["custom_files"]}
 
@@ -485,6 +640,14 @@ def doctor(target: Path) -> dict:
     else:
         if manifest.get("status") != "installed" or manifest.get("pending_conflicts"):
             checks.append({"status": "FAIL", "path": MANIFEST_PATH, "detail": "Migration has unresolved conflicts."})
+        native_egm = any(re.fullmatch(r"\.(?:agents|claude)/skills/(egm-[^/]+)/SKILL\.md", p)
+                         for p in manifest["managed_files"])
+        if "skills" in manifest or native_egm or "egm" in manifest.get("integrations", {}) or any(p.startswith(EGM_RUNTIME) for p in manifest["managed_files"]):
+            try:
+                egm_payload(joined(target, EGM_RUNTIME.rstrip("/")))
+                checks.append({"status": "PASS", "path": EGM_RUNTIME, "detail": "Complete pinned EGM runtime and license verified."})
+            except (InstallError, OSError, ValueError) as exc:
+                checks.append({"status": "FAIL", "path": EGM_RUNTIME, "detail": str(exc)})
         for relative, expected in sorted(manifest["managed_files"].items()):
             path = joined(target, relative)
             if not path.is_file():
@@ -499,17 +662,29 @@ def doctor(target: Path) -> dict:
             status = "PASS" if path.is_file() else "FAIL"
             detail = "Project-owned custom file; OAW will preserve it." if path.is_file() else "Declared custom file is missing."
             checks.append({"status": status, "path": relative, "detail": detail})
+            selected = manifest.get("skills")
+            match = re.fullmatch(r"\.(?:agents|claude)/skills/([^/]+)/SKILL\.md", relative)
+            retained_skill = match and selected is not None and match.group(1) not in selected
+            retained_agent = relative.startswith(".claude/agents/egm-") and selected is not None and not any(name in EGM_SKILLS for name in selected)
+            if path.is_file() and (retained_skill or retained_agent):
+                checks.append({"status": "WARN", "path": relative, "detail": "Explicitly retained project-owned entrypoint remains active outside the selected recipe; disable it manually before claiming an ablation."})
         required = ["AGENTS.md", "CLAUDE.md", "scripts/context_hub.py", "scripts/oaw_common.py"]
-        skill_names = ["oaw-evidence"]
+        skill_names = manifest.get("skills", ["oaw-evidence"])
         if manifest["profile"] == "knowledge":
             required.extend(["scripts/wiki_sync.py", "scripts/validate_skills.py"])
-            skill_names.append("oaw-wiki")
+            if "skills" not in manifest:
+                skill_names.append("oaw-wiki")
         if manifest["with_improve"]:
             required.append("scripts/improvement.py")
-            skill_names.append("oaw-improve")
+            if "skills" not in manifest:
+                skill_names.append("oaw-improve")
         for host in manifest.get("hosts", ["codex"]):
             prefix = ".agents" if host == "codex" else ".claude"
             required.extend(f"{prefix}/skills/{name}/SKILL.md" for name in skill_names)
+        retained_egm = any(re.fullmatch(r"\.(?:agents|claude)/skills/(" + "|".join(EGM_SKILLS) + r")/SKILL\.md", path)
+                           for path in set(manifest["managed_files"]) | set(manifest.get("custom_files", [])))
+        if "claude" in manifest.get("hosts", []) and (any(name in EGM_SKILLS for name in skill_names) or retained_egm):
+            required.extend(egm_native_agents())
         for relative in required:
             check_path(joined(target, relative), kind="file")
             declared = relative in manifest["managed_files"] or relative in manifest.get("custom_files", [])
@@ -545,6 +720,9 @@ def print_result(result: dict, *, as_json: bool) -> None:
         print(json.dumps(result, indent=2, ensure_ascii=False))
         return
     print(f"OAW {result['status']}: {result['target']}")
+    for skill in result.get("available_skills", []):
+        enabled = ",".join(skill["installed_hosts"]) or "not selected"
+        print(f"  {skill['name']:24} {skill['origin']:6} {enabled}")
     for item in result.get("actions", []):
         print(f"  {item['action']:10} {item['path']}")
     for item in result.get("checks", []):
@@ -559,9 +737,34 @@ def print_result(result: dict, *, as_json: bool) -> None:
         print("  Unresolved conflicts remain; review proposals before claiming migration complete.")
 
 
+def skill_inventory(target: Path | None = None) -> dict:
+    egm_payload()
+    manifest = read_manifest(target) if target is not None else None
+    rows = []
+    for name in BUNDLED_SKILLS:
+        installed = []
+        if target is not None:
+            for host, prefix in (("codex", ".agents"), ("claude", ".claude")):
+                path = joined(target, f"{prefix}/skills/{name}/SKILL.md")
+                check_path(path, kind="file")
+                if path.is_file():
+                    installed.append(host)
+        rows.append({"name": name, "origin": "EGM" if name in EGM_SKILLS else "OAW",
+                     "version": "0.1.0" if name in EGM_SKILLS else FRAMEWORK_VERSION,
+                     "source_commit": EGM_COMMIT if name in EGM_SKILLS else None,
+                     "installed_hosts": installed})
+    return {"status": "skills", "target": str(target) if target is not None else "bundled V2 skills",
+            "available_skills": rows, "selected": manifest.get("skills") if manifest else None,
+            "default": default_skills("minimal", False),
+            "scope": "Bundled skills only. External host-native skills remain project/user owned; no global host settings changed."}
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
+    listing = commands.add_parser("skills", help="list bundled V2 skills and a project's installed entrypoints")
+    listing.add_argument("--target")
+    listing.add_argument("--json", action="store_true")
     for command in ("init", "migrate", "doctor"):
         sub = commands.add_parser(command)
         sub.add_argument("--target", default=".", help="project directory (default: current directory)")
@@ -571,6 +774,7 @@ def main(argv: list[str] | None = None) -> int:
             sub.add_argument("--host", choices=(*HOSTS, "both"), default="codex",
                              help="native skill folder(s) to install; existing hosts are retained")
             sub.add_argument("--with-improve", action="store_true", help="also install the opt-in improvement workflow")
+            sub.add_argument("--skills", help="exact bundled native skill selection: comma-separated names, none, or default")
         if command == "migrate":
             sub.add_argument("--apply", action="store_true", help="apply with backups; otherwise only preview")
             sub.add_argument("--keep-custom", action="append", default=[], metavar="PATH",
@@ -579,6 +783,10 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if sys.version_info < (3, 10):
             raise InstallError("Python 3.10+ is required.")
+        if args.command == "skills":
+            result = skill_inventory(target_path(args.target) if args.target else None)
+            print_result(result, as_json=args.json)
+            return 0
         if args.command == "migrate" and args.keep_custom and not args.apply:
             raise InstallError("--keep-custom requires --apply; dry-run never acknowledges custom content.")
         target = target_path(args.target)
@@ -587,15 +795,18 @@ def main(argv: list[str] | None = None) -> int:
             code = 0 if result["status"] == "healthy" else 1
         else:
             migrate = args.command == "migrate"
+            selection = None if args.skills in (None, "default") else ([] if args.skills == "none" else [name.strip() for name in args.skills.split(",")])
             plan = plan_install(target, args.profile, args.with_improve, migrate=migrate,
                                 keep_custom=args.keep_custom if migrate else None,
-                                hosts=list(HOSTS) if args.host == "both" else [args.host])
+                                hosts=list(HOSTS) if args.host == "both" else [args.host],
+                                skills=selection, reset_recipe=args.skills == "default")
             if migrate and not args.apply:
                 result = {"status": "dry-run", "target": str(target), "profile": plan["profile"],
                           "hosts": plan["hosts"],
                           "with_improve": plan["with_improve"], "actions": plan["actions"],
+                          "skills": plan["skills"],
                           "custom_files": plan["custom_files"],
-                          "pending_conflicts": [a["path"] for a in plan["actions"] if a["action"] == "conflict"]}
+                          "pending_conflicts": [a["path"] for a in plan["actions"] if a["action"] in ("conflict", "retire-conflict")]}
                 code = 0
             else:
                 result = apply_plan(plan, migrate=migrate)
