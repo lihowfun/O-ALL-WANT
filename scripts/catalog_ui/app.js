@@ -23,7 +23,11 @@
     'startup-loaded text bytes (claude)': '啟動載入文字 bytes（Claude）', 'hooks': 'hooks',
     'non-stdlib dependencies': '非標準函式庫相依', 'host settings writes': '寫入 host 設定', 'quality': '品質'
   };
-  const BUILD_KINDS = { 'baseline': '基準版', 'restore-point': '還原點', 'absorb': '吸收', 'remove': '移除' };
+  const BUILD_KINDS = { 'baseline': '基準版', 'restore-point': '還原點', 'absorb': '吸收', 'remove': '移除', 'restore': '還原', 'readd': '加回' };
+  const HOSTS = { 'codex': 'Codex', 'claude': 'Claude' };
+  const SEVERITY = { 'high': '高', 'medium': '中', 'low': '低' };
+  const TRIAGE = { 'benign': '已判良性', 'allergen': '已判過敏原', 'confirm-toxic': '你確認有毒' };
+  const OWNER_CONFIRMS = '建議（尚未經你確認）';
   const CHIPS = { 'free-checks-passed': '免費檢查通過', 'rules-updated-free-T0-pending': '規則已更新，待重跑免費檢查' };
   const INTEGRITY = { 'git-object-verified': 'git 物件驗證', 'unverified-against-commit': '未對 commit 驗證' };
   const PLAN_STATUS = [
@@ -49,7 +53,7 @@
     'executable': '程式', 'dependency-manifest': '套件清單', 'instruction-file': '指示檔', 'binary': '二進位', 'docs': '文件',
     'other': '其他', 'method': '方法'
   };
-  const DECISIONS = { 'absorbed': '已吸收', 'excreted': '已排掉', 'removed': '已移除', 'absorbed as backlog item': '已記成待辦' };
+  const DECISIONS = { 'absorbed': '已吸收', 'excreted': '已排掉', 'removed': '已移除', 'absorbed as backlog item': '已記成待辦（未改程式）' };
   const ORIGINS = { 'url': '網址', 'scout': '覓食', 'import': '匯入' };
   const SANDBOX = {
     'isolated-venv': '隔離的 venv', 'project-copy': '專案副本', 'no-api-keys': '不帶 API key', 'no-network': '不連網',
@@ -322,11 +326,18 @@
     }, kind === 'bad' ? 7000 : 4200);
   }
 
+  // The engine sends error_zh for known errors; the English original stays in 動作紀錄.
+  function errorText(envelope) {
+    if (!envelope) return '';
+    if (envelope.error_zh) return txt(envelope.error_zh, 300);
+    return `${txt(envelope.error, 240)}（英文原文；細節見動作紀錄）`;
+  }
+
   function report(envelope, okMessage) {
     if (!envelope) return;
     if (envelope.ok) toast(okMessage || '完成', 'good');
     else if (envelope.code === 4) toast('等你輸入終端上的確認碼。', 'info');
-    else toast('沒有完成：' + txt(envelope.error, 300), 'bad');
+    else toast('沒有完成：' + errorText(envelope), 'bad');
   }
 
   function logAction(label, envelope) {
@@ -347,14 +358,19 @@
     const lines = options.lines || [];
     const list = el('ul', { class: 'dlg-lines' }, lines.slice(0, 120).map((line) => el('li', { text: txt(line, 300) })));
     if (lines.length > 120) list.append(el('li', { class: 'muted', text: `…還有 ${lines.length - 120} 行` }));
-    const reason = options.reason ? el('input', { type: 'text', class: 'reason', maxlength: '300', id: 'dialog-reason', placeholder: '原因（可空白，會記進決定紀錄）' }) : null;
+    const reason = options.reason ? el('input', { type: 'text', class: 'reason', maxlength: '300', id: 'dialog-reason',
+      placeholder: options.reasonRequired ? '原因（必填，會記進決定紀錄）' : '原因（可空白，會記進決定紀錄）' }) : null;
     $('dialog-title').textContent = options.title;
     $('dialog-body').replaceChildren(list, reason ? el('label', { for: 'dialog-reason', class: 'small', text: '原因' }) : '', reason || '');
     const ok = $('dialog-ok');
     ok.textContent = options.ok || '確認';
-    ok.disabled = !!options.disabled;
+    ok.disabled = !!options.disabled || (!!options.reasonRequired && !!reason);
+    if (reason && options.reasonRequired && !options.disabled) {
+      reason.addEventListener('input', () => { ok.disabled = !reason.value.trim(); });
+    }
     ok.classList.toggle('danger', !!options.danger);
     if (typeof dialog.showModal !== 'function') {
+      if (options.reasonRequired || options.disabled) return Promise.resolve(null);
       return Promise.resolve(window.confirm(`${options.title}\n\n${lines.slice(0, 20).join('\n')}`) ? { reason: '' } : null);
     }
     return new Promise((resolve) => {
@@ -389,7 +405,8 @@
     const funnel = (S.view && S.view.funnel) || {};
     $('top-stats').replaceChildren(
       chip(`食物 ${funnel.submitted || 0}`), chip(`已試吃 ${funnel.tasted || 0}`),
-      chip(`實測 ${funnel.measured || 0}`), chip(`已吸收成分 ${funnel.absorbed_parts || 0}`, 'good'));
+      chip(`實測 ${funnel.measured || 0}`), chip(`已吸收成分 ${funnel.absorbed_parts || 0}（在目前版本）`),
+      funnel.backlog_items ? chip(`待辦 ${funnel.backlog_items}（未改程式）`) : '');
   }
 
   // Same rule as oaw_status.installed_skills(): a fresh effect first, else the current build's skills.
@@ -423,9 +440,16 @@
     const missing = rows.filter((row) => row.tag === '比預設少');
     const egmPresent = present.filter((row) => egm.has(row.name));
     const list = el('ul', { class: 'skills' });
+    const effect = (view.my_oaw || {}).effect || {};
+    const onlyOn = (!effect.stale && effect.skills && effect.skills.only_on) || {};
+    const hostChip = (name) => {
+      const hosts = onlyOn[name];
+      if (!Array.isArray(hosts)) return '';
+      return chip(hosts.length ? `只在 ${hosts.map((h) => HOSTS[h] || txt(h, 20)).join('、')}` : '沒有裝到任何 host', 'warn');
+    };
     for (const row of present.filter((r) => !egm.has(r.name))) {
       list.append(el('li', { class: 'skill' },
-        el('span', { class: 'skill-name mono', text: row.name }), row.tag ? chip(row.tag, 'good') : '',
+        el('span', { class: 'skill-name mono', text: row.name }), row.tag ? chip(row.tag) : '', hostChip(row.name),
         el('button', { type: 'button', class: 'btn tiny act', text: '移除', title: `移除 ${row.name}（先預覽）`, onclick: () => removeFlow(row.name) })));
     }
     if (egmPresent.length) {
@@ -435,7 +459,19 @@
         el('button', { type: 'button', class: 'btn tiny act', text: '移除 EGM', title: '移除整組 EGM skill（先預覽）', onclick: () => removeFlow('egm') })));
     }
     const out = block(`skill（${present.length}）`, null, list);
-    if (missing.length) out.append(el('p', { class: 'muted small', text: `比預設少：${missing.map((row) => row.name).join('、')}（要加回來，用版本時間線的「還原到這版」）` }));
+    if (missing.length) {
+      const egmMissing = missing.filter((row) => egm.has(row.name));
+      const back = el('ul', { class: 'skills' });
+      if (egmMissing.length) {
+        back.append(el('li', { class: 'skill' }, el('span', { class: 'skill-name', text: `EGM（${egmMissing.length} 個 skill 比預設少）` }),
+          el('button', { type: 'button', class: 'btn tiny act', text: '加回 EGM', title: '經 oaw.py migrate 加回整組 EGM（先預覽）', onclick: () => readdFlow('egm') })));
+      }
+      for (const row of missing.filter((r) => !egm.has(r.name))) {
+        back.append(el('li', { class: 'skill' }, el('span', { class: 'skill-name mono', text: row.name }), chip('比預設少'),
+          el('button', { type: 'button', class: 'btn tiny act', text: '加回', title: `經 oaw.py migrate 加回 ${row.name}（先預覽）`, onclick: () => readdFlow(row.name) })));
+      }
+      out.append(el('p', { class: 'muted small', text: '比預設少（加回會保留之後的其他變更；加回的 skill 要重新測試）：' }), back);
+    }
     return out;
   }
 
@@ -470,6 +506,26 @@
       el('p', { class: 'muted small', text: '「加強」只會在有實測證據時出現，沒有就寫「未量測」。bytes ÷ 4 只是 token 估計。' }));
   }
 
+  // One effect line as text plus its evidence-level chip (compact form of the effect table).
+  function effectItem(line) {
+    if (line.metric === 'quality') return el('li', {}, el('span', { text: `品質：${qualityLabel(line)}` }), levelChip(line.level));
+    const delta = Number.isInteger(line.delta) ? `（${line.delta > 0 ? '+' : ''}${line.delta}）` : '';
+    return el('li', {}, el('span', { text: `${METRICS[line.metric] || txt(line.metric, 60)}：${fmt(line.current)} 對 ${fmt(line.default)}${delta}` }), levelChip(line.level));
+  }
+
+  // D12: every build shows its skills, its absorbed components and its effect versus the default.
+  function buildDetails(build) {
+    const skills = (build.skills || []).map((s) => txt(s, 64));
+    const parts = (build.components || []).map((c) => txt(c, 120));
+    const effect = build.effect && Array.isArray(build.effect.lines) ? build.effect : null;
+    return el('details', { class: 'tl-details' },
+      el('summary', { text: `內容：${skills.length} 個 skill · ${parts.length} 個吸收的成分 · 和預設比` }),
+      el('p', { class: 'small', text: 'skill：' + (skills.join('、') || '（沒有）') }),
+      el('p', { class: 'small', text: '吸收的成分：' + (parts.join('、') || '（沒有）') }),
+      effect ? el('ul', { class: 'tl-effect' }, effect.lines.filter(Boolean).map(effectItem))
+        : el('p', { class: 'muted small', text: '這一版沒有評估紀錄。' }));
+  }
+
   function timelineBlock(timeline) {
     if (!timeline.length) return block('版本時間線', null, el('p', { class: 'muted', text: '還沒有版本：第一次吸收或移除時，會先存一個基準版。' }));
     const list = el('ol', { class: 'timeline' });
@@ -478,9 +534,10 @@
         el('span', { class: 'tl-dot', 'aria-hidden': 'true' }),
         el('div', { class: 'tl-main' },
           el('div', { class: 'tl-top' }, el('span', { class: 'mono tl-name', text: txt(build.name, 60) }),
-            chip(BUILD_KINDS[build.kind] || txt(build.kind, 20)), build.current ? chip('目前', 'good') : ''),
-          el('div', { class: 'tl-label', text: txt(build.label, 160) }),
-          el('div', { class: 'muted small', text: `${when(build.created_at)} · ${(build.skills || []).length} 個 skill` + (build.doctor ? ` · doctor ${txt(build.doctor, 20)}` : '') })),
+            chip(BUILD_KINDS[build.kind] || txt(build.kind, 20)), build.current ? chip('目前') : ''),
+          el('div', { class: 'tl-label', text: txt(build.label_zh || build.label, 160) }),
+          el('div', { class: 'muted small', text: `${when(build.created_at)} · ${(build.skills || []).length} 個 skill` + (build.doctor ? ` · doctor ${txt(build.doctor, 20)}` : '') }),
+          buildDetails(build)),
         build.current ? '' : el('button', { type: 'button', class: 'btn tiny act', text: '還原到這版', onclick: () => restoreFlow(build) })));
     }
     return block('版本時間線', null, list);
@@ -521,7 +578,7 @@
     out.append(
       el('div', { class: 'field' }, el('label', { for: 'policy-food', text: '每樣食物的付費上限（tokens）' }), food),
       el('div', { class: 'field' }, el('label', { for: 'policy-week', text: '每週的付費上限（tokens）' }), week),
-      el('p', { class: 'small muted', text: txt((S.meta && S.meta.token_label) || '', 160) }),
+      el('p', { class: 'small muted', text: txt((S.meta && (S.meta.token_label_zh || S.meta.token_label)) || '', 160) }),
       el('fieldset', { class: 'checks' }, el('legend', { text: '試跑的隔離條件' }), boxes),
       el('div', { class: 'row' },
         el('button', { type: 'button', class: 'btn primary act', text: '送出（終端會顯示確認碼）', onclick: submitPolicy }),
@@ -564,7 +621,7 @@
       S.policyDraft = null;
       renderMy();
       toast('常設預算已設定：在預算內由系統決定怎麼測（v0 仍不執行付費實測）。', 'good');
-    } else if (envelope) toast('確認碼不對或過期（每個碼只能試一次）：請重新送出取得新的碼。', 'bad');
+    } else if (envelope) toast(envelope.error_zh ? txt(envelope.error_zh, 200) : '確認碼不對或過期（每個碼只能試一次）：請重新送出取得新的碼。', 'bad');
   }
 
   function renderMy() {
@@ -584,7 +641,7 @@
     kids.push(el('div', { class: 'build-card' },
       el('div', { class: 'build-kicker', text: my.current_build ? '目前版本' : '目前版本（預設）' }),
       el('div', { class: 'build-name mono', text: txt(my.current_build || view.release, 60) }),
-      el('div', { class: 'build-label', text: current ? txt(current.label, 160) : '還沒有建立版本：第一次吸收或移除時，會先存一個基準版。' }),
+      el('div', { class: 'build-label', text: current ? txt(current.label_zh || current.label, 160) : '還沒有建立版本：第一次吸收或移除時，會先存一個基準版。' }),
       my.current_build && my.current_matches_build === false ? el('p', { class: 'notice warn', text: '⚠ 目前的安裝和記錄的版本不同（在 catalog 之外被改過）。' }) : ''));
     kids.push(skillsBlock(view), effectBlock(my.effect, view.release || '2.0.0'), timelineBlock(timeline), policyBlock(view.policy || {}));
     body.replaceChildren(...kids);
@@ -599,24 +656,27 @@
       return;
     }
     if (!envelope.ok) {
-      box.replaceChildren(el('p', { class: 'notice bad', text: '沒有完成：' + txt(envelope.error, 300) }));
+      box.replaceChildren(el('p', { class: 'notice bad', text: '沒有完成：' + errorText(envelope) }));
       return;
     }
     const r = envelope.result || {};
     const items = [];
-    if ((r.added || []).length) items.push(el('li', { class: 'ok', text: '新加入：' + r.added.map((id) => txt(id, 64)).join('、') }));
+    if ((r.added || []).length) items.push(el('li', { text: '新加入：' + r.added.map((id) => txt(id, 64)).join('、') }));
     for (const merge of r.merges || []) {
       const inputs = (merge.inputs || []).map((i) => txt(i, 300));
+      const ignored = (merge.ignored || []).map((x) => `${x.field === 'ref' ? 'ref' : '子目錄'} ${txt(x.value, 80)}`);
       items.push(el('li', { class: 'merge', title: inputs.join('\n') },
-        `合併：${inputs.length} 個寫法是同一個 repo → `, el('span', { class: 'mono', text: mid(merge.key, 90) }), '（只試吃一次）'));
+        `合併：${inputs.length} 個寫法是同一個 repo → `, el('span', { class: 'mono', text: mid(merge.key, 90) }),
+        '（只試吃一次）' + (ignored.length ? `；用第一個寫法，已忽略 ${ignored.join('、')}` : '')));
     }
     for (const entry of r.existing || []) items.push(el('li', { text: `已經在食物卡裡：${txt(entry.id, 64)}` }));
-    for (const error of r.errors || []) items.push(el('li', { class: 'bad', text: `不能用：${txt(error.input, 120)}（${txt(error.error, 160)}）` }));
+    for (const error of r.errors || []) items.push(el('li', { class: 'bad', text: `不能用：${txt(error.input, 120)}（${txt(error.error_zh || error.error, 160)}）` }));
     for (const taste of r.tasted || []) {
       const counts = taste.components || {};
-      items.push(el('li', { class: 'ok', text: `✔ 試吃完成：${txt(taste.food, 64)} · ${headlineLabel({ headline: taste.verdict })} · 🟢${counts.absorb || 0} 🔴${counts.excrete || 0} 🟡${counts.hold || 0}` }));
+      const family = FAMILY[taste.verdict] || 'unknown';
+      items.push(el('li', { class: `fam-line fam-${family}`, text: `試吃完成：${txt(taste.food, 64)} · ${headlineLabel({ headline: taste.verdict })} · 🟢${counts.absorb || 0} 🔴${counts.excrete || 0} 🟡${counts.hold || 0}` }));
     }
-    for (const fail of r.failed || []) items.push(el('li', { class: 'bad', text: `✖ 試吃失敗：${txt(fail.food, 64)}（${txt(fail.error, 200)}）` }));
+    for (const fail of r.failed || []) items.push(el('li', { class: 'bad', text: `✖ 試吃失敗：${txt(fail.food, 64)}（${txt(fail.error_zh || fail.error, 200)}）` }));
     if ((r.already_tasted || []).length) items.push(el('li', { text: '已經試吃過：' + r.already_tasted.map((id) => txt(id, 64)).join('、') }));
     box.replaceChildren(el('ul', { class: 'feed-lines' }, items),
       el('button', { type: 'button', class: 'btn tiny', text: '收起', onclick: () => { S.feedResult = null; renderFeedResult(); } }));
@@ -750,7 +810,7 @@
       const step = steps[index] || {};
       const done = step.state === 'done' || step.state === 'measured';
       const locked = index === 2 && step.state === 'not-run';
-      let cls = 'step ' + (done ? 'done' : locked ? 'locked' : 'todo');
+      let cls = 'step ' + (done ? 'done' : locked ? 'locked' : 'todo') + (index === 3 ? ' result' : '');
       if (!done && !locked && !marked) {
         cls += ' current';
         marked = true;
@@ -772,6 +832,7 @@
   function partRow(food, part, key) {
     const selected = selection(food.id);
     const selectable = part.disposition === 'absorb' && !part.decision && !part.in_current_build;
+    const historical = part.level === 'historical-prior';
     const id = uid('part');
     const status = partState(part);
     const mark = selectable
@@ -780,13 +841,23 @@
         updateAbsorbButton(food.id);
       } })
       : el('span', { class: 'part-mark', 'aria-hidden': 'true', text: key === 'absorb' ? '•' : key === 'excrete' ? '×' : '…' });
+    const tags = el('span', { class: 'part-tags' }, chip(KINDS[part.kind] || txt(part.kind, 20)), part.exec_class ? chip(txt(part.exec_class, 10)) : '',
+      part.owner_confirms ? chip(OWNER_CONFIRMS, 'warn') : '', status ? chip(status) : '',
+      part.history ? chip(txt(part.history, 40)) : '', levelChip(part.level));
+    if (historical) {
+      // Report text is data written by someone else: fenced and collapsed, never styled like an OAW-derived reason.
+      const text = [part.name ? `名稱：${part.name}` : '', part.reason ? `理由：${part.reason}` : '', part.oaw_target ? `OAW 目標：${part.oaw_target}` : '',
+        part.missing_test ? `缺的測試：${part.missing_test}` : ''].filter(Boolean).join('\n');
+      return el('div', { class: 'part' }, mark,
+        el('label', { for: selectable ? id : undefined, class: 'part-body' },
+          el('span', { class: 'part-name' }, el('span', { class: 'part-id mono', text: txt(part.id, 80) })), tags,
+          text ? untrusted('報告原文', text) : ''));
+    }
     return el('div', { class: 'part' }, mark,
       el('label', { for: selectable ? id : undefined, class: 'part-body' },
-        el('span', { class: 'part-name' }, txt(part.name || part.id, 80), el('span', { class: 'part-id mono', text: txt(part.id, 80) })),
-        el('span', { class: 'part-tags' }, chip(KINDS[part.kind] || txt(part.kind, 20)), part.exec_class ? chip(txt(part.exec_class, 10)) : '',
-          part.owner_confirms ? chip('建議；由你確認', 'warn') : '', status ? chip(status, part.in_current_build ? 'good' : '') : '', levelChip(part.level)),
-        part.reason ? el('span', { class: 'part-reason', text: txt(part.reason, 300) }) : '',
-        part.missing_test ? el('span', { class: 'part-missing', text: '缺：' + txt(part.missing_test, 200) } ) : ''));
+        el('span', { class: 'part-name' }, txt(part.name || part.id, 80), el('span', { class: 'part-id mono', text: txt(part.id, 80) })), tags,
+        part.reason ? el('span', { class: 'part-reason', text: txt(part.reason_zh || part.reason, 300) }) : '',
+        part.missing_test ? el('span', { class: 'part-missing', text: '缺：' + txt(part.missing_zh || part.missing_test, 200) } ) : ''));
   }
 
   // `compact` (imported reports) opens only short groups, so a 30-part ledger stays scannable.
@@ -796,8 +867,8 @@
       const items = parts.filter((part) => part && part.disposition === key);
       const [icon, label] = DISPOSITIONS[key];
       const open = compact ? items.length <= 3 : key !== 'hold' || items.length <= 3;
-      const group = el('details', { class: `group g-${key}`, open: open },
-        el('summary', {}, el('span', { text: `${icon} ${label}` }), el('span', { class: 'count', text: String(items.length) })));
+      const group = el('details', { class: `group g-${key}${compact ? ' hist' : ''}`, open: open },
+        el('summary', {}, el('span', { text: compact ? `${label}（歷史提案）` : `${icon} ${label}` }), el('span', { class: 'count', text: String(items.length) })));
       if (!items.length) group.append(el('p', { class: 'muted small', text: key === 'absorb' ? emptyText : '沒有。' }));
       for (const part of items) group.append(partRow(food, part, key));
       wrap.append(group);
@@ -848,12 +919,10 @@
         panel.append(kv('查證', `${fmt(r.verify.checks)} 項${statuses ? '（' + statuses + '）' : ''} · 漏掉 ${fmt(r.verify.missed_issues)}`));
       }
       if (r.integration) {
-        panel.append(el('details', { class: 'small' }, el('summary', { text: '整合紀錄摘要' }),
-          el('ul', {}, Object.entries(r.integration).map(([k, v]) => el('li', { text: `${txt(k, 40)}：${txt(v, 160)}` })))));
+        panel.append(untrusted('整合紀錄摘要', Object.entries(r.integration).map(([k, v]) => `${txt(k, 40)}：${txt(v, 160)}`).join('\n')));
       }
       if (r.proposals && (r.proposals.headings || []).length) {
-        panel.append(el('details', { class: 'small' }, el('summary', { text: `吸收提案的章節（${r.proposals.headings.length}）` }),
-          el('ul', {}, r.proposals.headings.map((h) => el('li', { text: txt(h, 120) })))));
+        panel.append(untrusted(`吸收提案的章節（${r.proposals.headings.length}）`, r.proposals.headings.map((h) => txt(h, 120)).join('\n')));
       }
       if ((r.components || []).length) {
         panel.append(el('h5', { text: `大象提的成分分流（${r.components.length}）` }),
@@ -897,14 +966,19 @@
     for (const step of plan.steps || []) {
       list.append(el('li', { class: 'pstep' + (step.state === 'done' ? ' done' : '') },
         el('div', { class: 'pstep-head' }, el('span', { class: 'mono', text: txt(step.id, 12) }), el('strong', { text: PLAN_STEPS[step.id] || txt(step.name, 100) }),
-          chip(PLAN_STATES[step.state] || txt(step.state, 60)), chip(step.tokens ? tokensText(step.tokens) : step.cost === 'free' ? '免費' : txt(step.cost, 30))),
-        el('div', { class: 'small muted', text: txt(step.name, 160) }),
-        el('div', { class: 'small', text: '能證明：' + (step.can_prove || []).map((x) => txt(x, 120)).join('；') }),
-        el('div', { class: 'small', text: '不能證明：' + (step.cannot_prove || []).map((x) => txt(x, 120)).join('；') })));
+          chip(PLAN_STATES[step.state] || txt(step.state, 60)), chip(step.tokens ? tokensText(step.tokens) : step.cost === 'free' ? '免費' : txt(step.cost, 30)),
+          step.conditional ? chip('條件式') : ''),
+        el('div', { class: 'small muted', text: txt(step.name_zh || step.name, 160) }),
+        el('div', { class: 'small', text: '能證明：' + (step.can_prove_zh || step.can_prove || []).map((x) => txt(x, 120)).join('；') }),
+        el('div', { class: 'small', text: '不能證明：' + (step.cannot_prove_zh || step.cannot_prove || []).map((x) => txt(x, 120)).join('；') })));
     }
     const policySet = !!(S.view && S.view.policy && S.view.policy.set);
-    panel.append(list, kv('付費預估合計', tokensText(plan.estimate)),
-      el('p', { class: 'muted small', text: txt((plan.estimate || {}).label, 160) }),
+    const estimate = plan.estimate || {};
+    const fixed = Number.isFinite(estimate.unconditional_max) ? { min: estimate.min, max: estimate.unconditional_max } : estimate;
+    const extra = Number.isFinite(estimate.conditional_max) && estimate.conditional_max > 0
+      ? `；另加最多 ${(estimate.conditional_max / 1e6).toFixed(1)}M tokens（條件式，只在冒煙測試沒有決定性負面時才跑）` : '';
+    panel.append(list, kv('付費預估合計', tokensText(fixed) + extra),
+      el('p', { class: 'muted small', text: txt(estimate.label_zh || estimate.label, 160) }),
       el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn', disabled: true, text: '開始實測' }),
         el('span', { class: 'hint', text: '原型 v0 不執行付費實測：只顯示系統規劃的測試和預估花費。' + (policySet ? '' : '也還沒設定常設預算（在「我的 OAW」）。') })));
     return panel;
@@ -926,7 +1000,7 @@
     const tasted = steps[1] && steps[1].state === 'done';
     const open = openState(food.id);
     const parts = Array.isArray(food.components) ? food.components : [];
-    const installed = parts.some((part) => part.in_current_build && part.decision === 'absorbed');
+    const installed = parts.some((part) => part.in_current_build);
     let motion = '';
     if (prev === null) motion = ' arrived';
     else if (prev && prev.key !== sig.key) motion = ' advanced';
@@ -935,10 +1009,11 @@
       food.license ? txt(food.license, 40) : '', food.exec_class ? '執行等級 ' + txt(food.exec_class, 10) : ''].filter(Boolean).join(' · ');
     const node = el('article', { class: `card fam-${family}${motion}`, 'data-food': food.id },
       el('header', { class: 'card-head' },
-        el('div', { class: `badge fam-${family}`, title: (verdict.reasons || []).map((r) => txt(r, 160)).join('\n') },
+        el('div', { class: `badge fam-${family}` },
           el('span', { class: 'badge-sym', 'aria-hidden': 'true', text: txt(verdict.symbol, 3) || '?' }),
           el('span', { class: 'badge-text', text: headlineLabel(verdict) })),
         el('div', { class: 'card-title' }, el('h3', { text: txt(food.display, 80) }), el('p', { class: 'meta mono', text: meta }))),
+      (verdict.reasons || []).length ? el('p', { class: 'verdict-reasons', text: '判定依據：' + verdict.reasons.map((r) => txt(r, 160)).join('；') }) : '',
       track(food, prev));
     const chips = [levelChip(verdict.level)];
     for (const c of verdict.chips || []) chips.push(chip(chipLabel(c)));
@@ -947,9 +1022,21 @@
     for (const allergen of food.allergens || []) chips.push(chip('過敏原 ' + txt(allergen, 40), 'amber'));
     node.append(el('p', { class: 'safety', title: txt(food.safety_text, 200) }, el('span', { class: 'k', text: '安全' }), safetyLabel(food)),
       el('div', { class: 'chips' }, chips));
-    if (verdict.headline === 'risky') node.append(el('p', { class: 'notice warn', text: '有高嚴重度旗標要先分流：在終端執行 catalog.py menu →「分流旗標」（需要終端確認碼）。靜態規則只會舉旗，不會判有毒。' }));
-    else if (verdict.headline === 'toxic') node.append(el('p', { class: 'notice bad', text: '經人工確認有毒：不會進專案。' }));
-    else if (verdict.headline === 'inedible') node.append(el('p', { class: 'notice', text: 'OAW 沒辦法照原樣消化它（這不是說它有害）。' }));
+    if (food.last_error) node.append(el('p', { class: 'notice bad', text: `上次試吃失敗（${when(food.last_error.at)}）：` + txt(food.last_error.error_zh || food.last_error.error, 300) }));
+    if (verdict.headline === 'toxic') node.append(el('p', { class: 'notice bad', text: '經人工確認有毒：不會進專案。' }));
+    else if ((food.flags || {}).open) {
+      node.append(el('p', { class: 'notice warn', text: `${food.flags.open} 個旗標待分流（高 ${food.flags.open_high || 0}）：在終端執行 catalog.py menu → 12「分流旗標」（良性、過敏原要終端確認碼）。靜態規則只會舉旗，不會判有毒。` }));
+    }
+    if (verdict.headline === 'inedible') node.append(el('p', { class: 'notice', text: 'OAW 沒辦法照原樣消化它（這不是說它有害）。' }));
+    const flagList = (food.flag_list || []).filter(Boolean);
+    if (flagList.length) {
+      node.append(el('details', { class: 'flags', open: flagList.some((f) => f.severity === 'high' && !f.triage) },
+        el('summary', { text: `旗標（${flagList.length}）` }),
+        el('ul', { class: 'flag-list' }, flagList.map((f) => el('li', {},
+          chip(SEVERITY[f.severity] || txt(f.severity, 8), 'sev-' + (SEVERITY[f.severity] ? f.severity : 'low')),
+          el('span', { class: 'mono', text: `${txt(f.rule, 16)} ${mid(f.path, 60)}${f.line ? ':' + f.line : ''}` }),
+          el('span', { text: txt(f.meaning, 120) }), f.triage ? chip(TRIAGE[f.triage] || txt(f.triage, 20)) : '')))));
+    }
     if (parts.length) node.append(groups(food, parts, '沒有可以直接吸收的成分。'));
     else node.append(el('p', { class: 'muted small', text: tasted ? '沒有拆出成分。' : '試吃後會把食物拆成成分，分成吸收／排掉／暫留。' }));
     if (open.elephant) node.append(elephantPanel(food));
@@ -967,7 +1054,8 @@
       el('button', { type: 'button', class: 'btn primary act absorb-btn', 'data-food': food.id, disabled: !selected.size,
         text: selected.size ? `吸收選中的成分（${selected.size}）` : '吸收選中的成分', onclick: () => absorbFlow(food) }),
       el('button', { type: 'button', class: 'btn danger act', disabled: !installed, text: '排掉／移除',
-        title: installed ? '移除這樣食物已安裝的 skill（先預覽）' : '還沒有吸收任何會安裝的成分', onclick: () => removeFlow(food.id, food) })));
+        title: installed ? '移除這樣食物已安裝的 skill（先預覽）' : '還沒有吸收任何會安裝的成分', onclick: () => removeFlow(food.id, food) }),
+      installed ? '' : el('button', { type: 'button', class: 'btn act', text: '忘掉這樣食物', title: '從食物卡拿掉（先預覽）；決定紀錄會保留', onclick: () => forgetFlow(food) })));
     return node;
   }
 
@@ -1007,23 +1095,30 @@
       return;
     }
     const r = preview.result || {};
-    const lines = ['先存一個還原點，再產生新版本，並立刻評估和預設 2.0.0 比的差異（靜態量測；品質未量測）。'];
+    const lines = r.creates_build
+      ? ['先存一個還原點，再產生新版本，並立刻評估和預設 2.0.0 比的差異（靜態量測；品質未量測）。']
+      : ['只把歷史提案記成待辦（寫進決定紀錄）：不改任何安裝檔，也不產生新版本。'];
     for (const s of r.selections || []) lines.push(`${s.id}：${s.outcome === 'installed' ? '安裝 skill ' + s.name : '記成待辦項目（不改程式）'}`);
-    if ((r.writes || []).length) lines.push('會新增的檔案：', ...r.writes);
-    else lines.push('不會改任何安裝檔。');
-    const answer = await ask({ title: `吸收 ${txt(food.display, 60)} 的 ${ids.length} 個成分？`, lines: lines, ok: '確認吸收', reason: true });
+    if ((r.writes || []).length) lines.push('會新增的檔案：', ...r.writes, '另外會寫入吸收收據：.oaw/catalog/absorbed/' + txt(food.id, 64) + '.json');
+    const answer = await ask({ title: r.creates_build ? `吸收 ${txt(food.display, 60)} 的 ${ids.length} 個成分？` : `把 ${ids.length} 個歷史提案記成待辦？`,
+      lines: lines, ok: r.creates_build ? '確認吸收' : '記成待辦', reason: true });
     if (!answer) return;
-    const done = await run('absorb', { food: food.id, components: ids, apply: true, reason: answer.reason || '由遊戲頁吸收' }, '吸收中');
+    const done = await run('absorb', { food: food.id, components: ids, apply: true, reason: answer.reason || '由遊戲頁吸收' }, r.creates_build ? '吸收中' : '記成待辦');
     if (done && done.ok) {
       S.selected.delete(food.id);
       renderCards();
-      toast(`已吸收：新版本 ${txt(done.result.build, 60)}（品質：未量測）`, 'good');
+      const res = done.result || {};
+      if (res.build) {
+        const doctor = (res.doctor || {}).status;
+        toast(`已吸收：新版本 ${txt(res.build, 60)} · doctor：${txt(doctor, 20)}（品質：未量測）`, doctor === 'healthy' ? 'good' : 'warn');
+      } else toast(`已記成待辦 ${(res.backlog || []).length} 項（未改程式，沒有新版本）`, 'info');
     } else report(done);
   }
 
   async function removeFlow(name, food) {
     const label = food ? `${txt(food.display, 60)} 已安裝的部分` : name === 'egm' ? '整組 EGM' : name;
-    const preview = await run('remove', { name: name, apply: false }, `預覽移除 ${label}`);
+    const target = { name: name, food: !!food };
+    const preview = await run('remove', Object.assign({ apply: false }, target), `預覽移除 ${label}`);
     if (!preview) return;
     if (!preview.ok) {
       report(preview);
@@ -1035,11 +1130,45 @@
     for (const path of r.deletes || []) lines.push(`刪除  ${txt(path, 200)}`);
     const conflicts = r.conflicts || [];
     if (conflicts.length) lines.push(`⚠ 你改過的檔案擋住了移除：${conflicts.join('、')}（先用 oaw.py migrate 處理）`);
-    const answer = await ask({ title: `移除 ${label}？`, lines: lines, ok: '確認移除', reason: true, danger: true, disabled: conflicts.length > 0 });
-    if (!answer) return;
-    const done = await run('remove', { name: name, apply: true, reason: answer.reason || '由遊戲頁移除' }, `移除 ${label}`);
-    if (done && done.ok) toast(`已移除 ${label}：新版本 ${txt(done.result.build, 60)}`, 'good');
+    const answer = await ask({ title: `移除 ${label}？`, lines: lines, ok: '確認移除', reason: true, reasonRequired: true, danger: true, disabled: conflicts.length > 0 });
+    if (!answer || !answer.reason) return;
+    const done = await run('remove', Object.assign({ apply: true, reason: answer.reason }, target), `移除 ${label}`);
+    if (done && done.ok) toast(`已移除 ${label}：新版本 ${txt(done.result.build, 60)} · doctor：${txt((done.result.doctor || {}).status, 20)}`, 'good');
     else report(done);
+  }
+
+  async function readdFlow(name) {
+    const label = name === 'egm' ? '整組 EGM' : name;
+    const preview = await run('readd', { name: name, apply: false }, `預覽加回 ${label}`);
+    if (!preview) return;
+    if (!preview.ok) {
+      report(preview);
+      return;
+    }
+    const r = preview.result || {};
+    const lines = ['經 oaw.py migrate 加回：先備份並存一個還原點；之後的其他變更都保留。加回的 skill 算「未測」，要重新測試（D6）。'];
+    for (const a of r.actions || []) lines.push(`${PLAN_ACTIONS[a.action] || txt(a.action, 20)}  ${txt(a.path, 200)}`);
+    const conflicts = r.conflicts || [];
+    if (conflicts.length) lines.push(`⚠ 你改過的檔案擋住了加回：${conflicts.join('、')}（先用 oaw.py migrate 處理）`);
+    const answer = await ask({ title: `加回 ${label}？`, lines: lines, ok: '確認加回', reason: true, reasonRequired: true, disabled: conflicts.length > 0 });
+    if (!answer || !answer.reason) return;
+    const done = await run('readd', { name: name, apply: true, reason: answer.reason }, `加回 ${label}`);
+    if (done && done.ok) toast(`已加回 ${label}：新版本 ${txt(done.result.build, 60)} · doctor：${txt((done.result.doctor || {}).status, 20)}（要重新測試）`, 'good');
+    else report(done);
+  }
+
+  async function forgetFlow(food) {
+    const preview = await run('forget', { food: food.id, apply: false }, `預覽忘掉 ${food.id}`);
+    if (!preview) return;
+    if (!preview.ok) {
+      report(preview);
+      return;
+    }
+    const lines = ['從食物卡拿掉這樣食物：刪掉它的登記和證據摘要；決定紀錄保留（重新投食時從頭開始），LAB_HOME 的封存保留。'];
+    for (const path of preview.result.evidence || []) lines.push('刪除  ' + txt(path, 200));
+    const answer = await ask({ title: `忘掉 ${txt(food.display, 60)}？`, lines: lines, ok: '確認忘掉', reason: true, danger: true });
+    if (!answer) return;
+    report(await run('forget', { food: food.id, apply: true, reason: answer.reason || '由遊戲頁忘掉' }, `忘掉 ${food.id}`), `已忘掉 ${txt(food.id, 64)}`);
   }
 
   async function restoreFlow(build) {
@@ -1051,10 +1180,15 @@
     }
     const writes = preview.result.writes || [];
     const deletes = preview.result.deletes || [];
+    const kept = preview.result.kept || [];
+    const blocked = preview.result.conflicts || [];
     const lines = ['只動 OAW 安裝層，不動你的專案資料；先把目前的安裝存成還原點，還原後跑 doctor。',
       writes.length || deletes.length ? `寫入 ${writes.length} 個檔、刪除 ${deletes.length} 個檔：` : '檔案已經和這一版一樣，只會改「目前版本」的紀錄。']
-      .concat(writes.map((w) => '寫入  ' + txt(w.path, 200)), deletes.map((d) => '刪除  ' + txt(d.path, 200)));
-    const answer = await ask({ title: `還原到 ${txt(build.name, 60)}？`, lines: lines, ok: '確認還原' });
+      .concat(writes.map((w) => '寫入  ' + txt(w.path, 200)), deletes.map((d) => '刪除  ' + txt(d.path, 200)),
+        kept.map((p) => '保留  ' + txt(p, 200) + '（你的自訂檔，不會被蓋掉）'),
+        blocked.length ? ['⚠ 這些檔案不屬於目前的安裝層，還原會蓋掉它們，所以不能還原：先移開或改名：'] : [],
+        blocked.map((p) => '擋住  ' + txt(p, 200)));
+    const answer = await ask({ title: `還原到 ${txt(build.name, 60)}？`, lines: lines, ok: '確認還原', disabled: blocked.length > 0 });
     if (!answer) return;
     const done = await run('restore', { build: build.name, apply: true }, `還原到 ${build.name}`);
     if (done && done.ok) {

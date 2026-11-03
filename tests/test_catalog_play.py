@@ -175,6 +175,15 @@ class ServerGuardTests(PlayCase):
         self.assertEqual(status, 200)
         self.assertEqual(json.loads(raw)["paid_runs_enabled"], False)
 
+    def test_actions_refuse_a_missing_or_wrong_token(self):
+        self.start()
+        for token in (False, "wrong-" + "x" * 40, self.token[:-1]):
+            for name in ("view", "feed", "policy-set", "remove"):
+                status, headers, _raw = self.request("POST", "/api/action/" + name, {"urls": ["a/b"], "name": "egm", "apply": True}, token=token)
+                self.assertEqual(status, 403, (name, token))
+                self.assertNotIn("Access-Control-Allow-Origin", headers)
+        self.assertEqual(self.server.app.jobs, {})
+
     def test_actions_are_json_posts_only_and_cross_site_requests_are_refused(self):
         self.start()
         self.assertEqual(self.request("GET", "/api/action/view")[0], 405)
@@ -371,6 +380,26 @@ class RoundTripTests(PlayCase):
         self.assertEqual(done["status"], "set")
         policy = self.api("/api/view")["view"]["policy"]
         self.assertEqual((policy["set"], policy["per_food_token_cap"], policy["paid_runs_enabled"]), (True, 20_000_000, False))
+        # Codes live only in memory: nothing under LAB_HOME holds one.
+        self.assertFalse((self.base / "lab" / "pending").exists())
+
+    def test_wrong_codes_lock_the_session_and_no_terminal_means_no_code(self):
+        self.start()
+        params = {"per_food_tokens": 1_000_000, "weekly_tokens": 2_000_000, "sandbox": ["no-api-keys"]}
+        for _attempt in range(3):
+            self.assertEqual(self.action("policy-set", params, expect_ok=False)["code"], 4)
+            wrong = "000000" if self.codes[-1] != "000000" else "111111"
+            self.assertEqual(self.action("policy-set", {**params, "confirm": wrong}, expect_ok=False)["code"], 2)
+        locked = self.action("policy-set", params, expect_ok=False)
+        self.assertIn("Too many wrong", locked["error"])
+        self.assertTrue(locked["error_zh"].startswith("確認碼錯太多次"))
+        self.assertEqual(len(self.codes), 3)
+        with patch.object(catalog, "terminal_write", return_value=False):
+            other = play.PlayApp(self.project, "y" * 40)
+            envelope = play.run_action(self.project, "policy-set", params, confirmer=other.confirmer)
+        self.assertEqual(envelope["code"], 2)
+        self.assertIn("interactive terminal", envelope["error"])
+        self.assertFalse((self.project / ".oaw/catalog/policy.json").exists())
 
     def test_start_runs_the_default_comparison_once_in_the_background(self):
         self.start(auto_effect=True)
@@ -406,13 +435,14 @@ class MenuTests(PlayCase):
         out = []
         read, prompts = self.scripted([
             "2", f"{uri} {uri}/",                      # feed: one food, merged
-            "4", "1",                                   # card
+            "4", "1", "",                               # card (Enter: neither taste nor forget)
             "7", "1",                                   # plan
             "5", "1", "1", "y", "menu test",            # absorb skill:sweet-notes
             "1",                                        # my OAW
             "11", "y", "20,000,000", "60000000", "1 3", "CODE",  # standing policy with the terminal code
             "9", "2", "y",                              # restore the baseline (oldest listed last)
-            "6", "",                                    # remove: back out
+            "6", "1", "y", "menu test",              # remove EGM, with a reason
+            "13", "1", "y", "",                         # re-add EGM: preview, then an empty reason cancels
             "42",                                       # unknown choice
             "0"])
         result = play.cmd_menu(self.project, read=read, write=out.append)
@@ -423,12 +453,15 @@ class MenuTests(PlayCase):
         self.assertIn("① 找到 ✔ → ② 試吃 ✔ → ③ 實測 · 未執行", text)
         self.assertIn("🟢 吸收 skill:sweet-notes", text)
         self.assertIn("原型 v0 不執行付費實測", text)
-        self.assertIn("已吸收；品質：未量測", text)
+        self.assertIn("已吸收：新版本 2.0.0+build.2.", text)
+        self.assertIn("品質：未量測（沒有實測證據）", text)
         self.assertIn("sweet-notes（新增）", text)
         self.assertIn("品質：未量測 [未量測]", text)
         self.assertIn("standing policy set", text)
         self.assertIn("restored 2.0.0+build.1.", text)
         self.assertIn("沒有這個選項。", text)
+        self.assertIn("沒有原因：已取消。", text)
+        self.assertTrue(any("f = 忘掉這樣食物" in prompt for prompt in prompts))
         self.assertNotIn("加強", text)
         self.assertNotIn("Traceback", text)
         self.assertFalse((self.project / ".agents/skills/sweet-notes").exists())
@@ -470,6 +503,39 @@ class StatusViewTests(PlayCase):
         with redirect_stdout(out):
             oaw_status.main(["--project", str(self.project)])
         self.assertIn("view.json 無效", out.getvalue())
+
+    def test_terminal_cards_keep_the_suggestion_marker_level_and_flags(self):
+        food = {"id": "x", "display": "a/x", "verdict": {"headline": "risky", "symbol": "▲"}, "flags": {"open": 1, "open_high": 1},
+                "steps": [{"state": "done"}, {"state": "done"}, {"state": "not-run"}, {"state": "done"}],
+                "components": [{"id": "skill:x", "kind": "skill", "exec_class": "X0", "disposition": "excrete", "owner_confirms": True,
+                                "level": "static-measured", "reason": "high-severity static flag(s)", "reason_zh": "高嚴重度靜態旗標"}],
+                "flag_list": [{"id": "F-PIPE:x.sh:2", "rule": "F-PIPE", "path": "x.sh", "line": 2, "severity": "high",
+                               "meaning": "pipes a download into a shell", "triage": None}],
+                "last_error": None}
+        text = "\n".join(oaw_status.food_lines(food, detail=True))
+        self.assertIn("建議（尚未經你確認）", text)
+        self.assertIn("靜態量測", text)
+        self.assertIn("高嚴重度靜態旗標", text)
+        self.assertIn("F-PIPE x.sh:2", text)
+        self.assertIn("12 分流旗標", text)
+        script = (UI / "app.js").read_text(encoding="utf-8")
+        self.assertIn("const OWNER_CONFIRMS = '建議（尚未經你確認）';", script)
+        self.assertEqual(oaw_status.part_state({"decision": "absorbed as backlog item"}), "已記成待辦（未改程式）")
+        self.assertEqual(oaw_status.count_text(None), "—")
+
+    def test_progress_colours_never_make_a_bad_result_green(self):
+        css = (UI / "style.css").read_text(encoding="utf-8")
+        done = re.search(r"\.step\.done \.step-dot \{([^}]*)\}", css).group(1)
+        self.assertNotIn("--good", done)
+        self.assertNotIn("--good", re.search(r"\.step\.done::before \{([^}]*)\}", css).group(1))
+        self.assertIn("var(--fam)", re.search(r"\.step\.result\.done \.step-dot \{([^}]*)\}", css).group(1))
+        self.assertNotIn("color: #fff", css)
+        self.assertIn("--on-bad", css)
+        script = (UI / "app.js").read_text(encoding="utf-8")
+        self.assertNotIn("chip(row.tag, 'good')", script)
+        self.assertNotIn("class: 'ok'", script)
+        for flow in ("readdFlow", "forgetFlow", "buildDetails", "reasonRequired", "error_zh", "flag_list", "label_zh"):
+            self.assertIn(flow, script)
 
     def test_stale_effect_falls_back_to_the_recorded_build(self):
         view = {"my_oaw": {"current_matches_build": True,

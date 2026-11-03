@@ -39,7 +39,9 @@ METRICS = {"skills": "skill 數", "files": "檔案數", "bytes": "大小（bytes
            "startup-loaded text bytes (codex)": "啟動載入文字 bytes（Codex）",
            "startup-loaded text bytes (claude)": "啟動載入文字 bytes（Claude）", "hooks": "hooks",
            "non-stdlib dependencies": "非標準函式庫相依", "host settings writes": "寫入 host 設定", "quality": "品質"}
-BUILD_KINDS = {"baseline": "基準版", "restore-point": "還原點", "absorb": "吸收", "remove": "移除"}
+BUILD_KINDS = {"baseline": "基準版", "restore-point": "還原點", "absorb": "吸收", "remove": "移除", "restore": "還原", "readd": "加回"}
+HOST_NAMES = {"codex": "Codex", "claude": "Claude"}
+OWNER_CONFIRMS = "建議（尚未經你確認）"
 CHIPS = {"free-checks-passed": "免費檢查通過", "rules-updated-free-T0-pending": "規則已更新，待重跑免費檢查"}
 INTEGRITY = {"git-object-verified": "git 物件驗證", "unverified-against-commit": "未對 commit 驗證"}
 PLAN_STATUS = (("waiting for standing policy", "等你設定常設預算"),
@@ -279,31 +281,60 @@ def installed_skills(view):
     return sorted(rows, key=lambda row: (row[1] == "比預設少", row[0]))
 
 
+def count_text(value):
+    """A count, or — when the record has no such list (missing data is not 0)."""
+    return str(value) if isinstance(value, int) and not isinstance(value, bool) else "—"
+
+
+def effect_line_text(line):
+    if line.get("metric") == "quality":
+        return f"品質：{quality_label(line)} [{level_label(line.get('level'))}]"
+    delta = line.get("delta")
+    change = f"（{delta:+d}）" if isinstance(delta, int) and not isinstance(delta, bool) else ""
+    return (f"{METRICS.get(line.get('metric')) or clean(line.get('metric'), 60)}："
+            f"{count_text(line.get('current'))} 對 {count_text(line.get('default'))}{change} [{level_label(line.get('level'))}]")
+
+
 def effect_lines(effect, release="2.0.0"):
     if not isinstance(effect, dict) or not isinstance(effect.get("lines"), list):
         return ["  和預設比：尚未評估（catalog.py effect）"]
     lines = [f"  和預設 {clean(effect.get('release') or release, 20)} 比" + ("（過期，請重新評估）" if effect.get("stale") else "") + "："]
-    for line in effect["lines"]:
-        if not isinstance(line, dict):
-            continue
-        if line.get("metric") == "quality":
-            lines.append(f"    品質：{quality_label(line)} [{level_label(line.get('level'))}]")
-            continue
-        delta = line.get("delta")
-        change = f"（{delta:+d}）" if isinstance(delta, int) and not isinstance(delta, bool) else ""
-        lines.append(f"    {METRICS.get(line.get('metric')) or clean(line.get('metric'), 60)}："
-                     f"{line.get('current')} 對 {line.get('default')}{change} [{level_label(line.get('level'))}]")
+    lines += ["    " + effect_line_text(line) for line in effect["lines"] if isinstance(line, dict)]
     return lines
 
 
-def timeline_lines(timeline):
+def build_label(build):
+    return clean(build.get("label_zh") or build.get("label"), 120)
+
+
+def timeline_lines(timeline, detail=True):
+    """Each build with its skills, absorbed components and effect versus the default, every line with its level (D12)."""
     lines = []
     for build in reversed([b for b in timeline or [] if isinstance(b, dict)]):
         mark = "★ 目前" if build.get("current") else "  還原到這版：catalog.py restore " + clean(build.get("name"), 60)
         lines.append(f"  {clean(build.get('name'), 60)} · {BUILD_KINDS.get(build.get('kind')) or clean(build.get('kind'), 20)}"
-                     f" · {clean(build.get('label'), 120)} · {clean(build.get('created_at'), 25)}")
+                     f" · {build_label(build)} · {clean(build.get('created_at'), 25)}")
+        if detail:
+            skills = [clean(s, 64) for s in build.get("skills") or []]
+            lines.append(f"      skill（{len(skills)}）：" + ("、".join(skills) or "（沒有）"))
+            components = [clean(c, 120) for c in build.get("components") or []]
+            lines.append("      吸收的成分：" + ("、".join(components) or "（沒有）"))
+            effect = build.get("effect") if isinstance(build.get("effect"), dict) else None
+            if effect and isinstance(effect.get("lines"), list):
+                lines.append("      和預設比：" + " · ".join(effect_line_text(line) for line in effect["lines"] if isinstance(line, dict)))
+            else:
+                lines.append("      和預設比：這一版沒有評估紀錄")
         lines.append(f"      {mark}")
     return lines or ["  還沒有版本：第一次吸收或移除時，會先存一個基準版"]
+
+
+def host_note(view, name):
+    """'（只在 Codex）' when an absorbed skill is installed on only some of the install's hosts."""
+    effect = ((view.get("my_oaw") or {}).get("effect")) or {}
+    only = ((effect.get("skills") or {}).get("only_on") or {}).get(name)
+    if only is None or effect.get("stale"):
+        return ""
+    return "（只在 " + "、".join(HOST_NAMES.get(h, clean(h, 20)) for h in only) + "）" if only else "（沒有裝到任何 host）"
 
 
 def my_oaw_lines(view):
@@ -312,7 +343,7 @@ def my_oaw_lines(view):
     current = next((b for b in timeline if isinstance(b, dict) and b.get("current")), None)
     name = clean(my.get("current_build"), 60)
     if name:
-        lines = [f"我的 OAW：{name}" + (f"「{clean(current.get('label'), 120)}」" if current else "")]
+        lines = [f"我的 OAW：{name}" + (f"「{build_label(current)}」" if current else "")]
     else:
         lines = [f"我的 OAW：預設 {clean(view.get('release'), 20)}（尚未建立版本）"]
     if name and my.get("current_matches_build") is False:
@@ -321,7 +352,7 @@ def my_oaw_lines(view):
     if rows is None:
         lines.append("  skill：尚未評估（catalog.py effect）")
     else:
-        lines.append("  skill：" + (", ".join(name + (f"（{tag}）" if tag else "") for name, tag in rows) or "（沒有）"))
+        lines.append("  skill：" + (", ".join(name + (f"（{tag}）" if tag else "") + host_note(view, name) for name, tag in rows) or "（沒有）"))
     lines += effect_lines(my.get("effect"), view.get("release") or "2.0.0")
     lines.append("  版本時間線：")
     lines += timeline_lines(timeline)
@@ -335,7 +366,15 @@ def part_state(part):
     decision = part.get("decision")
     if decision == "absorbed":
         return "已吸收（不在目前版本）"
-    return {"excreted": "已排掉", "removed": "已移除", "absorbed as backlog item": "已記成待辦"}.get(decision) or clean(decision, 40) or ""
+    return {"excreted": "已排掉", "removed": "已移除", "absorbed as backlog item": "已記成待辦（未改程式）"}.get(decision) or clean(decision, 40) or ""
+
+
+def part_reason(part):
+    return clean(part.get("reason_zh") or part.get("reason"), 200)
+
+
+def part_missing(part):
+    return clean(part.get("missing_zh") or part.get("missing_test"), 120)
 
 
 def food_lines(food, detail=False):
@@ -362,13 +401,31 @@ def food_lines(food, detail=False):
         parts = [c for c in food.get("components") or [] if isinstance(c, dict) and c.get("disposition") == key]
         for part in parts:
             lines.append(f"  {DISPOSITIONS[key]} {clean(part.get('id'), 80)} · {clean(part.get('kind'), 20)} · {clean(part.get('exec_class'), 10)}"
+                         + (f" · {OWNER_CONFIRMS}" if part.get("owner_confirms") else "")
+                         + f" · {level_label(part.get('level'))}"
                          + (f" · {part_state(part)}" if part_state(part) else ""))
-            lines.append(f"      {clean(part.get('reason'), 200)}" + (f" · 缺：{clean(part.get('missing_test'), 120)}" if part.get("missing_test") else ""))
+            lines.append(f"      {part_reason(part)}" + (f" · 缺：{part_missing(part)}" if part_missing(part) else ""))
+    flags = [f for f in food.get("flag_list") or [] if isinstance(f, dict)]
+    open_flags = [f for f in flags if f.get("triage") not in ("benign", "allergen")]
+    for flag in open_flags[:12]:
+        triage = {"confirm-toxic": " · 你確認有毒"}.get(flag.get("triage"), "")
+        lines.append(f"  旗標 [{clean(flag.get('severity'), 8)}] {clean(flag.get('rule'), 16)} {clean(flag.get('path'), 80)}:{flag.get('line')}"
+                     f" · {clean(flag.get('meaning'), 80)}{triage}")
+    if (food.get("flags") or {}).get("open"):
+        lines.append("  分流：catalog.py menu → 12 分流旗標（良性、過敏原或確認有毒）")
+    if isinstance(food.get("last_error"), dict):
+        error = food["last_error"]
+        lines.append(f"  上次試吃失敗：{clean(error.get('error_zh') or error.get('error'), 160)}")
     for report in historical:
         lines.append(f"  歷史證據（不計入判定）：{clean(report.get('evidence_id'), 80)}")
         elephant = report.get("elephant") if isinstance(report.get("elephant"), dict) else None
         if elephant:
-            lines.append(f"    🐘 大象：整合方式 {clean(elephant.get('integration_mode'), 40)} · 關卡 {len(elephant.get('gates') or [])}")
+            lines.append(f"    🐘 大象：整合方式 {clean(elephant.get('integration_mode'), 40)} · 關卡 {len(elephant.get('gates') or [])}"
+                         f" · 養分／拉肚子風險／提議的 A/B {count_text(elephant.get('nutrients'))}／{count_text(elephant.get('diarrhea_risks'))}"
+                         f"／{count_text(elephant.get('proposed_ab_tests'))}")
+        verify = report.get("verify") if isinstance(report.get("verify"), dict) else None
+        if verify:
+            lines.append(f"    查證 {count_text(verify.get('checks'))} 項 · 漏掉 {count_text(verify.get('missed_issues'))}")
         for fish in report.get("goldfish") or []:
             severity = "、".join(f"{clean(k, 20)} {v}" for k, v in (fish.get("by_severity") or {}).items())
             lines.append(f"    🐟 金魚 {clean(fish.get('reviewer'), 40)}：{fish.get('findings')} 項發現" + (f"（{severity}）" if severity else ""))
@@ -398,7 +455,7 @@ def catalog_lines(view, stale=False):
     lines = ["視圖可能過期：請執行 catalog.py view"] if stale else []
     lines += my_oaw_lines(view)
     lines.append(f"食物 {funnel.get('submitted', 0)} · 已試吃 {funnel.get('tasted', 0)} · 實測 {funnel.get('measured', 0)}"
-                 f" · 已吸收成分 {funnel.get('absorbed_parts', 0)}")
+                 f" · 已吸收成分 {funnel.get('absorbed_parts', 0)}" + (f" · 待辦 {funnel['backlog_items']}" if funnel.get("backlog_items") else ""))
     foods = [f for f in view.get("foods") or [] if isinstance(f, dict)]
     for food in foods:
         lines += food_lines(food)

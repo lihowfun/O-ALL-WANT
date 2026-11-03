@@ -9,8 +9,10 @@ per-session token header and a Host header naming that address; no CORS
 headers are ever sent, actions are JSON POSTs only, and the static files carry
 a strict Content-Security-Policy. Food-derived strings are data: JSON responses
 escape <, > and & so no payload is ever markup, and the page sets text with
-textContent only. Owner confirmation codes are printed on the terminal that
-runs `play`; they never appear in an API response.
+textContent only. Owner confirmation codes live only in this process's memory
+and are printed on the interactive terminal that runs `play` or `menu`; they
+never appear in an API response or on disk, and a session stops accepting codes
+after three wrong ones. Without an interactive terminal no code is issued.
 """
 from __future__ import annotations
 
@@ -147,7 +149,7 @@ def act_feed(target, params, progress):
         try:
             tasted.append(catalog.cmd_taste(target, fid))
         except catalog.CatalogError as exc:
-            failed.append({"food": fid, "error": core.sanitize_text(str(exc), 300)})
+            failed.append({"food": fid, "error": core.sanitize_text(str(exc), 300), "error_zh": core.zh_error(exc)})
     lines = list(added["lines"]) + [line for result in tasted for line in result["lines"]]
     lines += [f"taste failed: {item['food']}: {item['error']}" for item in failed]
     return {"status": "fed", "added": added["added"], "merges": added["merges"], "existing": added["existing"],
@@ -190,10 +192,24 @@ def act_absorb(target, params, progress):
 
 
 def act_remove(target, params, progress):
+    """`food: true` names a food id; otherwise the name is egm, a bundled skill or an absorbed skill."""
     apply = _flag(params, "apply")
     if apply:
         progress("存還原點 → 移除 → 產生新版本 → 評估和預設的差異")
-    return catalog.cmd_remove(target, _text(params, "name", limit=200), _text(params, "reason", limit=300, required=False), apply)
+    return catalog.cmd_remove(target, _text(params, "name", limit=200), _text(params, "reason", limit=300, required=False), apply,
+                              food=_flag(params, "food"))
+
+
+def act_readd(target, params, progress):
+    apply = _flag(params, "apply")
+    if apply:
+        progress("存還原點 → 備份 → 經 oaw.py migrate 加回 → 產生新版本 → 評估和預設的差異")
+    return catalog.cmd_readd(target, _text(params, "name", limit=200), _text(params, "reason", limit=300, required=False), apply)
+
+
+def act_forget(target, params, progress):
+    return catalog.cmd_forget(target, _text(params, "food", limit=200), _text(params, "reason", limit=300, required=False),
+                              _flag(params, "apply"))
 
 
 def act_builds(target, params, progress):
@@ -216,21 +232,21 @@ def act_policy_show(target, params, progress):
     return catalog.cmd_policy(target, argparse.Namespace(policy_command="show"))
 
 
-def act_policy_set(target, params, progress):
+def act_policy_set(target, params, progress, confirmer=None):
     sandbox = _texts(params, "sandbox", limit=40, most=len(core.SANDBOX_CONDITIONS))
     args = argparse.Namespace(policy_command="set", per_food_tokens=_whole(params, "per_food_tokens"),
                               weekly_tokens=_whole(params, "weekly_tokens"), sandbox=",".join(sandbox), confirm=_code(params))
-    return catalog.cmd_policy(target, args)
+    return catalog.cmd_policy(target, args, confirmer=confirmer or catalog.ConfirmationChannel())
 
 
-def act_triage(target, params, progress):
+def act_triage(target, params, progress, confirmer=None):
     outcome = _text(params, "outcome", limit=20)
     if outcome not in core.TRIAGE_OUTCOMES:
         raise ActionError("outcome must be benign, allergen or confirm-toxic.")
     args = argparse.Namespace(food=_text(params, "food", limit=200), flag=_text(params, "flag", limit=400),
                               benign=outcome == "benign", allergen=outcome == "allergen", confirm_toxic=outcome == "confirm-toxic",
                               reason=_text(params, "reason", limit=300), confirm=_code(params))
-    return catalog.cmd_triage(target, args)
+    return catalog.cmd_triage(target, args, confirmer=confirmer or catalog.ConfirmationChannel())
 
 
 def act_view(target, params, progress):
@@ -239,22 +255,35 @@ def act_view(target, params, progress):
 
 ACTIONS = {"add": act_add, "feed": act_feed, "taste": act_taste, "scout": act_scout, "scout-pick": act_scout_pick,
            "import-report": act_import_report, "plan": act_plan, "absorb": act_absorb, "remove": act_remove,
+           "readd": act_readd, "forget": act_forget,
            "builds": act_builds, "restore": act_restore, "effect": act_effect, "policy-show": act_policy_show,
            "policy-set": act_policy_set, "triage": act_triage, "view": act_view}
+# Actions that need the owner's code get the front end's in-memory confirmation channel.
+CONFIRMED_ACTIONS = ("policy-set", "triage")
 
 
-def run_action(target: Path, name: str, params=None, progress=None) -> dict:
-    """One engine action as an envelope: ok, code (0 done, 2 refused/failed, 4 waiting for the owner's code)."""
+def run_action(target: Path, name: str, params=None, progress=None, confirmer=None) -> dict:
+    """One engine action as an envelope: ok, code (0 done, 2 refused/failed, 4 waiting for the owner's code).
+
+    `error` keeps the engine's English text (the 動作紀錄 log shows it); `error_zh` is the
+    Traditional Chinese message for a known error, or None.
+    """
     handler = ACTIONS.get(name)
     if handler is None:
-        return {"ok": False, "code": 2, "status": "error", "error": f"Unknown action {core.sanitize_text(name, 40)!r}.", "lines": []}
+        return {"ok": False, "code": 2, "status": "error", "error": f"Unknown action {core.sanitize_text(name, 40)!r}.",
+                "error_zh": "沒有這個動作。", "lines": []}
     progress = progress or (lambda *_args: None)
+    params = params if isinstance(params, dict) else {}
     try:
-        result = handler(target, params if isinstance(params, dict) else {}, progress)
+        if name in CONFIRMED_ACTIONS:
+            result = handler(target, params, progress, confirmer=confirmer)
+        else:
+            result = handler(target, params, progress)
     except catalog.NeedsConfirmation as exc:
-        return {"ok": False, "code": 4, "status": "needs-confirmation", "error": str(exc), "lines": [str(exc)]}
+        return {"ok": False, "code": 4, "status": "needs-confirmation", "error": str(exc), "error_zh": core.zh_error(exc), "lines": [str(exc)]}
     except (ActionError, catalog.CatalogError, oaw.InstallError, core.SourceError, OSError, ValueError) as exc:
-        return {"ok": False, "code": 2, "status": "error", "error": core.sanitize_text(str(exc), 600), "lines": [f"catalog error: {exc}"]}
+        return {"ok": False, "code": 2, "status": "error", "error": core.sanitize_text(str(exc), 600), "error_zh": core.zh_error(exc),
+                "lines": [f"catalog error: {exc}"]}
     return {"ok": True, "code": 0, "status": result.get("status"), "error": None,
             "result": {k: v for k, v in result.items() if k != "lines"}, "lines": list(result.get("lines", []))[:300]}
 
@@ -294,6 +323,7 @@ class PlayApp:
         self.target, self.token = target, token
         self.lock = threading.Lock()
         self.jobs, self.current = {}, None
+        self.confirmer = catalog.ConfirmationChannel()
 
     def submit(self, action: str, params: dict):
         with self.lock:
@@ -308,10 +338,11 @@ class PlayApp:
 
     def _run(self, job: Job):
         try:
-            envelope = run_action(self.target, job.action, job.params, job.update)
+            envelope = run_action(self.target, job.action, job.params, job.update, confirmer=self.confirmer)
         except Exception as exc:  # an engine bug must not kill the server or leak a traceback to the page
             traceback.print_exc()
-            envelope = {"ok": False, "code": 2, "status": "error", "error": f"internal error: {type(exc).__name__}", "lines": []}
+            envelope = {"ok": False, "code": 2, "status": "error", "error": f"internal error: {type(exc).__name__}",
+                        "error_zh": "內部錯誤（細節在啟動 play 的終端機）。", "lines": []}
         job.finish(envelope)
 
     def busy(self):
@@ -325,7 +356,7 @@ class PlayApp:
     def meta(self) -> dict:
         return {"release": core.RELEASE, "project": str(self.target), "project_name": self.target.name,
                 "installed": (self.target / oaw.MANIFEST_PATH).is_file(), "sandbox_conditions": list(core.SANDBOX_CONDITIONS),
-                "token_label": core.TOKEN_LABEL, "egm_skills": list(oaw.EGM_SKILLS), "bundled_skills": list(oaw.BUNDLED_SKILLS),
+                "token_label": core.TOKEN_LABEL, "token_label_zh": core.TOKEN_LABEL_ZH, "egm_skills": list(oaw.EGM_SKILLS), "bundled_skills": list(oaw.BUNDLED_SKILLS),
                 "actions": sorted(ACTIONS), "paid_runs_enabled": False}
 
 
@@ -502,11 +533,14 @@ class Menu:
         self.target = target
         self._read = read or (lambda prompt: input(prompt))
         self.write = write or (lambda text: print(text, flush=True))
+        # Codes live in this menu's memory and are shown on its terminal, like the page's.
+        self.confirmer = catalog.ConfirmationChannel()
         self.items = (("1", "我的 OAW（版本、skill、和預設比）", self.my_oaw), ("2", "投食：貼 GitHub 網址，送去試吃", self.feed),
-                      ("3", "本週覓食", self.scout), ("4", "食物卡", self.cards), ("5", "吸收選中的成分", self.absorb),
+                      ("3", "本週覓食", self.scout), ("4", "食物卡（送去試吃、忘掉）", self.cards), ("5", "吸收選中的成分", self.absorb),
                       ("6", "排掉／移除", self.remove), ("7", "實測…（系統的測試計畫）", self.plan),
                       ("8", "匯入 🐘 大象／🐟 金魚報告", self.import_report), ("9", "版本時間線／還原到這版", self.restore),
-                      ("10", "重新評估和預設的差異", self.effect), ("11", "常設預算", self.policy), ("12", "分流旗標", self.triage))
+                      ("10", "重新評估和預設的差異", self.effect), ("11", "常設預算", self.policy), ("12", "分流旗標", self.triage),
+                      ("13", "加回 EGM／內建 skill", self.readd))
 
     # ---- io
     def ask(self, prompt: str) -> str:
@@ -536,12 +570,20 @@ class Menu:
         return view or {"foods": [], "release": core.RELEASE}
 
     def do(self, action: str, params=None) -> dict:
-        envelope = run_action(self.target, action, params or {}, lambda label, *_rest: self.write(f"  … {label}"))
+        envelope = run_action(self.target, action, params or {}, lambda label, *_rest: self.write(f"  … {label}"),
+                              confirmer=self.confirmer)
         for line in envelope.get("lines", []):
             self.write("  " + line)
         if envelope["code"] == 2:
-            self.write("  沒有完成（refused or failed）。")
+            self.write("  沒有完成：" + (envelope.get("error_zh") or "（原文見上一行）"))
         return envelope
+
+    def reason(self, prompt: str = "原因（必填，會記進決定紀錄）：") -> str:
+        """D6: a removal or re-add records why; an empty answer cancels."""
+        text = self.ask(prompt)
+        if not text:
+            self.write("  沒有原因：已取消。")
+        return text
 
     # ---- loop
     def loop(self) -> None:
@@ -624,9 +666,23 @@ class Menu:
     def cards(self):
         view = self.view()
         food = self.choose_food(view)
-        if food:
-            for line in oaw_status.food_lines(food, detail=True):
-                self.write(line)
+        if not food:
+            return
+        for line in oaw_status.food_lines(food, detail=True):
+            self.write(line)
+        steps = food.get("steps") if isinstance(food.get("steps"), list) else []
+        tasted = len(steps) > 1 and isinstance(steps[1], dict) and steps[1].get("state") == "done"
+        installed = any(c.get("in_current_build") for c in food.get("components") or [] if isinstance(c, dict))
+        choices = (["t = 送去試吃（免費、封存在專案外）"] if not tasted else []) + (["f = 忘掉這樣食物"] if not installed else [])
+        if not choices:
+            return
+        answer = self.ask("；".join(choices) + "；Enter = 返回：").casefold()
+        if answer == "t" and not tasted:
+            if self.do("taste", {"food": food["id"]})["ok"]:
+                self.write("  試吃完成；再選 4 看結果。")
+        elif answer == "f" and not installed:
+            if self.do("forget", {"food": food["id"], "apply": False})["ok"] and self.yes(f"確定忘掉 {food['id']}？"):
+                self.do("forget", {"food": food["id"], "apply": True, "reason": "由終端選單忘掉"})
 
     def absorb(self):
         food = self.choose_food()
@@ -645,10 +701,18 @@ class Menu:
         if not picks:
             return
         params = {"food": food["id"], "components": [options[i - 1][0] for i in picks]}
-        if self.do("absorb", {**params, "apply": False})["ok"] and self.yes("確定吸收？會先存還原點，再產生新版本"):
+        preview = self.do("absorb", {**params, "apply": False})
+        if not preview["ok"]:
+            return
+        creates = preview["result"].get("creates_build")
+        if self.yes("確定吸收？會先存還原點，再產生新版本" if creates else "確定記成待辦？不改程式，也不產生新版本"):
             reason = self.ask("原因（可空白）：")
-            if self.do("absorb", {**params, "apply": True, "reason": reason})["ok"]:
-                self.write("  已吸收；品質：未量測（沒有實測證據）。")
+            done = self.do("absorb", {**params, "apply": True, "reason": reason})
+            if done["ok"] and done["result"].get("build"):
+                doctor = (done["result"].get("doctor") or {}).get("status")
+                self.write(f"  已吸收：新版本 {done['result']['build']} · doctor：{doctor} · 品質：未量測（沒有實測證據）。")
+            elif done["ok"]:
+                self.write("  已記成待辦（未改程式）。")
 
     def remove(self):
         view = self.view()
@@ -660,7 +724,7 @@ class Menu:
                 names.append("egm")
             names += [name for name in present if name not in oaw.EGM_SKILLS]
         if not names:
-            name = self.ask("要移除的 skill 名稱（或 egm、食物 id）：")
+            name = self.ask("要移除的 skill 名稱（或 egm）：")
             if not name:
                 return
         else:
@@ -671,8 +735,29 @@ class Menu:
                 return
             name = names[picks[0] - 1]
         if self.do("remove", {"name": name, "apply": False})["ok"] and self.yes(f"確定移除 {name}？會先備份和存還原點"):
-            reason = self.ask("原因（可空白）：")
-            self.do("remove", {"name": name, "apply": True, "reason": reason})
+            reason = self.reason()
+            if reason:
+                self.do("remove", {"name": name, "apply": True, "reason": reason})
+
+    def readd(self):
+        rows = oaw_status.installed_skills(self.view()) or []
+        missing = [name for name, tag in rows if tag == "比預設少"]
+        names = (["egm"] if any(name in oaw.EGM_SKILLS for name in missing) else []) + [n for n in missing if n not in oaw.EGM_SKILLS]
+        if not names:
+            name = self.ask("要加回的內建 skill 名稱（或 egm；Enter 返回）：")
+            if not name:
+                return
+        else:
+            for index, name in enumerate(names, 1):
+                self.write(f"  {index}. {name}" + ("（整組 EGM skill）" if name == "egm" else ""))
+            picks = self.numbers(self.ask("選要加回的編號："), len(names))
+            if not picks:
+                return
+            name = names[picks[0] - 1]
+        if self.do("readd", {"name": name, "apply": False})["ok"] and self.yes(f"確定加回 {name}？會先備份和存還原點；加回的 skill 要重新測試"):
+            reason = self.reason()
+            if reason:
+                self.do("readd", {"name": name, "apply": True, "reason": reason})
 
     def plan(self):
         food = self.choose_food()

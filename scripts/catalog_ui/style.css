@@ -9,14 +9,16 @@
   --line: #e0dcd2;
   --accent: #2f5fe8;
   --accent-ink: #ffffff;
-  --good: #1d7f47;
+  --good: #17703e;
   --good-bg: #e2f4e9;
-  --warn: #b8501a;
+  --on-good: #ffffff;
+  --warn: #a3440f;
   --warn-bg: #fde9dc;
   --amber: #946000;
   --amber-bg: #fff1c9;
   --bad: #c22727;
   --bad-bg: #fde3e3;
+  --on-bad: #ffffff;
   --gray: #5f6672;
   --gray-bg: #eceef1;
   --dark: #353940;
@@ -42,12 +44,14 @@
     --accent-ink: #0d1220;
     --good: #52c485;
     --good-bg: #16321f;
+    --on-good: #0d1a12;
     --warn: #f08b4e;
     --warn-bg: #3a2315;
     --amber: #f0c04f;
     --amber-bg: #372d12;
     --bad: #ff6f6f;
     --bad-bg: #3c1b1b;
+    --on-bad: #1a0d0d;
     --gray: #a6adb8;
     --gray-bg: #2a2e36;
     --dark: #c8cbd1;
@@ -150,6 +154,15 @@ ul, ol { margin: 6px 0; padding-left: 20px; }
   .layout { grid-template-columns: minmax(320px, 390px) minmax(0, 1fr); align-items: start; }
   .my-oaw { position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow: auto; }
 }
+/* One column: the feeding area comes first, so a first visit starts at the call to action. */
+@media (max-width: 979.98px) {
+  .main-col { display: contents; }
+  #feed { order: 1; }
+  .my-oaw { order: 2; }
+  #foods { order: 3; }
+  .rules { order: 4; }
+  .log { order: 5; }
+}
 .panel {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -186,7 +199,7 @@ ul, ol { margin: 6px 0; padding-left: 20px; }
 .btn.big { min-height: 46px; padding: 9px 24px; font-size: 1.02rem; }
 .btn.tiny { min-height: 30px; padding: 3px 10px; font-size: .8rem; }
 .btn.danger { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 40%, var(--line)); }
-.btn.danger.primary, #dialog-ok.danger { background: var(--bad); color: #fff; border-color: transparent; }
+.btn.danger.primary, #dialog-ok.danger { background: var(--bad); color: var(--on-bad); border-color: transparent; }
 .btn.toggle.on { background: var(--info-bg); border-color: var(--accent); }
 .btn:disabled { opacity: .45; cursor: not-allowed; }
 body.is-busy .btn.act { opacity: .5; pointer-events: none; }
@@ -269,16 +282,21 @@ table.effect td.quality-value { vertical-align: middle; }
 .tl-item { position: relative; display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; gap: 8px; align-items: start; padding: 7px 0 10px; }
 .tl-item:not(:last-child)::after { content: ""; position: absolute; left: 7px; top: 24px; bottom: -4px; width: 2px; background: var(--line); }
 .tl-dot { width: 16px; height: 16px; margin-top: 4px; border-radius: 50%; background: var(--surface); border: 3px solid var(--line); }
-.tl-item.current .tl-dot { border-color: var(--good); background: var(--good); }
+.tl-item.current .tl-dot { border-color: var(--accent); background: var(--accent); }
 .tl-top { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .tl-name { font-weight: 650; }
 .tl-label { font-size: .85rem; }
+.tl-details { margin-top: 4px; font-size: .8rem; }
+.tl-details summary { cursor: pointer; color: var(--accent); }
+.tl-details ul { margin: 4px 0; padding-left: 16px; }
+.tl-effect { list-style: none; padding: 0; margin: 4px 0; display: grid; gap: 2px; }
+.tl-effect li { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; }
 
 /* ---------------------------------------------------------------- feeding */
 .feed-result:empty { display: none; }
 .feed-result { margin-top: 10px; padding: 10px 12px; border-radius: 10px; background: var(--surface-2); }
 .feed-lines { list-style: none; padding: 0; margin: 0 0 6px; font-size: .88rem; display: grid; gap: 3px; }
-.feed-lines .ok { color: var(--good); }
+.feed-lines .fam-line { color: var(--fam); }
 .feed-lines .merge { color: var(--accent); }
 .feed-lines .bad { color: var(--bad); }
 .scout { margin-top: 18px; padding-top: 12px; border-top: 1px solid var(--line); }
@@ -344,7 +362,9 @@ table.effect td.quality-value { vertical-align: middle; }
 .step { position: relative; text-align: center; min-width: 0; }
 .step::before { content: ""; position: absolute; top: 15px; right: 50%; width: 100%; height: 3px; background: var(--line); z-index: 0; }
 .step:first-child::before { display: none; }
-.step.done::before { background: var(--good); }
+/* ①–③ are neutral progress; ④ takes the verdict family's colour, so toxic, risky or untested is never green. */
+.step.done::before { background: var(--accent); }
+.step.result.done::before { background: var(--fam); }
 .step-dot {
   position: relative;
   z-index: 1;
@@ -358,7 +378,8 @@ table.effect td.quality-value { vertical-align: middle; }
   font-weight: 700;
   transition: background-color .3s ease, border-color .3s ease;
 }
-.step.done .step-dot { background: var(--good); border-color: var(--good); color: #fff; }
+.step.done .step-dot { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.step.result.done .step-dot { background: var(--fam-bg); border-color: var(--fam); color: var(--fam); }
 .step.current .step-dot { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent); }
 .step.locked .step-dot { border-style: dashed; color: var(--muted); }
 .step.pop .step-dot { animation: pop .7s ease-out; }
@@ -375,6 +396,15 @@ table.effect td.quality-value { vertical-align: middle; }
 .g-absorb { --g: var(--good); --g-bg: var(--good-bg); }
 .g-excrete { --g: var(--bad); --g-bg: var(--bad-bg); }
 .g-hold { --g: var(--amber); --g-bg: var(--amber-bg); }
+/* Imported (historical) proposals keep one historical colour whatever they propose: they are not live dispositions. */
+.group.hist { --g: var(--hist); --g-bg: var(--hist-bg); border-left-style: dashed; }
+.flags { margin: 6px 0; font-size: .82rem; }
+.flags summary { cursor: pointer; font-weight: 650; }
+.flag-list { list-style: none; padding: 0; margin: 4px 0; display: grid; gap: 3px; }
+.flag-list li { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: baseline; overflow-wrap: anywhere; }
+.chip.sev-high { background: var(--bad-bg); color: var(--bad); }
+.chip.sev-medium { background: var(--amber-bg); color: var(--amber); }
+.verdict-reasons { margin: 2px 0 6px; font-size: .82rem; color: var(--muted); overflow-wrap: anywhere; }
 .group > summary { display: flex; justify-content: space-between; gap: 8px; cursor: pointer; font-weight: 650; list-style: none; padding: 2px 0; }
 .group > summary::-webkit-details-marker { display: none; }
 .group > summary::after { content: "▾"; color: var(--muted); margin-left: auto; }

@@ -28,6 +28,7 @@ import subprocess
 import sys
 import tarfile
 import tempfile
+import threading
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -60,6 +61,10 @@ class CatalogError(Exception):
 
 class NeedsConfirmation(CatalogError):
     """An owner-only change waits for the code shown on the terminal."""
+
+
+class TransportError(CatalogError):
+    """git could not reach or read the source; only this allows the codeload fallback (never a deliberate refusal)."""
 
 
 # --------------------------------------------------------------------------- small helpers
@@ -349,11 +354,11 @@ def run_git(argv, *, cwd: Path, env: dict, data: bytes | None = None, timeout=60
         else:
             process = subprocess.run(argv, cwd=str(cwd), env=env, input=data, capture_output=True, timeout=timeout)
     except (OSError, subprocess.TimeoutExpired) as exc:
-        raise CatalogError(f"git could not run: {exc}") from exc
+        raise TransportError(f"git could not run: {exc}") from exc
     if process.returncode:
         message = core.sanitize_text(process.stderr.decode("utf-8", "replace"), 300)
         verb = next((a for a in argv[1:] if a in ("init", "fetch", "rev-parse", "ls-tree", "cat-file")), "command")
-        raise CatalogError(f"git {verb} failed: {message}")
+        raise (TransportError if verb == "fetch" else CatalogError)(f"git {verb} failed: {message}")
     return process.stdout
 
 
@@ -451,10 +456,15 @@ def fetch_codeload(source: dict, ref) -> dict:
     if len(data) > core.LIMITS["max_total_bytes"]:
         raise CatalogError("Refused: tarball exceeds the 50 MB limit.")
     files, modes, symlinks, skipped = {}, {}, {}, []
+    total, members = 0, 0
     try:
         with tarfile.open(fileobj=io.BytesIO(data), mode="r:gz") as archive:
             comment = str(archive.pax_headers.get("comment", ""))
-            for member in archive.getmembers():
+            # Stream the members: the caps apply to the declared sizes before any member is read into memory.
+            for member in archive:
+                members += 1
+                if members > core.LIMITS["max_files"] * 2:
+                    raise CatalogError("Refused: tarball has too many members.")
                 parts = member.name.split("/", 1)
                 if len(parts) < 2 or not parts[1]:
                     continue
@@ -468,11 +478,14 @@ def fetch_codeload(source: dict, ref) -> dict:
                 elif member.size > core.LIMITS["max_file_bytes"]:
                     skipped.append(path)
                 else:
+                    total += member.size
+                    if total > core.LIMITS["max_total_bytes"]:
+                        raise CatalogError("Refused: snapshot exceeds the 50 MB limit.")
+                    if len(files) >= core.LIMITS["max_files"]:
+                        raise CatalogError("Refused: too many files.")
                     handle = archive.extractfile(member)
-                    files[path] = handle.read() if handle else b""
+                    files[path] = handle.read(core.LIMITS["max_file_bytes"] + 1) if handle else b""
                     modes[path] = "100755" if member.mode & 0o111 else "100644"
-                if len(files) > core.LIMITS["max_files"]:
-                    raise CatalogError("Refused: too many files.")
     except (tarfile.TarError, EOFError, OSError) as exc:
         raise CatalogError(f"Tarball is not readable: {exc}") from exc
     commit = comment if re.fullmatch(r"[0-9a-f]{40}", comment) else None
@@ -540,6 +553,14 @@ def cmd_taste(target: Path, ident: str, ref=None) -> dict:
         except CatalogError:
             raise exc from None
         write_status(target, entry, "quarantine", 0, stop_reason=core.sanitize_text(str(exc), 200))
+        # The card keeps the reason after a reload, in both languages (the raw text is sanitized).
+        failure = {"at": now_iso(), "error": core.sanitize_text(str(exc), 300), "error_zh": core.zh_error(exc)}
+
+        def remember(registry):
+            if entry["id"] in registry.get("foods", {}):
+                registry["foods"][entry["id"]]["last_error"] = failure
+        update_json(target, ("registry.json",), remember, {"schema_version": 1, "foods": {}})
+        update_view(target)
         raise
 
 
@@ -556,8 +577,9 @@ def _taste(target: Path, ident: str, ref=None) -> dict:
     if git:
         try:
             snapshot = fetch_git(git, source, wanted, lab)
-        except CatalogError as exc:
+        except TransportError as exc:
             errors.append(str(exc))
+        # Any other refusal (size or file limits, pin mismatch, unsafe ref) is final: no fallback.
     if snapshot is None:
         if source["kind"] != "github":
             raise CatalogError("Cannot fetch: " + ("; ".join(errors) or "git is not available"))
@@ -609,8 +631,9 @@ def _taste(target: Path, ident: str, ref=None) -> dict:
         food["source"].update(commit=snapshot["commit"], integrity=inventory["integrity"], fetched_at=stamp)
         food["lifecycle"] = "tasted"
         food["sealed"] = {"lab_ref": folder + "/source.tar", "tree_sha256": tree}
+        food.pop("last_error", None)
     update_json(target, ("registry.json",), mutate, {"schema_version": 1, "foods": {}})
-    derived = core.derive(load_evidence(target, fid), [d for d in load_decisions(target) if d.get("food") == fid])
+    derived = core.derive(load_evidence(target, fid), food_decisions(load_decisions(target), fid))
     write_status(target, {**entry, "source": {**source, "commit": snapshot["commit"]}}, "done", 3, headline=derived["headline"])
     update_view(target)
     counts = {k: sum(1 for c in derived["components"] if c["disposition"] == k) for k in core.DISPOSITIONS}
@@ -632,7 +655,7 @@ def cmd_list(target: Path) -> dict:
     decisions = load_decisions(target)
     rows = []
     for fid, entry in sorted(registry.get("foods", {}).items()):
-        derived = core.derive(load_evidence(target, fid), [d for d in decisions if d.get("food") == fid])
+        derived = core.derive(load_evidence(target, fid), food_decisions(decisions, fid))
         rows.append({"id": fid, "display": core.sanitize_text(entry["display"], 80), "lifecycle": entry.get("lifecycle"),
                      "commit": (entry["source"].get("commit") or "")[:7] or None, "verdict": derived["headline"],
                      "symbol": derived["symbol"]})
@@ -645,7 +668,7 @@ def cmd_show(target: Path, ident: str) -> dict:
     entry = resolve_food(registry, ident)
     fid = entry["id"]
     evidence = load_evidence(target, fid)
-    decisions = [d for d in load_decisions(target) if d.get("food") == fid]
+    decisions = food_decisions(load_decisions(target), fid)
     derived = core.derive(evidence, decisions)
     historical = [r for r in evidence if core.evidence_class(r) == "historical"]
     plan = core.decide_plan(fid, derived, historical, load_policy(target))
@@ -675,59 +698,104 @@ def cmd_show(target: Path, ident: str) -> dict:
             lines.append(f"    goldfish {fish['reviewer']}: {fish['findings']} findings {fish['by_severity']}")
         counts = report.get("counts", {})
         lines.append(f"    proposed parts: absorb {counts.get('absorb', 0)} · excrete {counts.get('excrete', 0)} · hold {counts.get('hold', 0)}")
-    lines.append(f"  plan: {plan['status']} · paid estimate {plan['estimate']['min'] / 1e6:.1f}-{plan['estimate']['max'] / 1e6:.1f}M tokens ({core.TOKEN_LABEL})")
+    lines.append(f"  plan: {plan['status']} · paid estimate {estimate_text(plan['estimate'])}")
     return {"status": "show", "card": card, "lines": lines}
 
 
 # --------------------------------------------------------------------------- owner confirmation codes
+#
+# A code is a speed bump against an agent running catalog commands on the owner's
+# behalf, not authentication. It never touches disk: the CLI shows it on its own
+# interactive terminal and reads it back in the same process; `play` and `menu`
+# keep it in memory and show it on the terminal that runs them. Without an
+# interactive stdin and stderr there is no code at all, so an agent's redirected
+# or hidden console gets a refusal. Anyone who can type into the owner's terminal
+# (or edit policy.json / decisions.jsonl directly) can still act: those files are
+# unauthenticated project records.
 
-def terminal_write(text: str) -> bool:
-    """Show text on the interactive terminal, not on redirected output."""
-    if sys.stderr.isatty() and sys.stdin.isatty():
-        sys.stderr.write(text)
-        sys.stderr.flush()
-        return True
-    device = "CONOUT$" if os.name == "nt" else "/dev/tty"
+CONFIRMED_VIA = "code typed back on an interactive terminal (unauthenticated)"
+
+
+def interactive() -> bool:
+    """True only when stdin and stderr are both a terminal a person can read and type into."""
     try:
-        with open(device, "w", encoding="utf-8") as tty:
-            tty.write(text)
-        return True
-    except OSError:
+        return bool(sys.stdin and sys.stdin.isatty() and sys.stderr and sys.stderr.isatty())
+    except (AttributeError, ValueError, OSError):
         return False
 
 
-def owner_confirm(target: Path, action: str, params: dict, code=None) -> None:
-    """Two-step owner confirmation: a code printed on the terminal must be echoed back."""
-    lab = lab_home(target)
-    relative = f"pending/{project_key(target)}-{core.slug(action)}.json"
+def terminal_write(text: str) -> bool:
+    """Show text on this process's interactive terminal; never on redirected output, a pipe or another console."""
+    if not interactive():
+        return False
+    sys.stderr.write(text)
+    sys.stderr.flush()
+    return True
+
+
+def terminal_read(prompt: str) -> str:
+    """Read one line from the interactive terminal (prompt on stderr, so --json output stays clean)."""
+    sys.stderr.write(prompt)
+    sys.stderr.flush()
+    line = sys.stdin.readline()
+    return line.strip()
+
+
+def new_code() -> str:
+    return f"{secrets.randbelow(10**6):06d}"
+
+
+def no_terminal(action: str) -> CatalogError:
+    return CatalogError(f"{action} needs an interactive terminal: run it yourself in PowerShell or cmd (in Git Bash, use winpty).")
+
+
+class ConfirmationChannel:
+    """Owner codes for a long-running front end (play, menu), kept only in this process's memory.
+
+    Each code is shown on this process's interactive terminal, is bound to the
+    exact settings, expires after CODE_TTL and allows one attempt. After
+    `attempts` wrong codes the channel refuses every further confirmation, so
+    codes cannot be guessed through the page in a loop.
+    """
+
+    def __init__(self, attempts: int = 3):
+        self.attempts, self.failures, self.pending = attempts, 0, {}
+        self.lock = threading.Lock()
+
+    def confirm(self, action: str, params_sha: str, code) -> None:
+        with self.lock:
+            if self.failures >= self.attempts:
+                raise CatalogError("Too many wrong confirmation codes in this session; restart catalog.py play or menu.")
+            if code is None:
+                fresh = new_code()
+                if not terminal_write(f"\nOAW owner confirmation for {action}: {fresh}\n"
+                                      "Type it into the page or the menu within 10 minutes. It works once.\n"):
+                    raise no_terminal(action)
+                self.pending[action] = (params_sha, fresh, datetime.now(timezone.utc) + CODE_TTL)
+                raise NeedsConfirmation(f"{action}: a confirmation code was shown on the terminal; type it in to confirm.")
+            entry = self.pending.pop(action, None)
+            if entry is None:
+                raise CatalogError(f"No pending {action} confirmation; request a new code.")
+            expected_params, fresh, expires = entry
+            if expires < datetime.now(timezone.utc) or expected_params != params_sha or not hmac.compare_digest(str(code), fresh):
+                self.failures += 1
+                raise CatalogError(f"{action}: confirmation code does not match these exact settings or has expired; request a new code.")
+
+
+def owner_confirm(target: Path, action: str, params: dict, *, channel: ConfirmationChannel | None = None, code=None) -> None:
+    """Ask the person at the interactive terminal to type back a one-time code; raise unless they do."""
     params_sha = core.record_sha256(params)
-    if code is None:
-        fresh = f"{secrets.randbelow(10**6):06d}"
-        salt = secrets.token_hex(16)
-        pending = {"action": action, "params_sha256": params_sha, "salt": salt,
-                   "code_sha256": hashlib.sha256((salt + fresh).encode()).hexdigest(),
-                   "expires_at": (datetime.now(timezone.utc) + CODE_TTL).isoformat()}
-        lab_write(lab, relative, dump(pending).encode("utf-8"))
-        shown = terminal_write(f"\nOAW owner confirmation for {action}: {fresh}\n"
-                               f"Re-run the same command with --confirm {fresh} within 10 minutes.\n")
-        if not shown:
-            lab_path(lab, relative).unlink()
-            raise CatalogError(f"{action} needs an interactive terminal: run it yourself (PowerShell/cmd, or winpty in Git Bash).")
-        raise NeedsConfirmation(f"{action}: a confirmation code was shown on the terminal; re-run with --confirm CODE.")
-    path = lab_path(lab, relative)
-    pending = load_json(path, None)
-    if not pending:
-        raise CatalogError(f"No pending {action} confirmation; run without --confirm first.")
-    try:
-        expired = datetime.fromisoformat(pending["expires_at"]) < datetime.now(timezone.utc)
-    except (KeyError, ValueError):
-        expired = True
-    expected = pending.get("code_sha256", "")
-    supplied = hashlib.sha256((str(pending.get("salt", "")) + str(code)).encode()).hexdigest()
-    # One attempt per code: any mismatch invalidates it, so codes cannot be guessed in a loop.
-    path.unlink()
-    if expired or pending.get("action") != action or pending.get("params_sha256") != params_sha or not hmac.compare_digest(expected, supplied):
-        raise CatalogError(f"{action}: confirmation code does not match these exact settings or has expired; request a new code.")
+    if channel is not None:
+        channel.confirm(action, params_sha, code)
+        return
+    if not interactive():
+        raise no_terminal(action)
+    fresh = new_code()
+    if not terminal_write(f"\nOAW owner confirmation for {action}: {fresh}\n"):
+        raise no_terminal(action)
+    typed = terminal_read("Type the code shown above to confirm (Enter cancels): ")
+    if not hmac.compare_digest(typed, fresh):
+        raise CatalogError(f"{action}: the confirmation code was refused; nothing changed.")
 
 
 # --------------------------------------------------------------------------- policy and plan
@@ -736,7 +804,7 @@ def load_policy(target: Path):
     return load_json(catalog_path(target, "policy.json"), None)
 
 
-def cmd_policy(target: Path, args) -> dict:
+def cmd_policy(target: Path, args, confirmer: ConfirmationChannel | None = None) -> dict:
     if args.policy_command == "show":
         policy = load_policy(target)
         if not policy:
@@ -751,18 +819,26 @@ def cmd_policy(target: Path, args) -> dict:
                                       [c.strip() for c in (args.sandbox or "").split(",") if c.strip()])
     except ValueError as exc:
         raise CatalogError(str(exc)) from exc
-    owner_confirm(target, "policy-set", params, args.confirm)
-    policy = {**params, "set_at": now_iso(), "confirmed_by": "owner terminal code"}
+    owner_confirm(target, "policy-set", params, channel=confirmer, code=getattr(args, "confirm", None))
+    policy = {**params, "set_at": now_iso(), "confirmed_via": CONFIRMED_VIA}
     save_json(target, ("policy.json",), policy)
     update_view(target)
     return {"status": "set", "policy": policy, "lines": [f"standing policy set: per-food {policy['per_food_token_cap']:,} · weekly {policy['weekly_token_cap']:,} tokens · {', '.join(policy['sandbox'])}"]}
+
+
+def estimate_text(estimate: dict) -> str:
+    """The least the plan can cost (unconditional steps) and what a conditional step may add."""
+    text = f"{estimate['min'] / 1e6:.1f}-{estimate.get('unconditional_max', estimate['max']) / 1e6:.1f}M tokens"
+    if estimate.get("conditional_max"):
+        text += f", plus up to {estimate['conditional_max'] / 1e6:.1f}M if the smoke shows no deterministic negative"
+    return text + f" ({core.TOKEN_LABEL})"
 
 
 def cmd_plan(target: Path, ident: str) -> dict:
     entry = resolve_food(load_registry(target), ident)
     fid = entry["id"]
     evidence = load_evidence(target, fid)
-    derived = core.derive(evidence, [d for d in load_decisions(target) if d.get("food") == fid])
+    derived = core.derive(evidence, food_decisions(load_decisions(target), fid))
     historical = [r for r in evidence if core.evidence_class(r) == "historical"]
     plan = core.decide_plan(fid, derived, historical, load_policy(target))
     plan["created_at"] = now_iso()
@@ -774,11 +850,11 @@ def cmd_plan(target: Path, ident: str) -> dict:
         cost = (f"{step['tokens']['min'] / 1e6:.1f}-{step['tokens']['max'] / 1e6:.1f}M tokens ({step['tokens']['runs']} runs)" if step["tokens"] else step["cost"])
         lines.append(f"  {step['id']:10} {step['state']:28} {cost} · {step['name']}")
         lines.append(f"             can prove: {'; '.join(step['can_prove'])} · cannot prove: {'; '.join(step['cannot_prove'])}")
-    lines.append(f"  total paid estimate: {plan['estimate']['min'] / 1e6:.1f}-{plan['estimate']['max'] / 1e6:.1f}M tokens ({core.TOKEN_LABEL})")
+    lines.append(f"  total paid estimate: {estimate_text(plan['estimate'])}")
     return {"status": "planned", "plan": plan, "lines": lines}
 
 
-def cmd_triage(target: Path, args) -> dict:
+def cmd_triage(target: Path, args, confirmer: ConfirmationChannel | None = None) -> dict:
     entry = resolve_food(load_registry(target), args.food)
     static = latest_static(load_evidence(target, entry["id"]))
     if not static or args.flag not in {f["id"] for f in static["flags"]}:
@@ -786,11 +862,14 @@ def cmd_triage(target: Path, args) -> dict:
     outcome = "benign" if args.benign else "allergen" if args.allergen else "confirm-toxic"
     if not args.reason.strip():
         raise CatalogError("A triage reason is required.")
+    extra = {}
     if outcome in ("benign", "allergen"):
-        owner_confirm(target, "triage", {"food": entry["id"], "flag": args.flag, "outcome": outcome}, args.confirm)
+        owner_confirm(target, "triage", {"food": entry["id"], "flag": args.flag, "outcome": outcome},
+                      channel=confirmer, code=getattr(args, "confirm", None))
+        extra["confirmed_via"] = CONFIRMED_VIA
     record_decision(target, {"kind": "triage", "food": entry["id"], "flag": args.flag, "outcome": outcome,
                              "reason": core.sanitize_text(args.reason, 300), "commit": static.get("commit"),
-                             "evidence_refs": [static["evidence_id"]]})
+                             "evidence_refs": [static["evidence_id"]], **extra})
     update_view(target)
     return {"status": "triaged", "lines": [f"{entry['id']}: {args.flag} → {outcome}"]}
 
@@ -855,25 +934,70 @@ def install_manifest(target: Path) -> dict:
     return manifest
 
 
+_DENIED_PREFIXES = (".git/", ".codex/", ".vscode/", ".idea/", ".github/", ".oaw/backups/", ".oaw/proposals/")
+_DENIED_PATHS = (".mcp.json", ".claude.json", ".gitmodules", ".gitattributes")
+_ABSORBED_FILE = re.compile(r"\.(?:agents|claude)/skills/([a-z0-9]+(?:-[a-z0-9]+)*)/(.+)")
+_PRODUCIBLE = {}
+
+
+def producible_paths() -> frozenset:
+    """Every project path an OAW install can write from this framework's templates (docs/ is never managed)."""
+    if "paths" not in _PRODUCIBLE:
+        try:
+            files = oaw.source_files("knowledge", True, list(oaw.HOSTS), skills=list(oaw.BUNDLED_SKILLS))
+        except oaw.InstallError as exc:
+            raise CatalogError(f"Cannot list the OAW templates: {exc}") from exc
+        _PRODUCIBLE["paths"] = frozenset(p for p in files if not p.startswith("docs/"))
+    return _PRODUCIBLE["paths"]
+
+
+def absorbed_skill_path(relative: str):
+    """The skill name when `relative` is a file absorb can install (allowlisted text in a food skill folder), else None."""
+    match = _ABSORBED_FILE.fullmatch(relative)
+    if not match or match.group(1) in oaw.BUNDLED_SKILLS:
+        return None
+    rest = PurePosixPath(match.group(2))
+    if any(part.casefold() in (".claude", ".codex", ".agents", ".git", "hooks") for part in rest.parts[:-1]):
+        return None
+    name = rest.name.casefold()
+    if name in core.ROUTER_NAMES:
+        return None
+    allowed = (rest.suffix.casefold() in core.INSTALL_ALLOWED_SUFFIXES or match.group(2).casefold() == "agents/openai.yaml"
+               or re.fullmatch(r"(?:license|licence|notice|copying)(?:\.[a-z]+)?", name))
+    return match.group(1) if allowed else None
+
+
 def layer_path_allowed(relative: str, managed) -> bool:
+    """Paths a build may hold and a restore may write: only what OAW itself installs.
+
+    That is the install manifest, the pinned EGM runtime, absorb receipts, and
+    managed files that are OAW templates or allowlisted food skill text. Git,
+    host settings, MCP files and project records are never part of a build.
+    """
     try:
         oaw.relative_path(relative)
     except oaw.InstallError:
         return False
-    if relative == oaw.MANIFEST_PATH or relative.startswith(".oaw/integrations/"):
+    folded = relative.casefold()
+    if (folded.startswith(_DENIED_PREFIXES) or folded in _DENIED_PATHS or "/.git/" in "/" + folded
+            or re.fullmatch(r"\.claude/settings[^/]*\.json", folded)):
+        return False
+    if relative == oaw.MANIFEST_PATH or relative.startswith(oaw.EGM_RUNTIME):
         return True
     if relative.startswith(".oaw/catalog/absorbed/"):
-        return relative.endswith(".json") and relative.count("/") == 3
-    if relative.startswith((".oaw/", "docs/")) or relative in oaw.ALWAYS_PRESERVE:
+        return bool(re.fullmatch(r"\.oaw/catalog/absorbed/[a-z0-9][a-z0-9-]{0,63}\.json", relative))
+    if relative.startswith((".oaw/", "docs/")) or relative in oaw.ALWAYS_PRESERVE or relative not in managed:
         return False
-    return relative in managed
+    return relative in producible_paths() or absorbed_skill_path(relative) is not None
 
 
 def layer_files(target: Path) -> tuple:
-    """OAW-managed layer: install manifest, managed files, integrations, absorb receipts."""
+    """OAW-managed layer: install manifest, managed files OAW can produce, the EGM runtime, absorb receipts."""
     manifest = install_manifest(target)
     files = {oaw.MANIFEST_PATH: oaw.joined(target, oaw.MANIFEST_PATH).read_bytes()}
     for relative in sorted(manifest["managed_files"]):
+        if not layer_path_allowed(relative, manifest["managed_files"]):
+            continue
         path = oaw.joined(target, relative)
         oaw.check_path(path, kind="file")
         if path.is_file():
@@ -916,14 +1040,41 @@ def absorbed_in(files: dict) -> list:
     return parts
 
 
-def record_build(target: Path, lab: Path, files: dict, *, label: str, kind: str, change=None, effect=None, doctor=None) -> dict:
-    """Snapshot the layer into LAB_HOME and name it; an identical composition reuses its build."""
+def build_tar_ref(target: Path, tar_sha: str) -> str:
+    """The only place a restore point of this project can live in LAB_HOME."""
+    return f"builds/{project_key(target)}/{tar_sha[:16]}.tar"
+
+
+def build_index(lab: Path, target: Path) -> dict:
+    """Restore points this LAB_HOME created for this project (tar sha256 -> facts); builds.json alone proves nothing."""
+    value = load_json(lab_path(lab, f"builds/{project_key(target)}/index.json"), {})
+    return value.get("tars", {}) if isinstance(value, dict) and isinstance(value.get("tars"), dict) else {}
+
+
+def _index_build(lab: Path, target: Path, tar_sha: str, files: dict) -> None:
+    tars = build_index(lab, target)
+    if tar_sha not in tars:
+        tars[tar_sha] = {"created_at": now_iso(), "files": len(files)}
+        lab_write(lab, f"builds/{project_key(target)}/index.json", dump({"schema_version": 1, "tars": tars}).encode("utf-8"))
+
+
+def record_build(target: Path, lab: Path, files: dict, *, label: str, kind: str, change=None, effect=None, doctor=None,
+                 label_zh: str | None = None) -> dict:
+    """Snapshot the layer into LAB_HOME and name it; an identical composition reuses its build.
+
+    A new baseline or restore point is evaluated against the default too, so every
+    build in the timeline carries its effect (D12).
+    """
     digest = layer_hash(files)
     tar = build_tar(files)
     tar_sha = core.sha256_bytes(tar)
-    relative = f"builds/{project_key(target)}/{tar_sha[:16]}.tar"
+    relative = build_tar_ref(target, tar_sha)
     if not lab_path(lab, relative).exists():
         lab_write(lab, relative, tar, readonly=True)
+    _index_build(lab, target, tar_sha, files)
+    known = any(b.get("hash") == digest for b in load_builds(target).get("builds", []))
+    if effect is None and not known and kind in ("baseline", "restore-point"):
+        effect = safe_effect(target, lab)
     box = {}
 
     def mutate(doc):
@@ -933,7 +1084,8 @@ def record_build(target: Path, lab: Path, files: dict, *, label: str, kind: str,
         if existing is None:
             number = max((b.get("n", 0) for b in doc["builds"]), default=0) + 1
             existing = {"n": number, "name": core.build_name(number, {p: core.sha256_bytes(d) for p, d in files.items() if p != oaw.MANIFEST_PATH}),
-                        "hash": digest, "label": core.sanitize_text(label, 200), "kind": kind, "created_at": now_iso(),
+                        "hash": digest, "label": core.sanitize_text(label, 200), "label_zh": core.sanitize_text(label_zh or "", 200) or None,
+                        "kind": kind, "created_at": now_iso(),
                         "skills": skills_in(files), "components": absorbed_in(files), "change": change or {},
                         "effect": effect, "doctor": doctor,
                         "snapshot": {"lab_ref": relative, "sha256": tar_sha, "files": len(files), "bytes": sum(len(v) for v in files.values())}}
@@ -990,33 +1142,95 @@ def cmd_builds(target: Path) -> dict:
     return {"status": "builds", "builds": doc.get("builds", []), "current": doc.get("current"), "matches": matching, "lines": lines}
 
 
+def snapshot_manifest(lab: Path, data: bytes) -> dict:
+    """The restore point's install.json, validated with oaw.read_manifest's rules in a LAB_HOME scratch copy."""
+    scratch = scratch_dir(lab, "restore-check-")
+    try:
+        path = scratch / ".oaw" / "install.json"
+        path.parent.mkdir(parents=True)
+        path.write_bytes(data)
+        try:
+            manifest = oaw.read_manifest(scratch)
+        except oaw.InstallError as exc:
+            raise CatalogError(f"The restore point lacks a valid install manifest: {exc}") from exc
+    finally:
+        rmtree(scratch)
+    if manifest is None:
+        raise CatalogError("The restore point lacks a valid install manifest.")
+    return manifest
+
+
+def load_restore_point(target: Path, lab: Path, build: dict) -> tuple:
+    """Bytes and manifest of a build's snapshot, accepted only from where record_build puts this project's builds."""
+    snapshot = build.get("snapshot") if isinstance(build.get("snapshot"), dict) else {}
+    tar_sha = str(snapshot.get("sha256") or "")
+    if not re.fullmatch(r"[0-9a-f]{64}", tar_sha) or snapshot.get("lab_ref") != build_tar_ref(target, tar_sha) \
+            or tar_sha not in build_index(lab, target):
+        raise CatalogError("Refused: this is not a restore point this LAB_HOME created for this project; nothing was restored.")
+    tar_path = lab_path(lab, build_tar_ref(target, tar_sha))
+    if not tar_path.is_file() or core.sha256_bytes(tar_path.read_bytes()) != tar_sha:
+        raise CatalogError("The restore point is missing from this LAB_HOME or changed; nothing was restored.")
+    snap = read_tar(tar_path)
+    if oaw.MANIFEST_PATH not in snap:
+        raise CatalogError("The restore point lacks a valid install manifest.")
+    manifest = snapshot_manifest(lab, snap[oaw.MANIFEST_PATH])
+    for relative in sorted(set(snap) | set(manifest["managed_files"])):
+        if not layer_path_allowed(relative, manifest["managed_files"]):
+            raise CatalogError(f"Restore point contains a path outside the OAW-managed layer: {core.sanitize_text(relative, 80)}")
+    return snap, manifest
+
+
 def cmd_restore(target: Path, ident: str, apply: bool) -> dict:
+    """Switch the OAW-managed layer to a build. Files the current install does not manage are never overwritten:
+    a declared custom file is kept (and stays custom); any other existing file blocks the restore."""
     doc = load_builds(target)
     build = find_build(doc, ident)
     lab = lab_home(target)
-    tar_path = lab_path(lab, build["snapshot"]["lab_ref"])
-    if not tar_path.is_file() or core.sha256_bytes(tar_path.read_bytes()) != build["snapshot"]["sha256"]:
-        raise CatalogError("The restore point is missing from this LAB_HOME or changed; nothing was restored.")
-    snap = read_tar(tar_path)
-    try:
-        snap_manifest = json.loads(snap[oaw.MANIFEST_PATH].decode("utf-8"))
-        snap_managed = snap_manifest["managed_files"]
-    except (KeyError, ValueError, TypeError) as exc:
-        raise CatalogError("The restore point lacks a valid install manifest.") from exc
-    for relative in snap:
-        if not layer_path_allowed(relative, snap_managed):
-            raise CatalogError(f"Restore point contains a path outside the OAW-managed layer: {core.sanitize_text(relative, 80)}")
+    snap, snap_manifest = load_restore_point(target, lab, build)
     current, manifest = layer_files(target)
-    writes = [{"path": p, "before": core.sha256_bytes(current[p]) if p in current else None, "after": core.sha256_bytes(snap[p])}
-              for p in sorted(snap) if current.get(p) != snap[p]]
+    custom_now = set(manifest.get("custom_files", []))
+    kept, conflicts, writes = [], [], []
+    for relative in sorted(p for p in snap if p != oaw.MANIFEST_PATH):
+        if current.get(relative) == snap[relative]:
+            continue
+        path = oaw.joined(target, relative)
+        oaw.check_path(path, kind="file")
+        if relative not in current and relative in custom_now:
+            kept.append(relative)
+            continue
+        if relative not in current and os.path.lexists(path):
+            if not path.is_file() or path.read_bytes() != snap[relative]:
+                conflicts.append(relative)
+            continue
+        writes.append({"path": relative, "before": core.sha256_bytes(current[relative]) if relative in current else None,
+                       "after": core.sha256_bytes(snap[relative])})
+    snap_custom = set(snap_manifest.get("custom_files", []))
     deletes = [{"path": p, "before": core.sha256_bytes(current[p])} for p in sorted(current)
-               if p not in snap and layer_path_allowed(p, manifest["managed_files"])]
+               if p != oaw.MANIFEST_PATH and p not in snap and p not in snap_custom and layer_path_allowed(p, manifest["managed_files"])]
+    # The written manifest is the build's, except that the owner's custom files stay custom.
+    out = copy.deepcopy(snap_manifest)
+    for relative in custom_now:
+        out["managed_files"].pop(relative, None)
+    out["custom_files"] = sorted(p for p in (set(out.get("custom_files", [])) | custom_now)
+                                 if p not in out["managed_files"] and os.path.isfile(oaw.joined(target, p)))
+    manifest_bytes = snap[oaw.MANIFEST_PATH] if out == snap_manifest else oaw.json_bytes(out)
+    if current.get(oaw.MANIFEST_PATH) != manifest_bytes:
+        writes.append({"path": oaw.MANIFEST_PATH, "before": core.sha256_bytes(current[oaw.MANIFEST_PATH]),
+                       "after": core.sha256_bytes(manifest_bytes)})
     lines = [f"restore {build['name']} ({build['label']}): write {len(writes)} · delete {len(deletes)} · OAW-managed layer only"]
     lines += [f"  write  {w['path']}" for w in writes[:40]] + [f"  delete {d['path']}" for d in deletes[:40]]
+    lines += [f"  keep   {p} (your custom file stays as it is)" for p in kept[:40]]
+    lines += [f"  BLOCKED {p} (exists and is not managed by the current install)" for p in conflicts[:40]]
+    result = {"build": build["name"], "writes": writes, "deletes": deletes, "kept": kept, "conflicts": conflicts}
     if not apply:
-        lines.append("preview only: re-run with --apply (a restore point of the current install is taken first)")
-        return {"status": "preview", "build": build["name"], "writes": writes, "deletes": deletes, "lines": lines}
-    before = record_build(target, lab, current, label=f"restore point before restoring {build['name']}", kind="restore-point")
+        lines.append("restore is blocked: move or rename those files first" if conflicts else
+                     "preview only: re-run with --apply (a restore point of the current install is taken first)")
+        return {"status": "preview", **result, "lines": lines}
+    if conflicts:
+        raise CatalogError("Restore would overwrite file(s) the current install does not manage: "
+                           + ", ".join(core.sanitize_text(p, 80) for p in conflicts[:10]) + "; nothing was restored.")
+    before = record_build(target, lab, current, label=f"restore point before restoring {build['name']}",
+                          label_zh=f"還原到 {build['name']} 之前的還原點", kind="restore-point")
     try:
         with oaw.install_lock(target):
             for item in deletes:
@@ -1026,24 +1240,24 @@ def cmd_restore(target: Path, ident: str, apply: bool) -> dict:
                     path.unlink()
                     _prune_dirs(target, path)
             for item in sorted(writes, key=lambda w: w["path"] == oaw.MANIFEST_PATH):
-                oaw.atomic_write(oaw.joined(target, item["path"]), snap[item["path"]])
+                data = manifest_bytes if item["path"] == oaw.MANIFEST_PATH else snap[item["path"]]
+                oaw.atomic_write(oaw.joined(target, item["path"]), data)
     except (OSError, oaw.InstallError) as exc:
         raise CatalogError(f"Restore failed; the previous install is kept as {before['name']}: {exc}") from exc
     doctor = doctor_summary(target)
     # Re-evaluate against the default so every renderer shows the restored layer, not the one before it.
     effect = safe_effect(target, lab)
-
-    def mutate(builds):
-        builds["current"] = build["name"]
-        builds.setdefault("history", []).append({"at": now_iso(), "action": "restore", "build": build["name"],
-                                                 "label": f"restored from {before['name']}"})
-    update_json(target, ("builds.json",), mutate, load_builds(target))
+    after, _m = layer_files(target)
+    # The same composition reuses the build's name; keeping a custom file can make it a new one.
+    restored = record_build(target, lab, after, label=f"restore {build['name']}" + (" (custom files kept)" if kept else ""),
+                            label_zh=f"還原到 {build['name']}" + ("（保留你的自訂檔）" if kept else ""), kind="restore",
+                            change={"restored": build["name"], "kept": kept}, effect=effect, doctor=doctor["status"])
     update_view(target)
-    lines.append(f"restored {build['name']} · previous install kept as {before['name']} · doctor: {doctor['status']}"
+    lines.append(f"restored {restored['name']} · previous install kept as {before['name']} · doctor: {doctor['status']}"
                  f" · quality: {effect.get('quality', 'not computed')}")
     lines += [f"  FAIL {f}" for f in doctor["fail"]]
-    return {"status": "restored", "build": build["name"], "restore_point": before["name"], "doctor": doctor,
-            "effect": effect, "writes": writes, "deletes": deletes, "lines": lines}
+    return {"status": "restored", **result, "build": restored["name"], "requested": build["name"], "restore_point": before["name"],
+            "doctor": doctor, "effect": effect, "lines": lines}
 
 
 # --------------------------------------------------------------------------- effect
@@ -1070,7 +1284,7 @@ def compute_effect(target: Path, lab: Path) -> dict:
         rmtree(scratch)
     registry = load_registry(target)
     measured = [r for fid in registry.get("foods", {}) for r in load_evidence(target, fid) if core.evidence_class(r) == "live"]
-    effect = core.effect_vs_default(core.install_inventory(current), core.install_inventory(default), measured)
+    effect = core.effect_vs_default(core.install_inventory(current), core.install_inventory(default), measured, hosts=hosts)
     effect.update(computed_at=now_iso(), layer_hash=layer_hash(files),
                   default_recipe={"profile": "minimal", "with_improve": False, "hosts": hosts, "skills": oaw.default_skills("minimal", False)},
                   current_recipe={"profile": manifest.get("profile"), "with_improve": manifest.get("with_improve"),
@@ -1123,12 +1337,31 @@ def load_receipts(target: Path) -> dict:
     return receipts
 
 
+def food_decisions(decisions, fid: str) -> list:
+    """One food's decisions after its latest `forget` (a forgotten food starts over)."""
+    return core.decisions_for(decisions, fid)
+
+
+def stage_lint(lab: Path, name: str, files: dict) -> list:
+    """OAW's own skill lint (the one doctor runs) on a copy of the skill in LAB_HOME scratch, never in the project."""
+    scratch = scratch_dir(lab, "lint-")
+    try:
+        root = scratch / name
+        for relative, data in files.items():
+            path = Path(oaw_common.confined_path(root, *relative.split("/")))
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(data)
+        return [core.sanitize_text(issue, 160) for issue in oaw.skill_issues(root / "SKILL.md")]
+    finally:
+        rmtree(scratch)
+
+
 def cmd_absorb(target: Path, ident: str, component_ids, reason: str, apply: bool) -> dict:
     registry = load_registry(target)
     entry = resolve_food(registry, ident)
     fid = entry["id"]
     evidence = load_evidence(target, fid)
-    decisions = [d for d in load_decisions(target) if d.get("food") == fid]
+    decisions = food_decisions(load_decisions(target), fid)
     derived = core.derive(evidence, decisions)
     current = {c["id"]: c for c in derived["components"]}
     static = latest_static(evidence)
@@ -1171,40 +1404,57 @@ def cmd_absorb(target: Path, ident: str, component_ids, reason: str, apply: bool
             selections.append({"id": hid, "outcome": "backlog", "kind": "method", "oaw_target": proposal.get("oaw_target", "")})
     if not selections:
         raise CatalogError("Name at least one component with --components.")
+    lab = lab_home(target)
     sealed = None
     for selection in selections:
         if selection["outcome"] != "installed":
             continue
         if sealed is None:
-            sealed = read_tar(lab_path(lab_home(target), static["sealed"]["lab_ref"]))
+            sealed = read_tar(lab_path(lab, static["sealed"]["lab_ref"]))
             if core.tree_sha256({p: core.sha256_bytes(d) for p, d in sealed.items()}) != static["tree_sha256"]:
                 raise CatalogError("The sealed food no longer matches its static record; taste it again.")
         skill = selection["skill"]
+        package = {}
+        for member in selection["paths"]:
+            relative = member[len(skill["dir"]) + 1:] if skill["dir"] else member
+            relative = "SKILL.md" if relative.casefold() == "skill.md" else relative
+            package[relative] = sealed[member]
+        # The same lint doctor runs: a skill that would make the project unhealthy is never installed.
+        issues = stage_lint(lab, selection["name"], package)
+        if issues:
+            raise CatalogError(f"{selection['id']} fails OAW's portable skill lint (doctor would fail): {issues[0]}; nothing was installed.")
         for host in hosts:
             prefix = (".agents/skills/" if host == "codex" else ".claude/skills/") + selection["name"] + "/"
-            for member in selection["paths"]:
-                relative = member[len(skill["dir"]) + 1:] if skill["dir"] else member
-                relative = "SKILL.md" if relative.casefold() == "skill.md" else relative
+            for relative, data in package.items():
                 destination = prefix + relative
                 oaw.relative_path(destination)
+                if absorbed_skill_path(destination) != selection["name"]:
+                    raise CatalogError(f"Install target outside the allowlist: {core.sanitize_text(destination, 80)}")
                 path = oaw.joined(target, destination)
                 oaw.check_path(path, kind="file")
                 if path.exists() or destination in manifest["managed_files"] or destination in manifest.get("custom_files", []):
                     raise CatalogError(f"Install target already exists: {destination}")
-                writes[destination] = sealed[member]
+                writes[destination] = data
+    installed = [s for s in selections if s["outcome"] == "installed"]
+    backlog = [s for s in selections if s["outcome"] != "installed"]
     lines = [f"absorb {fid}: " + ", ".join(f"{s['id']} ({'install skill ' + s['name'] if s['outcome'] == 'installed' else 'backlog item, no code change'})" for s in selections)]
     lines += [f"  add {p}" for p in sorted(writes)]
+    if not installed:
+        lines.append("  no install file changes and no new build: backlog items are recorded as decisions only")
     if not apply:
-        lines.append("preview only: re-run with --apply (a restore point is taken first, then a new build is named)")
+        lines.append("preview only: re-run with --apply" + (" (a restore point is taken first, then a new build is named)" if installed else ""))
         return {"status": "preview", "food": fid, "selections": [{k: v for k, v in s.items() if k not in ("skill", "paths")} for s in selections],
-                "writes": sorted(writes), "lines": lines}
-    lab = lab_home(target)
-    files, _manifest = layer_files(target)
-    first = not load_builds(target).get("builds")
-    before = record_build(target, lab, files, label="baseline before the first catalog change" if first else f"restore point before absorbing {fid}",
-                          kind="baseline" if first else "restore-point")
-    manifest_path = oaw.joined(target, oaw.MANIFEST_PATH)
-    if writes:
+                "writes": sorted(writes), "creates_build": bool(installed), "lines": lines}
+    stamp = now_iso()
+    refs = [r["evidence_id"] for r in evidence if r.get("evidence_id")][:10]
+    build = before = doctor = effect = None
+    if installed:
+        files, _manifest = layer_files(target)
+        first = not load_builds(target).get("builds")
+        before = record_build(target, lab, files, label="baseline before the first catalog change" if first else f"restore point before absorbing {fid}",
+                              label_zh="第一次變更前的基準版" if first else f"吸收 {fid} 之前的還原點",
+                              kind="baseline" if first else "restore-point")
+        manifest_path = oaw.joined(target, oaw.MANIFEST_PATH)
         written = []
         with oaw.install_lock(target):
             original = manifest_path.read_bytes()
@@ -1226,62 +1476,99 @@ def cmd_absorb(target: Path, ident: str, component_ids, reason: str, apply: bool
                         _prune_dirs(target, path)
                 oaw.atomic_write(manifest_path, original)
                 raise CatalogError(f"Absorb install failed and was rolled back: {exc}") from exc
-    stamp = now_iso()
 
-    def receipt(doc):
-        doc.update(schema_version=1, food=fid, lineage=private_ref(entry["source"]), commit=entry["source"].get("commit"),
-                   tree_sha256=(static or {}).get("tree_sha256"))
-        parts = doc.setdefault("components", {})
-        for selection in selections:
-            parts[selection["id"]] = {"kind": selection["kind"], "outcome": selection["outcome"], "absorbed_at": stamp,
-                                      "files": {p: core.sha256_bytes(d) for p, d in writes.items()
-                                                if selection["outcome"] == "installed" and re.match(r"\.(?:agents|claude)/skills/" + re.escape(selection.get("name", "")) + "/", p)},
-                                      "oaw_target": core.sanitize_text(selection.get("oaw_target", ""), 200)}
-    update_json(target, ("absorbed", core.slug(fid) + ".json"), receipt, {})
-    doctor = doctor_summary(target)
-    effect = safe_effect(target, lab)
-    after, _m = layer_files(target)
-    build = record_build(target, lab, after, label=f"absorb {fid}: {', '.join(s['id'] for s in selections)}", kind="absorb",
-                         change={"added": [s["id"] for s in selections], "food": fid}, effect=effect, doctor=doctor["status"])
+        def receipt(doc):
+            doc.update(schema_version=1, food=fid, lineage=private_ref(entry["source"]), commit=entry["source"].get("commit"),
+                       tree_sha256=(static or {}).get("tree_sha256"))
+            parts = doc.setdefault("components", {})
+            for selection in installed:
+                prefix = re.compile(r"\.(?:agents|claude)/skills/" + re.escape(selection["name"]) + "/")
+                parts[selection["id"]] = {"kind": selection["kind"], "outcome": "installed", "absorbed_at": stamp, "name": selection["name"],
+                                          "files": {p: core.sha256_bytes(d) for p, d in writes.items() if prefix.match(p)}}
+        update_json(target, ("absorbed", core.slug(fid) + ".json"), receipt, {})
+        doctor = doctor_summary(target)
+        effect = safe_effect(target, lab)
+        after, _m = layer_files(target)
+        ids = ", ".join(s["id"] for s in installed)
+        build = record_build(target, lab, after, label=f"absorb {fid}: {ids}", label_zh=f"吸收 {fid}：{ids}", kind="absorb",
+                             change={"added": [s["id"] for s in installed], "food": fid}, effect=effect, doctor=doctor["status"])
     for selection in selections:
         record_decision(target, {"kind": "absorb", "food": fid, "components": [selection["id"]], "outcome": selection["outcome"],
                                  "reason": core.sanitize_text(reason or "owner choice", 300), "commit": entry["source"].get("commit"),
-                                 "evidence_refs": [r["evidence_id"] for r in evidence if r.get("evidence_id")][:10], "build": build["name"]})
-
-    def lifecycle(reg):
-        reg["foods"][fid]["lifecycle"] = "absorbed"
-    update_json(target, ("registry.json",), lifecycle, {"schema_version": 1, "foods": {}})
+                                 "evidence_refs": refs, "build": build["name"] if build and selection["outcome"] == "installed" else None,
+                                 **({"oaw_target": core.sanitize_text(selection.get("oaw_target", ""), 200)} if selection["outcome"] != "installed" else {})})
+    if installed:
+        def lifecycle(reg):
+            reg["foods"][fid]["lifecycle"] = "absorbed"
+        update_json(target, ("registry.json",), lifecycle, {"schema_version": 1, "foods": {}})
     update_view(target)
-    lines.append(f"build {build['name']} (restore point {before['name']}) · doctor: {doctor['status']} · quality: {effect.get('quality', 'not computed')}")
-    lines += [f"  FAIL {f}" for f in doctor["fail"]]
-    return {"status": "absorbed", "food": fid, "build": build["name"], "restore_point": before["name"], "doctor": doctor,
-            "writes": sorted(writes), "effect": effect, "lines": lines}
+    if build:
+        lines.append(f"build {build['name']} (restore point {before['name']}) · doctor: {doctor['status']} · quality: {effect.get('quality', 'not computed')}")
+        lines += [f"  FAIL {f}" for f in doctor["fail"]]
+    if backlog:
+        lines.append(f"noted {len(backlog)} backlog item(s): decisions only, no code changed")
+    return {"status": "absorbed" if build else "noted", "food": fid, "build": build["name"] if build else None,
+            "restore_point": before["name"] if before else None, "doctor": doctor, "writes": sorted(writes), "effect": effect,
+            "backlog": [s["id"] for s in backlog], "lines": lines}
 
 
-def cmd_remove(target: Path, name: str, reason: str, apply: bool) -> dict:
+def receipt_files(manifest: dict, part: dict) -> tuple:
+    """(skill name, {path: sha256}) an absorb receipt may delete, or a refusal.
+
+    A receipt is shared project data, so it is checked, not trusted: every path
+    must sit in one food skill folder, be allowlisted text, and be in the install
+    manifest with the same hash.
+    """
+    files = part.get("files") if isinstance(part.get("files"), dict) else {}
+    folders = {absorbed_skill_path(p) for p in files}
+    name = part.get("name")
+    if not files or len(folders) != 1 or None in folders or (name is not None and folders != {name}):
+        raise CatalogError("The absorb receipt lists a path outside one absorbed skill folder; nothing was removed.")
+    for path, checksum in files.items():
+        if manifest["managed_files"].get(path) != checksum:
+            raise CatalogError(f"The absorb receipt lists a path outside the managed install ({core.sanitize_text(path, 80)}); nothing was removed.")
+    return folders.pop(), dict(files)
+
+
+def bundled_change(target: Path, manifest: dict, names: list, *, adding: bool):
+    """The oaw.py migrate plan that removes or re-adds bundled skills; never both."""
+    selected = list(manifest["skills"]) if "skills" in manifest else oaw.default_skills(manifest["profile"], manifest["with_improve"])
+    if adding:
+        selection = sorted(set(selected) | set(names))
+    else:
+        selection = [s for s in selected if s not in names]
+
+    def plan():
+        try:
+            return oaw.plan_install(target, manifest["profile"], manifest["with_improve"], migrate=True,
+                                    hosts=manifest.get("hosts", ["codex"]), skills=selection)
+        except oaw.InstallError as exc:
+            raise CatalogError(str(exc)) from exc
+    preview = plan()
+    actions = [a for a in preview["actions"] if a["action"] not in ("unchanged", "preserve")]
+    if not adding and any(a["action"] == "add" for a in actions):
+        raise CatalogError("A removal never adds: this plan would install other skills; resolve the recipe with oaw.py migrate first.")
+    if adding and any(a["action"].startswith("retire") for a in actions):
+        raise CatalogError("A re-add never retires: this plan would remove other skills; resolve the recipe with oaw.py migrate first.")
+    return selected, selection, actions, plan
+
+
+def cmd_remove(target: Path, name: str, reason: str, apply: bool, *, food: bool = False) -> dict:
+    """Remove `egm`, one bundled skill, one absorbed skill (by skill name) or, with `food`, every installed part of a food."""
     manifest = install_manifest(target)
-    selected = manifest.get("skills") or oaw.default_skills(manifest["profile"], manifest["with_improve"])
     receipts = load_receipts(target)
-    if name == "egm" or name in oaw.BUNDLED_SKILLS:
+    if apply and not (reason or "").strip():
+        raise CatalogError("A removal reason is required with --apply (D6: record why).")
+    if not food and (name == "egm" or name in oaw.BUNDLED_SKILLS):
         targets = list(oaw.EGM_SKILLS) if name == "egm" else [name]
-        missing = [t for t in targets if t not in selected]
-        if len(missing) == len(targets):
+        selected, selection, actions, plan = bundled_change(target, manifest, targets, adding=False)
+        if not [t for t in targets if t in selected]:
             raise CatalogError(f"{name} is not in the installed recipe.")
-        selection = [s for s in selected if s not in targets]
-
-        def plan():
-            try:
-                return oaw.plan_install(target, manifest["profile"], manifest["with_improve"], migrate=True,
-                                        hosts=manifest.get("hosts", ["codex"]), skills=selection)
-            except oaw.InstallError as exc:
-                raise CatalogError(str(exc)) from exc
-        preview = plan()
-        actions = [a for a in preview["actions"] if a["action"] not in ("unchanged", "preserve")]
         lines = [f"remove {name} through oaw.py migrate (recipe: {', '.join(selection) or 'no bundled skills'})"]
         lines += [f"  {a['action']:20} {a['path']}" for a in actions]
         conflicts = [a["path"] for a in actions if a["action"] in ("conflict", "retire-conflict")]
         if not apply:
-            lines.append("preview only: re-run with --apply (backup and restore point first)")
+            lines.append("preview only: re-run with --reason TEXT --apply (backup and restore point first)")
             return {"status": "preview", "remove": name, "actions": actions, "conflicts": conflicts, "lines": lines}
         if conflicts:
             raise CatalogError("Edited files block this removal; resolve them with oaw.py migrate first: " + ", ".join(conflicts))
@@ -1289,31 +1576,48 @@ def cmd_remove(target: Path, name: str, reason: str, apply: bool) -> dict:
         files, _m = layer_files(target)
         first = not load_builds(target).get("builds")
         before = record_build(target, lab, files, label="baseline before the first catalog change" if first else f"restore point before removing {name}",
+                              label_zh="第一次變更前的基準版" if first else f"移除 {name} 之前的還原點",
                               kind="baseline" if first else "restore-point")
         try:
             result = oaw.apply_plan(plan(), migrate=True)
         except oaw.InstallError as exc:
             raise CatalogError(str(exc)) from exc
-        removed, backup, food_ref = targets, result.get("backup"), name
+        removed, backup, food_ref = [t for t in targets if t in selected], result.get("backup"), name
     else:
-        owner = next((r for r in receipts.values() for cid, part in r.get("components", {}).items()
-                      if part.get("outcome") == "installed" and (cid == name or cid == "skill:" + name or r["food"] == name)), None)
-        if owner is None:
-            raise CatalogError(f"{core.sanitize_text(name, 80)!r} is neither a bundled skill, egm, nor an absorbed food skill.")
-        parts = {cid: part for cid, part in owner["components"].items() if part.get("outcome") == "installed"
-                 and (cid in (name, "skill:" + name) or owner["food"] == name)}
-        deletes = {p: h for part in parts.values() for p, h in part.get("files", {}).items()}
+        if food:
+            owner = receipts.get(name)
+            parts = {cid: part for cid, part in ((owner or {}).get("components") or {}).items()
+                     if isinstance(part, dict) and part.get("outcome") == "installed"}
+        else:
+            # A skill name means exactly that skill: never a food id, never another skill of the same food.
+            owner, parts = None, {}
+            for receipt in receipts.values():
+                for cid, part in (receipt.get("components") or {}).items():
+                    if isinstance(part, dict) and part.get("outcome") == "installed" and \
+                            (part.get("name") == name or (part.get("name") is None and cid == "skill:" + name)):
+                        owner, parts = receipt, {cid: part}
+                        break
+                if owner:
+                    break
+        if not owner or not parts:
+            raise CatalogError(f"{core.sanitize_text(name, 80)!r} is neither a bundled skill, egm, nor an installed absorbed "
+                               + ("food" if food else "skill") + ("" if food else " (use --food for a food id)") + ".")
+        deletes = {}
+        for cid, part in parts.items():
+            _skill, files = receipt_files(manifest, part)
+            deletes.update(files)
         edited = [p for p, h in deletes.items() if oaw.joined(target, p).is_file() and core.sha256_bytes(oaw.joined(target, p).read_bytes()) != h]
         lines = [f"remove {', '.join(parts)} from {owner['food']} (absorbed skill files)"] + [f"  delete {p}" for p in sorted(deletes)]
         if edited:
             raise CatalogError("Edited absorbed files are protected; restore or remove them by hand: " + ", ".join(edited))
         if not apply:
-            lines.append("preview only: re-run with --apply (restore point first)")
+            lines.append("preview only: re-run with --reason TEXT --apply (restore point first)")
             return {"status": "preview", "remove": name, "deletes": sorted(deletes), "lines": lines}
         lab = lab_home(target)
         files, _m = layer_files(target)
         first = not load_builds(target).get("builds")
         before = record_build(target, lab, files, label="baseline before the first catalog change" if first else f"restore point before removing {name}",
+                              label_zh="第一次變更前的基準版" if first else f"移除 {name} 之前的還原點",
                               kind="baseline" if first else "restore-point")
         manifest_path = oaw.joined(target, oaw.MANIFEST_PATH)
         with oaw.install_lock(target):
@@ -1338,16 +1642,91 @@ def cmd_remove(target: Path, name: str, reason: str, apply: bool) -> dict:
     doctor = doctor_summary(target)
     effect = safe_effect(target, lab)
     after, _m = layer_files(target)
-    build = record_build(target, lab, after, label=f"remove {name}", kind="remove", change={"removed": removed},
+    build = record_build(target, lab, after, label=f"remove {name}", label_zh=f"移除 {name}", kind="remove", change={"removed": removed},
                          effect=effect, doctor=doctor["status"])
     record_decision(target, {"kind": "remove", "food": food_ref,
-                             "components": removed, "outcome": "removed", "reason": core.sanitize_text(reason or "owner choice", 300),
+                             "components": removed, "outcome": "removed", "reason": core.sanitize_text(reason, 300),
                              "build": build["name"], "note": "re-adding requires testing again (D6)"})
     update_view(target)
     lines.append(f"build {build['name']} (restore point {before['name']}) · doctor: {doctor['status']}" + (f" · backup {backup}" if backup else ""))
     lines += [f"  FAIL {f}" for f in doctor["fail"]]
     return {"status": "removed", "remove": name, "build": build["name"], "restore_point": before["name"], "doctor": doctor,
             "backup": backup, "lines": lines}
+
+
+def cmd_readd(target: Path, name: str, reason: str, apply: bool) -> dict:
+    """Re-add `egm` or one bundled skill through oaw.py migrate, keeping every later change (D6: re-test it)."""
+    if name != "egm" and name not in oaw.BUNDLED_SKILLS:
+        raise CatalogError(f"{core.sanitize_text(name, 80)!r} is not egm or a bundled skill; food skills come back by absorbing them again.")
+    if apply and not (reason or "").strip():
+        raise CatalogError("A re-add reason is required with --apply (D6: record why).")
+    manifest = install_manifest(target)
+    targets = list(oaw.EGM_SKILLS) if name == "egm" else [name]
+    selected, selection, actions, plan = bundled_change(target, manifest, targets, adding=True)
+    missing = [t for t in targets if t not in selected]
+    if not missing:
+        raise CatalogError(f"{name} is already installed.")
+    conflicts = [a["path"] for a in actions if a["action"] in ("conflict", "retire-conflict")]
+    lines = [f"re-add {name} through oaw.py migrate (recipe: {', '.join(selection)}); untested until tested again (D6)"]
+    lines += [f"  {a['action']:20} {a['path']}" for a in actions]
+    if not apply:
+        lines.append("preview only: re-run with --reason TEXT --apply (backup and restore point first)")
+        return {"status": "preview", "readd": name, "actions": actions, "conflicts": conflicts, "lines": lines}
+    if conflicts:
+        raise CatalogError("Edited files block this re-add; resolve them with oaw.py migrate first: " + ", ".join(conflicts))
+    lab = lab_home(target)
+    files, _m = layer_files(target)
+    first = not load_builds(target).get("builds")
+    before = record_build(target, lab, files, label="baseline before the first catalog change" if first else f"restore point before re-adding {name}",
+                          label_zh="第一次變更前的基準版" if first else f"加回 {name} 之前的還原點",
+                          kind="baseline" if first else "restore-point")
+    try:
+        result = oaw.apply_plan(plan(), migrate=True)
+    except oaw.InstallError as exc:
+        raise CatalogError(str(exc)) from exc
+    doctor = doctor_summary(target)
+    effect = safe_effect(target, lab)
+    after, _m = layer_files(target)
+    build = record_build(target, lab, after, label=f"re-add {name}", label_zh=f"加回 {name}", kind="readd", change={"added": missing},
+                         effect=effect, doctor=doctor["status"])
+    record_decision(target, {"kind": "readd", "food": name, "components": missing, "outcome": "re-added",
+                             "reason": core.sanitize_text(reason, 300), "build": build["name"],
+                             "note": "re-added parts are untested until tested again (D6)"})
+    update_view(target)
+    lines.append(f"build {build['name']} (restore point {before['name']}) · doctor: {doctor['status']} · backup {result.get('backup')}")
+    lines += [f"  FAIL {f}" for f in doctor["fail"]]
+    return {"status": "re-added", "readd": name, "build": build["name"], "restore_point": before["name"], "doctor": doctor,
+            "backup": result.get("backup"), "lines": lines}
+
+
+def cmd_forget(target: Path, ident: str, reason: str, apply: bool) -> dict:
+    """Drop a food from the cards (registry entry, evidence, plan); its decisions stay in the log, cut off by a forget record."""
+    entry = resolve_food(load_registry(target), ident)
+    fid = entry["id"]
+    receipt = load_receipts(target).get(fid) or {}
+    if any(isinstance(p, dict) and p.get("outcome") == "installed" for p in (receipt.get("components") or {}).values()):
+        raise CatalogError(f"{fid} has absorbed parts; remove them first (catalog.py remove {fid} --food).")
+    folder = evidence_dir(target, fid)
+    paths = sorted(p.relative_to(target).as_posix() for p in folder.glob("*.json")) if folder.is_dir() else []
+    plan = catalog_path(target, "plans", core.slug(fid) + ".json")
+    lines = [f"forget {fid}: registry entry, {len(paths)} evidence file(s)" + (", plan" if plan.exists() else "")
+             + "; decisions stay in decisions.jsonl; the sealed copy in LAB_HOME is kept"]
+    if not apply:
+        lines.append("preview only: re-run with --apply")
+        return {"status": "preview", "food": fid, "evidence": paths, "lines": lines}
+
+    def mutate(registry):
+        registry.get("foods", {}).pop(fid, None)
+    update_json(target, ("registry.json",), mutate, {"schema_version": 1, "foods": {}})
+    if folder.is_dir():
+        rmtree(folder)
+    if plan.exists():
+        plan.unlink()
+    record_decision(target, {"kind": "forget", "food": fid, "outcome": "forgotten",
+                             "reason": core.sanitize_text(reason or "owner choice", 300)})
+    update_view(target)
+    lines.append(f"forgot {fid}")
+    return {"status": "forgotten", "food": fid, "lines": lines}
 
 
 # --------------------------------------------------------------------------- scout
@@ -1471,7 +1850,7 @@ def view_state(target: Path) -> dict:
     policy = load_policy(target)
     plans = {}
     for fid in registry.get("foods", {}):
-        derived = core.derive(evidence[fid], [d for d in decisions if d.get("food") == fid])
+        derived = core.derive(evidence[fid], food_decisions(decisions, fid))
         historical = [r for r in evidence[fid] if core.evidence_class(r) == "historical"]
         plans[fid] = core.decide_plan(fid, derived, historical, policy)
     builds = load_builds(target)
@@ -1542,7 +1921,6 @@ def parser() -> argparse.ArgumentParser:
     group.add_argument("--allergen", action="store_true")
     group.add_argument("--confirm-toxic", action="store_true")
     triage.add_argument("--reason", required=True)
-    triage.add_argument("--confirm", metavar="CODE")
     imported = commands.add_parser("import-report", parents=[common], help="import a digestion record directory as historical-prior evidence")
     imported.add_argument("food")
     imported.add_argument("directory")
@@ -1555,16 +1933,24 @@ def parser() -> argparse.ArgumentParser:
     policy_set.add_argument("--per-food-tokens", type=int, required=True)
     policy_set.add_argument("--weekly-tokens", type=int, required=True)
     policy_set.add_argument("--sandbox", required=True, help="comma-separated: " + ", ".join(core.SANDBOX_CONDITIONS))
-    policy_set.add_argument("--confirm", metavar="CODE", help="the code shown on the terminal by the first run")
     absorb = commands.add_parser("absorb", parents=[common], help="record the owner's absorption and name a new build")
     absorb.add_argument("food")
     absorb.add_argument("--components", required=True, help="comma-separated component ids from `show`")
     absorb.add_argument("--reason", default="")
     absorb.add_argument("--apply", action="store_true", help="apply after the preview; otherwise only preview")
-    remove = commands.add_parser("remove", parents=[common], help="remove an absorbed or bundled skill (egm = all EGM skills)")
-    remove.add_argument("name")
-    remove.add_argument("--reason", default="")
+    remove = commands.add_parser("remove", parents=[common], help="remove egm, a bundled skill, an absorbed skill, or (--food) a food's installed parts")
+    remove.add_argument("name", help="egm, a skill name, or with --food a food id")
+    remove.add_argument("--food", action="store_true", help="NAME is a food id: remove every installed part of that food")
+    remove.add_argument("--reason", default="", help="why (required with --apply)")
     remove.add_argument("--apply", action="store_true")
+    readd = commands.add_parser("readd", parents=[common], help="re-add egm or a bundled skill through oaw.py migrate (re-test it, D6)")
+    readd.add_argument("name", help="egm or a bundled skill name")
+    readd.add_argument("--reason", default="", help="why (required with --apply)")
+    readd.add_argument("--apply", action="store_true")
+    forget = commands.add_parser("forget", parents=[common], help="drop a food that has no absorbed parts from the cards")
+    forget.add_argument("food")
+    forget.add_argument("--reason", default="")
+    forget.add_argument("--apply", action="store_true")
     commands.add_parser("builds", parents=[common], help="named project builds and restore points")
     restore = commands.add_parser("restore", parents=[common], help="restore the OAW-managed layer of a build")
     restore.add_argument("build")
@@ -1607,7 +1993,11 @@ def dispatch(args) -> dict:
     if command == "absorb":
         return cmd_absorb(target, args.food, [c for c in args.components.split(",") if c.strip()], args.reason, args.apply)
     if command == "remove":
-        return cmd_remove(target, args.name, args.reason, args.apply)
+        return cmd_remove(target, args.name, args.reason, args.apply, food=args.food)
+    if command == "readd":
+        return cmd_readd(target, args.name, args.reason, args.apply)
+    if command == "forget":
+        return cmd_forget(target, args.food, args.reason, args.apply)
     if command == "builds":
         return cmd_builds(target)
     if command == "restore":
