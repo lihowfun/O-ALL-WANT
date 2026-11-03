@@ -17,6 +17,8 @@ All notable changes to this project will be documented in this file.
   JSON POST actions in a background thread, text-only rendering) with 我的 OAW, 投食區 and
   食物卡 areas; `catalog.py menu`: the same actions as a numbered terminal menu;
   `oaw_status.py` prints the catalog view with the same display rules.
+- `docs/CATALOG_PLAY.md`: player guide in Traditional Chinese (how to play, each button, what v0 does
+  not do, safety rules, project `.oaw/catalog/` versus `LAB_HOME`), linked from both READMEs.
 
 ### Fixed
 

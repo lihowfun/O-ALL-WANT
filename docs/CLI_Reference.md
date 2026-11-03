@@ -74,7 +74,7 @@ Paths are project-relative. A proposal stores its concrete git text diff and fix
 
 ## Skill catalog (prototype v0)
 
-Run from the OAW source checkout, like `oaw.py`. Every command accepts `--target PROJECT` and `--json`.
+Run from the OAW source checkout, like `oaw.py`. Every command accepts `--target PROJECT` and `--json`. Player guide (Traditional Chinese): [CATALOG_PLAY](CATALOG_PLAY.md).
 
 ```bash
 python3 scripts/catalog.py add URL [URL ...] [--ref REF]
