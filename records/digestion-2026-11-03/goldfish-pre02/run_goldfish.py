@@ -6,9 +6,9 @@ folder outside every project, with all tools, MCP servers, slash commands and
 user/local settings turned off. The init event is recorded to prove zero context.
 Results go to results/<packet>.json. Standard library only.
 
-    python3 review-kit/pre02/run_goldfish.py            # run every packet
-    python3 review-kit/pre02/run_goldfish.py --dry-run  # show what would run
-    python3 review-kit/pre02/run_goldfish.py --only plan
+    python3 records/digestion-2026-11-03/goldfish-pre02/run_goldfish.py            # run every packet
+    python3 records/digestion-2026-11-03/goldfish-pre02/run_goldfish.py --dry-run  # show what would run
+    python3 records/digestion-2026-11-03/goldfish-pre02/run_goldfish.py --only plan
 """
 import argparse
 import datetime

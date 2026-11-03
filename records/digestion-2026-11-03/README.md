@@ -5,8 +5,9 @@
 - `ingest/DECISIONS.md`：owner 決定 D1–D19，大象的上下文來源。
 - `ingest/SUMMARY.md`、`OWNER_SHEET.md`、`backlog.json`：三樣食物（TokenEconomizer、claude-mem、graphify）的修訂 3 摘要、決定表和吸收 backlog。
 - `ingest/<food>/`：scout、靜態消化、反駁查核、食物金魚、成分帳本、整合檢查、提案。
-- `ingest/PRE-06-goldfish-launch.md`：零上下文金魚的啟動方式。執行包在分支 `review/pre02-goldfish`。
-- `papers/2606.03979/`：論文〈Language Models Need Sleep〉的萃取、大象草稿與定稿、盲審、成分帳本和消化結論。原型在分支 `feat/paper-sleep`。
+- `ingest/PRE-06-goldfish-launch.md`：零上下文金魚的啟動方式。
+- `goldfish-pre02/`：零上下文金魚審查包、執行器和 4 份結果（PRE-02，2026-11-04 在 macOS 跑完）。
+- `papers/2606.03979/`：論文〈Language Models Need Sleep〉的萃取、大象草稿與定稿、盲審、成分帳本和消化結論。原型在分支 `claude/oaw-2`。
 - `design/`：消化流程設計 r2 和 v0 流程說明。v0 原本叫 PLAY.md；依 D19（不是遊戲）改名為 INTAKE_FLOW_v0.md，內文還沒改。
 
 所有效果都是 not measured；沒有任何吸收已被核准。

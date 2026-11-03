@@ -1,6 +1,6 @@
 # PRE-02 零上下文金魚審查包（修訂 3）
 
-這個分支只放審查包，不改任何 OAW 程式碼。用途：讓「完全沒有專案上下文」的金魚（D10、D15），盲審三樣食物（TokenEconomizer、claude-mem、graphify）的吸收提案與 backlog。
+這個資料夾只放審查包，不改任何 OAW 程式碼。用途：讓「完全沒有專案上下文」的金魚（D10、D15），盲審三樣食物（TokenEconomizer、claude-mem、graphify）的吸收提案與 backlog。
 
 ## 內容
 - `packets/plan.md`：摘要、owner 決定表、backlog（Lens B：計畫與依賴）
@@ -10,8 +10,8 @@
 
 ## 怎麼跑（任何已登入 Claude Code CLI 的電腦或雲端環境）
 ```
-python3 review-kit/pre02/run_goldfish.py --dry-run   # 先看會跑什麼
-python3 review-kit/pre02/run_goldfish.py             # 跑全部 4 份
+python3 records/digestion-2026-11-03/goldfish-pre02/run_goldfish.py --dry-run   # 先看會跑什麼
+python3 records/digestion-2026-11-03/goldfish-pre02/run_goldfish.py             # 跑全部 4 份
 ```
 - Windows 用 `python`。`claude` 不在 PATH 上時，加 `--claude <claude 執行檔路徑>`。
 - 先用 `claude auth status` 確認 `loggedIn: true`，登入方式要是 Claude 訂閱。
@@ -30,4 +30,4 @@ python3 review-kit/pre02/run_goldfish.py             # 跑全部 4 份
 - 預估用量：4 份合計約 0.5–1.5M logical tokens，在 D13 的開銷上限 10M 以內。
 
 ## 跑完之後
-把 `results/` commit 並 push 回這個分支（`review/pre02-goldfish`）。之後由 Elephant 在本機處理意見，才交給 owner 逐批核准。
+把 `results/` commit 並 push 回 `records` 分支。之後由 Elephant 在本機處理意見，才交給 owner 逐批核准。
