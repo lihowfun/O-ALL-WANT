@@ -32,9 +32,20 @@ All notable changes to this project will be documented in this file.
   resolved segment by segment against directory listings, so a citation whose case differs
   from the file is unresolved on Windows and macOS as on Linux. The hash-basis and byte-count
   parts of OAW-02 are not built.
+- `wiki_sync.py lint` checks backticked `path::Symbol` code citations (OAW-21; food:
+  graphify@8e6a6d2, method re-implemented with the standard library, no code copied). Only
+  whole single-backtick spans with a project-root-relative path and a file extension count,
+  only in raw notes and manual pages; paths resolve with exact case (OAW-02); `.py` names are
+  read with `ast` (functions, classes, `Class::method` or `Class.method`, module-level names)
+  with an indentation-scoped regex fallback, other files get a whole-word text check; a bad or
+  unreadable cited file gives a warning, never a traceback. Warnings are grouped per note.
+  Static evidence only: fixture tests; agent effect not measured.
 
 ### Changed
 
+- Strict-mode change (OAW-21): an unresolved `path::Symbol` code citation is a new soft lint
+  warning, so `wiki_sync.py lint --strict` now fails on it, like on every other soft warning.
+  Default `lint` still exits 0 for it.
 - The unreleased catalog prototype is named for what it is (D19): the web command is
   `catalog.py ui` (server `catalog_ui_server.py`), the guide is `docs/SKILL_INTAKE.md`, and the
   four-step food track gives way to the nine-stage intake pipeline.

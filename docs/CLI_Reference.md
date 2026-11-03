@@ -59,6 +59,8 @@ python3 scripts/wiki_sync.py cross-check
 python3 scripts/wiki_sync.py memory-check [--json] [--limit N]
 ```
 
+`lint` also warns about backticked `path::Symbol` code citations in raw notes and manual pages that do not resolve (path missing or differing in case, symbol not defined, or outside the project), one line per note; `--strict` makes them errors like every other warning. See [code citations](Wiki_Sync_Guide.md#code-citations).
+
 `memory-check` is a manual, read-only report of `.agents/memory.md` entries whose cited project paths are missing. It exits 0 whenever the check completes (advisory, also when the file is absent), 1 on a handled error such as non-UTF-8 input, and 2 on a usage error. `--limit` (1–500, default 50) truncates findings, never counts. See [memory citation check](Wiki_Sync_Guide.md#memory-citation-check-prototype).
 
 Raw source notes are rendered deterministically into topic pages. Manual pages are not overwritten. Generated source content and annotations use separate boundaries. Local Markdown links are relocated to the output directory. Metadata freshness checks run per page. Unchanged source inputs produce stable generated content.

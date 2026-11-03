@@ -8,6 +8,7 @@ and vector-DB-free.
 """
 
 import argparse
+import ast
 import os
 import re
 import sys
@@ -16,8 +17,8 @@ from datetime import date, datetime
 from urllib.parse import quote, unquote, urlsplit, urlunsplit
 
 from oaw_common import (
-    _fence_after, atomic_write, close_fence, confined_path, extract_annotations, locked_update,
-    render_annotations, validate_topic_id,
+    _fence_after, atomic_write, close_fence, confined_path, exact_case_path, extract_annotations,
+    locked_update, markdown_lines, normalize_cited_path, render_annotations, validate_topic_id,
 )
 
 BASE_DIR = os.path.abspath(os.environ.get("AGENT_MEMORY_BASE_DIR") or os.path.dirname(
@@ -180,6 +181,7 @@ def _discover_raw_sources():
                 "summary": summary,
                 "last_updated": last_updated,
                 "related_topics": related_topics,
+                "content": content,
                 "body": _body_without_h1(body) or "_No additional source notes._",
             }
         )
@@ -556,6 +558,148 @@ def _check_links(path, content, kind, where, issues, warnings):
             issues.append(f"broken {kind} link in {where}: {link}")
 
 
+# A code citation is a whole single-backtick span `path.ext::Name[::Member]` (or Name.Member).
+# The path needs an extension, so `std::vector`, `crate::mod` and bare names never count.
+_CODE_SPAN = re.compile(r"(?<!`)`([^`\n]+)`(?!`)")
+_CODE_CITATION = re.compile(r"(?P<path>(?:[A-Za-z]:)?[A-Za-z0-9_./\\-]+\.[A-Za-z0-9]+)"
+                            r"::(?P<chain>[A-Za-z_]\w*(?:(?:::|\.)[A-Za-z_]\w*)*)")
+_CHAIN_SEPARATOR = re.compile(r"::|\.")
+CODE_CITATION_MAX_BYTES = 1024 * 1024
+_PY_DEFINITION = re.compile(r"^\s*(async\s+def|def|class)\s+([A-Za-z_]\w*)\b")
+_PY_ASSIGNMENT = re.compile(r"^\s*([A-Za-z_]\w*)\s*(?::[^=\n]*)?=(?!=)")
+_PY_BLOCKS = (ast.If, ast.Try, ast.With, ast.AsyncWith, ast.For, ast.AsyncFor, ast.While) + (
+    (ast.TryStar,) if hasattr(ast, "TryStar") else ())
+
+
+def _iter_code_citations(text):
+    """Yield (line, citation, path, chain) for path::Symbol code spans outside fences.
+
+    Lines count from the start of the file. Citations are project-root-relative
+    because code spans are never rebased (see _map_markdown_links).
+    """
+    for number, (_offset, line, in_code) in enumerate(markdown_lines(text), start=1):
+        if in_code:
+            continue
+        for span in _CODE_SPAN.finditer(line):
+            match = _CODE_CITATION.fullmatch(span.group(1).strip())
+            if match:
+                yield number, match.group(0), match.group("path"), _CHAIN_SEPARATOR.split(match.group("chain"))
+
+
+def _collect_python_names(statements, names):
+    """Module and class scopes: defs, classes and simple assignment targets, never function bodies."""
+    for node in statements:
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            names.setdefault(node.name, {})
+        elif isinstance(node, ast.ClassDef):
+            _collect_python_names(node.body, names.setdefault(node.name, {}))
+        elif isinstance(node, (ast.Assign, ast.AnnAssign)):
+            for target in node.targets if isinstance(node, ast.Assign) else [node.target]:
+                if isinstance(target, ast.Name):
+                    names.setdefault(target.id, {})
+        elif isinstance(node, _PY_BLOCKS):
+            for field in ("body", "orelse", "finalbody"):
+                _collect_python_names(getattr(node, field, []), names)
+            for handler in getattr(node, "handlers", []):
+                _collect_python_names(handler.body, names)
+
+
+def _python_names_by_regex(text):
+    """Indentation-scoped def/class/assignment scan for files this Python cannot parse."""
+    names = {}
+    scopes = [(-1, names)]  # (header indent, members); members is None inside a function.
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        indent = len(line) - len(line.lstrip())
+        while indent <= scopes[-1][0]:
+            scopes.pop()
+        members = scopes[-1][1]
+        definition = _PY_DEFINITION.match(line)
+        if definition:
+            child = members.setdefault(definition.group(2), {}) if members is not None else None
+            scopes.append((indent, child if definition.group(1) == "class" else None))
+            continue
+        assignment = _PY_ASSIGNMENT.match(line)
+        if assignment and members is not None:
+            members.setdefault(assignment.group(1), {})
+    return names
+
+
+def _python_names(text):
+    """Return (name tree, parsed). ast only parses the cited file; it never imports or runs it.
+
+    Newer syntax than this Python, null bytes or deep nesting fall back to a
+    regex scan, so one bad file yields a verdict instead of aborting lint.
+    """
+    try:
+        names = {}
+        _collect_python_names(ast.parse(text).body, names)
+        return names, True
+    except (SyntaxError, ValueError, RecursionError, MemoryError):
+        return _python_names_by_regex(text), False
+
+
+def _text_has_names(text, chain):
+    """Non-Python files get a text check only: each chain name must appear as a whole word."""
+    return all(re.search(r"(?<!\w)" + re.escape(name) + r"(?!\w)", text) for name in chain)
+
+
+def _cited_file(relative, cache):
+    """Load one cited file once per run: (kind, data), kind 'python', 'regex', 'text' or 'problem'."""
+    if relative not in cache:
+        try:
+            path = exact_case_path(BASE_DIR, relative)
+            if path is None or not os.path.isfile(path):
+                cache[relative] = ("problem", "path not found, case-sensitive")
+            elif os.path.getsize(path) > CODE_CITATION_MAX_BYTES:
+                cache[relative] = ("problem", "file over 1 MB, not checked")
+            else:
+                text = _safe_read(path)
+                if relative.endswith(".py"):
+                    names, parsed = _python_names(text)
+                    cache[relative] = ("python" if parsed else "regex", names)
+                else:
+                    cache[relative] = ("text", text)
+        except UnicodeError:  # Before ValueError, its base class.
+            cache[relative] = ("problem", "unreadable: not UTF-8 text")
+        except ValueError:
+            cache[relative] = ("problem", "outside the project")
+        except OSError as exc:
+            cache[relative] = ("problem", f"unreadable: {exc.strerror or type(exc).__name__}")
+    return cache[relative]
+
+
+def _code_citation_problem(path, chain, cache):
+    """Return why one citation does not resolve, or None when it does."""
+    try:
+        relative = normalize_cited_path(path)
+    except ValueError:
+        return "outside the project"
+    kind, data = _cited_file(relative, cache)
+    if kind == "problem":
+        return data
+    if kind == "text":
+        return None if _text_has_names(data, chain) else "name not found, text check"
+    for name in chain:
+        if name not in data:
+            return "symbol not found" + ("; file did not parse, regex fallback" if kind == "regex" else "")
+        data = data[name]
+    return None
+
+
+def _check_code_citations(content, where, warnings, cache):
+    """Unresolved path::Symbol citations are soft warnings, one line per note."""
+    problems = []
+    for number, citation, path, chain in _iter_code_citations(content):
+        reason = _code_citation_problem(path, chain, cache)
+        if reason:
+            problems.append(f"`{citation}` at line {number} ({reason})")
+    if problems:
+        warnings.append(f"code citations in {where}: " + "; ".join(problems))
+
+
 def _parse_date(value):
     if not isinstance(value, str) or not value:
         return None
@@ -692,6 +836,7 @@ def lint(strict=False):
         placeholder_scan_pages = _load_knowledge_pages(include_meta=True)
     pages_by_id = defaultdict(list)
     raw_sources_by_ref = {source["relative_path"]: source for source in raw_sources}
+    cited_files = {}
 
     raw_source_ids = defaultdict(list)
     for source in raw_sources:
@@ -715,6 +860,7 @@ def lint(strict=False):
         if not source["summary"]:
             issues.append(f"raw source missing summary: {source['relative_path']}")
         _check_links(source["path"], source["body"], "raw", source["relative_path"], issues, warnings)
+        _check_code_citations(source["content"], source["relative_path"], warnings, cited_files)
 
     for source_id, refs in raw_source_ids.items():
         if len(refs) > 1:
@@ -775,6 +921,9 @@ def lint(strict=False):
             if related_topic == page["id"]:
                 issues.append(f"self-referential related topic in {page['filename']}: {related_topic}")
         _check_links(page["path"], page["body"], "knowledge", page["filename"], issues, warnings)
+        # Compiled pages repeat their raw notes, which are checked above; templates are placeholders.
+        if page["build_origin"] not in ("wiki_sync", "template"):
+            _check_code_citations(page["content"], page["filename"], warnings, cited_files)
 
     for page_id, filenames in pages_by_id.items():
         if len(filenames) > 1:
@@ -1576,7 +1725,8 @@ report; it never edits memory.md or decides that an entry is superseded.
     p_lint.add_argument(
         "--strict",
         action="store_true",
-        help="Treat unfilled `${...}` / `YYYY-MM-DD` placeholders as errors (default: warn only).",
+        help="Treat every soft warning, such as unfilled `${...}` / `YYYY-MM-DD` placeholders or "
+             "unresolved `path::Symbol` code citations, as an error (default: warn only).",
     )
 
     p_stale = subparsers.add_parser(

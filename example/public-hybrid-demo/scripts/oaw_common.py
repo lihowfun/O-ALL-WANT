@@ -267,6 +267,9 @@ def _markdown_lines(content):
         offset, fence = offset + len(line), after
 
 
+markdown_lines = _markdown_lines
+
+
 def close_fence(text):
     """Terminate a fence text leaves open so following generated markers stay live."""
     fence = None
