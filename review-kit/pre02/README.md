@@ -13,6 +13,10 @@
 python3 review-kit/pre02/run_goldfish.py --dry-run   # 先看會跑什麼
 python3 review-kit/pre02/run_goldfish.py             # 跑全部 4 份
 ```
+- Windows 用 `python`。`claude` 不在 PATH 上時，加 `--claude <claude 執行檔路徑>`。
+- 先用 `claude auth status` 確認 `loggedIn: true`，登入方式要是 Claude 訂閱。
+- 有設定 `ANTHROPIC_API_KEY` 時，執行器會拒絕執行，因為 CLI 會改走 API 計費。真的要走 API 才加 `--allow-api-key`。
+- 寫進 `results/` 前，會把暫存資料夾、家目錄、帳號名稱和 email 換成 `<tmp>`、`~`、`<user>`、`<email>`，可以直接 push 到公開 repo。零上下文檢查用的是未遮蔽的原始 init event。
 - 每份包都在一個全新的空資料夾裡用 `claude -p` 執行，並關閉工具、MCP、slash commands 和 user/local 設定。
 - 結果寫到 `results/<packet>.json`：啟動參數、CLI 版本、init event、零上下文檢查、canary 回答、審查意見、用量。
 - `zero_context_verified` 只有在以下條件全部成立時才是 true：

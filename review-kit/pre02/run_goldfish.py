@@ -24,6 +24,39 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 FLAGS = ["-p", "--tools", "", "--strict-mcp-config", "--disable-slash-commands",
          "--setting-sources", "project", "--output-format", "stream-json", "--verbose"]
 EMPTY_KEYS = ("tools", "mcp_servers", "slash_commands", "skills", "plugins", "agents")
+EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
+
+
+def redaction_pairs():
+    """Local paths and the account name to strip before results reach the public repository."""
+    pairs = []
+    for path, label in ((tempfile.gettempdir(), "<tmp>"), (os.path.expanduser("~"), "~")):
+        path = os.path.abspath(path)
+        forms = {path, path.replace("\\", "/"), path.replace("\\", "\\\\")}
+        if re.match(r"[A-Za-z]:\\", path):  # Git Bash spelling, /c/Users/...
+            forms.add("/" + path[0].lower() + path[2:].replace("\\", "/"))
+        for form in forms:
+            if len(form) > 3:
+                pairs.append((form, label))
+    user = os.environ.get("USERNAME") or os.environ.get("USER") or ""
+    return sorted(pairs, key=lambda p: -len(p[0])), user
+
+
+def redact(value, pairs, user):
+    if isinstance(value, str):
+        for old, new in pairs:
+            value = value.replace(old, new)
+        value = EMAIL.sub("<email>", value)
+        if user:
+            # Only inside paths, so a review that says "User settings" is left alone.
+            value = re.sub(r"(?i)((?:Users|home)(?:/|\\{1,2}))%s(?![A-Za-z0-9])" % re.escape(user),
+                           r"\1<user>", value)
+        return value
+    if isinstance(value, list):
+        return [redact(v, pairs, user) for v in value]
+    if isinstance(value, dict):
+        return {k: redact(v, pairs, user) for k, v in value.items()}
+    return value
 
 
 def run_one(claude, packet_path, timeout):
@@ -90,7 +123,12 @@ def main():
     ap.add_argument("--only", action="append", help="packet name without .md (repeatable)")
     ap.add_argument("--timeout", type=int, default=1800)
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--allow-api-key", action="store_true",
+                    help="run even though ANTHROPIC_API_KEY is set (API usage billing)")
     args = ap.parse_args()
+    if os.environ.get("ANTHROPIC_API_KEY") and not args.allow_api_key and not args.dry_run:
+        sys.exit("ANTHROPIC_API_KEY is set, so the CLI would bill API usage instead of the Claude "
+                 "subscription. Unset it, or pass --allow-api-key if that is intended.")
     pdir, rdir = os.path.join(HERE, "packets"), os.path.join(HERE, "results")
     names = sorted(n for n in os.listdir(pdir) if n.endswith(".md"))
     if args.only:
@@ -105,11 +143,15 @@ def main():
                   " ".join(["claude"] + [f if f else '""' for f in FLAGS]))
         return 0
     os.makedirs(rdir, exist_ok=True)
+    pairs, user = redaction_pairs()
     failed = 0
     for n in names:
         print("running", n, "...", flush=True)
         rec = run_one(args.claude, os.path.join(pdir, n), args.timeout)
         rec["host_version"] = version
+        # Checks ran on the raw init event; only the written record is redacted.
+        rec = redact(rec, pairs, user)
+        rec["local_paths_redacted"] = True
         with open(os.path.join(rdir, n[:-3] + ".json"), "w", encoding="utf-8", newline="\n") as fh:
             json.dump(rec, fh, ensure_ascii=False, indent=1)
         found = len((rec["review"] or {}).get("findings") or [])
