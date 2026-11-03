@@ -7,6 +7,7 @@
 - `ingest/<food>/`：scout、靜態消化、反駁查核、食物金魚、成分帳本、整合檢查、提案。
 - `ingest/PRE-06-goldfish-launch.md`：零上下文金魚的啟動方式。
 - `goldfish-pre02/`：零上下文金魚審查包、執行器和 4 份結果（PRE-02，2026-11-04 在 macOS 跑完）。
+- `ROUND_V1_PICKS.md`：改用 D21 精簡流程後，這一輪的快篩結果。
 - `papers/2606.03979/`：論文〈Language Models Need Sleep〉的萃取、大象草稿與定稿、盲審、成分帳本和消化結論。原型在分支 `claude/oaw-2`。
 - `design/`：消化流程設計 r2 和 v0 流程說明。v0 原本叫 PLAY.md；依 D19（不是遊戲）改名為 INTAKE_FLOW_v0.md，內文還沒改。
 

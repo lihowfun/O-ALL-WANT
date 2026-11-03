@@ -160,3 +160,51 @@ pages or docs "game" or "play".
 - D18 (P4, refines D12). An item that is not built carries evidence "not measured
   (planned: <level>)"; the planned level is kept in a separate field and never shown
   as the current level.
+
+## D20. PRE-02 goldfish label (2026-11-04, owner in chat, choosing "標成零專案上下文")
+The four PRE-02 goldfish runs (macOS, CLI 2.1.160, subscription) passed every init
+check (no tools, MCP servers, slash commands, skills or auto-memory; built-in
+plugins only; fresh temp folder) but the canary did not answer "none": `claude -p`
+always carries the CLI's default system prompt and an account reminder (email,
+date). The round is labelled "zero project context"; the result files keep
+`zero_context_verified: false` unchanged. Findings that rest on the goldfish's own
+claims about its tools are disregarded where the init event contradicts them.
+
+## D21. Lean intake flow v1 (2026-11-04, owner in chat: "我覺得目前的流程要再討論 超級沒效率 人類審查的步驟也太多 先找出最佳流程 降低我審查的必要性", then "改用，這輪開始"; refines D4, D5, D10, D11, D16, D19; replaces the per-batch approval of D14 and PRE-08)
+Diagnosis: the 2026-11-03 round needed about 20 owner touchpoints, three revisions
+and three goldfish rounds, produced 2.9 MB of records and absorbed nothing; most of
+the 25 PRE-02 findings were drift between five documents holding the same content,
+or cited lines missing from review packets, not defects.
+1. Entry (owner): a repo URL, or ticks on the weekly scout list.
+2. Quick screen (automatic): at most 3 units per food, by expected value. Units
+   not picked go back to the candidate pool with a one-line verdict; no further
+   analysis and no paid plan is spent on them.
+3. Build (automatic): each picked unit is built as code plus tests on the single
+   Claude V2 branch `claude/oaw-2`; the gate must pass. Code and tests are the
+   record; one ledger per food, summaries generated from it.
+4. Blind review (automatic): one zero-context goldfish round (D15 recipe) on the
+   code diff and tests, not on documents. The Elephant resolves the findings; only a
+   blocker the Elephant rejects goes to the owner.
+5. Tiers (automatic):
+   - A: mechanism only, no model-facing text, does not execute food code,
+     restorable -> absorbed (D17 allows static evidence).
+   - B: model-facing text -> A/B inside the standing D13 budget; ships only at
+     parity or better; queued when the budget is short.
+   - C: executes food code, adds a runtime dependency, needs a license or CLI
+     contract choice not covered by a standing decision, removes an existing skill,
+     or exceeds the budget -> owner.
+6. Release (owner): one page per version (what was added, comparison against the
+   default, how to restore); the owner merges the PR.
+- D14's standing choices (license route, CLI contract, release target, excrete
+  list) count as policy; items they cover are not asked again.
+- D16: the label "parity vs food alone: not tested" stays; a floor arm is no longer
+  designed at screening.
+- Findings on documents from the old flow are not resolved as document edits; real
+  defects among them become tests during the build.
+- Owner routine touchpoints: entry and release.
+
+## D22. GitHub branch layout (2026-11-04, owner in chat: "github 都弄好要保持整潔 我不希望看到一堆雜亂無章的branch", "最終我們這邊只會出去一個V2相關branch ＰＲ節數後 該merge main就merge", "可以刪")
+Four branches: `main`, `codex/oaw-2-native-upgrade` (PR #4), `claude/oaw-2` (all
+Claude V2 work; merged into main when its PR concludes, then deleted) and `records`
+(every round, review kit, auth-gated kit and result, as folders). No new branch per
+feature, round or kit.
