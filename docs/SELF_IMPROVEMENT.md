@@ -25,6 +25,26 @@ Create a fixed evaluation JSON, for example:
 
 Use at least two distinct cases and three repeats per case. These minimums discourage single-run promotion; they do not establish statistical confidence. Define assertions and resource limits before observing candidate results. The repository also includes `evals/native-ablation/spec.json` as a task-set starting point.
 
+### Require the mechanism to trigger
+
+A saving or a pass gain proves nothing if the candidate's mechanism never ran. A behavior A/B should declare, outside `assertions`, the cases that must exercise it:
+
+```json
+"trigger": {"cases": ["small-change"], "minimum_rate": 0.8}
+```
+
+`cases` is a subset of the evaluation cases; `minimum_rate` is greater than 0, at most 1, and defaults to 2/3. Every candidate case record then carries a boolean `triggered` (the baseline may omit it). It is not an assertion and never enters the regression check: as an assertion, a baseline without the mechanism would fail every trigger row and the trigger alone would make the candidate eligible. Each designated case needs `triggered / repeats >= minimum_rate`; the default means 2 of 3 or 4 of 5 repeats, and a written decimal compares exactly (0.667 needs 3 of 3). If any designated case falls short, a candidate that is not rejected is `inconclusive`, and the comparison carries `vacuous` with the reason `vacuous: mechanism did not trigger`. Acceptance revalidates through the same comparison. Before any paid run, show on fixtures, without a model, that the mechanism fires; stop at $0 if it does not.
+
+The `trigger` block is enforced from the `improvement.py` of the unreleased OAW-03 change (after the 2.0.0 proposal). An older copy ignores it silently. A comparison from an enforcing copy always carries a `trigger` object when the spec declares one.
+
+### Charge overhead and declare usage coverage
+
+A candidate can spend tokens its host's usage report never shows: a judge, a background job, or a subagent outside the parent's usage. Declare `"usage_coverage": "required"` (and, for the report only, `"overhead_fields": ["judge"]`). Every case record then carries `usage_coverage` (`complete` or `incomplete`) and may carry integer `overhead_tokens` and `grading_tokens`. `overhead_tokens` are added to that arm's `tokens` total; `grading_tokens` are listed but never counted as cost. The comparison's `usage` object reports each arm's own tokens, overhead, `overhead_frac` and grading tokens, and whether coverage is complete.
+
+An efficiency gain counts only when coverage is complete in both arms; otherwise the comparison says `efficiency_blocked: "usage coverage incomplete"` and only a pass gain can make the candidate eligible. Resource regressions still use the observed totals, which are lower bounds when coverage is incomplete. Mark a case `complete` only from usage the runner observed itself or from an independent meter (for example a wrapper around the CLI); a candidate's own ledger is a self-report and never makes coverage complete.
+
+This is a spec-declared field, not a new `schema_version`: specs and stored proposals without it keep their verdicts, including on `decide` revalidation. It is enforced from the `improvement.py` of the unreleased OAW-04 change; an older copy ignores it silently.
+
 ```bash
 python3 scripts/improvement.py propose --title "Remove duplicate startup rules" --hypothesis "Keep correctness while reducing context" --target AGENTS.md --patch runs/candidate.diff --evaluation runs/spec.json --snapshot BASE_COMMIT
 ```

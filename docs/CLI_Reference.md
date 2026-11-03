@@ -84,6 +84,10 @@ python3 scripts/improvement.py --base-dir PROJECT decide ID --decision accept|re
 
 Paths are project-relative. A proposal stores its concrete git text diff and fixed evaluation contract. Comparison returns eligible (exit 0), rejected (1) or inconclusive (3); malformed/mismatched inputs return 2. Eligible means ready for explicit review, not automatic approval, deployment, statistical proof, or patch application. See [SELF_IMPROVEMENT](SELF_IMPROVEMENT.md).
 
+An evaluation spec may declare an optional `trigger` block (cases plus `minimum_rate`, default 2/3); candidate case records then need a boolean `triggered`, and a candidate whose mechanism fired below the rate on any designated case compares as inconclusive (`vacuous: mechanism did not trigger`). Only the `improvement.py` from the unreleased OAW-03 change (after the 2.0.0 proposal) enforces it; older copies ignore the block silently.
+
+A spec may also declare `"usage_coverage": "required"` (optional `overhead_fields`). Case records then need `usage_coverage` (`complete`/`incomplete`) and may carry `overhead_tokens` (added to the arm's tokens) and `grading_tokens` (reported, never cost); an efficiency gain counts only when coverage is complete in both arms. Enforced from the unreleased OAW-04 change; older copies ignore it silently.
+
 ## Skill catalog (prototype v0)
 
 Run from the OAW source checkout, like `oaw.py`. Every command accepts `--target PROJECT` and `--json`. The official process for adding skills, and how to operate it (Traditional Chinese): [SKILL_INTAKE](SKILL_INTAKE.md).

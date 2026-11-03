@@ -5,6 +5,7 @@ delete the lock file: deleting it could let two writers lock different inodes.
 """
 
 from contextlib import contextmanager
+import hashlib
 import os
 from pathlib import Path
 import re
@@ -351,3 +352,87 @@ def append_annotation(content, annotation):
     head, notes, tail = _annotation_parts(content)
     notes = notes.rstrip() + ("\n\n" if notes.strip() else "") + annotation.strip()
     return head.rstrip() + "\n\n" + render_annotations(notes) + tail
+
+
+# >>> cli resolver
+# resolver_sha256() hashes every line from the opening marker through the closing marker.
+_SHIM_LIMIT = 8192
+# npm cmd-shim forms: "%_prog%" "%dp0%\node_modules\...\cli.js" %*  or  "%dp0%\node_modules\...\x.exe" %*
+_CMD_TARGET = re.compile(r'("%_prog%"[ \t]+)?"%dp0%\\([^"%\r\n]+)"[ \t]*%\*')
+_CMD_PROGRAM = re.compile(r'SET "_prog=([^"\r\n]*)"', re.IGNORECASE)
+_PS1_TARGET = re.compile(r'&[ \t]+("(?:\$basedir/)?node\$exe"[ \t]+)?"\$basedir/([^"$`\r\n]+)"[ \t]*\$args')
+
+
+def _which(name, directories, extensions, windows):
+    suffix = os.path.splitext(name)[1].lower()
+    known = suffix in extensions or (windows and suffix == ".ps1")
+    names = [name] if suffix and known else [name + extension for extension in extensions]
+    for directory in directories:
+        for candidate in (os.path.join(directory, item) for item in names):
+            if os.path.isfile(candidate) and (windows or os.access(candidate, os.X_OK)):
+                return os.path.abspath(candidate)
+    return None
+
+
+def _npm_shim(path, directories):
+    """[node.exe, script.js] or [program.exe] for an npm .cmd/.ps1 shim; refuse anything else."""
+    # Adapted from tokeneconomizer tokeneconomizer/plugin/sidecall.py (Apache-2.0); modified: own patterns, one target only, node_modules confinement, 8 KB cap, refusal raises.
+    with open(path, "rb") as handle:
+        data = handle.read(_SHIM_LIMIT + 1)
+    text = data.decode("utf-8", "replace")
+    powershell = path.lower().endswith(".ps1")
+    targets = {(bool(node), relative) for node, relative in (_PS1_TARGET if powershell else _CMD_TARGET).findall(text)}
+    programs = {value.lower() for value in _CMD_PROGRAM.findall(text)}
+    folder = os.path.dirname(path)
+    if len(data) <= _SHIM_LIMIT and len(targets) == 1 and programs <= {"%dp0%\\node.exe", "node"}:
+        (node, relative), = targets
+        modules = os.path.normcase(os.path.join(folder, "node_modules")) + os.sep
+        target = os.path.normpath(os.path.join(folder, relative.replace("\\", os.sep)))
+        if (os.path.normcase(target).startswith(modules) and os.path.isfile(target)
+                and target.lower().endswith(".js" if node else ".exe") and (powershell or not node or programs)):
+            if not node:
+                return [target]
+            program = os.path.join(folder, "node.exe")
+            program = program if os.path.isfile(program) else _which("node.exe", directories, (".exe",), True)
+            if not program:
+                raise FileNotFoundError(f"node.exe for npm shim {path} is not on PATH")
+            return [program, target]
+    raise ValueError(f"refusing non-npm {'PowerShell script' if powershell else 'batch file'}: {path}")
+
+
+def resolve_cli(name_or_path, *, platform=os.name, search_path=None):
+    """Return the argv list that starts a CLI directly; run it with shell=False.
+
+    Only absolute PATH entries are searched, never the current directory. On Windows an npm
+    .cmd/.ps1 shim is read and its node script or native .exe is started instead, so cmd.exe
+    never parses the arguments again; any other script is refused. Elsewhere the result is
+    the plain absolute path.
+    """
+    if not isinstance(name_or_path, str) or not name_or_path.strip():
+        raise ValueError("A CLI name or path is required")
+    windows = platform == "nt"
+    pathext = (os.environ.get("PATHEXT") or ".COM;.EXE;.BAT;.CMD").split(";")
+    extensions = tuple(dict.fromkeys(item.lower() for item in pathext if item.startswith("."))) if windows else ("",)
+    entries = os.environ.get("PATH", "") if search_path is None else search_path
+    directories = [entry for entry in (item.strip('"') for item in entries.split(os.pathsep)) if os.path.isabs(entry)]
+    if os.path.dirname(name_or_path):
+        explicit = os.path.abspath(name_or_path)
+        found = _which(os.path.basename(explicit), [os.path.dirname(explicit)], extensions, windows)
+    else:
+        found = _which(name_or_path, directories, extensions, windows)
+    if not found:
+        raise FileNotFoundError(f"CLI not found: {name_or_path!r} (the current directory is not searched)")
+    suffix = os.path.splitext(found)[1].lower()
+    if not windows or suffix in (".exe", ".com"):
+        return [found]
+    if suffix in (".cmd", ".bat", ".ps1"):
+        return _npm_shim(found, directories)
+    raise ValueError(f"refusing {found}: only an .exe or an npm shim starts without a shell")
+# <<< cli resolver
+
+
+def resolver_sha256():
+    """SHA-256 of the CLI resolver block above (LF line endings); record it beside cli_argv."""
+    lines = Path(__file__).read_text(encoding="utf-8").splitlines()
+    start, end = lines.index("# >>> cli resolver"), lines.index("# <<< cli resolver")
+    return hashlib.sha256("\n".join(lines[start:end + 1]).encode("utf-8")).hexdigest()

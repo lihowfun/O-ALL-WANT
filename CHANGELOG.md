@@ -54,6 +54,28 @@ All notable changes to this project will be documented in this file.
   and topic. Read-only and advisory; a renamed or deleted file still lists its citing notes;
   exit 0 with an empty list when nothing cites it. No skill text points to it yet (held for
   HOLD-12). Static evidence only: modify/rename/delete fixture tests.
+- OAW-01 (from microsoft/TokenEconomizer, Apache-2.0): `oaw_common.resolve_cli()` returns the
+  argv that starts a CLI with `shell=False`. It searches only absolute `PATH` entries, never the
+  current directory. On Windows it reads an npm `.cmd`/`.ps1` shim (at most 8 KB) and starts its
+  `node.exe` + script or native `.exe` inside the shim's `node_modules`, and refuses any other
+  batch file, so cmd.exe never parses the arguments again. `resolver_sha256()` hashes the
+  resolver source for run manifests. No runner uses it yet; frozen eval contracts are unchanged.
+  Evidence: static fixtures only.
+- OAW-03 (from thedotmack/claude-mem, Apache-2.0): an evaluation spec may declare an optional
+  `trigger` block (`cases`, `minimum_rate`, default 2/3) outside `assertions`. Candidate case
+  records then carry a boolean `triggered`; if the rate falls short on any designated case, a
+  candidate that is not rejected compares as `inconclusive` with `vacuous: mechanism did not
+  trigger`, and `decide` revalidation fails closed the same way. Specs without the block keep
+  their verdicts. The catalog comparison rules add a no-model trigger preflight before any paid
+  run. Evidence: static fixtures only.
+- OAW-04 (from microsoft/TokenEconomizer, Apache-2.0): an evaluation spec may declare
+  `"usage_coverage": "required"` (and `overhead_fields` for the report). Case records then carry
+  `usage_coverage` and may carry `overhead_tokens`, added to that arm's tokens, and
+  `grading_tokens`, reported but never counted as cost. The comparison reports each arm's
+  tokens, overhead, `overhead_frac`, grading tokens and coverage; an efficiency gain counts only
+  when coverage is complete in both arms (`efficiency_blocked` otherwise), while resource
+  regressions still use the observed lower bounds. Spec-declared, so schema-1 specs and stored
+  proposals keep their verdicts; no schema bump. Evidence: static fixtures only.
 
 ### Changed
 
