@@ -11,14 +11,36 @@ import argparse
 from datetime import datetime, timezone
 import json
 from pathlib import Path
+import re
 import sys
 
 PROGRESS_FILE = Path(".oaw/progress.json")
 STATUS_FILE = Path(".oaw/catalog/status.json")
 STALE_SECONDS = 600
 ICONS = {"done": "✅", "in_progress": "⏳", "waiting": "⏸", "todo": "○"}
-STAGES = {"ingest": "攝取", "static": "靜態", "goldfish": "金魚", "behavior-ab": "A/B", "verdict": "判定"}
+STAGES = {"ingest": "攝取", "quarantine": "隔離", "static": "靜態", "goldfish": "金魚", "behavior-ab": "A/B", "verdict": "判定"}
 VERDICTS = {"evolved": "進化", "parity": "齊平", "regressed": "退步", "pending": "進行中"}
+HEADLINES = {"nutritious": "營養", "no-gain": "沒營養", "untested": "未測", "incomplete": "證據不完整", "regressed": "變差",
+             "diarrhea": "拉肚子", "risky": "有疑慮", "toxic": "有毒", "inedible": "不能吃"}
+_UNSAFE = re.compile("[\x00-\x1f\x7f-\x9f\u061c\u200b-\u200f\u202a-\u202e\u2060-\u2064\u2066-\u2069\ufeff]")
+
+
+def clean(value, limit=120):
+    """Food-derived text: no control, bidi or zero-width characters; bounded length."""
+    if value is None:
+        return None
+    text = re.sub(r"\s+", " ", _UNSAFE.sub(" ", str(value))).strip()
+    return text if len(text) <= limit else text[:limit - 1] + "…"
+
+
+def verdict_label(data):
+    """A catalog headline wins; an unknown word is shown as unknown, never as in progress."""
+    if data.get("headline") is not None:
+        return HEADLINES.get(data["headline"]) or f"未知（{clean(data['headline'], 40)}，請更新 OAW）"
+    value = data.get("verdict_so_far")
+    if value is None:
+        return VERDICTS["pending"]
+    return VERDICTS.get(value) or f"未知（{clean(value, 40)}，請更新 OAW）"
 
 
 def load(path):
@@ -62,10 +84,10 @@ def digest_summary(data, now=None):
     updated = _timestamp(data.get("updated_at"))
     progress = data.get("progress") if isinstance(data.get("progress"), dict) else {}
     stage = data.get("stage")
-    return {"skill": data.get("skill"), "source": data.get("source"), "stage": stage,
-            "stage_label": "完成" if stage == "done" else STAGES.get(stage, str(stage)),
-            "done": progress.get("done"), "total": progress.get("total"), "host": data.get("host"),
-            "verdict": VERDICTS.get(data.get("verdict_so_far"), "進行中"),
+    return {"skill": clean(data.get("skill")), "source": clean(data.get("source")), "stage": stage,
+            "stage_label": "完成" if stage == "done" else STAGES.get(stage, clean(stage, 40)),
+            "done": progress.get("done"), "total": progress.get("total"), "host": clean(data.get("host")),
+            "verdict": verdict_label(data), "stop_reason": clean(data.get("stop_reason"), 160),
             "stalled": stage != "done" and (updated is None or (now - updated).total_seconds() > STALE_SECONDS)}
 
 
@@ -90,7 +112,7 @@ def render(project, progress, progress_note, digest, digest_note):
         lines.append("正在消化：沒有進行中的消化" + ("" if digest_note == "missing" else "（狀態檔無效）"))
     else:
         count = f" {digest['done']}/{digest['total']}" if digest["total"] else ""
-        stalled = " · 可能已中斷" if digest["stalled"] else ""
+        stalled = f" · 已停止：{digest['stop_reason']}" if digest["stop_reason"] else " · 可能已中斷" if digest["stalled"] else ""
         lines.append(f"正在消化：{digest['skill']} · {digest['stage_label']}{count} · {digest['verdict']}{stalled}")
         if digest["source"]:
             lines.append(f"  來源：{digest['source']}" + (f" · host：{digest['host']}" if digest["host"] else ""))

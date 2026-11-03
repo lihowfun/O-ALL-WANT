@@ -69,6 +69,22 @@ class StatusTests(unittest.TestCase):
         self.assertIn("完成 42/90 · 進化", text)
         self.assertNotIn("可能已中斷", text)
 
+    def test_catalog_headline_and_unknown_verdicts_are_never_in_progress(self):
+        status = {"schema_version": 1, "skill": "food" + chr(0x202E) + chr(27) + "[2J", "source": "x/food@abc1234", "stage": "done",
+                  "progress": {"done": 3, "total": 3}, "verdict_so_far": "pending", "headline": "untested",
+                  "updated_at": datetime.now(timezone.utc).isoformat()}
+        self.write(".oaw/catalog/status.json", status)
+        text = self.run_cli()
+        self.assertIn("正在消化：food [2J · 完成 3/3 · 未測", text)
+        self.assertNotIn(chr(0x202E), text)
+        status.pop("headline")
+        status["verdict_so_far"] = "glorious"
+        self.write(".oaw/catalog/status.json", status)
+        self.assertIn("未知（glorious，請更新 OAW）", self.run_cli())
+        status["headline"] = "mystery"
+        self.write(".oaw/catalog/status.json", status)
+        self.assertIn("未知（mystery，請更新 OAW）", self.run_cli())
+
 
 if __name__ == "__main__":
     unittest.main()
