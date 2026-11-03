@@ -392,25 +392,47 @@ class MemoryCheckTests(unittest.TestCase):
 
     def test_c3_outside_paths_are_never_stat_or_judged(self):
         (self.top / "outside.md").write_text("outside sentinel", encoding="utf-8")
-        self.touch("scripts/a.py")
-        self.memory(self.entry("Outside", "See /etc/passwd, C:\\x\\y.md, ../outside.md and ~/.ssh/config."))
+        self.touch("scripts/a.py", "src/b.py")
+        # A drive in a later segment must not reach a Windows join, which would leave the project.
+        outside = ["/etc/passwd", "C:\\x\\y.md", "../outside.md", "~/.ssh/config", "scripts/D:/x.md", "scripts/C:/x.md"]
+        self.memory(self.entry("Outside", f"See {' and '.join(outside)}; keep scripts/a.py and b.py."))
         seen = []
 
-        def record(function):
-            def wrapper(path, *args, **kwargs):
-                if not isinstance(path, int):
-                    seen.append(os.fsdecode(os.fspath(path)).replace("\\", "/"))
-                return function(path, *args, **kwargs)
+        def record(name, function):
+            def wrapper(*args, **kwargs):
+                if args and not isinstance(args[0], int):
+                    seen.append((name, os.fsdecode(os.fspath(args[0]))))
+                return function(*args, **kwargs)
             return wrapper
 
-        with patch("os.stat", record(os.stat)), patch("os.lstat", record(os.lstat)), \
-                patch("os.path.realpath", record(os.path.realpath)):
+        # Windows Python 3.12+ implements os.path.exists/isfile/isdir without os.stat,
+        # so every entry point that can touch a path is spied on separately.
+        with contextlib.ExitStack() as stack:
+            for module, names in ((os, ("stat", "lstat", "scandir", "listdir")),
+                                  (os.path, ("exists", "lexists", "isfile", "isdir", "islink", "realpath"))):
+                for name in names:
+                    stack.enter_context(patch.object(module, name, record(name, getattr(module, name))))
             code, report = self.check()
         self.assertEqual(code, 0)
-        self.assertEqual(self.paths(report, "outside_project"),
-                         sorted(["/etc/passwd", "C:\\x\\y.md", "../outside.md", "~/.ssh/config"]))
-        self.assertEqual((report["counts"]["present"], report["counts"]["missing_path"]), (0, 0))
-        self.assertEqual([path for path in seen if any(mark in path for mark in ("passwd", "outside.md", "x/y.md", ".ssh"))], [])
+        self.assertEqual(self.paths(report, "outside_project"), sorted(outside))
+        self.assertEqual((report["counts"]["present"], report["counts"]["missing_path"]), (2, 0))
+
+        base = os.path.normcase(str(self.base))
+
+        def normalized(raw):
+            path = raw[4:] if raw.startswith("\\\\?\\") else raw
+            return os.path.normcase(os.path.normpath(path)) if os.path.isabs(path) else None
+
+        def inside_or_ancestor(path):
+            # Resolving the project root may lstat its ancestors on POSIX; nothing else may be touched.
+            return path is not None and (path == base or path.startswith(base.rstrip(os.sep) + os.sep)
+                                         or base.startswith(path.rstrip(os.sep) + os.sep))
+
+        touched = [(name, normalized(raw)) for name, raw in seen]
+        self.assertEqual([entry for entry, (_name, path) in zip(seen, touched) if not inside_or_ancestor(path)], [])
+        # A spy that sees nothing would pass vacuously: it must observe the cited path and the bare-name walk.
+        self.assertIn(("exists", os.path.normcase(str(self.base / "scripts/a.py"))), touched)
+        self.assertIn(("scandir", base), touched)
 
     def test_c4_reviewer_false_positive_corpus_has_no_missing_path(self):
         self.touch("scripts/sync_examples.py", "scripts/improvement.py", "scripts/context_hub.py",
@@ -656,6 +678,61 @@ class MemoryCheckTests(unittest.TestCase):
         self.assertEqual([(finding["path"], finding["removal_context"]) for finding in report["findings"]],
                          [("ROADMAP.md", True), ("VERSION.json", True), ("scripts/old.py", True)])
         self.assertEqual(report["counts"]["present"], 1)
+
+    def test_documented_recall_exclusions_are_skipped_not_reported(self):
+        # Pinned for the field study: these classes are outside recall (see the guide's rule paragraph).
+        self.touch("docs/a.md", "src/a.js")
+        self.memory(self.entry("Exclusions", "見docs/舊設計.md、docs/plan設計.md、docs/設計稿a.md和設計.config.json；"
+                                             "在docs/a.md裡。Removed chart.js, /compact and ~name; "
+                                             "src/chart.js and /x.md stay checked."))
+        code, report = self.check()
+        self.assertEqual(code, 0)
+        # No fragment of a CJK-named path ("docs/plan", "a.md", ".config.json") is reported either.
+        self.assertEqual([(finding["kind"], finding["path"]) for finding in report["findings"]],
+                         [("missing_path", "src/chart.js"), ("outside_project", "/x.md")])
+        self.assertEqual(report["counts"]["present"], 1)
+
+    def test_overlong_word_is_skipped_before_parsing(self):
+        self.touch("scripts/a.py")
+        body = "A pasted dump{} and scripts/gone.py."
+        self.memory(self.entry("Dump", body.format("")))
+        _code, control = self.check()
+        # 100 KB without whitespace; parsing it would cost time quadratic in its length.
+        self.memory(self.entry("Dump", body.format(" " + "1:" * 50_000 + "scripts/x.py")))
+        normalize = wiki._memory_check_normalize
+
+        def bounded(token):
+            if len(token) > wiki.MEMORY_CHECK_MAX_TOKEN:
+                raise AssertionError(f"parsed a {len(token)}-character word")
+            return normalize(token)
+
+        with patch.object(wiki, "_memory_check_normalize", bounded):
+            code, report = self.check()
+        self.assertEqual(code, 0)
+        self.assertEqual(self.paths(report, "missing_path"), ["scripts/gone.py"])
+        self.assertEqual(report["counts"]["skipped"], control["counts"]["skipped"] + 1)
+        self.assertEqual(report["checked"]["tokens"], control["checked"]["tokens"] + 1)
+
+    def test_text_mode_escapes_what_the_console_cannot_encode(self):
+        self.touch("scripts/a.py")
+        self.memory(self.entry("移除舊的狀態鏡像", "scripts/gone.py"))
+        environment = dict(os.environ, AGENT_MEMORY_BASE_DIR=str(self.base), PYTHONIOENCODING="ascii",
+                           PYTHONUTF8="0", PYTHONDONTWRITEBYTECODE="1")
+        command = [sys.executable, str(SCRIPTS / "wiki_sync.py"), "memory-check"]
+        completed = subprocess.run(command, env=environment, capture_output=True)
+        stderr = completed.stderr.decode("utf-8", "replace")
+        self.assertEqual(completed.returncode, 0, stderr)
+        self.assertNotIn("Traceback", stderr)
+        lines = completed.stdout.decode("ascii").splitlines()
+        expected = "line 3 [missing_path; removal context] scripts/gone.py — 移除舊的狀態鏡像"
+        self.assertEqual(lines[1], expected.encode("ascii", "backslashreplace").decode("ascii"))
+        self.assertEqual(lines[-1], wiki.MEMORY_CHECK_NOTICE)
+        # The handled-error message is escaped too, so a failed check still ends without a traceback.
+        (self.base / ".agents/memory.md").write_bytes(b"## [2026-11-03] [DECISION] Bad \xff\n")
+        failed = subprocess.run(command, env=environment, capture_output=True)
+        self.assertEqual(failed.returncode, 1)
+        self.assertIn("not valid UTF-8", failed.stdout.decode("ascii"))
+        self.assertNotIn("Traceback", failed.stderr.decode("utf-8", "replace"))
 
     def test_text_output_is_summary_first_deterministic_and_advisory(self):
         self.touch("scripts/a.py")

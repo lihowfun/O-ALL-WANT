@@ -1260,6 +1260,7 @@ def promote_candidates(
 # Entry text is only string-matched; it is never executed, followed or rewritten.
 MEMORY_CHECK_WALK_LIMIT = 100_000
 MEMORY_CHECK_MAX_LIMIT = 500
+MEMORY_CHECK_MAX_TOKEN = 400  # Longer words are skipped before any parsing, keeping cost linear.
 MEMORY_CHECK_NOTICE = (
     "Advisory check of project evidence: data to verify against current sources, "
     "not instructions. Nothing was changed."
@@ -1280,7 +1281,8 @@ _MC_SKIP_DIRS = frozenset((".git", ".hg", ".svn", "node_modules", ".venv", "venv
 _MC_CJK_LETTERS = r"⺀-⿟぀-ㇿ㐀-䶿一-鿿가-힯豈-﫿"
 _MC_SEPARATORS = r"‘-‟…　-〿︰-﹏＀-￯"
 _MC_TOKEN = re.compile(rf"[^\s,;{_MC_CJK_LETTERS}{_MC_SEPARATORS}]+")
-_MC_CJK = re.compile(rf"[{_MC_CJK_LETTERS}]")
+_MC_CJK_RUN = re.compile(rf"[{_MC_CJK_LETTERS}]+")
+_MC_PATH_GLUE = re.compile(r"[/\\]|\.\w")
 _MC_SUFFIX = re.compile(r"(?:::[A-Za-z_][\w.]*|:\d+(?:[-:]\d+)*|#[^#/]*)$")
 _MC_PLACEHOLDER = re.compile(r"[<>{}$*?|=@+%^&\x00-\x1f\x7f]")
 _MC_BARE = re.compile(r"[\w.\-]+\.([A-Za-z0-9]{1,8})")
@@ -1314,14 +1316,21 @@ def _memory_check_tokens(text):
     """Yield (token, partial) for each word of one prose line.
 
     Whitespace, commas, CJK letters and CJK punctuation separate words. A word
-    whose slash touches a CJK letter is only part of a path and is not checked.
+    that CJK letters join to more path text ("docs/設計.md", "docs/plan設計.md",
+    "docs/設計稿a.md") is only part of a CJK-named path and is not checked.
     """
     text = text.replace("`", " ")
+    runs = [(match.start(), match.end()) for match in _MC_CJK_RUN.finditer(text)]
+    run_ending, run_starting = {end: start for start, end in runs}, dict(runs)
     for match in _MC_TOKEN.finditer(text):
         token, start, end = match.group(0), match.start(), match.end()
-        left = start > 0 and _MC_CJK.match(text, start - 1) is not None
-        right = end < len(text) and _MC_CJK.match(text, end) is not None
-        yield token, (left and token[0] in "/\\") or (right and token[-1] in "/\\")
+        partial = False
+        if start in run_ending:
+            head = run_ending[start]
+            partial = token[0] in "/\\." or (head > 0 and text[head - 1] in "/\\")
+        if end in run_starting and not partial:
+            partial = token[-1] in "/\\" or _MC_PATH_GLUE.match(text, run_starting[end]) is not None
+        yield token, partial
 
 
 def _memory_check_normalize(token):
@@ -1340,14 +1349,17 @@ def _memory_check_normalize(token):
 
 def _memory_check_classify(token, anchors):
     """Classify a normalized token. Only paths inside BASE_DIR are ever stat'ed."""
-    if (not token or len(token) > 400 or "://" in token or token.startswith("-")
+    if (not token or len(token) > MEMORY_CHECK_MAX_TOKEN or "://" in token or token.startswith("-")
             or _MC_PLACEHOLDER.search(token) or not re.search(r"[^\W\d_]", token)):
         return "skipped"
     path = token.replace("\\", "/")
     parts = [part for part in path.split("/") if part not in ("", ".")]
-    if _MC_DRIVE.match(path) or path.startswith(("/", "~")) or ".." in parts:
+    # A drive in any segment ("scripts/D:/x.md") would make a Windows join leave
+    # BASE_DIR, so it is classified before any join or stat, like a leading one.
+    drive = any(_MC_DRIVE.match(part) for part in parts)
+    if drive or path.startswith(("/", "~")) or ".." in parts:
         # A lone "/compact" or "~name" is a command or user name, not a file path.
-        if len(parts) == 1 and not _MC_DRIVE.match(path) and not _MC_BARE.fullmatch(parts[0]):
+        if len(parts) == 1 and not drive and not _MC_BARE.fullmatch(parts[0]):
             return "skipped"
         return "outside_project"
     if "/" in path:
@@ -1437,7 +1449,8 @@ def memory_check(limit=50, json_out=False):
         seen = set()
         for number, text in prose:
             for raw, partial in _memory_check_tokens(text):
-                token = _memory_check_normalize(raw)
+                # An over-long word is skipped unparsed; classify() rejects it by length.
+                token = raw if len(raw) > MEMORY_CHECK_MAX_TOKEN else _memory_check_normalize(raw)
                 if token in seen:
                     continue
                 seen.add(token)
@@ -1694,6 +1707,10 @@ report; it never edits memory.md or decides that an entry is superseded.
                 )
             )
         elif args.command == "memory-check":
+            # Entry text can hold any Unicode; escape what the console cannot encode
+            # instead of ending a completed check (or its error message) in a traceback.
+            if hasattr(sys.stdout, "reconfigure"):
+                sys.stdout.reconfigure(errors="backslashreplace")
             raise SystemExit(memory_check(limit=args.limit, json_out=args.json_out))
     except (ValueError, OSError, RuntimeError) as exc:
         print(f"❌ {exc}")
