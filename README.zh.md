@@ -220,16 +220,16 @@ OAW 不會偷改 host 設定。`doctor` 會把「支援」和「已啟用」分�
 
 ---
 
-## 🎮 試玩消化遊戲（原型 v0）
+## 🧪 用吸收流程新增 skill（原型 v0）
 
-把 skill repo 當成食物餵給 OAW。系統會免費試吃（封存在專案外、只讀、不執行），再拆成吸收、排掉、暫留三種成分。每次吸收或移除都會產生一個有名字、可以一鍵還原的版本。
+從現在起，OAW 每次加入 skill 都走同一條正式流程：每週偵查或你點名、封存在專案外的固定版本（絕不執行）、免費靜態檢查、測試計畫、以成分為單位判定吸收／排掉／暫留、你核准，最後產生一個可以一鍵還原的版本。本機網頁把這條流程做成動畫，每一站的動作就在動畫上。
 
 ```bash
-python3 scripts/catalog.py ui --target /path/to/project   # 本機遊戲頁（127.0.0.1）
-python3 scripts/catalog.py menu --target /path/to/project   # 同樣的功能，用終端選單
+python3 scripts/catalog.py ui --target /path/to/project     # 本機網頁：流程動畫（127.0.0.1）
+python3 scripts/catalog.py menu --target /path/to/project   # 同樣的站別和動作，用終端選單
 ```
 
-v0 只規劃付費實測、不執行，所以品質一律顯示「未量測」。玩法、每個按鈕的作用、安全規則和資料放在哪裡：[SKILL_INTAKE](docs/SKILL_INTAKE.md)。
+v0 只規劃付費實測和 Goldfish 零脈絡盲審、不執行，所以這兩站標「規劃中」，品質一律顯示「未量測」。正式流程、今天哪些已自動、怎麼操作、安全規則和資料放在哪裡：[SKILL_INTAKE](docs/SKILL_INTAKE.md)。
 
 ---
 

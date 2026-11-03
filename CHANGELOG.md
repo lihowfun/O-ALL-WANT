@@ -13,12 +13,25 @@ All notable changes to this project will be documented in this file.
   owner-confirmed standing policy, preview-first absorb/remove, named
   `2.0.0+build.N.<hash7>` builds with restore, static effect versus the default
   recipe, and `view.json`. Paid tests are planned, not run.
-- `catalog.py play`: a local game page on `127.0.0.1` (per-session token, Host check, no CORS,
-  JSON POST actions in a background thread, text-only rendering) with 我的 OAW, 投食區 and
-  食物卡 areas; `catalog.py menu`: the same actions as a numbered terminal menu;
-  `oaw_status.py` prints the catalog view with the same display rules.
-- `docs/CATALOG_PLAY.md`: player guide in Traditional Chinese (how to play, each button, what v0 does
-  not do, safety rules, project `.oaw/catalog/` versus `LAB_HOME`), linked from both READMEs.
+- `catalog.py ui`: a local page on `127.0.0.1` (per-session token, Host check, no CORS, JSON POST
+  actions in a background thread, text-only rendering) whose main screen is the animated intake
+  pipeline: two inlets merge into nine stages, each food is a token on its current stage with
+  one pip per component, it glides to its next stage (instant with reduced motion), and the
+  current stage's actions sit under it; planned stages are drawn without buttons. The food card
+  and 我的 OAW open from the token and the 版本 stage. `catalog.py menu` prints the same stage table
+  as one ASCII line per food and runs each food's stage actions by letter; `oaw_status.py` prints
+  the same lines from `view.json`.
+- The intake pipeline stage table (`catalog_core.PIPELINE_STAGES`) and per-food stage mapping in
+  `view.json` (schema `oaw-catalog-view/2`), defined once for every renderer.
+- `docs/SKILL_INTAKE.md`: the official process for adding skills from now on (owner decisions
+  D1-D19), with what is automated today, planned, or needs the owner, and how to operate it from
+  the web page, the terminal menu and the CLI; linked from both READMEs.
+
+### Changed
+
+- The unreleased catalog prototype is named for what it is (D19): the web command is
+  `catalog.py ui` (server `catalog_ui_server.py`), the guide is `docs/SKILL_INTAKE.md`, and the
+  four-step food track gives way to the nine-stage intake pipeline.
 
 ### Fixed
 
@@ -27,7 +40,7 @@ All notable changes to this project will be documented in this file.
 - `catalog.py restore --apply` re-evaluates the effect versus the default, so no view keeps
   showing the skills of the layer that was replaced.
 - Catalog owner codes never touch disk: the CLI reads the code back on its own interactive
-  terminal (no `--confirm`, no pending file, no hidden-console fallback), `play`/`menu` keep codes
+  terminal (no `--confirm`, no pending file, no hidden-console fallback), `ui`/`menu` keep codes
   in memory and lock after three wrong ones, and records say the confirmation is unauthenticated.
 - `catalog.py restore` accepts only restore points its `LAB_HOME` indexed for the project, never
   writes paths OAW does not install (`.git/`, host settings, `.mcp.json`, project records),
@@ -43,7 +56,7 @@ All notable changes to this project will be documented in this file.
 - The tarball fallback caps unpacked bytes while streaming and runs only after git transport errors.
 - Imported reports count list items of any type (missing lists show `—`, not 0) and use the
   ledger's canonical `after_integration` dispositions, including split parts.
-- The game page: progress dots are neutral and the result dot takes the verdict colour; builds
+- The web page: passed stages are neutral and only the food token takes the verdict colour; builds
   expand to their skills, components and effect lines; flags, verdict reasons, failed-taste
   reasons and one-host skills are shown; engine reasons, plans, build labels and known errors
   are in Traditional Chinese; phone layout starts at the feeding area; dark-mode contrast tokens.

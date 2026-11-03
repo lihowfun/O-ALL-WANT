@@ -263,6 +263,8 @@ class PipelinePageTests(unittest.TestCase):
             self.assertIsNone(self.GAME.search((UI / name).read_text(encoding="utf-8")), name)
         for script in ("catalog.py", "catalog_core.py", "catalog_ui_server.py", "oaw_status.py"):
             self.assertIsNone(self.GAME.search((ROOT / "scripts" / script).read_text(encoding="utf-8")), script)
+        for doc in ("docs/SKILL_INTAKE.md", "docs/CLI_Reference.md", "CHANGELOG.md", "README.md", "README.zh.md"):
+            self.assertIsNone(self.GAME.search((ROOT / doc).read_text(encoding="utf-8")), doc)
         self.assertIsNone(self.GAME.search("display: grid; replay; playbook"))  # unrelated words are not caught
 
     def test_pipeline_is_the_main_screen_with_two_inlets(self):

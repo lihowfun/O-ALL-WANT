@@ -1,117 +1,201 @@
-# OAW 消化遊戲：玩法說明（catalog 原型 v0）
+# OAW 新增 skill 的正式流程
 
-把 skill 當成食物：**丟進來 → 系統免費試吃 → 拆成「吸收／排掉／暫留」→ 你按吸收 → 產生一個可以一鍵還原的新版本**。
+從現在起，OAW 每次加入 skill（下文叫「食物」）都走這一條流程。流程只根據 owner 決定 D1–D19（索引在最後）。網頁上的消化系統動畫、`catalog.py menu` 和 `oaw_status.py` 畫的是同一張站別表（`scripts/catalog_core.py` 的 `PIPELINE_STAGES`），讀同一份 `.oaw/catalog/view.json`。
 
-這份說明涵蓋原型 v0 實際做得到的事。完整指令和參數見 [CLI Reference](CLI_Reference.md#skill-catalog-prototype-v0)。
+每一站和它的每個細項都標明今天的狀態：
 
-## 開始玩
+- **自動**：原型 v0 已經自己會做。
+- **需要你**：要 owner 決定。系統不會替你決定。
+- **部分自動**：一部分自動，其餘需要你或還在規劃中。
+- **規劃中**：屬於這個流程，但還沒自動化。畫面上畫出來、標「規劃中」、沒有按鈕，也不會被當成已經做過。
 
-需要 Python 3.10+（只用標準函式庫）和 git。指令都在 OAW checkout 執行，用 `--target` 指向你的專案，和 `oaw.py` 一樣：
+完整指令見 [CLI Reference](CLI_Reference.md#skill-catalog-prototype-v0)。
 
-```bash
-python3 scripts/oaw.py init --target /path/to/project        # 專案還沒裝 OAW 時先裝
-python3 scripts/catalog.py ui --target /path/to/project    # 開本機遊戲頁（Claude、Codex 都能用）
-python3 scripts/catalog.py menu --target /path/to/project    # 同樣的功能，用終端數字選單（Codex／沒有瀏覽器時）
-python3 scripts/oaw_status.py --project /path/to/project     # 只看目前狀態，不做任何動作
+## 流程
+
+```text
+每週偵查 → 相關性過濾 → 你確認 ─┐
+                               ├→ 1 入口 → 2 封存 → 3 靜態 → 4 計畫 → 5 盲審 → 6 實測 → 7 分流 → 8 核准 → 9 版本
+你點名（可批次，重複的合併）─────┘
 ```
 
-- `play` 只綁 `127.0.0.1`，會印出並開啟 `http://127.0.0.1:<port>/#t=<通行碼>`，按 Ctrl+C 結束。要用印出來的完整網址開，少了 `#t=…` 頁面會拒絕連線。加 `--no-browser` 只印網址，`--port N` 指定埠號。
-- `menu` 是 1–13 的數字選單，0 離開，不需要 curses。
-- 在一欄寬的畫面（手機）上，投食區排在最上面，「我的 OAW」接在後面。
-- 網頁、`menu`、`oaw_status.py` 讀的是同一份 `.oaw/catalog/view.json`，顯示規則也一樣。
-
-## 畫面上的三塊
-
-1. **我的 OAW**：目前版本（例如 `2.0.0+build.2.c51132c`）和它的說明、裝了哪些 skill、和預設 `2.0.0` 比多了或少了什麼。每一行都標證據等級：靜態量測或未量測。只裝到其中一個 host 的 skill 會標「只在 Codex」或「只在 Claude」。下面是版本時間線（每一版都能展開，看它有哪些 skill、吸收了哪些成分、和預設比的每一行與證據等級）和常設預算。
-2. **投食區**：貼 GitHub 網址、本週覓食清單，以及匯入已有的大象／金魚消化紀錄。
-3. **食物卡**：每樣食物一張卡，大徽章是判定，下面是四步進度：
-   `① 找到 → ② 試吃（免費） → ③ 實測（付費，依常設預算） → ④ 結果`
-   成分分成 🟢 吸收、🔴 排掉（附原因）、🟡 暫留（附缺哪個測試）。徽章下面直接寫出判定依據；有旗標時列出每個旗標的規則、位置和嚴重度，並告訴你去哪裡分流。標「建議（尚未經你確認）」的排掉只是靜態規則的建議。試吃失敗的原因會留在卡片上。
-
-## 每個按鈕做什麼
-
-| 按鈕 | 在哪裡 | 做什麼 | 對應指令 |
+| 站 | 做什麼 | 決定 | 今天 |
 |---|---|---|---|
-| 送去試吃 | 投食區、食物卡 | 加入食物（同一個 repo 寫兩次會合併，並列出合併了哪些網址），抓固定版本，封存成唯讀 tar 放在專案外的 `LAB_HOME`，在記憶體裡跑免費靜態檢查，再把食物拆成成分 | `add URL [URL ...]`、`taste FOOD` |
-| 立即覓食 | 投食區 → 本週覓食 | 搜尋 GitHub，濾掉和 coding agent skill／harness 無關的 repo，累積成候選清單。星數只決定排序 | `scout`、`scout list` |
-| 把勾選的送去試吃 | 本週覓食 | 只有你勾選的候選才會被加入並試吃 | `scout pick N [N ...]` |
-| 匯入 | 投食區 → 匯入已有的消化紀錄 | 把一個消化資料夾（`digest.json`、`verify.json`、`goldfish-*.json`、`components.json`、`integration.json`、`proposals.md`）存成**歷史證據**，只顯示、不計入判定。食物欄空白時依資料夾裡的 `scout.json` 判斷是哪樣食物 | `import-report FOOD DIR` |
-| 🐘 大象報告／🐟 金魚報告 | 食物卡 | 打開匯入的報告，標示「歷史證據 · 不計入判定」。評審的自由文字預設收起，並標成不受信任 | `show FOOD` |
-| 實測… | 食物卡 | 顯示系統自己規劃的測試，從便宜的排起，每一步寫明能證明和不能證明什麼，以及 token 預估。**開始實測**按鈕是停用的：v0 不執行付費測試 | `plan FOOD` |
-| 吸收選中的成分 | 食物卡 | 先預覽要寫哪些檔案，確認後先存還原點，再安裝選中的純文字 skill，產生新版本，並重新評估和預設的差異。安裝前先用 doctor 的同一套 skill 檢查，不合格就不裝。只選了歷史提案時，只記成待辦（寫進決定紀錄），不改任何檔案，也不產生新版本 | `absorb FOOD --components ID[,ID] [--apply]` |
-| 排掉／移除 | 食物卡 | 移除這樣食物已安裝的全部 skill。先預覽，確認後先存還原點，再移除；你改過的檔案受保護，不會被刪。原因必填 | `remove FOOD --food --reason TEXT [--apply]` |
-| 移除／移除 EGM | 我的 OAW → skill 清單 | 移除單一 skill；EGM 整組一起移除。內建 skill 和 EGM 走 `oaw.py` 的安裝計畫：先預覽，套用時先備份到 `.oaw/backups/`、存還原點，再移除。原因必填（決定 D6） | `remove SKILL\|egm --reason TEXT [--apply]` |
-| 加回／加回 EGM | 我的 OAW → 比預設少 | 經 `oaw.py migrate` 加回內建 skill 或整組 EGM：先預覽，套用時先備份、存還原點；之後吸收的東西都保留。加回的 skill 算「未測」，要重新測試（決定 D6）。原因必填 | `readd SKILL\|egm --reason TEXT [--apply]` |
-| 忘掉這樣食物 | 食物卡（沒有已安裝的成分時） | 從食物卡拿掉：刪掉登記和證據摘要；決定紀錄保留，重新投食時從頭開始 | `forget FOOD [--apply]` |
-| 重新評估 | 我的 OAW → 和預設比 | 重新比對目前安裝和全新的預設安裝。每一行都是靜態量測，品質一律「未量測」 | `effect` |
-| 還原到這版 | 我的 OAW → 版本時間線 | 列出會寫入和刪除的檔案，確認後先把目前安裝存成一版，再切回那一版，最後跑 doctor。只動 OAW 安裝層，不動你的專案資料：你宣告的自訂檔（例如保留的 `AGENTS.md`）照原樣留著；不屬於目前安裝層的現有檔案會擋住還原，不會被蓋掉 | `builds`、`restore BUILD [--apply]` |
-| 設定常設預算 | 我的 OAW | 設定每樣食物和每週的付費 token 上限，以及試跑的沙箱條件。送出後確認碼只印在終端，你把它輸回頁面才生效 | `policy show`、`policy set ...` |
-| 分流旗標 | 只在 `menu`（第 12 項）和 CLI | 處理靜態檢查舉的旗：`--benign`（誤報）、`--allergen`（只是限制，不是有毒）、`--confirm-toxic`（你確認有毒）。`--benign`／`--allergen` 需要終端確認碼 | `triage FOOD FLAG ... --reason TEXT` |
+| 入口（兩條） | 每週偵查 → 相關性過濾 → 你確認；或你直接點名。同一個 repo 只收一次 | D4 | 偵查、過濾、去重：自動；確認、點名：需要你 |
+| 1 入口 | 兩條入口匯成一份食物清單，等著送去試吃 | D4 | 需要你按「送去試吃」 |
+| 2 封存 | 固定在一個 pinned SHA，唯讀封存在專案外的 `LAB_HOME`，絕不執行 | D7、D13 | 自動 |
+| 3 靜態 | 免費靜態檢查，把食物拆成成分；靜態規則只舉旗 | D5、D7 | 自動；高嚴重度旗標的分流：需要你 |
+| 4 計畫 | Elephant 依紀錄的決定擬測試計畫和吸收提案 | D10、D11 | 系統測試計畫：自動；Elephant 提案：只能匯入（歷史證據） |
+| 5 盲審 | Goldfish 在驗證過的零脈絡下盲審我們的草稿，Elephant 解決發現 | D10、D15 | 規劃中 |
+| 6 實測 | 在常設政策內由便宜到貴跑測試；執行食物程式碼只在可拋棄沙箱 | D11、D13、D17 | 規劃中 |
+| 7 分流 | 每個成分判定吸收／排掉／暫留，附原因和證據等級；再做整合檢查和齊平底線 | D2、D5、D16、D17、D18 | 成分判定：自動（只有靜態量測）；整合檢查、齊平底線：規劃中 |
+| 8 核准 | 你決定吸收哪些成分 | D7、D11 | 需要你 |
+| 9 版本 | 每次吸收或移除都產生 `2.0.0+build.N.<hash7>`，可一鍵線性還原，列出和預設比的效果與證據等級；任何 skill（含 EGM）都能移除 | D3、D6、D12、D14 | 自動（套用前要你確認）；每版的引用清單：部分 |
 
-CLI 的 `absorb`、`remove`、`readd`、`restore`、`forget` 沒加 `--apply` 時都只預覽。每個指令都可以加 `--json`。結束碼：`0` 完成、`2` 拒絕或失敗、`4` 網頁或選單在等你輸入確認碼。頁面和選單的錯誤訊息是中文；引擎的英文原文留在「動作紀錄」。
+## 每一站的規則
+
+### 入口（D4）
+
+- **每週偵查**只偵測、累積候選。相關性過濾不經審查就丟掉和 coding-agent skill／harness 無關的 repo（例如影片工具）。星數只決定排序，不是品質。
+- 每週由你勾選要試哪些。沒有你確認，什麼都不會進封存或消化。
+- **你點名**：你直接給 repo，直接進入口。可以一次給很多個；同一個 repo 寫兩次（大小寫、`.git`、結尾斜線、SSH 或 tree 網址）只收一次。
+
+### 1 入口 → 2 封存（D7、D13）
+
+- 不會自動安裝或套用任何東西。
+- 抓取固定在一個 pinned SHA（hardened git fetch：不跑 hooks、不 checkout、只收 https 和 `file://`；沒有 git 時改用 codeload tarball，標 `unverified-against-commit`）。
+- 快照封存成 `LAB_HOME` 裡的唯讀 tar，在專案外；只在記憶體裡讀，不解壓、不 import、不執行。
+
+### 3 靜態（D5、D7）
+
+- 免費 T0 檢查：檔案角色、授權、宣告的 hooks／MCP server／腳本、旗標，再把食物拆成成分（skill、hook set、MCP server、腳本、manifest、指示檔、文件）。
+- 靜態規則只舉旗，不判有毒。高嚴重度旗標讓食物變成「有疑慮」；只有你分流成「確認有毒」才是有毒。
+- 掃描規則更新後，舊的試吃紀錄要用新規則再試吃一次（免費），才能吸收。
+
+### 4 計畫（D10、D11）
+
+- 系統決定每樣食物怎麼吃，不是你。Elephant（完整專案脈絡，來自紀錄的決定）擬測試計畫和吸收提案；系統挑最便宜、又能分辨營養、沒營養和有毒的測試。
+- 今天：`plan` 依證據自動產生系統測試計畫和 token 預估。Elephant 的提案只能匯入已經做好的紀錄（`import-report`），標成歷史證據，不計入任何判定。
+
+### 5 盲審（D10、D15）
+
+- Goldfish 盲審的是**我們的草稿**：測試計畫、吸收提案、backlog 合成，以及每個合併出來的項目。只審食物本身不能取代。
+- 零脈絡要驗證，不能假設：每隻 Goldfish 用固定 recipe 啟動，argv 和 init event 都顯示沒有工具、skill、plugin、MCP server 或繼承的設定。每份 Goldfish 紀錄寫明啟動方式、host 版本、繼承的脈絡和 init event 檢查。
+- Elephant 解決 Goldfish 的發現，再交給你。
+- 今天：規劃中。匯入的 Goldfish 紀錄只顯示成歷史證據。
+
+### 6 實測（D11、D13、D17）
+
+- 常設政策只設定一次。之後系統在政策內自己跑免費和付費測試、回報結果，不逐樣問你；只有測試會超出政策時才問。
+- 由便宜到貴：最便宜、還能分辨的測試先做。
+- 會執行食物的步驟自動變成暫留（D17）。每個暫留都從免費 Stage 0 開始。
+- 常設政策 PRE-01（D13）：
+  - 每樣食物 Stage 0/1 上限 10M logical tokens；Stage 2、第二個 host 或超過上限都要先問你。
+  - 消化系統本身的開銷（Goldfish 審查、探測、fixture）每輪上限 10M。
+  - 沙箱 level 1：這台機器上的專案副本，host 設定目錄改到別處；只給不執行食物程式碼的 run。
+  - 沙箱 level 2：可拋棄的 Linux container 或 VM，每次試跑後銷毀；凡是執行食物程式碼、安裝任何東西、可能讀到作業系統憑證庫的 run 都要 level 2（Windows 上改 HOME 隔離不了 `USERPROFILE` 或 Credential Manager）。沒有 level 2 的機器，這類 run 一律暫留。
+  - 試跑預設不給 API key；只有你自己建立專用、有上限、用完撤銷的 key 才給。Goldfish run 用可拋棄的設定目錄。
+  - 網路只開 model provider API；level 2 可以短暫開 PyPI／GitHub 抓相依套件。
+  - Codex 的一半在你登入 Codex CLI 之前一律記成「未測」。
+  - 共用 baseline 的 A/B 成本平分給用到它的食物；candidate arm 算在它測的那樣食物上。
+- 今天：規劃中。第 3 站的免費靜態檢查已自動；付費測試、沙箱試跑、離線整合（T1）都還沒實作。`plan` 只列出計畫和預估花費，「實測（依常設政策）」按鈕是停用的。
+
+### 7 分流（D2、D5、D16、D17、D18）
+
+- 每樣食物都先測過才判定。判定以成分為單位，「拉肚子」很少是整樣：
+  - 🟢 **吸收**：重新實作成一個具名的 OAW 部件。
+  - 🔴 **排掉**：附原因和證據。只排掉有害的部分。
+  - 🟡 **暫留**：寫明缺哪個付費測試。
+- 模型面向的文字（skill、模板、啟動文字）一律和它的機制拆開，文字要過 A/B 才算數；機制可以用靜態證據出貨（D17）。
+- 每一行都標證據等級：實測（measured）、靜態量測（static-measured）、未量測（not measured）。還沒建的項目寫「未量測（規劃：<等級>）」；規劃的等級放在另一欄，絕不顯示成目前的等級（D18）。
+- **整合檢查**：對現有配方的退步、觸發衝突（名稱碰撞）、context 預算、指示衝突。
+- **齊平底線**（D2、D16）：每樣測過的食物，計畫都要包含「OAW 吃完」對「單吃食物」（C ≥ B）。跑之前一律標「和單吃食物比：未測」。只有實測贏過食物本身才能叫「進化」；沒有對照證據就寫「齊平，未宣稱改善」或「尚未證明」。
+- 今天：成分判定由 `catalog_core.derive()` 自動算出，但只有靜態量測；整合檢查和齊平底線規劃中（建版本時會靜態量測啟動載入的文字 bytes，這是 context 預算的一部分）。
+
+### 8 核准（D7、D11）
+
+- 你決定吸收哪些成分。系統不會自動安裝或套用。
+- 吸收先預覽要寫哪些檔案，你確認後才動手。只選了歷史提案時，只記成待辦（寫進決定紀錄），不改任何檔案，也不產生新版本。
+
+### 9 版本（D3、D6、D12、D14）
+
+- 每次吸收或移除都產生一個專案版本和還原點。名稱遵守 SemVer 2.0：預設 release `2.0.0`，專案組合是 build metadata `2.0.0+build.N.<hash7>`（`hash7` 是內容 hash 的前 7 碼），附一個人看得懂的標籤，寫加了或拿掉什麼。內容相同的組合沿用同一個版本。
+- 一鍵還原到任何一個舊版本：預覽 → 還原 → doctor。還原只切換 OAW 安裝層，不動專案紀錄。還原是線性的：只有移除版本，沒有逐項開關（D14）。
+- 每一版都列出它有哪些 skill 和成分，以及和預設 release 比的效果，每一行一個證據等級。系統在吸收當下做這個簡單評估；沒有實測證據就寫「未量測」，絕不寫「加強」。
+- 移除（D6）：任何吸收進來的 skill 都能逐專案移除，包括內建的 EGM：預覽 → 備份 → 移除，記錄原因。再加回要重新測試。
+- 引用（D3）：每個版本只引用真正用到的上游材料，並寫出用在哪裡；移除或沒採用的列出原因。
+- 今天：版本、還原點、還原、和預設比、移除、加回都自動（套用前要你確認）。吸收收據記下每樣食物的 pinned commit 和 tree hash；release 的引用在 `docs/releases/<version>-sources.json`。每個專案版本自動列出「用在哪裡／沒採用的原因」的引用清單還是規劃中。
+
+## 怎麼操作（D8）
+
+OAW 由 Claude Code 和 Codex 共用。網頁、終端選單和 CLI 呼叫同一套引擎、讀同一份 `view.json`、用同一套顯示規則。需要 Python 3.10+（只用標準函式庫）和 git。指令都在 OAW checkout 執行，用 `--target` 指向專案：
+
+```bash
+python3 scripts/oaw.py init --target /path/to/project       # 專案還沒裝 OAW 時先裝
+python3 scripts/catalog.py ui --target /path/to/project     # 網頁：消化系統動畫，可以直接操作
+python3 scripts/catalog.py menu --target /path/to/project   # 終端選單：同樣的站別和動作（Codex、沒有瀏覽器時）
+python3 scripts/oaw_status.py --project /path/to/project    # 只看，不做任何動作
+```
+
+### 網頁（`catalog.py ui`）
+
+- 只綁 `127.0.0.1`，印出並開啟 `http://127.0.0.1:<port>/#t=<通行碼>`，Ctrl+C 結束。要用印出來的完整網址開，少了 `#t=…` 頁面會拒絕連線。`--no-browser` 只印網址，`--port N` 指定埠號。
+- 主畫面就是流程：上面兩個入口匯進「入口」，下面每樣食物一條軌道，九個站由左到右；窄螢幕（手機、直放的平板）改成每樣食物一張卡、由上往下，不會左右捲動。每一站的標題寫著它是自動、部分自動、需要你，還是規劃中；「每一站在做什麼」可以展開看每一站的細項。
+- 每樣食物是一個圖示，停在它目前的站；判定出來後，圖示上用顏色點標出每個成分（🟢 吸收、🔴 排掉、🟡 暫留）。重新整理後站別變了，圖示會滑到新的站（系統設定「減少動態效果」時直接跳過去）。試吃進行中，圖示會跟著 `status.json` 停在封存或靜態。
+- 這一站能做的動作，就是圖示下面的按鈕：
+  - 入口：送去試吃、排掉（忘掉）
+  - 封存（試吃失敗）：再送去試吃
+  - 靜態：規則更新時「用新規則再試吃（免費）」；有高嚴重度旗標時，圖示下只寫「分流旗標 → 終端 catalog.py menu」，網頁上沒有按鈕（確認碼只在終端）
+  - 計畫：看計畫（站已完成時也能按）；標題上的「匯入紀錄」匯入 Elephant／Goldfish 紀錄
+  - 分流：沒有可以吸收的成分（例如全部暫留）時「排掉（忘掉）」
+  - 核准：吸收選中的成分…（勾選成分 → 預覽 → 確認）、排掉（忘掉）
+  - 版本：移除；成分被還原掉時「還原到這版」
+- 盲審和實測標「規劃中」，畫成虛線，沒有按鈕；食物會被畫成「經過」它們，但不會被當成已經做過。
+- 點食物名稱或圖示打開食物卡（成分、旗標、判定依據、計畫、Elephant／Goldfish 紀錄）。點「版本」站的「版本與 skill」跳到「我的 OAW」：目前版本、skill 清單（可以移除單一 skill 或整組 EGM、加回）、和預設比的效果、版本時間線（每一版都能還原）、常設預算。
+- 還沒有食物時，畫面只有空的流程、兩個入口和一句怎麼加第一樣食物。
+
+### 終端選單（`catalog.py menu`）
+
+- 每次回到主畫面都先印出同一張站別表，一樣食物一行，例如：
+
+  ```text
+  sweet-notes  入口 ● 封存 ● 靜態 ● 計畫 ● 盲審 ┄ 實測 ┄ 分流 ● 核准 ◉ 版本 ○  等你核准：1 個成分可以吸收
+  ```
+
+  `●` 完成、`◉` 目前、`⊗` 卡住、`○` 還沒到、`┄` 規劃中、`–` 不需要。`oaw_status.py` 印的是同一張表。
+- 下面用字母列出每樣食物這一站能做的動作（和網頁的按鈕一樣，例如 `a. sweet-notes · 核准 · 吸收選中的成分…`），輸入字母就執行；需要確認碼的分流旗標也在這裡。
+- 數字選項 1–13 是各個畫面，名稱前面標它屬於哪一站：我的 OAW、你點名、每週偵查、食物卡、核准（吸收）、移除 skill／EGM、看計畫、匯入紀錄、版本時間線／還原、重新評估、常設預算、分流旗標、加回 EGM／內建 skill。0 離開。不需要 curses。
+
+### CLI
+
+| 站 | 指令 |
+|---|---|
+| 入口 | `add URL [URL ...]`、`scout`、`scout list`、`scout pick N [N ...]`、`forget FOOD [--apply]` |
+| 封存、靜態 | `taste FOOD`、`show FOOD`、`triage FOOD FLAG --benign\|--allergen\|--confirm-toxic --reason TEXT` |
+| 計畫 | `plan FOOD`、`import-report FOOD DIR`、`policy show`、`policy set ...` |
+| 核准 | `absorb FOOD --components ID[,ID] [--apply]` |
+| 版本 | `builds`、`restore BUILD [--apply]`、`effect`、`remove SKILL\|egm --reason TEXT [--apply]`、`remove FOOD --food --reason TEXT [--apply]`、`readd SKILL\|egm --reason TEXT [--apply]` |
+| 全部 | `view`（重算 `view.json`）、`list` |
+
+`absorb`、`remove`、`readd`、`restore`、`forget` 沒加 `--apply` 時只預覽；`remove`、`readd` 套用時一定要 `--reason`。每個指令都可以加 `--json`。結束碼：`0` 完成、`2` 拒絕或失敗、`4` 網頁或選單在等你輸入確認碼。
 
 ### 確認碼怎麼用
 
-設定常設預算和分流旗標（`--benign`／`--allergen`）屬於只有 owner 能做的變更：
+設定常設預算和分流旗標（`--benign`／`--allergen`）只有 owner 能做：
 
-- **CLI**：在你自己開的**互動終端**（PowerShell、cmd；Git Bash 請用 `winpty`）執行 `policy set ...` 或 `triage ...`。終端印出 6 位數確認碼，同一個指令接著請你把它打回去，對了才生效。沒有 `--confirm` 參數，也不會寫任何待確認檔。
-- **網頁和 `menu`**：確認碼印在啟動 `play` 或 `menu` 的那個終端，只存在那個程序的記憶體裡；你把它輸回頁面或選單。10 分鐘內有效、只能試一次、綁定那一組設定；同一次 `play` 錯三次就不再接受確認，要重新啟動。
-- 沒有互動終端（stdin 和 stderr 不是終端機，例如 agent 在背景、把輸出導到檔案）時，根本不會產生確認碼，指令直接拒絕。
+- **CLI**：在你自己開的**互動終端**（PowerShell、cmd；Git Bash 請用 `winpty`）執行 `policy set ...` 或 `triage ...`。終端印出 6 位數確認碼，同一個指令接著請你打回去，對了才生效。沒有 `--confirm` 參數，也不會寫任何待確認檔。
+- **網頁和 `menu`**：確認碼印在啟動 `ui` 或 `menu` 的那個終端，只存在那個程序的記憶體裡；你把它輸回頁面或選單。10 分鐘內有效、只能試一次、綁定那一組設定；同一次啟動錯三次就不再接受確認，要重新啟動。
+- 沒有互動終端（stdin 和 stderr 不是終端機，例如 agent 在背景執行、輸出導到檔案）時，根本不會產生確認碼，指令直接拒絕。
 
-**這只是減速帶，不是身分驗證。** 確認碼擋住的是「agent 透過 catalog 指令替你設定」這條路；任何能在你的終端打字的人或程式（包括在 PTY 裡跑指令的 agent），都能看到並輸入確認碼。`policy.json` 和 `decisions.jsonl` 是沒有簽章的專案檔，對專案有寫入權的程式可以直接改它們；所以紀錄裡寫的是 `confirmed_via: code typed back on an interactive terminal (unauthenticated)`，不會寫「由 owner 確認」。請自己輸入確認碼，不要貼給 agent。
+**這只是減速帶，不是身分驗證。** 確認碼擋住的是「agent 透過 catalog 指令替你設定」這條路；任何能在你的終端打字的人或程式（包括在 PTY 裡跑指令的 agent），都能看到並輸入確認碼。`policy.json` 和 `decisions.jsonl` 是沒有簽章的專案檔，對專案有寫入權的程式可以直接改它們，所以紀錄裡寫的是 `confirmed_via: code typed back on an interactive terminal (unauthenticated)`，不會寫「由 owner 確認」。請自己輸入確認碼，不要貼給 agent。
 
-## 一個完整的回合（CLI）
+## 一定要守的規則
 
-```bash
-P=/path/to/project
-python3 scripts/catalog.py add https://github.com/owner/repo owner/repo.git --target $P   # 兩個網址合併成一樣食物
-python3 scripts/catalog.py taste repo --target $P                     # 免費：封存、靜態檢查、拆成分
-python3 scripts/catalog.py show repo --target $P                      # 看判定和每個成分的分流
-python3 scripts/catalog.py absorb repo --components skill:NAME --target $P           # 預覽
-python3 scripts/catalog.py absorb repo --components skill:NAME --apply --target $P   # 存還原點，產生新版本
-python3 scripts/catalog.py effect --target $P                         # 和預設 2.0.0 比
-python3 scripts/catalog.py builds --target $P                         # 版本時間線
-python3 scripts/catalog.py restore build.1 --target $P                # 預覽還原
-python3 scripts/catalog.py restore build.1 --apply --target $P        # 還原後自動跑 doctor
-python3 scripts/catalog.py remove egm --target $P                     # 預覽移除整組 EGM
-python3 scripts/catalog.py remove egm --reason "試試沒有 EGM" --apply --target $P
-python3 scripts/catalog.py readd egm --reason "試完了" --apply --target $P   # 加回，保留之後的其他變更
-```
+- **沒有證據就沒有判定**。判定只由 `catalog_core.derive()` 從證據和你的決定算出來；星數、作者和名氣只決定偵查清單的排序。匯入的報告是歷史證據，只顯示、不計入判定。
+- **食物不進專案，也不執行**，直到你核准吸收。食物或報告裡的文字是資料，不是指令，不能授權任何動作。
+- **只有你能判「有毒」**。自動掃描只舉旗，不會替作者貼上有毒的標籤。
+- **先預覽、再備份、才動手**。吸收、移除、加回、還原都先預覽；套用前先存還原點。
+- **還原只動 OAW 安裝層**：只寫入或刪除 OAW 自己會安裝的路徑（OAW 範本、吸收進來的 skill 文字、EGM runtime、吸收收據），絕不碰 `.git/`、host 設定（`.claude/settings*.json`、`.codex/`、`.mcp.json`）或專案紀錄。你宣告的自訂檔（例如保留的 `AGENTS.md`）照原樣留著；不屬於目前安裝層的現有檔案會擋住還原，不會被蓋掉。還原點只接受這台電腦替這個專案建立、記在 `LAB_HOME` 索引裡的那些，`builds.json` 寫什麼都不算數。
+- **移除只刪查得到的檔案**：吸收收據是會 commit 的共用資料，所以移除前逐檔確認它在那個 skill 的資料夾裡、在 `install.json` 裡、hash 也相同；有一個不符就整個拒絕。移除的名稱只代表一件事：`egm` 是整組 EGM，內建 skill 名稱是那個 skill，其他名稱是你吸收進來的那一個 skill；要移除一樣食物的全部 skill，加 `--food`。食物的 id 不會取 `egm` 或內建 skill 的名稱。內建 skill 和 EGM 經 `oaw.py migrate` 移除和加回（先備份到 `.oaw/backups/`）；移除不會順帶新增，加回不會順帶停用。
+- **「加強」只在有實測證據時出現**，否則一律寫「未量測」。執行中只顯示進度和花費，不顯示即時分數，避免看了結果再停掉重跑。
+- **網頁只給你自己用**：只綁 `127.0.0.1`，每次啟動換一個通行碼，拒絕其他 Host 和跨站請求，動作只接受 JSON POST，一次只跑一個動作。食物裡的文字一律當純文字顯示，不渲染食物附帶的 HTML、SVG 或圖片。
 
-版本名稱遵守 SemVer 2.0：預設 release 是 `2.0.0`，專案組合是 build metadata `2.0.0+build.N.<hash7>`，`hash7` 是內容 hash 的前 7 碼。第一次吸收或移除前，系統會自動存一版「baseline」；每一版（包括 baseline 和還原點）都記下和預設比的評估。內容相同的組合沿用同一個版本，不會重複建立。`restore` 可以寫完整名稱，也可以寫 `build.N` 或 `N`。
+## 原型 v0 還沒做的事
 
-`remove` 的名稱只代表一件事：`egm` 是整組 EGM，內建 skill 名稱是那個 skill，其他名稱是你吸收進來的那一個 skill；要移除一樣食物的全部 skill，加 `--food`。食物的 id 不會取 `egm` 或內建 skill 的名稱。
-
-## 原型 v0 不做的事
-
-- **不跑付費實測**：行為 A/B、整合測試、齊平底線、對我們草稿的金魚盲審都只列計畫和預估花費。所以 v0 不會出現「營養」或「進化」，品質一律顯示「未量測」。
-- **不產生大象和金魚報告**：v0 只匯入已經做好的消化紀錄，而且標成歷史證據、不計入判定。
-- **免費的離線整合檢查（T1）還沒做**：計畫裡會顯示「not available in v0」。
-- **只吸收純文字 skill**：hooks、MCP server、腳本、manifest 等成分只記成待辦，不安裝，也不在你的電腦上執行。SKILL.md（或它附帶的說明檔）裡只要叫 agent 執行指令（程式碼區塊、行內指令、「執行 `…`」），或碰到任何旗標規則（網路、家目錄、`curl | sh`…），就算 `X1-inline`，要在可拋棄環境測過才能吸收；旗標分流成良性也一樣。規則更新後，舊的試吃紀錄要重新試吃才能吸收。
-- **來源只限 github.com 和本機 `file://` repo**。私有 repo 抓不到，因為 GitHub token 不會交給 git；`GITHUB_TOKEN` 只用在覓食搜尋。
-- **試吃抓整份 depth-1 快照**（有大小上限），還沒做只抓需要檔案的部分 clone。
-- **分流旗標不在網頁上**：有高嚴重度旗標的食物，卡片會請你改用 `menu`。
+- **盲審、實測、整合檢查、齊平底線都是規劃中**：只列計畫和預估花費。所以 v0 不會出現「營養」或「進化」，品質一律顯示「未量測」，每樣測過的食物都標「和單吃食物比：未測」。
+- **已知差距（D17）**：通過靜態檢查、沒有指令的純文字 skill（`X0`）今天仍標成「吸收」，你可以在靜態證據下核准它；D17 要求模型面向的文字先過 A/B。A/B 實作前，這種吸收的版本一律標「品質：未量測」，核准時請把它當成只有靜態證據。
+- **只吸收純文字 skill**：hooks、MCP server、腳本、manifest 等成分只記成待辦，不安裝，也不在你的電腦上執行。SKILL.md（或它附帶的說明檔）裡只要叫 agent 執行指令（程式碼區塊、行內指令、「執行 `…`」），或碰到任何旗標規則（網路、家目錄、`curl | sh`…），就算 `X1-inline`，要在可拋棄環境測過才能吸收；旗標分流成良性也一樣。
+- **來源只限 github.com 和本機 `file://` repo**。私有 repo 抓不到，因為 GitHub token 不會交給 git；`GITHUB_TOKEN` 只用在偵查搜尋。試吃抓整份 depth-1 快照（有大小上限）。
+- **分流旗標不在網頁上**：有高嚴重度旗標的食物，網頁會請你改用 `menu` 或 CLI。
 - hash 鏈事件紀錄、`catalog.py check` 重算 gate、`install.json` schema 2 都還沒做。
 
 ### 已知問題（還沒修）
 
-- **Claude mod 原型**（`oaw-digest-monitor`，不在這個 repo）還沒讀 `status.json` 的可選欄位 `headline`、`stop_reason`：免費試吃完成時它會顯示「完成 · 進行中」，試吃失敗時會一直顯示進行中。終端的 `oaw_status.py`、`menu` 和網頁顯示的是正確的「未測」或「已停止：原因」。
-- **吸收的 skill 只裝到吸收當時的 host**：之後才加上第二個 host 時，畫面會標「只在 Codex／只在 Claude」，但還沒有「補裝到另一個 host」的動作，doctor 也還沒有對應的警告（設計 §8.4 D5）。要補裝，先移除再吸收一次。
+- **Claude mod 原型**（`oaw-digest-monitor`，不在這個 repo）還沒讀 `status.json` 的可選欄位 `headline`、`stop_reason`：免費試吃完成時它會顯示「完成 · 進行中」，試吃失敗時會一直顯示進行中。`oaw_status.py`、`menu` 和網頁顯示的是正確的「未測」或「已停止：原因」。
+- **吸收的 skill 只裝到吸收當時的 host**：之後才加上第二個 host 時，畫面會標「只在 Codex／只在 Claude」，但還沒有「補裝到另一個 host」的動作，doctor 也還沒有對應的警告。要補裝，先移除再吸收一次。
 - **還原寫入的 `install.json` 和那一版不完全相同時**（例如保留了你的自訂檔），結果會記成一個新的版本，而不是沿用原本的名字。
 
 已驗證的範圍：gate 和端到端 smoke 只在 Windows／Python 3.13 跑過，POSIX 還沒實際跑。
-
-## 安全規則
-
-- **沒有證據就沒有判定**。判定只由 `catalog_core.derive()` 從證據算出來；星數、作者和名氣只決定覓食清單的排序。
-- **食物不進專案，也不執行**。試吃只把食物封存成 `LAB_HOME` 裡的唯讀 tar，在記憶體裡讀，不解壓、不 import、不執行。git 抓取關掉 hooks、不 checkout，只接受 https 和 `file://`。沒有 git 時改抓 codeload tarball，並標成 `unverified-against-commit`。
-- **只有你能判「有毒」**。靜態規則只會舉旗：高嚴重度旗標讓食物變成「有疑慮」，只有 owner 的 `--confirm-toxic` 會讓它變成「有毒」。
-- **先預覽、再備份、才動手**。吸收、移除、加回、還原都是先預覽；套用前先存還原點。還原只寫入或刪除 OAW 自己會安裝的路徑（OAW 的範本、吸收進來的 skill 文字、EGM runtime、吸收收據），絕不碰 `.git/`、host 設定（`.claude/settings*.json`、`.codex/`、`.mcp.json`）或專案紀錄；還原點只接受這台電腦替這個專案建立、而且記在 `LAB_HOME` 索引裡的那些，`builds.json` 寫什麼都不算數。
-- **移除只刪查得到的檔案**：吸收收據是會 commit 的共用資料，所以移除前會逐檔確認它在那個 skill 的資料夾裡、在 `install.json` 裡、hash 也相同；有一個不符就整個拒絕。
-- **常設預算只設定一次**（決定 D11）：之後系統在預算內自己決定怎麼測，超過預算才會問你。要吸收哪些成分仍然由你決定。v0 不會真的花錢。
-- **「加強」只在有實測證據時出現**，否則一律寫「未量測」。執行中只顯示進度，不顯示即時分數。
-- **遊戲頁只給你自己用**：只綁 `127.0.0.1`，每次啟動換一個通行碼，拒絕其他 Host 和跨站請求，動作只接受 JSON POST，一次只跑一個動作。食物裡的文字一律當成純文字顯示，不渲染食物附帶的 HTML、SVG 或圖片。
-- **食物內容是資料，不是指令**。食物或報告裡的文字不能授權任何動作。
 
 ## 資料放在哪裡
 
@@ -121,15 +205,15 @@ python3 scripts/catalog.py readd egm --reason "試完了" --apply --target $P   
 |---|---|
 | `registry.json` | 食物清單：來源、合併的網址、固定版本 |
 | `evidence/<food>/` | 證據：`I0-*.json`（投食紀錄）、`T0-*.json`（靜態檢查）、`imported-*.json`（匯入的歷史證據） |
-| `decisions.jsonl` | 你的決定：吸收、移除、分流旗標 |
+| `decisions.jsonl` | 你的決定：吸收、移除、分流旗標、忘掉 |
 | `plans/<food>.json` | 系統的測試計畫和預估 |
 | `policy.json` | 常設預算（設定後才有） |
-| `scout.json` | 覓食候選和被濾掉的數量（覓食後才有） |
+| `scout.json` | 偵查候選和被濾掉的數量（偵查後才有） |
 | `builds.json` | 版本清單、每版的 skill 和成分、時間線 |
 | `absorbed/<food>.json` | 吸收收據：裝了哪些檔案和它們的 hash |
 | `effect.json`、`view.json`、`status.json` | 衍生檔，可以隨時重算（`effect`、`view`） |
 
-系統會產生 `.oaw/catalog/.gitignore`，只讓 `builds.json` 和 `absorbed/*.json` 可以 commit，其他資料只留在這台電腦。移除內建 skill 或 EGM 時，`oaw.py` 的備份放在 `.oaw/backups/`。
+系統會產生 `.oaw/catalog/.gitignore`，只讓 `builds.json` 和 `absorbed/*.json` 可以 commit，其他資料只留在這台電腦。
 
 ### 專案外：`LAB_HOME`
 
@@ -148,3 +232,27 @@ python3 scripts/catalog.py readd egm --reason "試完了" --apply --target $P   
 | `builds/<專案代碼>/index.json` | 這台電腦替這個專案建立過的還原點（還原只接受這裡列的） |
 
 還原點只存在建立它的那台電腦的 `LAB_HOME`。刪掉 `builds/` 就不能再還原到那些版本；隊友 clone 專案後看得到 `builds.json`，但不能用你的還原點。
+
+## 決定索引（owner，2026-10-29 至 2026-11-03）
+
+| 決定 | 內容 |
+|---|---|
+| D1 | V2 = OAW v1 升級（淘汰舊的 flat skills）＋內建 EGM。內建 EGM 是產品決定，不是量測到的增益 |
+| D2 | 齊平底線：吃完一樣食物後，OAW 至少和單用那樣食物一樣好；只有實測贏過食物本身才叫「進化」 |
+| D3 | 每個版本只引用真正用到的上游材料和用在哪裡；移除或沒採用的列出原因 |
+| D4 | 兩條入口：每週偵查（相關性過濾、星數只排序、你確認）和你點名（可批次、去重） |
+| D5 | 每樣食物都要測；判定以成分為單位：吸收、排掉（原因＋證據）、暫留（缺哪個付費測試） |
+| D6 | 你可以逐專案移除任何吸收的 skill，包括 EGM：預覽、備份、移除、記原因；再加回要重新測試 |
+| D7 | 不自動安裝或套用；不受信任的 repo 封存在 pinned SHA，消化中絕不執行（付費測試的同意由 D11 改成常設政策） |
+| D8 | Claude Code 和 Codex 共用：單一 host 的功能要有 Codex 能用的對應（終端 CLI／skill），同一份資料、同一套顯示規則 |
+| D9 | 要好懂、真的能用（例如按一下就主動消化），操作要簡單；owner 會親自試（D19 說明了「簡單」的意思） |
+| D10 | 完整 EGM 組合：Elephant 擬吸收提案，Goldfish 零脈絡盲審這些草稿，Elephant 解決，你決定 |
+| D11 | 系統決定每樣食物怎麼測；你只設定一次常設政策；你仍決定吸收哪些成分 |
+| D12 | 每次吸收或移除都產生具名版本和還原點；SemVer `2.0.0+build.N`（加短 hash）；每版列效果和證據等級 |
+| D13 | 常設政策 PRE-01：上限、沙箱 level 1／2、API key、網路、Codex、共用成本（見第 6 站） |
+| D14 | 2026-11-03 這一輪的選擇；其中和流程有關的是：只有移除版本、沒有逐項開關，還原是線性的 |
+| D15 | 零脈絡要驗證：Goldfish 的啟動 recipe、argv、init event 都要記錄；backlog 合成和合併項目也要盲審 |
+| D16 | 齊平底線是每樣測過的食物的固定關卡（C ≥ B）；沒跑前標「和單吃食物比：未測」 |
+| D17 | 執行食物的步驟自動暫留；模型面向的文字和機制拆開，文字過 A/B，機制可用靜態證據出貨；暫留都從免費 Stage 0 開始 |
+| D18 | 沒建的項目證據寫「未量測（規劃：<等級>）」，規劃的等級另放一欄 |
+| D19 | 目的是定出之後新增 skill 的正式流程（本文件），再用消化系統動畫讓你看得懂、也能直接在動畫上操作；命令、頁面和文件都照用途命名 |
