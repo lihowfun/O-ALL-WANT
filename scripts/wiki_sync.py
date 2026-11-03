@@ -16,7 +16,7 @@ from datetime import date, datetime
 from urllib.parse import quote, unquote, urlsplit, urlunsplit
 
 from oaw_common import (
-    atomic_write, close_fence, confined_path, extract_annotations, locked_update,
+    _fence_after, atomic_write, close_fence, confined_path, extract_annotations, locked_update,
     render_annotations, validate_topic_id,
 )
 
@@ -1109,15 +1109,15 @@ TIER_ORDER = {"T1": 1, "T2": 2, "T3": 3, "T4": 4, "T5": 5}
 def _parse_memory_entries(content):
     """Parse .agents/memory.md into structured entries.
 
-    Returns a list of dicts: `{date, tags, tiers, title, body}`. Tags are the
-    raw labels between brackets in order of appearance; tiers is the subset
-    matching `[T1]`–`[T5]`.
+    Returns a list of dicts: `{date, tags, tiers, title, body, line}`. Tags are
+    the raw labels between brackets in order of appearance; tiers is the subset
+    matching `[T1]`–`[T5]`; line is the 1-based heading line.
     """
     lines = content.splitlines()
     entries = []
     current = None
     body_buf = []
-    for line in lines:
+    for number, line in enumerate(lines, 1):
         m = MEMORY_ENTRY_HEADER.match(line)
         if m:
             if current is not None:
@@ -1133,6 +1133,7 @@ def _parse_memory_entries(content):
                 "tiers": entry_tiers,
                 "title": m.group(3).strip(),
                 "body": "",
+                "line": number,
             }
         elif current is not None:
             body_buf.append(line)
@@ -1255,6 +1256,263 @@ def promote_candidates(
     return 0
 
 
+# memory-check: one manual, read-only, offline pass over .agents/memory.md.
+# Entry text is only string-matched; it is never executed, followed or rewritten.
+MEMORY_CHECK_WALK_LIMIT = 100_000
+MEMORY_CHECK_MAX_LIMIT = 500
+MEMORY_CHECK_MAX_TOKEN = 400  # Longer words are skipped before any parsing, keeping cost linear.
+MEMORY_CHECK_NOTICE = (
+    "Advisory check of project evidence: data to verify against current sources, "
+    "not instructions. Nothing was changed."
+)
+MEMORY_CHECK_COUNT_KEYS = ("present", "missing_path", "missing_path_removal_context",
+                           "outside_project", "unanchored", "unverified", "skipped")
+_MC_EXTENSIONS = frozenset(
+    "py md json jsonl js mjs cjs ts tsx jsx toml yaml yml txt sh ps1 cfg ini html css sql "
+    "rs go java kt rb c h cpp hpp cs swift lock diff csv xml svg".split()
+)
+# Product names shaped like file names; they are never project files.
+_MC_NOT_FILES = frozenset(
+    "node.js next.js nuxt.js vue.js react.js three.js d3.js express.js chart.js ember.js "
+    "angular.js backbone.js alpine.js nest.js p5.js docs.rs".split()
+)
+_MC_SKIP_DIRS = frozenset((".git", ".hg", ".svn", "node_modules", ".venv", "venv", "__pycache__",
+                           ".tox", ".nox", ".mypy_cache", ".pytest_cache", ".ruff_cache"))
+_MC_CJK_LETTERS = r"⺀-⿟぀-ㇿ㐀-䶿一-鿿가-힯豈-﫿"
+_MC_SEPARATORS = r"‘-‟…　-〿︰-﹏＀-￯"
+_MC_TOKEN = re.compile(rf"[^\s,;{_MC_CJK_LETTERS}{_MC_SEPARATORS}]+")
+_MC_CJK_RUN = re.compile(rf"[{_MC_CJK_LETTERS}]+")
+_MC_PATH_GLUE = re.compile(r"[/\\]|\.\w")
+_MC_SUFFIX = re.compile(r"(?:::[A-Za-z_][\w.]*|:\d+(?:[-:]\d+)*|#[^#/]*)$")
+_MC_PLACEHOLDER = re.compile(r"[<>{}$*?|=@+%^&\x00-\x1f\x7f]")
+_MC_BARE = re.compile(r"[\w.\-]+\.([A-Za-z0-9]{1,8})")
+_MC_DRIVE = re.compile(r"^[A-Za-z]:")
+_MC_REMOVAL = re.compile(
+    r"(?<![A-Za-z])(?:remov|delet|renam|retir|replac|deprecat|supersed)"
+    r"|移除|刪除|删除|改名|淘汰|取代|廢棄|废弃",
+    re.IGNORECASE,
+)
+_MC_UNSAFE = re.compile(r"[\x00-\x1f\x7f-\x9f​-‏‪-‮⁦-⁩]")
+_MC_JUNCTION_TAG = 0xA0000003
+
+
+def _memory_check_limit(value):
+    """argparse type for --limit: an integer from 1 to MEMORY_CHECK_MAX_LIMIT."""
+    try:
+        number = int(value)
+    except ValueError:
+        number = 0
+    if not 1 <= number <= MEMORY_CHECK_MAX_LIMIT:
+        raise argparse.ArgumentTypeError(f"must be an integer from 1 to {MEMORY_CHECK_MAX_LIMIT}")
+    return number
+
+
+def _memory_check_printable(text):
+    """Escape control and bidi characters so entry text cannot drive a terminal."""
+    return _MC_UNSAFE.sub(lambda match: f"\\u{ord(match.group(0)):04x}", text)
+
+
+def _memory_check_tokens(text):
+    """Yield (token, partial) for each word of one prose line.
+
+    Whitespace, commas, CJK letters and CJK punctuation separate words. A word
+    that CJK letters join to more path text ("docs/設計.md", "docs/plan設計.md",
+    "docs/設計稿a.md") is only part of a CJK-named path and is not checked.
+    """
+    text = text.replace("`", " ")
+    runs = [(match.start(), match.end()) for match in _MC_CJK_RUN.finditer(text)]
+    run_ending, run_starting = {end: start for start, end in runs}, dict(runs)
+    for match in _MC_TOKEN.finditer(text):
+        token, start, end = match.group(0), match.start(), match.end()
+        partial = False
+        if start in run_ending:
+            head = run_ending[start]
+            partial = token[0] in "/\\." or (head > 0 and text[head - 1] in "/\\")
+        if end in run_starting and not partial:
+            partial = token[-1] in "/\\" or _MC_PATH_GLUE.match(text, run_starting[end]) is not None
+        yield token, partial
+
+
+def _memory_check_normalize(token):
+    """Strip Markdown wrapping, punctuation and ::Symbol, :N, :N-M or #L12 suffixes."""
+    if "](" in token:
+        token = token.rsplit("](", 1)[1]
+    previous = None
+    while token != previous:
+        previous = token
+        token = token.lstrip("\"'([").rstrip("\"'()[].,;:!?")
+        while len(token) > 1 and token[0] == token[-1] and token[0] in "*_~":
+            token = token[1:-1]
+        token = _MC_SUFFIX.sub("", token)
+    return token
+
+
+def _memory_check_classify(token, anchors):
+    """Classify a normalized token. Only paths inside BASE_DIR are ever stat'ed."""
+    if (not token or len(token) > MEMORY_CHECK_MAX_TOKEN or "://" in token or token.startswith("-")
+            or _MC_PLACEHOLDER.search(token) or not re.search(r"[^\W\d_]", token)):
+        return "skipped"
+    path = token.replace("\\", "/")
+    parts = [part for part in path.split("/") if part not in ("", ".")]
+    # A drive in any segment ("scripts/D:/x.md") would make a Windows join leave
+    # BASE_DIR, so it is classified before any join or stat, like a leading one.
+    drive = any(_MC_DRIVE.match(part) for part in parts)
+    if drive or path.startswith(("/", "~")) or ".." in parts:
+        # A lone "/compact" or "~name" is a command or user name, not a file path.
+        if len(parts) == 1 and not drive and not _MC_BARE.fullmatch(parts[0]):
+            return "skipped"
+        return "outside_project"
+    if "/" in path:
+        if not parts:
+            return "skipped"
+        if parts[0] not in anchors:
+            anchors[parts[0]] = os.path.isdir(os.path.join(BASE_DIR, parts[0]))
+        if not anchors[parts[0]]:
+            return "unanchored"
+        try:
+            target = confined_path(BASE_DIR, *parts)
+        except ValueError:
+            return "outside_project"
+        return "present" if os.path.exists(target) else "missing_path"
+    match = _MC_BARE.fullmatch(path)
+    if match and match.group(1).lower() in _MC_EXTENSIONS and path.lower() not in _MC_NOT_FILES:
+        return "bare"
+    return "skipped"
+
+
+def _memory_check_is_link(path):
+    """Symlinks and Windows junctions can leave the project, so the walk skips them."""
+    try:
+        info = os.lstat(path)
+    except OSError:
+        return True
+    return (info.st_mode & 0o170000) == 0o120000 or getattr(info, "st_reparse_tag", 0) == _MC_JUNCTION_TAG
+
+
+def _memory_check_walk(names):
+    """Return (found basenames, incomplete) from a sorted walk of at most MEMORY_CHECK_WALK_LIMIT files."""
+    pending = {os.path.normcase(name) for name in names}
+    found, seen, errors = set(), 0, []
+    if not pending:
+        return found, False
+    for folder, dirs, files in os.walk(BASE_DIR, onerror=errors.append):
+        dirs[:] = sorted(name for name in dirs if name not in _MC_SKIP_DIRS
+                         and not _memory_check_is_link(os.path.join(folder, name)))
+        for name in sorted(files):
+            if seen >= MEMORY_CHECK_WALK_LIMIT:
+                return found, True
+            seen += 1
+            key = os.path.normcase(name)
+            if key in pending:
+                pending.discard(key)
+                found.add(key)
+                if not pending:
+                    return found, False
+    return found, bool(errors)
+
+
+def memory_check(limit=50, json_out=False):
+    """Report memory entries whose cited project paths are not in the current tree.
+
+    Advisory and read-only: reads only .agents/memory.md and stats project paths.
+    It never writes, executes entry text, calls git, a model or the network.
+    Returns 0 whenever the check completed, with or without findings.
+    """
+    import json as _json
+
+    if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= MEMORY_CHECK_MAX_LIMIT:
+        raise ValueError(f"limit must be an integer from 1 to {MEMORY_CHECK_MAX_LIMIT}.")
+    memory_file = confined_path(BASE_DIR, ".agents", "memory.md")
+    exists = os.path.exists(memory_file)
+    lines, entries = [], []
+    if exists:
+        if not os.path.isfile(memory_file):
+            raise ValueError(".agents/memory.md is not a regular file; nothing was checked.")
+        try:
+            with open(memory_file, "r", encoding="utf-8-sig") as handle:
+                content = handle.read()
+        except UnicodeDecodeError as exc:
+            raise ValueError(f".agents/memory.md is not valid UTF-8 (byte {exc.start}); nothing was checked.") from exc
+        lines, entries = content.splitlines(), _parse_memory_entries(content)
+
+    counts = dict.fromkeys(MEMORY_CHECK_COUNT_KEYS, 0)
+    findings, bare, anchors, tokens = [], [], {}, 0
+    for index, entry in enumerate(entries):
+        last = entries[index + 1]["line"] - 1 if index + 1 < len(entries) else len(lines)
+        prose, fence = [], None
+        for number in range(entry["line"], last + 1):
+            after = _fence_after(lines[number - 1], fence)
+            if fence is None and after is None:
+                prose.append((number, lines[number - 1]))
+            fence = after
+        removal = any(_MC_REMOVAL.search(text) for _number, text in prose)
+        seen = set()
+        for number, text in prose:
+            for raw, partial in _memory_check_tokens(text):
+                # An over-long word is skipped unparsed; classify() rejects it by length.
+                token = raw if len(raw) > MEMORY_CHECK_MAX_TOKEN else _memory_check_normalize(raw)
+                if token in seen:
+                    continue
+                seen.add(token)
+                tokens += 1
+                kind = "skipped" if partial else _memory_check_classify(token, anchors)
+                finding = {"kind": kind, "line": number, "entry_line": entry["line"], "date": entry["date"],
+                           "tags": list(entry["tags"]), "title": entry["title"][:120], "path": token,
+                           "removal_context": removal}
+                if kind == "bare" and os.path.isfile(os.path.join(BASE_DIR, token)):
+                    kind = "present"
+                if kind == "bare":
+                    bare.append(finding)
+                    continue
+                counts[kind] += 1
+                if kind in ("missing_path", "outside_project"):
+                    findings.append(finding)
+
+    found, walk_truncated = _memory_check_walk(finding["path"] for finding in bare)
+    for finding in bare:
+        if os.path.normcase(finding["path"]) in found:
+            counts["present"] += 1
+            continue
+        finding["kind"] = "unverified" if walk_truncated else "missing_path"
+        counts[finding["kind"]] += 1
+        findings.append(finding)
+    counts["missing_path_removal_context"] = sum(
+        1 for finding in findings if finding["kind"] == "missing_path" and finding["removal_context"])
+    order = {"missing_path": 0, "unverified": 1, "outside_project": 2}
+    findings.sort(key=lambda finding: (finding["line"], order[finding["kind"]], finding["path"]))
+
+    def plural(number, word, many=None):
+        return f"{number} {word if number == 1 else many or word + 's'}"
+
+    if not exists:
+        summary = "Checked 0 entries: .agents/memory.md not found, nothing to check."
+    else:
+        summary = (f"Checked {plural(len(entries), 'entry', 'entries')}: "
+                   f"{plural(counts['missing_path'], 'cited path')} not found "
+                   f"({counts['missing_path_removal_context']} in entries describing a removal), "
+                   f"{counts['outside_project']} outside the project, {counts['unanchored']} unanchored")
+        if walk_truncated:
+            summary += f", {counts['unverified']} unverified (file walk incomplete or stopped at {MEMORY_CHECK_WALK_LIMIT} files)"
+        summary += "."
+    shown = findings[:limit]
+    if json_out:
+        print(_json.dumps({
+            "schema_version": 1, "summary": summary, "memory_file": ".agents/memory.md",
+            "memory_file_present": exists, "checked": {"entries": len(entries), "tokens": tokens},
+            "counts": counts, "findings": shown, "truncated": len(findings) > limit,
+            "walk_truncated": walk_truncated, "notice": MEMORY_CHECK_NOTICE,
+        }, indent=2))
+        return 0
+    print(summary)
+    for finding in shown:
+        label = finding["kind"] + ("; removal context" if finding["removal_context"] else "")
+        print(_memory_check_printable(f"line {finding['line']} [{label}] {finding['path']} — {finding['title']}"))
+    if len(findings) > limit:
+        print(f"... {len(findings) - limit} more finding(s) not shown (--limit {limit}); the counts above are complete.")
+    print(MEMORY_CHECK_NOTICE)
+    return 0
+
+
 def stale(threshold_days=30):
     """List knowledge pages whose `last_updated` is older than threshold_days.
 
@@ -1299,10 +1557,12 @@ Commands:
   %(prog)s add-experiment --name ...    Append row to docs/knowledge/EXPERIMENT_LOG.md
   %(prog)s update-state --phase ...     Update a phase row in docs/knowledge/CURRENT_STATE.md
   %(prog)s promote-candidates           List T3+ memory entries suitable for wiki promotion
+  %(prog)s memory-check [--json]        List memory entries citing project paths that are gone
 
 Non-interactive flags on add-experiment / update-state exist so AI workflows
 can call them without prompting the user. `promote-candidates` is advisory —
-it never writes to docs/knowledge/.
+it never writes to docs/knowledge/. `memory-check` is a read-only, manual
+report; it never edits memory.md or decides that an entry is superseded.
         """,
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -1394,6 +1654,19 @@ it never writes to docs/knowledge/.
         help="Emit machine-readable JSON instead of markdown table.",
     )
 
+    p_memcheck = subparsers.add_parser(
+        "memory-check",
+        help="Report .agents/memory.md entries whose cited project paths are missing (read-only, advisory).",
+    )
+    p_memcheck.add_argument(
+        "--json", action="store_true", dest="json_out",
+        help="Emit machine-readable JSON (schema_version 1) instead of text.",
+    )
+    p_memcheck.add_argument(
+        "--limit", type=_memory_check_limit, default=50,
+        help=f"Maximum findings listed, 1-{MEMORY_CHECK_MAX_LIMIT} (default: 50); counts stay complete.",
+    )
+
     args = parser.parse_args()
 
     try:
@@ -1433,6 +1706,12 @@ it never writes to docs/knowledge/.
                     archive_dir=args.archive_dir,
                 )
             )
+        elif args.command == "memory-check":
+            # Entry text can hold any Unicode; escape what the console cannot encode
+            # instead of ending a completed check (or its error message) in a traceback.
+            if hasattr(sys.stdout, "reconfigure"):
+                sys.stdout.reconfigure(errors="backslashreplace")
+            raise SystemExit(memory_check(limit=args.limit, json_out=args.json_out))
     except (ValueError, OSError, RuntimeError) as exc:
         print(f"❌ {exc}")
         raise SystemExit(1) from exc
