@@ -8,7 +8,7 @@
 | `packets/evidence.md` | OAW-12、OAW-15 | `scripts/context_hub.py`、`scripts/oaw_common.py` |
 | `packets/citations.md` | OAW-02（部分）、OAW-21、OAW-22 | `scripts/wiki_sync.py`、`scripts/oaw_common.py` |
 
-- `build_packets.py`：從 OAW repo 的 diff 和 `../ingest/backlog.json` 的設計產生審查包。
+- `build_packets.py`：從 OAW repo 的 diff 和 `../ingest/backlog.json` 的設計產生審查包。現在的審查包是 `claude/oaw-2` 的 `790177e..6481437`（gate 9/9、359 個測試）。
 - `run_goldfish.py`：和 PRE-02 同一個執行器。零上下文 recipe、遮蔽、API key 防呆都一樣。
 
 ## 怎麼跑
