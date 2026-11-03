@@ -1,0 +1,169 @@
+{
+ "packet": "plan.md",
+ "started_at": "2026-11-03T16:01:19.837495+00:00",
+ "launch": {
+  "argv": [
+   "claude",
+   "-p",
+   "--tools",
+   "",
+   "--strict-mcp-config",
+   "--disable-slash-commands",
+   "--setting-sources",
+   "project",
+   "--output-format",
+   "stream-json",
+   "--verbose"
+  ],
+  "stdin": "packet",
+  "cwd": "fresh empty temp folder"
+ },
+ "exit_code": 0,
+ "stderr_tail": "",
+ "init_event": {
+  "cwd": "/private<tmp>/oaw-goldfish-5ywzta6b",
+  "model": "claude-sonnet-4-6",
+  "claude_code_version": "2.1.160",
+  "permissionMode": "default",
+  "apiKeySource": "none",
+  "memory_paths": {
+   "auto": "~/.claude/projects/<tmp>-oaw-goldfish-5ywzta6b/memory/"
+  },
+  "output_style": "default",
+  "tools": [],
+  "mcp_servers": [],
+  "slash_commands": [],
+  "skills": [],
+  "plugins": [],
+  "agents": [
+   "claude",
+   "claude-code-guide",
+   "Explore",
+   "general-purpose",
+   "Plan",
+   "statusline-setup"
+  ]
+ },
+ "init_checks": {
+  "tools": true,
+  "mcp_servers": true,
+  "slash_commands": true,
+  "skills": true,
+  "plugins_builtin_only": true,
+  "agents_unusable_without_tools": true,
+  "cwd_is_fresh_temp": true,
+  "auto_memory_empty": true
+ },
+ "canary": "Before this packet I received: (1) the Claude agent system prompt containing behavior rules, full tool access (Bash, file reading, editing, etc.), the auto-memory system path at ~/.claude/projects/<tmp>-oaw-goldfish-5ywzta6b/memory/, and tone/task instructions; (2) a system-reminder containing userEmail (<email>) and currentDate (2026-11-04). I did not receive OAW-specific memory entries, a CLAUDE.md, or an AGENTS.md. I was launched with full agent tools, not the PRE-06 zero-context recipe (--tools= , --disallowedTools, --setting-sources=, canary probe). This review must be labelled 'context: inherited (documented), not zero-context'.",
+ "zero_context_verified": false,
+ "usage": {
+  "input_tokens": 5,
+  "cache_creation_input_tokens": 123922,
+  "cache_read_input_tokens": 96139,
+  "output_tokens": 34812,
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 123922,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "global",
+  "iterations": [
+   {
+    "input_tokens": 3,
+    "output_tokens": 2812,
+    "cache_read_input_tokens": 94008,
+    "cache_creation_input_tokens": 32045,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 32045
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard"
+ },
+ "total_cost_usd": 1.0157442,
+ "review": {
+  "canary": "Before this packet I received: (1) the Claude agent system prompt containing behavior rules, full tool access (Bash, file reading, editing, etc.), the auto-memory system path at ~/.claude/projects/<tmp>-oaw-goldfish-5ywzta6b/memory/, and tone/task instructions; (2) a system-reminder containing userEmail (<email>) and currentDate (2026-11-04). I did not receive OAW-specific memory entries, a CLAUDE.md, or an AGENTS.md. I was launched with full agent tools, not the PRE-06 zero-context recipe (--tools= , --disallowedTools, --setting-sources=, canary probe). This review must be labelled 'context: inherited (documented), not zero-context'.",
+  "findings": [
+   {
+    "id": "PB-01",
+    "target": "backlog.json HOLD-04 run_location and paid_estimate",
+    "finding": "HOLD-04 reuses arm labels A, B, C across incompatible contexts within the same entry—item i uses A=native and C=OAW+graphify; Stage 0b uses A=OAW-only, B=OAW+graphify-no-LLM, C=graphify+LLM; the D2 floor uses F=native+OAW and B=graphify-official-install—so the run_location clause 'class 1 for arms A and F' and 'class 2 for … arms B and C' is ambiguous about which B and C are meant, and item ii's 'native plus the graphify map' arm (which executes graphify, food code) is not named in either list.",
+    "severity": "major",
+    "kind": "unclear",
+    "evidence": "paid_estimate item i: 'arms A native and C OAW core plus manual-only graphify, x 3 = 60 runs'; Stage 0b: 'A OAW recall/get only … B OAW plus graphify without LLM; C graphify alone with its LLM doc pass'; D2 floor: 'arm F native plus the OAW default build vs arm B native plus graphify's official install'; item ii: 'arms native, native plus repomap and native plus the graphify map, x 1 = 12 sessions'; run_location: 'class 2 for every stage that runs graphify (Stage 0, Stage 0b, arms B and C, the official build); class 1 for arms A and F'"
+   },
+   {
+    "id": "PB-02",
+    "target": "backlog.json test_order steps 4-5",
+    "finding": "test_order step 1 is gated with 'After batch 1 (OAW-01)' but steps 4 and 5 carry no equivalent batch gate; HOLD-05 (step 4) depends on OAW-28 (batch 7) and HOLD-06 (step 5) depends on PRE-04, OAW-03, OAW-04, OAW-05, and PRE-10 (all batch 2), so an operator or automated system following the test_order sequence would reach steps 4-5 before those batches are approved and built.",
+    "severity": "minor",
+    "kind": "unclear",
+    "evidence": "test_order: '1. After batch 1 (OAW-01): HOLD-07 phase 0 … 4. HOLD-05 phase 1 (A5 envfacts, 6-9M per host; the TE arm in class 2). 5. HOLD-06 phase 1 (A4 loopguard, 17-25M, class 2).'; HOLD-05 depends_on: ['OAW-28', 'PRE-04', 'PRE-01', 'OAW-03', 'OAW-04', 'OAW-05', 'PRE-03', 'PRE-10']; OAW-28 batch: 7; PRE-04, OAW-03-05, PRE-10 batch: 2"
+   },
+   {
+    "id": "PB-03",
+    "target": "backlog.json HOLD-01 system_decisions",
+    "finding": "HOLD-01 defers the FTS5 CI matrix check to 'after FTS5 wins, before shipping' but specifies no fallback action if FTS5 wins Stage 0 yet fails the 3-OS × 2-Python CI matrix; the Stage 0 tiebreaker rule 'a tie goes to IDF' applies to the Stage 0 recall@5 comparison, not to a post-selection CI failure, leaving the plan incomplete for that branch.",
+    "severity": "minor",
+    "kind": "missing_risk",
+    "evidence": "'FTS5 availability on the 3-OS x 2-Python CI matrix is a pre-ship check of an FTS5 winner, not a Stage 0 step, because it needs a harness change (goldfish-2 B23)'; Stage 0 rule: 'a tie goes to IDF (pure Python, no FTS5 availability risk)'; no system_decision or note in HOLD-01 states the action when FTS5 wins Stage 0 but fails CI"
+   },
+   {
+    "id": "PB-04",
+    "target": "backlog.json HOLD-01 depends_on vs stage_dependencies",
+    "finding": "OAW-16 (a hold, not yet absorbed) appears in HOLD-01's depends_on, which the conventions define as 'hard prerequisites of the item's paid or final stages'; a reader applying that definition infers HOLD-01 cannot start until OAW-16 ships, whereas the actual requirement—stated only in stage_dependencies—is that OAW-16's verdict (ship or excrete) be recorded so the baseline build is known.",
+    "severity": "minor",
+    "kind": "unclear",
+    "evidence": "HOLD-01 depends_on list includes 'OAW-16'; conventions.depends_on: 'hard prerequisites of the item's paid or final stages'; HOLD-01 stage_dependencies: {'OAW-16': 'its A/B verdict (shipped or excreted), so the baseline build matches the recall output that ships'}"
+   },
+   {
+    "id": "PB-05",
+    "target": "backlog.json HOLD-04 paid_estimate Stage 0b",
+    "finding": "Stage 0b runs graphify's LLM doc pass 'with a capped key' in class 2, but neither HOLD-04 nor PRE-01 states whether this key is drawn from PRE-01's model-provider API key policy (and charged against the graphify PRE-01 cap) or is a separate graphify-configured LLM backend key; the excreted gf.llm-backend-autodetect component confirms graphify can route to any of 8 providers, making the key identity and cap attribution material but unspecified.",
+    "severity": "minor",
+    "kind": "unclear",
+    "evidence": "Stage 0b: 'about 1.2-2.7M for graphify's LLM doc pass on fixture W, class 2 with a capped key'; excrete table entry: 'gf.llm-backend-autodetect … 自動把內容送到 8 家 provider'; PRE-01 user_decision_needed: 'API keys and goldfish configuration: none, or one dedicated capped key per trial, revoked after the run'; no statement in HOLD-04 or PRE-01 links Stage 0b's graphify LLM key to the PRE-01 policy or the graphify PRE-01 cap"
+   },
+   {
+    "id": "PB-06",
+    "target": "backlog.json HOLD-08b stage_dependencies and HOLD-04",
+    "finding": "HOLD-08b's stage_dependencies claim 'HOLD-04: repomap Stage 1 result only (item ii),' implying items within HOLD-04's merged registration can produce independently recordable results, but HOLD-04 itself does not declare that its items have independent stop-and-record semantics; whether a repomap Stage 1 result (item ii) can be formally recorded before item i's graphify class-2 stages complete within the shared registration is not stated.",
+    "severity": "minor",
+    "kind": "unstated_assumption",
+    "evidence": "HOLD-08b stage_dependencies: {'HOLD-04': 'repomap Stage 1 result only (item ii)'}; conventions.stage_dependencies: 'that dependency is met once the named stage has a recorded result'; HOLD-04 paid_estimate: 'Merged registration on F2 with one F2 checkout, one baseline build and one native arm per task set'; HOLD-04 does not contain a field or note declaring that individual items produce independently recorded verdicts"
+   }
+  ],
+  "coverage": {
+   "reviewed": [
+    "SUMMARY.md (all 11 sections including revision log and goldfish response table)",
+    "OWNER_SHEET.md (all 5 sections)",
+    "backlog.json (all 60 items: 10 PRE, 33 absorb, 17 hold; plus conventions, budget_summary, test_order, owner_decisions, revision fields)",
+    "all embedded cited file:line excerpts"
+   ],
+   "not_reviewed": [
+    "ingest/tokeneconomizer/proposals.md",
+    "ingest/claude-mem/proposals.md",
+    "ingest/graphify/proposals.md",
+    "ingest/tokeneconomizer/components.json (ledger revision 2 with after_integration records)",
+    "ingest/claude-mem/components.json",
+    "ingest/graphify/components.json",
+    "ingest/tokeneconomizer/integration.json",
+    "ingest/claude-mem/integration.json",
+    "ingest/graphify/integration.json",
+    "ingest/DECISIONS.md",
+    "ingest/<food>/goldfish-*.json",
+    "oaw-ref source files beyond the embedded excerpts"
+   ]
+  },
+  "summary": "HOLD-04 reuses arm labels A, B, C, F with different meanings across its items and stages, making the class-1/class-2 run_location specification ambiguous—particularly for item ii's 'native plus the graphify map' arm, which executes food code but is absent from both the class-1 and class-2 lists. The test_order places HOLD-05 (depends on batch 7) and HOLD-06 (depends on batch 2) at steps 4-5 without stating the intervening batch approvals and builds, giving a misleadingly linear picture of sequencing. This review was not zero-context per PRE-06—full agent tools and a system-reminder with email and current date were received—and must carry the same 'context: inherited (documented), not zero-context' label as the two prior revision-2 reviews."
+ },
+ "raw_result_if_unparsed": null,
+ "host_version": "2.1.160 (Claude Code)",
+ "local_paths_redacted": true
+}
