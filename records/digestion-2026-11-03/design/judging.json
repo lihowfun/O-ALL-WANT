@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "subject": "OAW food intake / verdict / metabolism-view design synthesis",
+  "reference_checkout": "oaw-ref fc5fda1",
+  "criteria": ["usability", "safety", "test_rigor", "fit_with_oaw", "honesty", "feasibility"],
+  "judges": [
+    {
+      "judge": 1,
+      "perspective": "skeptical security reviewer",
+      "winner": "safety",
+      "ranking": ["safety", "arch", "ux"],
+      "ranking_basis": "explicit in rationale",
+      "scores": {
+        "ux":     {"usability": 9, "safety": 5, "test_rigor": 6, "fit_with_oaw": 7, "honesty": 8, "feasibility": 7, "total": 42},
+        "safety": {"usability": 6, "safety": 9, "test_rigor": 9, "fit_with_oaw": 7, "honesty": 8, "feasibility": 6, "total": 45},
+        "arch":   {"usability": 7, "safety": 7, "test_rigor": 8, "fit_with_oaw": 9, "honesty": 7, "feasibility": 8, "total": 46}
+      }
+    },
+    {
+      "judge": 2,
+      "perspective": "end-user / owner requirements",
+      "winner": "ux",
+      "ranking": ["ux", "arch", "safety"],
+      "ranking_basis": "winner explicit; 2nd/3rd by score total (arch 46 > safety 45)",
+      "scores": {
+        "ux":     {"usability": 9, "safety": 7, "test_rigor": 8, "fit_with_oaw": 7, "honesty": 9, "feasibility": 7, "total": 47},
+        "safety": {"usability": 5, "safety": 9, "test_rigor": 8, "fit_with_oaw": 8, "honesty": 9, "feasibility": 6, "total": 45},
+        "arch":   {"usability": 7, "safety": 7, "test_rigor": 8, "fit_with_oaw": 9, "honesty": 7, "feasibility": 8, "total": 46}
+      }
+    },
+    {
+      "judge": 3,
+      "perspective": "OAW maintainer who must build and support it",
+      "winner": "arch",
+      "ranking": ["arch", "ux", "safety"],
+      "ranking_basis": "winner explicit; 2nd/3rd by score total (ux 45 > safety 43)",
+      "scores": {
+        "ux":     {"usability": 9, "safety": 6, "test_rigor": 8, "fit_with_oaw": 7, "honesty": 9, "feasibility": 6, "total": 45},
+        "safety": {"usability": 5, "safety": 9, "test_rigor": 9, "fit_with_oaw": 7, "honesty": 8, "feasibility": 5, "total": 43},
+        "arch":   {"usability": 7, "safety": 7, "test_rigor": 8, "fit_with_oaw": 9, "honesty": 9, "feasibility": 8, "total": 48}
+      }
+    }
+  ],
+  "aggregate": {
+    "first_place_votes": {"ux": 1, "safety": 1, "arch": 1},
+    "score_totals": {"arch": 140, "ux": 134, "safety": 133},
+    "score_means_per_judge": {"arch": 46.67, "ux": 44.67, "safety": 44.33},
+    "criterion_means": {
+      "ux":     {"usability": 9.0,  "safety": 6.0,  "test_rigor": 7.33, "fit_with_oaw": 7.0,  "honesty": 8.67, "feasibility": 6.67},
+      "safety": {"usability": 5.33, "safety": 9.0,  "test_rigor": 8.67, "fit_with_oaw": 7.33, "honesty": 8.33, "feasibility": 5.67},
+      "arch":   {"usability": 7.0,  "safety": 7.0,  "test_rigor": 8.0,  "fit_with_oaw": 9.0,  "honesty": 7.67, "feasibility": 8.0}
+    },
+    "borda_3_2_1": {"arch": 7, "ux": 6, "safety": 5}
+  },
+  "winner": "arch",
+  "winner_method": "First-place votes tied 1-1-1, so the base design was chosen by Borda count (3/2/1) over each judge's ranking, cross-checked by summed criterion scores; arch leads on both (Borda 7, total 140).",
+  "final_design": {
+    "path": "design/food-flow-design.md",
+    "base": "arch",
+    "grafted_from_safety": [
+      "sealed tar in LAB_HOME outside the project, read in memory, never extracted",
+      "hardened bare git fetch with self-built tar from ls-tree/cat-file; codeload fallback unverified and barred from core/pack",
+      "INV-6: executable food components never run on the user's host; disposable env + import-run",
+      "TTY-only consent with user-typed cap; no default budget; agent may not consent",
+      "no-peek status (no interim pass counts)",
+      "prespecified gain margin m and certain-regression formula",
+      "mandatory parity floor (n/a only for nutrient kind declared at T0)",
+      "private holdout suites; food's own scenarios count only toward parity",
+      "graph-memory exclusion gate for graphify (v2.0.0-execution.md:78); host-plugin SHA drift notice; never render food SVG/HTML"
+    ],
+    "grafted_from_ux": [
+      "derive() with no popularity/star/author/requested_by inputs, property-tested",
+      "lifecycle vs verdict as separate axes; stale overlay; scope and tested-by chips",
+      "allergens separate from verdicts",
+      "toxic from live tripwire only with clean control arm plus human attribution; control trips void the run",
+      "negative-only early stop",
+      "nutrition-label card; can/cannot-prove table on every consent screen",
+      "event-to-visual replay; README animation from labelled fixture replay",
+      "D/G/N replacement trial for graphify vs oaw-wiki with incumbent guarantees as required checks",
+      "three removal strengths with evidence kept by default",
+      "smoke carry-forward chip that cannot satisfy core",
+      "fix for oaw_status.py:68 showing unknown verdicts as in-progress"
+    ],
+    "kept_from_arch": [
+      "pure catalog_core.py plus catalog.py; generalize oaw.py/improvement.py/oaw_status.py/version_check",
+      "EGM moved onto a release-file pin guarded by byte-identical golden install test (AT-C2-1)",
+      "status.json stays schema 1 with additive optional fields; derived view.json",
+      "v1 flat skills imported as retired foods with design-decision basis (corrected to 10 skills + 2 scaffolding files)",
+      "host-discovery probe; unmeasurable Codex trigger stealing recorded as unmeasured, not pass",
+      "numbered menu input (no curses on Windows stdlib)",
+      "paid ladder proven on a fake host before any real model; fixture repos by default for paid tests"
+    ],
+    "fatal_flaws_fixed": [
+      "in-project quarantine (ux, arch)",
+      "executable foods run on user host (ux)",
+      "interim pass counts / mid-run verdict labels (ux, arch)",
+      "single extra pass earns nutritious (ux)",
+      "status schema 2 vs tests/test_status.py:51 (ux)",
+      ".oaw/foods/ vs read_manifest reserved .oaw/ rule (ux)",
+      "non-TTY consent by default (ux, arch)",
+      "static regex rules auto-toxic with appeal capped at risky (safety)",
+      "single-event live observations auto-toxic without control arm (safety, arch)",
+      "name collision branded toxic/inedible, blocking upstream EGM updates (safety, ux)",
+      "declared CLAUDE.md writes by memory foods branded toxic (arch TX-2)",
+      "TX-5 not human-confirmable (arch)",
+      "spec change voids old results instead of preserving them (arch)",
+      "invented mid-run verdict and spend for a real food in mod example (arch)",
+      "README.md/_TEMPLATE.md counted as flat skills (arch)",
+      "local nutritious without parity floor (ux)",
+      "archives not verified against git objects (ux)",
+      "graph-memory exclusion and deterministic wiki renderer not noted (ux)",
+      "network-capable runner installed into every project via --with-catalog (ux)"
+    ]
+  }
+}

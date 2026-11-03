@@ -1,0 +1,162 @@
+# OAW project decisions for skill digestion (owner decisions, with provenance)
+
+Purpose: give any fresh agent the full project context to act as the EGM "Elephant",
+without relying on a chat transcript. Each entry: decision, date, source, scope.
+Status: draft evidence record; to be moved into the OAW repo's decision records.
+
+## D1. V2 definition (2026-10-30, owner in chat; scope: all OAW docs and code)
+V2 = the OAW v1 upgrade (old flat skills retired) + bundled EGM
+(google/elephant-goldfish-model, pinned f0ba151, Apache-2.0). Never write "V2+EGM"
+or "OAW+EGM" in new material; historical/frozen records keep their wording.
+Implemented by Codex in 341b450 (EGM under .oaw/integrations/egm, bridge skills,
+selectable EGM skills). Bundling EGM is a product decision, not a measured gain:
+the 2026-10-29 Codex study found no detection gain over native and one extra
+unsupported claim for standalone EGM.
+
+## D2. Parity floor and evolution claims (2026-10-29, owner; scope: every food)
+After eating a food, OAW must be at least as good as using that food alone
+(parity floor; iterative updates may ship at parity). Only a measured win over the
+food may be called "evolution". Without matched evidence, write "parity, no
+improvement claimed" or "not yet proven".
+
+## D3. Citations per version (2026-10-29, owner; scope: releases)
+Each version cites only upstream material it actually uses, with where it is used;
+anything removed or not adopted is listed with the reason.
+
+## D4. Intake: two entry paths (2026-11-03, owner; scope: catalog)
+1. Weekly active scouting: only detect and accumulate; a relevance filter drops
+   anything unrelated to coding-agent skills/harnesses (e.g. video tools) without
+   review; stars only order the list. Each week the owner picks which candidates to
+   try; nothing enters quarantine or digestion without that confirmation.
+2. Manual entry: the owner names repos (e.g. graphify) and they enter directly.
+   Batches are allowed; duplicates are merged (the same repo named twice is reviewed once).
+
+## D5. Every food is tested; verdicts are per component (2026-11-03, owner)
+Some foods are toxic, some nutritious, but every food is tested before any verdict.
+"Diarrhea" is rarely total: split each food into components and mark each absorb
+(re-implemented into a named OAW part), excrete (reason + evidence) or hold (which
+paid test is missing). Excrete only the harmful part.
+
+## D6. Owner control over existing skills (2026-11-03, owner)
+The owner may remove any absorbed skill per project, including the bundled EGM:
+preview, back up, then remove; record why. Re-adding requires testing again.
+
+## D7. Consent and cost (2026-10-29/30, owner)
+No automatic install or apply. Paid model tests (behavior A/B, integration runs)
+need the owner's explicit consent and a budget, shown with an estimate first.
+Untrusted repos are quarantined at a pinned SHA and never executed during digestion.
+
+## D8. Cross-host counterpart (2026-10-29, owner)
+OAW is shared by Claude Code and Codex. Any single-host feature (e.g. a Claude mod)
+needs a counterpart usable from Codex (terminal CLI / skill). Same data, same
+display rules.
+
+## D9. Usable, simple, game-like (2026-11-03, owner)
+The digestion experience must be simple to understand and actually usable (e.g.
+press to actively digest), "like a video game", and the owner will test it personally.
+
+## D10. Use the full EGM combination (2026-11-03, owner)
+Digestion uses Elephant (full project context, from these records) drafting the
+absorption proposals, Goldfish (zero context) blind-reviewing those drafts, the
+Elephant resolving findings, and the owner deciding. A goldfish review of the food
+alone is not a substitute for goldfish review of our own drafts.
+
+## D11. The digestion system decides how to eat each food (2026-11-03, owner)
+The system, not the owner, decides each food's test plan: the Elephant drafts the
+plan from evidence, goldfish blind-review it, and the system picks the cheapest
+test that can still tell nutritious from no-gain or toxic. The owner sets a
+standing policy once (per-food paid budget cap; sandbox conditions for trial runs,
+e.g. isolated venv, copy of the project, no API keys). Within that policy the
+system runs free and paid tests without asking per food and reports results;
+it asks only when a test would exceed the policy. The owner still approves which
+components are absorbed. This refines D7: consent is given once as a policy,
+not per test.
+
+## D12. Versioned absorption with one-click restore (2026-11-03, owner)
+Every absorption or removal produces a named project build with a restore point,
+and the owner can restore any earlier build in one step (preview, restore, then
+doctor). Names must be professional: SemVer 2.0, release `2.0.0` as the default,
+project compositions as build metadata `2.0.0+build.N` (plus a short content hash),
+each with a human label of what was added or removed. Restoring switches only the
+OAW-installed layer, never project records. Each build shows which skills and
+components it has and its effect versus the default release, with an evidence
+level per line (measured / static-measured / not measured); the digestion system
+performs this simple evaluation at absorption time. Without measured evidence the
+view says "not measured", never "enhanced".
+
+## Evidence index (for this digestion round)
+- Pinned foods and static digests: ingest/<food>/scout.json, digest.json, verify.json
+- graphify vs LLM wiki duel: ingest/graphify/wiki-duel.json (judge: complement)
+- Goldfish-on-food, component ledgers, integration checks, first proposals:
+  ingest/<food>/goldfish-*.json, components.json, integration.json, proposals.md
+  (components.json ledger_revision 2 carries the integration-resolved after_integration
+  records; goldfish-*.json are marked "context unverified")
+- Cross-food absorption backlog (revision 2: items, dependencies, test order, owner
+  decisions, budget estimates): ingest/backlog.json
+- Round summary for owner approval, with the 修訂紀錄 of revision 2: ingest/SUMMARY.md
+- OAW V2 reference: oaw-ref/ (origin/codex/oaw-2-native-upgrade)
+
+## D13. Standing policy PRE-01 (2026-11-03, owner in chat: "全部都照你的建議推進", approving Claude's recommendations; scope: all digestion runs)
+- Per-food screening cap: 10M logical tokens per food for Stage 0/1. Stage 2, a
+  second host, or anything over the cap asks the owner first. Reason: on 2026-11-03
+  about 7M subagent logical tokens across three workflows reached the owner's
+  usage limit, so the drafted 120M/250M/300M caps would span many limit windows.
+- Digestion-system overhead cap (goldfish reviews, probes, fixtures): 10M per round.
+- Sandbox level 1: a copy of the project on this machine with the host config
+  directory redirected; only for runs that do not execute food code.
+- Sandbox level 2: a disposable Linux container or VM, destroyed after each trial;
+  required for any run that executes food code, installs anything, or could read OS
+  credential stores (HOME redirection does not isolate USERPROFILE or Credential
+  Manager on Windows). Not available on this machine yet: such runs stay hold.
+- API keys: trials get none by default; a dedicated, capped, revoked-after key only
+  if the owner creates one. Goldfish runs use a disposable config directory.
+- Network: model provider API only; level 2 may open PyPI/GitHub briefly to fetch
+  dependencies.
+- Codex CLI (PRE-03): install on this machine (D8), pending the owner's own login;
+  until then every Codex half is recorded "untested".
+- Shared A/B cost: a shared baseline is split evenly across the foods that use it;
+  candidate arms are charged to the food they test.
+
+## D14. Owner choices for the 2026-11-03 round (same source)
+- Target release: all batches go into the untagged 2.0.0; if 2.0.0 is tagged
+  first, additive items go to 2.x and incompatible ones (OAW-19, OAW-12/13, OAW-25)
+  wait for 3.0.0.
+- Removal granularity: removal builds only, no per-item switches; restore is linear.
+- CLI contract (OAW-19): exit 3 = a choice is needed, 4 = no match; `memory recall`
+  with no hit stays 0; `get` gives a unique case-insensitive match on every OS with a
+  stderr note; an empty knowledge base always exits 0.
+- License route (OAW-07/12/30): Apache-2.0 attribution with modification notices,
+  LICENSE/NOTICE shipped, as for EGM.
+- The excrete list in ingest/OWNER_SHEET.md section 3 is accepted whole.
+- Batches 1-9 are NOT approved yet: approval follows the zero-context PRE-02
+  review of revision 3 (D10, D15).
+- Paper arXiv 2606.03979: the T0 field check may read only O-ALL-WANT's own
+  .agents/memory.md.
+- Digestion animation: superseded by D19 the same day.
+
+## D19. Not a game: the official skill-intake process plus an operable animated view (2026-11-03, owner in chat: "這不是遊戲 而是之後要開始增加skills時候最佳流程定出來 消化系統動畫讓使用者容易懂也能幫忙操作"; refines D9)
+The prototype is not a game. Its purpose is (1) to fix the best process OAW uses
+whenever skills are added from now on (intake, relevance filter, quarantine, tests,
+per-component verdicts, absorb, versioned build, restore, removal), written down as
+the official process, and (2) a digestion-system animation that makes that process
+easy to understand AND lets the user operate it: each food is shown moving through
+the stages, and the actions for the current stage are on the animation itself.
+"Like a video game" (D9) means simple to use, not a game. Do not name commands,
+pages or docs "game" or "play".
+
+## D15-D18. Process rules P1-P4 confirmed (same source; refine D10, D2, D5/D7, D12)
+- D15 (P1, refines D10). Zero context is verified, not assumed: each goldfish is
+  launched with a recipe whose argv and init event show no tools, skills, plugins,
+  MCP servers or inherited settings, and each goldfish record states its launch
+  method, host version, inherited context and init-event check. The backlog
+  synthesis and every merge-derived item are Elephant drafts and get goldfish review.
+- D16 (P2, refines D2). The parity floor is a designed gate for every tested food:
+  the plan includes "OAW after eating" against "the food alone" (C >= B). Until it
+  runs, the food is labelled "parity vs food alone: not tested". Scope: the whole food.
+- D17 (P3, refines D5/D7). A step that executes the food is automatically a hold
+  under D11. A model-facing line (skill, template or startup text) is always split
+  from its mechanism and held behind an A/B; the mechanism may ship at static
+  evidence. Every hold starts with a free Stage 0.
+- D18 (P4, refines D12). An item that is not built carries evidence "not measured
+  (planned: <level>)"; the planned level is kept in a separate field and never shown
+  as the current level.

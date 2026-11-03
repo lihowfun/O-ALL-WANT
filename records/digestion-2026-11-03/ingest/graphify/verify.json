@@ -1,0 +1,95 @@
+{
+  "checks": [
+    {
+      "claim": "graphify/skill.md is 48,455 B at HEAD (LF), body 48,061 B, 49,252 B on disk with CRLF; exceeds the 24,000 B gate; no disable-model-invocation; description begins 'Use for any question about a codebase'.",
+      "status": "confirmed",
+      "evidence": "Measured with an isolated script. skill.md: 49,252 B on disk, `git show HEAD:graphify/skill.md | wc -c` = 48,455, body after frontmatter = 48,061. skill-codex.md body = 48,821. skill-windows.md body = 50,457. The frontmatter (skill.md:1-4) has only name and description. The description is 353 chars and begins 'Use for any question about a codebase'. The references total 49,348 B (graphify/skills/claude/references/*).",
+      "correction": "The user is on Windows. There, plain `graphify install` defaults to the 'windows' platform (install.py:2579, 741-746), which installs skill-windows.md (body 50,457 B, PowerShell). Budget figures should use that variant."
+    },
+    {
+      "claim": "Retrieval is not vector-based: README.md:38 'No embeddings, no vector store'; query.md:25 'case-folded substring + IDF', no stemming, synonyms or cross-language match; serve.py _score_nodes 569, _bfs 1067, _dfs 1098, _subgraph_to_text 1125; no embedding library imported.",
+      "status": "confirmed",
+      "evidence": "README.md:38 and graphify/skills/claude/references/query.md:25 read as quoted. serve.py has `def _score_nodes` at 569, `_bfs` at 1067, `_dfs` at 1098 and `_subgraph_to_text(..., token_budget: int = 2000 ...)` at 1125. I grepped graphify/*.py for sentence_transformers, faiss, chromadb, torch, transformers, sklearn, gensim, fastembed, lancedb, qdrant, hnswlib and annoy: none are imported. The only openai imports are chat SDKs (llm.py:1500, 1564, 2023, 2426, 3329; prs.py:694).",
+      "correction": "Two nuances. serve.py:1430-1436 accepts explicit `seeds` from 'an external ranker -- embeddings, a learned retriever, grep', so embeddings can be bolted on from outside. BENCHMARKS.md:11-13 and 47-50 describe 'hybrid retrieval', dense RAG and hybrid RRF and 'a local embedder' (183), none of which exists in this OSS code path. The published numbers may therefore not describe what this SHA ships."
+    },
+    {
+      "claim": "'graphify claude install' writes PreToolUse hooks Bash|Grep -> 'hook-guard search' and Read|Glob -> 'hook-guard read', timeout 10 (install.py:506-511, 2241-2263); --strict denies the first in-project raw Read per session (cli.py:1169-1186).",
+      "status": "confirmed",
+      "evidence": "install.py:477-511 `_claude_pretooluse_hooks` returns two entries with matchers 'Bash|Grep' and 'Read|Glob' and 'timeout': 10. install.py:2241-2262 `_install_claude_hook` merges them into .claude/settings.json. cli.py:1169-1186 docstring: strict mode DENIES the first raw read of indexed in-project fresh code per session via permissionDecision, then downgrades to a nudge. It fails open. cli.py:59-66 builds the deny payload.",
+      "correction": "Hooks come only from `graphify claude install` or `graphify install --project` (install.py:2051-2054, 2212-2232), never from plain `graphify install`. Strict mode needs the explicit --strict flag or GRAPHIFY_HOOK_STRICT."
+    },
+    {
+      "claim": "always_on/claude-md.md:6 says to run 'graphify query' before the first grep/search/source read and to put that rule in every subagent prompt; line 10 says 'Do not flag it as churn or suggest skipping the graph rebuild or its hooks'.",
+      "status": "confirmed",
+      "evidence": "always_on/claude-md.md:6 and :10 match verbatim. agents-md.md:8 and :13 carry the same rules, and agents-md.md:9 adds 'dirty graph files are not a reason to skip graphify'. Sizes: claude-md.md 1,169 B, agents-md.md 1,529 B.",
+      "correction": "Line 10 is scoped to large graphify-out/graph.json diffs in pull requests. It does not tell reviewers to stay quiet about anything else. The digest's 'muzzles EGM and goldfish reviewers' overstates it. The real conflict is narrower: reviewers are told not to suggest removing the hooks or the rebuild."
+    },
+    {
+      "claim": "skill.md Step 1 installs the package without asking: line 92 'uv tool install --upgrade graphifyy', line 97 'pip install graphifyy -q --break-system-packages'.",
+      "status": "confirmed",
+      "evidence": "skill.md:92 `uv tool install --upgrade graphifyy -q`. skill.md:96-97: plain `pip install graphifyy -q`, falling back to `--break-system-packages`. The same lines appear in skill-codex.md:92/97, and skill-windows.md:116/118 is the PowerShell equivalent. The install is unpinned (no version).",
+      "correction": "The install runs only when `\"$PYTHON\" -c \"import graphify\"` fails (skill.md:89). `--break-system-packages` is a fallback after a plain pip install fails, not the first attempt."
+    },
+    {
+      "claim": "Core runtime deps in pyproject.toml:14-54 are non-stdlib: networkx, numpy, rapidfuzz, pyyaml, tree-sitter 0.25 and about 25 grammar packages.",
+      "status": "confirmed",
+      "evidence": "pyproject.toml:15-28 lists networkx>=3.4, numpy>=1.21, rapidfuzz>=3.0, pyyaml>=6.0, tomli (<3.11) and tree-sitter>=0.25,<0.26. Lines 29-53 list exactly 25 tree-sitter-* grammar packages. OAW's rule is oaw-ref/AGENTS.md:8 'Python 3.10+; keep runtime dependencies in the standard library.'"
+    },
+    {
+      "claim": "wiki.py to_wiki owns its output dir and deletes any *.md it did not produce (wiki.py:356-363, 461-477); community labeling falls back to 'claude -p' when no API key is set (llm.py:3936-3949).",
+      "status": "confirmed",
+      "evidence": "wiki.py:355-363 comment: 'to_wiki() still owns wiki/ entirely, so anything it did not produce this run is still removed'. wiki.py:461-466 runs `for old_article in out.glob(\"*.md\")` and calls `old_article.unlink()` when the file is not in `produced`. llm.py:3947-3948 sets `backend = \"claude-cli\"` when detect_backend finds no key and `_claude_cli_available()`. GRAPHIFY_BACKEND=none opts out (llm.py:3920-3926).",
+      "correction": "The labeling LLM path is reached only from `graphify cluster-only` and `graphify label` (cli.py:2476-2479, 2744-2766); `--no-label` skips it. The git-hook rebuild never calls an LLM: watch.py:2166 is 'No LLM needed' and watch.py:3061 uses hub labels. 'Opus by default' comes from a code comment (llm.py ~1957) and README.md:426. In practice the model is whatever the local claude CLI defaults to unless GRAPHIFY_CLAUDE_CLI_MODEL is set."
+    },
+    {
+      "claim": "querylog.py:15-31 logs only when GRAPHIFY_QUERY_LOG or GRAPHIFY_QUERY_LOG_ENABLE is set, contradicting README.md:437 (logged by default); git hooks log detached rebuilds to ~/.cache/graphify-rebuild.log (hooks.py:365).",
+      "status": "confirmed",
+      "evidence": "querylog.py:15-31: '# Opt-in only (#1797)', and the function returns None unless GRAPHIFY_QUERY_LOG or GRAPHIFY_QUERY_LOG_ENABLE is set. README.md:437: 'every graphify query ... is logged to ~/.cache/graphify-queries.log ... Set GRAPHIFY_QUERY_LOG_DISABLE=1 to opt out'. hooks.py:365 sets `_log = ... os.path.join(os.path.expanduser('~'), '.cache', 'graphify-rebuild.log')`, and the shell hooks repeat it at hooks.py:544, 606, 659 and 711."
+    },
+    {
+      "claim": "Gate 'license' = pass (Apache-2.0 with LICENSE, LICENSE-MIT, NOTICE; redistributable).",
+      "status": "confirmed",
+      "evidence": "pyproject.toml:10-11 declares license = \"Apache-2.0\" and license-files = [LICENSE, LICENSE-MIT, NOTICE]. LICENSE is Apache 2.0. NOTICE says pre-relicense contributions remain MIT, and LICENSE-MIT is retained. Out of 1,152 tracked files, none are vendor or third_party trees and none are bundled binaries or wheels. graphify/_minhash.py is a self-described reimplementation of the datasketch API (datasketch is MIT, so it is compatible; there is no upstream notice, which is low risk). worked/httpx is 'A synthetic 6-file Python codebase modeled after httpx' (worked/httpx/README.md:3). The CDN libraries are referenced, not bundled. graphify/pi/package.json is Apache-2.0."
+    },
+    {
+      "claim": "Gate 'cross_host_counterpart' = pass: both Claude and Codex are first-class targets generated from one source; 'graphify install --platform codex' copies the skill, adds an AGENTS.md always-on section and registers a no-op hook-check.",
+      "status": "partly",
+      "evidence": "tools/skillgen/platforms.toml:35-54 defines [platform.claude] (dispatch agent-tool-disk) and [platform.codex] (dispatch codex-agenttask). skill-codex.md:276-283 uses spawn_agent and requires multi_agent=true. However, install.py:949-1025 shows that plain `install(platform='codex')` only copies the skill to ~/.codex/skills (claude_md False, no _agents_install call). The AGENTS.md block and .codex/hooks.json are written only by `graphify codex install` (install.py:2827-2833 -> _agents_install -> 1989-1990) or `install --project --platform codex` (install.py:2064-2072). README.md:302 claims these are equivalent, and the code disagrees. `graphify codex install` without --project writes AGENTS.md and the hook but does not copy the skill. The Codex hook (install.py:1922-1931) has no timeout and runs a process on every Codex Bash call that does nothing (cli.py:2971-2975 sys.exit(0)).",
+      "correction": "The verdict should be 'flag', not 'pass'. Behavioral parity is absent: Claude gets runtime hooks, Codex gets prose only. Install commands are split across commands, contrary to README.md:302. OAW installs Codex skills into .agents/skills, and graphify's variant for that path ('agents', skill-agents.md) contains 0 mentions of spawn_agent. It says 'MANDATORY: You MUST use the Agent tool' (skill-agents.md:223), a tool Codex does not have. Whether current Codex discovers ~/.codex/skills cannot be verified from source."
+    },
+    {
+      "claim": "Security flag (e): a repo-controlled interpreter path runs as code; query.md:14 runs '$(cat graphify-out/.graphify_python)' on the fast path that skips Step 1 (skill.md:57); the git hook falls back to the same file (hooks.py:41-52).",
+      "status": "partly",
+      "evidence": "The skill.md fast path (57, 767-775) itself runs the PATH `graphify query`, not .graphify_python. The .graphify_python execution is in references/query.md:14, 31, 80, 177 and 203, which skill.md:775 directs the agent to for the 'REQUIRED' expansion step. skill.md:745 also says to check that .graphify_python exists before query, path or explain. hooks.py:37-53 uses the file only when the install-time pinned interpreter fails. It applies a character allowlist (hooks.py:48) and then executes the named path with a probe.",
+      "correction": "The risk is real for repos that commit graphify-out/ (the always-on block treats a committed graph.json as normal). It is narrower than stated: the agent must load query.md, and the git hook reaches the file only after the pinned interpreter fails."
+    },
+    {
+      "claim": "Instruction-conflict evidence: OAW 'No router, no mandatory startup reads' at oaw-ref/README.md:78 and 141.",
+      "status": "partly",
+      "evidence": "oaw-ref/README.md:78 contains 'No router, no mandatory startup reads'. Line 141 instead reads 'Short AGENTS.md; skills load on demand; no second agent runtime'.",
+      "correction": "Cite README.md:78 for the quote and README.md:141 for the 'native-first / no second agent runtime' principle."
+    },
+    {
+      "claim": "native_redundancy: project evidence is small (BENCHMARKS.md:145-147 ERPNext n=6, 70.8%->82.0%, ~140K tokens/query); harness (crosstool/, memory/runner.py) not in repo; BENCHMARKS.md:183 'local embedder' contradicts README.md:38.",
+      "status": "confirmed",
+      "evidence": "BENCHMARKS.md:145-147 reads as quoted. BENCHMARKS.md:47-55 names `memory/` and `crosstool/` suites run with Claude Opus 4.8. `git ls-files | grep -E 'crosstool|memory/runner'` returns nothing. BENCHMARKS.md:183 says 'a local embedder' and BENCHMARKS.md:11 says 'hybrid retrieval'. No embedder exists in graphify/*.py.",
+      "correction": "The integration rationale calls this 'the user's own benchmark'. It is the upstream project's benchmark, not the OAW user's."
+    }
+  ],
+  "missed_issues": [
+    "Skill files update themselves. On the first non-silent CLI run after a package upgrade, __main__.py:266-300 and 846-856 (`_refresh_stale_skills`) rewrite every user-scope SKILL.md that graphify installed, on all platforms (~/.claude/skills, ~/.codex/skills, ~/.agents/skills, ...). Only one .bak is kept (install.py ~376-381). skill.md:92 also runs an unpinned `uv tool install --upgrade`. Together this is a de facto auto-update channel for agent instructions. The only opt-out is GRAPHIFY_NO_AUTO_REFRESH=1. It conflicts with OAW's 'nothing applies itself' rule and with pinned-SHA catalog evidence.",
+    "Data leaves the machine in skill mode without a prompt. skill.md:172-175: if GEMINI_API_KEY or GOOGLE_API_KEY is set in the environment, the skill sends doc, PDF and image contents to Google's `gemini-3-flash-preview`, a preview model (llm.py:178-180). It prints only a tip and says 'do not wait for the user'. skill.md:170 also claims 'graphify does not read ANTHROPIC_API_KEY, OPENAI_API_KEY', but headless extract, label and prs auto-detect those keys (llm.py:3544-3548; prs.py:670-714).",
+    "The nested `claude -p` session runs with full agent context and no tool restrictions. llm.py:1911-1915 itself notes that the CLI layers in CLAUDE.md, AGENTS.md, skills and MCP from cwd. cli_args (llm.py:1949-1953) pass no --allowedTools, --tools or --permission-mode. Untrusted corpus text is fed into an agentic session that inherits the user's permission allowlist and the project's hooks, including graphify's own PreToolUse guards. This opens a prompt-injection surface, risks recursion, and adds subscription spend. prs.py:709-714 runs a similar `claude -p` with PR metadata.",
+    "Code-derived data can leave the machine despite 'Code files: ... Nothing leaves your machine' (README.md:36, 432). `graphify cluster-only` and `graphify label` send community member labels (code identifiers) to an auto-detected API backend or to the claude -p fallback (llm.py:3790-3830, 3936-3949). The opt-outs are --no-label and GRAPHIFY_BACKEND=none.",
+    "Git hooks and the merge driver are opt-in. They are installed only by an explicit `graphify hook install` (cli.py:1594-1603; references/hooks.md:10). Neither the skill nor `graphify install` adds them. The digest's 'what_it_does' implies they are part of the default agent-steering install.",
+    "`graphify claude install` writes a '## graphify' block into the project-root CLAUDE.md (install.py:2212-2229). `install --project` also writes .claude/CLAUDE.md, .claude/skills and .claude/settings.json (install.py:990-1003, 2051-2054). OAW's managed CLAUDE.md is supposed to only import AGENTS.md (oaw-ref/README.md:78), so this is a direct managed-file conflict, not just a possible one.",
+    "Windows-specific: the default install platform on Windows is 'windows' (install.py:2579). It installs skill-windows.md with a 50,457 B body, the largest variant. The hooks start graphify.exe on every Bash, Grep, Read and Glob call. The ~170 ms figure (install.py:500-502) is the project's own number, and Windows process startup has not been measured.",
+    "By default the Dockerfile serves MCP over HTTP on 0.0.0.0:8080 with no --api-key (Dockerfile CMD). serve.py:3373-3375 only prints a warning. If the 'other hosts via MCP' route is used, the graph is exposed without authentication.",
+    "callflow_html.py:1708 loads mermaid@11 from jsDelivr with a floating major version and no SRI integrity attribute. vis-network in exporters/html.py:733-735 is pinned and has SRI.",
+    "The video extra downloads faster-whisper model weights from Hugging Face on first use (transcribe.py:20, 150 `WhisperModel(model_name, ...)`). This network fetch is not mentioned in the privacy section. It downloads only and uploads no corpus data.",
+    "The Codex PreToolUse 'hook-check' entry has no timeout (install.py:1922-1931). It still starts a graphify process on every Codex Bash call even though it does nothing (cli.py:2971-2975).",
+    "BENCHMARKS.md describes a configuration this SHA does not ship ('hybrid retrieval', a dense RAG or hybrid RRF comparison, 'local embedder'; lines 11, 47-50, 183). The memory and crosstool harnesses are absent, so none of the published accuracy or cost figures can be attributed to this code."
+  ],
+  "integration_mode_agrees": true,
+  "integration_mode_note": "I agree with absorb_method. Three things rule out a core or pack absorption: graphify needs non-stdlib native dependencies (pyproject.toml:14-54), every skill variant is over 48 KB, and it installs always-on routers and hooks. The OAW plan's own preference order puts 'absorb method' first (oaw-ref/docs/plans/skill-catalog-execution.md, section on digesting into nutrients). The source adds two reasons to be stricter about any later 'pack' route. First, `_refresh_stale_skills` rewrites installed SKILL.md copies automatically after upgrades, which breaks pinned-version evidence. Second, the Codex path OAW uses (.agents/skills) gets a variant whose subagent dispatch is wrong for Codex. Any pack must therefore force GRAPHIFY_NO_AUTO_REFRESH=1, GRAPHIFY_BACKEND=none (or an explicit --backend) and project-scope install without hooks, and must ship the codex variant at the OAW path. Two corrections to the digest's inputs: the reviewer-muzzling concern is narrower than stated, and git hooks are opt-in, not part of the default install. Neither changes the verdict."
+}

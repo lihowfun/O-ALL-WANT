@@ -1,0 +1,942 @@
+{
+  "food": "Graphify-Labs/graphify",
+  "pinned_commit": "8e6a6d2129d4aeffc7a0e9ed79b153f7f057f42b",
+  "package": "graphifyy 0.9.101 (Apache-2.0; LICENSE, LICENSE-MIT, NOTICE must travel with any copied text)",
+  "ledger_date": "2026-11-03",
+  "inputs": [
+    "ingest/graphify/scout.json",
+    "ingest/graphify/digest.json",
+    "ingest/graphify/verify.json (skeptic corrections take precedence over the digest)",
+    "ingest/graphify/goldfish-1.json",
+    "ingest/graphify/goldfish-2.json",
+    "ingest/graphify/wiki-duel.json (judge: complement, not replace)",
+    "oaw-ref (README.md, AGENTS.md, scripts/context_hub.py, scripts/wiki_sync.py, scripts/improvement.py, scripts/oaw.py, scripts/oaw_common.py, scripts/validate_skills.py, evals/egm-pilot/run_pilot.py, docs/plans/skill-catalog-execution.md, docs/plans/v2.0.0-execution.md, templates/)",
+    "ingest/DECISIONS.md (D5 per-component verdicts, D7 consent and cost, D8 cross-host, D10 goldfish review of our drafts)"
+  ],
+  "method": "Read-only. No food installer, package manager, build, hook, test or code was run. Every kept citation was re-read in the pinned source or in oaw-ref. One food function (install.py:815-842) was re-implemented from reading, outside src, in scratchpad/ledger-work/h1_replica.py and run with python -I to confirm the H1-boundary deletion.",
+  "citation_corrections": [
+    "verify.json says the import check is skill.md:89; it is skill.md:90 (89 sets the python3 fallback).",
+    "wiki-duel.json cites query.md:22 for 'case-folded substring + IDF'; the sentence is at query.md:25 (Step 0 heading at :23).",
+    "wiki-duel.json cites markdown.py:493-519; the file is graphify/extractors/markdown.py (L<n> source_location at :495, :509, :519).",
+    "goldfish-1's 'no untrusted-content instruction' holds for the skill subagent spec (extraction-spec.md has no 'untrusted' text) but not for the API path: llm.py:534-540 and :611-655 wrap every file in a hash-stamped untrusted_source block. That wrapper is a nutrient (gf.untrusted-wrapper).",
+    "digest.json says OAW 'doctor' drift is unverified; reading oaw.py:651-656 shows any appended block in a managed CLAUDE.md/AGENTS.md changes its hash, so doctor reports 'Modified managed file' and a framework update becomes a migration conflict (read, not executed).",
+    "digest.json proposes a docs/raw/_codemap note; wiki_sync.py:149-150 skips raw files whose name starts with '_', so that note would never render."
+  ],
+  "food_summary": "graphify (PyPI graphifyy 0.9.101, commit 8e6a6d2, Apache-2.0, ~60.7k lines of Python) builds a local tree-sitter code graph with query/path/explain/affected CLIs, an MCP server and a host skill. Retrieval is lexical substring+IDF plus graph traversal, not vectors, and per the wiki-duel judge it complements the OAW LLM wiki rather than replacing it. Ledger: 31 components, 13 excrete, 13 absorb, 5 hold. Excreted: the agent-steering and installer layer (always-on query-first router, silent uv/pip install, silent self-refresh of installed SKILL.md files, opt-in git hooks with job-escaping detached rebuilds, PreToolUse guards in shared settings.json, global CLAUDE.md registration with a confirmed H1-boundary bug that deletes user sections, the 48-50 KB skill package), ambient LLM egress including an unrestricted nested `claude -p`, the repo-controlled .graphify_python interpreter, the Write+Bash doc-extraction fan-out, the directory-sweeping wiki exporter, the save-result memory loop, and the MCP/PR tools. Absorbed as stdlib methods into existing OAW parts: a `path::Symbol` citation lint and a read-only reverse 'cites' lookup in wiki_sync.py, hash plus renderer-version staleness in wiki_sync.py, budget-fit reporting and 0/3/4 exit codes in context_hub.py, and a references/ remedy for the planned 24,000-byte gate in validate_skills.py. Absorbed into the planned catalog.py digestion pipeline: untrusted-source wrapping, reviewer read-coverage checks, rubric fingerprints, a hook-safety rubric, an installer round-trip check, credential-file flags and URL validation. Held for paid tests: graphify itself as a manual-only external code-map pack (pinned, project scope, GRAPHIFY_BACKEND=none, GRAPHIFY_NO_AUTO_REFRESH=1, no skill, no hooks, graphify-out/ gitignored), a stdlib code map, IDF ranking, query expansion and outcome-scored promotion. Nothing is installed. Absorbed items need deterministic tests under harness_check. Changes that affect behavior also need improvement.py A/B, and every OAW draft needs a goldfish review (D10). Status: parity, no improvement claimed.",
+  "counts": {
+    "absorb": 13,
+    "excrete": 13,
+    "hold": 5,
+    "total": 31
+  },
+  "components": [
+    {
+      "id": "gf.always-on-router",
+      "name": "Always-on CLAUDE.md/AGENTS.md rule block",
+      "what": "Marker section `## graphify` written into the project CLAUDE.md (graphify claude install / install --project) or AGENTS.md (codex install). It requires `graphify query` before the first grep, search or source-file read, says to copy that rule into every subagent prompt, limits raw reads to lines the graph located, and tells reviewers not to flag graph.json churn or suggest skipping the rebuild or its hooks. The AGENTS variant adds 'only skip graphify if the user explicitly says not to use it'.",
+      "disposition": "excrete",
+      "oaw_target": "",
+      "reason": "A second mandatory router, which OAW v2 removed on purpose. v2.0.0 also forbids shipping a mandatory nudge or graph memory. Copying the rule into every subagent prompt inflates EGM and goldfish prompts. The reviewer clause pre-empts judgement about the tool's own footprint. The verifier narrows it to graph.json PR diffs, but it still conflicts. Appending the block to OAW-managed CLAUDE.md or AGENTS.md changes their managed hash, so doctor reports a modified managed file and the next framework update becomes a migration conflict.",
+      "evidence": [
+        "graphify/always_on/claude-md.md:6 (query before first grep/search/read; put this rule in every subagent prompt)",
+        "graphify/always_on/claude-md.md:10 and graphify/always_on/agents-md.md:13 (do not flag it as churn or suggest skipping the graph rebuild or its hooks)",
+        "graphify/always_on/agents-md.md:9 (only skip graphify if the user explicitly says not to use it)",
+        "graphify/install.py:2212-2229 (claude_install writes the block into project-root CLAUDE.md)",
+        "graphify/cli.py:18-21 (the package itself notes MANDATORY/You MUST/every-subagent wording reads like prompt injection)",
+        "oaw-ref/README.md:78 (No router, no mandatory startup reads); oaw-ref/README.md:141 (short AGENTS.md; no second agent runtime)",
+        "oaw-ref/docs/plans/v2.0.0-execution.md:78 (no mandatory nudge, no graph memory)",
+        "oaw-ref/scripts/oaw.py:651-656 (managed hash mismatch -> WARN 'Modified managed file'; update becomes a migration conflict)"
+      ],
+      "missing_test": "",
+      "sources_agree": "Digest (instruction_conflicts fail; diarrhea risks 2-3), verifier (confirmed; narrows line 10 to graph.json diffs in PRs), goldfish-1 and goldfish-2 (major, rubric 5) and wiki duel (router rules not adopted) all agree. The only disagreement is how severe the reviewer clause is. Doctor drift was 'unverified' in the digest; it is confirmed here by reading oaw.py, not by running it."
+    },
+    {
+      "id": "gf.skill-autoinstall",
+      "name": "Skill Step 1 silent install/upgrade",
+      "what": "When `import graphify` fails, the skill runs `uv tool install --upgrade graphifyy` (unpinned) or `pip install graphifyy`. If that fails it retries with `--break-system-packages`. On success it prints nothing. The same block is in skill-codex.md and skill-windows.md.",
+      "disposition": "excrete",
+      "oaw_target": "",
+      "reason": "Breaks OAW's never-auto-install/upgrade/apply rule and D7, which requires consent before any install. An unpinned upgrade breaks pinned-SHA evidence, and --break-system-packages can modify the system Python. Verifier: it runs only when the import fails, and the system-packages retry is a fallback. That narrows the scope but does not add consent.",
+      "evidence": [
+        "graphify/skill.md:90-99",
+        "graphify/skill.md:113 (If the import succeeds, print nothing)",
+        "oaw-ref/docs/plans/skill-catalog-execution.md:68 and :430 (no automatic install, upgrade or apply)",
+        "ingest/DECISIONS.md D7"
+      ],
+      "missing_test": "",
+      "sources_agree": "Digest (security flag b), verifier (confirmed; narrowed), goldfish-1 and goldfish-2 (major) agree. Wiki duel lists it among the policy conflicts."
+    },
+    {
+      "id": "gf.skill-self-refresh",
+      "name": "Silent self-refresh of installed SKILL.md files",
+      "what": "After a package upgrade, every non-silent CLI run calls `_refresh_stale_skills` and `_refresh_v1_opencode_plugins`. That includes `graphify query`, which the router tells agents to run constantly. Together they re-copy SKILL.md and references/ for every user-scope platform and rewrite OpenCode plugin files. Only a SKILL.md.bak is kept. The opt-out is GRAPHIFY_NO_AUTO_REFRESH=1, and the behavior is disclosed only in the CHANGELOG.",
+      "disposition": "excrete",
+      "oaw_target": "",
+      "reason": "An auto-update channel for agent instructions. It contradicts OAW's rule that nothing applies itself and the v2 ban on a self-rewriting background component. It also voids catalog evidence pinned to a SHA, because the instructions the agent follows change without re-digestion.",
+      "evidence": [
+        "graphify/__main__.py:266-300 (_refresh_stale_skills; GRAPHIFY_NO_AUTO_REFRESH)",
+        "graphify/__main__.py:843-858 (query is not a silent command; refresh runs first)",
+        "CHANGELOG.md:570 (0.9.72 entry)",
+        "oaw-ref/README.md:143 (nothing applies itself)",
+        "oaw-ref/docs/plans/v2.0.0-execution.md:78 (no background self-rewriting daemon)",
+        "oaw-ref/docs/plans/skill-catalog-execution.md:238 (upstream change -> new quarantined version, never an automatic upgrade)"
+      ],
+      "missing_test": "",
+      "sources_agree": "Verifier (missed issue 1), goldfish-1 and goldfish-2 (major, rubric 3) agree. The digest missed it and the verifier closed the gap. Wiki duel is silent."
+    },
+    {
+      "id": "gf.git-hook-installer",
+      "name": "graphify hook install (git hooks, merge driver, detached rebuilds)",
+      "what": "An opt-in command. It installs post-commit, post-checkout, post-merge and post-rewrite hooks, registers a merge.graphify.* git-config driver that runs a pinned interpreter, and appends a line to the tracked .gitattributes. Each hook spawns a detached Python rebuild (start_new_session; on Windows with CREATE_BREAKAWAY_FROM_JOB) that logs to ~/.cache/graphify-rebuild.log. The agent-facing doc mentions only a post-commit hook and says 'No background process needed'.",
+      "disposition": "excrete",
+      "oaw_target": "",
+      "reason": "It creates background processes that can escape the parent's job object (agent sandbox or CI) and writes to git config, a tracked file and the home directory. Its documentation also contradicts the code. OAW ships no git hooks, its packaging allowlist rejects hooks, and v2 forbids background daemons. Verifier: the command is opt-in and not part of the default install, so excreting it costs the held code-map route nothing. The well-made hook craft is kept as rubric items in gf.hook-safety-rubric.",
+      "evidence": [
+        "graphify/hooks.py:1116-1153 (four hooks + merge driver)",
+        "graphify/hooks.py:1003-1048 (git config merge.graphify.*; .gitattributes append)",
+        "graphify/hooks.py:360-381 (detached launcher; 0x01000000 CREATE_BREAKAWAY_FROM_JOB; log path at :365)",
+        "graphify/skills/claude/references/hooks.md:7 ('No background process needed')",
+        "oaw-ref/docs/plans/skill-catalog-execution.md:313 (packaging allowlist rejects hooks and auto-approved permissions)",
+        "oaw-ref/docs/plans/v2.0.0-execution.md:78"
+      ],
+      "missing_test": "",
+      "sources_agree": "Digest (flag d), verifier (opt-in correction), goldfish-1 and goldfish-2 (major) agree. Wiki duel says never run `graphify hook install`."
+    },
+    {
+      "id": "gf.pretooluse-guard",
+      "name": "PreToolUse hook-guard (Claude) and no-op hook-check (Codex)",
+      "what": "`graphify claude install` and `install --project` merge two PreToolUse entries into the shared .claude/settings.json: Bash|Grep runs `hook-guard search` and Read|Glob runs `hook-guard read`, each with a 10s timeout. --strict or GRAPHIFY_HOOK_STRICT denies the first raw Read in each session. Outside --project the entry embeds the installing machine's absolute exe path in that usually-committed file. Codex gets a .codex/hooks.json `hook-check` entry with no timeout: it spawns a process on every Bash call and exits 0.",
+      "disposition": "excrete",
+      "oaw_target": "",
+      "reason": "It starts a Python process on the four most-used tools (about 170 ms warm by the project's own figure; Windows is unmeasured). Its nudges repeat the router, and strict mode can block harness_check and EGM flows. Claude gets runtime hooks while Codex gets prose only, which fails OAW's cross-host counterpart rule. A machine path committed to config breaks every other clone.",
+      "evidence": [
+        "graphify/install.py:477-511 (matchers, timeout 10, ~170ms warm comment)",
+        "graphify/install.py:2241-2263 (_install_claude_hook merges into .claude/settings.json)",
+        "graphify/cli.py:58-74 (strict-mode deny payload, once per session)",
+        "graphify/install.py:1924-1931 (Codex PreToolUse hook-check entry, no timeout)",
+        "graphify/cli.py:2971-2975 (hook-check is a no-op sys.exit(0))",
+        "oaw-ref/docs/plans/skill-catalog-execution.md:317-331 (cross-host counterpart rule)",
+        "ingest/DECISIONS.md D8"
+      ],
+      "missing_test": "",
+      "sources_agree": "Digest (flag a; latency risk), verifier (hooks only from claude install or install --project; Codex hook has no timeout), goldfish-1 (major), goldfish-2 (minor plus rubric 4) agree. Wiki duel excludes hooks."
+    },
+    {
+      "id": "gf.host-registration-writes",
+      "name": "Global '# graphify' registration and its section-boundary bug",
+      "what": "Default `graphify install` copies the skill to ~/.claude/skills (or ~/.codex/skills; on Windows the default is the 'windows' variant). Without asking, it adds an H1 `# graphify` block to ~/.claude/CLAUDE.md or $CLAUDE_CONFIG_DIR/CLAUDE.md. The block's section ends at the next line starting with '# '. A re-install or project uninstall therefore deletes every user `##` section written after the block, and an emptied file is unlinked. `graphify uninstall` never removes the global block.",
+      "disposition": "excrete",
+      "oaw_target": "",
+      "reason": "Three problems: unconsented user-global writes outside the project, a confirmed data-loss path in the user's CLAUDE.md, and a stale instruction left after uninstall. OAW keeps CLAUDE.md as a one-line @AGENTS.md import and protects existing content.",
+      "evidence": [
+        "graphify/install.py:578-587 (H1 registration text)",
+        "graphify/install.py:988-1003 (home or CLAUDE_CONFIG_DIR target)",
+        "graphify/install.py:618-621 (replace with boundary_prefix='# ')",
+        "graphify/install.py:815-842 (section runs to next boundary line or EOF)",
+        "graphify/install.py:441-463 (removal uses the same H1 boundary; unlinks an emptied file)",
+        "scratchpad/ledger-work/h1_replica.py (independent re-implementation, run with python -I: a '## Added later by user' section did not survive a re-install; output 'survives: False')",
+        "graphify/install.py:2579 (Windows default platform is 'windows')",
+        "oaw-ref/templates/CLAUDE.md (only '@AGENTS.md'); oaw-ref/README.md:78"
+      ],
+      "missing_test": "",
+      "sources_agree": "goldfish-2 found and replicated the H1 deletion, and it was re-confirmed independently here. goldfish-1 rates the global writes minor. Digest (writes_outside_project flag) and verifier (missed issue 6: managed CLAUDE.md conflict) agree on excrete."
+    },
+    {
+      "id": "gf.skill-package",
+      "name": "graphify SKILL.md package as shipped",
+      "what": "Skill bodies of 48-50 KB (claude 48,061 B, codex 48,821 B, windows 50,457 B) plus about 49 KB of references/. The model-invocable description reads 'Use for any question about a codebase ... or project content'. The body uses MANDATORY/You MUST phrasing. The agents variant, the one that would land in OAW's .agents/skills, mandates the Agent tool and never mentions spawn_agent. After the pipeline it keeps an exploration loop going ('be the guide'), adds a sponsor link, and the installer prints a hosted-product advert.",
+      "disposition": "excrete",
+      "oaw_target": "",
+      "reason": "Every body is about twice the 24,000-byte structure gate and blows the context budget. The trigger competes with oaw-evidence, oaw-wiki, egm-drift-report and native search, and contradicts the skill's own 'just grep' advice. The Codex/agents variant dispatches wrongly for Codex. The exploration loop goes beyond what the user asked. It cannot serve as a pack entrypoint without a rewrite. Only the references/ split idea is kept (gf.skill-size-references).",
+      "evidence": [
+        "graphify/skill.md:1-4 (frontmatter: name and description only; no disable-model-invocation)",
+        "graphify/skill.md:3 vs graphify/skill.md:51 (claims every codebase question; says one lookup is faster with grep)",
+        "verify.json check 1 (measured bodies 48,061 / 48,821 / 50,457 B; references 49,348 B)",
+        "graphify/skill.md:223 and graphify/skill-agents.md:223 (MANDATORY Agent tool); 0 occurrences of spawn_agent in graphify/skill-agents.md",
+        "graphify/skill.md:720 (sponsor link); graphify/skill.md:733-739 (keep exploring; 'be the guide')",
+        "graphify/install.py:1024-1025 (hosted-product advert)",
+        "oaw-ref/docs/plans/skill-catalog-execution.md:76 (body <= 24,000 bytes)"
+      ],
+      "missing_test": "",
+      "sources_agree": "Digest (structure and context_budget fail; trigger_conflicts flag), verifier (sizes confirmed; agents variant wrong for Codex), goldfish-1 (rubric 1 major and minor), goldfish-2 (rubric 1) and wiki duel (skill not adopted) agree."
+    },
+    {
+      "id": "gf.llm-backend-autodetect",
+      "name": "Ambient LLM backend auto-detection and claude -p fallback",
+      "what": "Headless extract, label and cluster-only pick a provider from whatever keys are in the environment, in the order gemini, kimi, claude, openai, deepseek, azure, bedrock, ollama. They send it doc content or community member labels, which are code identifiers. With no key, labeling spawns `claude -p` using the local CLI's default model. The call passes no --tools, --allowedTools or --permission-mode, so it inherits the cwd's CLAUDE.md, skills and hooks. The skill tells the agent 'No other API keys are read' and uses Gemini preview automatically when a Gemini key is set.",
+      "disposition": "excrete",
+      "oaw_target": "",
+      "reason": "Data leaves the machine and money is spent without an explicit choice. The agent-facing skill makes a false claim. The nested agent is unconstrained and fed untrusted corpus text. OAW needs none of it: OAW tools make no model calls, and OAW's paid runner already pins tools, disallowed tools, setting sources, permission mode and a per-invocation budget. graphify's mitigations (stderr announcement, GRAPHIFY_BACKEND=none, --no-label) become mandatory settings in gf.code-map-external rather than being absorbed.",
+      "evidence": [
+        "graphify/skill.md:169-176 ('No other API keys are read'; Gemini path)",
+        "graphify/llm.py:3517-3566 (detect_backend_with_source priority order)",
+        "graphify/llm.py:3915-3949 (claude-cli fallback for labeling; GRAPHIFY_BACKEND=none disables it)",
+        "graphify/llm.py:1911-1975 (cli_args: -p, --output-format json, --no-session-persistence, optional --model/--json-schema; no tool or permission restriction)",
+        "README.md:432 (code: nothing leaves your machine) vs README.md:435 (auto-detected data residency)",
+        "oaw-ref/evals/egm-pilot/run_pilot.py:121-132 (OAW runner passes --max-budget-usd, --setting-sources, --permission-mode, --tools, --disallowedTools)"
+      ],
+      "missing_test": "",
+      "sources_agree": "Digest (flag f), verifier (missed issues 2-4; the labeling path is reached only from cluster-only/label), goldfish-1 and goldfish-2 (major) agree. Wiki duel requires using it with no LLM backend."
+    },
+    {
+      "id": "gf.repo-controlled-interpreter",
+      "name": "Trusting graphify-out/.graphify_python",
+      "what": "Every later skill block runs `$(cat graphify-out/.graphify_python)`. The required query.md flow runs it without rewriting it first. The git hook falls back to it when the pinned interpreter probe fails, filtered by a character allowlist that also accepts relative paths. The README encourages committing or sharing graphify-out/.",
+      "disposition": "excrete",
+      "oaw_target": "",
+      "reason": "A cloned repo that ships this file chooses which executable the agent runs. The verifier narrows the risk (the agent must load query.md; the hook reaches the file only after the pinned probe fails). The attack is plausible but was not exercised, and it is still incompatible with OAW's stance on untrusted repos.",
+      "evidence": [
+        "graphify/skill.md:115",
+        "graphify/skills/claude/references/query.md:14",
+        "graphify/hooks.py:41-53",
+        "README.md:411 (commit or share the graph with the team)"
+      ],
+      "missing_test": "",
+      "sources_agree": "Digest (flag e), verifier (partly; narrower path), goldfish-1 (major) and goldfish-2 (minor, hook path) agree on excrete."
+    },
+    {
+      "id": "gf.semantic-subagent-fanout",
+      "name": "LLM doc-extraction pass (subagent fan-out)",
+      "what": "For docs, PDFs and images, the skill forbids the agent from reading files itself. It dispatches about ceil(files/22) general-purpose subagents with Write and Bash, all running extraction-spec.md. Unlike llm.py's API path, that spec has no 'file content is untrusted' clause. It asks for aggressive INFERRED edges in deep mode and semantically_similar_to edges, leaves source_location null, and concatenates rationale fragments without their source or date.",
+      "disposition": "excrete",
+      "oaw_target": "",
+      "reason": "Bash-capable subagents read cloned repos, which opens an injection surface, and the spend is unbounded. The output also does not suit OAW decision notes: superseded and current rationale become indistinguishable and lose line provenance, whereas OAW keeps verbatim source text with ref, ID and date per source. The useful part, graphify's no-LLM markdown references layer, is absorbed through gf.code-citation-lint.",
+      "evidence": [
+        "graphify/skill.md:223 (MANDATORY Agent tool) and graphify/skill.md:278 (general-purpose with Write and Bash)",
+        "graphify/skills/claude/references/extraction-spec.md:6-26 (subagent prompt; the file contains no 'untrusted' text)",
+        "graphify/llm.py:534-540 (the API path does carry an untrusted_source clause)",
+        "graphify/skills/claude/references/extraction-spec.md:45, :48, :71-73, :80 (aggressive INFERRED; semantically_similar_to; bimodal confidence; source_location null)",
+        "graphify/semantic_cleanup.py:324-336 (rationale fragments appended with no source or date)",
+        "oaw-ref/scripts/wiki_sync.py:257-324 (verbatim body plus ref, ID and date per source)"
+      ],
+      "missing_test": "",
+      "sources_agree": "goldfish-1 (major, rubric 5), wiki duel (decisive reason 3; LLM doc pass not adopted) and digest (context blowup risk) agree. The verifier is silent on this."
+    },
+    {
+      "id": "gf.wiki-export",
+      "name": "graphify export wiki / --wiki (to_wiki)",
+      "what": "Writes index.md plus one article per community or god node, generated from graph structure. It owns its output directory: an end-of-run sweep deletes every *.md it did not produce in that run.",
+      "disposition": "excrete",
+      "oaw_target": "",
+      "reason": "Pointed at docs/knowledge it would erase OAW manual pages and AI annotations. It has no provenance frontmatter, no freshness lint and no annotation preservation, so it cannot replace the LLM wiki (judge: complement). Its write-if-changed half is already in OAW, whose locked_update skips identical text, so excreting it loses nothing.",
+      "evidence": [
+        "graphify/wiki.py:355-363 (to_wiki owns wiki/ entirely)",
+        "graphify/wiki.py:462-465 (unlinks any *.md not produced this run)",
+        "graphify/reflect.py:22-24 (its own warning that files placed there get clobbered)",
+        "oaw-ref/scripts/wiki_sync.py:431-438 (refuses to overwrite manual pages; keeps annotations)",
+        "oaw-ref/scripts/oaw_common.py:166-170 (write only when the text changed)"
+      ],
+      "missing_test": "",
+      "sources_agree": "Digest (data-loss risk), verifier (confirmed) and wiki duel (decisive reason 2) agree. The goldfish reviewers are silent."
+    },
+    {
+      "id": "gf.memory-reflect-loop",
+      "name": "save-result / reflect work-memory loop",
+      "what": "`graphify save-result` writes the user's verbatim question and the model's full answer into graphify-out/memory/*.md. detect() always re-ingests that directory, so the saved answers become graph nodes. reflect.py turns their outcomes into reflections/LESSONS.md for the next session to read.",
+      "disposition": "excrete",
+      "oaw_target": "",
+      "reason": "Model-written answers become graph facts, and user questions are shared with the team if graphify-out is committed. It is also a second memory store beside .agents/memory.md, which v2 forbids (no graph memory; personal memory is left to the host). The scoring method is held separately as gf.outcome-scored-promotion.",
+      "evidence": [
+        "graphify/skills/claude/references/query.md:173-190 (save-result with verbatim question and full answer; --outcome loop)",
+        "graphify/detect.py:2182-2186 (graphify-out/memory always scanned)",
+        "graphify/reflect.py:1-24",
+        "oaw-ref/docs/plans/v2.0.0-execution.md:78",
+        "oaw-ref/README.md:96 (mandatory memory writes removed; record only reusable project evidence)"
+      ],
+      "missing_test": "",
+      "sources_agree": "goldfish-1 (minor) and wiki duel (memory and reflect loop not adopted) agree on excrete. The digest proposed the scoring as a nutrient; that part is handled as a hold."
+    },
+    {
+      "id": "gf.mcp-server",
+      "name": "MCP server and PR-triage tools",
+      "what": "serve.py exposes query_graph, get_node, neighbors, community, god_nodes, stats and shortest_path, plus list_prs, get_pr_impact and triage_prs, over stdio or HTTP. The Dockerfile default binds 0.0.0.0:8080 with no --api-key and only prints a warning. The list_prs description tells the agent to call it before starting work, and the PR tools shell out to gh with the user's credentials.",
+      "disposition": "excrete",
+      "oaw_target": "",
+      "reason": "For the manual-only code-map route it duplicates the CLI. Its shipped container default exposes the graph without authentication, and it adds a tool description that steers the agent plus GitHub egress. OAW does not need it.",
+      "evidence": [
+        "Dockerfile:25 (CMD --transport http --host 0.0.0.0 --port 8080, no api key)",
+        "graphify/serve.py:3373-3375 (warning only)",
+        "graphify/serve.py:2711-2717 (list_prs: 'Use this before starting work')",
+        "graphify/prs.py:141-145 (gh subprocess)"
+      ],
+      "missing_test": "",
+      "sources_agree": "Verifier (missed issue: Dockerfile with no auth), goldfish-2 (minor: gh egress and steering description) and goldfish-1 (MCP mirrors the CLI, rubric 4) agree. The digest lists the MCP server neutrally."
+    },
+    {
+      "id": "gf.code-citation-lint",
+      "name": "Backticked path::Symbol code citations, checked by a stdlib lint",
+      "what": "graphify method: extractors/markdown.py records L<n> provenance per heading with no LLM. markdown_resolution.py turns backticked code spans into `references` edges: a path-qualified mention is EXTRACTED, a bare name that matches exactly one symbol is INFERRED 0.95, and ambiguous or unresolved mentions are dropped silently ('a guess is not an edge').",
+      "disposition": "absorb",
+      "oaw_target": "scripts/wiki_sync.py lint (new citation check beside _check_links) + templates/docs/raw/_SOURCE_TEMPLATE.md (one convention line) + tests/test_wiki_sync.py",
+      "reason": "OAW notes cite code, but nothing checks those citations, so drift between a note and current code is left to the agent's judgement. Stdlib re-implementation:\n- parse backticked `rel/path.py::Name[::Member]` in docs/raw and docs/knowledge;\n- resolve the path with confined_path;\n- for .py files, confirm with ast that a def or class of that name exists;\n- classify each citation as path-resolved (EXTRACTED) or bare (INFERRED);\n- unlike graphify, report ambiguous or unresolved citations as warnings (errors under --strict) rather than dropping them.\nIt is deterministic, adds no dependency, and its fixture tests are free. This is the wiki duel's Step 0.",
+      "evidence": [
+        "graphify/markdown_resolution.py:1-40 (resolution rules; 'a guess is not an edge')",
+        "graphify/markdown_resolution.py:230-252 (references edge with confidence, score and source_location)",
+        "graphify/extractors/markdown.py:495-519 (L<n> source_location)",
+        "oaw-ref/scripts/wiki_sync.py:547-556 (_check_links: only markdown links are checked today)",
+        "oaw-ref/templates/docs/raw/_SOURCE_TEMPLATE.md:12-14 (asks for a source path, but no code-citation form)",
+        "oaw-ref/templates/.agents/skills/oaw-wiki/SKILL.md:19-21 (conflict with current code left to the agent)",
+        "wiki-duel.json minimal_integration Step 0"
+      ],
+      "missing_test": "",
+      "sources_agree": "Wiki duel (Step 0; decisive reason 5) supports it, and the digest's confidence-tag and rationale nutrients point the same way. Verifier and goldfish are silent. This draft has not yet had its own goldfish review (D10).",
+      "after_integration": {
+        "integration_ref": "ingest/graphify/integration.json#gf.code-citation-lint",
+        "integration_result": "flag",
+        "disposition": "split",
+        "claim_corrections": [
+          "Revision 1 bundled the _SOURCE_TEMPLATE.md convention line with the lint. The line changes what agents write (model-facing) and is held; the lint ships first and stays inert while no note uses the form."
+        ],
+        "parts": [
+          {
+            "id": "gf.code-citation-lint/lint",
+            "disposition": "absorb",
+            "model_facing": false,
+            "oaw_target": "scripts/wiki_sync.py lint citation check beside _check_links: path-qualified backticked citations only (left side contains '/' or a file extension); raw notes and manual pages only (build_origin wiki_sync pages skipped, so nothing is reported twice); per-file error containment with a regex def/class fallback (no traceback on SyntaxError or decode errors); exact-case path resolution via directory listing (OAW-02); .py symbols via ast; warnings grouped per file; a bad citation is a deterministic defect and becomes an error under --strict (documented in CHANGELOG/UPGRADING).",
+            "backlog": [
+              "OAW-21"
+            ]
+          },
+          {
+            "id": "gf.code-citation-lint/template-line",
+            "disposition": "hold",
+            "model_facing": true,
+            "oaw_target": "One convention line in templates/docs/raw/_SOURCE_TEMPLATE.md: cite code as a backticked relative/path.py::Symbol.",
+            "missing_test": "10 note-writing tasks x 2 arms x 3 = 60 runs, about 36-54M (Claude screen, estimate).",
+            "backlog": [
+              "HOLD-12"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "gf.reverse-citation-lookup",
+      "name": "Reverse lookup: which notes cite this code",
+      "what": "`graphify affected <Symbol>` walks references, calls and imports edges in reverse to list what depends on a symbol, including the docs that cite it.",
+      "disposition": "absorb",
+      "oaw_target": "scripts/wiki_sync.py (new read-only advisory subcommand, e.g. `cites <path[::Symbol]>`, reusing the gf.code-citation-lint parser) + tests/test_wiki_sync.py",
+      "reason": "After a code change, the agent needs the raw notes that cite the changed path or symbol so it can refresh them through wiki_sync. A stdlib index over backticked citations provides this without a graph. The output is advisory, like promote_candidates, and never edits docs. Renames and deletes, which graphify drops silently, surface as lint warnings from gf.code-citation-lint. Precision and recall on scripted modify, rename and delete cases can be measured with a free fixture test.",
+      "evidence": [
+        "graphify/affected.py:10-32 (DEFAULT_AFFECTED_RELATIONS include references)",
+        "wiki-duel.json roles (2) and to_measure 2",
+        "oaw-ref/scripts/wiki_sync.py:1184-1257 (promote_candidates: advisory-output precedent)"
+      ],
+      "missing_test": "",
+      "sources_agree": "Wiki duel (role 2; to_measure 2) supports it. The digest notes partial overlap with egm-drift-report. The other sources are silent.",
+      "after_integration": {
+        "integration_ref": "ingest/graphify/integration.json#gf.reverse-citation-lookup",
+        "integration_result": "pass",
+        "disposition": "split",
+        "claim_corrections": [
+          "Integration added a held skill-text pointer: oaw-wiki triggers only on requested wiki maintenance, so without a pointer agents find 'cites' only through --help; the pointer changes default skill behavior and is held."
+        ],
+        "parts": [
+          {
+            "id": "gf.reverse-citation-lookup/command",
+            "disposition": "absorb",
+            "model_facing": false,
+            "oaw_target": "scripts/wiki_sync.py cites <path[::Symbol]> (read-only, advisory, --json), sharing one parser with the lint; modify, rename and delete fixtures (a deleted path still returns the notes citing it); a docs/ byte snapshot proves nothing is written; epilog and docs/CLI_Reference.md updated.",
+            "backlog": [
+              "OAW-22"
+            ]
+          },
+          {
+            "id": "gf.reverse-citation-lookup/skill-pointer",
+            "disposition": "hold",
+            "model_facing": true,
+            "oaw_target": "One oaw-wiki SKILL.md line: after changing code, run wiki_sync.py cites <path::Symbol> and update the notes it lists.",
+            "missing_test": "Stage 0 free and deterministic (cites on scripted modify/rename/delete of fixture W); Stage 1: 8 code-change tasks x 2 arms x 3 = 48 runs, about 29-43M (Claude screen, estimate).",
+            "backlog": [
+              "HOLD-12"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "gf.budget-fit-report",
+      "name": "Over-budget output that states the budget that would fit",
+      "what": "_subgraph_to_text renders seed hits first and never cuts them, and renders nodes before edges. When output is over budget it reports how many nodes were cut and the smallest budget that would return everything.",
+      "disposition": "absorb",
+      "oaw_target": "scripts/context_hub.py memory_recall (the two '--max-chars is too small' errors) and search --compact + tests/test_context_hub.py",
+      "reason": "OAW recall already keeps every query match intact and pages with a cursor. On overflow, though, it only says 'increase it'. Computing and printing the minimal --max-chars that fits the first hit (and the full page) saves agents a retry loop. The change is small and deterministic.",
+      "evidence": [
+        "graphify/serve.py:1125-1160 (seed-first, hop-distance ordering)",
+        "graphify/serve.py:1253-1310 (never cut seeds; 'raise the token budget to {full_budget}')",
+        "oaw-ref/scripts/context_hub.py:386-500 (memory_recall)",
+        "oaw-ref/scripts/context_hub.py:485 and :494 (errors carry no number)"
+      ],
+      "missing_test": "",
+      "sources_agree": "Digest (nutrient 2) supports it, and the verifier confirmed the renderer. The other sources are silent.",
+      "after_integration": {
+        "integration_ref": "ingest/graphify/integration.json#gf.budget-fit-report",
+        "integration_result": "pass",
+        "disposition": "absorb",
+        "model_facing": false,
+        "oaw_target": "scripts/context_hub.py memory_recall: the reachable '--max-chars is too small' error prints the smallest --max-chars that would succeed, computed through the same candidate() and _render_recall path (including the OAW-16 notice) on the prefix-trimmed, match-only excerpt; exit stays 1; the second error stays a defensive check; --json errors stay plain text; one test reruns with the printed number at max_chars=512.",
+        "claim_corrections": [
+          "Revision 1 also named search --compact and both errors; by reading (not running), only the first error is reachable, and search --compact needs no change."
+        ],
+        "backlog": [
+          "OAW-17"
+        ]
+      }
+    },
+    {
+      "id": "gf.ambiguity-exit-codes",
+      "name": "Refuse-to-guess exit codes",
+      "what": "query, path and explain exit 0 for an answer, 3 for an ambiguous name (with candidates listed) and 4 for no match.",
+      "disposition": "absorb",
+      "oaw_target": "scripts/context_hub.py get and search (exit status and candidate listing) + tests/test_context_hub.py + docs/CLI_Reference.md",
+      "reason": "OAW `get` returns 1 for a missing topic without suggesting candidates, and `search` exits 0 when nothing matches, so a script or agent cannot tell 'no match' from 'ambiguous'. Adopt distinct codes and list near candidates (case-insensitive or substring topic ids) instead of guessing. This changes the CLI contract, so the harness cli_check and the CLI reference must change in the same commit.",
+      "evidence": [
+        "README.md:417 (0 an answer, 3 ambiguous, 4 no matching node)",
+        "oaw-ref/scripts/context_hub.py:240-250 (get returns 1; no candidates)",
+        "oaw-ref/scripts/context_hub.py:175-233 (search returns no status on no match)"
+      ],
+      "missing_test": "",
+      "sources_agree": "Digest (nutrient 3) supports it. The other sources are silent.",
+      "after_integration": {
+        "integration_ref": "ingest/graphify/integration.json#gf.ambiguity-exit-codes",
+        "integration_result": "flag",
+        "disposition": "absorb",
+        "model_facing": false,
+        "oaw_target": "scripts/context_hub.py get and search. The exit status is set only in the CLI dispatch (main, context_hub.py:821); search() may return a code, which its internal callers ignore, so bootstrap (context_hub.py:592, :615) and the wiki lane (:694) are unchanged: 0 answer, 3 ambiguous with candidates capped at 5, 4 no match, subject to the owner's exit-code vocabulary decision. Empty-query rule: search '' lists every topic and exits 0, and a missing or empty knowledge base exits 0. memory recall is unchanged (no-match stays 0). get case policy per the owner's decision, tested on all three CI operating systems. docs/CLI_Reference.md, CHANGELOG and UPGRADING change in the same commit; new test_context_hub cases are the guard.",
+        "claim_corrections": [
+          "Revision 1 said 'the harness cli_check and the CLI reference must change in the same commit'. cli_check (oaw-ref/scripts/harness_check.py:101-109) only greps --help for subcommand names, so it cannot catch an exit-code change; new tests are the guard and cli_check does not change.",
+          "Exit 3 already means 'inconclusive' in improvement.py compare and 'unresolved conflicts' in oaw.py migrate, so the vocabulary is documented per CLI or chosen not to collide.",
+          "A no-match search exiting 4 changes recorded metrics: evals/three-way/bench.py:275-277 (successful_commands) and evals/skill-value/experiment.py:289-297 (command_count) count only exit_code == 0. Every registration of those runners on a build containing this change is a new baseline."
+        ],
+        "backlog": [
+          "OAW-19"
+        ]
+      }
+    },
+    {
+      "id": "gf.hash-staleness",
+      "name": "Content-hash plus renderer-version staleness",
+      "what": "graphify namespaces its AST cache by package, schema and grammar version, and keys its semantic cache by content plus a normalized prompt fingerprint. A tool upgrade or an edited input therefore invalidates outputs deterministically.",
+      "disposition": "absorb",
+      "oaw_target": "scripts/wiki_sync.py _render_topic_page (generated frontmatter: per-source sha256 and renderer version) and lint (stale-by-hash beside the date rule) + tests/test_wiki_sync.py",
+      "reason": "OAW lint flags a stale page only when a raw note's last_updated is newer than the page. An edit that forgets to bump the date, or a renderer change, goes unseen. Storing source hashes and the renderer version in the generated frontmatter lets lint report exactly 'raw changed since compile'. Only build_origin wiki_sync pages carry this frontmatter, so manual pages are untouched.",
+      "evidence": [
+        "graphify/cache.py:23-32 (versioned AST cache; semantic cache deliberately not package-versioned)",
+        "graphify/cache.py:141-163 (prompt_fingerprint normalizes CRLF and trailing whitespace)",
+        "oaw-ref/scripts/wiki_sync.py:808-817 (date-only stale rule)",
+        "oaw-ref/scripts/wiki_sync.py:257-300 (generated frontmatter fields)"
+      ],
+      "missing_test": "",
+      "sources_agree": "Digest (nutrient 7) supports it. The wiki duel's point that the semantic cache is unversioned is consistent: OAW takes only the versioned half. The other sources are silent.",
+      "after_integration": {
+        "integration_ref": "ingest/graphify/integration.json#gf.hash-staleness",
+        "integration_result": "flag",
+        "disposition": "absorb",
+        "model_facing": false,
+        "oaw_target": "scripts/wiki_sync.py: RENDERER_VERSION in build_origin wiki_sync frontmatter; lint re-renders each compiled page from current sources and compares (mismatch is an error, like the existing stale rule); a missing or old renderer version is a warning, an error only under --strict; pages compiled before the change are 'unknown', not failures; text is LF-normalized before any comparison; a golden test fails when _render_topic_page output changes without a RENDERER_VERSION bump.",
+        "claim_corrections": [
+          "Revision 1 stored a per-source sha256 in frontmatter. context_hub get prints frontmatter in full, so full 64-hex hashes cost about 40 tokens per source; the proposal uses re-render comparison plus RENDERER_VERSION instead (short digests if per-source hashes are ever added)."
+        ],
+        "backlog": [
+          "OAW-23"
+        ]
+      }
+    },
+    {
+      "id": "gf.untrusted-wrapper",
+      "name": "Labelled, hash-stamped untrusted-data blocks with delimiter defanging",
+      "what": "llm.py wraps each file as `<untrusted_source path=... sha256=...>` and tells the model everything inside is data. It defangs forged closing tags, `<|...|>` chat-template tokens, [INST]/[SYSTEM], <<SYS>> and 'system:' headings by inserting a zero-width space.",
+      "disposition": "absorb",
+      "oaw_target": "Planned scripts/catalog.py digest: the packet builder that hands quarantined food files to goldfish and verify reviewers (skill-catalog-execution.md:79, :419). Until catalog.py exists, the same wrapper applies to this digestion workflow's reviewer prompts.",
+      "reason": "OAW digestion feeds untrusted repos to zero-context reviewers. graphify's own skill path forgot this guard (see gf.semantic-subagent-fanout), while its API path has it. A stdlib re-implementation with re and hashlib is short, and the sha256 lets a reviewer tie a finding to exact bytes. Whether it reduces injection-following is unmeasured, so it ships as defense in depth with no gain claimed. Applying it to context_hub recall output would be a later, separately tested change.",
+      "evidence": [
+        "graphify/llm.py:534-540 (SECURITY clause)",
+        "graphify/llm.py:611-628 (_INJECTION_SENTINELS)",
+        "graphify/llm.py:631-655 (_neutralise_injection_sentinels and _wrap_untrusted)",
+        "oaw-ref/docs/plans/skill-catalog-execution.md:79 (goldfish gate) and :445 (third-party skills are a prompt-injection entry point)",
+        "oaw-ref/README.md:142 (evidence, not instructions)"
+      ],
+      "missing_test": "",
+      "sources_agree": "None of the four inputs named this mechanism. It turned up while verifying goldfish-1's 'no untrusted clause' finding, which is correct for extraction-spec.md and wrong for llm.py. It needs its own goldfish review as an OAW draft (D10).",
+      "after_integration": {
+        "integration_ref": "ingest/graphify/integration.json#gf.untrusted-wrapper",
+        "integration_result": "flag",
+        "disposition": "absorb",
+        "model_facing": false,
+        "oaw_target": "Planned scripts/catalog.py packet builder (wrap_untrusted, defang, undefang): sha256 over the original bytes, taken before defanging and labelled as such; quote verification and read-coverage checks strip U+200B first. Interim: this digestion workflow's reviewer prompts (workflow script, not OAW). Not extended to context_hub recall without its own A/B (see cm.recall-data-fence's resolution).",
+        "claim_corrections": [
+          "Limit stated: it protects only content embedded in a packet; files a reviewer opens with its own tools arrive raw, and OAW ships no hook that could wrap them."
+        ],
+        "backlog": [
+          "OAW-07"
+        ]
+      }
+    },
+    {
+      "id": "gf.read-coverage-check",
+      "name": "Reviewer read-coverage verification",
+      "what": "Each extraction subagent reports the lines it read per file. The skill compares those counts with real file lengths, warns about short reads, and caches them as partial so they are retried. The Read tool truncates at 2000 lines without any error.",
+      "disposition": "absorb",
+      "oaw_target": "Planned scripts/catalog.py digest goldfish/verify record format (skill-catalog-execution.md:419): reviewers report coverage per file; the digester checks it against actual line counts and rejects any cited file:line past EOF",
+      "reason": "Digestion reviewers read large food files (graphify's install.py has 2,859 lines), and a silent partial read produces confident but incomplete verdicts. It is a deterministic stdlib check on the reviewer's JSON, and testing it is free.",
+      "evidence": [
+        "graphify/skill.md:310-346 (Step B3.5)",
+        "graphify/skills/claude/references/extraction-spec.md:12-26 (coverage object; Read truncation)",
+        "ingest/graphify/scout.json manifests (install.py, 2859 lines)",
+        "oaw-ref/docs/plans/skill-catalog-execution.md:79 and :419"
+      ],
+      "missing_test": "",
+      "sources_agree": "goldfish-1 and goldfish-2 (value, rubric 6) support it. Digest and verifier are silent.",
+      "after_integration": {
+        "integration_ref": "ingest/graphify/integration.json#gf.read-coverage-check",
+        "integration_result": "flag",
+        "disposition": "absorb",
+        "model_facing": false,
+        "oaw_target": "Planned catalog goldfish/verify record format: per-file coverage, every cited file:line must exist, reported last line equals the real length (Python splitlines on decoded text); Codex reviewers read in explicit numbered ranges and report them; older records marked 'coverage unverified'. Interim: this workflow's reviewer prompts carry the coverage fields now. The gate text says it proves consistency, not that every line was read.",
+        "claim_corrections": [
+          "The goldfish and verify records already written for all three foods have no coverage fields; they are marked 'coverage unverified', not rejected."
+        ],
+        "backlog": [
+          "OAW-08"
+        ]
+      }
+    },
+    {
+      "id": "gf.hook-safety-rubric",
+      "name": "Hook safety checklist for the static digest",
+      "what": "graphify's hook engineering, good and bad.\nGood practice:\n- an explicit 10s timeout instead of the host's 600s default;\n- hooks that fail open;\n- a per-agent nudge budget (session_id plus hashed agent_id; the first nudge always fires; a fresh query stamp silences later ones; cap 5; markers garbage-collected after 24h);\n- a strict deny claimed at most once per session with O_EXCL;\n- factual rather than imperative wording;\n- repository text flattened to one inert line;\n- command parsing that understands tokens;\n- hook blocks run in a subshell so `exit 0` does not end other tools' hook code;\n- skips for linked worktrees and rebases;\n- removal of only its own hook entries rather than whole groups.\nAnti-patterns:\n- breaking away from the parent job object;\n- absolute paths in committed config;\n- a no-op hook with no timeout.",
+      "disposition": "absorb",
+      "oaw_target": "Planned scripts/catalog.py digest security-flag scan (skill-catalog-execution.md:77, :418): rubric items applied whenever a food ships hooks. The same list applies to any future OAW hook; the planned oaw-digest-monitor mod stays read-only and adds none.",
+      "reason": "OAW installs no hooks, so these mechanisms have no runtime home in OAW. The static digest still has to judge foods that ship hooks, and turning graphify's careful and careless choices into flag criteria makes 'flag for a human' concrete. It amounts to rubric text plus a few regex and JSON checks, all stdlib.",
+      "evidence": [
+        "graphify/install.py:477-511 (timeout rationale)",
+        "graphify/cli.py:18-21 (facts, not commands)",
+        "graphify/cli.py:231-236 (_hint_text inert line)",
+        "graphify/cli.py:981-1031 (_nudge_allowed per-agent budget)",
+        "graphify/cli.py:1034-1045 (24h marker GC)",
+        "graphify/cli.py:1048-1066 (O_EXCL deny once)",
+        "graphify/install.py:517-577 (entry-level strip)",
+        "graphify/hooks.py:407-412 (worktree guard)",
+        "graphify/hooks.py:439-452 (subshell rationale)",
+        "graphify/hooks.py:360-381 (job-object breakaway)",
+        "oaw-ref/docs/plans/skill-catalog-execution.md:77 and :313"
+      ],
+      "missing_test": "",
+      "sources_agree": "goldfish-1 and goldfish-2 (value) and the digest (nutrient 10) support it, and the verifier adds the Codex no-timeout anti-pattern. The digest named oaw-digest-monitor as the receiver, but that mod is read-only and adds no tool hooks (skill-catalog-execution.md:382), so the catalog digest is the better receiver.",
+      "after_integration": {
+        "integration_ref": "ingest/graphify/integration.json#gf.hook-safety-rubric",
+        "integration_result": "pass",
+        "disposition": "absorb",
+        "model_facing": false,
+        "oaw_target": "Planned catalog P3 static digest security-flag scan: flag-only rubric items (never auto-reject) for foods that ship hooks, naming both .claude/settings.json hooks and .codex/hooks.json; Claude payload items (session_id, agent_id) are not required of Codex hooks; the food's '600 s host default' is checked against current host docs before it is encoded; seeded with the recurring excrete patterns of all three foods.",
+        "claim_corrections": [
+          "Revision 1 said 'the same list applies to any future OAW hook', which can read as licence to add hooks. OAW ships none and its packaging allowlist rejects them (oaw-ref/docs/plans/skill-catalog-execution.md:313), so the rubric is limited to judging foods."
+        ],
+        "backlog": [
+          "OAW-32",
+          "OAW-10"
+        ]
+      }
+    },
+    {
+      "id": "gf.installer-roundtrip-check",
+      "name": "Install/uninstall round-trip check for foods",
+      "what": "graphify co-edits host config carefully. It refuses unparseable JSON, keeps a rolling .graphify-bak, skips identical writes, matches marker lines exactly and preserves newline style. It still shipped a section-boundary bug that deletes user content and an uninstall that leaves its global block behind.",
+      "disposition": "absorb",
+      "oaw_target": "Planned catalog integration (diarrhea) check (skill-catalog-execution.md:81, :419): run the food's installer and uninstaller in a throwaway HOME and fixture project, and require every touched file (CLAUDE.md with user sections after the block, settings.json with co-resident hooks, .gitattributes, git config) to come back byte-for-byte",
+      "reason": "OAW's installer already refuses unreadable JSON and keeps backups, receipts and rollback, so graphify's editing method adds nothing to oaw.py. What OAW gains is the test: a round-trip fixture would have caught the H1 bug. Running a food installer counts as execution, so this check belongs to the consented integration stage, not to static digestion.",
+      "evidence": [
+        "graphify/install.py:1102-1143 (refuse unparseable JSON; rolling backup; skip identical output)",
+        "graphify/install.py:788-842 (exact-line marker match and its boundary)",
+        "graphify/install.py:441-463 (project-only removal)",
+        "scratchpad/ledger-work/h1_replica.py (survives: False)",
+        "oaw-ref/scripts/oaw.py:116-123 (read_json raises on bad JSON)",
+        "oaw-ref/scripts/oaw.py:500-566 (backups, receipts, rollback)",
+        "digest.json proposed_ab_tests 8 (byte-for-byte restore)"
+      ],
+      "missing_test": "",
+      "sources_agree": "goldfish-1 (value: safe merge), goldfish-2 (major: H1 bug; minor: uninstall gap) and digest (test 8) agree.",
+      "after_integration": {
+        "integration_ref": "ingest/graphify/integration.json#gf.installer-roundtrip-check",
+        "integration_result": "fail",
+        "disposition": "split",
+        "claim_corrections": [
+          "Revision 1 targeted running the food's installer and uninstaller 'in a throwaway HOME'. That executes untrusted code, which D7 and oaw-ref/docs/plans/skill-catalog-execution.md:431 forbid during digestion; graphify's installer also needs its package installed first, so a build backend runs too.",
+          "On Windows a throwaway HOME isolates nothing: graphify resolves targets through Path.home() and LOCALAPPDATA (graphify/install.py:62, :214-260, :224-226), and Python 3.8+ on Windows uses USERPROFILE, so a run would write into the real profile.",
+          "The revision-1 backlog filed the component under two absorb items (OAW-10, OAW-33) and one hold (HOLD-10). Revision 2: the static part is OAW-33 only; OAW-10 keeps only the general 'a step that executes the food is a hold' rule."
+        ],
+        "parts": [
+          {
+            "id": "gf.installer-roundtrip-check/static",
+            "disposition": "absorb",
+            "model_facing": false,
+            "oaw_target": "Planned catalog P3/P4: the no-execution replica (scratchpad/ledger-work/h1_replica.py) as a negative fixture; a static inventory of the installer's write targets (Path.home, LOCALAPPDATA, APPDATA, CLAUDE_CONFIG_DIR, CODEX_HOME, settings.json, .gitattributes, git config); the criterion text 'every touched file restored byte-for-byte, new files listed'.",
+            "backlog": [
+              "OAW-33"
+            ]
+          },
+          {
+            "id": "gf.installer-roundtrip-check/live",
+            "disposition": "hold",
+            "model_facing": false,
+            "oaw_target": "Catalog self-test only: confirms the round-trip check catches a known-bad food; never unlocks graphify's installer.",
+            "missing_test": "Scripted (0 model tokens) in a disposable VM under the PRE-01 policy: graphify install, claude install, install --project, codex install and hook install, each paired with its uninstall, on a fixture with user sections after the block, co-resident hooks, existing .gitattributes and git config; pre-registered prediction: CLAUDE.md FAIL (H1 boundary bug) and a leftover global block.",
+            "backlog": [
+              "HOLD-10"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "gf.sensitive-file-filter",
+      "name": "Credential-file exclusion patterns",
+      "what": "detect.py silently skips these credential-bearing files:\n- .env and .envrc variants;\n- *.pem, .key, .p12, .pfx, .crt, .der and .p8;\n- id_rsa, id_dsa, id_ecdsa and id_ed25519 (matched with a left boundary);\n- secring;\n- .netrc, .pgpass, .htpasswd, .npmrc, .pypirc, .git-credentials and .boto.\nredact_secrets strips credential-shaped text from labels.",
+      "disposition": "absorb",
+      "oaw_target": "Planned scripts/catalog.py ingest/quarantine record (skill-catalog-execution.md:74, :417): flag credential-shaped files in a food and never copy their contents into catalog evidence or reviewer packets",
+      "reason": "wiki_sync and context_hub read only *.md under docs/raw, docs/knowledge and .agents/memory.md, so they gain nothing from this. Quarantined food repos, however, can carry keys that must never reach evidence files or reviewer prompts. The fix is a stdlib regex list with an offline fixture test.",
+      "evidence": [
+        "graphify/detect.py:132-146 (_SENSITIVE_PATTERNS)",
+        "graphify/security.py:439 (redact_secrets)",
+        "oaw-ref/scripts/wiki_sync.py:146-150 (only *.md; skips '_*' and README)",
+        "oaw-ref/docs/plans/skill-catalog-execution.md:74 (ingest gate)"
+      ],
+      "missing_test": "",
+      "sources_agree": "Digest (nutrient 9) and goldfish-2 (value) support it. The digest targeted wiki_sync and context_hub; that target is corrected here because both already read only Markdown.",
+      "after_integration": {
+        "integration_ref": "ingest/graphify/integration.json#gf.sensitive-file-filter",
+        "integration_result": "flag",
+        "disposition": "absorb",
+        "model_facing": false,
+        "oaw_target": "Planned catalog P2 ingest/quarantine record: flag credential-shaped files; never copy their contents into evidence or packets; record only path and size (no hashes, which would allow offline confirmation of short secrets); allow .env.example/.sample/.template with values redacted; also run the OAW-12 content patterns over packet text; Claude reviewer Read-deny on flagged paths; Codex enforcement recorded as prose only (asymmetry).",
+        "claim_corrections": [
+          "The plan's ingest gate records file hashes; for flagged files that would publish hashes of low-entropy secrets, so they record path and size only."
+        ],
+        "backlog": [
+          "OAW-30"
+        ]
+      }
+    },
+    {
+      "id": "gf.url-validation",
+      "name": "URL-validation subset of the SSRF guard",
+      "what": "security.py allows only http/https and rejects embedded credentials and port 0. It blocks metadata hostnames and private, loopback, link-local and CGN ranges, resolves DNS once and connects to the validated IP, re-validates redirects and caps response sizes.",
+      "disposition": "absorb",
+      "oaw_target": "Planned scripts/catalog.py ingest for user-supplied GitHub URLs (skill-catalog-execution.md:229, :417): before calling git, apply an https-only scheme allowlist, reject embedded credentials and check a host allowlist. The DNS-pinned HTTP opener stays out.",
+      "reason": "OAW reaches the network only through the explicit ingest and outdated commands. A user-supplied URL should never carry credentials into logs or point at an internal host. The full DNS-pinned opener matters only for arbitrary HTTP fetches, which OAW does not do.",
+      "evidence": [
+        "graphify/security.py:20 (_ALLOWED_SCHEMES)",
+        "graphify/security.py:69 (_BLOCKED_HOSTS)",
+        "graphify/security.py:105-160 (validate_url: credentials, port 0, metadata hosts, blocked IPs)",
+        "graphify/security.py:173-262 (resolve once; guarded connections; redirect handler)",
+        "oaw-ref/docs/plans/skill-catalog-execution.md:229 and :432 (only ingest/outdated touch the network, explicitly)"
+      ],
+      "missing_test": "",
+      "sources_agree": "goldfish-1 and goldfish-2 (value) support it. The digest records the guard only under network flags.",
+      "after_integration": {
+        "integration_ref": "ingest/graphify/integration.json#gf.url-validation",
+        "integration_result": "flag",
+        "disposition": "absorb",
+        "model_facing": false,
+        "oaw_target": "Planned catalog P2 ingest: https-only scheme, no embedded credentials, host allowlist; plus git transport controls: -c protocol.allow=never -c protocol.https.allow=always, no submodule recursion, GIT_TERMINAL_PROMPT=0, GIT_LFS_SKIP_SMUDGE=1, and on Windows -c credential.helper= with GCM_INTERACTIVE=never; private repos go through the plan's local-directory path.",
+        "claim_corrections": [
+          "URL checks alone miss git's own escape routes (ext::, fd::, file://, submodules, .lfsconfig lfs.url) and the Windows credential-manager GUI prompt that can hang a headless ingest."
+        ],
+        "backlog": [
+          "OAW-31"
+        ]
+      }
+    },
+    {
+      "id": "gf.rubric-fingerprint",
+      "name": "Prompt or rubric fingerprint on review evidence",
+      "what": "graphify's semantic cache stamps each entry with a hash of the extraction prompt, normalized for CRLF and trailing whitespace. A changed prompt invalidates old results, and an unchanged prompt keeps its cache hits.",
+      "disposition": "absorb",
+      "oaw_target": "Planned catalog evidence/<id>/ goldfish and verify records (skill-catalog-execution.md:258, :419): store the normalized hash of the rubric or prompt each reviewer used, so a rubric change marks old goldfish evidence stale instead of silently mixing generations",
+      "reason": "This extends OAW's rule of freezing a spec and recording its hash before A/B runs to reviews. It does not belong in improvement.py, which correctly hashes the raw bytes of evidence artifacts.",
+      "evidence": [
+        "graphify/cache.py:141-163 (prompt_fingerprint)",
+        "graphify/skill.md:235, :249 and :385 (cache read and write keyed to SPEC_PATH)",
+        "oaw-ref/docs/plans/skill-catalog-execution.md:179 (tolerance and spec hash fixed before runs)",
+        "oaw-ref/scripts/improvement.py:29-30 and :46-53 (raw-byte digests)"
+      ],
+      "missing_test": "",
+      "sources_agree": "goldfish-1 (value) supports it. The other sources are silent.",
+      "after_integration": {
+        "integration_ref": "ingest/graphify/integration.json#gf.rubric-fingerprint",
+        "integration_result": "flag",
+        "disposition": "absorb",
+        "model_facing": false,
+        "oaw_target": "Planned catalog evidence/<id>/ goldfish and verify records: hash of the shared rubric only, on the existing CRLF-fold basis (oaw-ref/evals/egm-pilot/pilot_common.py:39-41, through OAW-02) with hash_basis recorded; host in a separate field; EGM persona rubrics cite the per-file upstream sha256 in vendor/egm/OAW_SOURCE.json; older records 'rubric unknown'.",
+        "claim_corrections": [
+          "graphify's normalization also strips trailing whitespace, which would add a third hash basis beside improvement.py's raw bytes and pilot_common's CRLF fold."
+        ],
+        "backlog": [
+          "OAW-09"
+        ]
+      }
+    },
+    {
+      "id": "gf.skill-size-references",
+      "name": "references/ as the remedy for the skill-size gate",
+      "what": "graphify keeps per-host references/*.md files that the SKILL body loads only when needed.",
+      "disposition": "absorb",
+      "oaw_target": "scripts/validate_skills.py: the planned 24,000-byte body gate (skill-catalog-execution.md:215, :311) should name references/ as the fix; _reference_issues already checks that referenced files exist",
+      "reason": "This is the only part of graphify's packaging worth keeping. Its single-source generator and --check drift guard duplicate OAW's sync_examples.py --write and the harness generated-file checks, so those are not absorbed. graphify also shows the limit of the method: with about 49 KB already moved to references, its bodies are still about 48 KB.",
+      "evidence": [
+        "graphify/skill.md:298 (load extraction-spec.md only when needed)",
+        "graphify/skills/claude/references/ (8 on-demand files)",
+        "oaw-ref/scripts/validate_skills.py:184-226 (_reference_issues)",
+        "oaw-ref/AGENTS.md:10-11 (sync_examples.py --write; no hand-maintained copies)"
+      ],
+      "missing_test": "",
+      "sources_agree": "Digest (nutrient 11) and goldfish-2 (value) support it.",
+      "after_integration": {
+        "integration_ref": "ingest/graphify/integration.json#gf.skill-size-references",
+        "integration_result": "flag",
+        "disposition": "absorb",
+        "model_facing": false,
+        "oaw_target": "scripts/validate_skills.py remedy text, shipped with the planned 24,000-byte body gate: name references/ as the fix; count LF-normalized UTF-8 bytes (OAW-02); for hash-locked vendored runtimes say 'hold this upstream version or record an exception'; report a bridge plus its upstream entry as information with an EGM exception; state that the gate also applies to project-owned custom versions of OAW packages.",
+        "claim_corrections": [
+          "With CRLF, egm-bootstrap's body grows past 24,000 bytes on a core.autocrlf=true checkout, so the byte count must be LF-normalized; vendored EGM bodies are hash-locked and cannot be split into references/."
+        ],
+        "backlog": [
+          "OAW-24"
+        ]
+      }
+    },
+    {
+      "id": "gf.code-map-external",
+      "name": "graphify CLI as an optional, manual-only external code map",
+      "what": "A local tree-sitter AST graph (about 40 languages, no LLM for code) with communities, god nodes, `query`/`path`/`explain`/`affected`, GRAPH_REPORT.md and an HTML view. Building it as `GRAPHIFY_BACKEND=none graphify extract .` followed by `graphify update .` also adds the no-LLM markdown references layer for docs.",
+      "disposition": "hold",
+      "oaw_target": "",
+      "reason": "OAW has no structural code map, so this can only ever be a pack. Core is ruled out by the stdlib-only rule, the v2 ban on graph memory and the 24 KB skill gate.\nPermitted use until tested:\n- a pinned graphifyy installed by the user in its own venv or pipx, at project scope;\n- GRAPHIFY_BACKEND=none and GRAPHIFY_NO_AUTO_REFRESH=1;\n- no skill, no `claude install`, no `hook install`;\n- graphify-out/ gitignored;\n- never `export wiki` into docs/.\nIt complements the LLM wiki (judge) and is not vector retrieval. Its own detector says corpora under 50k words may not need a graph. The upstream benchmarks are not evidence: n=6, the harness is absent, and they describe hybrid and embedding setups this SHA does not ship.",
+      "evidence": [
+        "README.md:36 and :38 (local AST; no embeddings, no vector store)",
+        "graphify/skills/claude/references/query.md:25 (case-folded substring + IDF; no stemming, synonyms or cross-language match)",
+        "graphify/serve.py:382-395 (_compute_idf), :1067 (_bfs), :1098 (_dfs)",
+        "graphify/detect.py:56 (CORPUS_WARN_THRESHOLD 50,000 words)",
+        "verify.json native_redundancy check (BENCHMARKS n=6; harness not in repo)",
+        "wiki-duel.json minimal_integration Steps 1-3",
+        "oaw-ref/docs/plans/v2.0.0-execution.md:78; oaw-ref/AGENTS.md:8; oaw-ref/docs/plans/skill-catalog-execution.md:133-137"
+      ],
+      "missing_test": "Paid code-map A/B on both hosts, 5 repeats, with a pre-registered tolerance. Arms: A native; B native plus graphify's official install; C OAW core plus manual-only graphify. Run 20 where-is, what-calls, path and architecture questions with required and forbidden key facts. Measure tokens including the build, wall time and tool calls. It passes only if C >= B and C > A. After that: the integration (diarrhea) suite with and without it (EGM's 30 scenarios, the oaw-evidence, wiki and improve cases, the trigger set), footprint and per-call latency on Windows and POSIX, and owner consent with a budget (D7).",
+      "sources_agree": "Digest (integration_mode absorb_method; pack only after A/B), verifier (agrees; adds NO_AUTO_REFRESH and BACKEND=none), goldfish-1 (if running the CLI, set those env vars and skip both installs) and wiki duel (complement; Steps 1-3) agree on hold.",
+      "after_integration": {
+        "integration_result": "n/a (hold)",
+        "disposition": "hold",
+        "backlog": [
+          "HOLD-04"
+        ],
+        "test_changes": "Merged with te.repomap (one shared native arm). Stage 0 adds wiki-duel to_measure 2 (precision and recall of graphify affected vs OAW's cites on scripted modify/rename/delete). Stage 0b adds wiki-duel to_measure 1 (the 'replace the LLM wiki' premise, with graphify alone and its LLM doc pass as an arm). After Stage 2, the integration (diarrhea) suite H1 requires is now in the plan with an estimate (about 108-378M per host). Depends on OAW-03, OAW-04, OAW-05, OAW-22 and PRE-03."
+      }
+    },
+    {
+      "id": "gf.stdlib-codemap",
+      "name": "Stdlib minimal code map plus rationale harvest",
+      "what": "A digest idea: a Python-only ast pass (module to imports and defs) and a regex pass over '# WHY:' and '# NOTE:' comments and ADR/RFC citations, written as a generated raw note so wiki_sync renders and lints it.",
+      "disposition": "hold",
+      "oaw_target": "",
+      "reason": "It would fill the code-map slot with no dependency, but it copies code into notes. oaw-evidence says code and native search remain the source for facts already kept there. It is also Python-only. The proposed docs/raw/_codemap name would never render, because wiki_sync skips raw files whose names start with '_'. Build it only if a code map measurably helps at all.",
+      "evidence": [
+        "graphify/extract.py:1796 (rationale labels shortened to 80 chars)",
+        "oaw-ref/scripts/wiki_sync.py:149-150 (skips files starting with '_')",
+        "oaw-ref/templates/.agents/skills/oaw-evidence/SKILL.md:8-9",
+        "digest.json nutrients 4-5"
+      ],
+      "missing_test": "Add an 'OAW + stdlib codemap note' arm to the gf.code-map-external A/B, with the same 20 questions on both hosts. It must beat native on key-fact pass counts without lowering decision recall on the wiki-duel fixture.",
+      "sources_agree": "The digest proposes it, with an A/B before adoption. The wiki duel prefers the citation lint (Step 0) over generated code notes. Goldfish and verifier are silent. The disagreement is resolved to hold.",
+      "after_integration": {
+        "integration_result": "n/a (hold)",
+        "disposition": "split",
+        "claim_corrections": [
+          "Revision 1 bundled the rationale harvest with the code map, so the rationale half (code linked to the decision layer) would only be tested if a code map won H1. They are separate questions and are split."
+        ],
+        "parts": [
+          {
+            "id": "gf.stdlib-codemap/codemap",
+            "disposition": "hold",
+            "model_facing": true,
+            "missing_test": "Conditional arm D of the merged code-map A/B (backlog HOLD-04), only if a code map beats native in Stage 1; the note is named docs/raw/codemap.md, because wiki_sync skips names starting with '_' (oaw-ref/scripts/wiki_sync.py:149).",
+            "backlog": [
+              "HOLD-04"
+            ]
+          },
+          {
+            "id": "gf.stdlib-codemap/rationale-harvest",
+            "disposition": "hold",
+            "model_facing": true,
+            "oaw_target": "If it wins: a stdlib regex pass over '# WHY:' and '# NOTE:' comments and ADR/RFC citations writing docs/raw/code-rationale.md with file:line provenance, rendered and linted by wiki_sync.",
+            "missing_test": "Decision-recall test on fixture W (backlog HOLD-13): Stage 0 free (harvest precision/recall and a recall-contamination check); Stage 1 Claude screen 12 decision questions x 2 arms x 3 = 72 runs, about 43-65M (estimate).",
+            "backlog": [
+              "HOLD-13"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "gf.idf-ranked-search",
+      "name": "IDF-weighted token ranking for OAW search and recall",
+      "what": "_score_query tokenizes the question and scores labels, paths and attributes with IDF weights, exact and prefix tiers and term coverage. OAW search, by contrast, is an unranked whole-query substring test, and recall matches one escaped literal pattern.",
+      "disposition": "hold",
+      "oaw_target": "",
+      "reason": "It could improve recall for multi-word queries in context_hub, but it changes which excerpts agents see, so OAW's proof-before-promotion rule requires matched evidence first. It is implementable in stdlib (math.log over per-page token counts).",
+      "evidence": [
+        "graphify/serve.py:382-395 (_compute_idf)",
+        "graphify/serve.py:569-578 (_score_nodes over _score_query)",
+        "oaw-ref/scripts/context_hub.py:188-197 (unranked substring)",
+        "oaw-ref/scripts/context_hub.py:401 (recall: one escaped literal pattern)",
+        "oaw-ref/README.md:143"
+      ],
+      "missing_test": "Recall A/B on the wiki-duel fixture (30-50 raw notes with superseded decisions, in zh-TW and English): current substring recall against IDF-ranked recall. Measure decision recall@k, superseded-decision detection, citation accuracy and retrieval tokens on both hosts.",
+      "sources_agree": "Digest (oaw_overlap 2) and wiki duel (decisive reason 5: OAW search is unranked) both note the gap. Neither proposes adopting it without measurement.",
+      "after_integration": {
+        "integration_result": "n/a (hold)",
+        "disposition": "hold",
+        "backlog": [
+          "HOLD-01"
+        ],
+        "test_changes": "Merged recall registration with a shared baseline pinned to the build after batch 4; CJK bigram tokenization pre-registered."
+      }
+    },
+    {
+      "id": "gf.query-expansion",
+      "name": "Constrained query expansion before a lexical lookup",
+      "what": "query.md Step 0: before searching, rewrite the user's wording into the corpus's own vocabulary (another language, synonyms) without inventing terms, because matching has no stemming, synonyms or cross-language match.",
+      "disposition": "hold",
+      "oaw_target": "",
+      "reason": "OAW recall matches a literal substring, and the owner's notes mix Traditional Chinese and English, so this prompt step could matter. Adding it means editing the default oaw-evidence SKILL.md, which requires A/B evidence.",
+      "evidence": [
+        "graphify/skills/claude/references/query.md:23-25",
+        "oaw-ref/templates/.agents/skills/oaw-evidence/SKILL.md:14 (literal query)",
+        "oaw-ref/scripts/context_hub.py:401"
+      ],
+      "missing_test": "Cross-language recall A/B: 20 zh-TW questions against English notes and the reverse, with oaw-evidence run with and without an expansion sentence, on both hosts, 5 repeats each. Measure key-fact recall, wrong-source citations and tokens.",
+      "sources_agree": "Digest (nutrient 12; proposed test 7) and wiki duel (to_measure 5) both support measuring first. The other sources are silent.",
+      "after_integration": {
+        "integration_result": "n/a (hold)",
+        "disposition": "hold",
+        "backlog": [
+          "HOLD-01"
+        ],
+        "test_changes": "Merged recall registration (see gf.idf-ranked-search)."
+      }
+    },
+    {
+      "id": "gf.outcome-scored-promotion",
+      "name": "Outcome-scored memory promotion",
+      "what": "reflect.py scores cited sources from useful, dead_end and corrected outcomes, decaying each signal with a 30-day half-life. A source needs at least 2 distinct corroborations before it is 'preferred', and contested items and known dead ends get their own lists. Output is deterministic.",
+      "disposition": "hold",
+      "oaw_target": "",
+      "reason": "It could sharpen wiki_sync promote_candidates, which today ranks by tier and citation count. OAW memory entries carry no outcome signal, though, so a tag convention would have to come first, and the wiki duel rejects graphify's memory loop. The scoring math itself is stdlib.",
+      "evidence": [
+        "graphify/reflect.py:1-24",
+        "graphify/reflect.py:51-52 (_DEFAULT_HALF_LIFE_DAYS 30; _DEFAULT_MIN_CORROBORATION 2)",
+        "oaw-ref/scripts/wiki_sync.py:1184-1257 (promote_candidates: tier and citation count)"
+      ],
+      "missing_test": "Paid A/B on promotion usefulness. Use a fixture .agents/memory.md with outcome tags and compare current promote_candidates with outcome-scored ranking, judged by which candidates become useful wiki topics. Also check that contested or superseded entries are never promoted.",
+      "sources_agree": "The digest (nutrient 6) supports absorbing it. The wiki duel rejects the memory and reflect loop, which is excreted as gf.memory-reflect-loop. Their disagreement over the scoring method is resolved to hold.",
+      "after_integration": {
+        "integration_result": "n/a (hold)",
+        "disposition": "hold",
+        "backlog": [
+          "HOLD-09"
+        ],
+        "test_changes": "Stage 0 free after OAW-20 (P0 baseline); paid stages need PRE-01, OAW-03, OAW-04, OAW-01 and PRE-03."
+      }
+    },
+    {
+      "id": "gf.statement-confidence-tags",
+      "added_in_revision": 2,
+      "name": "Confidence tags for compiled statements (EXTRACTED / INFERRED / AMBIGUOUS)",
+      "what": "graphify's wiki export prints an audit trail of edge confidence classes per article; the digest suggested marking each compiled wiki statement as quoted or inferred and linting the ratio.",
+      "disposition": "excrete",
+      "oaw_target": "",
+      "reason": "Redundant for OAW. wiki_sync compiles each topic page by copying every source note's body verbatim (links rebased only) under its source ref, ID and date, so a compiled page holds no inferred statement to tag. graphify's classes describe LLM- or heuristic-derived graph edges, which OAW does not produce. The one place OAW resolves a reference, path::Symbol code citations, is checked deterministically by the citation lint (backlog OAW-21). Listed as not adopted for D3.",
+      "evidence": [
+        "graphify/wiki.py:191-195 (Audit Trail lists EXTRACTED, INFERRED, AMBIGUOUS edge counts)",
+        "oaw-ref/scripts/wiki_sync.py:305-315 (per-source ref, ID, date, then the source body verbatim)"
+      ],
+      "missing_test": "",
+      "sources_agree": "Digest nutrient 1 proposed it. The wiki duel's first decisive reason (OAW stores verbatim source text) supports dropping it. Other sources are silent."
+    },
+    {
+      "id": "gf.output-integrity-guards",
+      "added_in_revision": 2,
+      "name": "Refuse to write an empty graph or to shrink graph.json without --force",
+      "what": "graphify's build stops when extraction produced no nodes and refuses to overwrite a larger graph.json unless --force is given; the report and sidecars are written only if the graph was.",
+      "disposition": "excrete",
+      "oaw_target": "",
+      "reason": "Redundant for OAW. wiki_sync build writes only the pages it produces and never deletes a page: an orphaned compiled page is reported by lint for a person to delete, and locked_update writes only when content changed. An empty or failed raw scan therefore cannot erase existing pages, which is the loss graphify's guard prevents. Listed as not adopted for D3.",
+      "evidence": [
+        "graphify/skill.md:490-513 (empty-graph guard before any write; shrink guard)",
+        "oaw-ref/scripts/wiki_sync.py:448-453 (build writes compiled pages and meta pages; no deletion)",
+        "oaw-ref/scripts/wiki_sync.py:797-800 (orphaned compiled page reported for a person to delete)",
+        "oaw-ref/scripts/oaw_common.py:168-169 (write only if changed)"
+      ],
+      "missing_test": "",
+      "sources_agree": "Raised by goldfish-1 finding #25 (value). Other sources are silent."
+    },
+    {
+      "id": "gf.optional-extra-remote-fetches",
+      "added_in_revision": 2,
+      "name": "Remote fetches in optional exporters and extras (mermaid@11 from a CDN without SRI; faster-whisper model download)",
+      "what": "The call-flow HTML export loads mermaid@11 from jsDelivr with a floating major version and no integrity attribute (vis-network elsewhere is pinned with SRI). The video extra downloads faster-whisper model weights from Hugging Face on first use, which the privacy section does not mention.",
+      "disposition": "excrete",
+      "oaw_target": "",
+      "reason": "Not adopted: OAW takes no graphify exporter or extra, and OAW default commands do not go online. Both fetches become catalog toxin signatures (unpinned remote script in generated output; undisclosed first-use download) for the static scan (backlog OAW-32), and the H1 sandbox records them if an arm ever enables those extras.",
+      "evidence": [
+        "graphify/callflow_html.py:1708 (mermaid@11 from cdn.jsdelivr.net, no integrity attribute)",
+        "graphify/exporters/html.py:733-735 (vis-network@9.1.6 pinned with integrity and crossorigin)",
+        "graphify/transcribe.py:25, :150 (faster_whisper.WhisperModel loads the model on first use)"
+      ],
+      "missing_test": "",
+      "sources_agree": "Raised by verifier missed issues #9 and #10. The digest's risk 11 mentions the floating mermaid@11 script. No disagreement."
+    },
+    {
+      "id": "gf.pypi-name-and-release-churn",
+      "added_in_revision": 2,
+      "name": "PyPI name pair (graphifyy vs graphify) and near-daily releases",
+      "what": "The official package is graphifyy (double y); other graphify* packages are unaffiliated. Releases 0.9.98 to 0.9.101 landed between 2026-10-30 and 2026-11-02.",
+      "disposition": "excrete",
+      "oaw_target": "",
+      "reason": "A distribution risk, not a method: OAW never installs graphify from PyPI by name. Any sandbox arm installs graphifyy==0.9.101 hash-pinned from the food's uv.lock (backlog HOLD-04 Stage 0). Because releases are near-daily, this digestion's evidence is valid only for SHA 8e6a6d2; a later SHA re-enters as a new food (D4).",
+      "evidence": [
+        "pyproject.toml:6-7 (name graphifyy, version 0.9.101)",
+        "README.md:188 (official package is graphifyy; other graphify* packages are not affiliated)",
+        "CHANGELOG.md:5, :29, :53, :65 (0.9.101 on 2026-11-02, 0.9.100 on 2026-11-01, 0.9.99 and 0.9.98 on 2026-10-30)"
+      ],
+      "missing_test": "",
+      "sources_agree": "Raised by digest diarrhea risk 11. Other sources are silent."
+    }
+  ],
+  "process_notes": [
+    "Verifier precedence changed several readings: git hooks are opt-in (not default), the reviewer clause is scoped to graph.json diffs, `--break-system-packages` is a fallback, and labeling LLM calls come only from cluster-only and label.",
+    "Several absorb targets are parts of the planned scripts/catalog.py, which does not exist yet. That pipeline is the digestion system, separate from eating this food. graphify still showed what it lacks: an untrusted-data wrapper, reviewer read-coverage checks, rubric fingerprints, a hook-safety rubric and an installer round-trip check.",
+    "Absorb order, all free and deterministic: gf.code-citation-lint, then gf.reverse-citation-lookup, gf.hash-staleness, gf.budget-fit-report and gf.ambiguity-exit-codes. Each goes through improvement.py propose with a concrete diff, gets a goldfish review as an OAW draft (D10) and passes harness_check. The per-version citation lists this repo as used_in for the changed files (D3).",
+    "No paid test has run. Every hold needs the owner's consent and a budget with an estimate first (D7)."
+  ],
+  "ledger_revision": 2,
+  "revised": "2026-11-03",
+  "revision_basis": [
+    "ingest/graphify/integration.json",
+    "ingest/backlog.json (revision 2)",
+    "ingest/SUMMARY.md (修訂紀錄)"
+  ],
+  "revision_rule": "Revision 2 (integration-resolved). Every component keeps its revision-1 fields as the historical record. Where a component has an 'after_integration' object, that object is canonical: its disposition, oaw_target, claim_corrections, missing_test and backlog fields supersede the revision-1 fields they restate. A split component lists its parts in after_integration.parts, and each part has its own disposition; counts_after_integration counts units (unsplit components plus parts), not components. Components with 'added_in_revision': 2 were added to give minor digest, verifier and goldfish items a disposition. Integration checked absorb components only; excrete components without an after_integration object are unchanged and each becomes a D3 not-adopted line through backlog PRE-08.",
+  "counts_after_integration": {
+    "absorb": 13,
+    "hold": 9,
+    "excrete": 17,
+    "units": 39,
+    "components": 35
+  },
+  "parity_vs_food_alone": "not tested",
+  "summary_after_integration": "graphify after integration: 13 absorb, 9 hold, 17 excrete units (39). Changes from revision 1: gf.installer-roundtrip-check (integration fail) splits into a static part (absorb) and a live run (hold); gf.code-citation-lint and gf.reverse-citation-lookup each split off a model-facing line (hold); gf.stdlib-codemap splits into the code map and the rationale harvest (both hold); four minor items are added as excrete. Parity vs the food alone: not tested (the C >= B floor is designed in backlog HOLD-04 Stage 2).",
+  "inputs_status": {
+    "ingest/graphify/goldfish-1.json": "context unverified: the record does not say how the reviewer was launched or what it inherited. Subagents in this workflow receive the user's auto-memory index, so zero context is not established (D10). Usable as a review of the food, not as zero-context evidence.",
+    "ingest/graphify/goldfish-2.json": "context unverified: the record does not say how the reviewer was launched or what it inherited. Subagents in this workflow receive the user's auto-memory index, so zero context is not established (D10). Usable as a review of the food, not as zero-context evidence."
+  }
+}

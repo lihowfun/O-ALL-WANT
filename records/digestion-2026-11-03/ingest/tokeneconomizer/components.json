@@ -1,0 +1,929 @@
+{
+  "schema_version": 1,
+  "food": "microsoft/TokenEconomizer",
+  "pinned_commit": "d58755d849cd9157d29aef539f2beab3d5fee0fc",
+  "ledger_date": "2026-11-03",
+  "inputs": [
+    "ingest/tokeneconomizer/digest.json",
+    "ingest/tokeneconomizer/verify.json (takes precedence over the digest)",
+    "ingest/tokeneconomizer/goldfish-1.json",
+    "ingest/tokeneconomizer/goldfish-2.json",
+    "no wiki duel exists for this food",
+    "oaw-ref (read-only OAW V2 reference)"
+  ],
+  "citation_convention": "Paths without a prefix are in the food clone (ingest/tokeneconomizer/src). Paths starting with oaw-ref/ are in the OAW V2 reference. Every kept citation was re-read against the source for this ledger; nothing from the food was executed.",
+  "counts": {
+    "absorb": 13,
+    "hold": 5,
+    "excrete": 17
+  },
+  "food_summary": "TokenEconomizer (Apache-2.0, pinned d58755d) is a hook-driven cost-control plugin for coding agents. Its stdlib Python core has three mechanisms: micro-skills (learned repository facts pushed at SessionStart, off by default), toolprune (writes deny lists into the host's project settings, auto by default), and loopguard (paid judge plus one mid-turn redirect, on by default). It also has an optional aider repomap and a cache-weighted cost ledger. It is a token and cost layer, not a data map, so it does not help with the graphify or vectorization question. Ledger: 13 absorb, 5 hold, 17 excrete. Absorbed (measurement and lifecycle methods, re-implemented in OAW's stdlib scripts): effective tokens and usage coverage in improvement.py and the pilot scorer, measured startup size for the catalog context-budget gate, an opt-in host load probe for doctor, a shadow arm before paid A/B, cache-aware timing advice for migrate, failure signatures as an eval diagnostic, static fact-lifecycle rules for wiki promotion and oaw-evidence, a completion-advice lint, Windows npm-shim argv resolution for the eval runners, a test-trap fixture, a no-executables-from-repo ingest rule, and a script-generated README animation with static fallback. Held until paid tests run: loopguard redirect (A4), envfacts push vs OAW pull (A5), toolprune evidence rule vs native deferral (A3), repomap (compare with graphify), and installing TE beside OAW (A1, A2, A6). Excreted: auto toolprune writes, unmatched hooks on every tool call, detached daemons including a 24 h waiter, the Windows job-object escape with an environment spec file, python -m with the repository root first on sys.path, the default-on paid side-call runtime, side-call isolation gaps, the unlabelled redirect and verbatim relay, EnvValue secret capture, the paid LLM proposer, loading hook code from the mutable clone, unquoted slash-command arguments, probe side effects, bundled third-party text, the live ledger runtime, packing TE into OAW, and the non-OAW host adapters. Process notes for the digestion system: (1) the verifier overrode the digest three times (the hard-fail pricing rule lives in pricing.py, not the plugin ledger; the EGM risk applies only to repositories where subagents were never used under TE; Codex apply has no trust check but refuses a committed config) and found the most serious issue (repository-root module shadowing) that neither goldfish found, so the verify step carries real weight; (2) one digest nutrient, the nested-call isolation recipe, was already stronger in OAW's evals/egm-pilot runner, so ledger work must search OAW's evals/ as well as scripts/; (3) cross-food links: te.sidecall-isolation-gaps matters for claude-mem (its hooks would record every TE judge call), and te.repomap should be compared with graphify's code map.",
+  "components": [
+    {
+      "id": "te.effective-tokens",
+      "name": "Cache-weighted effective tokens",
+      "what": "pricing.effective_tokens converts a usage breakdown (input, cache_read, cache_write, output) into fresh-input-token equivalents using price ratios keyed on the exact billed model id. A non-Claude id with no table entry raises an error instead of being mispriced.",
+      "disposition": "absorb",
+      "oaw_target": "oaw-ref/scripts/improvement.py: an optional derived effective_tokens metric beside raw tokens, computed from per-case usage fields and a price-ratio table frozen in the evaluation spec and covered by its sha256. Also oaw-ref/evals/egm-pilot/pilot_common.py usage(): keep the raw fields it reads instead of only their equal-weight sum.",
+      "reason": "OAW's gate compares raw tokens (improvement.py:22, :273-274), and the pilot adds input, output, cache_read and cache_creation at weight 1 (pilot_common.py:224-231). In agent loops most tokens are cache re-reads. An equal-weight sum therefore rewards pruning cheap cached context and hides added output, which is the bias TE describes (pricing.py:5-13). Re-implement in stdlib with four rules. (1) Weights come only from the pre-registered spec. (2) An unknown billed model id makes the run invalid, as in pricing.py:135-160. Do not copy the live accounting.py:14-26 fallback, which silently prices on FALLBACK_WEIGHTS. (3) Raw fields stay recorded, as the protocol requires (SHARED_ACCEPTANCE_PROTOCOL.md:337-341). (4) Absolute tokens are never merged across hosts. Do not copy TE's Codex summation either: sidecall.py:262-270 adds reasoning_output_tokens to output_tokens without proving the two are disjoint, the protocol forbids adding reasoning twice, and OAW's bench.py usage_of is already stricter. TE's ratio numbers are a dated snapshot, not ground truth. This changes measurement only, so fixture tests in harness_check are enough and no paid A/B is needed.",
+      "evidence": [
+        "tokeneconomizer/pricing.py:1-31 (rationale: raw totals overstate cached re-reads and understate output; per-model-id table)",
+        "tokeneconomizer/pricing.py:135-160 (weights_for raises ValueError for an unpriced non-Claude id)",
+        "tokeneconomizer/plugin/accounting.py:1-26 (live ledger catches that error and prices on FALLBACK_WEIGHTS, priced_by='fallback': not to be copied)",
+        "tokeneconomizer/plugin/sidecall.py:262-270 (Codex usage: output_tokens + reasoning_output_tokens: not to be copied)",
+        "oaw-ref/scripts/improvement.py:22, :254-274 (METRICS tokens/latency_ms/cost_usd; raw totals)",
+        "oaw-ref/evals/egm-pilot/pilot_common.py:218-235 (equal-weight sum of four token fields)",
+        "oaw-ref/docs/SHARED_ACCEPTANCE_PROTOCOL.md:337-341 (raw usage fields per process; no reasoning double count; no USD without verifiable prices)",
+        "oaw-ref/evals/three-way/bench.py:209-221 (stricter Codex usage parsing already in OAW)"
+      ],
+      "missing_test": "",
+      "sources_agree": "Digest nutrient 1 supports absorbing. The verifier refuted the digest's claim that the plugin ledger fails hard on unknown ids (accounting.py falls back) and moved the hard-fail citation to pricing.py:135-160; this ledger follows the verifier. Goldfish-2 notes the ledger overlaps host /cost, which fits absorbing only the method. Goldfish-1 is silent. No wiki duel.",
+      "after_integration": {
+        "integration_ref": "ingest/tokeneconomizer/integration.json#te.effective-tokens",
+        "integration_result": "flag",
+        "disposition": "absorb",
+        "model_facing": false,
+        "oaw_target": "scripts/improvement.py: an optional, spec-declared effective-token block (weights by billed model id, frozen in the evaluation spec and covered by evaluation_sha256). When the block is present, compare derives and reports effective tokens from raw per-case usage; when absent, behavior is unchanged. METRICS and the raw integer 'tokens' field stay as they are. An unknown billed model id or a missing usage breakdown makes the efficiency comparison invalid; nothing is reweighted silently. Per-host field mapping: Claude result.modelUsage; Codex turn.completed, whose input_tokens already include cached_input_tokens and which has no cache-write field. The registered egm-pilot v2 files are not edited; the raw-field change goes into the next pilot contract.",
+        "claim_corrections": [
+          "Revision 1 also targeted oaw-ref/evals/egm-pilot/pilot_common.py usage(). That file is a pinned scorer and execution file of the registered v2 pilot (oaw-ref/evals/egm-pilot/pilot_common.py:23-24), so editing it breaks tests/test_egm_pilot.py; the change moves to the next pilot contract.",
+          "Adding effective_tokens to improvement.METRICS (oaw-ref/scripts/improvement.py:22) would reject every existing run artifact, so it is a derived, opt-in metric.",
+          "TE's fallbacks (accounting.py FALLBACK_WEIGHTS; pricing.py raw-total fallback) are not copied."
+        ],
+        "backlog": [
+          "OAW-05"
+        ]
+      }
+    },
+    {
+      "id": "te.overhead-attribution",
+      "name": "Overhead charged to the arm, with usage coverage",
+      "what": "Every model call the plugin makes (judge, nudge writer, proposer) goes into the same ledger as the session it serves. It is charged when spent, even if the verdict arrives after the turn has ended. The summary reports overhead_frac.",
+      "disposition": "absorb",
+      "oaw_target": "oaw-ref/scripts/improvement.py validate_run/compare: per-case overhead_tokens for candidate-internal calls (judges, background jobs, subagents), added to the arm's totals and reported separately, plus a per-run usage-coverage flag. An efficiency verdict is allowed only when coverage is complete in both arms.",
+      "reason": "The protocol already says that all reviewer and synthesizer usage counts as candidate cost, that grading overhead is listed separately, and that missing child usage forbids whole-tree token or cost claims (SHARED_ACCEPTANCE_PROTOCOL.md:61-62, :339-340). improvement.py enforces none of this: it adds up three totals per case and grants efficiency_gain on any drop of 5% or more. TE shows how to do it: background spend is charged before the result is published (plugin/judge.py:87-94), and overhead is aggregated into one cost definition (ledger.py:1-13; accounting.py:33-47). This enforces an existing OAW rule rather than adding a new one. It changes measurement only and can be covered by fixture tests.",
+      "evidence": [
+        "tokeneconomizer/ledger.py:1-13 (task_cost = effective_exec + overhead; one definition for ledger and reports)",
+        "tokeneconomizer/plugin/accounting.py:33-53 (summarize: overhead records, overhead_frac)",
+        "tokeneconomizer/plugin/judge.py:13-15, :87-96 (background judge spend charged as its own overhead record before the verdict is written)",
+        "oaw-ref/scripts/improvement.py:254-274, :312-318 (totals only; efficiency_gain on a >=5% drop)",
+        "oaw-ref/docs/SHARED_ACCEPTANCE_PROTOCOL.md:61-62, :339-340"
+      ],
+      "missing_test": "",
+      "sources_agree": "Digest nutrient 2 supports this. The verifier and both goldfish are silent. OAW's own protocol already requires it, so absorbing is low-risk.",
+      "after_integration": {
+        "integration_ref": "ingest/tokeneconomizer/integration.json#te.overhead-attribution",
+        "integration_result": "flag",
+        "disposition": "absorb",
+        "model_facing": false,
+        "oaw_target": "scripts/improvement.py validate_run/compare: optional spec-declared coverage (coverage required, overhead fields listed). Per-case overhead_tokens for candidate-internal calls are added to the arm's totals and reported separately. An efficiency verdict is allowed only when coverage is complete in both arms. Specs without the field keep their current verdicts, including decide() revalidation.",
+        "claim_corrections": [
+          "Making coverage mandatory would change current verdicts: tests/test_improvement.py fixtures are eligible through a token drop with no coverage field, and decide() re-runs compare on stored proposals (oaw-ref/scripts/improvement.py:375-379). Coverage is therefore spec-declared.",
+          "For a black-box food such as TE, coverage stays incomplete until an independent meter exists (backlog PRE-04); the food's own ledger is a self-report."
+        ],
+        "backlog": [
+          "OAW-04"
+        ]
+      }
+    },
+    {
+      "id": "te.startup-size-probe",
+      "name": "Measured startup request size, with injection caps",
+      "what": "toolprune measure works per host. On Codex it renders the prompt input locally with codex debug prompt-input (no model call). On Claude it runs two one-line claude -p requests on haiku, with and without a --settings deny file, and sums input, cache_read and cache_creation. A probe that exits nonzero, reports an error, returns no usage or prints nothing raises instead of counting 0. The always-on injected fact block is capped at 4 facts and 150 tokens.",
+      "disposition": "absorb",
+      "oaw_target": "oaw-ref/docs/plans/skill-catalog-execution.md integration gate for context overload (the future scripts/catalog.py digest integration step): measure the startup prompt with and without the candidate instead of estimating metadata tokens, and set a fixed cap for any always-on text in the P5 core budget.",
+      "reason": "The plan currently estimates name and description tokens (skill-catalog-execution.md:120) and leaves the budget numbers to P5 (:127). TE's probes measure what the host actually sends. Its rule that a failed probe is an error, never 0 (toolcheck.py:233-237, :248-249), keeps a broken measurement from reading as a full saving. Under the plan's automation boundary (:68), the Codex probe uses no model quota and may run automatically; the Claude probe makes two small paid calls and runs only when a person starts it. Still unverified: TE notes that prompt-input excludes tool schemas (toolcheck.py:268). Whether Codex skill metadata appears in it must be checked locally once the Codex CLI is installed; that check is free. TE's 4-fact and 150-token caps are its own choice (plugin/config.py:149-150). OAW should set its own numbers from measurement in P5.",
+      "evidence": [
+        "tokeneconomizer/plugin/toolcheck.py:216-238 (Claude probe; nonzero exit, is_error or zero usage raises)",
+        "tokeneconomizer/plugin/toolcheck.py:241-249 (codex debug prompt-input; empty output is a failed probe)",
+        "tokeneconomizer/plugin/toolcheck.py:252-294 (measure; Codex note: prompt input only, tool schemas not included)",
+        "tokeneconomizer/plugin/config.py:149-150 (microskills_max_facts=4, microskills_max_tokens=150)",
+        "oaw-ref/docs/plans/skill-catalog-execution.md:68, :120, :127"
+      ],
+      "missing_test": "",
+      "sources_agree": "Digest nutrients 3 and 7 support this. Goldfish-1 notes that measure makes two paid claude -p calls the slash command does not warn about; this absorption handles that by making the Claude probe human-started. The verifier is silent.",
+      "after_integration": {
+        "integration_ref": "ingest/tokeneconomizer/integration.json#te.startup-size-probe",
+        "integration_result": "flag",
+        "disposition": "absorb",
+        "model_facing": false,
+        "oaw_target": "Catalog plan text now (OAW-10), catalog code at P4 (OAW-34): measure the startup prompt with and without the candidate in the candidate project, not in a temporary directory, on each host (Codex prompt-input in characters, free; Claude two small isolated requests). A failed probe raises and never counts as 0. Size is paired with a presence check from the init event, and the mode measured is recorded. Budgets are per host and are set in P5.",
+        "claim_corrections": [
+          "Plan decision 2 requires both hosts, so the gate cannot count the Claude probe alone. The Codex half is unverified until a Codex CLI exists here (backlog PRE-03); verifying it is a free local check.",
+          "A probe runner that starts claude on this machine depends on te.windows-cli-argv, because Claude is installed only as the npm shim claude.cmd."
+        ],
+        "backlog": [
+          "OAW-10",
+          "OAW-34"
+        ]
+      }
+    },
+    {
+      "id": "te.host-load-probe",
+      "name": "Host-side load check without a task",
+      "what": "refresh-catalog reads the tool list from the init event of a claude -p --output-format stream-json --verbose run and kills the process tree right after that event. Codex edits are validated with codex features list, which loads the layered config without a model call, and are rolled back if Codex rejects them.",
+      "disposition": "absorb",
+      "oaw_target": "oaw-ref/scripts/oaw.py doctor: an explicit, opt-in host probe that records which OAW skills the host reports as loaded. This is kept as evidence separate from schema checks. Rollback stays with OAW's existing backups and receipts.",
+      "reason": "doctor currently reports host discovery as not inspected (oaw.py:709), and Skill_Guide.md:19 says schema checks do not prove discovery. OAW's pilot already parses the init event's skills, plugins and slash_commands (pilot_common.py:238-262), so the probe mostly reuses existing code. Three fixes apply when absorbing. (1) Pass --strict-mcp-config with an empty config, plus disableAllHooks, so the probe starts neither the user's MCP servers nor other plugins' hooks; TE's catalog probe keeps them on purpose (toolcheck.py:58-64). (2) Label it 'may incur one small request', because killing the process after init can race the first API call. (3) Never run it implicitly. The rest of TE's settings-writer discipline is already covered in OAW: the symlink guard, refusing invalid JSON, restoring only its own entries, never re-applying entries the user gave back, and refusing a git-tracked shared file (denylist.py:89-121, :170-237, :416-450). OAW has confined_path, locked atomic writes, backups, receipts and a persisted explicit skill selection (oaw_common.py:43-83; oaw.py:304-308, :500-605), so nothing else is taken.",
+      "evidence": [
+        "tokeneconomizer/plugin/toolcheck.py:58-98 (_init_tools reads the init event, then _kill_tree)",
+        "tokeneconomizer/plugin/denylist.py:397-413, :437-446 (codex features list validation; file restored on rejection)",
+        "tokeneconomizer/plugin/denylist.py:89-121, :170-237, :416-425 (already covered by OAW: invalid-JSON refusal, symlink guard, ownership record, committed config refused)",
+        "oaw-ref/scripts/oaw.py:709 (host discovery/settings were not inspected)",
+        "oaw-ref/docs/Skill_Guide.md:19",
+        "oaw-ref/evals/egm-pilot/pilot_common.py:238-262 (init_summary already reads skills/plugins/slash_commands)",
+        "oaw-ref/scripts/oaw_common.py:43-83; oaw-ref/scripts/oaw.py:304-308, :500-605 (existing OAW safe-write, backup, receipt and selection mechanisms)"
+      ],
+      "missing_test": "",
+      "sources_agree": "The probe is this ledger's own adaptation of TE's refresh-catalog init-event read (tokeneconomizer/plugin/toolcheck.py:58-98); no source proposed it as an OAW feature. Goldfish-1 finding #5 flags refresh-catalog's side effect (it starts the user's MCP servers without --strict-mcp-config), which fix (1) in 'reason' addresses. Goldfish-1 #17 and goldfish-2 #17 praise TE's conservative settings writer (denylist.py), a different mechanism that this ledger does not take because OAW already has safe writes, backups and receipts. The verifier added the validate-and-rollback step; the digest did not list this component.",
+      "after_integration": {
+        "integration_ref": "ingest/tokeneconomizer/integration.json#te.host-load-probe",
+        "integration_result": "flag",
+        "disposition": "hold",
+        "model_facing": false,
+        "oaw_target": "If unblocked: scripts/oaw.py doctor --probe-host, an explicit opt-in flag that reports which OAW skills each host loaded, shipped for Claude and Codex together; default doctor stays offline and unchanged.",
+        "missing_test": "Free once a Codex CLI exists (backlog PRE-03): check whether `codex debug prompt-input` output lists the OAW skill names in the target project. If it does, Claude (init event with --strict-mcp-config, an empty MCP config and disableAllHooks) and Codex ship together behind one flag, subject to batch approval. If Codex has no free counterpart, the probe is excreted under D8 rather than shipped for one host.",
+        "claim_corrections": [
+          "Revision 1 recorded this as absorb. D8 and oaw-ref/docs/plans/skill-catalog-execution.md:317 forbid a doctor feature that works on one host only, and the Codex counterpart is unverified, so it is held.",
+          "Revision 1's sources_agree credited the goldfish 'settings writer' value items (goldfish-1 #17, goldfish-2 #17). Those praise TE's conservative settings-file editing in denylist.py, a different mechanism. The field is rewritten in revision 2."
+        ],
+        "backlog": [
+          "OAW-26 (kind changed to hold)"
+        ],
+        "revision_1_sources_agree": "Goldfish-1 and goldfish-2 both list the conservative settings writer as worth lifting. The verifier added the validate-and-rollback step and the git-tracked refusal, which the digest missed; the digest did not list this component. The absorbed part is narrowed to the probe because OAW already has everything else."
+      }
+    },
+    {
+      "id": "te.shadow-arm",
+      "name": "Shadow (log-only) mode",
+      "what": "With shadow=True, every decision (injection, nudge, deny list) is computed and logged but none is delivered or written, so a mechanism can be measured before anyone trusts it.",
+      "disposition": "absorb",
+      "oaw_target": "oaw-ref/docs/plans/skill-catalog-execution.md behavior digest stage: when a mechanism-type food offers a log-only mode, a sandboxed shadow run comes before the paid A/B and estimates how often the food would act. Shadow logs are never counted as A/B evidence.",
+      "reason": "It is a cheap pre-A/B arm that shows whether a mechanism would fire at all on OAW fixtures, which matches the owner's cheapest-test-first policy (D11). In the shadow arm it changes no model-facing behavior: delivery and writes are skipped at controller.py:121, :334 and :347 and at fold.py:327. It does not replace the matched A/B gate in improvement.py compare. For TokenEconomizer itself, any trial run should start with shadow=True and toolprune=propose.",
+      "evidence": [
+        "tokeneconomizer/plugin/config.py:26-28 (shadow: computed and logged, none reaches the agent)",
+        "tokeneconomizer/plugin/controller.py:121, :334, :347 (if not self.cfg.shadow guards injection, nudge and notice)",
+        "tokeneconomizer/plugin/fold.py:327 (auto apply skipped in shadow)",
+        "oaw-ref/docs/plans/skill-catalog-execution.md:80 (behavior A/B gate it precedes)"
+      ],
+      "missing_test": "",
+      "sources_agree": "Digest nutrient 4 supports this, and goldfish-2 notes that shadow mode logs every decision without acting. The verifier and goldfish-1 are silent.",
+      "after_integration": {
+        "integration_ref": "ingest/tokeneconomizer/integration.json#te.shadow-arm",
+        "integration_result": "flag",
+        "disposition": "absorb",
+        "model_facing": false,
+        "oaw_target": "oaw-ref/docs/plans/skill-catalog-execution.md behavior digest stage: a log-only mode is the cheapest behavior trial only when the mechanism's decisions cost nothing to compute. When the food still makes model calls in that mode, as TE does, the shadow run is a budgeted sandbox trial under the D11 standing policy. It is never part of automatic static digestion and never A/B evidence.",
+        "claim_corrections": [
+          "Revision 1 said the shadow arm 'changes no model-facing behavior' and called it a cheap pre-A/B arm. In TE, shadow mode suppresses delivery, not execution or spend: tokeneconomizer/plugin/controller.py:322-323 still passes judge=self._judge(...), which starts paid AsyncJudge side calls in shadow mode; hooks still fire on every tool call and fold jobs still run. Only injection, nudge, notice and settings writes are skipped (tokeneconomizer/plugin/controller.py:121, :334, :347; tokeneconomizer/plugin/fold.py:327).",
+          "On Codex, TE's judge runs on the user's default model, so a Codex shadow run is not cheap either."
+        ],
+        "backlog": [
+          "OAW-10"
+        ]
+      }
+    },
+    {
+      "id": "te.cache-aware-timing",
+      "name": "Prompt-cache-aware timing of startup-prefix changes",
+      "what": "A new deny list is held until every session of the repository has been idle longer than a prompt-cache lifetime (60 minutes), or until a day has passed. The reason: a resumed conversation sends the new tool list and rewrites its whole history to the cache.",
+      "disposition": "absorb",
+      "oaw_target": "oaw-ref/docs/UPGRADING.md and the oaw-ref/scripts/oaw.py migrate --apply preview text (advice only), plus the absorb/retire step in oaw-ref/docs/plans/skill-catalog-execution.md: apply changes that alter the startup prefix between sessions, not while a conversation will be resumed.",
+      "reason": "As human-facing guidance this rule is useful and costs nothing. Only the timing rule is taken. TE's implementation, a detached waiter that runs up to 24 h (fold.py:51-52; cli.py:355-382), is excreted under te.background-daemons. TE's authors report the cache rewrite for tool-list changes on Claude Code 2.1.307, Codex 0.163.0 and Copilot 1.0.102 (PLUGIN.md:381-395). OAW has not measured it, and applying it to AGENTS.md or skill changes is an extrapolation. The doc text must therefore say 'upstream-reported, not measured by OAW'.",
+      "evidence": [
+        "tokeneconomizer/plugin/fold.py:42-51 (rationale and PENDING_MAX_S)",
+        "tokeneconomizer/plugin/fold.py:312-341 (apply_pending idle check)",
+        "docs/PLUGIN.md:381-395 (authors' observations on three hosts)",
+        "oaw-ref/README.md:185-192 (migrate preview and apply flow that receives the advice)"
+      ],
+      "missing_test": "",
+      "sources_agree": "Digest nutrient 5. Goldfish-1 and goldfish-2 value findings support lifting the cache-aware timing. The verifier confirmed the 24 h constant and the waiter loop; their removal is handled under excrete.",
+      "after_integration": {
+        "integration_ref": "ingest/tokeneconomizer/integration.json#te.cache-aware-timing",
+        "integration_result": "pass",
+        "disposition": "absorb",
+        "model_facing": false,
+        "oaw_target": "docs/UPGRADING.md and the scripts/oaw.py migrate --apply preview line: apply migrate between sessions, then start fresh sessions on both hosts. Labelled 'upstream-reported, not measured by OAW'.",
+        "claim_corrections": [
+          "Applying TE's cache-rewrite observation (tool-list changes) to AGENTS.md or skill changes is an extrapolation, and whether a resumed Codex session re-reads AGENTS.md is unverified; the wording is host-neutral advice only."
+        ],
+        "backlog": [
+          "OAW-11"
+        ]
+      }
+    },
+    {
+      "id": "te.failure-signature",
+      "name": "Failure signatures and stagnation counters",
+      "what": "SpiralState folds each tool call into counters: edits per file, distinct files, test runs and error outputs. It hashes the first error line after stripping numbers, hex addresses and paths, so a recurring identical failure produces a stagnation ratio.",
+      "disposition": "absorb",
+      "oaw_target": "oaw-ref/evals/egm-pilot/score.py (through pilot_common.py) as an offline, report-only diagnostic over retained tool traces (repeated_identical_failures and stagnation per run). Also used as reproducible 'recurring failure' evidence for oaw-improve proposals (oaw-ref/templates/.agents/skills/oaw-improve/SKILL.md starts from the recurring failure).",
+      "reason": "The method is cheap, deterministic and stdlib-only (state.py:120-134, :155-168, :170-212). It helps explain efficiency differences between arms without a model call, and it gives improvement proposals a stable way to identify 'the same failure'. It is a diagnostic only, never a gate. Excluded: the judge digest's raw command lines (first 90 characters, state.py:187-190) and grep patterns (:193-194), which can carry inline secrets despite the 'leakage-safe' label. OAW reports keep only hashes and counts. TE uses md5 as a non-security fingerprint; OAW should use sha256.",
+      "evidence": [
+        "tokeneconomizer/loopguard/state.py:120-134 (_failure_sig normalizes and hashes the first error line)",
+        "tokeneconomizer/loopguard/state.py:155-168 (edit_churn, distinct_edit_files, stagnation)",
+        "tokeneconomizer/loopguard/state.py:170-212 (per-call update)",
+        "tokeneconomizer/loopguard/state.py:187-194 (raw 90-char commands and 40-char patterns in the action log: excluded)",
+        "oaw-ref/templates/.agents/skills/oaw-improve/SKILL.md (start with the recurring failure)",
+        "oaw-ref/docs/SHARED_ACCEPTANCE_PROTOCOL.md:318-319 (tool traces retained raw, which the diagnostic reads)"
+      ],
+      "missing_test": "",
+      "sources_agree": "Goldfish-1 and goldfish-2 both name the loop detector as worth lifting. Goldfish-2 and the verifier flag the raw 90-char commands, which this ledger handles by excluding them. The digest did not list this component.",
+      "after_integration": {
+        "integration_ref": "ingest/tokeneconomizer/integration.json#te.failure-signature",
+        "integration_result": "flag",
+        "disposition": "split",
+        "model_facing": false,
+        "claim_corrections": [
+          "Revision 1 targeted oaw-ref/evals/egm-pilot/score.py through pilot_common.py, the frozen pinned scorer (oaw-ref/evals/egm-pilot/pilot_common.py:23-24); editing it breaks tests/test_egm_pilot.py. The pilot also disallows Bash and PowerShell, so its traces contain no test runs to fold.",
+          "TE strips only POSIX paths (tokeneconomizer/loopguard/state.py:133), so the same failure from two Windows workspaces hashes differently; drive-letter, backslash and workspace-root paths must be normalized."
+        ],
+        "parts": [
+          {
+            "id": "te.failure-signature/diagnostic",
+            "disposition": "absorb",
+            "model_facing": false,
+            "oaw_target": "New unpinned, report-only evals/diagnostics/ module with a Claude stream-json adapter (tool_use/tool_result is_error) and a Codex command_execution adapter (exit_code); sha256, not md5; path normalization through the shared helper (OAW-02); only hashes and counts leave local run directories; never a gate; its own fixtures and CI step.",
+            "backlog": [
+              "OAW-27"
+            ]
+          },
+          {
+            "id": "te.failure-signature/oaw-improve-line",
+            "disposition": "excrete",
+            "model_facing": true,
+            "reason": "A line in the installed oaw-improve SKILL.md pointing to the diagnostic would point user projects at a module they do not have: the diagnostic lives under evals/, and scripts/oaw.py source_files installs only scripts/ helpers and templates (oaw-ref/scripts/oaw.py:225-245). It would also be a model-facing framework update for every installed project. Dropped instead of tested.",
+            "evidence": [
+              "oaw-ref/scripts/oaw.py:225-245",
+              "oaw-ref/templates/.agents/skills/oaw-improve/SKILL.md:13"
+            ],
+            "backlog": [
+              "OAW-27 (system decision)"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "te.fact-lifecycle",
+      "name": "Evidence-gated fact lifecycle (static rules)",
+      "what": "A learned fact stays a candidate until confirmed on K=3 tasks that edited different files. A contradiction weighs lambda=5 times a confirmation, and a high-stakes fact retires on one clean contradiction. LLM-proposed facts need at least 2 cited sessions in which a host-run detector confirms them. Recency decay and a firing gate are also applied.",
+      "disposition": "absorb",
+      "oaw_target": "oaw-ref/scripts/wiki_sync.py promote_candidates (advisory): count citing sources as distinct files, default --min-citations to 2, and exclude an entry that a later memory entry marks as contradicted. Also oaw-ref/templates/.agents/skills/oaw-evidence/SKILL.md: one verified contradiction of a high-stakes note, such as a verification or build command, supersedes it; record a superseding entry instead of editing the old one.",
+      "reason": "OAW promotes memory entries to the wiki with min_citations defaulting to 0 (wiki_sync.py:1184-1216), and its evidence skill only says to check old conclusions against the source. Two TE rules are static and fit OAW's human-recorded, pull-based notes: asymmetric contradiction weighting that leans toward retirement (lifecycle.py:15-21, :102-117) and the grounding rule (distiller.py:33, :650-662). Recency decay and the firing gate are not absorbed. They need automatic per-session observation, which is the memory telemetry loop v2 removed. OAW's skill-value 'superseded-handoff' case is a ready fixture (fixtures.py:15-18). Output is advisory only and covered by fixture tests.",
+      "evidence": [
+        "tokeneconomizer/microskills/lifecycle.py:3-21 (K_PROMOTE=3, GAMMA=0.8, LAMBDA=5, HARD_KILL, FIRE_GATE=0.40, FIRE_MIN_N=4)",
+        "tokeneconomizer/microskills/lifecycle.py:78-117 (drifted confirmations, score, promotion and retirement)",
+        "tokeneconomizer/microskills/distiller.py:33 (MIN_CITE=2)",
+        "tokeneconomizer/microskills/distiller.py:650-662 (_ground re-checks each citation with the host-run detector)",
+        "oaw-ref/scripts/wiki_sync.py:1164-1216 (_count_entry_citations; min_citations default 0)",
+        "oaw-ref/templates/.agents/skills/oaw-evidence/SKILL.md (check the referenced source before relying on an old conclusion)",
+        "oaw-ref/evals/skill-value/fixtures.py:15-18 (superseded-handoff case)",
+        "oaw-ref/docs/plans/v2.0.0-execution.md:86 (memory/skill telemetry loops removed from defaults)"
+      ],
+      "missing_test": "",
+      "sources_agree": "Digest nutrient 6 (advisory metadata only). Goldfish-1 and goldfish-2 value findings support lifting the lifecycle. The verifier is silent.",
+      "after_integration": {
+        "integration_ref": "ingest/tokeneconomizer/integration.json#te.fact-lifecycle",
+        "integration_result": "flag",
+        "disposition": "split",
+        "claim_corrections": [
+          "Revision 1 set the --min-citations default to 2. _count_entry_citations returns 0 when docs/archive is missing (oaw-ref/scripts/wiki_sync.py:1164-1166), and the V2 templates never create that folder, so the new default would silently empty promote-candidates for every V2 project; no test covers promote-candidates. The default stays 0 (wiki_sync.py:1185) and the rule is an opt-in flag.",
+          "Citations are already counted per distinct archive file (wiki_sync.py:1171-1181); no new code is needed for that part.",
+          "OAW's memory format ('## [date] [TAG] body') has no supersede or contradiction marker, so 'contradicted by a later entry' needs a defined marker (memory add --supersedes) before it can be detected.",
+          "The revision-1 SKILL.md wording ('record a superseding entry' on the agent's own initiative) conflicts with oaw-evidence's description ('append an explicitly requested durable project decision') and with AGENTS.md. The held wording is limited to decisions the user asks to record.",
+          "OAW's 'citation' (an archive file that mentions the title) is not TE's grounding (a host-run detector confirming the fact); they are not described as equivalent."
+        ],
+        "parts": [
+          {
+            "id": "te.fact-lifecycle/8a",
+            "disposition": "absorb",
+            "model_facing": false,
+            "oaw_target": "scripts/wiki_sync.py promote_candidates --evidence-gate (opt-in: at least 2 distinct archive citations; superseded entries excluded with a reason); scripts/context_hub.py memory add --supersedes; --min-citations default stays 0; first promote-candidates tests.",
+            "backlog": [
+              "OAW-20"
+            ]
+          },
+          {
+            "id": "te.fact-lifecycle/8b",
+            "disposition": "hold",
+            "model_facing": true,
+            "oaw_target": "templates/.agents/skills/oaw-evidence/SKILL.md: when the user asks to record a decision that replaces an earlier one, record it with --supersedes instead of editing the old entry (about 2 sentences in the on-demand body; description unchanged).",
+            "missing_test": "skill-value superseded-handoff case, new registration: Codex half through the existing skill-value runner and Claude half through the shell-allowed Claude runner (backlog PRE-04); about 6-18M per host (estimate). Low priority; runs last among TE holds.",
+            "backlog": [
+              "HOLD-03"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "te.completion-advice-lint",
+      "name": "Lint against completion and verification advice",
+      "what": "envfacts refuses any fact whose text matches skip, no need, don't, do not, stop, done, complete, finish, verify, or 'instead of running/testing'. Learned text can state facts but can never tell the agent to skip work.",
+      "disposition": "absorb",
+      "oaw_target": "oaw-ref/scripts/context_hub.py memory_add (a soft warning before appending) and oaw-ref/scripts/wiki_sync.py lint (a soft warning next to HOLLOW_PHRASES).",
+      "reason": "It enforces OAW's 'Evidence, not instructions' principle (oaw-ref/README.md:142) when notes are written. TE's regex (envfacts.py:51-53) is too broad for prose because it matches 'done' and 'verify'. OAW therefore takes it as a warning with a tuned phrase list and fixtures, never as a refusal. wiki_sync already has a soft-warning mechanism to attach it to.",
+      "evidence": [
+        "tokeneconomizer/microskills/envfacts.py:51-53 (_LINT_RE)",
+        "tokeneconomizer/microskills/envfacts.py:216-217 (lint_ok)",
+        "tokeneconomizer/microskills/envfacts.py:276-278 (_select drops facts that fail the lint)",
+        "oaw-ref/scripts/wiki_sync.py:585-591, :759-765 (HOLLOW_PHRASES soft warnings)",
+        "oaw-ref/scripts/context_hub.py:287-312 (memory_add)",
+        "oaw-ref/README.md:142"
+      ],
+      "missing_test": "",
+      "sources_agree": "Goldfish-1 and goldfish-2 mention the completion-advice lint as part of the envfacts layer worth lifting. The digest and the verifier are silent.",
+      "after_integration": {
+        "integration_ref": "ingest/tokeneconomizer/integration.json#te.completion-advice-lint",
+        "integration_result": "flag (minor)",
+        "disposition": "absorb",
+        "model_facing": false,
+        "oaw_target": "Shared write-path choke point with OAW-12: context_hub.py memory_add soft warning on stderr and wiki_sync.py lint warning next to HOLLOW_PHRASES. Only skip-work phrases (no need to run, skip the tests, do not re-run, instead of running), never 'verify', 'done' or 'complete'. Validated against OAW's own docs/knowledge as a fixture. Warning-only, also under lint --strict (a heuristic family).",
+        "claim_corrections": [
+          "TE's list (tokeneconomizer/microskills/envfacts.py:51-53) includes verify, done and complete, which would flag the verification notes OAW wants to keep; it is not copied.",
+          "lint --strict turns warnings into errors (oaw-ref/scripts/wiki_sync.py:842-855); this heuristic family stays a warning under --strict so existing strict wikis do not start failing on a guess.",
+          "OAW's own wiki is the first false positive (docs/knowledge/OAW_Session_Continuity_Test.md contains 'DO NOT RERUN'), so the phrase list is tuned on it."
+        ],
+        "backlog": [
+          "OAW-14"
+        ]
+      }
+    },
+    {
+      "id": "te.windows-cli-argv",
+      "name": "Windows npm shim resolved to a direct argv",
+      "what": "On Windows, sidecall.program reads an npm .cmd shim and starts its target directly (node plus the script, or the .exe). Any other batch file is refused, so cmd.exe never re-parses the arguments.",
+      "disposition": "absorb",
+      "oaw_target": "CLI resolution on Windows in oaw-ref/evals/egm-pilot/run_pilot.py, oaw-ref/evals/three-way/bench.py and oaw-ref/evals/skill-value/experiment.py.",
+      "reason": "This user runs Windows. OAW's pilot only looks for claude.exe (run_pilot.py:35-37), and the Codex runners take a bare 'codex' or a supplied path (bench.py:371; experiment.py:462). An npm install therefore either fails, which is fail-closed and acceptable, or, when a .cmd path is supplied, runs through cmd.exe, which re-parses %VAR% and & inside arguments such as workspace paths. OAW already passes prompts on stdin (bench.py:262; experiment.py:234), which removes the worst case. Resolving the shim (sidecall.py:127-177) removes the rest. Stdlib only, and testable with a fake shim fixture.",
+      "evidence": [
+        "tokeneconomizer/plugin/sidecall.py:127-177 (_SHIM_TARGET_RE, _shim_argv, program refuses non-shim batch files)",
+        "oaw-ref/evals/egm-pilot/run_pilot.py:35-37",
+        "oaw-ref/evals/three-way/bench.py:262, :371",
+        "oaw-ref/evals/skill-value/experiment.py:234, :462"
+      ],
+      "missing_test": "",
+      "sources_agree": "Goldfish-1 and goldfish-2 list the npm-shim parsing among the side-call hygiene worth lifting. The digest and the verifier are silent. The rest of TE's side-call recipe is not absorbed, because OAW's runner is already stricter (see te.sidecall-isolation-gaps).",
+      "after_integration": {
+        "integration_ref": "ingest/tokeneconomizer/integration.json#te.windows-cli-argv",
+        "integration_result": "flag",
+        "disposition": "absorb",
+        "model_facing": false,
+        "oaw_target": "scripts/oaw_common.py resolve_cli() (resolver_sha256 recorded in each run manifest), used by new registrations of evals/three-way/bench.py and evals/skill-value/experiment.py and by the next egm-pilot contract version, which also moves the prompt to stdin. Resolve once at Runner/Engine setup, not inside experiment.cli_command; resolve the --version calls the same way; resolve from a trusted working directory; record the absolute argv in each manifest. Registered egm-pilot v2 files, and bench.py and experiment.py registrations prepared earlier, are not edited.",
+        "claim_corrections": [
+          "Revision 1 said 'OAW already passes prompts on stdin (bench.py:262; experiment.py:234)'. That holds only for the two Codex runners, which end their argv with '-' and pass input= (oaw-ref/evals/three-way/bench.py:262, :267; oaw-ref/evals/skill-value/experiment.py:231-234, :280). The Claude pilot passes each turn's text as the last argv element after '--' (oaw-ref/evals/egm-pilot/run_pilot.py:141) and runs it with stdin=subprocess.DEVNULL (run_pilot.py:317), so through claude.cmd the prompt itself is re-parsed by cmd.exe.",
+          "Revision 1 targeted run_pilot.py, bench.py and experiment.py in place. run_pilot.py is a pinned execution file (pilot_common.py:24), bench.py is checked against the manifest's runner_sha256, and experiment.py is a CONTROL_FILE (experiment.py:32), so only new registrations and the next pilot contract get the fix.",
+          "This machine has only the npm shim claude.cmd and no claude.exe, so the change matters more than revision 1 stated: it is the first item of the backlog."
+        ],
+        "backlog": [
+          "OAW-01",
+          "PRE-06 (same method in the workflow script)"
+        ]
+      }
+    },
+    {
+      "id": "te.test-trap-fixture",
+      "name": "Environment test-trap fixture",
+      "what": "te probe builds a throwaway repository with a test trap: the project is configured for pytest, but pytest is not installed, so bare pytest fails while the unittest-written tests pass under python -m unittest. It then measures whether sessions that have the learned fact avoid the trap.",
+      "disposition": "absorb",
+      "oaw_target": "oaw-ref/evals/skill-value/fixtures.py: a new 'evidence' case in which the verification command is recorded in project evidence, and the check is whether the first test command run is the recorded one.",
+      "reason": "OAW's evidence cases test scoped recall and superseded decisions (fixtures.py:15-18), but not a verification-command trap, which is the commonest waste TE targets (probe.py:5-10). Writing the fixture is free; running it is the paid A5 comparison held under te.envfacts-miner. Only the fixture design is taken, not probe.py, because the probe runs --allow-all-tools sessions inside a folder the user trusts (probe.py:118-119, :182-185).",
+      "evidence": [
+        "tokeneconomizer/plugin/probe.py:1-22 (trap design and what it reports)",
+        "tokeneconomizer/plugin/probe.py:118-119, :182-185 (side effects that keep the probe itself out)",
+        "oaw-ref/evals/skill-value/fixtures.py:15-18 (existing evidence cases)"
+      ],
+      "missing_test": "",
+      "sources_agree": "The digest's A1 and A5 test proposals reuse this trap. Goldfish-1 and the verifier flag the probe's writes into a trusted location, which is why only the design is taken.",
+      "after_integration": {
+        "integration_ref": "ingest/tokeneconomizer/integration.json#te.test-trap-fixture",
+        "integration_result": "flag",
+        "disposition": "absorb",
+        "model_facing": false,
+        "oaw_target": "New evals/skill-value/verification_fixtures.py (for example CASES['verification']) with its own builder, tests and a new protocol registration. fixtures.py is not edited. The controller proves on every run that the trap is armed (pytest absent for the interpreter and PATH the candidate sees); an unarmed run is invalid, not a pass. When A5 runs, it adds an AGENTS.md arm.",
+        "claim_corrections": [
+          "Revision 1 added a third 'evidence' case to oaw-ref/evals/skill-value/fixtures.py. That file is a CONTROL_FILE of the registered protocol oaw-retained-skill-value-v1 (oaw-ref/evals/skill-value/experiment.py:32), and its tests pin two evidence prompts and 60 calls.",
+          "OAW keeps 'the real verification commands' in AGENTS.md, not in memory, so the fixture needs an AGENTS.md arm or it tests a setup OAW does not recommend.",
+          "The skill-value and three-way runners are Codex-only and the Claude pilot forbids shells, so a Claude half needs the shell-allowed runner (backlog PRE-04)."
+        ],
+        "backlog": [
+          "OAW-28"
+        ]
+      }
+    },
+    {
+      "id": "te.repo-cannot-redirect-executables",
+      "name": "Executables are never configured by the repository",
+      "what": "All settings, including the ones that name executables (repomap_python, pi_cli), are read from the state root and environment variables, never from the checkout. A cloned repository therefore cannot choose what the plugin runs.",
+      "disposition": "absorb",
+      "oaw_target": "The P2 ingest rules in oaw-ref/docs/plans/skill-catalog-execution.md and the future scripts/catalog.py: interpreter and tool paths come only from OAW's own config or the environment, never from a quarantined clone or project-local files, and any Python run near a clone uses -I with a working directory outside the clone.",
+      "reason": "This containment property is worth stating explicitly for OAW's own ingest code (context.py:46-56; plugin/config.py:300-305; paths.py:252-254). The second half of the rule is the lesson from TE's own defect: its detached jobs run python -m with the working directory at the repository root (context.py:84-93), which lets repository modules shadow the standard library (see te.repo-cwd-module-shadowing).",
+      "evidence": [
+        "tokeneconomizer/plugin/context.py:46-56 (config loaded with repo_dir inside the state store)",
+        "tokeneconomizer/plugin/config.py:300-305 (global and per-repository config.json, both under the state root)",
+        "tokeneconomizer/plugin/paths.py:252-254 (repo_state_dir under the state root)",
+        "tokeneconomizer/plugin/context.py:84-93 (counter-example: python -m with the working directory at the repository root)",
+        "oaw-ref/docs/plans/skill-catalog-execution.md:74, :417 (ingest gate and P2 acceptance: downloaded content is never executed)"
+      ],
+      "missing_test": "",
+      "sources_agree": "Goldfish-1 and goldfish-2 both record this containment property. The verifier supplied the -I/-P counter-rule. The digest is silent.",
+      "after_integration": {
+        "integration_ref": "ingest/tokeneconomizer/integration.json#te.repo-cannot-redirect-executables",
+        "integration_result": "pass",
+        "disposition": "absorb",
+        "model_facing": false,
+        "oaw_target": "Catalog P2 ingest rule (plan text now, catalog.py code later): interpreter and tool paths come only from OAW config or the environment; Python that reads an untrusted clone runs with -I plus -X utf8 and a working directory outside the clone. Scoped to untrusted clones only, because -I breaks OAW's own helpers (ModuleNotFoundError: oaw_common). Counter-example recorded: TE runs python -m with the repository root as working directory.",
+        "claim_corrections": [
+          "Revision 1 read as a blanket rule; integration scoped it to untrusted clones and added -X utf8 (-I ignores PYTHONUTF8, which harness_check sets)."
+        ],
+        "backlog": [
+          "OAW-10",
+          "OAW-29"
+        ]
+      }
+    },
+    {
+      "id": "te.readme-teaser",
+      "name": "Script-generated README animation with static fallback",
+      "what": "docs/assets/teaser.py generates teaser.gif. The README shows it inside a <picture> element whose <source media='(prefers-reduced-motion: reduce)'> falls back to a static PNG.",
+      "disposition": "absorb",
+      "oaw_target": "The P8 README animation in oaw-ref/docs/plans/skill-catalog-execution.md (docs/assets/skill-metabolism.svg with a static fallback in README.md and README.zh.md).",
+      "reason": "OAW's plan already calls for a pure SVG+CSS animation with a static view under reduced motion (skill-catalog-execution.md:404-409). Two details are worth taking. First, generate the asset from a checked-in script, so the gate can verify it is current. Second, keep a <picture> static fallback for renderers that ignore CSS media queries inside SVG. Whether GitHub honours prefers-reduced-motion inside <picture> is unverified; the plan's manual render check covers it. TE's assets are not copied, since the logos are trademarks.",
+      "evidence": [
+        "README.md:36-39 (<picture> with a reduced-motion PNG source and a GIF img)",
+        "docs/assets/teaser.py, docs/assets/teaser.gif, docs/assets/teaser.png",
+        "oaw-ref/docs/plans/skill-catalog-execution.md:404-409"
+      ],
+      "missing_test": "",
+      "sources_agree": "Digest nutrient 9. No other source addressed it.",
+      "after_integration": {
+        "integration_ref": "ingest/tokeneconomizer/integration.json#te.readme-teaser",
+        "integration_result": "pass",
+        "disposition": "absorb",
+        "model_facing": false,
+        "oaw_target": "P8: docs/assets/make_skill_metabolism.py writes a stdlib SVG under 30 KB with no JS, plus a <picture> reduced-motion static fallback in README.md and README.zh.md; covered by the P8 freshness gate; no unmeasured numbers; no TE assets copied.",
+        "claim_corrections": [
+          "TE's generator imports PIL and writes a GIF; OAW's must be stdlib-only (CI installs no packages)."
+        ],
+        "backlog": [
+          "OAW-35"
+        ]
+      }
+    },
+    {
+      "id": "te.loopguard-redirect",
+      "name": "In-turn loop guard (judge plus one redirect)",
+      "what": "The guard waits until the repository has an envelope: a typical resolved-turn length learned from 5 turns that ended green. After that, a free gate wakes a sampled LLM judge when it sees signs of trouble. If the judge finds the turn stuck with enough confidence, one redirect per turn is injected. A backstop redirect also fires without the judge once the turn runs past the envelope times a multiplier. A turn that is still stuck gets a notice. The plugin never stops a turn itself.",
+      "disposition": "hold",
+      "oaw_target": "",
+      "reason": "This is the only TE mechanism with no host-native counterpart (the hosts offer only Esc or turn caps), so it is not excreted as redundant. However, its own authors say its efficacy is unproven (PLUGIN.md:572-578). OAW also has no runtime that could host it (v2.0.0-execution.md:78), and its injection details conflict with OAW policy; those details are excreted under te.injected-redirect-and-relay. The hold decides only what OAW recommends to a user who installs TE: loopguard off, shadow or nudge.",
+      "evidence": [
+        "tokeneconomizer/plugin/controller.py:281-358 (gate, async judge, nudge budget, notice)",
+        "tokeneconomizer/plugin/judge.py:1-17, :25-51 (verdict handed to a later hook call; the agent never waits)",
+        "tokeneconomizer/loopguard/turn.py:332-344 (judge-free backstop redirect)",
+        "tokeneconomizer/loopguard/judge.py:15-27 (judge prompt biased toward sparing)",
+        "docs/PLUGIN.md:572-578 (whether a nudge changes a looping model's course is not established)",
+        "oaw-ref/docs/plans/v2.0.0-execution.md:78"
+      ],
+      "missing_test": "A4, paid A/B: a provoked-loop fixture plus normal tasks, including one instructed repetitive workflow (for example 12 edit-and-test cycles). Compare loopguard=off, shadow and nudge on Claude Code and Codex. Measure tool calls to green, redirect false positives on turns that were not stuck or were following instructions, compliance with a project rule 'stop and ask after N failed attempts', judge and writer overhead tokens (on Codex the default model, not haiku), and final pass rate.",
+      "sources_agree": "The digest proposes A4. Goldfish-1 notes that the judge never sees the user's prompt and that TE's own verification redirected an instructed 12-cycle turn. Goldfish-2 notes the 'Do NOT stop' conflict. The verifier adds the judge-free backstop and that Codex side calls run on the default model. All agree it cannot be absorbed without a test.",
+      "after_integration": {
+        "integration_result": "n/a (hold)",
+        "disposition": "hold",
+        "backlog": [
+          "HOLD-06"
+        ],
+        "test_changes": "Depends on OAW-03 (the nudge must actually fire on L1/L2, trigger block), OAW-04/OAW-05 (overhead and effective tokens) and PRE-03 (Codex half). Order: step 5 of the TE test order (backlog test_order)."
+      }
+    },
+    {
+      "id": "te.envfacts-miner",
+      "name": "LLM-free environment-fact miner (FormRepair, Boundary, EmptyProbe, ArgRepair)",
+      "what": "It reads finished sessions for recurring evidence shapes: form A fails and form B then works; every fetch to a host is refused; probes always come back empty; a test label works only in a rewritten shape. It turns each into a one-line declarative fact with a lifecycle and injects the facts at SessionStart.",
+      "disposition": "hold",
+      "oaw_target": "",
+      "reason": "The miner makes no model call (envfacts.py:1-33), and its static rules are already absorbed (te.fact-lifecycle, te.completion-advice-lint). What stays on hold is its value claim: that pushing learned facts saves tokens compared with OAW's pull-based evidence. Automatic SessionStart push conflicts with v2's removal of automatic memory, and the injected block is never reconciled with AGENTS.md or CLAUDE.md (envfacts.py:47-49; controller.py:106-133). If the test shows a gain, the OAW form would be an offline, human-reviewed report that suggests verification commands for AGENTS.md, never an automatic injection. Reading native transcripts for it would also need a decision against Skill_Guide.md:40 ('usage diagnostics stay with the host'). The EnvValue family is excreted separately (te.envvalue-secret-capture).",
+      "evidence": [
+        "tokeneconomizer/microskills/envfacts.py:1-33 (families; no LLM; caps and lint)",
+        "tokeneconomizer/microskills/envfacts.py:45-49, :253-259 (block caps and header)",
+        "tokeneconomizer/plugin/controller.py:106-133 (SessionStart injection)",
+        "tokeneconomizer/plugin/config.py:148 (microskills off by default)",
+        "oaw-ref/docs/Skill_Guide.md:40"
+      ],
+      "missing_test": "A5, paid A/B on the test-trap fixture (te.test-trap-fixture), on Claude Code and Codex. Compare three arms: microskills=envfacts (push); oaw-evidence holding the same fact, recorded by hand and recalled with --max-chars (pull); and native only. Measure whether the trap is avoided, the first test command, the wrong-command rate, effective tokens and pass rate.",
+      "sources_agree": "The digest proposes A5. Goldfish-2 says the miner could be reused as a CLAUDE.md suggestion generator without EnvValue. Goldfish-1 and goldfish-2 both flag the unreconciled block. The verifier is silent.",
+      "after_integration": {
+        "integration_result": "n/a (hold)",
+        "disposition": "hold",
+        "backlog": [
+          "HOLD-05"
+        ],
+        "missing_test": "A5, paid A/B on the verification-trap fixture (te.test-trap-fixture, new module) on Claude Code (through the PRE-04 shell-allowed runner) and Codex. Four arms: native; one AGENTS.md line (OAW's recommended place); oaw-evidence pull of the same fact; TE microskills=envfacts push. trap_armed proven on every run. Measure trap avoidance, wrong-command count, effective tokens including warm-up and pass rate.",
+        "test_changes": "Revision 1 had three arms; integration added the AGENTS.md arm (ingest/tokeneconomizer/integration.json#te.test-trap-fixture). Depends on OAW-03, OAW-04, OAW-05 and PRE-03."
+      }
+    },
+    {
+      "id": "te.toolprune-evidence-rule",
+      "name": "Never-used tool evidence rule",
+      "what": "A tool, Codex capability or Copilot MCP server is proposed for removal only after it has gone unused over 10 prompts across at least 2 sessions, or over 5 sessions (three times as long for high-risk tools). It is never proposed if it was ever used in the repository, and core and interactive tools are protected. With toolprune=propose, it only proposes.",
+      "disposition": "hold",
+      "oaw_target": "",
+      "reason": "The decision rule is careful (fold.py:97-106, :257-261; adapter.py:36-61; toolprune/codex.py:516). But OAW has no tool lists to prune and no transcript reader, and the net saving over native features is unknown. Claude Code already defers tools behind ToolSearch, and TE itself says deferred tools cost one listing line each (adapter.py:14-18); prompt caching also discounts re-sent schemas. The automatic write is excreted (te.toolprune-auto-default). What is held is whether OAW should ever recommend toolprune=propose to a user.",
+      "evidence": [
+        "tokeneconomizer/plugin/fold.py:97-106 (enough_evidence)",
+        "tokeneconomizer/plugin/fold.py:257-261 (Codex proposal requires never used, not applied, not kept)",
+        "tokeneconomizer/toolprune/codex.py:516 (ever-completed capabilities are protected)",
+        "tokeneconomizer/plugin/adapter.py:14-18, :36-61 (deferred tools cost one listing line; protected sets; high-risk x3)",
+        "tokeneconomizer/plugin/denylist.py:7-10 (the lever is the host's own permissions.deny)"
+      ],
+      "missing_test": "A3, paid: run te toolprune measure before and after, and record real-session effective tokens over N sessions with ToolSearch deferral and caching on, net of cache rewrites on resumed sessions, on Claude Code and Codex. Count tasks that later needed a pruned tool (false prunes).",
+      "sources_agree": "The digest proposes A3 and flags native redundancy. Goldfish-1 and goldfish-2 both say pruning overlaps host-native features. The verifier narrowed the EGM risk to capabilities that were never used.",
+      "after_integration": {
+        "integration_result": "n/a (hold)",
+        "disposition": "hold",
+        "backlog": [
+          "HOLD-07"
+        ],
+        "test_changes": "Phase 0 (two small isolated Claude requests, Codex prompt-input free) runs first and may end the test; phase 1 depends on OAW-03, OAW-04, OAW-05 and PRE-03."
+      }
+    },
+    {
+      "id": "te.repomap",
+      "name": "Repository map (aider tree-sitter/PageRank)",
+      "what": "Opt-in. It injects aider's ranked map of a repository's key files and symbols, trimmed to 2048 tokens, either at SessionStart or ranked against the prompt. aider runs as a separate, optional Python process.",
+      "disposition": "hold",
+      "oaw_target": "",
+      "reason": "It is off by default (plugin/config.py:162-165), and it is not a knowledge graph or vector store, so it does not answer the owner's graphify or vectorization question. By design it duplicates the host instruction channel (repomap.py:3-6). It also depends on aider-chat (a pyproject extra), so absorbing it would mean a stdlib re-implementation (ast-based symbol ranking), which only makes sense if a code map proves useful. Compare it with graphify's code map in that food's ledger before testing either.",
+      "evidence": [
+        "tokeneconomizer/plugin/repomap.py:1-14",
+        "tokeneconomizer/plugin/config.py:162-165 (repomap off, 2048 tokens)",
+        "pyproject.toml:18, :45 (no runtime dependencies; aider-chat only as an optional extra)"
+      ],
+      "missing_test": "Paid A/B on fixed fixture tasks: repomap on vs off (and vs graphify's map, if that food is tested), on Claude Code and Codex. Measure tool calls and effective tokens to the first correct edit, pass rate, and the map's own token cost.",
+      "sources_agree": "The digest says it is not an embedding or knowledge graph. Goldfish-1 and goldfish-2 say it duplicates host-native channels. The verifier confirms there is no vector or graph store.",
+      "after_integration": {
+        "integration_result": "n/a (hold)",
+        "disposition": "hold",
+        "backlog": [
+          "HOLD-04"
+        ],
+        "test_changes": "Merged with graphify's code-map registration (one shared native arm). Effective tokens need OAW-05."
+      }
+    },
+    {
+      "id": "te.install-as-user-plugin",
+      "name": "TokenEconomizer installed by the user beside OAW",
+      "what": "The whole plugin, installed by the user from its own marketplace rather than by OAW. OAW would record the pinned SHA and the recommended settings.",
+      "disposition": "hold",
+      "oaw_target": "",
+      "reason": "Its paper headline (18.4-30.9% lower cost, but Pass@1 -1.0 for Claude Code with Opus 4.8, README.md:38) cannot be checked from the repository, and OAW's no-assertion-regression rule would reject it. On Codex, auto toolprune can write features.multi_agent=false and agents.enabled=false into an untracked project .codex/config.toml in a repository where subagents were never used under TE (denylist.py:61-64; fold.py:257-261). That would break the subagent sessions bundled EGM needs. A committed .codex/config.toml prevents it (denylist.py:420-425). Any test should start with toolprune=propose and shadow=True. OAW never installs it.",
+      "evidence": [
+        "README.md:36-39 (headline numbers in the teaser alt text)",
+        "tokeneconomizer/plugin/denylist.py:61-64, :72, :420-425",
+        "tokeneconomizer/plugin/fold.py:257-261",
+        "oaw-ref/docs/plans/skill-catalog-execution.md:275 (EGM needs sessions that can start subagents)",
+        "oaw-ref/scripts/improvement.py:300-320 (any assertion regression is rejected)"
+      ],
+      "missing_test": "A1: a four-arm stream A/B (native; native+TE defaults; native+OAW default; native+OAW+TE) with at least 8 sequential sessions per arm and at least 5 repeats, on Claude Code and Codex. Count TE overhead, hook latency and per-assertion passes; the gate is D >= C. A2: on Codex, let TE apply the collaboration deny in a fixture repository with no subagent use, then run EGM's 30 scenarios plus the seeded-defect set against arm C. A6: a trigger test of TE's generic Codex skill names (status, config, repos) next to OAW's planned oaw-status.",
+      "sources_agree": "The digest's integration rationale and its A1, A2 and A6 proposals. The verifier agrees and narrows A2's precondition (capability never used, file untracked). Goldfish-1 and goldfish-2 agree the defaults are aggressive.",
+      "after_integration": {
+        "integration_result": "n/a (hold)",
+        "disposition": "hold",
+        "backlog": [
+          "HOLD-08a",
+          "HOLD-08b"
+        ],
+        "missing_test": "HOLD-08a (cheap, Codex-only, early): A2 yes/no EGM-subagent conflict, then A6 static name/description check and, only on divergence, a trigger run. HOLD-08b (last): A1 four-arm stream (A native; B native+TE; C native+OAW default; D native+OAW+TE) with the gate D >= C AND the D2 floor C >= B; TE settings learned from A2-A5 and repomap, never TE defaults (which include the excreted toolprune=auto).",
+        "test_changes": "Revision 1's gate was D >= C only; C >= B (OAW after eating vs the food alone, D2) is added. The backlog's single HOLD-08 put A2 and A6 behind A3-A5, contradicting tokeneconomizer/proposals.md 2.0; it is split into 08a and 08b."
+      }
+    },
+    {
+      "id": "te.toolprune-auto-default",
+      "name": "Automatic deny-list writes (toolprune=auto by default)",
+      "what": "By default, once evidence forms and the repository has been idle for 60 minutes, or after 24 h regardless, the plugin writes to the host's project settings: permissions.deny in .claude/settings.local.json, toggles in .codex/config.toml, or disabledMcpServers in .github/copilot/settings.local.json. The user is told at the next session start.",
+      "disposition": "excrete",
+      "oaw_target": "",
+      "reason": "It makes persistent host permission and configuration changes without per-change consent. That contradicts OAW's promise not to edit host settings silently (oaw-ref/README.md:202; Skill_Guide.md:17) and the packaging allowlist, which rejects auto-approved permissions (skill-catalog-execution.md:313). On Claude Code the notice is a systemMessage that appears only in the Ctrl+O transcript (README.md:318-320; hosts.py:242-244). The entries stay after uninstall unless toolprune restore is run in every repository. The Codex collaboration package disables subagents (denylist.py:61-64), which EGM needs. The writer's safety discipline is fine and mostly already in OAW (see te.host-load-probe); only the consent-free default is excreted.",
+      "evidence": [
+        "tokeneconomizer/plugin/config.py:11-16, :152, :156",
+        "tokeneconomizer/plugin/fold.py:312-341, :344-350",
+        "tokeneconomizer/plugin/denylist.py:24-37, :52-56, :61-64, :244-262",
+        "tokeneconomizer/plugin/controller.py:188-199 (after-the-fact notice)",
+        "README.md:318-320 (notice only in the Ctrl+O detailed transcript)",
+        "oaw-ref/README.md:202; oaw-ref/docs/Skill_Guide.md:17; oaw-ref/docs/plans/skill-catalog-execution.md:313"
+      ],
+      "missing_test": "",
+      "sources_agree": "All four sources agree: the digest (security flag 2 and an instruction conflict), the verifier (confirmed the defaults and added the forced write after 24 h), and goldfish-1 and goldfish-2 (major findings)."
+    },
+    {
+      "id": "te.hooks-on-every-tool-call",
+      "name": "Unmatched hooks on six events",
+      "what": "One sh launcher is registered with no matcher on SessionStart, UserPromptSubmit, PostToolUse, PostToolUseFailure, Stop and SessionEnd (the PostToolUse timeouts are 60 s). It starts sh plus Python on every tool call.",
+      "disposition": "excrete",
+      "oaw_target": "",
+      "reason": "OAW ships no hooks, and its packaging allowlist rejects them (skill-catalog-execution.md:313). The process starts even with every mechanism off, because post_tool returns {} only after startup (controller.py:298). Any A/B arm with TE installed therefore has polluted latency_ms, and OAW rejects resource regressions over 10% (improvement.py:87). TE's fail-open entry point (hook.py:62-87) is good practice, but OAW has nowhere to use it.",
+      "evidence": [
+        "plugin/hooks/hooks.json:4-65 (six events, no matcher; timeouts 15/20/60/60/10/10)",
+        "tokeneconomizer/plugin/controller.py:298 (returns {} only after the process has started)",
+        "tokeneconomizer/plugin/hook.py:62-87",
+        "oaw-ref/scripts/improvement.py:87 (maximum_resource_regression 0.10)",
+        "oaw-ref/docs/plans/skill-catalog-execution.md:313"
+      ],
+      "missing_test": "",
+      "sources_agree": "The digest (security flag 1 and a diarrhea risk), the verifier (confirmed, and added that the cost remains with every mechanism off), and goldfish-2 (minor)."
+    },
+    {
+      "id": "te.background-daemons",
+      "name": "Detached background jobs and the 24 h waiter",
+      "what": "Hooks spawn detached jobs: te fold on SessionStart and SessionEnd, te judge, te repomap refresh, te repos migrate, and a toolprune apply-pending waiter. The waiter polls every 600 s for up to 24 h, then edits settings after the agent has exited.",
+      "disposition": "excrete",
+      "oaw_target": "",
+      "reason": "v2.0.0-execution.md:78 forbids a background self-rewriting daemon, and this waiter edits host configuration with no agent or user present. docs/PLUGIN.md discloses the resident process, but the README does not.",
+      "evidence": [
+        "tokeneconomizer/plugin/context.py:73-96",
+        "tokeneconomizer/plugin/controller.py:154-174, :374",
+        "tokeneconomizer/plugin/fold.py:51-52, :344-350",
+        "tokeneconomizer/plugin/cli.py:355-382 (while True / time.sleep waiter with heartbeat)",
+        "tokeneconomizer/plugin/judge.py:100-104",
+        "oaw-ref/docs/plans/v2.0.0-execution.md:78"
+      ],
+      "missing_test": "",
+      "sources_agree": "The digest, the verifier, goldfish-1 (minor) and goldfish-2 (major) agree."
+    },
+    {
+      "id": "te.windows-job-escape",
+      "name": "Windows job-object escape with an environment spec file",
+      "what": "On Windows, detached jobs start with CREATE_BREAKAWAY_FROM_JOB. If the job forbids breakaway, they start through PowerShell Invoke-CimMethod Win32_Process.Create, after the command, working directory and the hook's full environment are written to a te-spawn-*.json file beside the log.",
+      "disposition": "excrete",
+      "oaw_target": "",
+      "reason": "It deliberately escapes the host's kill-on-close job object. On the WMI path, the full environment, API keys included, sits in a file until the child reads and deletes it. The 0700/0600 privacy claim (PLUGIN.md:543-544) is not enforced on Windows, because secure_root needs os.getuid (paths.py:33-46), so the file is protected only by the directory's inherited ACLs. Neither the README nor PLUGIN.md mentions the escape or the spec file. This user runs Windows.",
+      "evidence": [
+        "tokeneconomizer/plugin/winspawn.py:1-14, :25-27, :44-77",
+        "tokeneconomizer/plugin/winspawn.py:80-89 (child reads, then deletes, the spec)",
+        "tokeneconomizer/plugin/context.py:79-89 (environment is the hook's env plus PYTHONPATH and PYTHONUTF8)",
+        "tokeneconomizer/plugin/paths.py:33-46 (secure_root depends on os.getuid)",
+        "docs/PLUGIN.md:543-544"
+      ],
+      "missing_test": "",
+      "sources_agree": "The digest, the verifier (who found the spec file is temporary and deleted on read), goldfish-1 (major) and goldfish-2 (major) agree."
+    },
+    {
+      "id": "te.repo-cwd-module-shadowing",
+      "name": "Detached Python runs with the repository root first on sys.path",
+      "what": "Every detached job runs sys.executable -m tokeneconomizer.plugin.cli with the working directory set to the repository root, and without -I, -P or PYTHONSAFEPATH. The Windows Codex hook uses python -c.",
+      "disposition": "excrete",
+      "oaw_target": "",
+      "reason": "Both python -m and python -c put the current directory first on sys.path, ahead of the standard library. A repository-root random.py, json.py or similar module therefore runs with the hook's full environment, outside the agent's permission system; the verifier reproduced this Python behaviour with its own files. With TE installed user-wide, opening an untrusted clone, as OAW's own ingest does, would execute candidate code. The Windows Codex hook path is PLAUSIBLE: te_bootstrap imports re before it inserts its own path, but whether Codex runs hooks with the project as the working directory could not be checked statically.",
+      "evidence": [
+        "tokeneconomizer/plugin/context.py:84-93 (python -m, cwd=self.repo.root)",
+        "tokeneconomizer/plugin/winspawn.py:88-89 (WMI child runs the same command with the same cwd)",
+        "plugin/hooks/codex-hooks.json:9, :21 (commandWindows: python -X --% -u -X utf8 -c ...)",
+        "plugin/scripts/te_bootstrap.py:28-29, :154-156 (os, re, sys imported before the package path is inserted)"
+      ],
+      "missing_test": "",
+      "sources_agree": "Only the verifier found this; the digest and both goldfish missed it. It was checked against the source here. OAW's counter-rule is recorded under te.repo-cannot-redirect-executables."
+    },
+    {
+      "id": "te.sidecall-model-runtime",
+      "name": "Default-on paid side-call runtime",
+      "what": "The loop-guard judge and nudge writer (on by default) and the micro-skills proposer (opt-in) call nested agent CLIs: claude -p on haiku, codex exec on the user's default model, copilot -p, pi and opencode. The calls are billed to the user's plan. The judge digest includes raw command lines up to 90 characters and grep patterns.",
+      "disposition": "excrete",
+      "oaw_target": "",
+      "reason": "This is a second model runtime that spends without per-call consent, which v2.0.0-execution.md:78 forbids and which OAW's no-automatic-spend boundary excludes (skill-catalog-execution.md:68; owner decisions D7 and D11). On Codex there is no cheap default: paid_model is empty, so the judge runs on the user's default model and each call carries about 25k base-prompt tokens (sidecall.py:14-17, :470-487). The docs say digests are command templates and never file contents (PLUGIN.md:546-553). In fact, raw commands up to 90 characters go to the provider unredacted (loopguard/state.py:187-194, :214-232), so inline tokens in commands leave the machine.",
+      "evidence": [
+        "tokeneconomizer/plugin/config.py:17-25, :158, :166 (loopguard=nudge; paid_model empty)",
+        "tokeneconomizer/plugin/sidecall.py:14-17, :217-235, :238-246, :470-490",
+        "tokeneconomizer/plugin/judge.py:64-97",
+        "tokeneconomizer/loopguard/state.py:187-194, :214-232 (raw command text in the digest)",
+        "docs/PLUGIN.md:546-553 (privacy description that understates this)",
+        "oaw-ref/docs/plans/v2.0.0-execution.md:78; oaw-ref/docs/plans/skill-catalog-execution.md:68"
+      ],
+      "missing_test": "",
+      "sources_agree": "The digest (network flag and a diarrhea risk), the verifier (Codex default model, raw commands), goldfish-1 (minor) and goldfish-2 (minor) agree."
+    },
+    {
+      "id": "te.sidecall-isolation-gaps",
+      "name": "Side-call isolation gaps",
+      "what": "Claude side calls drop the built-in tools and, when claude --help lists the flags, the MCP servers and session persistence. They do not disable the user's other plugins, hooks or user-level CLAUDE.md. TE_SIDECALL=1 silences only TE's own hooks.",
+      "disposition": "excrete",
+      "oaw_target": "",
+      "reason": "If another session-capture plugin is installed (claude-mem is being digested in this round), every TE judge call becomes a nested headless session that the plugin can observe, record and inject into, which adds cost and pollutes memory. Flags missing from --help are dropped silently. That loads every MCP server (TE's own figure: about 570k vs 14k effective tokens with 31 servers) and puts side calls into the resume history. Nothing from the recipe is absorbed. OAW's pilot runner already pins disableAllHooks, --setting-sources project,local, --strict-mcp-config with its own mcp.json and --no-session-persistence, and it fails closed when the CLI rejects a flag. Only the Windows shim handling is taken (te.windows-cli-argv).",
+      "evidence": [
+        "tokeneconomizer/plugin/sidecall.py:8-13, :57-58 (only TE_SIDECALL in the environment)",
+        "tokeneconomizer/plugin/sidecall.py:183-214 (flags added only if claude --help lists them)",
+        "tokeneconomizer/plugin/sidecall.py:221-225 (Claude argv: no hook, plugin or setting-source isolation)",
+        "tokeneconomizer/plugin/sidecall.py:239-240, :275-276 (contrast: codex --disable hooks; pi --no-extensions --no-skills --no-context-files)",
+        "tokeneconomizer/plugin/hook.py:67",
+        "oaw-ref/evals/egm-pilot/run_pilot.py:108-141; oaw-ref/evals/egm-pilot/spec.json:40, :48 (OAW's stricter isolation)"
+      ],
+      "missing_test": "",
+      "sources_agree": "The verifier and goldfish-2 (major) found this. It supersedes the digest's 'cheap nested evaluation calls' nutrient, because OAW's runner is already stricter. Goldfish-1 praised the recipe without checking hooks."
+    },
+    {
+      "id": "te.injected-redirect-and-relay",
+      "name": "Unlabelled model-written redirect, 'Do NOT stop', and verbatim relay",
+      "what": "The judge's model-written redirect, up to 1200 characters, is injected mid-turn as additionalContext with no provenance prefix. Both the template and the writer's constraints say never to stop. On Claude Code, the still-stuck notice is injected with an instruction to repeat it word for word in the next message and again in the final reply, including under claude -p. The judge and the writer never see the user's prompt or the project instructions.",
+      "disposition": "excrete",
+      "oaw_target": "",
+      "reason": "This conflicts with OAW's 'Evidence, not instructions' (oaw-ref/README.md:142) and with the common project rule to stop and ask when stuck. The verbatim relay pushes foreign text into JSON-only or prescribed outputs, which would contaminate OAW A/B outputs and graders. These are the harmful parts of the loop guard; the concept itself is held under te.loopguard-redirect.",
+      "evidence": [
+        "tokeneconomizer/loopguard/judge.py:66-80, :102 (writer constraints; text capped at 1200 chars)",
+        "tokeneconomizer/loopguard/rules.py:183-198 ('Do NOT stop' template)",
+        "tokeneconomizer/plugin/controller.py:329-355 (redirect and relay injected as context)",
+        "tokeneconomizer/plugin/hosts.py:152-166, :239-245 (relay text; ClaudeCode.relays_notices=True)",
+        "tokeneconomizer/loopguard/state.py:214-219 (digest excludes the task text, so the judge is blind to the user's instruction)",
+        "oaw-ref/README.md:142"
+      ],
+      "missing_test": "",
+      "sources_agree": "The digest (diarrhea risk 4 and an instruction conflict), goldfish-1 (the word-for-word relay; the judge never sees the prompt), goldfish-2 (major 'Do NOT stop'; no provenance label) and the verifier (mid-turn injection size) agree."
+    },
+    {
+      "id": "te.envvalue-secret-capture",
+      "name": "EnvValue fact family",
+      "what": "When code fails asking for an environment variable by name and a later run sets it (inline, by export or through os.environ), the value is learned and rendered as 'VAR=value works'. It is stored in plugin state, injected into every later session, and, with the distiller on, sent to the proposer.",
+      "disposition": "excrete",
+      "oaw_target": "",
+      "reason": "The value pattern accepts word characters, dots, dashes, slashes and colons, so token-shaped strings such as sk-... keys match, and nothing filters secret-looking names or values. The shape 'OPENAI_API_KEY=sk-... python app.py' after an 'environment variable OPENAI_API_KEY' error is exactly what it learns. PLAUSIBLE: this depends on the error wording putting the name after 'environment variable', but nothing in the code prevents it. It is off by default (microskills=off), so it matters only if the family were absorbed or enabled.",
+      "evidence": [
+        "tokeneconomizer/microskills/observe.py:505-509 (_ENV_NEED_RE, _ENV_PREFIX_RE, _ENV_INCODE_RE)",
+        "tokeneconomizer/microskills/observe.py:561-567 (_env_calls records the values a command sets)",
+        "tokeneconomizer/microskills/envfacts.py:26-28, :110-114 (claim embeds the value)",
+        "tokeneconomizer/microskills/envfacts.py:437-455 (good and bad values counted per variable)",
+        "tokeneconomizer/microskills/distiller.py:507-513 (injected facts listed in the proposer prompt)",
+        "tokeneconomizer/plugin/config.py:148; README.md:72"
+      ],
+      "missing_test": "",
+      "sources_agree": "Goldfish-1 (major, PLAUSIBLE) and goldfish-2 (major) agree. The digest and the verifier are silent."
+    },
+    {
+      "id": "te.distiller-proposer",
+      "name": "Paid LLM fact proposer and the 'repo operating manual' block",
+      "what": "Every k sessions, a paid proposer call reads digests of the last 8 sessions (command templates, raw command excerpts, masked errors). It writes open-vocabulary facts with regex detectors and extractors, which are compiled in-process. Facts that pass grounding are injected at SessionStart as a '# repo operating manual' block.",
+      "disposition": "excrete",
+      "oaw_target": "",
+      "reason": "This is automatic memory written by a second model and pushed into all future sessions, which v2 removed (v2.0.0-execution.md:78, :86). The block has no precedence statement against AGENTS.md or CLAUDE.md, so learned text can contradict a documented project command. Session content, which a repository controls (PLUGIN.md:560-564), becomes a persistence path into later sessions. Model-written regexes are compiled with re.compile and run over session output, which is a ReDoS risk. Its grounding and contradiction-only revision rules are absorbed separately (te.fact-lifecycle).",
+      "evidence": [
+        "tokeneconomizer/microskills/distiller.py:28-38 (cadence, window, raw-blob caps)",
+        "tokeneconomizer/microskills/distiller.py:260-266, :346-362 (model-written patterns compiled and run)",
+        "tokeneconomizer/microskills/distiller.py:418-454 (proposer prompt)",
+        "tokeneconomizer/microskills/distiller.py:498-515 (raw command excerpts in the prompt)",
+        "tokeneconomizer/microskills/distiller.py:711-719 ('# repo operating manual' render)",
+        "tokeneconomizer/plugin/config.py:5-10, :148",
+        "docs/PLUGIN.md:560-564",
+        "oaw-ref/docs/plans/v2.0.0-execution.md:78, :86"
+      ],
+      "missing_test": "",
+      "sources_agree": "The digest (ReDoS-only risk; duplicate fact sources), goldfish-1 and goldfish-2 (minor: unreconciled block, persistence path). The verifier is silent."
+    },
+    {
+      "id": "te.unpinned-clone-loading",
+      "name": "Hook code loaded from the mutable clone",
+      "what": "te_bootstrap looks for the package in TE_CORE_PATH, plugin/lib, a symlink stub, the plugin's parent folder, or the clone path recorded in ~/.claude/plugins/known_marketplaces.json or the Codex config.toml source, and inserts it at sys.path[0]. Updates are done with git pull in the clone.",
+      "disposition": "excrete",
+      "oaw_target": "",
+      "reason": "The running hook code changes on any git pull, with no SHA or hash check. That conflicts with OAW's intake, which pins a SHA and verifies hashes (skill-catalog-execution.md:74). On Windows, the lib symlink checks out as a stub, so the live clone is the path actually used, as the verifier confirmed.",
+      "evidence": [
+        "plugin/scripts/te_bootstrap.py:57-118, :154-156",
+        "README.md:116-117, :199-200 (run from the clone; update with git pull)",
+        "oaw-ref/docs/plans/skill-catalog-execution.md:74"
+      ],
+      "missing_test": "",
+      "sources_agree": "The digest (security flag 6 and a diarrhea risk) and the verifier (confirmed for Windows) agree. Both goldfish are silent."
+    },
+    {
+      "id": "te.slash-command-shell-args",
+      "name": "Unquoted $ARGUMENTS in slash commands",
+      "what": "The slash commands tell the model to run an exact shell line in which $ARGUMENTS is substituted unquoted.",
+      "disposition": "excrete",
+      "oaw_target": "",
+      "reason": "Shell metacharacters in the arguments become shell syntax. The scoping is otherwise good ('never add apply or restore yourself'); the unquoted splice is the harmful part.",
+      "evidence": [
+        "plugin/slash-commands/config.md:9",
+        "plugin/slash-commands/repos.md:9",
+        "plugin/slash-commands/toolprune.md:9",
+        "plugin/slash-commands/untool.md:9"
+      ],
+      "missing_test": "",
+      "sources_agree": "Goldfish-1 and goldfish-2 (minor) agree. The digest and the verifier are silent."
+    },
+    {
+      "id": "te.probe-side-effects",
+      "name": "Side effects of the probe and catalog commands",
+      "what": "refresh-catalog starts claude -p with all of the user's MCP servers and kills the process tree after the init event. The Copilot probe creates its throwaway repository inside the first writable Copilot-trusted folder and runs copilot -p --allow-all-tools there. On Claude, toolprune measure makes two paid requests that the slash command does not warn about.",
+      "disposition": "excrete",
+      "oaw_target": "",
+      "reason": "These user-run commands have side effects the docs do not describe: the README says refresh-catalog works 'without a model call' (README.md:190-191), and the probe's docstring says nothing outside a temporary directory is written. The method behind refresh-catalog is absorbed with fixes (te.host-load-probe); the side effects are not.",
+      "evidence": [
+        "tokeneconomizer/plugin/toolcheck.py:58-98, :216-238",
+        "tokeneconomizer/plugin/probe.py:1-22, :118-121, :182-185",
+        "README.md:190-191",
+        "plugin/slash-commands/toolprune.md:3, :9"
+      ],
+      "missing_test": "",
+      "sources_agree": "Goldfish-1 (minor) and the verifier (the probe writes into a trusted location) agree. The digest is silent."
+    },
+    {
+      "id": "te.bundled-third-party-text",
+      "name": "Bundled third-party text and trademarks",
+      "what": "The repository bundles tokeneconomizer/trace/claude_tool_catalog.json (7.3 KB of Claude Code tool-description excerpts, shipped as package data), experiments/te_harness/data/codex_base_prompt/0.153.1.md (18 KB of Codex's base prompt), and docs/assets/logo_berkeley.png and logo_microsoft.png.",
+      "disposition": "excrete",
+      "oaw_target": "",
+      "reason": "The Apache-2.0 grant on TE's code may not cover Anthropic product text or the logos, and OAW's license gate requires redistributable content (skill-catalog-execution.md:75). Absorbing methods instead of files avoids the issue; none of these files is copied.",
+      "evidence": [
+        "tokeneconomizer/trace/claude_tool_catalog.json (7363 bytes)",
+        "experiments/te_harness/data/codex_base_prompt/0.153.1.md (17933 bytes)",
+        "docs/assets/logo_berkeley.png; docs/assets/logo_microsoft.png",
+        "pyproject.toml:58 (package-data section)",
+        "oaw-ref/docs/plans/skill-catalog-execution.md:75"
+      ],
+      "missing_test": "",
+      "sources_agree": "This comes from the verifier's license correction. The digest's 'license pass' verdict was written before it. Both goldfish are silent."
+    },
+    {
+      "id": "te.live-ledger-and-status",
+      "name": "Live per-session ledger and te status",
+      "what": "Every folded session is priced from the host transcript into the state store's ledger.jsonl. te status summarizes sessions, overhead, nudges and sessions that received injected facts.",
+      "disposition": "excrete",
+      "oaw_target": "",
+      "reason": "It duplicates host-native usage views (/cost, /usage), and OAW leaves usage diagnostics to the host (Skill_Guide.md:40). Being superseded by a native feature is an excretion condition in the catalog plan (skill-catalog-execution.md:242). The useful parts, effective-token weighting and overhead attribution, are absorbed as evaluation methods (te.effective-tokens, te.overhead-attribution). The always-on runtime that reads transcripts is not.",
+      "evidence": [
+        "tokeneconomizer/plugin/fold.py:370-418 (session record appended to ledger.jsonl)",
+        "tokeneconomizer/plugin/cli.py:197-208 (te status reads the ledger)",
+        "tokeneconomizer/plugin/accounting.py:33-53",
+        "oaw-ref/docs/Skill_Guide.md:40; oaw-ref/docs/plans/skill-catalog-execution.md:242"
+      ],
+      "missing_test": "",
+      "sources_agree": "The digest (OAW overlap point 2) and goldfish-2 (the ledger and status overlap /cost and /usage) agree. The verifier is silent."
+    },
+    {
+      "id": "te.pack-or-bundle",
+      "name": "TokenEconomizer as an OAW pack or core item",
+      "what": "Distributing or installing TE (hooks, runtime, settings writer) as part of an OAW recipe.",
+      "disposition": "excrete",
+      "oaw_target": "",
+      "reason": "Policy blocks this regardless of any A/B result. The packaging allowlist rejects hooks and auto-approved permissions (skill-catalog-execution.md:313). v2 forbids a second model runtime and background daemons (v2.0.0-execution.md:78). OAW promises not to edit host settings silently (Skill_Guide.md:17). Methods are absorbed instead, which the plan ranks first (skill-catalog-execution.md:133-137). Installation by the user is held under te.install-as-user-plugin.",
+      "evidence": [
+        "plugin/hooks/hooks.json:4-65",
+        "tokeneconomizer/plugin/config.py:152, :158",
+        "oaw-ref/docs/plans/skill-catalog-execution.md:133-137, :313",
+        "oaw-ref/docs/plans/v2.0.0-execution.md:78",
+        "oaw-ref/docs/Skill_Guide.md:17"
+      ],
+      "missing_test": "",
+      "sources_agree": "The digest (integration_mode absorb_method), the verifier (agrees, and makes the case against packing stronger) and goldfish-1 and goldfish-2 (both describe the defaults as aggressive)."
+    },
+    {
+      "id": "te.non-oaw-host-adapters",
+      "name": "Copilot, Pi, opencode and Cursor adapters",
+      "what": "Copilot CLI hooks and MCP-server pruning, a Pi TypeScript extension, an opencode plugin, and an experimental Cursor adapter.",
+      "disposition": "excrete",
+      "oaw_target": "",
+      "reason": "These are not harmful in themselves; they are excreted only because they are out of scope. OAW v2 targets only Claude Code and Codex, and its Copilot and Cursor pointer files were retired (oaw-ref/README.md:97), so these adapters have no OAW receiver and nothing is taken.",
+      "evidence": [
+        "plugin/hooks/copilot-hooks.json; plugin/hooks/cursor-hooks.json",
+        "plugin/pi/tokeneconomizer.ts; plugin/opencode/tokeneconomizer.ts",
+        "oaw-ref/README.md:97"
+      ],
+      "missing_test": "",
+      "sources_agree": "The digest (hosts.other). No source disagrees."
+    },
+    {
+      "id": "te.codex-skill-consent-pattern",
+      "added_in_revision": 2,
+      "name": "Narrow Codex skill triggers with read-only defaults and escalation for writes",
+      "what": "TE's Codex skills name TokenEconomizer in each description, default to read-only subcommands (show, list, status), and route any state-changing subcommand through Codex sandbox escalation with a justification, so the user approves each write.",
+      "disposition": "excrete",
+      "oaw_target": "",
+      "reason": "Redundant: OAW already covers each part. Food skills are checked for broad or colliding triggers by the digest's trigger-conflict gate; OAW's own policy says installing OAW authorizes no external actions and that a recorded acceptance never applies a patch; the bundled EGM bridges are manual-only. OAW's own write paths (memory add, annotate) stay inside the workspace, so they need no escalation. Listed as not adopted for D3.",
+      "evidence": [
+        "plugin/codex-skills/config/SKILL.md:3-4, :15-17 (narrow description; show by default; writes need require_escalated)",
+        "oaw-ref/templates/AGENTS.md:23 (installing OAW does not authorize external actions)",
+        "oaw-ref/templates/.agents/skills/oaw-improve/SKILL.md:22-23 (acceptance does not apply the patch)",
+        "oaw-ref/templates/.agents/skills/egm-bootstrap/SKILL.md:5 (disable-model-invocation: true)"
+      ],
+      "missing_test": "",
+      "sources_agree": "Raised only by goldfish-2 finding #21 (value). The digest and verifier are silent. No disagreement; the disposition is this ledger's judgment that OAW already has the pattern."
+    }
+  ],
+  "ledger_revision": 2,
+  "revised": "2026-11-03",
+  "revision_basis": [
+    "ingest/tokeneconomizer/integration.json",
+    "ingest/backlog.json (revision 2)",
+    "ingest/SUMMARY.md (修訂紀錄)"
+  ],
+  "revision_rule": "Revision 2 (integration-resolved). Every component keeps its revision-1 fields as the historical record. Where a component has an 'after_integration' object, that object is canonical: its disposition, oaw_target, claim_corrections, missing_test and backlog fields supersede the revision-1 fields they restate. A split component lists its parts in after_integration.parts, and each part has its own disposition; counts_after_integration counts units (unsplit components plus parts), not components. Components with 'added_in_revision': 2 were added to give minor digest, verifier and goldfish items a disposition. Integration checked absorb components only; excrete components without an after_integration object are unchanged and each becomes a D3 not-adopted line through backlog PRE-08.",
+  "counts_after_integration": {
+    "absorb": 12,
+    "hold": 7,
+    "excrete": 19,
+    "units": 38,
+    "components": 36
+  },
+  "parity_vs_food_alone": "not tested",
+  "summary_after_integration": "TokenEconomizer after integration: 12 absorb, 7 hold, 19 excrete units (38). Changes from revision 1: te.host-load-probe moves to hold (no verified Codex counterpart, D8); te.fact-lifecycle splits into 8a (absorb) and 8b (hold); te.failure-signature splits into the diagnostic (absorb) and the oaw-improve line (excrete); te.codex-skill-consent-pattern is added as excrete (redundant). Seven absorbs are retargeted away from frozen files or have corrected claims (see after_integration). Parity vs the food alone: not tested (the A1 floor C >= B is designed in backlog HOLD-08b).",
+  "inputs_status": {
+    "ingest/tokeneconomizer/goldfish-1.json": "context unverified: the record does not say how the reviewer was launched or what it inherited. Subagents in this workflow receive the user's auto-memory index, so zero context is not established (D10). Usable as a review of the food, not as zero-context evidence.",
+    "ingest/tokeneconomizer/goldfish-2.json": "context unverified: the record does not say how the reviewer was launched or what it inherited. Subagents in this workflow receive the user's auto-memory index, so zero context is not established (D10). Usable as a review of the food, not as zero-context evidence."
+  }
+}

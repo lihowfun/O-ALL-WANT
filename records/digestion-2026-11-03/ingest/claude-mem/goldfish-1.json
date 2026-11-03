@@ -1,0 +1,130 @@
+{
+  "reviewer": "goldfish-1",
+  "food": "thedotmack/claude-mem",
+  "version_reviewed": "15.9.0 (plugin/.claude-plugin/plugin.json:3)",
+  "source_root": "ingest/claude-mem/src",
+  "method": "Read-only static review of the food's src folder. No installers, package managers, builds, hooks, tests or code from the food were run. All paths below are relative to source_root.",
+  "verdict_summary": "claude-mem is a large, carefully engineered system: 9 lifecycle hooks, a long-lived local worker, an MCP server and 29 bundled skills. Its core ideas are worth taking: background compression of tool activity into searchable observations, three-step retrieval (search, timeline, get_observations), and a tool-less, sandboxed observer LLM. The plugin goes too far as an install, though. A marketplace install uses a SessionStart hook to edit shell rc files or the Windows user PATH with no prompt, and uninstall leaves those edits in place. By default it reads Claude Code's OAuth token from the OS credential store so a background Haiku observer can run on the user's plan. It sends every tool input and output to that observer with secret redaction off. PostHog telemetry is on by default, and marketplace installs never ask about it. The agent-facing how-it-works skill also says nothing leaves the machine apart from provider calls and the signup contact, which leaves telemetry out. A PreToolUse 'File Read Gate' is on by default and denies Claude Code's own whole-file Read. The plugin also ships the author's own release and PR workflow skills (push after every phase, merge PRs, 'non negotiable' read-every-file), and these would override a project's own commit/push rules. Recommendation: take the mechanisms, not the install.",
+  "findings": [
+    {
+      "rubric_item": 2,
+      "severity": "major",
+      "finding": "A SessionStart hook on every Claude Code startup compiles a native binary and, if needed, edits persistent PATH. On POSIX it appends to ~/.zshrc, ~/.bashrc, ~/.bash_profile or config.fish. On Windows it rewrites the HKCU Environment Path registry value. Marketplace (/plugin install) users get no consent prompt. Uninstall leaves the rc line and the Path entry in place.",
+      "evidence": "plugin/hooks/hooks.json:47-58 (SessionStart startup -> node ensure-launcher.cjs, timeout 180); src/launcher/ensure-launcher.ts:1-10,158-168 (self-heal on SessionStart); src/launcher/install-launcher.ts:863-867 (runPathSetup: POSIX rc append runs on every self-heal, not only on first placement); :261-324 (ensureLocalBinOnShellPath writes rc file at :308-313); :453-473 (PowerShell script SetValue('Path',...) on HKCU\\Environment plus WM_SETTINGCHANGE broadcast); :976-1007 (removeInstalledLauncher: 'Shell rc files and the Windows user Path are never edited'). Disclosure exists only for the npx path: README.md:335, docs/public/installation.mdx:78-89."
+    },
+    {
+      "rubric_item": 3,
+      "severity": "major",
+      "finding": "PostHog product telemetry is on by default (opt-out). Only the interactive npx installer asks about it, and it asks after installation finishes. Marketplace, CI and non-TTY installs send telemetry with no prompt. The installer's wording understates what is collected. The agent-facing how-it-works skill and README.md never mention telemetry, and how-it-works says nothing leaves the machine apart from provider calls and signup.",
+      "evidence": "src/services/telemetry/consent.ts:45-69 (precedence: default -> enabled:true); src/services/telemetry/common.ts:19-21 (embedded phc_ key, https://us.i.posthog.com), :48-76 (person properties incl. db_observation_count, db_project_count, db_size_mb, obs_count_7d, locale, os); src/services/telemetry/telemetry.ts:84-96 (disableGeoip:false, uncaught-exception autocapture in worker); src/npx-cli/commands/install.ts:2270-2285 (prompt only if interactive and not CI, says 'Anonymous install ID only', initialValue true), :3404-3406 (asked last, after install); plugin/skills/how-it-works/SKILL.md:20-22 ('Nothing leaves your machine except calls to whichever AI provider ... nothing else is sent to cmem.ai', no telemetry mention); README.md has no 'telemetry' occurrence. Full disclosure is only in docs/public/telemetry.mdx:10,16,284."
+    },
+    {
+      "rubric_item": 2,
+      "severity": "major",
+      "finding": "By default the background worker reads Claude Code's own OAuth credential so it can run an observer LLM on the user's Anthropic plan. Sources are the macOS keychain via `security`, Windows Credential Manager via an Add-Type CredRead P/Invoke shim, libsecret, and ~/.claude/.credentials.json. The default provider is 'claude' with model 'haiku'. Plan usage from background compression is mentioned in the README. Reading the credential store is not.",
+      "evidence": "src/shared/oauth-token.ts:24 (KEYCHAIN_SERVICE_NAME 'Claude Code-credentials'), :218-253 (readMacOsKeychain -> security), :341-385 (buildWindowsCredentialScript, Advapi32 CredRead on 'Claude Code-credentials' targets), :497-498 (reads <configDir>/.credentials.json), :684-702 (readClaudeOAuthToken order); src/shared/SettingsDefaultsManager.ts:481 (CLAUDE_MEM_MODEL 'haiku'), :516 (CLAUDE_MEM_PROVIDER 'claude'); README.md:149 (only says memory 'falls back to your Anthropic plan')."
+    },
+    {
+      "rubric_item": 3,
+      "severity": "major",
+      "finding": "Every tool call, matcher '*' and failures included, has its tool_input and tool_response captured and spooled to the worker. The worker forwards that content to the observer provider: Anthropic by default, or the cmem.ai inference gateway, OpenRouter, Gemini and others. Every user prompt is stored verbatim too. Automatic secret redaction is off by default, so file contents, env dumps and tokens printed by Bash reach the provider and the local DB unless the user wraps them in <private> tags.",
+      "evidence": "plugin/hooks/hooks.json:77-112 (PostToolUse and PostToolUseFailure matcher '*'); src/cli/handlers/observation.ts:30-45 (spools bounded tool_input/tool_response); src/cli/handlers/session-init.ts:302-308 (prompt sent to /api/sessions/init); src/services/sqlite/SessionStore.ts:3727 (INSERT INTO user_prompts); src/shared/SettingsDefaultsManager.ts:603 (CLAUDE_MEM_REDACT_ENABLED 'false'), :607 (generic credential redaction 'false'); src/utils/redaction.ts:297-311 (enabled only when setting === 'true'); src/shared/cmem-gateway.ts:6-8 (Pro observer goes through cmem.ai /api/inference/v1)."
+    },
+    {
+      "rubric_item": 5,
+      "severity": "major",
+      "finding": "The File Read Gate is on by default. A synchronous PreToolUse hook returns permissionDecision 'deny' for Claude Code's native whole-file Read when a code file is at least 32 KB, has prior observations, and has not changed since them. It tells the model to use claude-mem's MCP smart_outline/smart_unfold or a paged Read instead. That overrides host-native behavior and any project rule such as 'read the whole file before editing'. The gate only checks that tree-sitter loads, not that the user has the claude-mem MCP tools enabled.",
+      "evidence": "plugin/hooks/hooks.json:113-129 (PreToolUse Read|Bash|Grep|Glob|memory tools, synchronous, timeout 15); src/cli/handlers/file-context.ts:26-34 (FILE_READ_GATE_DENY_MIN_BYTES 32 KB), :164-178 (deny reason text routing to mcp__plugin_claude-mem_mcp-search__smart_outline), :261-316 (gate conditions; availability check is only checkTreeSitterCliLoadable), :371-401 (returns permissionDecision 'deny'), :347-349 (lookup lazy-spawns the worker and creates its DB); src/shared/SettingsDefaultsManager.ts:586 (CLAUDE_MEM_FILE_READ_GATE_ENABLED 'true'). Documented only in docs/public/file-read-gate.mdx:9-11, not in README.md."
+    },
+    {
+      "rubric_item": 5,
+      "severity": "major",
+      "finding": "The plugin bundles the author's own engineering workflow skills to every user. Their instructions would override a project's AGENTS.md/CLAUDE.md commit and push policy. 'do' pushes to the working branch after every phase. 'babysit' commits, pushes and resolves PR review threads. 'build-and-release' merges the PR and then releases. 'learn-codebase' says to read every source file in full as 'critical and non negotiable' and tells the model not to warn the user about cost. Broad trigger words like 'execute a plan', 'release' and 'prime' widen the collision surface with other skills.",
+      "evidence": "plugin/skills/do/SKILL.md:3 (trigger 'execute, run, or carry out a plan'), :36-38 ('Push to working branch after each verified phase'); plugin/skills/babysit/SKILL.md:16 ('Fix real issues in focused commits ... push'), :73-79 (resolveReviewThread mutation); plugin/skills/build-and-release/SKILL.md:8,13 ('Merge the ready PR and continue from updated main'); plugin/skills/release/SKILL.md:12-13 (version-bump + childhood); plugin/skills/version-bump/SKILL.md:3 (git tagging, GitHub releases); plugin/skills/learn-codebase/SKILL.md:8-11,17-21 ('Please keep this in mind before deciding to warn the user over cost')."
+    },
+    {
+      "rubric_item": 1,
+      "severity": "minor",
+      "finding": "The memory instructions appended to every SessionStart context are one dense block covering four runtimes: local worker, self-hosted server, CMEM Pro, and direct /v1/mcp. Each runtime uses different tool names and argument names (anchor vs anchorId, search vs memory_search, save_memory vs observation_add). The model has to work out which runtime is active from what tools happen to be present. The worker/server split trims only part of the text, so the CMEM Pro and /v1/mcp lines always ship.",
+      "evidence": "src/shared/memory-instructions.ts:1-6 (single block with all runtimes), :9-15 (memoryInstructionsForRuntime removes only 'Worker runtime:'/'Server runtime:' fragments; line 5 CMEM Pro and /v1/mcp variants always kept); src/cli/handlers/context.ts:256,435 (always appended); src/shared/SettingsDefaultsManager.ts:476 (CLAUDE_MEM_MEMORY_INSTRUCTIONS_ENABLED 'true'); plugin/skills/mem-search/SKILL.md:10-25 (same multi-runtime naming matrix)."
+    },
+    {
+      "rubric_item": 5,
+      "severity": "minor",
+      "finding": "The injected memory instructions compete with host-native and project memory conventions. They route to-do tracking to claude-mem's work_state_write instead of the host's task/TodoWrite tool. They route preferences, corrections and decisions to save_memory instead of CLAUDE.md or native auto-memory. The PreToolUse hook also intercepts the host's native `memory` tool and reads of ~/.claude/projects/*/memory to inject claude-mem results. The npx installer offers to turn off Claude Code's native auto-memory entirely.",
+      "evidence": "src/shared/memory-instructions.ts:3 (save_memory for preferences/corrections/decisions), :6 ('Use work_state_write for to-do lists and changing work state when available'); src/cli/handlers/memory-search.ts:32-39 (treats ~/.claude/projects/*/memory and ~/.codex/memories as memory paths), :100-130 (hooks native `memory` view/search and Read/Grep/Bash cat on those paths), :41-52 (reads user/project .claude/settings.json autoMemoryDirectory); plugin/hooks/hooks.json:115; src/npx-cli/commands/install.ts:226-249,3018-3031 (consented CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 write; uninstall reverts it at src/npx-cli/commands/uninstall.ts:138-164)."
+    },
+    {
+      "rubric_item": 2,
+      "severity": "minor",
+      "finding": "Hooks start a detached, long-lived worker daemon that by default never exits when idle. By default it also launches chroma-mcp through uvx, which downloads and runs pinned PyPI packages at runtime. The Setup hook runs `bun install --production` in the plugin directory with trusted postinstall scripts for tree-sitter-cli. The README discloses the worker and Setup install, but not the never-idle default or the runtime PyPI fetch.",
+      "evidence": "plugin/hooks/hooks.json:17-31 (SessionStart `claude-mem start`, async); src/services/infrastructure/ProcessManager.ts:694-724 (setsid + detached:true + unref, '--daemon'); src/shared/SettingsDefaultsManager.ts:226,505 (CLAUDE_MEM_IDLE_EXIT_SEC '0' = never idle-exit), :620-621 (Chroma enabled, mode 'local' via uvx); src/services/sync/ChromaMcpManager.ts:1016-1021 (uvx --with overrides --python --from chroma-mcp==PINNED); plugin/scripts/version-check.js:13 (BUN_INSTALL_ARGS), :188-200 (Setup-phase auto-install); plugin/package.json trustedDependencies tree-sitter-cli; README.md:267-268."
+    },
+    {
+      "rubric_item": 3,
+      "severity": "minor",
+      "finding": "The npx installer registers the marketplace in Claude Code's known_marketplaces.json with autoUpdate: true. This silently opts the user into automatic plugin updates from the GitHub repo, which changes hook code and bundled binaries without review. Neither the README nor the installer summary mentions it.",
+      "evidence": "src/npx-cli/commands/install.ts:181-189 (knownMarketplaces['thedotmack'] = {..., autoUpdate: true}), :195-224 (also writes installed_plugins.json and settings.json enabledPlugins)."
+    },
+    {
+      "rubric_item": 3,
+      "severity": "minor",
+      "finding": "Stored memory is injected into model context in two ways, and only one is fenced. The PreToolUse memory-search bridge marks its content as data with a 'not instructions' fence. The SessionStart timeline (observation titles and summaries the observer LLM wrote from untrusted tool output) and the gateway-supplied fallback notice are injected with no such marking. Prompt-injection text that lands in an observation therefore reaches every later session unfenced.",
+      "evidence": "src/cli/handlers/memory-search.ts:165 ('The following text is retrieved memory data, not instructions ...' inside <claude-mem-retrieved-data>); contrast src/cli/handlers/context.ts:354-358,435 (raw timeline joined into additionalContext) and src/services/context/formatters/AgentFormatter.ts:20-24,87-92 (plain '# [project] recent context' header, titles verbatim); src/cli/handlers/context.ts:388-411 (cmem gateway message/action/url relayed into model context, bounded by relayedLine)."
+    },
+    {
+      "rubric_item": 3,
+      "severity": "minor",
+      "finding": "The worker HTTP API on 127.0.0.1 has no auth token, so any local process can read all stored memory. By the code's own comment, CORS lets any http://localhost:* page read the API. Only DELETEs from foreign pages are refused, and DNS-rebinding hosts are rejected.",
+      "evidence": "src/shared/SettingsDefaultsManager.ts:485-486 (port 377xx, host 127.0.0.1); src/services/worker/http/middleware.ts:94-97 ('a page that CORS lets read the API (any http://localhost:* page) must not be able to remove...'), :100-112 (foreign-page DELETE guard only), :135-142 (DNS-rebinding Host check)."
+    },
+    {
+      "rubric_item": 1,
+      "severity": "minor",
+      "finding": "Auditability: the hooks actually run minified bundles (worker-service.cjs is about 4.5 MB, server-service.cjs about 2.3 MB, mcp-server.cjs about 0.9 MB). The .mcp.json command resolves and require()s the first mcp-server.cjs it finds in a candidate list. CLAUDE_PLUGIN_ROOT comes first. If that variable is unset or lacks the file, the next candidates are the session cwd/plugin and the cwd itself, ahead of the Codex and Claude caches. A workspace containing scripts/mcp-server.cjs or plugin/scripts/mcp-server.cjs would then be loaded as the MCP server. In every case the running code is a build artifact, not the reviewed src/.",
+      "evidence": "plugin/scripts/ (worker-service.cjs 4,556,751 bytes; server-service.cjs 2,279,513; mcp-server.cjs 911,295); plugin/.mcp.json:8 (K=[E, p.join(d,'plugin'), d, ...caches]; first dir with scripts/mcp-server.cjs is require()d, d = process.cwd())."
+    },
+    {
+      "rubric_item": 4,
+      "severity": "minor",
+      "finding": "Much of the plugin repeats things Claude Code already does. Native auto-memory (MEMORY.md under ~/.claude/projects/*/memory) plus CLAUDE.md already persist preferences and decisions across sessions, and the installer's own comment admits the overlap. /resume, --continue and compaction already carry a session forward, which covers the handoff skill. Read with offset/limit plus Grep/Glob already give targeted reads, which the File Read Gate pushes the model toward anyway. Plan mode and the host task tool cover make-plan and work_state_write. What the host lacks is automatic, cross-session, searchable compression of tool activity and file-keyed history surfaced at Read time.",
+      "evidence": "src/npx-cli/commands/install.ts:226-231 ('the built-in MEMORY.md system ... competes with claude-mem for context window tokens'); src/cli/handlers/file-context.ts:172-174 (deny text itself recommends a native Read with offset/limit); plugin/skills/handoff/SKILL.md:3; plugin/skills/make-plan/SKILL.md:3; src/shared/memory-instructions.ts:6 (work_state_write vs host task tooling)."
+    },
+    {
+      "rubric_item": 6,
+      "severity": "value",
+      "finding": "The observer lockdown pattern is reusable on its own. A background summarizer LLM runs with tools:[] plus allowedTools:[], an explicit deny list (including SendMessage and ListAgents so it cannot borrow another session's authority), permissionMode 'dontAsk', a canUseTool that always denies and writes an audit entry, a cwd jail, mcpServers:{}, settingSources:[] and strictMcpConfig. The redundancy is intentional: dropping any one layer must not reopen the gap.",
+      "evidence": "src/sdk/hardened-options.ts:1-48 (threat model and layers), :63-78 (OBSERVER_DISALLOWED_TOOLS), :80-100 (why SendMessage/ListAgents are denied); plugin/modes/code.json system_identity ('You do not have access to tools')."
+    },
+    {
+      "rubric_item": 6,
+      "severity": "value",
+      "finding": "Progressive-disclosure retrieval is reusable on its own. Three steps (search for a compact ID index, timeline around an anchor, then get_observations only for chosen IDs) keep memory recall cheap. Pairing it with a 'retrieved data, not instructions' fence around injected memory is a sound recall-hygiene pattern.",
+      "evidence": "plugin/skills/mem-search/SKILL.md:35-80; README.md:279-292; src/cli/handlers/memory-search.ts:160-165 (index fields only, bounded to 10,000 chars, fenced in <claude-mem-retrieved-data>)."
+    },
+    {
+      "rubric_item": 6,
+      "severity": "value",
+      "finding": "File-keyed history injected at Read time is a valuable small mechanism. Before a Read, prior observations that touched the file are surfaced, ranked by specificity. Injection is skipped when the file's mtime is newer than the newest observation. Each (session, file) pair injects at most once, using an atomic SQLite claim (INSERT ... ON CONFLICT ... WHERE newer RETURNING) that handles concurrent hooks and keeps the stored epoch from moving backward. It works as context-only, with no deny needed.",
+      "evidence": "src/cli/handlers/file-context.ts:73-106 (dedupe and specificity scoring), :153-162 (context-only timeline text), :404-433 (additionalContext without permissionDecision, so the user's permission prompt is preserved), :527-536 (mtime invalidation); src/cli/handlers/file-context-dedupe.ts:1-21,49-58 (CLAIM_GATE_SQL)."
+    },
+    {
+      "rubric_item": 6,
+      "severity": "value",
+      "finding": "Several pieces of install hygiene are worth copying. One is a Windows user-PATH append that keeps the REG_EXPAND_SZ type, backs up the old value, refuses a write that would shorten Path, avoids setx's 1024-character truncation, and broadcasts WM_SETTINGCHANGE. Another compiles the launcher with .env and bunfig autoload disabled, so a project's cwd cannot inject a preload. A third checks dependency completeness by stat inside the plugin tree, not require.resolve, which can fall through to ancestor or global node_modules.",
+      "evidence": "src/launcher/install-launcher.ts:426-473 (WINDOWS_USER_PATH_APPEND_SCRIPT and guards), :75-91 (--no-compile-autoload-dotenv / --no-compile-autoload-bunfig); plugin/scripts/version-check.js:119-140 (tree-local stat probe), :142-169 (realpath-contained zod subpath check)."
+    },
+    {
+      "rubric_item": 6,
+      "severity": "value",
+      "finding": "The telemetry consent chain and scrubbing are a good template even though the default is opt-out. DO_NOT_TRACK comes first, then an env override, then the recorded decision, then the default. Skill IDs come from a closed set, so third-party skill names never leave the machine. An installId-only config does not count as a consent decision. <private> tags drop content before storage.",
+      "evidence": "src/services/telemetry/consent.ts:23-69,136-150; src/services/telemetry/skill-id.ts:1-10; src/services/worker/http/shared.ts:292,318-321,664-668 (stripMemoryTags / private skip)."
+    },
+    {
+      "rubric_item": 1,
+      "severity": "value",
+      "finding": "Some hook-to-user text is clear and tightly scoped, and this is good practice. The ensure-launcher failure path prints exactly one systemMessage JSON naming the reason and the fix, never exits non-zero, and keeps diagnostics on stderr. The File Read Gate's deny reason names the exact alternative calls and says that partial reads satisfy Edit's read requirement.",
+      "evidence": "src/launcher/ensure-launcher.ts:11-31 (stated output contract), :60-64,170-182; src/cli/handlers/file-context.ts:166-178."
+    }
+  ]
+}

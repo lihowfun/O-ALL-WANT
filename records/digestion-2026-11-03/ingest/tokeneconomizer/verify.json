@@ -1,0 +1,108 @@
+{
+  "checks": [
+    {
+      "claim": "config.py:148,152,158,162 set the defaults to microskills=off, toolprune=auto, loopguard=nudge, repomap=off. Toolprune applies deny lists automatically once evidence forms, after a 60-minute idle window (config.py:156).",
+      "status": "confirmed",
+      "evidence": "tokeneconomizer/plugin/config.py:148 microskills=\"off\", :152 toolprune=\"auto\", :156 toolprune_quiet_minutes=60, :158 loopguard=\"nudge\", :162 repomap=\"off\". The idle gate is at fold.py:327-332, with PENDING_MAX_S=24h at fold.py:51.",
+      "correction": "Add one detail. A pending list is written after 24h even if the repository never goes idle (fold.py:331, PENDING_MAX_S). The person learns of it only afterwards, through a SessionStart systemMessage (controller.py:188-199)."
+    },
+    {
+      "claim": "denylist.py:61-64,72: the Codex 'collaboration' capability is (None, include_collaboration_mode_instructions, false), (agents, enabled, false), (features, multi_agent, false), and it is part of CODEX_LIVE_CAPABILITIES. fold.py:254-258 proposes it when unused, using enough_evidence (fold.py:97-107).",
+      "status": "confirmed",
+      "evidence": "denylist.py:61-64 CODEX_TOGGLES['collaboration'] has exactly those three toggles. denylist.py:72 CODEX_LIVE_CAPABILITIES = tuple(sorted(CODEX_TOGGLES)). enough_evidence is at fold.py:97-106.",
+      "correction": "The proposal list is at fold.py:257-261, not 254-258. It has extra conditions. The Codex profile must already have demoted the capability (c in current_pruned). The capability must never have been used in this repository's whole history (c not in ever_completed; toolprune/codex.py:515-566 treats ever_completed as permanently protected). Evidence counts sessions in which the capability was LOADED. So the EGM risk applies to a repository where subagents were never used under TE. It does not apply to one where they were simply not used for a while."
+    },
+    {
+      "claim": "plugin/hooks/hooks.json:4-69 registers the same launcher on SessionStart, UserPromptSubmit, PostToolUse, PostToolUseFailure, Stop and SessionEnd with no matcher; PostToolUse and PostToolUseFailure have timeout 60.",
+      "status": "confirmed",
+      "evidence": "hooks.json registers six events, each with one command \"${CLAUDE_PLUGIN_ROOT}/scripts/te-hook\" and no matcher. Timeouts: SessionStart 15, UserPromptSubmit 20, PostToolUse 60, PostToolUseFailure 60, Stop 10, SessionEnd 10. plugin.json does not name the hooks file. Note: the process (sh + python + imports) starts on every tool call even when loopguard=off. controller.post_tool returns {} only after startup (controller.py:298), so turning mechanisms off does not remove the per-call process cost. Only disabling the plugin or TE_DISABLE does, and TE_DISABLE still starts Python."
+    },
+    {
+      "claim": "sidecall.py:217-223 runs side calls as claude -p --output-format json --max-turns 1 --tools \"\" plus strict empty MCP config plus --model haiku, with env TE_SIDECALL=1 (sidecall.py:57-58). hook.py:67 does nothing when TE_SIDECALL is set.",
+      "status": "partly",
+      "evidence": "sidecall.py:221-225 builds [cli,'-p','--output-format','json','--max-turns','1','--tools',''] + claude_no_mcp + ['--model', model or 'haiku'] + claude_flags, runs it in a TemporaryDirectory cwd, with env=_env() (sidecall.py:57-58 sets TE_SIDECALL=1). hook.py:67 skips when TE_SIDECALL or TE_DISABLE is truthy.",
+      "correction": "Three corrections. (1) --strict-mcp-config/--mcp-config and --no-session-persistence are added only if `claude --help` lists them (sidecall.py:183-214, which also runs `claude --help` as an extra subprocess). (2) The model is config.paid_model, falling back to haiku only when that is empty (sidecall.py:476,490). On Codex there is no cheap default: codex_call runs on the user's default Codex model (sidecall.py:238-242,487). (3) The Claude side call does NOT disable the user's other hooks or plugins. There is no --settings disableAllHooks or --bare; grep finds none. TE_SIDECALL silences only TE's own hook. Other plugins such as claude-mem still run their hooks inside every judge or nudge-writer call."
+    },
+    {
+      "claim": "winspawn.py:44-66 first tries Popen with CREATE_BREAKAWAY_FROM_JOB, then falls back to PowerShell Invoke-CimMethod Win32_Process.Create, after writing {cmd, cwd, env, log} (the full environment) to a te-spawn-*.json in the state dir.",
+      "status": "confirmed",
+      "evidence": "winspawn.py:25-27 _FLAGS | _BREAKAWAY (0x01000000). spawn() at :44-53. _spawn_wmi at :56-77 runs tempfile.mkstemp(prefix='te-spawn-', dir=dirname(log_path)), then json.dump({'cmd','cwd','env','log'}), then powershell -NoProfile -NonInteractive Invoke-CimMethod Win32_Process Create.",
+      "correction": "The spec file is temporary. The child deletes it as soon as it reads it (winspawn.py:80-86), or the parent deletes it if WMI fails (:71-76). It sits in the per-repository store dir (dirname of the log), not the state root. The environment is the hook's full env plus PYTHONPATH and PYTHONUTF8 (context.py:79-83), so any API keys in the agent's environment pass through it."
+    },
+    {
+      "claim": "fold.py:51-52 (PENDING_MAX_S=24*3600, WAITER_POLL_S=600) and cli.py:355-375 (while True with time.sleep) implement a detached toolprune apply-pending waiter that can live up to a day.",
+      "status": "confirmed",
+      "evidence": "fold.py:51-52 holds the constants. cli.py:355-382 _wait_and_apply has a heartbeat file, `while True: wait = fold.apply_pending(ctx) ... time.sleep(min(max(wait,1.0), fold.WAITER_POLL_S))`. fold.py:344-350 schedule_pending spawns it detached. There is one waiter per repository and host (heartbeat check at cli.py:362-366)."
+    },
+    {
+      "claim": "pyproject.toml:18 dependencies = [], and no HTTP client, telemetry or update check in tokeneconomizer/ or plugin/. The only network-related code is urllib.parse at cli.py:748 and a 127.0.0.1 ThreadingHTTPServer at toolcheck.py:144 used by explicit Copilot probes.",
+      "status": "confirmed",
+      "evidence": "Grep for urllib/http/socket/ssl/requests/urlopen/HTTPServer in tokeneconomizer/, plugin/ and scripts/ finds only cli.py:748 (urllib.parse.urlparse) and toolcheck.py:19,144,157 (ThreadingHTTPServer on 127.0.0.1:0, used as COPILOT_PROVIDER_BASE_URL). The Pi and opencode TS extensions use child_process only, no fetch. Data still leaves the machine through the nested agent CLIs: claude -p, codex exec, copilot -p, pi, opencode run. The codex features list subprocess during Codex apply makes no model call (denylist.py:397-413)."
+    },
+    {
+      "claim": "README.md:38 alt text reports Claude Code + Opus 4.8: 30.9% lower cost, Pass@1 -1.0. This is a paper claim (arXiv 2610.22732) that the repository cannot verify.",
+      "status": "confirmed",
+      "evidence": "README.md:38 reads '30.9% and −1.0 with Opus 4.8'. README.md:22 links arXiv 2610.22732. The repository holds only the experiment harness (experiments/) and no result data that reproduces these numbers. The numbers themselves stay unverifiable."
+    },
+    {
+      "claim": "Gate license = pass (Apache-2.0, no NOTICE).",
+      "status": "partly",
+      "evidence": "LICENSE:1-3 is Apache License 2.0. plugin/.claude-plugin/plugin.json:10 and the .codex-plugin manifest say Apache-2.0. git ls-files shows no NOTICE.",
+      "correction": "It passes for code, but the repository bundles third-party material the Apache grant may not cover. tokeneconomizer/trace/claude_tool_catalog.json (7.3 KB of verbatim Claude Code tool-description excerpts, shipped as package-data per pyproject.toml) is Anthropic product text. experiments/te_harness/data/codex_base_prompt/0.153.1.md is 18 KB of Codex's base prompt (Codex is Apache-2.0, so fine). docs/assets/logo_berkeley.png and logo_microsoft.png are trademarks. This only matters if OAW copies these files. Absorbing methods avoids it."
+    },
+    {
+      "claim": "Gate dependencies_vs_stdlib = pass (pyproject.toml:18 dependencies = [], aider-chat extra at :45 only for repomap, off by default; Python >=3.10 matches OAW).",
+      "status": "confirmed",
+      "evidence": "pyproject.toml:18 dependencies = []. :45 baselines = [\"aider-chat>=0.60\"]. requires-python >=3.10. repomap.py:8-12 runs aider in a separate process. OAW AGENTS.md:8 says 'Python 3.10+; keep runtime dependencies in the standard library'. Caveat: the runtime still needs external binaries (git, the agent CLIs, powershell/pythonw on Windows), and the Pi extension declares a peerDependency '@earendil-works/pi-coding-agent': '*'."
+    },
+    {
+      "claim": "Gate cross_host_counterpart = pass (Claude Code + Codex, with a Windows Codex variant).",
+      "status": "confirmed",
+      "evidence": "plugin/.claude-plugin/plugin.json (commands ./slash-commands/) plus hooks/hooks.json. plugin/.codex-plugin/plugin.json:19-20 hooks ./hooks/codex-hooks.json and skills ./codex-skills. codex-hooks.json has 5 events with commandWindows. README.md:310-317 gives per-host pruning units.",
+      "correction": "One Windows caveat. The Codex commandWindows variant calls bare `python -X --% -u -X utf8 -c ...` with no TE_PYTHON override and no WindowsApps-stub check, unlike te-hook. It runs with -c, which puts the current directory at sys.path[0]. Codex on Windows is therefore more fragile than the sh path."
+    },
+    {
+      "claim": "Gate context_budget = pass (5 Codex skill descriptions about 1290 characters, 7 slash-command descriptions about 670 characters; nothing injected at SessionStart by default; ≤4 facts/≤150 tokens when on; repomap 2048).",
+      "status": "confirmed",
+      "evidence": "Re-measured with my own parser outside the clone: Codex descriptions are 271+239+303+226+251 = 1290 characters, bodies 529-1482 B. Slash-command descriptions total 670 characters. config.py:148-150,163. SessionStart emits only systemMessage notices when microskills=off (controller.py:106-137).",
+      "correction": "The default loopguard can inject mid-turn up to 1200 characters of model-written redirect (loopguard/judge.py:102). On Claude Code it adds a relay instruction (hosts.py:160-166, ClaudeCode.relays_notices=True at hosts.py:244). A backstop redirect also fires without the judge (loopguard/turn.py:332-343). The digest already lists these as uncounted."
+    },
+    {
+      "claim": "SIDE CALLS / nutrient: usage priced into ledger with per-model-id weights; 'an unknown model id fails hard' (pricing.py:1-30, accounting.py:17-26).",
+      "status": "refuted",
+      "evidence": "pricing.weights_for (pricing.py:135-160) raises ValueError only for a non-claude id with no table entry. Any id containing 'claude' and any record with no model id silently get the Claude curve. The plugin's live ledger (accounting.py:1-26) catches that ValueError and prices on FALLBACK_WEIGHTS with priced_by='fallback'.",
+      "correction": "The plugin ledger never hard-fails. Only the experiment-side pricing.weights_for does. If OAW adopts the hard-fail rule, cite pricing.py:135-160 and say it is the experiments' behavior. accounting.py:17-26 shows the opposite."
+    },
+    {
+      "claim": "Codex toolprune: 'marked toggles in .codex/config.toml, applied only in trusted projects'.",
+      "status": "partly",
+      "evidence": "_apply_codex (denylist.py:416-450) has no trust check and writes the file regardless. Codex only honors it in trusted projects. At SessionStart the plugin then tells the user to trust the folder (controller.py:190-198).",
+      "correction": "The file is written whether or not the project is trusted; Codex only reads it when trusted. Two mitigations are missing from the digest. The plugin refuses to edit a git-tracked .codex/config.toml (denylist.py:420-425). It also validates the edit with `codex features list` and rolls it back on error (denylist.py:440-446)."
+    },
+    {
+      "claim": "SessionStart rewrites the ~/.tokeneconomizer/bin/te launcher (controller.py:96).",
+      "status": "partly",
+      "evidence": "controller.py:96 calls ensure_launcher at every SessionStart. paths.py:72-76 returns early if the content is unchanged.",
+      "correction": "It is checked every SessionStart but rewritten only when the plugin path changes."
+    },
+    {
+      "claim": "Hooks load code from the mutable clone path (unpinned).",
+      "status": "confirmed",
+      "evidence": "README.md:116-117 says 'Claude Code, Codex, the Copilot CLI and opencode run the plugin from the clone, so leave it in place'. README.md:199 says to update by `git pull` in the clone. On Windows the lib symlink (git ls-files mode 120000) checks out as a stub. te_bootstrap.py:98-118 then misses in the install copy and falls through to the known_marketplaces.json or config.toml source, which is the user's clone (te_bootstrap.py:57-95). This applies on this user's Windows machine."
+    }
+  ],
+  "missed_issues": [
+    "Repository code can run inside TE's own detached processes, outside the agent's permission system, with default settings. context.py:84-93 starts every detached job (fold at every SessionEnd and for pending sessions at SessionStart, judge, repomap, migrate, the apply-pending waiter) as `python -m tokeneconomizer.plugin.cli` with cwd=repo root, and no -P, -I or PYTHONSAFEPATH (grep finds none). `python -m` puts the cwd first on sys.path, ahead of PYTHONPATH. So a repository-root random.py, json.py, glob.py, argparse.py, copy.py, email/, html/ or tokeneconomizer/ is imported and executed with the hook's full environment. fold.py imports tempfile, which imports random; cli.py imports toolcheck, which imports http.server. I checked the Python behavior with my own test files: a cwd random.py ran under `python -m` with PYTHONPATH set. On Windows the WMI path does the same (winspawn.py:88). This bears directly on OAW's ingest workflow: if TE is installed user-wide, opening an untrusted candidate clone in Claude Code would execute candidate code. Even benign repositories with a random.py or json.py at the root would silently break TE's folding.",
+    "On Windows, the Codex hook (codex-hooks.json commandWindows) uses `python -c`, which also puts the cwd at sys.path[0] for every hook, including every PostToolUse. If Codex runs hooks in the project directory, this is the same shadowing risk on the synchronous hook path. That depends on Codex's hook cwd, which I could not verify statically.",
+    "Claude side calls (judge, nudge writer, proposer, toolprune measure) do not disable the user's other hooks or plugins: no `--settings {\"disableAllHooks\":true}`, no --bare (grep confirms). With claude-mem installed (also under evaluation here), every TE judge call becomes a nested headless Claude session that claude-mem's SessionStart, PostToolUse and SessionEnd hooks observe, record and inject into. That adds cost and pollutes memory. The digest's 'cheap nested evaluation calls' nutrient inherits this gap.",
+    "--strict-mcp-config/empty --mcp-config and --no-session-persistence are added only if `claude --help` lists them (sidecall.py:183-214). On a CLI that lacks them, side calls load all MCP servers (TE's own note: about 570k vs 14k effective tokens with 31 servers) and appear in the user's resume history.",
+    "The loopguard judge digest is not just 'command templates'. loopguard/state.py:186-187 sends the first 90 characters of each raw bash command, plus grep patterns, edited basenames and hashed error signatures, to the provider (state.py:214-232). Inline secrets in commands, such as `curl -H 'Authorization: ...'` or `export TOKEN=...`, would go to the judge model. PLUGIN.md:548-551 overstates the masking.",
+    "On Codex, side calls run on the user's default Codex model (sidecall.py:476,487; paid_model empty by default), not a cheap model. Combined with the ~25k base prompt, the default-on judge can be more expensive there than on Claude, where it uses haiku.",
+    "The loopguard has a judge-free backstop redirect: a turn past envelope × backstop_mult gets the template redirect without any model call (loopguard/turn.py:332-343). 'A judge model decides' is not the only path.",
+    "Even with every mechanism off, the six hooks still start sh + Python on every tool call and session event. Only uninstalling or disabling the plugin removes that latency, so OAW latency_ms A/B arms with TE installed but 'off' are not clean.",
+    "`te probe` (Copilot, explicit command only) creates its throwaway repository inside a folder the user's Copilot trusts and runs `copilot -p --allow-all-tools` there (probe.py:1-22,118-121). It is opt-in, but it writes into a user-trusted location.",
+    "The digest's EGM risk is narrower and has mitigations it does not mention. The plugin will not edit a git-tracked .codex/config.toml (denylist.py:420-425), it rolls back if `codex features list` rejects the edit (denylist.py:440-446), and collaboration is proposed only if it was never used in that repository (toolprune/codex.py:515-566). If OAW commits a project .codex/config.toml, TE cannot touch it."
+  ],
+  "integration_mode_agrees": true,
+  "integration_mode_note": "I agree with absorb_method; the case against packing or bundling is stronger than the digest says. On top of the hooks, the default auto writes to .claude/.codex settings, the detached daemons and the second model runtime, I found two more problems. Every detached TE job runs `python -m` with the repository root first on sys.path (context.py:84-93), so repository-root modules execute outside the agent's permission system. Claude side calls also leave other plugins' hooks running, claude-mem included. Corrections for the absorbed methods: (a) cite pricing.py:135-160 for the hard-fail on unknown model ids; the plugin's accounting.py actually falls back silently. (b) Any nested `claude -p` grader recipe OAW adopts should also pass `--settings '{\\\"disableAllHooks\\\":true}'` (or equivalent) and treat a missing --strict-mcp-config or --no-session-persistence as an error, not silently drop the flag. (c) Any OAW subprocess that runs in a candidate or user repository should use `python -I` or `-P`. The v2.0.0-execution.md:78 'mandatory nudge' line refers to the Hermes branch's nudge and usage counters, so it only weakly matches TE's loop redirect. The stronger conflicts are 'second model runtime' and 'background ... daemon' on the same line, and Skill_Guide.md:17 (no silent .claude edits). TE does not address the user's graphify or vector data-map wish: grep finds no embedding, vector or graph store, and repomap is aider's tree-sitter/PageRank text map, off by default."
+}

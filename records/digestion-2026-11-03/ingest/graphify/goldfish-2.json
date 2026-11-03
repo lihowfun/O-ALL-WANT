@@ -1,0 +1,135 @@
+{
+  "reviewer": "goldfish-2",
+  "food": "Graphify-Labs/graphify",
+  "pinned_source": "ingest/graphify/src",
+  "method": "Read-only inspection of the src tree. No food code, installer, hook or test was executed. One independent re-implementation of install.py:815-842 (written outside src, run with python -I) confirmed the CLAUDE.md section-boundary data loss.",
+  "verdict_summary": "graphify is a large, careful local code-graph CLI whose core extraction and query path runs locally, with no telemetry: the query log is opt-in (querylog.py:15-31). It also contains several mechanisms worth reusing on their own: precise hook-entry merge and strip, settings backup, per-agent nudge budgets, an SSRF-guarded fetch, and secret redaction. The risks are in its host integration. The skill silently pip/uv-installs itself, including --break-system-packages. Every CLI run rewrites installed skill files in several home directories. `hook install` adds 4 git hooks, a git merge driver and a .gitattributes line, and launches a detached rebuild that on Windows escapes the parent's job object. The always-on CLAUDE.md/AGENTS.md rules claim precedence over normal exploration and tell reviewers not to flag graph churn. The H1 `# graphify` registration block silently deletes any user `##` sections written after it when the install is re-run or removed. The agent-facing docs also misstate several behaviors: no background process, post-commit only, and no provider keys read.",
+  "findings": [
+    {
+      "rubric_item": 2,
+      "severity": "major",
+      "finding": "The Claude Code `# graphify` registration block uses H1 as its section boundary. Re-running install (or a project uninstall) therefore deletes every user-written `##` section that follows the block up to EOF, and can delete the file outright.",
+      "evidence": "install.py:578-587 writes the H1 '# graphify' block; install.py:620-621 replaces it with boundary_prefix='# '; install.py:822-830 runs the section to the next line starting with '# ' or EOF, and '## ...' does not match; install.py:452 and install.py:461-463 remove it with the same boundary and unlink the file when it ends up empty. An independent replica of install.py:815-842 showed that a '## Added later by user' section after the block did not survive a re-install. The upgrade warning tells users to re-run install (__main__.py:234-241)."
+    },
+    {
+      "rubric_item": 2,
+      "severity": "major",
+      "finding": "SKILL.md Step 1 tells the agent to install or upgrade the graphifyy package from PyPI when it is missing. It falls back to `pip install --break-system-packages`, suppresses errors, and says to print nothing. The user is never asked.",
+      "evidence": "skill.md:90-99 (uv tool install --upgrade graphifyy; pip install graphifyy ... --break-system-packages; 2>/dev/null); skill.md:113 'If the import succeeds, print nothing'; the same block is in skill-codex.md:92-97 and skill-windows.md:116-118"
+    },
+    {
+      "rubric_item": 2,
+      "severity": "major",
+      "finding": "`graphify hook install` adds 4 git hooks (post-commit, post-checkout, post-merge, post-rewrite). It also writes a repo-local git config merge driver that runs a pinned Python, and appends to the committed .gitattributes. Each hook launches a detached background rebuild of up to 600s. On Windows that rebuild is spawned with CREATE_BREAKAWAY_FROM_JOB, so it escapes the parent's job object (agent sandbox or CI process tree).",
+      "evidence": "hooks.py:1141-1149 (four hooks plus _register_merge_driver); hooks.py:1021-1032 (git config merge.graphify.driver); hooks.py:1036-1047 (.gitattributes append); hooks.py:373-380 (CREATE_NO_WINDOW|CREATE_NEW_PROCESS_GROUP|0x01000000 breakaway, start_new_session on POSIX); hooks.py:201 and hooks.py:273 (default GRAPHIFY_REBUILD_TIMEOUT 600); hooks.py:365 and hooks.py:544-547 (log appended to ~/.cache/graphify-rebuild.log)"
+    },
+    {
+      "rubric_item": 3,
+      "severity": "major",
+      "finding": "Every non-silent CLI invocation re-copies the installed SKILL.md files under each platform's user-scope directory, and also rewrites OpenCode plugins in the cwd and home (running `opencode --version` to decide). This includes `graphify query`, which the always-on rules tell agents to run before every search. In effect it is an auto-update of agent instructions. The only notice is a line on stderr, and it is opt-out (GRAPHIFY_NO_AUTO_REFRESH).",
+      "evidence": "__main__.py:843 and __main__.py:852-858 (_refresh_stale_skills/_refresh_v1_opencode_plugins on every command except install/uninstall/hook-check/hook-guard); __main__.py:266-336; __main__.py:360-382; __main__.py:397-406 (subprocess opencode --version); __main__.py:409-462 (cwd and home .opencode plugin rewrite); claude-md.md:6 (agents told to run graphify query first)"
+    },
+    {
+      "rubric_item": 5,
+      "severity": "major",
+      "finding": "The always-on CLAUDE.md/AGENTS.md blocks claim precedence over normal exploration. They require `graphify query` before the first grep, search or read, tell the agent to propagate the rule into every subagent prompt, and limit raw reads to lines the graph already located. They also tell reviewers not to flag graph.json churn or suggest skipping its hooks. These rules fight project CLAUDE.md/AGENTS.md rules and code-review skills. The repo's own AGENTS.md uses softer wording with an exception for tasks about the graph's own correctness, which claude-md.md lacks.",
+      "evidence": "always_on/claude-md.md:6 ('before your first grep, search or source-file read ... put this rule in every subagent prompt ... Read raw files only for lines the graph ... already located'); always_on/claude-md.md:10 and always_on/agents-md.md:13 ('Do not flag it as churn or suggest skipping the graph rebuild or its hooks'); always_on/agents-md.md:9 ('Only skip graphify if ... the user explicitly says not to use it'); compare the repo's AGENTS.md:6 ('Do not use the graph as evidence when the task concerns the graph's correctness itself')"
+    },
+    {
+      "rubric_item": 1,
+      "severity": "major",
+      "finding": "The skill states that graphify reads no provider keys other than the Gemini ones. In fact the shipped CLI auto-detects ANTHROPIC/OPENAI/DEEPSEEK/MOONSHOT/AZURE/AWS credentials and sends the corpus to that provider, and `label` falls back to spawning `claude -p`. An agent following the skill could run `graphify extract` and cause cloud egress it was told cannot happen.",
+      "evidence": "skill.md:169 ('graphify does **not** read `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, or any other provider key') and skill.md:176; contradicted by llm.py:3545-3552 (detect_backend probes gemini, kimi, claude, openai, deepseek, azure, bedrock), cli.py:4279-4287 (graphify extract auto-selects that backend), llm.py:3929-3949 (claude-cli fallback for community labels). README.md:434 documents the headless behaviour correctly."
+    },
+    {
+      "rubric_item": 1,
+      "severity": "minor",
+      "finding": "The agent-facing hooks reference understates what the install commands do. It says 'No background process needed' and that a post-commit hook is installed, when the code adds 4 hooks plus a merge driver and a detached process. It says `claude install` writes a CLAUDE.md section but omits the PreToolUse hooks merged into .claude/settings.json. It also omits that post-commit regenerates reflections/LESSONS.md.",
+      "evidence": "skills/claude/references/hooks.md:7, hooks.md:15-17, hooks.md:29; versus hooks.py:540-548 (detached launch), hooks.py:1141-1149, install.py:2231-2233 and install.py:2247-2263 (settings.json PreToolUse merge), hooks.py:248-258 (reflect writes LESSONS.md). The CLI help at __main__.py:1022 and __main__.py:1031 is more complete."
+    },
+    {
+      "rubric_item": 1,
+      "severity": "minor",
+      "finding": "SKILL.md gives conflicting directives. The frontmatter claims 'any question about a codebase', while the body says to just grep when no graph exists. It says 'MANDATORY: You MUST use the Agent tool ... Reading files yourself ... is forbidden', yet on hosts without subagents it says to 'extract those inline yourself'. The package's own comment explains that this imperative style reads like prompt injection.",
+      "evidence": "skill.md:3 (description) versus skill.md:49-51; skill.md:223 versus skill.md:176; cli.py:18-21 ('MANDATORY', 'You MUST' ... read like a prompt injection)"
+    },
+    {
+      "rubric_item": 2,
+      "severity": "minor",
+      "finding": "`graphify claude install` merges its hooks into the shared, usually committed `.claude/settings.json` rather than settings.local.json. In the non-project mode it embeds the installing machine's absolute graphify path in that file. By default it also writes to the global ~/.claude/CLAUDE.md. Each write is announced but nothing asks for confirmation.",
+      "evidence": "install.py:2247-2261 (project_dir/.claude/settings.json); install.py:503-511 and install.py:1895-1906 (absolute exe unless project=True); install.py:994-1003 (global ~/.claude/CLAUDE.md or $CLAUDE_CONFIG_DIR/CLAUDE.md). Mitigations: install.py:1110-1128 refuses to touch unparseable JSON and install.py:1129-1143 keeps a .graphify-bak backup."
+    },
+    {
+      "rubric_item": 2,
+      "severity": "minor",
+      "finding": "`graphify uninstall` never removes the global `# graphify` registration it wrote to ~/.claude/CLAUDE.md (or $CLAUDE_CONFIG_DIR/CLAUDE.md, ~/.codebuddy/CODEBUDDY.md). A stale instruction is left pointing at a deleted skill.",
+      "evidence": "Writers: install.py:994-1003 and install.py:1007-1011. Removers: install.py:441-463 handles only project/.claude/CLAUDE.md (called from install.py:2097). claude_uninstall at install.py:2397-2401 cleans only project CLAUDE.md, CLAUDE.local.md and .claude/CLAUDE.local.md. uninstall_all at install.py:2331-2370 never touches the home CLAUDE.md."
+    },
+    {
+      "rubric_item": 3,
+      "severity": "minor",
+      "finding": "The hook guard stores files named by Claude session_id and agent_id hash under graphify-out/cache/hook_sessions and deletes markers older than 24h. The MCP server's PR tools shell out to `gh`, which reaches GitHub with the user's credentials, and their tool description tells the agent to call them before starting work.",
+      "evidence": "cli.py:1007-1029 and cli.py:1034-1045 (session markers and GC); cli.py:1058-1062; serve.py:2711-2717 ('Use this before starting work ...'); prs.py:143-145 (subprocess gh)"
+    },
+    {
+      "rubric_item": 3,
+      "severity": "minor",
+      "finding": "If the pinned interpreter is missing, the git hook falls back to an interpreter path read from the repo-relative graphify-out/.graphify_python and executes it. The allowlist accepts relative paths, so a committed sidecar plus an executable in the repo would run on commit. This is plausible rather than confirmed, since it applies only after the pinned-interpreter probe fails.",
+      "evidence": "hooks.py:41-53 (reads graphify-out/.graphify_python, allowlist *[!a-zA-Z0-9/_.@:\\\\-]*, then executes \"$_FROM_FILE\" -c probe); hooks.py:36-40 (pinned interpreter tried first)"
+    },
+    {
+      "rubric_item": 3,
+      "severity": "minor",
+      "finding": "Install always prints an advert for the hosted product. Unlike the build-time call to action, it is not gated on a TTY or an opt-out.",
+      "evidence": "install.py:1024-1025 and __main__.py:1096 (unconditional 'Try the graphify platform free'); compare cli.py:126-147 (_print_cloud_cta respects GRAPHIFY_NO_TIPS/NO_CTA, isatty and a once-per-project marker)"
+    },
+    {
+      "rubric_item": 4,
+      "severity": "minor",
+      "finding": "Several integrations duplicate what the host already does. Claude Code already discovers ~/.claude/skills/graphify/SKILL.md and handles /graphify, so the global CLAUDE.md registration is redundant. The Codex hook is an admitted no-op that still spawns a process on every Bash call. The PreToolUse nudges repeat the CLAUDE.md rule, and the guard's Python process runs on every Bash, Grep, Read and Glob call (measured at about 170ms warm per its own docstring). The skill concedes that a one-off lookup is better done with plain grep and Read.",
+      "evidence": "install.py:578-587 and install.py:986-1003; install.py:1925-1949 and cli.py:2971-2975 (hook-check sys.exit(0)); cli.py:22-46 versus always_on/claude-md.md:6; install.py:495-511 (~170ms, matchers Bash|Grep and Read|Glob); skill.md:51"
+    },
+    {
+      "rubric_item": 5,
+      "severity": "minor",
+      "finding": "Opt-in strict mode denies the first raw Read of an indexed file in each session until `graphify query` runs. That would block skills or project rules that need to read files first, such as diff reviewers. It is bounded to once per session and toggled by an env var.",
+      "evidence": "cli.py:62-74 (_READ_DENY permissionDecision deny); cli.py:1339-1347; cli.py:946-955 (GRAPHIFY_HOOK_STRICT); install.py:2238-2240 (disclosed at install)"
+    },
+    {
+      "rubric_item": 6,
+      "severity": "value",
+      "finding": "Its approach to safely co-editing host hook config is reusable. It removes only its own hook entries, identified by subcommand token rather than a loose substring. It refuses to rewrite unparseable JSON, writes nothing when the output would be unchanged, keeps a rolling backup, and sets an explicit hook timeout so one hung hook cannot stall tool calls for 600s.",
+      "evidence": "install.py:513-577 (_is_graphify_hook_command/_strip_graphify_hooks); install.py:1110-1143 (_read_settings_for_merge/_write_settings_with_backup); install.py:495-511 (timeout 10)"
+    },
+    {
+      "rubric_item": 6,
+      "severity": "value",
+      "finding": "Its context-injection hygiene for hooks is reusable. The nudge budget is per agent (session_id plus a hashed agent_id, capped at 5 by default and silenced by a fresh query stamp), and the strict deny is claimed once per session with O_EXCL. Search-command detection is token-aware, ignoring heredocs, quoted prose and pipes. Repository-derived hint text is reduced to single, backtick-free lines, and the wording is factual rather than imperative.",
+      "evidence": "cli.py:981-1031; cli.py:1048-1067; cli.py:1081-1166; cli.py:231-236; cli.py:18-21"
+    },
+    {
+      "rubric_item": 6,
+      "severity": "value",
+      "finding": "The network and data safety primitives stand on their own. The SSRF-guarded fetch resolves DNS once and connects to the validated IP, which defeats DNS rebinding. It also re-validates redirects and blocks private, CGN and metadata ranges. Credential-shaped text is redacted before it reaches graph labels. Sensitive files (.env, keys, id_rsa) are skipped, and the skipped names are reported rather than only counted.",
+      "evidence": "security.py:83-102, security.py:105-158, security.py:173-266, security.py:273-300; security.py:415 and security.py:439-448; detect.py:134-140 and detect.py:288-307; cli.py:4235-4247"
+    },
+    {
+      "rubric_item": 6,
+      "severity": "value",
+      "finding": "The LLM backend selection makes egress explicit. It names the exact environment variable that chose a cloud backend and has a GRAPHIFY_BACKEND=none kill switch. Ollama is probed last so it never shadows a paid key, and link-local or metadata Ollama URLs are hard-blocked. Code-only corpora never need an LLM, and the query log is off unless opted in.",
+      "evidence": "cli.py:4262-4291; llm.py:3488-3511; llm.py:3534-3560; llm.py:3415-3456; querylog.py:15-31"
+    },
+    {
+      "rubric_item": 6,
+      "severity": "value",
+      "finding": "Several git-hook engineering patterns are worth copying even without graphify. The appended block is wrapped in a subshell so its `exit 0` does not end other tools' hook code that follows it. Rebuilds are skipped in linked worktrees and during rebase, merge or range-pick. Background work uses a cross-platform detached launch with a watchdog that kills worker children. The --purge guard refuses to rmtree the project, home or a filesystem root.",
+      "evidence": "hooks.py:439-452; hooks.py:397-413; hooks.py:466-505; hooks.py:342-381; hooks.py:198-225; install.py:2293-2325"
+    },
+    {
+      "rubric_item": 6,
+      "severity": "value",
+      "finding": "The skill design itself has reusable ideas. It uses progressive disclosure, loading references only when a flag needs them. It tells the agent honestly when a graph is not worth building. Its extraction-coverage check catches subagents that only read part of a file, and its semantic cache is keyed to the extraction prompt so a prompt change invalidates old entries.",
+      "evidence": "skill.md:67, skill.md:161, skill.md:298 (references/ on demand); skill.md:49-51; skill.md:310-339 (coverage versus real line count); skill.md:235 and skill.md:249 (prompt_file-keyed cache)"
+    }
+  ]
+}

@@ -1,0 +1,149 @@
+{
+  "schema_version": 1,
+  "food": "microsoft/TokenEconomizer",
+  "pinned_commit": "d58755d849cd9157d29aef539f2beab3d5fee0fc",
+  "oaw_ref": "scratchpad/oaw-ref (OAW V2, read-only)",
+  "checked_on": "2026-11-03",
+  "scope": "Integration (diarrhea) check of the 13 absorb components in components.json. Static reading only; no food code was run. Local probes run: 'python -I -B scripts/improvement.py --help' on the OAW reference, a pytest import check, and a PATH lookup for claude, codex and node.",
+  "result_counts": {"pass": 3, "flag": 10, "fail": 0},
+  "cross_cutting": [
+    "Frozen contracts. evals/egm-pilot/spec.json pins the 'scorer' (pilot_common.py, score.py) and 'execution' (plus run_pilot.py, convert_scenarios.py) hashes and an oaw_source equal to the historical archive tests/fixtures/egm-registered-oaw-source.zip. Editing those files in place breaks tests/test_egm_pilot.py (score.score raises 'pre-registered contract changed'). Re-freezing would move oaw_source to today's tree and break test_current_source_is_rejected_before_scoring. evals/skill-value CONTROL_FILES (experiment.py:32) and the three-way manifest runner_sha256 make prepared registrations refuse after an edit. Absorbs that touch these files belong in new contract versions or in unpinned, report-only modules.",
+    "CI split. harness_check.py discovers only tests/. evals/three-way/test_bench.py and evals/skill-value/test_*.py run as separate CI steps (.github/workflows/test.yml:28-30) on ubuntu, macos and windows with Python 3.10 and 3.13. New eval tests must be added there.",
+    "Local machine facts (this user's Windows host). Claude Code exists only as the npm shim ~/AppData\\Roaming\\npm\\claude.cmd; there is no claude.exe on PATH. No Codex CLI is installed. Python 3.13 has no pytest. So the egm-pilot refuses by default, and every Codex half below cannot be verified here yet.",
+    "'python -I' breaks OAW's own helpers (verified: ModuleNotFoundError: No module named 'oaw_common'), because -I removes the script directory from sys.path. -I also ignores PYTHONUTF8, which harness_check.run sets.",
+    "Startup budget and triggers. No absorb adds a skill, changes a skill description, or touches templates/AGENTS.md (23 lines; tests/test_skills.py caps it at 25). The seven EGM bridges are manual-only (disable-model-invocation: true; openai.yaml allow_implicit_invocation: false). No trigger collisions were found.",
+    "Citations (D3). Each method that lands in code must cite TE at the full 40-hex SHA in the release source ledger. harness_check.version_check rejects any short or unpinned commit."
+  ],
+  "checks": [
+    {
+      "component_id": "te.effective-tokens",
+      "other_parts_regress": "Two parts of the plan break things. (1) Adding effective_tokens to improvement.METRICS (scripts/improvement.py:22), or requiring usage fields, rejects every existing run artifact. The tests that catch it: tests/test_improvement.py, whose fixtures carry only tokens, latency_ms and cost_usd (for example test_eligible_decision_never_applies_patch and test_no_benefit_is_inconclusive); evals/skill-value/test_improve_fixtures.py, which iterates imp.METRICS at :81 and expects the positive control to stay eligible; and tests/test_egm_pilot.py::test_valid_synthetic_protocol_export_cross_checks_official_gate, where the frozen score.py emits only the three metrics into the current improvement.compare. It would also open a second efficiency_gain path and a second resource-regression path in compare (:312-318). (2) Editing evals/egm-pilot/pilot_common.py usage() changes the pinned scorer and execution hashes. ScoreEndToEndTests and RunPilotTests then fail with 'contract changed', and test_output_parsing_metrics_and_isolation asserts usage()['tokens'] == 120. Safe form: an optional, spec-declared block (weights by billed model id). When present, compare derives and reports effective tokens from raw per-case usage; when absent, behavior is unchanged. 'tokens' stays a raw integer (integer check at :274). The pilot change goes into the next pilot contract, not v2.",
+      "trigger_conflict": "None. No skill or description changes.",
+      "context_budget": "None. This is evaluation code and no host loads it.",
+      "instruction_conflict": "It fits SHARED_ACCEPTANCE_PROTOCOL.md:337-341 if raw fields stay recorded and no USD is derived. Two TE fallbacks must not be copied: accounting.py's FALLBACK_WEIGHTS, and pricing.py's own rule that a missing breakdown falls back to raw tokens_total at full weight (pricing.py:29, :173). In OAW, a missing breakdown or an unpriced id makes the efficiency comparison invalid; it is never reweighted silently.",
+      "cross_host": "Needs a per-host field mapping. Claude's result.modelUsage gives fresh input, cacheRead, cacheCreation and output per model. Codex's turn.completed reports input_tokens that already include cached_input_tokens, has no cache-write field, and reports output_tokens that OAW treats as already including reasoning (evals/three-way/test_bench.py::test_preserves_usage_without_double_counting_reasoning). So on Codex, fresh input = input - cached, the cache-write weight cannot be observed, and TE's reasoning addition (sidecall.py:262-270) is not copied. Claude modelUsage often lists more than one model, so the frozen table must price every id the host uses internally; otherwise runs go invalid after a host upgrade. Absolute values are never compared across hosts.",
+      "result": "flag",
+      "notes": "Absorb only as an opt-in, spec-declared derived metric, with new fixtures: an unknown id is invalid, the weights are covered by evaluation_sha256, raw fields are preserved, and Claude and Codex mappings are tested. Leave the registered egm-pilot v2 files untouched."
+    },
+    {
+      "component_id": "te.overhead-attribution",
+      "other_parts_regress": "Making usage coverage mandatory for an efficiency verdict changes current results. tests/test_improvement.py::test_eligible_decision_never_applies_patch and test_earlier_non_eligible_comparison_blocks_acceptance are eligible only through a 100 to 80 token drop with no coverage field. evals/skill-value/test_improve_fixtures.py::test_masked_regression_and_positive_control_use_real_comparator expects its positive control to be eligible. decide() re-runs compare on stored proposals (improvement.py:375-379), so a silent semantics change would also make evaluated but undecided proposals fail with 'Revalidated comparison is no longer eligible'. Make it spec-declared (coverage required, overhead fields listed), or bump SCHEMA to 2 and keep schema-1 proposals on their old rules.",
+      "trigger_conflict": "None.",
+      "context_budget": "None.",
+      "instruction_conflict": "None. It enforces existing protocol text (SHARED_ACCEPTANCE_PROTOCOL.md:61-62, :339-340).",
+      "cross_host": "Coverage rules differ by host, so two adapters are needed. On Codex, bench.usage_of and experiment.usage already reject collab items as 'coverage not established'. On Claude, modelUsage covers the parent process, but a food's side processes appear in neither host's result event: TE's judge, for example, runs as a separate claude -p or codex exec. For a black-box food like TE, coverage is incomplete unless the runner meters those processes independently. The food's own ledger is a self-report and cannot certify coverage.",
+      "result": "flag",
+      "notes": "Absorb with versioned spec semantics and fixture tests. Consequence for the held A1 test: a TE arm gives 'coverage incomplete, no efficiency claim' until an independent meter exists, such as the provider-side usage delta or a wrapped CLI."
+    },
+    {
+      "component_id": "te.startup-size-probe",
+      "other_parts_regress": "Nothing regresses today. scripts/catalog.py does not exist, and the change is to docs/plans/skill-catalog-execution.md (:120, :127). The future code needs new tests: a nonzero exit, is_error, missing usage or empty output must raise and never count as 0. A probe runner that starts claude on Windows depends on te.windows-cli-argv, because Claude on this machine is the npm claude.cmd shim.",
+      "trigger_conflict": "None.",
+      "context_budget": "This lowers risk by replacing an estimate with a measurement. One caveat: if a host caps its skill listing, the measured size can stay flat while skills drop out. A size check must therefore be paired with a presence check from the init event (te.host-load-probe), and a flat size alone is not a pass. Also record the mode measured, because headless -p differs from interactive.",
+      "instruction_conflict": "It fits the automation boundary (plan :68). The Codex prompt-input probe uses no model quota. The Claude probe makes two small paid requests per candidate and runs only under the D11 standing budget or when a person starts it. TE's 4-fact and 150-token caps are not imported; OAW sets its own numbers in P5.",
+      "cross_host": "The methods and units differ. Claude reports tokens from two paid requests. Codex's debug prompt-input gives characters (TE divides by 4) and excludes tool schemas (toolcheck.py:271). TE ran both probes in a temporary directory; OAW must run them in the candidate project so AGENTS.md and the skills are included. Budgets must be per host. The Codex half is unverified because no Codex CLI is installed here (the egm-pilot spec says the same), so it is still unknown whether skill metadata appears in prompt-input. Plan decision 2 requires both hosts, so the gate cannot rely on the Claude probe alone.",
+      "result": "flag",
+      "notes": "Absorb into the plan with the presence pairing and per-host budgets. Before the gate counts the Codex probe, verify it locally once Codex is installed (free)."
+    },
+    {
+      "component_id": "te.host-load-probe",
+      "other_parts_regress": "The default doctor must stay offline and unchanged. tests/test_install.py asserts that a fresh-install doctor exits 0 and that every capability reports enabled == 'UNKNOWN' (:111-113). harness_check.py install_check runs doctor --json in a temp project on CI runners that have no host CLI. tests/test_egm_integration.py asserts oaw.doctor(...)['status'] in many cases. The probe must therefore be its own flag (for example doctor --probe-host), report under its own key, and never turn a healthy install unhealthy. oaw.py imports no subprocess today. Copy the init-summary parsing into scripts/ rather than importing evals/egm-pilot/pilot_common.py, which is a frozen file. Add mocked-binary tests in the style of tests/test_egm_pilot.py::test_live_execution_records_runs_with_a_mocked_binary.",
+      "trigger_conflict": "None.",
+      "context_budget": "On demand only; output appears only when the flag is passed.",
+      "instruction_conflict": "A temporary --settings file and an empty --mcp-config write nothing to the project, which is consistent with 'OAW does not silently edit host settings' (README.md:202; Skill_Guide.md:17). But doctor is a static check today, and templates/AGENTS.md says installing OAW does not authorize external actions. Starting the host CLI is a new external action, so it must be explicit and labelled 'may make one small request'. TE's catalog probe ran in a temporary directory, but OAW's must run in the target project, where the host loads that project's CLAUDE.md, .claude settings and .mcp.json. So the probe must pin --setting-sources, disableAllHooks, --strict-mcp-config and --no-session-persistence. TE adds the last flag only when --help lists it and silently drops it otherwise (sidecall.py:195-199); OAW must fail closed instead, as its pilot runner does. Label the result as headless discovery on that host version, not proof of interactive discovery.",
+      "cross_host": "As described, this is Claude-only. Codex has no init event that lists skills, and TE's 'codex features list' validates config without reporting loaded skills. A possible free Codex counterpart is to search the codex debug prompt-input output for the OAW skill names, but this is unverified because Codex is not installed here. D8 and the plan's cross-host rule (:317) forbid shipping a doctor feature that works on only one host.",
+      "result": "flag",
+      "notes": "Hold the Claude probe until the Codex counterpart is checked, then ship both together behind one explicit flag."
+    },
+    {
+      "component_id": "te.shadow-arm",
+      "other_parts_regress": "This is a doc-only change to docs/plans/skill-catalog-execution.md, so no code or test is affected. One statement must be corrected first. In TE, shadow mode suppresses delivery, not execution or spend: controller.py:323 still passes judge=self._judge(...), which starts paid AsyncJudge side calls in shadow mode; hooks still fire on every tool call, and fold jobs still run. Only injection, nudge, notice and settings writes are skipped (controller.py:121, :334, :347; fold.py:327).",
+      "trigger_conflict": "None.",
+      "context_budget": "None.",
+      "instruction_conflict": "A shadow run executes the food's code, which D7 and the plan keep out of digestion (plan :431: no third-party code runs at ingest). It is therefore a sandbox trial under the D11 standing policy (isolated copy, no API keys or a capped budget) and never part of automatic static digestion. Its latency and token numbers include the food's own overhead, so they are neither a native baseline nor A/B evidence.",
+      "cross_host": "The rule is host-neutral, and TE's shadow flag works on both adapters. On Codex, however, TE's judge runs on the user's default model (paid_model is empty), so a Codex shadow run is not cheap.",
+      "result": "flag",
+      "notes": "Rewrite the rule as: a log-only mode is the cheapest behavior trial when the mechanism's decisions cost nothing to compute; if the food still makes model calls in that mode, budget them and run it in the sandbox."
+    },
+    {
+      "component_id": "te.cache-aware-timing",
+      "other_parts_regress": "None. This is advice text only. tests/test_install.py::test_migrate_is_dry_run_then_backs_up_retirements and harness install_check check only status 'dry-run' and that nothing is written, so an extra advice field or printed line keeps them passing.",
+      "trigger_conflict": "None.",
+      "context_budget": "None. Neither UPGRADING.md nor the migrate output is loaded at startup. The rationale fits: migrate changes AGENTS.md and skill packages, which are part of each host's startup prefix.",
+      "instruction_conflict": "None, provided the text says 'upstream-reported, not measured by OAW' (AGENTS.md: record measured validation and its platform).",
+      "cross_host": "The advice is the same for both hosts. TE reports the cache rewrite for tool-list changes on Claude Code 2.1.307 and Codex 0.163.0; applying it to AGENTS.md or skill changes is an extrapolation, and it is unverified whether a resumed Codex session re-reads AGENTS.md at all. A host-neutral wording: apply migrate between sessions, then start fresh sessions so both hosts load the new policy.",
+      "result": "pass",
+      "notes": "Only the timing rule is taken. The 24 h waiter remains excreted under te.background-daemons."
+    },
+    {
+      "component_id": "te.failure-signature",
+      "other_parts_regress": "The named target collides with frozen files: score.py and pilot_common.py are the pinned egm-pilot scorer, so adding the diagnostic there breaks the ScoreEndToEndTests and RunPilotTests in tests/test_egm_pilot.py. The pilot could not feed it anyway: its invocation disallows Bash and PowerShell (spec.json invocation.disallowed_tools), so its traces contain no test runs or command errors. A better home is a standalone, report-only script outside CONTROL_FILES and the three-way runner hash. It would read the Codex events.jsonl that evals/three-way and evals/skill-value already keep (command_execution items with exit_code). No existing test covers it, so fixtures must be added.",
+      "trigger_conflict": "None. If oaw-improve's SKILL.md mentions the diagnostic, its description stays unchanged.",
+      "context_budget": "None at startup. An optional line in oaw-improve's SKILL.md (body now 1,216 bytes) adds a few bytes that load on demand.",
+      "instruction_conflict": "None, if it stays report-only (never a gate), emits only hashes and counts, and leaves raw traces in local run directories (AGENTS.md: keep native transcripts and local runs out of the public repository). Use sha256 instead of md5.",
+      "cross_host": "Needs two trace adapters: Claude stream-json tool_use/tool_result (is_error) and Codex command_execution (exit_code and output). A Windows fix is also needed. TE strips only POSIX '/...' paths (state.py:133), so the same failure from two temp workspaces with C:\\ or backslash paths hashes differently and is undercounted on this user's platform. Normalize drive-letter, backslash and workspace-root paths, with fixtures for both forms; CI runs windows-latest.",
+      "result": "flag",
+      "notes": "Retarget to a new unpinned diagnostic module, with Claude and Codex adapters and cross-platform path normalization."
+    },
+    {
+      "component_id": "te.fact-lifecycle",
+      "other_parts_regress": "Changing the --min-citations default from 0 to 2 (wiki_sync.py:1185, :1385) would empty promote-candidates for every project without docs/archive: _count_entry_citations returns 0 when that folder is missing (:1166), and the V2 templates never create it. No test covers promote-candidates (tests/test_wiki_sync.py has none), so this regression would pass the gate silently. Keep the default, add an opt-in flag, and add tests. Two parts of the rule need no new code or are not yet possible: citations are already counted per distinct file (each archive file counts once, :1171-1181), and OAW's memory format ('## [date] [TAG] body', context_hub.py memory_add) has no supersede or contradiction marker, so one must be defined before 'contradicted by a later entry' can be detected. Editing templates/.agents/skills/oaw-evidence/SKILL.md also requires sync_examples.py --write (harness example-content check) and turns into a framework update or a migration conflict in installed projects.",
+      "trigger_conflict": "None, as long as the description is unchanged.",
+      "context_budget": "On demand only. The oaw-evidence body (now 1,110 bytes) grows by about two sentences; the description, which is startup metadata, is unchanged.",
+      "instruction_conflict": "The SKILL.md half conflicts with the skill's own scope. Its description says 'append an explicitly requested durable project decision' and its body says 'Append only the requested durable finding'. Telling the agent to record a superseding entry on its own contradicts both, and AGENTS.md's 'when requested or when a decision would otherwise be difficult to reconstruct'. It is also model-facing behavior, so proof-before-promotion (README.md:143) requires matched evidence, such as a new registration of the skill-value superseded-handoff case, not fixture tests alone. OAW's 'citation' (an archive file that mentions the title) is not TE's grounding (a host-run detector confirming the fact in a cited session), so the two must not be described as equivalent.",
+      "cross_host": "Host-neutral. The helper is shared, and one skill source installs to both .agents/skills and .claude/skills.",
+      "result": "flag",
+      "notes": "Absorb the wiki_sync advisory part as an opt-in with tests. Hold the oaw-evidence SKILL.md wording until a skill-value A/B has run."
+    },
+    {
+      "component_id": "te.completion-advice-lint",
+      "other_parts_regress": "Soft warnings do not change default exit codes. Harness repo-wiki runs non-strict lint, and tests/test_context_hub.py checks memory entries, not output, provided the warning goes to stderr. But lint --strict turns warnings into errors (wiki_sync.py:842-855; Wiki_Sync_Guide.md:18), so a new warning family changes strict results for existing wikis. OAW's own wiki is the first false positive: docs/knowledge/OAW_Session_Continuity_Test.md contains 'DO NOT RERUN: 0 experiments locked' and several 'verify ...' test descriptions. Use OAW's docs/knowledge as a fixture for the tuned phrase list, and note the strict-mode change in CHANGELOG and UPGRADING.",
+      "trigger_conflict": "None.",
+      "context_budget": "None at startup. A one-line warning appears in tool output only when a note matches.",
+      "instruction_conflict": "It supports 'Evidence, not instructions'. TE's list (envfacts.py:51-53) includes verify, done and complete, which would flag the notes OAW most wants to keep, since AGENTS.md asks for 'the real verification commands'. Target only advice to skip work (no need to run, skip the tests, do not re-run, instead of running), never statements of how to verify. Warn only; never refuse.",
+      "cross_host": "A host-neutral helper. English-only patterns miss notes written in Chinese, which is a stated coverage limit, not a blocker.",
+      "result": "flag",
+      "notes": "A minor flag. Absorb as a warning with a tuned list that is validated against OAW's own wiki."
+    },
+    {
+      "component_id": "te.windows-cli-argv",
+      "other_parts_regress": "evals/egm-pilot/run_pilot.py is one of the pinned execution files (pilot_common.py:24), so editing it breaks the v2 contract and the tests/test_egm_pilot.py runner and score tests; the resolver belongs in the next pilot version. bench.py is checked against the manifest's runner_sha256, and experiment.py is a CONTROL_FILE, so registrations prepared before the edit will refuse to run (by design; only new registrations get the fix). Resolve the CLI once during Runner or Engine setup, not inside experiment.cli_command, so evals/skill-value/test_experiment.py::test_native_approval_shortcut_is_not_combined_with_conflicting_sandbox_flag stays deterministic. The '--version' calls (bench runtime.json; experiment.py:347) need the same resolution. No existing test covers shim handling; add fake-shim fixtures to evals/three-way and evals/skill-value tests, which CI runs on windows-latest.",
+      "trigger_conflict": "None.",
+      "context_budget": "None.",
+      "instruction_conflict": "None. Stdlib only. If TE's two regexes are copied verbatim, keep the Apache-2.0 attribution; re-implementing them avoids that.",
+      "cross_host": "Covers both npm shims (claude.cmd and codex.cmd); POSIX behavior is unchanged. Correction to the ledger: run_pilot.py passes each turn's text as the last argv element after '--' (run_pilot.py:141), not on stdin, so through cmd.exe the prompt itself is re-parsed. On this machine Claude is only the npm shim, so the pilot refuses by default and runs only with --claude pointing at claude.cmd. 2 of 31 scenario turns contain '&', which is safe today only because list2cmdline quotes arguments that contain spaces. Also, shutil.which on Windows searches the current directory first unless NoDefaultCurrentDirectoryInExePath is set. Resolve from a trusted working directory and record the resolved absolute argv in each run manifest.",
+      "result": "flag",
+      "notes": "Absorb into bench.py and experiment.py for new registrations and into the next pilot contract. This matters more than the ledger states, because the user's Claude install is npm-only."
+    },
+    {
+      "component_id": "te.test-trap-fixture",
+      "other_parts_regress": "Adding the trap as a third 'evidence' case breaks evals/skill-value/test_fixtures.py, whose evidence tests assume a 500-record handoff memory and exactly two prompts (test_evidence_has_500_real_records_and_no_preseeded_prompt_only_ticket, test_each_fixture_is_deterministic_and_mutably_isolated, test_evidence_stage_update_changes_current_revision_only_for_update_family). fixtures.py is also a CONTROL_FILE of the registered protocol oaw-retained-skill-value-v1, and test_experiment.py::test_registered_population_and_no_source_name_leak_in_ids pins 60 calls from protocol.json. Put the trap in a new module (for example CASES['verification']) with its own builder, its own tests and a new protocol registration.",
+      "trigger_conflict": "None.",
+      "context_budget": "None; the fixture is never installed. For context: OAW's recommended place for a verification command is templates/AGENTS.md, which is loaded at startup and costs one line.",
+      "instruction_conflict": "OAW policy keeps 'the real verification commands' in AGENTS.md, not in memory. A fixture that records the command only as project evidence tests a setup OAW does not recommend, so when A5 runs it needs an AGENTS.md arm next to the pull arm (oaw-evidence) and the native arm. The trap must also be armed on every run: the controller must show that pytest is absent for the interpreter and PATH the candidate sees (experiment.py points candidates at sys.executable). It is absent for Python 3.13 on this machine but may be present elsewhere. A run in which the trap is not armed is invalid, not a pass.",
+      "cross_host": "The fixture is host-neutral, but the skill-value and three-way runners are Codex-only (bench.py refuses non-Codex manifests), and the Claude pilot forbids Bash and PowerShell. A Claude runner that allows a shell inside a sandbox is needed before A5 can cover both hosts.",
+      "result": "flag",
+      "notes": "Absorb the fixture design as a new, separately registered module. Running it remains the held paid A5 test."
+    },
+    {
+      "component_id": "te.repo-cannot-redirect-executables",
+      "other_parts_regress": "None. This is a plan rule for the future catalog.py, and no current code changes. Scope it to Python that reads untrusted clones. As a blanket rule it would break OAW's own helpers: 'python -I scripts/improvement.py --help' fails here with ModuleNotFoundError: No module named 'oaw_common', because -I drops the script directory from sys.path (wiki_sync's validate_skills import would fail the same way). -I also ignores PYTHONUTF8 and PYTHONIOENCODING, which harness_check.run sets (:41), so add -X utf8 explicitly; this Windows host uses a cp950 console.",
+      "trigger_conflict": "None.",
+      "context_budget": "None.",
+      "instruction_conflict": "None. It is consistent with D7, the ingest gate (plan :74) and the P2 acceptance criteria (:417). Python 3.10 is OAW's floor, so use -I (available since 3.4), not -P (3.11+).",
+      "cross_host": "Host-neutral; ingest runs the same way for both hosts.",
+      "result": "pass",
+      "notes": "Write the rule with its scope (untrusted clones only), the -X utf8 companion flag, and the TE counter-example (python -m with the repository root as working directory)."
+    },
+    {
+      "component_id": "te.readme-teaser",
+      "other_parts_regress": "None today; no test covers README assets. P8's acceptance criteria (plan :423) already call for a freshness gate on generated README content, and the same gate can cover the animation. TE's generator imports PIL (docs/assets/teaser.py:49) and writes a GIF. OAW's generator must write SVG text with the standard library, because CI installs no packages, and the plan caps the SVG at 30 KB with no JS (:406). README.md and README.zh.md both need the same <picture> block.",
+      "trigger_conflict": "None.",
+      "context_budget": "None. Neither host loads the README at startup.",
+      "instruction_conflict": "None, provided the animation shows no unmeasured gains. TE's teaser carries headline cost numbers; OAW's must not (P8: no claims of unmeasured model gains; README: no v2 token-savings number is claimed). TE's logos and GIF are not copied.",
+      "cross_host": "Not host-specific.",
+      "result": "pass",
+      "notes": "Whether GitHub honors prefers-reduced-motion in <picture> is still covered by the plan's manual render check."
+    }
+  ]
+}

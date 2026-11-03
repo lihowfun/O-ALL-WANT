@@ -1,0 +1,128 @@
+{
+  "reviewer": "goldfish-1",
+  "food": "microsoft/TokenEconomizer",
+  "scope": "Read-only review of src/ (plugin/, tokeneconomizer/, docs/, README.md). experiments/ not reviewed beyond its exclusion from the installed plugin (pyproject.toml:52-57). No code from the food was executed.",
+  "verdict_summary": "A carefully engineered, mostly well-disclosed cost-control plugin (hooks + a stdlib Python core). It does not touch PATH, shell profiles, git hooks or global host config, and it never stops a turn. The main concerns: (1) tool pruning defaults to 'auto' and writes permission deny rules into repo-local agent settings without asking first, and on Claude Code the notice appears only in the Ctrl+O transcript; (2) on Windows it escapes the agent's hook job object through CREATE_BREAKAWAY_FROM_JOB or WMI/PowerShell and writes the full process environment to a spec file, which the user docs do not mention; (3) the opt-in EnvValue micro-skill can persist and re-inject literal VAR=value strings, secrets included; (4) the loop-guard digest, which is on by default, sends raw command lines without redaction. Instruction conflicts: the notice relay asks the model to repeat text 'word for word' even in headless runs, the redirect judge never sees the user's prompt, and the 'repo operating manual' is never reconciled with CLAUDE.md or AGENTS.md. Several mechanisms are worth lifting on their own: the leakage-safe loop digest with an async judge, evidence-gated fact lifecycles, conservative settings-file editing, side-call isolation, and prompt-cache-aware timing of tool changes.",
+  "findings": [
+    {
+      "rubric_item": 2,
+      "severity": "major",
+      "finding": "Tool pruning defaults to 'auto'. Once evidence forms and the repo has been idle for 60 minutes, it writes permission deny rules (Claude Code permissions.deny), Codex feature toggles, or Copilot disabledMcpServers into the repository's agent settings files without asking per change. The user is told only after the fact, at the next session start, and on Claude Code that notice is a systemMessage visible only in the Ctrl+O transcript. The README discloses this, and opt-out is toolprune=propose. The entries outlive uninstall unless the user runs 'toolprune restore' in every repository.",
+      "evidence": "tokeneconomizer/plugin/config.py:11-16,152 (toolprune default 'auto'); tokeneconomizer/plugin/fold.py:312-341 (apply_pending writes the list); tokeneconomizer/plugin/denylist.py:52-56,240-262 (appends to permissions.deny / disabledMcpServers); tokeneconomizer/plugin/denylist.py:416-450 (.codex/config.toml); tokeneconomizer/plugin/controller.py:188-198 (after-the-fact notice); README.md:55-58,311-322 ('shows only in the detailed transcript (Ctrl+O)'); plugin/README.md:98-104 (uninstall step 1 is a manual per-repo restore)"
+    },
+    {
+      "rubric_item": 3,
+      "severity": "major",
+      "finding": "On Windows, detached jobs (fold, judge, repomap, migrate, apply-pending) are started so that they outlive the agent's hook job object. The first attempt uses CREATE_BREAKAWAY_FROM_JOB; if that fails, it runs PowerShell Invoke-CimMethod Win32_Process.Create (WMI). For the WMI path it writes a JSON spec holding the hook's entire environment (every env var, including any API tokens in it) to the state directory, deleted only once the child starts. The README and docs/PLUGIN.md never mention escaping the job object, WMI, or the env spec file. The privacy claim that files are created 0700/0600 does not hold on Windows: secure_root is a no-op without os.getuid, and umask does not set ACLs.",
+      "evidence": "tokeneconomizer/plugin/winspawn.py:1-14,22-27,44-53,56-77,80-89; tokeneconomizer/plugin/context.py:73-89 (env = dict(self.env) handed to winspawn); tokeneconomizer/plugin/paths.py:33-46 (os.getuid -> AttributeError swallowed on Windows); docs/PLUGIN.md:543-544 (0700/0600 claim); README.md:111-112 ('never handles credentials')"
+    },
+    {
+      "rubric_item": 3,
+      "severity": "major",
+      "finding": "PLAUSIBLE: the EnvValue fact family learns the literal value of an environment variable that a command set inline or exported (the regex accepts token-like strings such as sk-..., ghp_...) after code failed asking for that variable. It renders the fact as '`VAR=value` works' and injects it into every later session's context in that repository, with no secret filtering. Micro-skills is off by default, and the docs warn only about repository-controlled text, not about secrets.",
+      "evidence": "tokeneconomizer/microskills/observe.py:505-509 (_ENV_NEED_RE, _ENV_PREFIX_RE value [\\w.\\-/:]+), 561-567 (_env_calls); tokeneconomizer/microskills/envfacts.py:26-28,110-114 (render 'VAR=good works'), 437-455 (stores good/bad values); tokeneconomizer/plugin/config.py:148 (microskills off by default); docs/PLUGIN.md:561-565"
+    },
+    {
+      "rubric_item": 3,
+      "severity": "minor",
+      "finding": "The loop guard's judge and redirect writer are on by default. The digest they receive contains raw shell command lines (the first 90 characters), grep patterns and edited basenames, with no secret redaction. The micro-skills proposer also gets raw command templates and uncovered raw command excerpts. Docs describe this as 'command templates ... never file contents', which understates that inline secrets in commands are sent. Mitigation: the calls go through the user's own agent CLI and provider (claude -p on haiku by default).",
+      "evidence": "tokeneconomizer/loopguard/state.py:187-195,207-212,214-232; tokeneconomizer/plugin/judge.py:64-86; tokeneconomizer/loopguard/judge.py:40-43; tokeneconomizer/microskills/distiller.py:225-227,238-252,503-505,600-612; tokeneconomizer/plugin/sidecall.py:1-13,217-225; docs/PLUGIN.md:546-553"
+    },
+    {
+      "rubric_item": 3,
+      "severity": "minor",
+      "finding": "Commands the user must run have side effects the docs do not fully describe. 'toolprune refresh-catalog' on Claude Code starts a real 'claude -p' session with all of the user's MCP servers attached (no --strict-mcp-config) and kills the process tree after the init event; the README says only 'without a model call'. 'te --host copilot probe' creates its throwaway repository inside the first writable Copilot-trusted folder, which can be a real project directory, and runs '--allow-all-tools' sessions there, while its docstring says nothing is written outside a temporary directory. Side calls add --no-session-persistence only when 'claude --help' lists it; otherwise they show up in the user's resume history.",
+      "evidence": "tokeneconomizer/plugin/toolcheck.py:58-98; tokeneconomizer/plugin/sidecall.py:195-214 (comment: 'Not for the catalog probes'); README.md:190-192; tokeneconomizer/plugin/probe.py:20-22,118-124,183-185"
+    },
+    {
+      "rubric_item": 2,
+      "severity": "minor",
+      "finding": "Hooks start detached background processes: fold at every SessionEnd and at SessionStart for unseen ends, async judge jobs, repomap refresh, a one-time migration, and a 'toolprune apply-pending' waiter that sleeps and polls for up to 24 hours. docs/PLUGIN.md discloses these. The README describes the idle wait but not the fact that a process stays resident.",
+      "evidence": "tokeneconomizer/plugin/fold.py:51-52,344-350,455-462; tokeneconomizer/plugin/cli.py:355-382; tokeneconomizer/plugin/repos.py:689-705; tokeneconomizer/plugin/repomap.py:183-187; tokeneconomizer/plugin/judge.py:100-104; docs/PLUGIN.md:21,43,390-393; README.md:287-291"
+    },
+    {
+      "rubric_item": 2,
+      "severity": "minor",
+      "finding": "Other writes outside the plugin's own state: when the plugin creates a settings file, it adds the path to .git/info/exclude (disclosed; the exclude line stays after uninstall). Every SessionStart writes ~/.tokeneconomizer/bin/te, which is not added to PATH. The Codex skills ask the agent to request sandbox escalation ('require_escalated') for state writes, which Codex shows to the user for approval.",
+      "evidence": "tokeneconomizer/plugin/denylist.py:141-167,260-261; tokeneconomizer/plugin/paths.py:49-84; tokeneconomizer/plugin/controller.py:95-98; plugin/codex-skills/config/SKILL.md:17; plugin/codex-skills/toolprune/SKILL.md:17; README.md:320; plugin/README.md:103-104"
+    },
+    {
+      "rubric_item": 1,
+      "severity": "minor",
+      "finding": "The slash commands tell the model to 'Run this exact command' with $ARGUMENTS substituted unquoted into a shell line, so shell metacharacters in the arguments run as shell commands. Scoping is otherwise clear and good: 'never add [set/unset/apply/restore/migrate] yourself'.",
+      "evidence": "plugin/slash-commands/config.md:5-12; plugin/slash-commands/repos.md:5-12; plugin/slash-commands/toolprune.md:5-12; plugin/slash-commands/untool.md:5-12"
+    },
+    {
+      "rubric_item": 1,
+      "severity": "minor",
+      "finding": "Cost wording is inconsistent. 'toolprune measure' on Claude Code makes two paid 'claude -p' requests, but the toolprune slash command gives no cost warning and the README says commands run from a terminal are free. The Codex skill's 'makes no model call' is true only for Codex. The README's 'announces each action in one line' does not hold on Claude Code, where systemMessage appears only in Ctrl+O.",
+      "evidence": "tokeneconomizer/plugin/toolcheck.py:216-238,283-294; plugin/slash-commands/toolprune.md:3,9; README.md:69-70,252,320-322,353-355; plugin/codex-skills/toolprune/SKILL.md:15-21; docs/PLUGIN.md:546-548"
+    },
+    {
+      "rubric_item": 5,
+      "severity": "minor",
+      "finding": "On Claude Code (and Cursor), the 'still stuck' notice is injected as context telling the model to put the line 'word for word, in your next message to the user, and again in your final reply'. This also applies in headless 'claude -p' runs, so it can conflict with project or user output contracts such as JSON-only replies or prescribed answer formats in CLAUDE.md.",
+      "evidence": "tokeneconomizer/plugin/hosts.py:152-166,239-245,466,493-494; tokeneconomizer/plugin/controller.py:339-355; README.md:345-355"
+    },
+    {
+      "rubric_item": 5,
+      "severity": "minor",
+      "finding": "The redirect judge and writer deliberately never see the user's prompt or the project instructions. A repetitive workflow the user asked for can therefore be judged stuck and redirected toward 'a MATERIALLY DIFFERENT next step' mid-turn, against an explicit user or project instruction. The plugin's own verification redirected a turn that was told to make 12 edit-and-test cycles.",
+      "evidence": "tokeneconomizer/loopguard/state.py:214-219; tokeneconomizer/loopguard/judge.py:15-27,66-80; tokeneconomizer/plugin/controller.py:329-338; docs/PLUGIN.md:457-464"
+    },
+    {
+      "rubric_item": 5,
+      "severity": "minor",
+      "finding": "Micro-skills is injected at SessionStart as a '# repo operating manual' or '# environment facts' block and is never reconciled with CLAUDE.md, AGENTS.md or other skills. Nothing in the package reads those files, so learned facts can duplicate or contradict project-declared commands. Tool-pruning deny rules can also refuse tools that a rarely used skill or project workflow depends on, because the protected set covers only core and interactive tools and toolprune_protect is manual.",
+      "evidence": "tokeneconomizer/microskills/distiller.py:711-719; tokeneconomizer/microskills/envfacts.py:47-49,253-259; tokeneconomizer/plugin/controller.py:106-133; tokeneconomizer/plugin/adapter.py:37-48; tokeneconomizer/plugin/fold.py:97-106; tokeneconomizer/plugin/config.py:38-40 (toolprune_protect); grep for AGENTS.md/CLAUDE.md in tokeneconomizer/ finds only the copied tool catalog"
+    },
+    {
+      "rubric_item": 4,
+      "severity": "minor",
+      "finding": "Tool pruning overlaps heavily with what the hosts already do. Claude Code already defers many tools behind ToolSearch, and the plugin itself notes that deferred tools 'cost one listing line each'. Without a manual 'refresh-catalog', only deferred tools can be proposed on Claude Code. The lever is the host's own permissions.deny / --disallowed-tools, which the plugin automates.",
+      "evidence": "tokeneconomizer/plugin/adapter.py:14-18; tokeneconomizer/plugin/denylist.py:7-10; docs/PLUGIN.md:595-597; README.md:128-130"
+    },
+    {
+      "rubric_item": 4,
+      "severity": "minor",
+      "finding": "Micro-skills and the repo map duplicate host-native project-instruction channels (CLAUDE.md, AGENTS.md); the package itself describes repomap as 'delivered through the plugin's own channel instead of a project instructions file'. Cost reporting partly duplicates host usage displays. The loop guard has no host-native equivalent: the hosts offer only Esc or turn caps, and the plugin adds stuck detection plus a redirect.",
+      "evidence": "tokeneconomizer/plugin/repomap.py:3-6; README.md:97-99; tokeneconomizer/plugin/hosts.py:11-14; tokeneconomizer/plugin/accounting.py:1-64"
+    },
+    {
+      "rubric_item": 6,
+      "severity": "value",
+      "finding": "Worth lifting on its own: the leakage-safe loop detector. It folds each tool call into counts (edit churn per basename, error outputs, test runs) and hashes normalized failure signatures, so a repeated failure after edits gives a stagnation metric. The LLM judge then runs as a detached job whose verdict and pre-written redirect are picked up by a later hook, so the agent never waits.",
+      "evidence": "tokeneconomizer/loopguard/state.py:120-134,164-168,170-212,214-232; tokeneconomizer/plugin/judge.py:1-17,25-51; tokeneconomizer/plugin/controller.py:281-295; tokeneconomizer/loopguard/judge.py:15-27"
+    },
+    {
+      "rubric_item": 6,
+      "severity": "value",
+      "finding": "Worth lifting: evidence-gated fact lifecycles. Proposer facts must carry host-run regex detectors (scope/confirm/contradict) and at least 2 citations, and a contradiction retires them. Facts must be declarative and must never forbid a tool. An LLM-free layer covers 'form A fails, form B works' and similar facts, with a lint that rejects completion or verification advice.",
+      "evidence": "tokeneconomizer/microskills/distiller.py:33,418-454,650-660; tokeneconomizer/microskills/envfacts.py:3-32,51-53,216-217,276-289"
+    },
+    {
+      "rubric_item": 6,
+      "severity": "value",
+      "finding": "Worth lifting: conservative editing of agent settings files. It refuses symlinks that lead out of the repository, refuses to overwrite invalid JSON, records and removes only its own entries, refuses to edit a committed .codex/config.toml, validates the result with 'codex features list' and rolls back on rejection, and keeps the file it creates out of git through .git/info/exclude.",
+      "evidence": "tokeneconomizer/plugin/denylist.py:89-121,141-167,244-286,416-450"
+    },
+    {
+      "rubric_item": 6,
+      "severity": "value",
+      "finding": "Worth lifting: the side-call isolation recipe. TE_SIDECALL stops recursion into the plugin's own hooks. Claude side calls use --tools \"\" plus --strict-mcp-config with an empty mcp.json (measured as about 570k down to about 14k effective tokens). On Windows, npm .cmd shims are resolved to a direct argv so cmd.exe never re-parses session-derived prompt text.",
+      "evidence": "tokeneconomizer/plugin/sidecall.py:36-43,57-58,127-177,202-225; tokeneconomizer/plugin/hook.py:5-9,67"
+    },
+    {
+      "rubric_item": 6,
+      "severity": "value",
+      "finding": "Worth lifting: tool-list changes timed around the prompt cache. A new deny list is held until every session in the repo has been idle longer than the cache lives, so a warm resumed conversation never re-writes its whole history to the cache. Hooks fail open and isolate stdout, with progress lines redirected to stderr and exactly one JSON object written out.",
+      "evidence": "tokeneconomizer/plugin/fold.py:42-51,312-341; docs/PLUGIN.md:381-395; tokeneconomizer/plugin/hook.py:62-87"
+    },
+    {
+      "rubric_item": 2,
+      "severity": "value",
+      "finding": "A positive containment property: settings, including the ones that name executables (repomap_python, pi_cli, pi_extensions), are read only from the state root and environment variables, never from the repository, so a cloned repository cannot redirect what the plugin executes. Global host configs (~/.codex/config.toml, ~/.copilot/config.json, known_marketplaces.json) are only read. Repository identity uses the normalized origin remote and honours GIT_CEILING_DIRECTORIES and a home-directory ceiling.",
+      "evidence": "tokeneconomizer/plugin/context.py:46-56; tokeneconomizer/plugin/config.py:58-63; tokeneconomizer/plugin/denylist.py:471-521; plugin/scripts/te_bootstrap.py:57-95; tokeneconomizer/plugin/paths.py:121-141,188-249"
+    }
+  ]
+}

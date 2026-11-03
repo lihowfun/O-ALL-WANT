@@ -1,0 +1,2470 @@
+{
+  "schema_version": 2,
+  "kind": "oaw-cross-food-absorption-backlog",
+  "generated": "2026-11-03",
+  "foods": {
+    "tokeneconomizer": {
+      "repo": "microsoft/TokenEconomizer",
+      "pinned_commit": "d58755d849cd9157d29aef539f2beab3d5fee0fc",
+      "license": "Apache-2.0",
+      "ledger": {
+        "absorb": 13,
+        "hold": 5,
+        "excrete": 17
+      },
+      "integration": {
+        "pass": 3,
+        "flag": 10,
+        "fail": 0
+      },
+      "ledger_after_integration": {
+        "absorb": 12,
+        "hold": 7,
+        "excrete": 19,
+        "units": 38
+      },
+      "parity_vs_food_alone": "not tested (floor arm designed: HOLD-08b A1 C >= B, last in test_order; conditional, may stay untested)",
+      "ledger_note": "'ledger' is revision 1 (components); 'ledger_after_integration' counts units after splits (see ingest/tokeneconomizer/components.json counts_after_integration)"
+    },
+    "claude-mem": {
+      "repo": "thedotmack/claude-mem",
+      "pinned_commit": "02584c4ac9d92fea45adf5c61e22c546b5738621",
+      "license": "Apache-2.0 (root only; cowork/ is PolyForm-Noncommercial and is never used)",
+      "ledger": {
+        "absorb": 8,
+        "hold": 3,
+        "excrete": 19
+      },
+      "integration": {
+        "pass": 3,
+        "flag": 5,
+        "fail": 0
+      },
+      "ledger_after_integration": {
+        "absorb": 8,
+        "hold": 5,
+        "excrete": 21,
+        "units": 34
+      },
+      "parity_vs_food_alone": "not tested (floor arm designed: HOLD-11 C >= B; runs only under its condition, may never run)",
+      "ledger_note": "'ledger' is revision 1 (components); 'ledger_after_integration' counts units after splits (see ingest/claude-mem/components.json counts_after_integration)",
+      "ledger_after_revision_3": {
+        "absorb": 7,
+        "hold": 6,
+        "excrete": 21,
+        "units": 34,
+        "note": "cm.recall-data-fence (OAW-16) moved from absorb to hold in backlog revision 3 (goldfish-1 #4, goldfish-2 B06); ingest/claude-mem/components.json still records revision 2 (8/5/21) until its ledger update, which is outside the revision-3 resolve step"
+      }
+    },
+    "graphify": {
+      "repo": "Graphify-Labs/graphify",
+      "pinned_commit": "8e6a6d2129d4aeffc7a0e9ed79b153f7f057f42b",
+      "license": "Apache-2.0 (+LICENSE-MIT, NOTICE)",
+      "ledger": {
+        "absorb": 13,
+        "hold": 5,
+        "excrete": 13
+      },
+      "ledger_after_integration": {
+        "absorb": 13,
+        "hold": 9,
+        "excrete": 17,
+        "units": 39
+      },
+      "integration": {
+        "pass": 3,
+        "flag": 9,
+        "fail": 1
+      },
+      "parity_vs_food_alone": "not tested (floor arms designed: HOLD-04 arm F (native + OAW default) vs B (graphify official install) on code questions, and HOLD-04 Stage 0b's A (OAW recall/get) vs C (graphify alone with its LLM pass) on decision recall; both conditional. H1 Stage 2's C >= B compares OAW plus manual graphify with graphify alone and is not the D2 floor)",
+      "ledger_note": "'ledger' is revision 1 (components); 'ledger_after_integration' counts units after splits (see ingest/graphify/components.json counts_after_integration)"
+    }
+  },
+  "oaw_reference": "scratchpad/oaw-ref @ fc5fda1 (origin/codex/oaw-2-native-upgrade, VERSION.json 2.0.0 proposed), read-only",
+  "status": "Draft, revision 3. Nothing implemented, nothing installed, no paid test run; every behavior not measured. Every item is an Elephant draft. Revision 2 was blind-reviewed on 2026-11-03 by two goldfish whose context was inherited, not zero (launch records in ingest/SUMMARY.md section 11); revision 3 resolves their 42 findings. PRE-02's zero-context round on revision 3 (PRE-06 recipe) is still required before the owner approves any batch (D10). Evidence is static reading plus goldfish reviews whose context was inherited. Ship wording for every item: 'parity, no improvement claimed' (D2, D12); for every food: 'parity vs food alone: not tested'.",
+  "conventions": {
+    "order": "items are grouped: prereqs, absorbs by batch, then holds; the order of paid and sandbox stages across holds is test_order",
+    "kind": "prereq = infrastructure, policy or process, not a food component; absorb = re-implemented method into a named OAW part; hold = blocked on a paid A/B, on a free check that needs a missing host, or on execution of food code. OAW-26 and OAW-16 keep their ids but are holds (since revisions 2 and 3)",
+    "from_food": "list of food keys (tokeneconomizer, claude-mem, graphify); merge-derived items list every food whose components they serve",
+    "size": "rough added/changed lines from the food proposals (code / tests / docs); items marked 'merge estimate' are this synthesis's own rough guess",
+    "runtime_cost": "cost in installed OAW projects: startup text, extra tool calls, extra model calls",
+    "needs_paid_ab": "true when a paid model A/B is required before the item (or its model-facing part) can ship",
+    "paid_estimate": "logical tokens, ESTIMATES from the Claude calibration of 0.6-0.9M per fresh tool-using agent, mostly cache reads, not billed amounts, not USD; Codex uncalibrated; every figure is an estimate",
+    "user_decision_needed": "owner decisions only (D11): the PRE-01 standing policy, per-batch absorb approval and real product choices (CLI contract, license route, release target, process rules). Empty = only the normal per-batch approval",
+    "every_code_item": "stdlib only, Python 3.10+; passes scripts/harness_check.py on the ubuntu/macos/windows x 3.10/3.13 CI matrix; raise MINIMUM_TESTS (159 today); run scripts/sync_examples.py --write after changing scripts/ or templates/; D3 source-ledger line with full 40-hex SHA; never edit frozen egm-pilot v2 / skill-value CONTROL_FILES / three-way runner_sha256 files in place",
+    "components": "component ids, or part ids '<component>/<part>' where revision 2 split a component (see the food's components.json after_integration.parts)",
+    "depends_on": "hard prerequisites of the item's paid or final stages",
+    "stage0_depends_on": "prerequisites of the item's free Stage 0 (or cheap phase 0) when it can run before the paid stages; absent = same as depends_on",
+    "PRE-03_in_depends_on": "the item has a Codex half. PRE-03 is satisfied when the owner either installs a Codex CLI (on this machine for class-1 halves and in the class-2 image for food-executing halves) or records Codex as unavailable (the Codex half is recorded 'untested' and no two-host verdict is claimed). Claude halves may run first",
+    "system_decisions": "choices the digestion system makes itself under D11 once PRE-01 is set, each with the default taken and the reason. The owner may override any of them but is not asked",
+    "evidence_level": "current evidence of the item: 'not measured' for every item, because nothing is built (D12)",
+    "target_evidence_level": "the level the item is designed to reach once built and its fixtures or tests pass (D12 vocabulary: measured / static-measured / not measured)",
+    "synthesis_derived": "true when the item's content was created by this cross-food synthesis or by a revision-2 Elephant resolution rather than by one food's proposal; such items are goldfish-reviewed individually under PRE-02",
+    "build": "D12 build label within a batch when one batch is split into separately restorable builds (PRE-07)",
+    "run_location": "class 1 = a project copy on this machine with redirected host config directories, for stages that never execute food code; class 2 = a disposable VM or Linux container for any stage that executes food code, an installer, or code that reads OS credential stores (PRE-01). Each hold names the class per stage; a stage that executes food code never runs on this machine. OAW-01 matters for class-1 runs and for a Windows class-2 image; it is moot in a Linux image (revision 3, goldfish-2 B18)",
+    "stage_dependencies": "when present, names the stage or result of a depends_on item that is actually needed (for example HOLD-08b needs only HOLD-04's repomap Stage 1 result); that dependency is met once the named stage has a recorded result (revision 3, goldfish-2 B16)",
+    "free_stage0": "every hold names its free Stage 0, or states why no free check can discriminate (PRE-09 P3 as narrowed in revision 3, goldfish-2 B13)",
+    "external_dependencies": "scripts/catalog.py phases P2-P4 and P8 are built under docs/plans/skill-catalog-execution.md (phase table :416-424), not by this backlog; items that wait for them carry status 'waiting-for-catalog-Pn' and are not scheduled in test_order before that phase exists (revision 3, goldfish-2 B09)",
+    "comparison": "paid holds registered as improvement.py specs use PRE-10's count-based comparison with pre-registered tolerance (live: at most 1 fewer pass in 5 per case x assertion; 3-repeat screens: no case down by 2 or more); D2 floor arms and food arms use PRE-10's external-arm mode (revision 3, goldfish-1 #1)"
+  },
+  "items": [
+    {
+      "id": "PRE-01",
+      "kind": "prereq",
+      "title": "D11 standing policy: per-food paid caps, sandbox classes, keys, network, Codex availability, cap attribution",
+      "from_food": [
+        "tokeneconomizer",
+        "claude-mem",
+        "graphify"
+      ],
+      "components": [],
+      "target": "ingest/DECISIONS.md D11 policy record (owner)",
+      "depends_on": [],
+      "size": "policy text only",
+      "runtime_cost": "none",
+      "needs_paid_ab": false,
+      "paid_estimate": null,
+      "user_decision_needed": [
+        "per-food paid cap in logical tokens for screens (Stage 0 and Stage 1) of tokeneconomizer, claude-mem and graphify, plus a separate cap for digestion-system overhead (goldfish reviews, fixtures, probes); confirmations (Stage 2, second host) ask again when they would exceed it",
+        "sandbox classes: (1) a copy of the project with redirected host config directories, for runs that never execute food code; (2) a disposable VM or Linux container for any run that executes food code, an installer, or code that reads OS credential stores (Windows HOME redirection is not isolation: Python uses USERPROFILE, and Credential Manager is per OS user)",
+        "API keys and goldfish configuration: none, or one dedicated capped key per trial, revoked after the run; a dedicated key also lets goldfish run from a throwaway config directory, which PRE-06's canary probe can verify (with the owner's own login the probe can only check known content, a weaker check)",
+        "network allowlist (default: the model provider API only)",
+        "Codex: install a Codex CLI on this machine (class-1 runs) and in the class-2 image (food-executing runs) (PRE-03), or record every Codex half 'untested'",
+        "confirm the default cap-attribution rule for merged cross-food A/Bs (system_decisions) or replace it"
+      ],
+      "status": "blocked-on-owner",
+      "blocks": "every paid stage and every step that executes food code",
+      "evidence": [
+        "ingest/graphify/integration.json#gf.installer-roundtrip-check",
+        "ingest/claude-mem/proposals.md#0.1",
+        "ingest/DECISIONS.md#D11",
+        "ingest/claude-mem/integration.json#cm.hardened-headless-reviewer"
+      ],
+      "evidence_level": "not measured",
+      "system_decisions": [
+        "Cap attribution default for merged registrations (HOLD-01 claude-mem+graphify, HOLD-04 graphify+tokeneconomizer): a shared baseline arm is split equally among the foods whose candidate arms use it; each candidate arm is charged to the food it tests; an arm built from two foods' components (for example ranked recall from cm.ranked-fts5-recall and gf.idf-ranked-search) is split equally between them. When a food's cap is exhausted, its arms stop; the shared baseline continues only while another food in the registration still has budget. Charges are recorded per food in the run manifest.",
+        "Within the policy the system runs free and paid stages without asking per test, in test_order, and reports results; it asks only when a stage would exceed a cap (D11).",
+        "Placement: every stage runs in the class named by conventions.run_location; a stage that executes food code never runs on this machine (revision 3)."
+      ],
+      "synthesis_derived": false
+    },
+    {
+      "id": "PRE-03",
+      "kind": "prereq",
+      "title": "Codex CLI availability: on this machine for class-1 runs and in the class-2 image for food-executing runs",
+      "from_food": [
+        "tokeneconomizer",
+        "claude-mem",
+        "graphify"
+      ],
+      "components": [],
+      "target": "this machine and the PRE-01 class-2 image",
+      "depends_on": [],
+      "size": "none",
+      "runtime_cost": "none",
+      "needs_paid_ab": false,
+      "paid_estimate": null,
+      "user_decision_needed": [
+        "part of the PRE-01 policy set: install a Codex CLI (this machine and the class-2 image), or record every Codex half 'untested'"
+      ],
+      "status": "blocked-on-owner",
+      "blocks": "OAW-26 (a hold since revision 2), OAW-34's Codex half, OAW-13's Codex wrapper table and the Codex half of every hold",
+      "evidence": [
+        "ingest/tokeneconomizer/integration.json#cross_cutting (local machine facts)"
+      ],
+      "evidence_level": "not measured",
+      "system_decisions": [],
+      "synthesis_derived": false,
+      "notes": "Revision 3 (goldfish-2 B18): revision 2 said 'on this machine' only, but every Codex half that executes food code (HOLD-04 arms B and C, the HOLD-05 and HOLD-06 TE arms, HOLD-08a, HOLD-08b arms B and D) must run in the class-2 image."
+    },
+    {
+      "id": "PRE-07",
+      "kind": "prereq",
+      "title": "Release target and D12 build/restore plan, including removal granularity",
+      "from_food": [
+        "tokeneconomizer",
+        "claude-mem",
+        "graphify"
+      ],
+      "components": [],
+      "target": "ingest/DECISIONS.md (owner) and docs/releases/<ver>-sources.json; one D12 build per batch (or per 'build' label)",
+      "depends_on": [],
+      "size": "policy text and release notes only",
+      "runtime_cost": "none",
+      "needs_paid_ab": false,
+      "paid_estimate": null,
+      "user_decision_needed": [
+        "target release for the absorbed batches: the untagged 2.0.0 PR (oaw-ref/VERSION.json release_status 'proposed', no tag published) or later releases. Compatibility table (revision 3, goldfish-2 B08). Incompatible default behaviour under SemVer 2.0: OAW-19 (search with no match on a non-empty knowledge base 0 -> 4; get on a missing topic 1 -> 4, context_hub.py:244-245; an ambiguous get 3), OAW-12 and OAW-13 (memory add and annotate refuse credential-shaped text, balanced <private> blocks and host wrapper tags that are accepted today), OAW-25 (a doctor FAIL turns a project with a shadowing scripts/ module 'unhealthy', oaw.py:713). Strict mode only: OAW-14, OAW-21 and OAW-23 add lint findings that are warnings by default and, like every soft warning, errors under lint --strict (wiki_sync.py:848-849), so a --strict run that passes today can fail. Default output: OAW-23 adds one renderer_version frontmatter line per compiled page (a one-time diff at the next build); OAW-16 adds one notice line to every recall output only if its A/B passes. Additive: new flags, commands and default-mode warnings (OAW-11, OAW-15, OAW-17, OAW-18, OAW-20, OAW-22, OAW-24). Recommended: every batch into the untagged 2.0.0 while that PR is open (one major version carries every behaviour change, each listed in UPGRADING); after 2.0.0 is tagged, additive items go to 2.x and the incompatible ones wait for 3.0.0",
+        "removal granularity (D6, D12). Facts (revision 3, goldfish-1 #13, goldfish-2 B07): restoring build N is linear and also drops every later build; removing one item from an older build means a new removal build (D12: every removal produces a named build) that reverts that item, and the items that depend on it, on top of the current build. Options: removal builds only (recommended, no per-component switches), or per-component switches for selected default-on items such as OAW-12"
+      ],
+      "system_decisions": [
+        "One D12 build per batch, named '<release>+build.N.<short content hash>', with a human label naming the batch, its items and each default-on behaviour change; each build lists its components with an evidence level per line (measured / static-measured / not measured), and a line with no measured evidence says 'not measured', never 'enhanced'.",
+        "Builds: 1, 2, 3, 4a (OAW-15, OAW-17, OAW-18: new flags and messages), 4b (OAW-19: exit codes, kept apart because its release target may differ), 5, 6, 7, 8 and 9; OAW-16 gets its own build only if its A/B passes (revision 3: it is a hold).",
+        "Each item lands as its own revertible commit set with its dependents named (for example OAW-13 and OAW-14 come out before OAW-12, OAW-18 before OAW-15), so a removal build can take out one item.",
+        "Records written forward stay in the project, because restoring switches only the OAW-installed layer (D12): 'files:' lines (OAW-18), 'Supersedes:' lines (OAW-20) and renderer_version frontmatter (OAW-23). Each such item states and tests how the previous build treats them (planned: read as plain text, or as an ordinary scalar by _parse_frontmatter, wiki_sync.py:31-74; not yet tested).",
+        "The restore point of each build is the previous build; a restore or removal build switches only the OAW-installed layer, never project records, then runs doctor (D12)."
+      ],
+      "status": "blocked-on-owner",
+      "evidence_level": "not measured",
+      "target_evidence_level": "doc",
+      "synthesis_derived": true,
+      "evidence": [
+        "ingest/graphify/proposals.md#5 (decision 3)",
+        "ingest/claude-mem/proposals.md#6 (decision 2)",
+        "ingest/DECISIONS.md#D6",
+        "ingest/DECISIONS.md#D12",
+        "oaw-ref/VERSION.json"
+      ],
+      "notes": "Revision 3: revision 2's 'a restore removes as little as possible' and 'the other items are additive or credential refusals' were wrong (goldfish-1 #13; goldfish-2 B07, B08). Revision 2's build 4b (OAW-16, OAW-17) no longer exists: OAW-16 is a hold and OAW-17 moved to 4a."
+    },
+    {
+      "id": "PRE-09",
+      "kind": "prereq",
+      "title": "Process amendments from this round: proposed DECISIONS.md entries P1-P4 (owner confirms)",
+      "from_food": [
+        "tokeneconomizer",
+        "claude-mem",
+        "graphify"
+      ],
+      "components": [],
+      "target": "ingest/DECISIONS.md (text proposed in ingest/SUMMARY.md section 8; not in force until confirmed)",
+      "depends_on": [],
+      "size": "policy text only",
+      "runtime_cost": "none",
+      "needs_paid_ab": false,
+      "paid_estimate": null,
+      "user_decision_needed": [
+        "confirm or reject P1 (D10: zero context is verified, not assumed: argv, the init event and a canary or known-content check for injected memory and CLAUDE.md/AGENTS.md text, recorded per goldfish record; the backlog and merge-derived items are reviewed like proposals), P2 (D2: each tested food's plan carries a designed floor arm 'OAW after eating' vs 'the food alone'; the arm runs only under its stated conditions, so a food may stay 'parity vs food alone: not tested' indefinitely; scope: the whole food, the default, or only the absorbed functions), P3 (D5/D7: a step that executes the food is automatically a hold; a model-facing line, including text added to default tool output, is split from its mechanism and held behind an A/B; every hold names a free Stage 0 or states why none can discriminate) and P4 (D12: unbuilt items say 'not measured (planned: X)')"
+      ],
+      "system_decisions": [
+        "Until the owner confirms them, P1-P4 are not in force: the system follows them only where D1-D12 already require the same behaviour (ingest/DECISIONS.md, Proposed amendments). OAW-10 writes them into the catalog plan only after confirmation (revision 3, goldfish-2 B05)."
+      ],
+      "status": "blocked-on-owner",
+      "evidence_level": "not measured",
+      "target_evidence_level": "doc",
+      "synthesis_derived": true,
+      "evidence": [
+        "ingest/tokeneconomizer/proposals.md#4",
+        "ingest/claude-mem/proposals.md#0.1",
+        "ingest/claude-mem/integration.json#process_notes_for_the_digestion_system",
+        "ingest/graphify/proposals.md#4"
+      ]
+    },
+    {
+      "id": "PRE-06",
+      "kind": "prereq",
+      "title": "Interim zero-context goldfish launcher for this digestion workflow (OAW-06 recipe in the workflow script, verified live)",
+      "from_food": [
+        "claude-mem",
+        "tokeneconomizer"
+      ],
+      "components": [
+        "cm.hardened-headless-reviewer",
+        "te.windows-cli-argv"
+      ],
+      "target": "the digestion workflow script, not the OAW repo: claude -p with --tools= , --disallowedTools Agent,Task,Skill,SendMessage,ListAgents, --permission-mode dontAsk, --setting-sources= , --strict-mcp-config with an empty mcp.json, --max-budget-usd, --no-session-persistence, an empty temp cwd and the prompt on stdin; claude.cmd resolved to a direct node argv with OAW-01's method so no text crosses cmd.exe. Checks per host, recorded with the host version: (1) one live init-event probe asserting empty tools, skills, plugins, slash_commands and MCP servers; (2) a canary probe for injected context (revision 3, goldfish-1 #2, goldfish-2 B03): with a dedicated key and a throwaway config directory, unique canary strings are planted in a user-level CLAUDE.md, in the auto-memory index for the goldfish's cwd and in a CLAUDE.md and AGENTS.md above the cwd; the goldfish is asked to repeat any text it received besides the prompt, and the probe passes only if no canary appears in the reply or the stream-json transcript; with the owner's own login the probe instead checks the reply for distinctive lines of the real user CLAUDE.md and memory index (weaker, labelled 'known-content check'); (3) review packets (revision 3, goldfish-1 #3, goldfish-2 B03): a tool-less goldfish cannot open cited files, so the workflow script embeds each cited file:line with a few lines of context (food files wrapped as untrusted data, the interim OAW-07), about 40-70k tokens of input per review set (estimate), and coverage is the packet manifest (tool-recorded, not self-reported); (4) a recipe check before PRE-02 relies on it: two tool-less goldfish review the revision-2 drafts with packets, and their findings are matched against the findings accepted from the two inherited-context reviews of 2026-11-03 (the reference set); if they recover fewer than half of the reference major findings, each PRE-02 review set adds one tool-using reviewer whose inheritance is documented. Every goldfish record gets launch_method, host_version, inherited_context, init_event_check and canary_check; Codex counterpart (codex exec --ignore-user-config --ephemeral --sandbox read-only -C <empty dir> - plus a post-hoc audit) recorded 'untested, weaker isolation' until checked",
+      "depends_on": [
+        "PRE-01"
+      ],
+      "size": "workflow-script change (merge estimate: about 120-180 lines including the packet builder and the canary probe) plus probe records",
+      "runtime_cost": "none in OAW projects",
+      "needs_paid_ab": false,
+      "paid_estimate": "init and canary probes per host, well under 0.05M each, capped at USD 0.50 each; recipe check about 0.4-1M (8 tool-less single-turn reviews, about 40-70k tokens of input each); estimates, not measured",
+      "user_decision_needed": [],
+      "system_decisions": [
+        "The hardened recipe is used in this workflow before OAW-06's OAW-repo code exists, as OAW-07 and OAW-08 are used interim in reviewer prompts; OAW-06 later reuses this probe record.",
+        "If the installed Claude Code rejects --setting-sources= or the SendMessage/ListAgents names, the probe fails and reviews wait; they never fall back to inherited context silently.",
+        "Who reviews PRE-06 (goldfish-2 B04): its revision-2 text was reviewed by the two inherited-context reviews of 2026-11-03; its revision-3 text is reviewed in the PRE-02 zero-context round, which uses PRE-06 itself. That is acceptable only because isolation is established by the probes (mechanical checks recorded with the host version), not by the review; the review judges the recipe text."
+      ],
+      "status": "waiting-for-PRE-01",
+      "evidence_level": "not measured (planned: argv static-measured; isolation measured by the init and canary probes; review quality measured once by the recipe check)",
+      "target_evidence_level": "argv static-measured; isolation measured by the init and canary probes; review quality measured once by the recipe check",
+      "synthesis_derived": true,
+      "notes": "Breaks the bootstrap loop: PRE-02 cannot wait for OAW-06's OAW-repo code, because OAW-06 itself needs PRE-02's review before the owner approves it. Revision 3: the revision-2 probe asserted only tools, skills, plugins, slash commands and MCP servers, which cannot show injected memory or CLAUDE.md/AGENTS.md text; both 2026-11-03 reviewers received the user's auto-memory index, and one also received oaw-ref/CLAUDE.md and AGENTS.md when it read a file under oaw-ref.",
+      "blocks": "PRE-02, PRE-05 (goldfish route) and every later goldfish review",
+      "evidence": [
+        "ingest/claude-mem/integration.json#cm.hardened-headless-reviewer",
+        "ingest/claude-mem/proposals.md#A6",
+        "ingest/tokeneconomizer/integration.json#te.windows-cli-argv",
+        "ingest/DECISIONS.md#D10"
+      ]
+    },
+    {
+      "id": "PRE-02",
+      "kind": "prereq",
+      "title": "D10 goldfish blind review of the Elephant drafts: the three proposals.md files and backlog.json with the revision-2 ledger records, then Elephant resolution",
+      "from_food": [
+        "tokeneconomizer",
+        "claude-mem",
+        "graphify"
+      ],
+      "components": [],
+      "target": "ingest/<food>/proposals.md, ingest/backlog.json (every item; synthesis_derived items reviewed individually) and the after_integration records in ingest/<food>/components.json -> goldfish review records carrying launch_method, host_version, inherited_context and init_event_check -> Elephant resolution before any owner approval",
+      "depends_on": [
+        "PRE-01",
+        "PRE-06"
+      ],
+      "size": "none (review run)",
+      "runtime_cost": "none in OAW projects",
+      "needs_paid_ab": false,
+      "paid_estimate": "zero-context round on revision 3: 4 review sets x 2 tool-less goldfish with packets, about 0.4-1M (estimate, not measured); if PRE-06's recipe check fails, one tool-using reviewer per set adds about 2.4-3.6M (estimate). Round 1 used the tool-using calibration",
+      "user_decision_needed": [],
+      "status": "round 1 done with inherited context (2026-11-03, two reviews, resolved in revision 3); zero-context round waiting-for-PRE-01-and-PRE-06",
+      "evidence": [
+        "ingest/graphify/proposals.md#5 (decision 16)",
+        "ingest/claude-mem/proposals.md#6 (decision 13)",
+        "ingest/DECISIONS.md#D10"
+      ],
+      "evidence_level": "not measured",
+      "system_decisions": [
+        "Runs under the PRE-01 cap without a separate spend approval (D11).",
+        "Goldfish are launched only with the PRE-06 recipe, so zero context is checked at the init event instead of assumed. A review launched any other way records its launch method and inherited context and is labelled 'context: inherited (documented), not zero-context'.",
+        "The two reviews of revision 2 run on 2026-11-03 were launched before PRE-01 and PRE-06, with full tools and inherited context (the user's auto-memory index; one also received oaw-ref/CLAUDE.md and AGENTS.md). They are labelled 'context: inherited (documented), not zero-context' (goldfish-2 B02). Their findings are resolved in revision 3, but they do not meet D10's zero-context requirement, so PRE-02 stays open and the zero-context round reviews revision 3 before the owner approves any batch.",
+        "Synthesis-derived items (OAW-02 hash basis, OAW-10 process rules, OAW-32 toxin seeding, HOLD-01 and HOLD-04 merged registrations, PRE-05 merged fixture, and every revision-2 resolution such as OAW-16, OAW-19, HOLD-08a/08b, HOLD-11 arm C, HOLD-12 to HOLD-14, PRE-06 to PRE-09) are reviewed as items in their own right."
+      ],
+      "synthesis_derived": false,
+      "notes": "Existing goldfish-on-food records (ingest/<food>/goldfish-*.json) do not record how the reviewer was launched or what it inherited, and subagents in this workflow receive the user's auto-memory index. They are marked 'context unverified' (components.json inputs_status): usable as food reviews, not as zero-context evidence."
+    },
+    {
+      "id": "PRE-08",
+      "kind": "prereq",
+      "title": "Excrete-list acceptance, D3 not-adopted release lines and 'rejected as package' catalog records",
+      "from_food": [
+        "tokeneconomizer",
+        "claude-mem",
+        "graphify"
+      ],
+      "components": [],
+      "target": "docs/releases/<ver>-sources.json not-adopted lines (D3), generated from the excrete units of each components.json revision 2 with reason and evidence; catalog records 'rejected as package' for claude-mem and for TokenEconomizer's plugin (te.pack-or-bundle); graphify's package status stays 'hold' (HOLD-04)",
+      "depends_on": [
+        "PRE-02",
+        "PRE-07"
+      ],
+      "size": "doc and catalog records only",
+      "runtime_cost": "none",
+      "needs_paid_ab": false,
+      "paid_estimate": null,
+      "user_decision_needed": [
+        "accept each food's excrete list as a whole (tokeneconomizer 19, claude-mem 21, graphify 17 units, revision 2) or name a unit to move to hold; decided together with the per-batch absorb approval"
+      ],
+      "system_decisions": [
+        "Excrete units that are redundant rather than harmful are listed as not adopted together with the OAW part that already covers them, so D3's 'removed or not adopted, with the reason' is complete."
+      ],
+      "status": "waiting-for-PRE-02",
+      "evidence_level": "not measured",
+      "target_evidence_level": "doc",
+      "synthesis_derived": true,
+      "evidence": [
+        "ingest/tokeneconomizer/proposals.md#5 (decision 15)",
+        "ingest/claude-mem/proposals.md#6 (decision 12)",
+        "ingest/graphify/proposals.md#3",
+        "ingest/DECISIONS.md#D3",
+        "ingest/DECISIONS.md#D5"
+      ],
+      "notes": "Revision 3 (goldfish-2 B20): docs/releases/<ver>-sources.json needs PRE-07's release target, so PRE-07 was added to depends_on."
+    },
+    {
+      "id": "PRE-05",
+      "kind": "prereq",
+      "title": "Shared fixtures: wiki/recall fixture W (zh-TW + English, superseded decisions, path::Symbol citations, outcome-tagged memory, plus a small code tree with '# WHY:'/'# NOTE:' rationale comments) merged with claude-mem's 220-entry recall fixture, plus Q-code code-map questions and fixture F2",
+      "from_food": [
+        "graphify",
+        "claude-mem",
+        "tokeneconomizer"
+      ],
+      "components": [],
+      "target": "eval fixtures, each registered with sha256 before any run on the CRLF-folded-to-LF basis of evals/egm-pilot/pilot_common.py:40-41, recorded as hash_basis (OAW-02 later implements the same basis; revision 3, goldfish-2 B20)",
+      "depends_on": [
+        "PRE-01",
+        "PRE-06"
+      ],
+      "size": "fixture authoring",
+      "runtime_cost": "none in OAW projects",
+      "needs_paid_ab": false,
+      "paid_estimate": "about 2.4-3.6M if Elephant drafts and goldfish review it (estimate); 0 tokens if the owner labels gold answers",
+      "user_decision_needed": [],
+      "status": "waiting-for-PRE-01-and-PRE-06",
+      "evidence": [
+        "ingest/graphify/proposals.md#H0",
+        "ingest/claude-mem/proposals.md#H1",
+        "oaw-ref/evals/egm-pilot/pilot_common.py:40-41"
+      ],
+      "evidence_level": "not measured",
+      "system_decisions": [
+        "Gold answers are drafted by the Elephant and goldfish-reviewed under the PRE-01 cap (about 2.4-3.6M, estimate). The owner may volunteer to label instead (0 tokens, owner time) but is not asked.",
+        "Fixture F2 is chosen by the Elephant at PRE-05 (a pinned, permissively licensed, 50-200k LOC multi-language repository, recorded by full SHA, license and LOC count) and reviewed in PRE-05's own goldfish review, not in PRE-02, which runs before it (revision 3, goldfish-2 B10).",
+        "The free contamination checks on W (HOLD-13, HOLD-04 item iii) use the oaw-evidence default call: literal recall, --limit 5 --max-chars 6000."
+      ],
+      "synthesis_derived": true,
+      "notes": "The W code tree serves HOLD-13 (rationale harvest) and the cites pointer test in HOLD-12; Q-code and F2 serve HOLD-04 and HOLD-14."
+    },
+    {
+      "id": "OAW-01",
+      "kind": "absorb",
+      "batch": 1,
+      "title": "Windows npm-shim resolver (never run cmd.exe)",
+      "from_food": [
+        "tokeneconomizer"
+      ],
+      "components": [
+        "te.windows-cli-argv"
+      ],
+      "target": "scripts/oaw_common.py resolve_cli(); used by new registrations of evals/three-way/bench.py and evals/skill-value/experiment.py and by the next egm-pilot contract version (prompt moved to stdin); manifests record cli_argv and resolver_sha256",
+      "depends_on": [],
+      "size": "helper 50-70 / tests 100-130; 5-10 per runner (new registrations only)",
+      "runtime_cost": "startup 0; one extra file read per run setup",
+      "needs_paid_ab": false,
+      "paid_estimate": null,
+      "user_decision_needed": [],
+      "integration": "flag",
+      "evidence_level": "not measured (planned: static-measured (fixtures))",
+      "status": "proposed",
+      "notes": "Do first. This machine has only the npm shim claude.cmd (no claude.exe). The Claude pilot passes each prompt in argv (oaw-ref/evals/egm-pilot/run_pilot.py:141) with stdin=DEVNULL (run_pilot.py:317), and its default binary is looked up only as claude.exe (run_pilot.py:36-38), so on this machine a default run fails to start and a prompt reaches cmd.exe only when --claude points at claude.cmd, the only Claude here (revision 3, goldfish-1 #10); the Codex runners already use stdin (bench.py:262, :267; experiment.py:231-234, :280). Every OAW eval runner that starts claude or codex on this machine depends on it, directly or through PRE-04, OAW-06 or OAW-26. The digestion workflow's own goldfish launcher (PRE-06) applies the same method in the workflow script, because OAW-01 itself must be goldfish-reviewed before it is approved.",
+      "evidence": [
+        "ingest/tokeneconomizer/components.json#te.windows-cli-argv",
+        "ingest/tokeneconomizer/integration.json#te.windows-cli-argv",
+        "ingest/tokeneconomizer/proposals.md#吸收-10",
+        "oaw-ref/evals/egm-pilot/run_pilot.py:141",
+        "oaw-ref/evals/egm-pilot/run_pilot.py:317",
+        "oaw-ref/evals/egm-pilot/run_pilot.py:36-38"
+      ],
+      "target_evidence_level": "static-measured (fixtures)",
+      "system_decisions": [
+        "Resolver lives in scripts/oaw_common.py with resolver_sha256 recorded in each run manifest (one copy, one hash), not one copy per runner."
+      ],
+      "synthesis_derived": false
+    },
+    {
+      "id": "OAW-02",
+      "kind": "absorb",
+      "batch": 1,
+      "title": "Shared cross-platform helpers: one hash basis and exact-case paths (merge-derived)",
+      "from_food": [
+        "graphify",
+        "claude-mem",
+        "tokeneconomizer"
+      ],
+      "components": [
+        "gf.rubric-fingerprint",
+        "gf.code-citation-lint",
+        "gf.skill-size-references",
+        "cm.file-keyed-recall",
+        "te.failure-signature"
+      ],
+      "target": "scripts/oaw_common.py: LF-folded sha256 with optional short digest (same CRLF-fold basis as evals/egm-pilot/pilot_common.py), exact-case path resolution via directory listing, Windows path normalization (drive letter, backslash, workspace root), LF-normalized UTF-8 byte count",
+      "depends_on": [],
+      "size": "merge estimate: about 40-60 / 60-80",
+      "runtime_cost": "0",
+      "needs_paid_ab": false,
+      "paid_estimate": null,
+      "user_decision_needed": [],
+      "integration": "n/a (merge-derived; resolves conflicts found in five integration checks)",
+      "evidence_level": "not measured (planned: static-measured (fixtures))",
+      "status": "proposed",
+      "notes": "Not a food component. Five absorbs each proposed their own normalization; this machine has core.autocrlf=true and case-insensitive os.path.exists, so results diverge from Ubuntu CI unless one helper is shared.",
+      "evidence": [
+        "ingest/graphify/integration.json#cross_cutting",
+        "ingest/graphify/integration.json#gf.rubric-fingerprint",
+        "ingest/claude-mem/integration.json#cm.file-keyed-recall",
+        "ingest/tokeneconomizer/integration.json#te.failure-signature"
+      ],
+      "target_evidence_level": "static-measured (fixtures)",
+      "system_decisions": [
+        "One hash basis (CRLF folded to LF, recorded as hash_basis) for all new evidence hashes, the basis evals/egm-pilot/pilot_common.py already uses; improvement.py keeps its raw-byte digests."
+      ],
+      "synthesis_derived": true
+    },
+    {
+      "id": "PRE-04",
+      "kind": "prereq",
+      "title": "Shell-allowed Claude sandbox runner plus an independent usage meter",
+      "from_food": [
+        "tokeneconomizer"
+      ],
+      "components": [],
+      "target": "new eval runner outside any food src; PATH wrapper that records every nested claude/codex call and its usage",
+      "depends_on": [
+        "OAW-01"
+      ],
+      "size": "engineering work, no model quota (size not estimated in the proposals)",
+      "runtime_cost": "none in OAW projects",
+      "needs_paid_ab": false,
+      "paid_estimate": null,
+      "user_decision_needed": [],
+      "status": "blocked-on-owner",
+      "blocks": "HOLD-05 and HOLD-06 on Claude; any efficiency claim for a black-box food arm (coverage stays incomplete without the meter); the Claude halves of OAW-16 and HOLD-03; HOLD-11's observer-spend measurement",
+      "evidence": [
+        "ingest/tokeneconomizer/proposals.md#2.0",
+        "ingest/tokeneconomizer/proposals.md#5 (decision 13)"
+      ],
+      "evidence_level": "not measured",
+      "system_decisions": [
+        "Built as eval tooling in batch 2; approved with that batch (code only, no model quota)."
+      ],
+      "synthesis_derived": false,
+      "batch": 2
+    },
+    {
+      "id": "OAW-03",
+      "kind": "absorb",
+      "batch": 2,
+      "title": "Non-vacuous A/B verdicts (mechanism must trigger)",
+      "from_food": [
+        "claude-mem"
+      ],
+      "components": [
+        "cm.nonvacuous-ab-verdicts"
+      ],
+      "target": "scripts/improvement.py validate_spec/validate_run/compare: optional trigger block {cases, minimum_rate 0.667} outside 'assertions'; below rate -> inconclusive 'vacuous: mechanism did not trigger'",
+      "depends_on": [],
+      "size": "50 / 110",
+      "runtime_cost": "0",
+      "needs_paid_ab": false,
+      "paid_estimate": null,
+      "user_decision_needed": [],
+      "integration": "pass",
+      "evidence_level": "not measured (planned: static-measured (fixtures))",
+      "status": "proposed",
+      "notes": "Gate for the digestion system itself: every paid A/B hold below depends on it, except HOLD-08a (a yes/no hazard probe and a trigger check that apply the vacuous rule inline). Specs without the block keep their exact verdicts. The trigger sits outside 'assertions'; inside them it would invert into a free pass.",
+      "evidence": [
+        "ingest/claude-mem/components.json#cm.nonvacuous-ab-verdicts",
+        "ingest/claude-mem/integration.json#cm.nonvacuous-ab-verdicts",
+        "ingest/claude-mem/proposals.md#A7"
+      ],
+      "target_evidence_level": "static-measured (fixtures)",
+      "system_decisions": [],
+      "synthesis_derived": false
+    },
+    {
+      "id": "OAW-04",
+      "kind": "absorb",
+      "batch": 2,
+      "title": "Overhead attribution and usage coverage",
+      "from_food": [
+        "tokeneconomizer"
+      ],
+      "components": [
+        "te.overhead-attribution"
+      ],
+      "target": "scripts/improvement.py: per-case overhead_tokens added to the arm and reported separately; per-run usage-coverage flag; efficiency verdict only when coverage is complete in both arms (spec-declared, versioned)",
+      "depends_on": [
+        "OAW-03"
+      ],
+      "size": "40-60 / 100-130",
+      "runtime_cost": "0",
+      "needs_paid_ab": false,
+      "paid_estimate": null,
+      "user_decision_needed": [],
+      "integration": "flag",
+      "evidence_level": "not measured (planned: static-measured (fixtures))",
+      "status": "proposed",
+      "notes": "Must be optional: making coverage mandatory changes current test verdicts. Consequence: a TE arm reports 'coverage incomplete, no efficiency claim' until PRE-04's meter exists.",
+      "evidence": [
+        "ingest/tokeneconomizer/components.json#te.overhead-attribution",
+        "ingest/tokeneconomizer/integration.json#te.overhead-attribution",
+        "ingest/tokeneconomizer/proposals.md#吸收-2"
+      ],
+      "target_evidence_level": "static-measured (fixtures)",
+      "system_decisions": [
+        "Coverage is a spec-declared field, so schema-1 specs and stored proposals keep their verdicts; no SCHEMA 2 bump."
+      ],
+      "synthesis_derived": false
+    },
+    {
+      "id": "OAW-05",
+      "kind": "absorb",
+      "batch": 2,
+      "title": "Cache-weighted effective tokens (opt-in derived metric)",
+      "from_food": [
+        "tokeneconomizer"
+      ],
+      "components": [
+        "te.effective-tokens"
+      ],
+      "target": "scripts/improvement.py optional effective_tokens beside raw tokens; price-ratio table frozen in the evaluation spec (covered by evaluation_sha256); unknown billed model id or missing breakdown -> comparison invalid; per-host field mapping (Claude modelUsage vs Codex turn.completed); egm-pilot v2 files untouched",
+      "depends_on": [
+        "OAW-04"
+      ],
+      "size": "70-90 / 120-150",
+      "runtime_cost": "0",
+      "needs_paid_ab": false,
+      "paid_estimate": null,
+      "user_decision_needed": [],
+      "integration": "flag",
+      "evidence_level": "not measured (planned: static-measured (fixtures))",
+      "status": "proposed",
+      "notes": "Lands with OAW-03/04 as one evaluation-spec version so existing run artifacts keep validating.",
+      "evidence": [
+        "ingest/tokeneconomizer/components.json#te.effective-tokens",
+        "ingest/tokeneconomizer/integration.json#te.effective-tokens",
+        "ingest/tokeneconomizer/proposals.md#吸收-1"
+      ],
+      "target_evidence_level": "static-measured (fixtures)",
+      "system_decisions": [
+        "Report-only in the first version; it becomes eligible as a verdict metric only in a later, separately registered spec.",
+        "The price-ratio table is drafted by the Elephant from each host provider's published price page on the registration date, goldfish-reviewed and frozen in the spec (covered by evaluation_sha256)."
+      ],
+      "synthesis_derived": false
+    },
+    {
+      "id": "PRE-10",
+      "kind": "prereq",
+      "batch": 2,
+      "title": "Catalog comparison rule pulled forward into improvement.py: count-based comparison with pre-registered tolerance, a parity verdict and external-arm comparisons",
+      "from_food": [
+        "tokeneconomizer",
+        "claude-mem",
+        "graphify"
+      ],
+      "components": [],
+      "target": "scripts/improvement.py validate_spec/validate_run/compare, as an opt-in spec block in one evaluation-spec version with OAW-03 to OAW-05: (1) the comparison unit is the 'case x assertion' pass count over N repeats instead of the (case_id, repeat) pairing, with the tolerance pre-registered and hashed (deterministic 0; live default 1 in 5), and the total pass count may not fall below the baseline (docs/plans/skill-catalog-execution.md:178-180); (2) a 'parity' verdict (no regression beyond tolerance, equal pass count, resources within the cap) beside eligible, inconclusive and rejected, as the plan's parity-shippable mode (:150-155, :419); (3) an external-arm mode in which baseline and candidate are named configurations (for example native plus a food, or native plus a named OAW build) recorded by configuration hash instead of a proposal patch sha; this mode records a verdict and never feeds decide accept. Specs without the block keep today's paired, zero-tolerance verdicts",
+      "depends_on": [
+        "OAW-03"
+      ],
+      "size": "merge estimate: about 90-130 / 150-200",
+      "runtime_cost": "0",
+      "needs_paid_ab": false,
+      "paid_estimate": null,
+      "user_decision_needed": [],
+      "status": "proposed",
+      "evidence": [
+        "oaw-ref/scripts/improvement.py:242-244",
+        "oaw-ref/scripts/improvement.py:259",
+        "oaw-ref/scripts/improvement.py:300-304",
+        "oaw-ref/scripts/improvement.py:319-324",
+        "oaw-ref/docs/plans/skill-catalog-execution.md:150-155",
+        "oaw-ref/docs/plans/skill-catalog-execution.md:178-180",
+        "oaw-ref/docs/plans/skill-catalog-execution.md:419"
+      ],
+      "evidence_level": "not measured (planned: static-measured (fixtures))",
+      "target_evidence_level": "static-measured (fixtures)",
+      "system_decisions": [
+        "Pulled forward from catalog P4 (revision 3, goldfish-1 #1): every paid hold is registered as an improvement.py spec, but today's compare keys rows by (case_id, repeat), counts any pass-to-fail at the same repeat as a regression with zero tolerance, and needs candidate = baseline plus the proposal patch (improvement.py:242-244, :259, :300-304, :319-324). One stochastic flip would reject a candidate, the pre-registered 1-in-5 tolerance could not be expressed, and the D2 floor arms (HOLD-04, HOLD-08b, HOLD-11) and food arms have no patch shape.",
+        "Lands with OAW-03 to OAW-05 as one evaluation-spec version; catalog P4 later reuses it instead of re-implementing it."
+      ],
+      "synthesis_derived": true,
+      "notes": "Every paid hold that registers an improvement.py spec depends on it; HOLD-08a (a yes/no hazard probe and a trigger check) and HOLD-10 (a scripted round trip) do not."
+    },
+    {
+      "id": "OAW-06",
+      "kind": "absorb",
+      "batch": 2,
+      "title": "Hardened zero-context goldfish launcher",
+      "from_food": [
+        "claude-mem"
+      ],
+      "components": [
+        "cm.hardened-headless-reviewer"
+      ],
+      "target": "docs/plans/skill-catalog-execution.md goldfish gate + future catalog runner: claude -p with --tools= , --disallowedTools incl. Agent/Task/Skill/SendMessage/ListAgents, --permission-mode dontAsk, --setting-sources= , --strict-mcp-config + empty mcp.json, --max-budget-usd, --no-session-persistence, empty temp cwd; mocked-binary argv test; Codex counterpart codex exec --ignore-user-config --ephemeral --sandbox read-only + post-hoc audit, recorded 'untested'",
+      "depends_on": [
+        "OAW-01",
+        "PRE-06"
+      ],
+      "size": "120 / 130",
+      "runtime_cost": "0 for users (not installed)",
+      "needs_paid_ab": false,
+      "paid_estimate": "one live init-event probe and one canary probe per host, well under 0.05M tokens each, capped at USD 0.50 each (estimate); the review-quality check is PRE-06's recipe check (about 0.4-1M, estimate)",
+      "user_decision_needed": [],
+      "integration": "flag",
+      "evidence_level": "not measured (planned: argv static-measured; isolation needs the live probe)",
+      "status": "proposed",
+      "notes": "Feeds the digestion system: makes every later goldfish review truly tool-less and probably much cheaper than the 0.6-0.9M tool-using calibration (not measured).",
+      "evidence": [
+        "ingest/claude-mem/components.json#cm.hardened-headless-reviewer",
+        "ingest/claude-mem/integration.json#cm.hardened-headless-reviewer",
+        "ingest/claude-mem/proposals.md#A6"
+      ],
+      "target_evidence_level": "argv static-measured; isolation needs the live probe",
+      "system_decisions": [
+        "The live init and canary probes are PRE-06's records (one per host, under the PRE-01 cap); OAW-06 reuses them with the Claude Code version they were verified on.",
+        "Revision 3 (goldfish-1 #3): revision 2's decision not to run any review-quality check ('the hardened recipe only removes capability') is withdrawn, because removing Read also removes the reviewer's ability to check file:line citations. The check is PRE-06's recipe check (tool-less goldfish with packets measured against the reference findings of 2026-11-03), not the 5-run parity check."
+      ],
+      "synthesis_derived": false
+    },
+    {
+      "id": "OAW-07",
+      "kind": "absorb",
+      "batch": 2,
+      "title": "Untrusted-source wrapper for reviewer packets",
+      "from_food": [
+        "graphify"
+      ],
+      "components": [
+        "gf.untrusted-wrapper"
+      ],
+      "target": "planned scripts/catalog.py packet builder wrap_untrusted/defang/undefang (hash original bytes); interim: this digestion workflow's reviewer prompts (workflow script, not the OAW repo); not context_hub",
+      "depends_on": [],
+      "size": "35 / 50",
+      "runtime_cost": "0 at startup; about 120 bytes per file in packets",
+      "needs_paid_ab": false,
+      "paid_estimate": null,
+      "user_decision_needed": [
+        "license route (one choice for OAW-07, OAW-12 and OAW-30): Apache-2.0 attribution with modification notices, or an independent rewrite"
+      ],
+      "integration": "flag",
+      "evidence_level": "not measured (planned: static-measured; injection reduction not measured (defense in depth, no gain claimed))",
+      "status": "proposed (interim use in this workflow's reviewer prompts and PRE-06 packets now; the OAW code waits for catalog P3)",
+      "notes": "Quote verification must be U+200B-aware (undefang), or verify and read-coverage checks break.",
+      "evidence": [
+        "ingest/graphify/components.json#gf.untrusted-wrapper",
+        "ingest/graphify/integration.json#gf.untrusted-wrapper",
+        "ingest/graphify/proposals.md#B1"
+      ],
+      "target_evidence_level": "static-measured; injection reduction not measured (defense in depth, no gain claimed)",
+      "system_decisions": [
+        "Used now in this workflow's reviewer prompts and in PRE-06's review packets (workflow script, not OAW), before catalog.py exists.",
+        "Never extended to context_hub recall without its own A/B; see OAW-16's resolution."
+      ],
+      "synthesis_derived": false
+    },
+    {
+      "id": "OAW-08",
+      "kind": "absorb",
+      "batch": 2,
+      "title": "Reviewer read-coverage check",
+      "from_food": [
+        "graphify"
+      ],
+      "components": [
+        "gf.read-coverage-check"
+      ],
+      "target": "planned catalog goldfish/verify record format: per-file coverage, cited file:line must exist, reported last line vs real length; Codex reading instruction; older records marked 'unverified'",
+      "depends_on": [
+        "OAW-07"
+      ],
+      "size": "45 / 60, prompt text 10",
+      "runtime_cost": "0",
+      "needs_paid_ab": false,
+      "paid_estimate": null,
+      "user_decision_needed": [],
+      "integration": "flag",
+      "evidence_level": "not measured (planned: static-measured)",
+      "status": "proposed (interim fields in this workflow's records now; the OAW code waits for catalog P4)",
+      "notes": "Proves consistency, not that every line was read; the gate text must say so. Existing goldfish-*.json for all three foods have no coverage fields.",
+      "evidence": [
+        "ingest/graphify/components.json#gf.read-coverage-check",
+        "ingest/graphify/integration.json#gf.read-coverage-check",
+        "ingest/graphify/proposals.md#B2"
+      ],
+      "target_evidence_level": "static-measured",
+      "system_decisions": [
+        "Interim: this workflow's reviewer prompts carry the per-file coverage fields now (graphify decision 15); every new goldfish/verify record has them.",
+        "'catalog.py show' (tool-recorded coverage instead of self-report) is designed into catalog P4."
+      ],
+      "synthesis_derived": false
+    },
+    {
+      "id": "OAW-09",
+      "kind": "absorb",
+      "batch": 2,
+      "title": "Rubric fingerprint on review evidence",
+      "from_food": [
+        "graphify"
+      ],
+      "components": [
+        "gf.rubric-fingerprint"
+      ],
+      "target": "planned catalog evidence/<id>/ goldfish and verify records: hash of the shared rubric only (CRLF-fold basis), host recorded in a separate field; a rubric change marks old evidence stale",
+      "depends_on": [
+        "OAW-02"
+      ],
+      "size": "20 / 30",
+      "runtime_cost": "one hash field per record",
+      "needs_paid_ab": false,
+      "paid_estimate": null,
+      "user_decision_needed": [],
+      "integration": "flag",
+      "evidence_level": "not measured (planned: static-measured)",
+      "status": "waiting-for-catalog-P4",
+      "evidence": [
+        "ingest/graphify/components.json#gf.rubric-fingerprint",
+        "ingest/graphify/integration.json#gf.rubric-fingerprint",
+        "ingest/graphify/proposals.md#B6"
+      ],
+      "target_evidence_level": "static-measured",
+      "system_decisions": [],
+      "synthesis_derived": false
+    },
+    {
+      "id": "OAW-10",
+      "kind": "absorb",
+      "batch": 2,
+      "title": "Catalog plan amendments (doc only)",
+      "from_food": [
+        "tokeneconomizer",
+        "graphify"
+      ],
+      "components": [
+        "te.shadow-arm",
+        "te.repo-cannot-redirect-executables",
+        "te.startup-size-probe",
+        "gf.hook-safety-rubric"
+      ],
+      "target": "docs/plans/skill-catalog-execution.md amendments (doc only). Food methods: (1) shadow/log-only trial rule, corrected: TE shadow still makes paid judge calls, so it is a budgeted sandbox trial under D11, never automatic and never A/B evidence; (2) 'executables never configured by the repository', scoped to Python that reads untrusted clones (-I plus -X utf8; -I breaks OAW's own helpers); (3) measured startup size instead of estimates, paired with a presence check, per-host budgets, and both hosts verified before the gate counts; (4) flag-only hook-safety rubric naming .claude/settings.json and .codex/hooks.json, limited to judging foods. Process rules from this round (SUMMARY.md section 8), written only after the owner confirms PRE-09 (until then they are not in force): a step that executes the food is automatically a hold under D11; a frozen-file map (pinned scorer, CONTROL_FILES, runner hashes) is read before any oaw_target is chosen; each component is labelled model-facing or measurement-only, and model-facing lines are split from mechanisms and held behind an A/B; every hold names a free Stage 0 or states why none can discriminate; after integration the ledger is revised (after_integration per component) before the backlog is written; cross-food integration notes are reconciled explicitly by the Elephant; each tested food's plan carries a designed D2 floor arm (OAW after eating vs the food alone) that runs only under its stated conditions; backlog owner decisions are limited to policy, batch approval and product choices; the backlog synthesis itself goes to goldfish review; graphify's B1-B6 are specified inside catalog P2-P4, not as a pack. The installer round-trip criterion text lives in OAW-33 only.",
+      "depends_on": [
+        "PRE-09"
+      ],
+      "size": "about 15 + 8 + 8 lines (TE) plus rubric about 40 lines (graphify) plus about 25 lines of process rules (merge estimate)",
+      "runtime_cost": "0",
+      "needs_paid_ab": false,
+      "paid_estimate": null,
+      "user_decision_needed": [],
+      "integration": "te.shadow-arm flag, te.repo-cannot-redirect-executables pass, te.startup-size-probe flag, gf.hook-safety-rubric pass; the process rules are synthesis-derived",
+      "evidence_level": "not measured (planned: doc)",
+      "status": "proposed",
+      "evidence": [
+        "ingest/tokeneconomizer/integration.json#te.shadow-arm",
+        "ingest/tokeneconomizer/integration.json#te.repo-cannot-redirect-executables",
+        "ingest/tokeneconomizer/proposals.md#吸收-3",
+        "ingest/graphify/proposals.md#B3",
+        "ingest/graphify/proposals.md#H6",
+        "ingest/tokeneconomizer/proposals.md#4",
+        "ingest/claude-mem/proposals.md#0.1",
+        "ingest/graphify/proposals.md#4"
+      ],
+      "target_evidence_level": "doc",
+      "system_decisions": [],
+      "synthesis_derived": true,
+      "notes": "Revision 3 (goldfish-2 B05): the four food methods (1)-(4) may land first as their own commit; only the process-rule paragraph waits for PRE-09, which is now in depends_on."
+    },
+    {
+      "id": "OAW-11",
+      "kind": "absorb",
+      "batch": 2,
+      "title": "Cache-aware timing advice for migrate",
+      "from_food": [
+        "tokeneconomizer"
+      ],
+      "components": [
+        "te.cache-aware-timing"
+      ],
+      "target": "docs/UPGRADING.md and scripts/oaw.py migrate --apply preview line: apply between sessions, then start fresh sessions; labelled 'upstream-reported, not measured by OAW'",
+      "depends_on": [],
+      "size": "code 6 / doc 10 / tests 10",
+      "runtime_cost": "one printed line during migrate",
+      "needs_paid_ab": false,
+      "paid_estimate": null,
+      "user_decision_needed": [],
+      "integration": "pass",
+      "evidence_level": "not measured (planned: doc (upstream-reported))",
+      "status": "proposed",
+      "evidence": [
+        "ingest/tokeneconomizer/components.json#te.cache-aware-timing",
+        "ingest/tokeneconomizer/integration.json#te.cache-aware-timing"
+      ],
+      "target_evidence_level": "doc (upstream-reported)",
+      "system_decisions": [],
+      "synthesis_derived": false
+    },
+    {
+      "id": "OAW-12",
+      "kind": "absorb",
+      "batch": 3,
+      "title": "Prefixed-credential guard on evidence writes (default on)",
+      "from_food": [
+        "claude-mem"
+      ],
+      "components": [
+        "cm.secret-pattern-guard"
+      ],
+      "target": "scripts/oaw_common.py SECRET_PATTERNS + evidence_write_refusal(); called by context_hub.py memory_add and annotate (lesson inherits); prefixed patterns + url_credentials + keyed AWS secret; no generic password=/TOKEN=; no override flag",
+      "depends_on": [],
+      "size": "80 / 130",
+      "runtime_cost": "0 model context; write path only",
+      "needs_paid_ab": false,
+      "paid_estimate": null,
+      "user_decision_needed": [
+        "license route (one choice for OAW-07, OAW-12 and OAW-30): Apache-2.0 derivative with a modification notice and LICENSE/NOTICE shipped (a), or a clean-room rewrite from vendors' public token formats (b)"
+      ],
+      "integration": "pass",
+      "evidence_level": "not measured (planned: static-measured)",
+      "status": "proposed",
+      "notes": "One choke point shared with OAW-13 and OAW-14. Covers only the CLI write path; direct Edit of .agents/memory.md bypasses it. Batch-3 approval includes the stated behavior: on by default and no override flag, so documentation examples such as https://user:pass@host must use placeholders.",
+      "evidence": [
+        "ingest/claude-mem/components.json#cm.secret-pattern-guard",
+        "ingest/claude-mem/integration.json#cm.secret-pattern-guard",
+        "ingest/claude-mem/proposals.md#A5"
+      ],
+      "target_evidence_level": "static-measured",
+      "system_decisions": [],
+      "synthesis_derived": false,
+      "build": "3"
+    },
+    {
+      "id": "OAW-13",
+      "kind": "absorb",
+      "batch": 3,
+      "title": "Refuse <private> blocks and host-injected wrapper tags in evidence writes",
+      "from_food": [
+        "claude-mem"
+      ],
+      "components": [
+        "cm.private-and-injected-tag-refusal"
+      ],
+      "target": "scripts/oaw_common.py PRIVATE_TAGS / HOST_WRAPPER_TAGS (named, versioned tables; Codex table 'untested') inside evidence_write_refusal(), called before locked_update so no lock or temp file is left; balanced <private> blocks refused (re DOTALL|IGNORECASE, backreferenced close tag), an unclosed '<private>' in prose accepted; the refusal names the tag and line number only and never echoes the note (the success path prints note[:60], context_hub.py:281, :312); the claude-mem-context tag is not added (no OAW producer)",
+      "depends_on": [
+        "OAW-12",
+        "PRE-03"
+      ],
+      "size": "35 / 80",
+      "runtime_cost": "0; write path only",
+      "needs_paid_ab": false,
+      "paid_estimate": null,
+      "user_decision_needed": [],
+      "integration": "flag",
+      "evidence_level": "not measured (planned: static-measured; Codex wrappers untested)",
+      "status": "proposed",
+      "evidence": [
+        "ingest/claude-mem/components.json#cm.private-and-injected-tag-refusal",
+        "ingest/claude-mem/integration.json#cm.private-and-injected-tag-refusal",
+        "ingest/claude-mem/proposals.md#A4",
+        "oaw-ref/scripts/context_hub.py:281",
+        "oaw-ref/scripts/context_hub.py:312"
+      ],
+      "target_evidence_level": "static-measured; Codex wrappers untested",
+      "system_decisions": [
+        "Refuse instead of silently stripping, because .agents/memory.md is committed and shared (part of batch 3's stated behavior).",
+        "Codex wrapper tags are verified on a throwaway Codex session created for the purpose once PRE-03 provides Codex; no owner transcript is read. Until then the Codex table is 'untested'."
+      ],
+      "synthesis_derived": false,
+      "build": "3"
+    },
+    {
+      "id": "OAW-14",
+      "kind": "absorb",
+      "batch": 3,
+      "title": "Completion-advice lint (warn only)",
+      "from_food": [
+        "tokeneconomizer"
+      ],
+      "components": [
+        "te.completion-advice-lint"
+      ],
+      "target": "same choke point returns warnings: context_hub.py memory_add soft warning (stderr) and wiki_sync.py lint warning next to HOLLOW_PHRASES; only skip-work phrases (no need to run, skip the tests, do not re-run, instead of running), never 'verify' or 'done'; validated against OAW's own wiki",
+      "depends_on": [
+        "OAW-12"
+      ],
+      "size": "25-40 / 60-80",
+      "runtime_cost": "startup 0; one warning line only when a note matches",
+      "needs_paid_ab": false,
+      "paid_estimate": null,
+      "user_decision_needed": [],
+      "integration": "flag (minor)",
+      "evidence_level": "not measured (planned: static-measured)",
+      "status": "proposed",
+      "evidence": [
+        "ingest/tokeneconomizer/components.json#te.completion-advice-lint",
+        "ingest/tokeneconomizer/integration.json#te.completion-advice-lint",
+        "ingest/tokeneconomizer/proposals.md#吸收-9",
+        "oaw-ref/scripts/wiki_sync.py:848-849"
+      ],
+      "target_evidence_level": "static-measured",
+      "system_decisions": [
+        "English skip-work patterns first; zh-TW patterns are added only after they show zero false positives on fixture W's zh-TW notes and OAW's own docs/knowledge.",
+        "Under lint --strict this family escalates to an error like every other soft warning, the documented --strict behaviour (docs/Wiki_Sync_Guide.md:18; wiki_sync.py:848-849); CHANGELOG and UPGRADING note the new strict-mode failure, and the zero-hit test on OAW's own docs/knowledge keeps OAW's own --strict runs green. Revision 2's 'heuristic warnings stay warning-only' rule is withdrawn: it needed an undesigned non-escalating warning class and contradicted today's HOLLOW_PHRASES behaviour (revision 3, goldfish-1 #7)."
+      ],
+      "synthesis_derived": false,
+      "build": "3"
+    },
+    {
+      "id": "OAW-15",
+      "kind": "absorb",
+      "batch": 4,
+      "title": "memory recall --index (CLI only)",
+      "from_food": [
+        "claude-mem"
+      ],
+      "components": [
+        "cm.recall-index-first/cli"
+      ],
+      "target": "scripts/context_hub.py memory recall --index: one row per hit, same cursor and --max-chars rules, mode bound into the cursor hash; documented only in --help and docs/CLI_Reference.md",
+      "depends_on": [],
+      "size": "100 / 90",
+      "runtime_cost": "startup 0; no extra tool call",
+      "needs_paid_ab": false,
+      "paid_estimate": null,
+      "user_decision_needed": [],
+      "integration": "flag (split)",
+      "evidence_level": "not measured (planned: static-measured (fixture byte counts))",
+      "status": "proposed",
+      "notes": "Records the byte-golden of default output before OAW-16 deliberately changes it; 'parity by construction' holds for the CLI only.",
+      "evidence": [
+        "ingest/claude-mem/components.json#cm.recall-index-first",
+        "ingest/claude-mem/integration.json#cm.recall-index-first",
+        "ingest/claude-mem/proposals.md#A1"
+      ],
+      "target_evidence_level": "static-measured (fixture byte counts)",
+      "system_decisions": [
+        "Split accepted under the mechanism/model-facing rule (PRE-09 P3): the CLI ships now, the oaw-evidence line is tested in HOLD-01."
+      ],
+      "synthesis_derived": false,
+      "build": "4a"
+    },
+    {
+      "id": "OAW-16",
+      "kind": "hold",
+      "batch": 4,
+      "title": "Data-not-instructions notice on every recall output (default on only if its A/B passes)",
+      "from_food": [
+        "claude-mem"
+      ],
+      "components": [
+        "cm.recall-data-fence"
+      ],
+      "target": "if its A/B passes: scripts/context_hub.py _render_recall and JSON packet, a fixed one-line notice counted inside --max-chars in every mode, also printed on 'No matches found.', shipped default-on in its own build at 'parity, no improvement claimed'; otherwise excrete the notice",
+      "depends_on": [
+        "OAW-15",
+        "PRE-10",
+        "OAW-03",
+        "OAW-04",
+        "OAW-01",
+        "PRE-01",
+        "PRE-03",
+        "PRE-04"
+      ],
+      "size": "15 / 40",
+      "runtime_cost": "if shipped: about 90-100 chars per recall call, inside the caller's --max-chars; startup 0",
+      "needs_paid_ab": true,
+      "paid_estimate": "Stage 0 free and deterministic: on the skill-value evidence fixtures (oaw-ref/evals/skill-value/fixtures.py) and fixture W, run the oaw-evidence default call (--limit 5 --max-chars 6000 --json) with and without the notice and record every hit or excerpt byte the notice displaces (excerpts are binary-searched to fit --max-chars, context_hub.py:470-479, so a binding budget shortens excerpts or pushes hits into the continuation). Stage 1, a paired pre/post registration in improvement.py's own shape (baseline = the newest D12 build, candidate = that build plus the notice patch): the skill-value evidence cases (scoped-recall, superseded-handoff; the planted record-499 injection reaches the arms through recall) x 2 arms x 5 repeats = 20 runs per host, about 12-18M per host; the Codex half on the skill-value runner, the Claude half on the PRE-04 runner; both hosts about 24-36M (estimates; Codex uncalibrated). Gate (PRE-10 parity mode): no case x assertion regression beyond tolerance, no new unsupported claim or unauthorized policy application, tokens <= 1.10x; parity ships, a regression excretes.",
+      "user_decision_needed": [],
+      "integration": "pass (claude-mem check); graphify's gf.untrusted-wrapper check asked for an A/B before recall framing changes, which this hold now provides",
+      "evidence_level": "not measured",
+      "status": "hold",
+      "notes": "Revision 3 (goldfish-1 #4, goldfish-2 B06): moved from absorb to hold. Revision 2 shipped it default-on with no A/B on the premise that excerpt bytes stay unchanged, but the notice is counted inside --max-chars and excerpts are fitted to that budget (context_hub.py:470-479), so under oaw-evidence's --max-chars 6000 it can shorten excerpts or push hits into the continuation. Revision 2's rule that every later registration on an OAW-16 build is a new baseline also meant its effect on the planted record-499 injection (fixtures.py:49-51) could never be measured, so its 'first suspect' clause could not fire. graphify's integration check asked for exactly this A/B (ingest/graphify/integration.json#gf.untrusted-wrapper), and the notice is model-facing text added to default tool output (PRE-09 P3). The ledger record cm.recall-data-fence in ingest/claude-mem/components.json still says absorb; its revision-3 update is pending (foods.claude-mem.ledger_after_revision_3).",
+      "evidence": [
+        "ingest/claude-mem/components.json#cm.recall-data-fence",
+        "ingest/claude-mem/integration.json#cm.recall-data-fence",
+        "ingest/claude-mem/proposals.md#A3",
+        "ingest/graphify/integration.json#gf.untrusted-wrapper",
+        "oaw-ref/evals/skill-value/fixtures.py:49-52",
+        "oaw-ref/evals/three-way/bench.py:145",
+        "oaw-ref/scripts/context_hub.py:470-479",
+        "oaw-ref/templates/.agents/skills/oaw-evidence/SKILL.md:14",
+        "oaw-ref/evals/skill-value/protocol.json"
+      ],
+      "target_evidence_level": "measured (A/B, parity gate)",
+      "system_decisions": [
+        "Runs before HOLD-01 in test_order, so HOLD-01's baseline is the default recall output that actually ships.",
+        "Ships only when both host halves pass (D8); with Codex recorded unavailable, the Claude result alone is shown at batch approval with 'Codex untested'.",
+        "Free Stage 0 first: if the notice displaces no hit or excerpt byte on the fixtures, Stage 1 tests only the header's effect on behaviour."
+      ],
+      "synthesis_derived": true,
+      "build": "own build, only if its A/B passes",
+      "stage0_depends_on": [
+        "OAW-15"
+      ],
+      "free_stage0": "the deterministic displacement check (paid_estimate)",
+      "run_location": "class 1 (no food code)"
+    },
+    {
+      "id": "OAW-17",
+      "kind": "absorb",
+      "batch": 4,
+      "title": "Over-budget error states the --max-chars that would fit",
+      "from_food": [
+        "graphify"
+      ],
+      "components": [
+        "gf.budget-fit-report"
+      ],
+      "target": "scripts/context_hub.py memory_recall overflow errors (exit stays 1), minimum computed through the same render path (so it stays right if the OAW-16 notice ships later)",
+      "depends_on": [
+        "OAW-15"
+      ],
+      "size": "6 / 30",
+      "runtime_cost": "0",
+      "needs_paid_ab": false,
+      "paid_estimate": null,
+      "user_decision_needed": [],
+      "integration": "pass",
+      "evidence_level": "not measured (planned: static-measured)",
+      "status": "proposed",
+      "evidence": [
+        "ingest/graphify/components.json#gf.budget-fit-report",
+        "ingest/graphify/integration.json#gf.budget-fit-report",
+        "ingest/graphify/proposals.md#A4"
+      ],
+      "target_evidence_level": "static-measured",
+      "system_decisions": [
+        "Included: 6 lines, deterministic, no claim; the owner can still drop it at batch approval."
+      ],
+      "synthesis_derived": false,
+      "build": "4a",
+      "notes": "Revision 3: depended on OAW-16 in revision 2; OAW-16 is now a hold, and because the minimum is computed through the render path it stays correct if the notice ships."
+    },
+    {
+      "id": "OAW-18",
+      "kind": "absorb",
+      "batch": 4,
+      "title": "File-keyed recall (memory add --files, memory recall --file)",
+      "from_food": [
+        "claude-mem"
+      ],
+      "components": [
+        "cm.file-keyed-recall"
+      ],
+      "target": "scripts/context_hub.py: --files writes 'files:' lines as project-relative POSIX path@sha256[:12] (LF-folded, via OAW-02); paths with spaces or '@' refused; --file is an alternative selector, so the positional query becomes nargs='?' with mutual-exclusion rules (literal mode still requires a query): a CLI contract change documented in docs/CLI_Reference.md:44 and both example copies; text-citation matching is path-boundary aware (scripts/oaw.py must not match scripts/oaw.py.bak); ranking by specificity (<=3 files +2, <=8 files +1; no '+2 modified'); changed_since_entry true/false/missing by rehashing; case-sensitive on every OS (no normcase); mode, the --index flag, file and query bound into the cursor hash (file mode: sha256 of json.dumps(['file', path, query or '', 'index' or 'full'])), with refusal tests across default, --index, --file and --file --index cursors (revision 3, goldfish-1 #16; today's cursor check compares only [query_hash, snapshot], context_hub.py:353-363)",
+      "depends_on": [
+        "OAW-15",
+        "OAW-02"
+      ],
+      "size": "150 / 150",
+      "runtime_cost": "startup 0; one 'files:' line per entry written with --files",
+      "needs_paid_ab": false,
+      "paid_estimate": null,
+      "user_decision_needed": [],
+      "integration": "flag",
+      "evidence_level": "not measured (planned: static-measured)",
+      "status": "proposed",
+      "notes": "The 'call it before editing' trigger is a model-facing skill line and is held as HOLD-02.",
+      "evidence": [
+        "ingest/claude-mem/components.json#cm.file-keyed-recall",
+        "ingest/claude-mem/integration.json#cm.file-keyed-recall",
+        "ingest/claude-mem/proposals.md#A2",
+        "oaw-ref/scripts/context_hub.py:784",
+        "oaw-ref/scripts/context_hub.py:394",
+        "oaw-ref/scripts/context_hub.py:353-363"
+      ],
+      "target_evidence_level": "static-measured",
+      "system_decisions": [
+        "Paths containing spaces or '@' are refused (keeps the path@hash format unambiguous).",
+        "The '+2 modified' ranking term is dropped (no OAW analog; integration requires it)."
+      ],
+      "synthesis_derived": false,
+      "build": "4a"
+    },
+    {
+      "id": "OAW-19",
+      "kind": "absorb",
+      "batch": 4,
+      "title": "Refuse-to-guess exit codes for get/search",
+      "from_food": [
+        "graphify"
+      ],
+      "components": [
+        "gf.ambiguity-exit-codes"
+      ],
+      "target": "scripts/context_hub.py get and search; the exit status is set only in the CLI dispatch (main, context_hub.py:821), and search() may return a code that its internal callers ignore, so bootstrap (:592, :615) and the wiki lane (:694) are unchanged: 0 answer, 3 ambiguous (candidates listed, capped at 5), 4 no match, per the owner's vocabulary decision. Empty rules: search '' lists every topic and exits 0; a missing or empty knowledge base exits 0 for any query, because exit 4 needs at least one searched entry (knowledge, or memory with --include-memory) and none matching (revision 3, goldfish-1 #12; ingest/graphify/integration.json#gf.ambiguity-exit-codes regression 1). memory recall unchanged. docs/CLI_Reference.md, CHANGELOG and UPGRADING in the same commit; new test_context_hub cases on all three CI operating systems are the guard",
+      "depends_on": [],
+      "size": "40 / 80, docs 15",
+      "runtime_cost": "a few candidate ids on stdout",
+      "needs_paid_ab": false,
+      "paid_estimate": null,
+      "user_decision_needed": [
+        "CLI contract (one decision): adopt 3 = needs a choice and 4 = no match (or other codes that do not collide with improvement.py's 3 'inconclusive' and oaw.py migrate's 3 'unresolved conflicts'); memory recall no-match stays 0 (recommended) or becomes 4 (behavior change, needs an A/B); get case policy: serve a unique case-insensitive match on every OS with a stderr note (recommended) or refuse with exit 3"
+      ],
+      "integration": "flag",
+      "evidence_level": "not measured (planned: static-measured)",
+      "status": "proposed",
+      "notes": "Ledger claim corrected: harness cli_check only greps --help, so new tests are the guard. Recorded-metric consequence (ingest/graphify/integration.json#gf.ambiguity-exit-codes): evals/three-way/bench.py:275-277 counts only exit_code == 0 commands as successful_commands, and evals/skill-value/experiment.py:289-297 does the same for command_count, so a no-match search exiting 4 lowers both. Every three-way and skill-value registration made on a build containing OAW-19 is a new baseline recorded with its D12 build label; those metrics are never compared across the boundary. Release consequence: a documented exit status changes, so under SemVer it belongs in the untagged 2.0.0 or a later major version (PRE-07). get on a missing topic also changes from exit 1 (context_hub.py:244-245) to 4; both changes are in PRE-07's compatibility table.",
+      "evidence": [
+        "ingest/graphify/components.json#gf.ambiguity-exit-codes",
+        "ingest/graphify/integration.json#gf.ambiguity-exit-codes",
+        "ingest/graphify/proposals.md#A5",
+        "oaw-ref/evals/three-way/bench.py:275-277",
+        "oaw-ref/evals/skill-value/experiment.py:289-297",
+        "oaw-ref/scripts/context_hub.py:592",
+        "oaw-ref/scripts/context_hub.py:821",
+        "oaw-ref/scripts/context_hub.py:244-245"
+      ],
+      "target_evidence_level": "static-measured",
+      "system_decisions": [
+        "The optional agent smoke test (about 18-27M) is not run: default skills reach this code only through memory recall, which is unchanged, so no default agent behavior changes and no gain is claimed."
+      ],
+      "synthesis_derived": true,
+      "build": "4b"
+    },
+    {
+      "id": "OAW-20",
+      "kind": "absorb",
+      "batch": 5,
+      "title": "Evidence-gated wiki promotion (static lifecycle rules, opt-in)",
+      "from_food": [
+        "tokeneconomizer"
+      ],
+      "components": [
+        "te.fact-lifecycle/8a"
+      ],
+      "target": "scripts/wiki_sync.py promote_candidates --evidence-gate (>= 2 distinct archive citations, superseded entries excluded with reason); context_hub.py memory add --supersedes; --min-citations default stays 0; first promote-candidates tests",
+      "depends_on": [],
+      "size": "40-60 / 90-120",
+      "runtime_cost": "startup 0",
+      "needs_paid_ab": false,
+      "paid_estimate": null,
+      "user_decision_needed": [],
+      "integration": "flag (split: 8a here, 8b oaw-evidence wording is HOLD-03)",
+      "evidence_level": "not measured (planned: static-measured)",
+      "status": "proposed",
+      "notes": "Changing the default to 2 would silently empty promote-candidates for every V2 project (no docs/archive). This item becomes the P0 baseline for HOLD-09.",
+      "evidence": [
+        "ingest/tokeneconomizer/components.json#te.fact-lifecycle",
+        "ingest/tokeneconomizer/integration.json#te.fact-lifecycle",
+        "ingest/tokeneconomizer/proposals.md#8a"
+      ],
+      "target_evidence_level": "static-measured",
+      "system_decisions": [],
+      "synthesis_derived": false
+    },
+    {
+      "id": "OAW-21",
+      "kind": "absorb",
+      "batch": 5,
+      "title": "path::Symbol code-citation lint",
+      "from_food": [
+        "graphify"
+      ],
+      "components": [
+        "gf.code-citation-lint/lint"
+      ],
+      "target": "scripts/wiki_sync.py lint citation check beside _check_links: path-qualified backticked citations only, raw and manual pages only, per-file error containment with regex fallback, exact-case path resolution (OAW-02), .py symbols via ast; warnings grouped per file",
+      "depends_on": [
+        "OAW-02"
+      ],
+      "size": "90 / 120",
+      "runtime_cost": "startup 0; one lint line per bad citation",
+      "needs_paid_ab": false,
+      "paid_estimate": null,
+      "user_decision_needed": [],
+      "integration": "flag",
+      "evidence_level": "not measured (planned: static-measured; agent effect not measured)",
+      "status": "proposed",
+      "evidence": [
+        "ingest/graphify/components.json#gf.code-citation-lint",
+        "ingest/graphify/integration.json#gf.code-citation-lint",
+        "ingest/graphify/proposals.md#A1"
+      ],
+      "target_evidence_level": "static-measured; agent effect not measured",
+      "system_decisions": [
+        "Symbol check scope: .py via ast with a regex fallback, whole-word text check elsewhere.",
+        "A bad path::Symbol citation is a warning by default and, like every soft warning, an error under --strict (wiki_sync.py:848-849), noted in CHANGELOG and UPGRADING as a strict-mode change. Revision 2's separate rule 'deterministic defects escalate, heuristic ones do not' is withdrawn (revision 3, goldfish-1 #7): --strict already escalates every warning.",
+        "The template convention line is tested only in HOLD-12."
+      ],
+      "synthesis_derived": false
+    },
+    {
+      "id": "OAW-22",
+      "kind": "absorb",
+      "batch": 5,
+      "title": "Reverse citation lookup: wiki_sync.py cites",
+      "from_food": [
+        "graphify"
+      ],
+      "components": [
+        "gf.reverse-citation-lookup/command"
+      ],
+      "target": "scripts/wiki_sync.py cites <path[::Symbol]> (read-only, advisory, --json), reusing the OAW-21 parser",
+      "depends_on": [
+        "OAW-21"
+      ],
+      "size": "50 / 80",
+      "runtime_cost": "0",
+      "needs_paid_ab": false,
+      "paid_estimate": null,
+      "user_decision_needed": [],
+      "integration": "pass",
+      "evidence_level": "not measured (planned: static-measured)",
+      "status": "proposed",
+      "notes": "Any skill-text pointer to 'cites' is held until measured (HOLD-12).",
+      "evidence": [
+        "ingest/graphify/components.json#gf.reverse-citation-lookup",
+        "ingest/graphify/integration.json#gf.reverse-citation-lookup",
+        "ingest/graphify/proposals.md#A2"
+      ],
+      "target_evidence_level": "static-measured",
+      "system_decisions": [],
+      "synthesis_derived": false
+    },
+    {
+      "id": "OAW-23",
+      "kind": "absorb",
+      "batch": 5,
+      "title": "Renderer-version and re-render staleness lint",
+      "from_food": [
+        "graphify"
+      ],
+      "components": [
+        "gf.hash-staleness"
+      ],
+      "target": "scripts/wiki_sync.py RENDERER_VERSION in build_origin frontmatter; lint re-renders and compares: a missing or older version, and in the release that introduces it a same-version content mismatch, are warnings by default and errors under --strict; a golden test forces a version bump; a test asserts that OAW's own docs/knowledge and example/ show no mismatch",
+      "depends_on": [],
+      "size": "35 / 70, docs 3",
+      "runtime_cost": "about 6 tokens of frontmatter per compiled page in context_hub get",
+      "needs_paid_ab": false,
+      "paid_estimate": null,
+      "user_decision_needed": [],
+      "integration": "flag",
+      "evidence_level": "not measured (planned: static-measured)",
+      "status": "proposed",
+      "evidence": [
+        "ingest/graphify/components.json#gf.hash-staleness",
+        "ingest/graphify/integration.json#gf.hash-staleness",
+        "ingest/graphify/proposals.md#A3",
+        "oaw-ref/scripts/harness_check.py:178",
+        "oaw-ref/docs/Wiki_Sync_Guide.md:18"
+      ],
+      "target_evidence_level": "static-measured",
+      "system_decisions": [
+        "Re-render comparison plus RENDERER_VERSION (the proposal's design), not the revision-1 per-source hash fields.",
+        "Revision 3 (goldfish-1 #18): the redesign is re-checked against the five integration conditions (ingest/graphify/integration.json#gf.hash-staleness): (1) pages without the field are tolerated (warning); (2) a renderer mismatch is a warning, an error only under --strict; (3) there are no hashes, and the comparison reads text in universal-newline mode, so CRLF checkouts are not stale (test_crlf_checkout_is_not_stale); (4) no per-source digests, only one frontmatter scalar (about 6 tokens per compiled page in get); (5) a golden test guards the renderer version. The one new behaviour, a same-version content mismatch (raw edited without a last_updated change, or generated text edited by hand, which today's date-based check misses and the next build silently overwrites), is a warning by default rather than an error, because OAW's own CI (harness_check.py:178) and user CIs run plain lint. Making it an error later is a separate, versioned decision."
+      ],
+      "synthesis_derived": false
+    },
+    {
+      "id": "OAW-24",
+      "kind": "absorb",
+      "batch": 5,
+      "title": "references/ as the remedy for the 24,000-byte skill gate",
+      "from_food": [
+        "graphify"
+      ],
+      "components": [
+        "gf.skill-size-references"
+      ],
+      "target": "scripts/validate_skills.py remedy text, shipped with the planned 24,000-byte body gate; LF-normalized byte count (OAW-02); exception path for hash-locked vendored runtimes",
+      "depends_on": [
+        "OAW-02"
+      ],
+      "size": "10 / 30",
+      "runtime_cost": "0",
+      "needs_paid_ab": false,
+      "paid_estimate": null,
+      "user_decision_needed": [],
+      "integration": "flag",
+      "evidence_level": "not measured (planned: static-measured)",
+      "status": "proposed",
+      "evidence": [
+        "ingest/graphify/components.json#gf.skill-size-references",
+        "ingest/graphify/integration.json#gf.skill-size-references",
+        "ingest/graphify/proposals.md#A6"
+      ],
+      "target_evidence_level": "static-measured",
+      "system_decisions": [
+        "Revision 3 (goldfish-1 #17): a bridge's effective load (bridge body plus the upstream entry it tells the agent to read) counts against the 24,000-byte gate for every bridge; a bridge may exceed it only with an exception record in catalog evidence (reason, upstream SHA, measured LF bytes), goldfish-reviewed and approved with its batch. EGM's egm-bootstrap (1,348 + 23,610 = 24,958 LF bytes) gets the first such record under D1. Revision 2 reported every bridge's load as information only, which left the bridge pattern able to sidestep the gate."
+      ],
+      "synthesis_derived": false
+    },
+    {
+      "id": "OAW-25",
+      "kind": "absorb",
+      "batch": 6,
+      "title": "doctor: stdlib/helper shadowing check (reduced form)",
+      "from_food": [
+        "claude-mem"
+      ],
+      "components": [
+        "cm.cwd-code-injection-guard"
+      ],
+      "target": "scripts/oaw.py doctor: FAIL only for scripts/ entries named in the helpers' real import closure (or oaw_common as a package); WARN for other stdlib names; closure pinned in a test regenerated per supported Python",
+      "depends_on": [
+        "OAW-01",
+        "OAW-02",
+        "OAW-12"
+      ],
+      "size": "60 / 110",
+      "runtime_cost": "0 model context",
+      "needs_paid_ab": false,
+      "paid_estimate": null,
+      "user_decision_needed": [],
+      "integration": "flag",
+      "evidence_level": "not measured (planned: static-measured)",
+      "status": "proposed",
+      "notes": "A health check, not a security boundary (the same repo controls install.json hashes). Same threat class as TE's excreted te.repo-cwd-module-shadowing. Lands after OAW-01, OAW-02 and OAW-12, which add imports to oaw_common.py; the pinned-closure test is regenerated whenever a later item changes a helper's imports. Last in the user-facing batches: a false FAIL marks a project unhealthy. Compatibility: a project with a shadowing scripts/ module that is healthy today becomes 'unhealthy' (oaw.py:713); listed in PRE-07's compatibility table.",
+      "evidence": [
+        "ingest/claude-mem/components.json#cm.cwd-code-injection-guard",
+        "ingest/claude-mem/integration.json#cm.cwd-code-injection-guard",
+        "ingest/claude-mem/proposals.md#A8"
+      ],
+      "target_evidence_level": "static-measured",
+      "system_decisions": [
+        "FAIL only for the helpers' import closure (and oaw_common as a package), WARN for other stdlib names.",
+        "Closure pinned in a test regenerated per supported Python, not a doctor-time subprocess."
+      ],
+      "synthesis_derived": false
+    },
+    {
+      "id": "OAW-26",
+      "kind": "hold",
+      "batch": 6,
+      "title": "doctor --probe-host (held until a Codex counterpart is verified)",
+      "from_food": [
+        "tokeneconomizer"
+      ],
+      "components": [
+        "te.host-load-probe"
+      ],
+      "target": "scripts/oaw.py doctor --probe-host: reports which OAW skills the host loaded (Claude init event with --strict-mcp-config empty + disableAllHooks; Codex counterpart via prompt-input search, unverified); default doctor stays offline and unchanged",
+      "depends_on": [
+        "OAW-01",
+        "OAW-06",
+        "PRE-03",
+        "PRE-01"
+      ],
+      "size": "90-120 / 120-150",
+      "runtime_cost": "0 without the flag; with it, one host process and possibly one small request",
+      "needs_paid_ab": false,
+      "paid_estimate": "the free Codex check needs PRE-03; with the flag, possibly one small request per run (not measured)",
+      "user_decision_needed": [
+        "deferred: only if the Codex check passes, allow doctor to start a host CLI behind an explicit flag (asked with that batch)"
+      ],
+      "integration": "flag",
+      "evidence_level": "not measured (planned: not measured)",
+      "status": "hold",
+      "notes": "Kept id OAW-26 for stable references; kind changed from absorb to hold in revision 2 (te.host-load-probe after_integration). Missing test: once Codex is installed, check whether codex debug prompt-input lists the OAW skill names in the target project (free).",
+      "evidence": [
+        "ingest/tokeneconomizer/components.json#te.host-load-probe",
+        "ingest/tokeneconomizer/integration.json#te.host-load-probe",
+        "ingest/tokeneconomizer/proposals.md#吸收-4"
+      ],
+      "target_evidence_level": "not measured",
+      "system_decisions": [
+        "If Codex has no free counterpart, the probe is excreted under D8 instead of shipping a Claude-only doctor feature.",
+        "If Codex is recorded unavailable under PRE-03, OAW-26 is excreted under D8 at that point; it can be reopened and re-tested if Codex is installed later (revision 3, goldfish-2 B17). The free Codex check is test_order step 0."
+      ],
+      "synthesis_derived": true,
+      "free_stage0": "the Codex check (codex debug prompt-input lists the OAW skill names in the target project) is free once PRE-03 provides Codex",
+      "run_location": "class 1 (no food code)"
+    },
+    {
+      "id": "OAW-27",
+      "kind": "absorb",
+      "batch": 7,
+      "title": "Failure signatures and stagnation counters (report-only diagnostic)",
+      "from_food": [
+        "tokeneconomizer"
+      ],
+      "components": [
+        "te.failure-signature/diagnostic"
+      ],
+      "target": "new unpinned evals/diagnostics/ module with Claude stream-json and Codex command_execution adapters; sha256 not md5; Windows path normalization via OAW-02; only hashes and counts leave local run dirs; never a gate",
+      "depends_on": [
+        "OAW-02"
+      ],
+      "size": "120-160 / 100-130",
+      "runtime_cost": "0 (offline after runs)",
+      "needs_paid_ab": false,
+      "paid_estimate": null,
+      "user_decision_needed": [],
+      "integration": "flag (retargeted away from the frozen egm-pilot scorer)",
+      "evidence_level": "not measured (planned: static-measured)",
+      "status": "proposed",
+      "evidence": [
+        "ingest/tokeneconomizer/components.json#te.failure-signature",
+        "ingest/tokeneconomizer/integration.json#te.failure-signature",
+        "ingest/tokeneconomizer/proposals.md#吸收-7"
+      ],
+      "target_evidence_level": "static-measured",
+      "system_decisions": [
+        "The oaw-improve SKILL.md line is dropped (te.failure-signature/oaw-improve-line, excrete): the diagnostic lives under evals/, which scripts/oaw.py never installs in user projects (oaw-ref/scripts/oaw.py:225-245), so the line would point at a module those projects do not have."
+      ],
+      "synthesis_derived": false
+    },
+    {
+      "id": "OAW-28",
+      "kind": "absorb",
+      "batch": 7,
+      "title": "Verification-command trap fixture (design only)",
+      "from_food": [
+        "tokeneconomizer"
+      ],
+      "components": [
+        "te.test-trap-fixture"
+      ],
+      "target": "new evals/skill-value/verification_fixtures.py, separately registered (fixtures.py is a CONTROL_FILE); trap_armed must be proven on every run; A5 adds an AGENTS.md arm",
+      "depends_on": [],
+      "size": "90-120 / 80-110",
+      "runtime_cost": "0 (never installed)",
+      "needs_paid_ab": false,
+      "paid_estimate": "writing it is free; running it is HOLD-05",
+      "user_decision_needed": [],
+      "integration": "flag",
+      "evidence_level": "not measured (planned: static-measured)",
+      "status": "proposed",
+      "evidence": [
+        "ingest/tokeneconomizer/components.json#te.test-trap-fixture",
+        "ingest/tokeneconomizer/integration.json#te.test-trap-fixture",
+        "ingest/tokeneconomizer/proposals.md#吸收-11"
+      ],
+      "target_evidence_level": "static-measured",
+      "system_decisions": [],
+      "synthesis_derived": false
+    },
+    {
+      "id": "OAW-29",
+      "kind": "absorb",
+      "batch": 8,
+      "title": "Ingest rule: no executables from the clone (code)",
+      "from_food": [
+        "tokeneconomizer"
+      ],
+      "components": [
+        "te.repo-cannot-redirect-executables"
+      ],
+      "target": "planned scripts/catalog.py P2 ingest: interpreter and tool paths only from OAW config or environment; Python near a clone runs with -I and cwd outside the clone",
+      "depends_on": [
+        "OAW-10"
+      ],
+      "size": "code about 10 / tests 50-70",
+      "runtime_cost": "0",
+      "needs_paid_ab": false,
+      "paid_estimate": null,
+      "user_decision_needed": [],
+      "integration": "pass",
+      "evidence_level": "not measured (planned: static-measured)",
+      "status": "waiting-for-catalog-P2",
+      "evidence": [
+        "ingest/tokeneconomizer/components.json#te.repo-cannot-redirect-executables",
+        "ingest/tokeneconomizer/proposals.md#吸收-12"
+      ],
+      "target_evidence_level": "static-measured",
+      "system_decisions": [],
+      "synthesis_derived": false
+    },
+    {
+      "id": "OAW-30",
+      "kind": "absorb",
+      "batch": 8,
+      "title": "Credential-file flags in quarantined foods",
+      "from_food": [
+        "graphify",
+        "claude-mem"
+      ],
+      "components": [
+        "gf.sensitive-file-filter"
+      ],
+      "target": "planned scripts/catalog.py P2 ingest/quarantine record: flag credential-shaped files, never copy contents into evidence or packets, publish no hashes for them, redacted .env templates; also run OAW-12 content patterns over packet text; Claude reviewer Read-deny on flagged paths, Codex asymmetry recorded",
+      "depends_on": [
+        "OAW-12",
+        "OAW-10"
+      ],
+      "size": "40 / 50",
+      "runtime_cost": "0; packets get smaller",
+      "needs_paid_ab": false,
+      "paid_estimate": null,
+      "user_decision_needed": [
+        "license route (one choice for OAW-07, OAW-12 and OAW-30): Apache-2.0 attribution for the filename and secret-shape rules, or an independent rewrite"
+      ],
+      "integration": "flag",
+      "evidence_level": "not measured (planned: static-measured)",
+      "status": "waiting-for-catalog-P2",
+      "evidence": [
+        "ingest/graphify/components.json#gf.sensitive-file-filter",
+        "ingest/graphify/integration.json#gf.sensitive-file-filter",
+        "ingest/graphify/proposals.md#B4"
+      ],
+      "target_evidence_level": "static-measured",
+      "system_decisions": [],
+      "synthesis_derived": false
+    },
+    {
+      "id": "OAW-31",
+      "kind": "absorb",
+      "batch": 8,
+      "title": "Ingest URL validation plus git transport controls",
+      "from_food": [
+        "graphify"
+      ],
+      "components": [
+        "gf.url-validation"
+      ],
+      "target": "planned scripts/catalog.py P2 ingest: https-only, no embedded credentials, host allowlist; git -c protocol.allow=never -c protocol.https.allow=always, LFS controls, -c credential.helper= and GCM_INTERACTIVE=never on Windows",
+      "depends_on": [
+        "OAW-10"
+      ],
+      "size": "45 / 60",
+      "runtime_cost": "0",
+      "needs_paid_ab": false,
+      "paid_estimate": null,
+      "user_decision_needed": [],
+      "integration": "flag",
+      "evidence_level": "not measured (planned: static-measured)",
+      "status": "waiting-for-catalog-P2",
+      "evidence": [
+        "ingest/graphify/components.json#gf.url-validation",
+        "ingest/graphify/integration.json#gf.url-validation",
+        "ingest/graphify/proposals.md#B5"
+      ],
+      "target_evidence_level": "static-measured",
+      "system_decisions": [],
+      "synthesis_derived": false
+    },
+    {
+      "id": "OAW-32",
+      "kind": "absorb",
+      "batch": 8,
+      "title": "Hook-safety rubric checks plus cross-food toxin signatures",
+      "from_food": [
+        "graphify",
+        "tokeneconomizer",
+        "claude-mem"
+      ],
+      "components": [
+        "gf.hook-safety-rubric"
+      ],
+      "target": "planned scripts/catalog.py P3 static digest security-flag scan: regex/JSON flag rules (flag-only, never auto-reject), seeded with the recurring excrete patterns of all three foods (second model runtime, detached/job-escaping daemons, unmatched every-tool hooks, silent host/global config writes, unpinned or self-updating code, repo-controlled executables, injected startup/turn text, default-on telemetry; revision 2 adds: unpinned CDN scripts without SRI in generated output, undisclosed first-use model downloads, bundled third-party runtimes without attribution, and capture without exclusion settings)",
+      "depends_on": [
+        "OAW-10"
+      ],
+      "size": "rubric about 40 / code about 60 / tests about 80 (graphify); toxin-signature seeding is a merge estimate of about 30-50 extra lines",
+      "runtime_cost": "0; about 2 KB loaded into a digest packet only when a food ships hooks",
+      "needs_paid_ab": false,
+      "paid_estimate": null,
+      "user_decision_needed": [],
+      "integration": "pass",
+      "evidence_level": "not measured (planned: static-measured)",
+      "status": "waiting-for-catalog-P3",
+      "evidence": [
+        "ingest/graphify/components.json#gf.hook-safety-rubric",
+        "ingest/graphify/integration.json#gf.hook-safety-rubric",
+        "ingest/tokeneconomizer/proposals.md#3",
+        "ingest/claude-mem/proposals.md#4"
+      ],
+      "target_evidence_level": "static-measured",
+      "system_decisions": [],
+      "synthesis_derived": true
+    },
+    {
+      "id": "OAW-33",
+      "kind": "absorb",
+      "batch": 8,
+      "title": "Installer round-trip: static parts only",
+      "from_food": [
+        "graphify"
+      ],
+      "components": [
+        "gf.installer-roundtrip-check/static"
+      ],
+      "target": "planned catalog P3/P4: the no-execution replica (scratchpad/ledger-work/h1_replica.py) as a negative fixture, a static inventory of installer write targets, the byte-for-byte restore criterion",
+      "depends_on": [
+        "OAW-32"
+      ],
+      "size": "30 / 40",
+      "runtime_cost": "0",
+      "needs_paid_ab": false,
+      "paid_estimate": null,
+      "user_decision_needed": [],
+      "integration": "fail as written (it executes the installer); only the static parts are absorbed, the live run is HOLD-10",
+      "evidence_level": "not measured (planned: static-measured)",
+      "status": "waiting-for-catalog-P3",
+      "evidence": [
+        "ingest/graphify/integration.json#gf.installer-roundtrip-check",
+        "ingest/graphify/proposals.md#H6"
+      ],
+      "target_evidence_level": "static-measured",
+      "system_decisions": [],
+      "synthesis_derived": false
+    },
+    {
+      "id": "OAW-34",
+      "kind": "absorb",
+      "batch": 8,
+      "title": "Measured startup-size gate (code)",
+      "from_food": [
+        "tokeneconomizer"
+      ],
+      "components": [
+        "te.startup-size-probe"
+      ],
+      "target": "planned scripts/catalog.py measure_startup(host, project_copy, candidate): Codex prompt-input (chars, free), Claude two small isolated claude -p requests; failed probe raises, never 0; size paired with presence check; per-host budgets set in P5",
+      "depends_on": [
+        "OAW-01",
+        "OAW-06",
+        "OAW-10",
+        "PRE-01",
+        "PRE-03"
+      ],
+      "size": "100-140 / 120-160",
+      "runtime_cost": "0 in user projects; during catalog integration, per candidate: 1 free local command on Codex, 2 small paid requests on Claude",
+      "needs_paid_ab": false,
+      "paid_estimate": "2 small requests per candidate on Claude, each about one startup prefix (not measured; record on first run)",
+      "user_decision_needed": [],
+      "integration": "flag",
+      "evidence_level": "not measured (planned: static-measured; Codex half unverified until PRE-03)",
+      "status": "waiting-for-catalog-P4; Codex half blocked on PRE-03",
+      "evidence": [
+        "ingest/tokeneconomizer/components.json#te.startup-size-probe",
+        "ingest/tokeneconomizer/integration.json#te.startup-size-probe",
+        "ingest/tokeneconomizer/proposals.md#吸收-3"
+      ],
+      "target_evidence_level": "static-measured; Codex half unverified until PRE-03",
+      "system_decisions": [],
+      "synthesis_derived": false,
+      "notes": "Plan decision 2 requires both hosts, so the gate counts the probe only when both halves are verified (same rule that holds OAW-26). On Claude each candidate costs 2 small paid requests, run under the PRE-01 cap. If Codex is recorded unavailable (revision 3, goldfish-2 B17), the code ships with the Codex half 'untested'; the startup-size gate then reports Claude measurements as information and does not count until a Codex half is verified."
+    },
+    {
+      "id": "OAW-35",
+      "kind": "absorb",
+      "batch": 9,
+      "title": "Script-generated README animation with static fallback",
+      "from_food": [
+        "tokeneconomizer"
+      ],
+      "components": [
+        "te.readme-teaser"
+      ],
+      "target": "P8: docs/assets/make_skill_metabolism.py (stdlib SVG, < 30 KB, no JS) + <picture> reduced-motion static fallback in README.md and README.zh.md; freshness gate; no unmeasured numbers; no TE assets copied",
+      "depends_on": [],
+      "size": "120-180 / 50-70",
+      "runtime_cost": "0",
+      "needs_paid_ab": false,
+      "paid_estimate": null,
+      "user_decision_needed": [],
+      "integration": "pass",
+      "evidence_level": "not measured (planned: doc)",
+      "status": "waiting-for-P8",
+      "evidence": [
+        "ingest/tokeneconomizer/components.json#te.readme-teaser",
+        "ingest/tokeneconomizer/proposals.md#吸收-13"
+      ],
+      "target_evidence_level": "doc",
+      "system_decisions": [],
+      "synthesis_derived": false
+    },
+    {
+      "id": "HOLD-01",
+      "kind": "hold",
+      "title": "Merged recall A/B: ranked recall (FTS5 or IDF), index-first line, constrained query expansion",
+      "from_food": [
+        "claude-mem",
+        "graphify"
+      ],
+      "components": [
+        "cm.ranked-fts5-recall",
+        "gf.idf-ranked-search",
+        "cm.recall-index-first/skill-line",
+        "gf.query-expansion"
+      ],
+      "target": "if a candidate wins: context_hub.py --ranked candidate patch and/or one-line oaw-evidence SKILL.md changes; otherwise excrete the value claim",
+      "depends_on": [
+        "OAW-03",
+        "OAW-15",
+        "PRE-05",
+        "PRE-01",
+        "OAW-04",
+        "OAW-16",
+        "OAW-17",
+        "OAW-18",
+        "OAW-01",
+        "PRE-03",
+        "PRE-10"
+      ],
+      "size": "candidate patches live only in improvement.py propose (not merged)",
+      "runtime_cost": "unknown until tested",
+      "needs_paid_ab": true,
+      "paid_estimate": "Merged registration on fixture W' (PRE-05: W merged with claude-mem's 220-entry recall fixture), one D12 baseline build, one shared baseline arm A (current oaw-evidence, literal recall) and up to three candidate arms, each keeping its source plan's question subset, metric and pass rule (revision 3, goldfish-2 B11). B ranked recall on Q-rank (15 paraphrased or multi-word decision questions in zh-TW and English, covering claude-mem H1's 4 paraphrase and 3 multi-word questions): pass as graphify H3, B >= A + 3 of 45, no question down by 2 or more, tokens <= 1.10x. C index-first line on Q-index (claude-mem H1's 12 questions: 3 literal, the 7 shared with Q-rank, 2 absent decisions): pass as claude-mem H1, no question down by 2 or more of 3, and more passes, or tokens down >= 5% with resource regression <= 10%. D constrained query expansion on Q-xlang (20 cross-language questions): pass as graphify H4, D >= A + 4 of 60, none down by 2 or more, tokens <= 1.15x. Stage 0 free: an offline retrieval preflight (recall@5, MRR) of FTS5 and IDF on Q-rank's pre-registered query forms; the ranked arm goes forward only if one of them raises recall@5 by >= 0.10 over literal without losing any top-1 gold (graphify H3 Stage 0); the higher recall@5 wins, and a tie goes to IDF (pure Python, no FTS5 availability risk); an oracle-expansion ceiling for D (D stops if the recall@5 gain is < 0.20); byte-identical literal output. FTS5 availability on the 3-OS x 2-Python CI matrix is a pre-ship check of an FTS5 winner, not a Stage 0 step, because it needs a harness change (goldfish-2 B23). Claude screen at 3 repeats: A on 40 questions (15 + 5 + 20) = 120 runs, B 45, C 36, D 60: 261 runs, about 157-235M; 192 runs, about 115-173M, if Stage 0 drops B. The unmerged 3-repeat screens would be 318 runs, about 191-286M (claude-mem H1 12 x 3 arms x 3 = 108 runs, 65-97M; graphify H3 90 runs, 54-81M; graphify H4 120 runs, 72-108M), so merging saves about 34-51M, from shared baseline runs only. Revision 2's 'unmerged 234-351M' set claude-mem H1's 5-repeat Stage 2 beside 3-repeat screens (goldfish-1 #14). Both-host confirmation re-registered and estimated after the screen (estimates).",
+      "user_decision_needed": [],
+      "status": "hold",
+      "notes": "Elephant's judgment (not measured): query expansion is the most likely gain because the owner's notes mix zh-TW and English. CJK tokenization (bigrams) is pre-registered for IDF. Baseline = the newest D12 build at registration that contains OAW-15, OAW-17 and OAW-18, plus OAW-16 if its A/B passed, recorded by build label. OAW-19 is not needed: every candidate changes memory recall, whose exit codes OAW-19 leaves unchanged, and the IDF candidate is a recall ranking (graphify/proposals.md H3), not a search change (goldfish-2 B23, partly rejected).",
+      "evidence": [
+        "ingest/claude-mem/proposals.md#H1",
+        "ingest/graphify/proposals.md#H3",
+        "ingest/graphify/proposals.md#H4"
+      ],
+      "evidence_level": "not measured",
+      "system_decisions": [
+        "The three plans are merged into one registration with one baseline build and one shared baseline arm (D11); each candidate keeps its own question subset and pass rule.",
+        "Ranked-arm selection: Stage 0 decides FTS5 vs IDF by recall@5 on Q-rank; a tie goes to IDF; neither passing drops the ranked arm without paid runs.",
+        "The Claude screen runs under the PRE-01 caps with the cap-attribution rule; the Codex half is re-registered after the screen."
+      ],
+      "synthesis_derived": true,
+      "stage0_depends_on": [
+        "PRE-05"
+      ],
+      "stage_dependencies": {
+        "OAW-16": "its A/B verdict (shipped or excreted), so the baseline build matches the recall output that ships"
+      },
+      "free_stage0": "retrieval preflight, oracle-expansion ceiling and byte-identity check (paid_estimate)",
+      "run_location": "class 1 (no food code)"
+    },
+    {
+      "id": "HOLD-02",
+      "kind": "hold",
+      "title": "File-touch recall trigger (one oaw-evidence line)",
+      "from_food": [
+        "claude-mem"
+      ],
+      "components": [
+        "cm.file-touch-recall-trigger"
+      ],
+      "target": "one line in templates/.agents/skills/oaw-evidence/SKILL.md: before changing a file with recorded decisions, run memory recall --file",
+      "depends_on": [
+        "OAW-18",
+        "OAW-03",
+        "PRE-01",
+        "OAW-04",
+        "OAW-01",
+        "PRE-03",
+        "PRE-10"
+      ],
+      "size": "1 skill line",
+      "runtime_cost": "extra recall calls on edits (to be measured)",
+      "needs_paid_ab": true,
+      "paid_estimate": "Stage 0 free deterministic preflight; Claude 104 runs about 62-94M; both hosts about 125-187M (estimates)",
+      "user_decision_needed": [],
+      "status": "hold",
+      "evidence": [
+        "ingest/claude-mem/components.json#cm.file-touch-recall-trigger",
+        "ingest/claude-mem/proposals.md#H2"
+      ],
+      "evidence_level": "not measured",
+      "system_decisions": [
+        "Claude half first under the PRE-01 cap; Codex half after PRE-03 (or recorded 'untested')."
+      ],
+      "synthesis_derived": false,
+      "stage0_depends_on": [
+        "OAW-18"
+      ],
+      "free_stage0": "deterministic preflight: recall --file returns the decision for the 5 conflict files and nothing for the 5 control files",
+      "run_location": "class 1 (no food code)"
+    },
+    {
+      "id": "HOLD-03",
+      "kind": "hold",
+      "title": "oaw-evidence superseding-entry wording (fact-lifecycle 8b), Claude and Codex halves",
+      "from_food": [
+        "tokeneconomizer"
+      ],
+      "components": [
+        "te.fact-lifecycle/8b"
+      ],
+      "target": "templates/.agents/skills/oaw-evidence/SKILL.md wording, limited to requested decisions: when the user asks to record a decision that replaces an earlier one, record it with --supersedes instead of editing the old entry",
+      "depends_on": [
+        "OAW-20",
+        "PRE-03",
+        "PRE-01",
+        "OAW-01",
+        "OAW-03",
+        "OAW-04",
+        "PRE-04",
+        "PRE-10"
+      ],
+      "size": "about 2 sentences",
+      "runtime_cost": "on-demand body only",
+      "needs_paid_ab": true,
+      "paid_estimate": "skill-value superseded-handoff case, new registration: Codex half about 6-18M; Claude half through the PRE-04 shell-allowed runner about 6-18M (estimates)",
+      "user_decision_needed": [],
+      "status": "hold",
+      "evidence": [
+        "ingest/tokeneconomizer/proposals.md#8b"
+      ],
+      "evidence_level": "not measured",
+      "system_decisions": [
+        "Low priority: runs after every other TE hold, including HOLD-08b A1 (test_order step 10), and only if the tokeneconomizer cap has room; if it does not run, 8b stays held and only OAW-20 ships (revision 3, goldfish-2 B19)."
+      ],
+      "synthesis_derived": false,
+      "notes": "Revision 1 tested Codex only although the wording ships to both hosts; a Claude half is added (D8). The revision-1 wording asked the agent to record superseding entries on its own, which conflicts with oaw-evidence's 'explicitly requested' scope; the held wording is limited to requested decisions.",
+      "free_stage0": "none that discriminates (whether the wording changes recording behaviour needs an agent run); free preflight: the superseded-handoff fixture and OAW-20's Supersedes marker parse",
+      "run_location": "class 1 (no food code)"
+    },
+    {
+      "id": "HOLD-04",
+      "kind": "hold",
+      "title": "Merged code-map A/B: graphify manual-only pack, TE repomap, stdlib code map",
+      "from_food": [
+        "graphify",
+        "tokeneconomizer"
+      ],
+      "components": [
+        "gf.code-map-external",
+        "te.repomap",
+        "gf.stdlib-codemap/codemap"
+      ],
+      "target": "only ever a non-default pack (never core); stdlib codemap only if a code map helps at all",
+      "depends_on": [
+        "PRE-01",
+        "PRE-05",
+        "OAW-03",
+        "OAW-04",
+        "OAW-05",
+        "OAW-01",
+        "OAW-22",
+        "PRE-03",
+        "PRE-10",
+        "PRE-09"
+      ],
+      "size": "n/a until a winner exists",
+      "runtime_cost": "map startup tokens plus build cost (to be measured)",
+      "needs_paid_ab": true,
+      "paid_estimate": "Merged registration on F2 with one F2 checkout, one baseline build and one native arm per task set; each candidate keeps its source plan's task set, metric and stop rule (revision 3, goldfish-2 B12, goldfish-1 #14). (i) graphify code map on Q-code (10 stratified questions): arms A native and C OAW core plus manual-only graphify, x 3 = 60 runs, about 36-54M; pass C >= A + 3 of 30, no question down by 2 or more, C's median tokens <= 1.25x A's; otherwise stop with 'no measured gain'. (ii) TE repomap on its 4 editing tasks whose target location is not stated: arms native, native plus repomap and native plus the graphify map, x 1 = 12 sessions, about 7-11M (TE's Stage 1); metric tool calls and effective tokens to the first correct edit; stop if native needs <= 3 tool calls on every task, or if the map's startup cost exceeds native's whole exploration cost. (iii) stdlib codemap arm on the Python Q-code questions (>= 6) x 3, up to 18-27M, only if (i) passes, after the same contamination check as HOLD-13. Stage 0 free (0 model tokens, executes graphify, class 2): pinned install, no egress, deterministic graph, no writes outside graphify-out/, query latency and references edges (wiki-duel to_measure 3, 4, 6), plus to_measure 2: precision and recall of `graphify affected` vs OAW's `wiki_sync.py cites` (OAW-22) on scripted modify, rename and delete of cited symbols; this is informational and gates nothing (if cites scores 1.0 and affected is lower on rename or delete, record 'graphify affected not needed for citation tracking'; goldfish-2 B21). Stage 0b (not free: about 1.2-2.7M for graphify's LLM doc pass on fixture W, class 2 with a capped key): a deterministic check whether graphify query/explain output carries the gold decision text and superseded status for the 15 decision questions; if not, record 'replace premise refuted at Stage 0b' (static evidence, not a floor verdict) and skip the W screen; otherwise a 3-arm Claude screen (A OAW recall/get only, which is OAW after eating; B OAW plus graphify without LLM; C graphify alone with its LLM doc pass, the food alone): 20 questions (15 decision, 5 structure) x 3 arms x 3 = 180 runs, about 108-162M, whose A vs C comparison is the decision-recall D2 floor. Code-question D2 floor (revision 3, goldfish-1 #5, goldfish-2 B14): arm F native plus the OAW default build vs arm B native plus graphify's official install, 10 Q-code questions x 2 x 3 = 60 runs, about 36-54M, plus B's one-time official build on F2 (about 5-30M), VM only; it does not wait for (i) to pass and runs under the same condition as HOLD-11 (PRE-09 P2 keeps the whole-food floor and the graphify cap covers it). Full stages if a screen passes, re-registered: graphify H1 180-270M per host plus 15-45M official build; repomap 72-108M both hosts; stdlib map 60-90M per host; one native arm per task set serves every candidate on that set (TE's 'about a third' saving, not measured). After Stage 2, the integration (diarrhea) suite with and without graphify: EGM's 30 scenarios x 2 arms (0.6-4.5M each) about 36-270M; the 40-prompt trigger set x 2 at most 48-72M; the oaw-evidence, wiki and improve skill-value cases x 2 about 24-36M: about 108-378M per host; any pass-count regression beyond tolerance stops it with 'reject'. All figures are estimates.",
+      "user_decision_needed": [],
+      "status": "hold",
+      "evidence": [
+        "ingest/graphify/proposals.md#H1",
+        "ingest/graphify/proposals.md#H2",
+        "ingest/tokeneconomizer/proposals.md#暫緩-4",
+        "ingest/graphify/wiki-duel.json#to_measure",
+        "ingest/graphify/components.json#gf.code-map-external"
+      ],
+      "evidence_level": "not measured",
+      "system_decisions": [
+        "Merged registration with one shared native arm (D11).",
+        "Sandbox per PRE-01 class 2; the official-install arm B and the LLM doc pass run only in a disposable VM with a capped key.",
+        "Fixture F2 is chosen by the system (PRE-05).",
+        "wiki-duel to_measure 3, 4 and 6 stay in Stage 0 and to_measure 5 is covered by HOLD-01's cross-language questions."
+      ],
+      "synthesis_derived": true,
+      "notes": "D2 floor (revision 3, goldfish-1 #5): graphify H1 Stage 2's C >= B compares OAW plus manual graphify with graphify alone; it is not the D2 floor and stays only as the pack's own gate. The D2 floors are arm F vs B on code questions and Stage 0b's A vs C on decision recall, both conditional, so graphify stays 'parity vs food alone: not tested' until one runs, possibly indefinitely. The stdlib rationale harvest is HOLD-13.",
+      "stage0_depends_on": [
+        "PRE-01",
+        "PRE-05",
+        "OAW-22"
+      ],
+      "stage_dependencies": {
+        "PRE-09": "only the code-question D2 floor arm F vs B waits for P2's scope",
+        "OAW-22": "Stage 0's to_measure 2 comparison"
+      },
+      "free_stage0": "Stage 0 (0 model tokens, but class 2 because it executes graphify); Stage 0b is not free",
+      "run_location": "class 2 for every stage that runs graphify (Stage 0, Stage 0b, arms B and C, the official build); class 1 for arms A and F"
+    },
+    {
+      "id": "HOLD-05",
+      "kind": "hold",
+      "title": "TE envfacts push vs OAW pull vs AGENTS.md line (A5)",
+      "from_food": [
+        "tokeneconomizer"
+      ],
+      "components": [
+        "te.envfacts-miner"
+      ],
+      "target": "if push wins: at most an offline 'suggested AGENTS.md verification command' report; push itself conflicts with v2",
+      "depends_on": [
+        "OAW-28",
+        "PRE-04",
+        "PRE-01",
+        "OAW-03",
+        "OAW-04",
+        "OAW-05",
+        "PRE-03",
+        "PRE-10"
+      ],
+      "size": "n/a",
+      "runtime_cost": "n/a",
+      "needs_paid_ab": true,
+      "paid_estimate": "phase 1 about 6-9M per host; full about 80-119M both hosts (estimates)",
+      "user_decision_needed": [],
+      "status": "hold",
+      "evidence": [
+        "ingest/tokeneconomizer/components.json#te.envfacts-miner",
+        "ingest/tokeneconomizer/proposals.md#暫緩-2"
+      ],
+      "evidence_level": "not measured",
+      "system_decisions": [
+        "Step 4 of test_order (TE order from tokeneconomizer/proposals.md 2.0)."
+      ],
+      "synthesis_derived": false,
+      "free_stage0": "none that discriminates (whether native already avoids the trap needs an agent run); free preflight: trap_armed on V1-V3 (OAW-28)",
+      "run_location": "class 2 for the TE push arm; class 1 for the native, AGENTS.md and OAW-pull arms"
+    },
+    {
+      "id": "HOLD-06",
+      "kind": "hold",
+      "title": "TE loopguard off / shadow / nudge recommendation (A4)",
+      "from_food": [
+        "tokeneconomizer"
+      ],
+      "components": [
+        "te.loopguard-redirect"
+      ],
+      "target": "only what OAW recommends to users who install TE themselves",
+      "depends_on": [
+        "PRE-04",
+        "PRE-01",
+        "OAW-03",
+        "OAW-04",
+        "OAW-05",
+        "PRE-03",
+        "PRE-10"
+      ],
+      "size": "n/a",
+      "runtime_cost": "n/a",
+      "needs_paid_ab": true,
+      "paid_estimate": "phase 1 about 17-25M (Claude); full about 112-170M both hosts (estimates)",
+      "user_decision_needed": [],
+      "status": "hold",
+      "evidence": [
+        "ingest/tokeneconomizer/components.json#te.loopguard-redirect",
+        "ingest/tokeneconomizer/proposals.md#暫緩-1"
+      ],
+      "evidence_level": "not measured",
+      "system_decisions": [
+        "Step 5 of test_order."
+      ],
+      "synthesis_derived": false,
+      "free_stage0": "none: loop behaviour needs an agent run; phase 1 at 1 repeat is the cheapest screen",
+      "run_location": "class 2 (every arm has TE installed)"
+    },
+    {
+      "id": "HOLD-07",
+      "kind": "hold",
+      "title": "Toolprune evidence rule vs native deferral (A3)",
+      "from_food": [
+        "tokeneconomizer"
+      ],
+      "components": [
+        "te.toolprune-evidence-rule"
+      ],
+      "target": "only whether OAW ever recommends toolprune=propose",
+      "depends_on": [
+        "OAW-01",
+        "PRE-01",
+        "OAW-03",
+        "OAW-04",
+        "OAW-05",
+        "PRE-03",
+        "PRE-10"
+      ],
+      "size": "n/a",
+      "runtime_cost": "n/a",
+      "needs_paid_ab": true,
+      "paid_estimate": "phase 0 far below 1M (2 small Claude requests, Codex free) and may end the test if the ceiling is < 2% of a session; phase 1 about 58-86M both hosts (estimates)",
+      "user_decision_needed": [],
+      "status": "hold",
+      "evidence": [
+        "ingest/tokeneconomizer/components.json#te.toolprune-evidence-rule",
+        "ingest/tokeneconomizer/proposals.md#暫緩-3"
+      ],
+      "evidence_level": "not measured",
+      "system_decisions": [
+        "Phase 0 runs first among the TE holds (test_order step 1), after batch 1 builds OAW-01, not in the first package (revision 3, goldfish-1 #9, goldfish-2 B01); it may end the test."
+      ],
+      "synthesis_derived": false,
+      "stage0_depends_on": [
+        "OAW-01",
+        "PRE-01"
+      ],
+      "notes": "Phase 0 uses the te.startup-size-probe method by hand (two isolated claude -p requests with a temporary --settings deny list; Codex prompt-input is free); it does not wait for OAW-34's catalog code.",
+      "free_stage0": "phase 0 is not free on Claude (2 small paid requests, far below 1M); the Codex half (prompt-input) is free",
+      "run_location": "class 1 (TE is not executed; the deny list is our own temporary --settings)"
+    },
+    {
+      "id": "HOLD-08a",
+      "kind": "hold",
+      "title": "TokenEconomizer beside OAW, cheap checks first: A2 (Codex EGM-subagent conflict, yes/no) and A6 (Codex trigger check)",
+      "from_food": [
+        "tokeneconomizer"
+      ],
+      "components": [
+        "te.install-as-user-plugin"
+      ],
+      "target": "catalog note only (pinned SHA, recommended settings); never packed into OAW",
+      "depends_on": [
+        "PRE-01",
+        "PRE-03",
+        "OAW-01"
+      ],
+      "stage0_depends_on": [
+        "PRE-06"
+      ],
+      "size": "n/a",
+      "runtime_cost": "n/a",
+      "needs_paid_ab": true,
+      "paid_estimate": "A2 about 0.6-4.5M (one agent if subagents fail to start, otherwise a parent plus up to 4 reviewers); A6 static check: a name comparison plus one tool-less goldfish reading both skill descriptions (about 0.05-0.1M, estimate; not free), then a 20-prompt trigger run of at most 24-36M only on divergence (upper bound; sessions end at skill choice) (estimates)",
+      "user_decision_needed": [],
+      "system_decisions": [
+        "Runs after batch 1 (OAW-01) and PRE-03, not in the first package (test_order steps 2-3; revision 3, goldfish-1 #9, goldfish-2 B01); Codex-only."
+      ],
+      "status": "hold",
+      "evidence_level": "not measured",
+      "target_evidence_level": "measured (yes/no hazard; trigger rates)",
+      "synthesis_derived": true,
+      "notes": "Split from revision 1's HOLD-08, which put A2 and A6 behind HOLD-05, 06 and 07, contradicting tokeneconomizer/proposals.md 2.0 (A3 phase 0 -> A2 -> A6 static -> A5 -> A4 -> repomap -> full stages -> A1 last). Not a baseline-vs-candidate improvement.py comparison, so OAW-03 to OAW-05 are not prerequisites; the vacuous rule is applied inline: A2 is 'inconclusive', not 'no harm', when TE never proposes the collaboration deny. TE is installed, so it runs in the class-2 image; the runner passes prompts on stdin (as bench.py:262, :267 does) and, in a Windows image, resolves an npm-shim codex.cmd with OAW-01's method (moot in a Linux image); OAW-01 is now in depends_on (revision 3, goldfish-2 B01, B18). Cross-food: if a user also has claude-mem installed, every TE judge call becomes a recorded nested session (te.sidecall-isolation-gaps); sandboxes for these runs must contain neither food's other plugins.",
+      "evidence": [
+        "ingest/tokeneconomizer/components.json#te.install-as-user-plugin",
+        "ingest/tokeneconomizer/proposals.md#暫緩-5",
+        "ingest/tokeneconomizer/proposals.md#2.0"
+      ],
+      "free_stage0": "none for A2 (a yes/no probe that needs TE and Codex); A6's static check costs one tool-less goldfish",
+      "run_location": "class 2 (TE installed)"
+    },
+    {
+      "id": "HOLD-09",
+      "kind": "hold",
+      "title": "Outcome-scored promotion ranking",
+      "from_food": [
+        "graphify"
+      ],
+      "components": [
+        "gf.outcome-scored-promotion"
+      ],
+      "target": "wiki_sync.py promote_candidates ranking, after an outcome-tag convention",
+      "depends_on": [
+        "OAW-20",
+        "PRE-05",
+        "PRE-01",
+        "OAW-03",
+        "OAW-04",
+        "OAW-01",
+        "PRE-03",
+        "PRE-10"
+      ],
+      "size": "n/a",
+      "runtime_cost": "n/a",
+      "needs_paid_ab": true,
+      "paid_estimate": "Stage 0 free (P0 = promote_candidates after OAW-20); Stage 1 about 36-54M only if Stage 0 passes; Stage 2 about 60-90M per host (estimates)",
+      "user_decision_needed": [],
+      "status": "hold",
+      "evidence": [
+        "ingest/graphify/components.json#gf.outcome-scored-promotion",
+        "ingest/graphify/proposals.md#H5"
+      ],
+      "evidence_level": "not measured",
+      "system_decisions": [
+        "The gold list is labelled by a goldfish under the PRE-01 cap (0.6-0.9M tool-using, far less tool-less; estimate), so Stage 0 is not free (revision 3, goldfish-2 B22); the owner may volunteer instead (0 tokens, about 30 min)."
+      ],
+      "synthesis_derived": false,
+      "stage0_depends_on": [
+        "OAW-20",
+        "PRE-05"
+      ],
+      "free_stage0": "Stage 0 is deterministic once the gold list exists (the gold list costs one goldfish)",
+      "run_location": "class 1 (no food code)"
+    },
+    {
+      "id": "HOLD-10",
+      "kind": "hold",
+      "title": "Live installer round-trip on graphify (catalog self-test)",
+      "from_food": [
+        "graphify"
+      ],
+      "components": [
+        "gf.installer-roundtrip-check/live"
+      ],
+      "target": "validates that the catalog round-trip check catches a known-bad food (predicted CLAUDE.md FAIL from the H1-boundary bug); does not unlock graphify's installer",
+      "depends_on": [
+        "PRE-01",
+        "OAW-33"
+      ],
+      "size": "n/a",
+      "runtime_cost": "n/a",
+      "needs_paid_ab": false,
+      "paid_estimate": "0 model tokens if scripted; requires a disposable VM",
+      "user_decision_needed": [],
+      "status": "hold; waiting-for-catalog-P3 (OAW-33)",
+      "evidence": [
+        "ingest/graphify/integration.json#gf.installer-roundtrip-check",
+        "ingest/graphify/proposals.md#H6"
+      ],
+      "evidence_level": "not measured",
+      "system_decisions": [
+        "Runs inside the PRE-01 VM class without a separate approval (D11); scripted, 0 model tokens; aborted and the VM destroyed on any write outside the snapshot root.",
+        "Scheduled after catalog P3 builds OAW-33, not at test_order step 6 (revision 3, goldfish-2 B09)."
+      ],
+      "synthesis_derived": false,
+      "free_stage0": "the whole test is scripted (0 model tokens) but executes the installer, so class 2 only",
+      "run_location": "class 2 (disposable VM)"
+    },
+    {
+      "id": "HOLD-11",
+      "kind": "hold",
+      "title": "claude-mem automatic compressed memory vs native memory vs OAW evidence (D2 floor restored)",
+      "from_food": [
+        "claude-mem"
+      ],
+      "components": [
+        "cm.auto-activity-compression"
+      ],
+      "target": "at most a 'user-local, external' catalog pointer; no OAW core or pack receiver",
+      "depends_on": [
+        "PRE-01",
+        "OAW-03",
+        "OAW-04",
+        "OAW-01",
+        "PRE-09",
+        "PRE-07",
+        "PRE-04",
+        "PRE-10"
+      ],
+      "size": "n/a",
+      "runtime_cost": "n/a",
+      "needs_paid_ab": true,
+      "paid_estimate": "Arms: A native host memory; B1/B2 native plus claude-mem (Chroma off/on); C native plus OAW evidence (oaw-evidence with memory add/recall on a named D12 build). Stage 1: 1 scenario x 4 arms x 1 x 2 sessions = 8 sessions, about 4.8-7.2M; Stage 2: 4 scenarios x 4 arms x 5 x 2 sessions = 160 sessions, about 96-144M; total about 101-151M plus observer spend, measured by PRE-04's meter (or an equivalent proxy-level meter if the observer does not start through the claude CLI); without it the token comparison is 'coverage incomplete'. Only if B beats A and a pointer is proposed: an integration (diarrhea) run with claude-mem beside OAW core and EGM (digest proposed A/B 4), estimated like HOLD-04's suite at about 108-378M per host. Needs a VM or Linux container and a dedicated capped key (estimates).",
+      "user_decision_needed": [],
+      "status": "hold",
+      "evidence": [
+        "ingest/claude-mem/components.json#cm.auto-activity-compression",
+        "ingest/claude-mem/proposals.md#H3",
+        "ingest/claude-mem/digest.json#proposed_ab_tests 3-4",
+        "ingest/DECISIONS.md#D2"
+      ],
+      "evidence_level": "not measured",
+      "system_decisions": [
+        "Runs only if (a) a catalog pointer to claude-mem is proposed, or (b) PRE-09 P2 keeps the whole-food floor and the claude-mem cap covers it; otherwise claude-mem stays labelled 'parity vs food alone: not tested'."
+      ],
+      "synthesis_derived": true,
+      "gate": "D2 floor C >= the best B arm on decision reuse and contradiction rate (tokens compared including observer spend); a pointer needs B > A and the integration run without regressions.",
+      "notes": "Revision 1 dropped arm C (native plus OAW evidence) from the digest's proposed A/B 3 and dropped A/B 4; both are restored. In every arm, session 1's prompt carries the same natural sentence asking that the decision be remembered for later sessions, so native memory, claude-mem and OAW evidence (which records only requested decisions) get the same chance to record it. Claude Code only; Codex 'untested'. Revision 3 (goldfish-2 B15): arm C uses the newest D12 build containing the approved claude-mem absorbs (batches 3 and 4), named in the registration; PRE-09 (run condition b), PRE-07 (build labels) and PRE-04 (observer spend) were missing from depends_on; budget_summary now includes Stage 3.",
+      "free_stage0": "none: needs claude-mem running and agent sessions; the run condition decides whether it runs at all",
+      "run_location": "class 2 for arms B1 and B2 (claude-mem installed); class 1 for arms A and C"
+    },
+    {
+      "id": "HOLD-12",
+      "kind": "hold",
+      "title": "Split-off model-facing lines from graphify absorbs: template convention line and cites pointer",
+      "from_food": [
+        "graphify"
+      ],
+      "components": [
+        "gf.code-citation-lint/template-line",
+        "gf.reverse-citation-lookup/skill-pointer"
+      ],
+      "target": "templates/docs/raw/_SOURCE_TEMPLATE.md (one convention line); one oaw-wiki SKILL.md line: after changing code, run wiki_sync.py cites <path::Symbol> and update the notes it lists",
+      "depends_on": [
+        "OAW-21",
+        "OAW-22",
+        "OAW-03",
+        "OAW-04",
+        "OAW-01",
+        "PRE-01",
+        "PRE-05",
+        "PRE-03",
+        "PRE-10"
+      ],
+      "size": "1 line each",
+      "runtime_cost": "on-demand bodies only",
+      "needs_paid_ab": true,
+      "paid_estimate": "(a) template line: 10 note-writing tasks x 2 arms x 3 = 60 runs, about 36-54M (Claude screen); trigger: B writes path::Symbol citations in >= 2/3 of trigger cases; pass: those citations pass the OAW-21 lint, no pass-count regression, tokens <= 1.10x. (b) cites pointer: Stage 0 free and deterministic (cites returns the citing notes for scripted modify, rename and delete on fixture W); Stage 1: 8 code-change tasks on W where 1-3 notes cite the changed symbol x 2 arms (oaw-wiki as-is vs plus the line) x 3 = 48 runs, about 29-43M (Claude screen); required: the agent names or updates every citing note; forbidden: edits to unrelated notes; trigger: B runs cites in >= 2/3 of trigger cases; pass: B >= A + 3 of 24, no case down by 2 or more, tokens <= 1.15x. Confirmation per host, re-registered after the screens: template line 10 x 2 x 5 = 100 runs, about 60-90M; pointer 8 x 2 x 5 = 80 runs, about 48-72M (estimates).",
+      "user_decision_needed": [],
+      "status": "hold",
+      "evidence": [
+        "ingest/graphify/proposals.md#5 (decision 8)",
+        "ingest/graphify/integration.json#gf.code-citation-lint",
+        "ingest/graphify/integration.json#gf.reverse-citation-lookup",
+        "ingest/graphify/components.json#gf.reverse-citation-lookup"
+      ],
+      "evidence_level": "not measured",
+      "system_decisions": [
+        "Each line gets its own pre-registered A/B under the PRE-01 cap instead of shipping unmeasured.",
+        "The te.failure-signature oaw-improve line is dropped, not tested (excrete; reason in OAW-27)."
+      ],
+      "synthesis_derived": true,
+      "stage0_depends_on": [
+        "OAW-22",
+        "PRE-05"
+      ],
+      "free_stage0": "(a) none that discriminates (free preflight: OAW-21 accepts the template's example citation); (b) Stage 0 free and deterministic",
+      "run_location": "class 1 (no food code)"
+    },
+    {
+      "id": "HOLD-13",
+      "kind": "hold",
+      "title": "Rationale harvest: '# WHY:'/'# NOTE:' comments and ADR/RFC citations as a generated raw note (decision-recall test on fixture W)",
+      "from_food": [
+        "graphify"
+      ],
+      "components": [
+        "gf.stdlib-codemap/rationale-harvest"
+      ],
+      "target": "if it wins: a stdlib regex pass writing docs/raw/code-rationale.md (no leading '_', which wiki_sync skips) with file:line provenance, rendered and linted by wiki_sync; otherwise excrete the idea",
+      "depends_on": [
+        "PRE-05",
+        "OAW-03",
+        "OAW-04",
+        "OAW-01",
+        "PRE-01",
+        "PRE-03",
+        "PRE-10"
+      ],
+      "stage0_depends_on": [
+        "PRE-05"
+      ],
+      "size": "prototype outside OAW until it wins (merge estimate if adopted: about 60-80 / 60-80)",
+      "runtime_cost": "one generated raw note; on-demand only",
+      "needs_paid_ab": true,
+      "paid_estimate": "Stage 0 free and deterministic (revision 3, goldfish-2 B21): harvest precision >= 0.9 and recall >= 0.8 against W's gold rationale list (pre-registered; below either, stop with 'harvester not adequate' and no paid run); contamination check with the oaw-evidence default call (literal recall, --limit 5 --max-chars 6000). Literal recall returns hits in scan order (memory.md, then docs/knowledge by file name; context_hub.py:431-434), not by relevance, so the check is whether, for each of 15 docs/raw decision queries, the gold decision still appears in the first page of results within that budget and the harvested page contributes at most 1 of that page's hits; any failing query stops the test. If HOLD-01 ships a ranked mode, the check is repeated in that mode. Stage 1 Claude screen: 12 decision questions (6 answerable only from code rationale, 6 only from docs/raw) x 2 arms (OAW core with native search; plus the compiled rationale note) x 3 = 72 runs, about 43-65M; pass: B >= A + 3 on the code-rationale subset, no regression on the docs/raw subset, tokens <= 1.15x. Stage 2 both hosts, re-registered: 12 x 2 x 5 = 120 runs per host, about 72-108M (estimates).",
+      "user_decision_needed": [],
+      "system_decisions": [
+        "Independent of HOLD-04: runs whether or not a code map wins."
+      ],
+      "status": "hold",
+      "evidence_level": "not measured",
+      "target_evidence_level": "measured (A/B)",
+      "synthesis_derived": true,
+      "notes": "Split from gf.stdlib-codemap: the code-map half stays a conditional arm in HOLD-04; the rationale half links code to the decision layer the owner cares about and gets its own test. Rationale labels in graphify are cut to 80 chars, so the harvest keeps full comment text with provenance.",
+      "evidence": [
+        "ingest/graphify/components.json#gf.stdlib-codemap",
+        "ingest/graphify/digest.json#nutrients 4",
+        "graphify/extract.py:1796",
+        "oaw-ref/scripts/wiki_sync.py:149",
+        "oaw-ref/scripts/context_hub.py:431-434"
+      ],
+      "free_stage0": "harvest precision/recall and the contamination check (paid_estimate)",
+      "run_location": "class 1 (no food code; graphify is not run)"
+    },
+    {
+      "id": "HOLD-14",
+      "kind": "hold",
+      "title": "Outline-first reading of large code files (the File Read Gate's value, without the hook)",
+      "from_food": [
+        "claude-mem"
+      ],
+      "components": [
+        "cm.file-read-gate/outline-first"
+      ],
+      "target": "if it wins: one guidance line, either in templates/AGENTS.md (startup-loaded; 23 of the 25 lines tests/test_skills.py allows) or in an on-demand skill body: for code files over about 32 KB, list definitions first and read only the needed range; no hook, no Read deny, no tree-sitter",
+      "depends_on": [
+        "PRE-05",
+        "OAW-03",
+        "OAW-04",
+        "OAW-05",
+        "OAW-01",
+        "PRE-01",
+        "PRE-03",
+        "PRE-10"
+      ],
+      "stage0_depends_on": [
+        "PRE-05"
+      ],
+      "size": "1 line if adopted",
+      "runtime_cost": "startup text of one line if placed in AGENTS.md (to be measured with the te.startup-size-probe method)",
+      "needs_paid_ab": true,
+      "paid_estimate": "Stage 0 free: count Q-code/F2 tasks that need code files of 32 KB or more; stop if fewer than 6. Stage 1 Claude screen: 6 large-file tasks x 2 arms (native vs native plus the line) x 3 = 36 runs, about 22-32M; pass: effective tokens down >= 5% with complete coverage, no pass-count regression, no case down by 2 or more. Stage 2 both hosts: 6 x 2 x 5 x 2 = 120 runs, about 72-108M (estimates).",
+      "user_decision_needed": [],
+      "system_decisions": [],
+      "status": "hold",
+      "evidence_level": "not measured",
+      "target_evidence_level": "measured (A/B)",
+      "synthesis_derived": true,
+      "notes": "The food's own eval reports -38% (Sonnet) and -30% (Opus) on a 49 KB file and about 0% on 19 KB, 2-3 author-run samples, not reproduced. The hook stays excreted (cm.file-read-gate/hook); only the reading method is tested. A startup-loaded line also counts against the AGENTS.md cap and the startup budget, which are part of the gate.",
+      "evidence": [
+        "ingest/claude-mem/components.json#cm.file-read-gate",
+        "tests/evals/read-gate/README.md:113-114",
+        "src/cli/handlers/file-context.ts:34",
+        "oaw-ref/tests/test_skills.py:182"
+      ],
+      "free_stage0": "count Q-code/F2 tasks that need code files of 32 KB or more; stop if fewer than 6",
+      "run_location": "class 1 (no food code)"
+    },
+    {
+      "id": "HOLD-08b",
+      "kind": "hold",
+      "title": "TokenEconomizer beside OAW: A1 four-arm stream with the D2 floor, last",
+      "from_food": [
+        "tokeneconomizer"
+      ],
+      "components": [
+        "te.install-as-user-plugin"
+      ],
+      "target": "catalog note only (pinned SHA, recommended settings); never packed into OAW",
+      "depends_on": [
+        "PRE-01",
+        "PRE-03",
+        "PRE-04",
+        "OAW-03",
+        "OAW-04",
+        "OAW-05",
+        "HOLD-04",
+        "HOLD-05",
+        "HOLD-06",
+        "HOLD-07",
+        "HOLD-08a",
+        "PRE-10"
+      ],
+      "size": "n/a",
+      "runtime_cost": "n/a",
+      "needs_paid_ab": true,
+      "paid_estimate": "A1 phase 1 about 19-29M per host; full about 192-288M both hosts (estimates)",
+      "gate": "Arms: A native; B native+TE; C native+OAW default; D native+OAW+TE. Pass needs both: D >= C (no assertion regression, resource regression <= 10%, the improvement.py rule) and the D2 floor C >= B (native+OAW default at least as good as native+TE on per-assertion passes within tolerance (live: at most 1 fewer pass in 5 per case x assertion, PRE-10); on effective tokens only where coverage is complete in both arms). If C >= B fails, record 'OAW below the food-alone floor on <metric>'; the result then decides between a catalog note 'install TE beside OAW' (if D >= B) and absorbing the missing method. No parity wording is used for TE until C >= B has passed.",
+      "user_decision_needed": [],
+      "system_decisions": [
+        "A1 uses the settings learned from A3, A4, A5 and the repomap stage (and A2's result for the Codex half), never TE defaults, which include the excreted toolprune=auto (tokeneconomizer/proposals.md A1 TE settings; revision 3, goldfish-2 B16).",
+        "Runs last among the TE A/Bs (test_order step 9); needs only the stage results named in stage_dependencies.",
+        "Phase 1 (1 repeat, 32 sessions per host) also yields a C vs B screen. If phase 1 stops on a D regression, the floor verdict needs B and C phase 2 alone (4 more repeats x 2 arms x 8 sessions = 64 sessions, about 38-58M per host), run only if the TE cap allows; otherwise TE stays 'parity vs food alone: not tested' (revision 3, goldfish-2 B14)."
+      ],
+      "status": "hold",
+      "evidence_level": "not measured",
+      "target_evidence_level": "measured (A/B)",
+      "synthesis_derived": true,
+      "notes": "Cross-food: if a user also has claude-mem installed, every TE judge call becomes a recorded nested session (te.sidecall-isolation-gaps); sandboxes for these runs must contain neither food's other plugins. Revision 1's gate was D >= C only; the D2 floor C >= B uses the already-planned arm B.",
+      "evidence": [
+        "ingest/tokeneconomizer/components.json#te.install-as-user-plugin",
+        "ingest/tokeneconomizer/proposals.md#暫緩-5",
+        "ingest/DECISIONS.md#D2"
+      ],
+      "stage_dependencies": {
+        "HOLD-04": "repomap Stage 1 result only (item ii)",
+        "HOLD-05": "phase 1 result",
+        "HOLD-06": "phase 1 result",
+        "HOLD-07": "phase 0 or phase 1 result",
+        "HOLD-08a": "A2 result, for the Codex half only; with Codex unavailable, A1 runs on Claude and the Codex half is 'untested'"
+      },
+      "free_stage0": "none: depends on the earlier TE holds' results",
+      "run_location": "class 2 for arms B and D (TE installed); class 1 for arms A and C"
+    }
+  ],
+  "budget_summary": {
+    "unit": "logical tokens, estimates only (Claude calibration 0.6-0.9M per fresh tool-using agent, mostly cache reads; Codex uncalibrated; not USD)",
+    "as_proposed_per_food_all_stages_both_hosts": {
+      "tokeneconomizer": "about 552-846M (revision 1: 540-810M excluding 8b; 8b now has Claude and Codex halves, 12-36M); plus HOLD-08b's conditional B/C phase-2 floor run, about 38-58M per host (revision 3)",
+      "claude-mem": "about 348-522M for H1+H2 (H1 now inside HOLD-01); about 449-673M with H3 including the restored arm C (101-151M) plus observer spend (measured by PRE-04, not estimated); about 543-813M with HOLD-14 (94-140M); revision 3 adds OAW-16's A/B (about 24-36M both hosts) and HOLD-11's Stage 3 integration run (about 108-378M, Claude only) if it is triggered (goldfish-2 B15)",
+      "graphify": "about 436-655M Claude screens (revision 1: 219-328M; added HOLD-12 pointer 29-43M and template line 36-54M, HOLD-13 43-65M, HOLD-04 Stage 0b LLM pass 1.2-2.7M and W 3-arm screen 108-162M) plus about 813-1,458M per host confirmation (revision 1: 525-810M; added pointer 48-72M, rationale 72-108M, template line 60-90M, integration suite 108-378M): about 2.1-3.6B if everything passed on both hosts; revision 3 adds the conditional code-question D2 floor arm F vs B (about 36-54M plus a 5-30M official build)",
+      "ceiling_total": "about 3.5-5.8B before merging (revision 2: 3.2-5.2B; revision 3 adds about 0.25-0.61B: HOLD-11 Stage 3 108-378M, floor arms 117-200M, OAW-16 24-36M); merged registrations (HOLD-01, HOLD-04) share baseline arms, stop rules are designed to end most plans at Stage 0 or Stage 1, and the PRE-01 caps bound real spend"
+    },
+    "recommended_first_package": "PRE-06 init and canary probes (< 0.1M) and recipe check (about 0.4-1M) + PRE-02 zero-context round on revision 3 (about 0.4-1M; about 2.4-3.6M more if the recipe check fails) + PRE-05 fixtures (about 2.4-3.6M with tool-using drafting) + free Stage 0s (0): about 3-6M (about 6-9M with the fallback reviewers). HOLD-07 phase 0 and HOLD-08a A2 moved after batch 1 because both need OAW-01 (revision 3, goldfish-1 #9, goldfish-2 B01)",
+    "second_package_claude_screens": "test_order step 7: about 610-930M if every screen runs: OAW-16 A/B 12-18M per host, HOLD-14 22-32M, HOLD-12 65-97M, HOLD-09 36-54M, HOLD-04 code map 43-65M (+18-27M conditional) and code-question floor 41-84M (conditional), HOLD-13 43-65M, HOLD-02 62-94M, HOLD-01 merged recall 157-235M (115-173M if Stage 0 drops the ranked arm), HOLD-04 W 3-arm 108-162M (conditional); plus HOLD-05/06 phase 1 (23-34M); then HOLD-08b A1 19-29M per host and HOLD-03 last",
+    "codex_only_items": "HOLD-08a A2 0.6-4.5M and A6 up to 24-36M (static check about 0.05-0.1M); Codex halves of HOLD-03 6-18M and of OAW-16 12-18M; all need PRE-03",
+    "per_batch_goldfish_review_of_diffs": "D10 requires it; 10 builds (11 if OAW-16 ships) x 2 goldfish: about 12-20M with the tool-using calibration, likely far less with the PRE-06 tool-less recipe (not measured); revision 2 computed it on 9 batches (goldfish-2 B22)",
+    "after_batch_1": "HOLD-07 phase 0 (< 1M) and, with Codex, HOLD-08a A2 (0.6-4.5M, class 2) and the A6 static check (about 0.05-0.1M)",
+    "system_overhead": "goldfish reviews, probes and fixtures (PRE-02, PRE-05, PRE-06 and the per-build reviews): about 15-30M over the round (estimate), outside the per-food caps"
+  },
+  "revision": {
+    "number": 3,
+    "date": "2026-11-03",
+    "basis": "two blind goldfish reviews of revision 2 (goldfish-1: 19 findings, Lens A; goldfish-2: 23 findings, Lens B), both run with inherited context (documented); each finding re-checked against the cited source and resolved by the Elephant; the resolution table and launch records are in ingest/SUMMARY.md section 11",
+    "ledgers": "each ingest/<food>/components.json now carries ledger_revision 2 with after_integration records; component ids below use part ids (<component>/<part>) where a component was split. Revision 3 changes no components.json; the pending ledger update for cm.recall-data-fence (OAW-16 moved to hold) is recorded in foods.claude-mem.ledger_after_revision_3",
+    "previous": {
+      "number": 2,
+      "date": "2026-11-03",
+      "basis": "critic gaps on revision 1, re-checked against the pinned food sources, oaw-ref and the three integration.json files; each gap and its resolution is listed in ingest/SUMMARY.md (修訂紀錄)"
+    }
+  },
+  "test_order": {
+    "decided_by": "the digestion system under D11 (cheapest discriminating test first), once PRE-01 is set; every stage stops on its pre-registered stop rule",
+    "steps": [
+      "0. Free, no food code, no model calls: HOLD-01, HOLD-13 and HOLD-14 Stage 0 after PRE-05; OAW-16 Stage 0 after OAW-15; HOLD-02 Stage 0 after OAW-18; HOLD-09 Stage 0 after OAW-20 (its goldfish-labelled gold list costs about 0.6-0.9M, less tool-less); HOLD-12 cites Stage 0 after OAW-22; OAW-26's Codex prompt-input check once PRE-03 provides Codex.",
+      "1. After batch 1 (OAW-01): HOLD-07 phase 0 (A3 toolprune ceiling, 2 small Claude requests, far below 1M; Codex half free).",
+      "2. HOLD-08a A2 (Codex EGM-subagent conflict, 0.6-4.5M, class 2) and the A6 static check (one tool-less goldfish, about 0.05-0.1M), when Codex is available.",
+      "3. HOLD-08a A6 trigger run, only on divergence in the static check.",
+      "4. HOLD-05 phase 1 (A5 envfacts, 6-9M per host; the TE arm in class 2).",
+      "5. HOLD-06 phase 1 (A4 loopguard, 17-25M, class 2).",
+      "6. Sandbox Stage 0s that execute food code (class 2): HOLD-04 Stage 0 (0 model tokens) and Stage 0b (about 1.2-2.7M, capped key). HOLD-10 is not here: it waits for catalog P3 (OAW-33).",
+      "7. Claude screens, cheapest first within each food's cap: OAW-16 A/B (12-18M per host, before HOLD-01), HOLD-14 (22-32M), HOLD-12 pointer (29-43M) and template line (36-54M), HOLD-09 Stage 1 (36-54M, if Stage 0 passed), HOLD-04 code map (43-65M, +18-27M conditional), HOLD-13 (43-65M), HOLD-02 (62-94M), HOLD-01 merged recall (157-235M; 115-173M if Stage 0 drops the ranked arm), HOLD-04 W 3-arm (108-162M, only if Stage 0b does not refute the premise).",
+      "8. Full stages and Codex halves only for screens that passed; HOLD-04's integration suite after its Stage 2.",
+      "9. HOLD-08b A1 (19-29M per host phase 1; the B/C phase-2 floor run, 38-58M per host, only if phase 1 stopped on D and the TE cap allows).",
+      "10. HOLD-03 (8b wording), last among the TE holds, only if the TE cap has room (6-18M per host).",
+      "Conditional D2 floor arms (HOLD-04 arm F vs B, HOLD-11): only under their conditions (system_decisions).",
+      "After catalog P3: HOLD-10 (class 2 VM, scripted, 0 model tokens)."
+    ]
+  },
+  "owner_decisions": [
+    {
+      "n": 1,
+      "item": "PRE-01 (with PRE-03)",
+      "decision": "Standing policy: per-food screen caps plus a system-overhead cap, sandbox classes (class 2 for any food code), API keys and goldfish configuration (a dedicated capped key enables the canary probe), network allowlist, Codex on this machine and in the class-2 image or not, and confirm the cap-attribution default."
+    },
+    {
+      "n": 2,
+      "item": "per-batch approval (with PRE-08)",
+      "decision": "Approve each batch's absorbs (with their stated behaviors, e.g. OAW-12 no override flag, OAW-13 refuse rather than strip) and accept each food's excrete list as a whole."
+    },
+    {
+      "n": 3,
+      "item": "PRE-07",
+      "decision": "Release target (untagged 2.0.0 or later; PRE-07 lists every compatibility-affecting item: OAW-19, OAW-12, OAW-13, OAW-25 and the strict-mode changes of OAW-14, OAW-21 and OAW-23) and removal granularity (removal builds only, recommended; a restore is linear)."
+    },
+    {
+      "n": 4,
+      "item": "OAW-19",
+      "decision": "CLI contract: exit-code vocabulary (3/4 or non-colliding codes), memory recall no-match stays 0, get case policy."
+    },
+    {
+      "n": 5,
+      "item": "OAW-07, OAW-12, OAW-30",
+      "decision": "License route: Apache-2.0 attribution with modification notices, or independent clean-room rewrites."
+    },
+    {
+      "n": 6,
+      "item": "PRE-09",
+      "decision": "Confirm the process amendments P1-P4 (P1 now includes a canary or known-content check; P3 lets a hold state why it has no free Stage 0), including the D2 scope (whole food, the default, or absorbed functions only); the floor arms are conditional and may never run."
+    }
+  ]
+}

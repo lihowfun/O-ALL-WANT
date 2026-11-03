@@ -1,0 +1,135 @@
+{
+  "reviewer": "goldfish-2",
+  "food": "microsoft/TokenEconomizer",
+  "pinned_source": "ingest/tokeneconomizer/src",
+  "method": "Read-only review of plugin/ (hooks, launchers, slash commands, Codex skills, manifests), tokeneconomizer/plugin/*, the mechanisms (microskills, loopguard, toolprune), README.md, plugin/README.md and docs/PLUGIN.md. Nothing from the food was executed.",
+  "verdict_summary": "TokenEconomizer is a carefully written, fail-open, stdlib-only hook plugin. It does three things: it mines repository facts from finished sessions, it writes a deny list of tools that went unused, and it judges whether a turn is stuck in a loop. There is no direct network egress. Every model call goes through the host CLI the user is already signed in to. Its default stance is aggressive, though. Two mechanisms are on out of the box. toolprune=auto writes permissions.deny rules into each repo's .claude/settings.local.json without per-action consent, and the announcement is visible only in Claude Code's Ctrl+O transcript. loopguard=nudge makes paid `claude -p --model haiku` side calls and injects a redirect that says 'Do NOT stop', which contradicts the common project rule of stopping to ask when stuck. Detached background processes outlive the session: fold, judge, migration, repomap, and a waiter that can run for up to 24 h. On Windows they deliberately escape the host's job object through CREATE_BREAKAWAY_FROM_JOB or WMI. The Claude side calls are not isolated from the user's other hooks and plugins or from the user-level CLAUDE.md, while the Codex and Pi side calls are. With microskills on, the EnvValue family can persist and re-inject environment-variable values, secrets included, with no redaction. The pieces worth taking on their own are the LLM-free envfacts failure miner with its lifecycle and lint, the denylist writer's ownership-tracking and rollback discipline, the cache-aware delayed apply, the side-call hygiene (recursion guard, strict MCP, npm-shim parsing), and the leakage-safe digest with its sparing-biased judge prompt.",
+  "findings": [
+    {
+      "rubric_item": 2,
+      "severity": "major",
+      "finding": "Tool pruning defaults to `auto` and writes Claude Code permission rules (`permissions.deny`) into each repository's `.claude/settings.local.json` with no per-action consent. On Codex it writes `.codex/config.toml` and on Copilot `.github/copilot/settings.local.json` in the same way. The only announcement is a `systemMessage`, which, as the package itself says, Claude Code shows only in the Ctrl+O detailed transcript. The behaviour is disclosed in the README, but it is opt-out and the user learns of it after the fact.",
+      "evidence": "tokeneconomizer/plugin/config.py:11-16 and :152 (`toolprune: str = \"auto\"`); tokeneconomizer/plugin/fold.py:312-341 (apply_pending writes via denylist.apply); tokeneconomizer/plugin/denylist.py:52-54, :244-262 (`permissions.deny` appended, file written); tokeneconomizer/plugin/controller.py:193-198 (after-the-fact notice); README.md:318-322 ('shows only in the detailed transcript (Ctrl+O)'); plugin/README.md:83-86"
+    },
+    {
+      "rubric_item": 2,
+      "severity": "major",
+      "finding": "Hooks start detached background processes that outlive the hook and the session: `te fold` on SessionStart and SessionEnd, `te judge`, `te repos migrate`, `te repomap refresh`, and a `te toolprune apply-pending` waiter. The waiter loops and sleeps for up to 24 h, then edits settings files after the agent has exited. On Windows, winspawn deliberately escapes the agent's kill-on-close job object, first with CREATE_BREAKAWAY_FROM_JOB and, if that is refused, by having PowerShell call WMI `Win32_Process.Create` so the process is parented by the WMI service. The user-facing README does not mention the WMI escape or the long-lived waiter; only docs/PLUGIN.md and the source docstrings describe them.",
+      "evidence": "tokeneconomizer/plugin/controller.py:160, :172, :173, :374; tokeneconomizer/plugin/context.py:73-96 (Popen start_new_session / winspawn); tokeneconomizer/plugin/fold.py:51-52 (PENDING_MAX_S = 24h, WAITER_POLL_S), :344-350; tokeneconomizer/plugin/cli.py:355-382 (while True / time.sleep waiter); tokeneconomizer/plugin/winspawn.py:1-12, :25-27, :44-77 (breakaway, then Invoke-CimMethod Win32_Process Create); docs/PLUGIN.md:21, :43, :390-391"
+    },
+    {
+      "rubric_item": 3,
+      "severity": "major",
+      "finding": "The Claude Code side calls (stuck judge, nudge writer, fact proposer) are isolated only from MCP servers and built-in tools. Unlike the Codex call (`--disable hooks`) and the Pi call (`--no-extensions --no-skills --no-context-files`), the nested `claude -p` still loads the user's other plugins and hooks and the user-level CLAUDE.md. TE_SIDECALL=1 silences only this plugin's own hooks. As a result, every judge call is plausibly seen, and possibly recorded, by other session-capture or memory plugins, and pays for and is steered by user-level instructions. The docstring advertises isolation and is silent on hooks.",
+      "evidence": "tokeneconomizer/plugin/sidecall.py:8-13 (docstring claims only MCP isolation), :57-58 (_env sets only TE_SIDECALL), :221-222 (claude argv: -p --output-format json --max-turns 1 --tools '' + strict-mcp + --model + --no-session-persistence; no hook/plugin/setting-source isolation) vs :239-240 (codex `--disable hooks`) and :275-276 (pi `--no-extensions --no-skills --no-context-files`); tokeneconomizer/plugin/hook.py:67 (only this plugin honours TE_SIDECALL)"
+    },
+    {
+      "rubric_item": 3,
+      "severity": "major",
+      "finding": "With micro-skills on, the EnvValue fact family captures the literal value of an environment variable from inline shell assignments (`VAR=value cmd`, `export VAR=value`, `os.environ['VAR']`) once code has failed asking for that variable. It persists the value in plugin state and later injects it into every new session as '`VAR=value` works'. With the distiller on, it also sends the value to the proposer side call as an 'already injected' fact. Nothing filters secret-looking names or values, so an `OPENAI_API_KEY=sk-... python app.py` after a 'environment variable OPENAI_API_KEY' error is exactly the shape it learns. The README's 'What it learns stays on your machine' does not cover re-injection into context.",
+      "evidence": "tokeneconomizer/microskills/observe.py:506-508 (_ENV_NEED_RE, _ENV_PREFIX_RE value `[\\w.\\-/:]+`, _ENV_INCODE_RE), :564-566 (sets = {var: value}); tokeneconomizer/microskills/envfacts.py:26-28, :110-114 (rendered claim embeds `{var}={good}`), :437-455 (good/bad values stored in params); tokeneconomizer/microskills/distiller.py:506-513 (external facts appended to proposer prompt); README.md:72"
+    },
+    {
+      "rubric_item": 5,
+      "severity": "major",
+      "finding": "The loop guard is on by default, and its injected redirect explicitly tells the agent not to stop: the template says 'Do NOT stop', and the LLM nudge writer is hard-constrained never to tell it to stop or give up. That fights the common AGENTS.md/CLAUDE.md rule 'if you are stuck after N attempts, stop and ask the user', and it arrives mid-turn as additionalContext at the moment that rule would apply.",
+      "evidence": "tokeneconomizer/loopguard/rules.py:189-198 ('This looks like a repetitive loop. Do NOT stop — instead ...'); tokeneconomizer/loopguard/judge.py:76-77 ('HARD CONSTRAINTS: Do NOT tell it to stop, give up, or reduce effort'); tokeneconomizer/plugin/config.py:17-25, :158 (`loopguard: str = \"nudge\"` default); tokeneconomizer/plugin/controller.py:330-338 (nudge delivered via host.context)"
+    },
+    {
+      "rubric_item": 1,
+      "severity": "minor",
+      "finding": "The LLM-written redirect is injected verbatim (up to 1200 chars) with no provenance label. The fallback template begins 'Process check (automated):', but the model-written text has no such prefix, so the agent receives free-form instructions from a hook with nothing saying they come from TokenEconomizer's judge rather than from the user or the project.",
+      "evidence": "tokeneconomizer/loopguard/judge.py:102 (raw[:1200]); tokeneconomizer/plugin/judge.py:85-86 (verdict['_nudge'] = text); tokeneconomizer/loopguard/turn.py:289, :374-376 (nudge_ready returned as body); tokeneconomizer/plugin/controller.py:330, :336; contrast tokeneconomizer/loopguard/rules.py:190"
+    },
+    {
+      "rubric_item": 5,
+      "severity": "minor",
+      "finding": "On Claude Code the still-stuck notice is also injected as context, telling the model to put the line word for word in its next message and again in its final reply. Under `claude -p`, and for projects with a strict output contract (JSON-only final answers, output styles), this pushes foreign text into the result. The README admits it lands 'in the final reply' in headless mode.",
+      "evidence": "tokeneconomizer/plugin/hosts.py:160-164 (relay text: '... word for word, in your next message to the user, and again in your final reply'), :244 (ClaudeCode.relays_notices = True); tokeneconomizer/plugin/controller.py:352-355; plugin/README.md:87-91"
+    },
+    {
+      "rubric_item": 5,
+      "severity": "minor",
+      "finding": "Micro-skills are injected at SessionStart as a '# repo operating manual ... learned from earlier sessions' or '# environment facts ...' block of imperative-sounding facts. The block carries no precedence statement relative to the project's CLAUDE.md or AGENTS.md, so a learned fact such as '`X` fails here; `Y` works' can contradict a documented project command, and the model gets no rule for resolving the conflict. Proposer-authored facts come from an LLM reading session digests, including raw command excerpts, which is a persistence path from one session's content into all future sessions. Firing and grounding gates limit this but do not remove it. Micro-skills are off by default.",
+      "evidence": "tokeneconomizer/microskills/distiller.py:711-719 (render header), :502-505 (RAW command excerpts into proposer prompt), :615-634 (_maybe_propose admits LLM facts and regex extractors); tokeneconomizer/microskills/envfacts.py:47-49, :253-259; tokeneconomizer/plugin/controller.py:105-127 (injected as SessionStart additionalContext); tokeneconomizer/plugin/config.py:148 (default off)"
+    },
+    {
+      "rubric_item": 5,
+      "severity": "minor",
+      "finding": "Tool pruning can deny any tool outside a fixed protected list, including MCP tools and (after 3x the evidence) NotebookEdit. It acts through a bare-name deny rule that removes the tool from the session entirely. A project skill or CLAUDE.md workflow that relies on a rarely used tool silently loses it from the next session, and the only way back is `toolprune restore` or adding a `toolprune_protect` pattern.",
+      "evidence": "tokeneconomizer/plugin/adapter.py:36-61 (INTERACTIVE_PROTECTED, HIGH_RISK = NotebookEdit x3), :144-146; tokeneconomizer/plugin/denylist.py:7-10 (deny rule removes the tool from the tool list); tokeneconomizer/plugin/fold.py:97-106, :184"
+    },
+    {
+      "rubric_item": 1,
+      "severity": "minor",
+      "finding": "Every slash command tells the model to 'Run this exact command with the Bash tool' with `$ARGUMENTS` spliced unquoted into a shell line, so shell metacharacters in the user's arguments become shell syntax. Scoping is otherwise good: 'never add them yourself' for set/unset/apply/restore/merge.",
+      "evidence": "plugin/slash-commands/config.md:5-12; plugin/slash-commands/toolprune.md:5-12; plugin/slash-commands/repos.md:5-12; plugin/slash-commands/untool.md:9"
+    },
+    {
+      "rubric_item": 2,
+      "severity": "minor",
+      "finding": "Paid model calls are on by default, because loopguard=nudge spawns `claude -p --model haiku` (or `codex exec`, `copilot -p`, ...) on the user's plan or key whenever the gate opens. This is disclosed clearly in the README and charged to an internal ledger, but it is opt-out. The Claude Code PostToolUse and PostToolUseFailure hooks have no matcher, so every tool call starts sh plus Python (60 s timeout) and rewrites session state.",
+      "evidence": "tokeneconomizer/plugin/sidecall.py:217-235, :472-490; tokeneconomizer/plugin/judge.py:64-97, :100-104; README.md:258-262; plugin/hooks/hooks.json:26-47 (no matcher, timeout 60)"
+    },
+    {
+      "rubric_item": 2,
+      "severity": "minor",
+      "finding": "Smaller persistent footprints, each disclosed. When it creates a settings file, the plugin appends an entry to the repo's `.git/info/exclude`, and uninstall leaves that entry behind. On every SessionStart it rewrites an executable launcher at `~/.tokeneconomizer/bin/te`, which is not put on PATH. The install guide tells users to answer Claude Code's Bash permission prompt with 'allow it always', a standing allow rule for the plugin script. Uninstall needs a manual `toolprune restore` in every repository first, or the deny rules stay behind.",
+      "evidence": "tokeneconomizer/plugin/denylist.py:141-167, :260-261; tokeneconomizer/plugin/paths.py:53-84; tokeneconomizer/plugin/controller.py:96; plugin/README.md:56, :98-104, :160-166"
+    },
+    {
+      "rubric_item": 2,
+      "severity": "value",
+      "finding": "Negative result on wider overreach: nothing writes shell rc files, PATH, git hooks or global agent settings. Host configs (~/.claude/settings.json, Copilot and Codex config) are only read, for diagnostics and trust checks. Per-repo plugin config lives in the state dir, not the checkout, so a cloned repo cannot set `repomap_python` or other options. Writes into the repo refuse symlinks that lead outside it, refuse a committed `.codex/config.toml`, and refuse non-JSON settings.",
+      "evidence": "tokeneconomizer/plugin/context.py:53-55 (config repo_dir = state dir); tokeneconomizer/plugin/paths.py:252-254; tokeneconomizer/plugin/denylist.py:89-121, :420-425; tokeneconomizer/plugin/cli.py:510-520 (rtk hook detection read-only); tokeneconomizer/plugin/denylist.py:501-521 (codex trust read-only)"
+    },
+    {
+      "rubric_item": 3,
+      "severity": "value",
+      "finding": "There is no direct network egress anywhere in the runtime: no urllib, socket or requests client. Every model call goes through the host CLI the user already uses, and the only HTTP code is a localhost capture server for the user-invoked `toolprune measure` on Copilot. The state root is created umask 077 and tightened to 0700.",
+      "evidence": "tokeneconomizer/plugin/toolcheck.py:1-9, :18, :98-120 (localhost capture only); tokeneconomizer/plugin/sidecall.py:1-43; plugin/scripts/te_bootstrap.py:149-151 (umask 077); tokeneconomizer/plugin/paths.py:33-46 (secure_root)"
+    },
+    {
+      "rubric_item": 4,
+      "severity": "minor",
+      "finding": "Much of the package overlaps with host-native features. Micro-skills overlap with CLAUDE.md/AGENTS.md and Claude Code's own memory. On Claude Code, tool pruning is a self-written `permissions.deny` or `--disallowedTools`, and deferred tools already cost only one listing line each, as the package admits; with the core tools protected, the prunable set is small. repomap is aider's RepoMap run in a separate Python. The cost ledger and status overlap `/cost` and `/usage`. The only mechanism without a native counterpart is the loop guard, since the host's alternative is the user pressing Esc or `--max-turns` in headless runs.",
+      "evidence": "tokeneconomizer/plugin/denylist.py:7-10 ('the same list `--disallowed-tools` produced'); tokeneconomizer/plugin/adapter.py:14-18 ('Without a snapshot only deferred tools can be proposed -- they cost one listing line each'), :37-48; tokeneconomizer/plugin/repomap.py:1-12; tokeneconomizer/plugin/hosts.py:9-14 (plugin never stops a turn)"
+    },
+    {
+      "rubric_item": 6,
+      "severity": "value",
+      "finding": "The envfacts layer is an LLM-free miner of recurring environment-failure patterns. Its families are FormRepair, Boundary, EmptyProbe, ArgRepair and EnvValue. Each fact goes through a confirm/contradict/retire lifecycle and a lint that rejects anything reading as completion or verification advice, and the block is capped at 4 facts / 150 tokens. It can be reused on its own as a principled CLAUDE.md suggestion generator, minus EnvValue, or with secret redaction added.",
+      "evidence": "tokeneconomizer/microskills/envfacts.py:1-31, :45-53, :216-217, :276-293; tokeneconomizer/microskills/lifecycle.py"
+    },
+    {
+      "rubric_item": 6,
+      "severity": "value",
+      "finding": "The settings-writer discipline is a reusable pattern. It records exactly which entries it added per settings file before writing, and restore removes only those. Entries the user gave back are remembered and never re-applied. Symlink escapes are refused. For Codex the edited TOML is validated, `codex features list` is run against it, and the file is rolled back if Codex rejects it.",
+      "evidence": "tokeneconomizer/plugin/denylist.py:24-37, :111-121, :170-237, :244-286, :416-450"
+    },
+    {
+      "rubric_item": 6,
+      "severity": "value",
+      "finding": "The deny list is applied with awareness of the prompt cache. Because changing the tool list invalidates the cached prompt prefix of any resumed conversation, a new list is held as pending until every session of the repository has been idle longer than a cache lifetime, or a day has passed. Evidence must span both prompts and a minimum number of sessions, so no single session decides on its own. Both are useful ideas for anything that mutates an agent's tool surface.",
+      "evidence": "tokeneconomizer/plugin/fold.py:42-51, :97-106, :280-341"
+    },
+    {
+      "rubric_item": 6,
+      "severity": "value",
+      "finding": "The side-call and hook hygiene patterns are reusable. The TE_SIDECALL recursion guard keeps a nested agent from re-entering the hooks. Side calls run in a throwaway cwd with `--strict-mcp-config` plus an empty MCP config, which the package says cut one Haiku call from ~570k to ~14k effective tokens. On Windows, npm `.cmd` shims are parsed and their target started directly so cmd.exe cannot re-parse session content. The hook entry point fails open, sending stdout to stderr while mechanisms run so that only one JSON object reaches the agent. The bootstrap stays Python-3.0-syntax so an old interpreter still answers `{}`.",
+      "evidence": "tokeneconomizer/plugin/hook.py:62-87; tokeneconomizer/plugin/sidecall.py:36-42, :127-177, :202-214; plugin/scripts/te_bootstrap.py:25-26, :138-148; plugin/scripts/te-hook:26-28"
+    },
+    {
+      "rubric_item": 6,
+      "severity": "value",
+      "finding": "The loop-guard design can be lifted independently. A free gate (repeated failure signatures, dense errors, min tool calls) wakes a sampled LLM judge with backoff. The judge sees a 'leakage-safe' digest of tool names, commands truncated to 90 chars, search patterns, edited basenames and error signatures, never file contents. Its prompt is biased toward sparing. The redirect is rate-limited to one per turn and the guard never kills the turn. Shadow mode logs every decision without acting, which makes it possible to measure a mechanism before trusting it. The 90-char commands can still carry inline secrets.",
+      "evidence": "tokeneconomizer/loopguard/judge.py:15-27; tokeneconomizer/loopguard/state.py:170-232; tokeneconomizer/plugin/controller.py:297-358 (gate, AsyncJudge, nudge budget); tokeneconomizer/plugin/config.py:26-28; tokeneconomizer/plugin/judge.py:1-15"
+    },
+    {
+      "rubric_item": 1,
+      "severity": "value",
+      "finding": "The Codex skills are narrowly triggered (each description names TokenEconomizer) and default to read-only subcommands (`show`, `list`, `status`). Any state-changing subcommand must go through Codex's sandbox escalation with a justification, so the user approves each write. This is a good consent pattern.",
+      "evidence": "plugin/codex-skills/config/SKILL.md:3-4, :15-17; plugin/codex-skills/toolprune/SKILL.md:15-17; plugin/codex-skills/repos/SKILL.md:15-17"
+    }
+  ]
+}
