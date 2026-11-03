@@ -25,6 +25,18 @@ Create a fixed evaluation JSON, for example:
 
 Use at least two distinct cases and three repeats per case. These minimums discourage single-run promotion; they do not establish statistical confidence. Define assertions and resource limits before observing candidate results. The repository also includes `evals/native-ablation/spec.json` as a task-set starting point.
 
+### Require the mechanism to trigger
+
+A saving or a pass gain proves nothing if the candidate's mechanism never ran. A behavior A/B should declare, outside `assertions`, the cases that must exercise it:
+
+```json
+"trigger": {"cases": ["small-change"], "minimum_rate": 0.8}
+```
+
+`cases` is a subset of the evaluation cases; `minimum_rate` is greater than 0, at most 1, and defaults to 2/3. Every candidate case record then carries a boolean `triggered` (the baseline may omit it). It is not an assertion and never enters the regression check: as an assertion, a baseline without the mechanism would fail every trigger row and the trigger alone would make the candidate eligible. Each designated case needs `triggered / repeats >= minimum_rate`; the default means 2 of 3 or 4 of 5 repeats, and a written decimal compares exactly (0.667 needs 3 of 3). If any designated case falls short, a candidate that is not rejected is `inconclusive`, and the comparison carries `vacuous` with the reason `vacuous: mechanism did not trigger`. Acceptance revalidates through the same comparison. Before any paid run, show on fixtures, without a model, that the mechanism fires; stop at $0 if it does not.
+
+The `trigger` block is enforced from the `improvement.py` of the unreleased OAW-03 change (after the 2.0.0 proposal). An older copy ignores it silently. A comparison from an enforcing copy always carries a `trigger` object when the spec declares one.
+
 ```bash
 python3 scripts/improvement.py propose --title "Remove duplicate startup rules" --hypothesis "Keep correctness while reducing context" --target AGENTS.md --patch runs/candidate.diff --evaluation runs/spec.json --snapshot BASE_COMMIT
 ```

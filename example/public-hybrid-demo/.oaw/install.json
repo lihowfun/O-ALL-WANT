@@ -106,7 +106,7 @@
     "AGENTS.md": "69fa4c1423372aae4fcf560786ab48b5d52a930147472ddeac63d1297b2c7a4a",
     "CLAUDE.md": "336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49",
     "scripts/context_hub.py": "c0582010bc92edd75c02afb6d98527eeba6b1b94a600cc825a5fa1daaa2c1066",
-    "scripts/improvement.py": "01fe8010b98bcc0d1b4799c4c55a9045f59f866add0cb5f773b0c03166dda015",
+    "scripts/improvement.py": "2f675e9d442e975f35287f5e8cd27b4b1495cf6df79f3d05d5020371c5b39149",
     "scripts/oaw_common.py": "f3a06877b3bf76ab21da8105b543e08db22ec05f6d96ff040a525ede1fdf850d",
     "scripts/validate_skills.py": "ebcd392ea41c7c9ac732fbb3fe6207b0a82bfdb81e3840c8c4bc076d585b0385",
     "scripts/wiki_sync.py": "9644970534cafe6dce2bb817fbbf6f6cd0f68fb663b6925660cd5686c997a1ef"

@@ -20,6 +20,8 @@ from oaw_common import confined_path, locked_update
 SCHEMA = 1
 MATCHED_FIELDS = ("model", "effort", "host", "host_version", "environment")
 METRICS = ("tokens", "latency_ms", "cost_usd")
+TRIGGER_RATE = 2 / 3  # default trigger minimum_rate: 2 of 3, 4 of 5 repeats
+VACUOUS = "vacuous: mechanism did not trigger"
 
 
 def timestamp():
@@ -88,6 +90,19 @@ def validate_spec(spec):
         value = number(spec.get(field, default), field)
         if value > 1:
             raise ValueError(f"{field} must be a fraction between 0 and 1")
+    if "trigger" in spec:
+        # Outside assertions: a baseline without the mechanism would fail every trigger row,
+        # so as an assertion the trigger itself would make the candidate eligible.
+        trigger = spec["trigger"]
+        if not isinstance(trigger, dict):
+            raise ValueError("trigger must be an object with cases and an optional minimum_rate")
+        names(trigger.get("cases"), "trigger cases")
+        if not set(trigger["cases"]) <= set(spec["cases"]):
+            raise ValueError("trigger cases must be a subset of the evaluation cases")
+        if not 0 < number(trigger.get("minimum_rate", TRIGGER_RATE), "trigger minimum_rate") <= 1:
+            raise ValueError("trigger minimum_rate must be greater than 0 and at most 1")
+        if {"trigger", "triggered"} & set(spec["assertions"]):
+            raise ValueError("The trigger is recorded outside assertions; remove it from assertions")
     return spec
 
 
@@ -253,6 +268,8 @@ def validate_run(base, run, proposal, variant):
     rows = {}
     totals = {name: 0 for name in METRICS}
     evidence = {}
+    # Only the candidate reports whether its mechanism fired; it never enters rows or regressions.
+    triggered = {name: 0 for name in spec["trigger"]["cases"]} if "trigger" in spec and variant == "candidate" else None
     for case in cases:
         if not isinstance(case, dict) or type(case.get("repeat")) is not int:
             raise ValueError(f"{variant} invalid case record")
@@ -260,6 +277,11 @@ def validate_run(base, run, proposal, variant):
         if key not in expected or key in seen:
             raise ValueError(f"{variant} duplicate or unexpected case/repeat: {key}")
         seen.add(key)
+        if triggered is not None:
+            if type(case.get("triggered")) is not bool:
+                raise ValueError(f"{variant} case {key} requires a boolean 'triggered' (spec declares a trigger)")
+            if key[0] in triggered:
+                triggered[key[0]] += case["triggered"]
         assertions = case.get("assertions")
         if not isinstance(assertions, dict) or any(type(assertions.get(name)) is not bool for name in spec["assertions"]):
             raise ValueError(f"{variant} case assertions are missing or not boolean")
@@ -275,7 +297,10 @@ def validate_run(base, run, proposal, variant):
     if seen != expected:
         raise ValueError(f"{variant} run does not cover the fixed evaluation cases/repeats")
     successes = sum(all(assertions.values()) for assertions in rows.values())
-    return {"passed": successes, "total": len(rows), "metrics": totals, "evidence": evidence, "rows": rows}
+    result = {"passed": successes, "total": len(rows), "metrics": totals, "evidence": evidence, "rows": rows}
+    if triggered is not None:
+        result["triggered"] = triggered
+    return result
 
 
 def compare(base, args, *, persist=True, proposal=None):
@@ -316,8 +341,16 @@ def compare(base, args, *, persist=True, proposal=None):
         efficiency_gain |= old > 0 and new < old and (old - new) / old >= improvement
         if (old == 0 and new > 0) or (relative is not None and relative > max_regression):
             resource_regressions.append(name)
+    trigger, vacuous = limits.get("trigger"), {}
+    if trigger:
+        # Per designated case, so control cases cannot dilute or mask a dormant mechanism.
+        minimum = trigger.get("minimum_rate", TRIGGER_RATE)
+        rates = {name: count / limits["repeats"] for name, count in after["triggered"].items()}
+        vacuous = {name: rate for name, rate in rates.items() if rate < minimum}
     if regressions or failed_checks or resource_regressions:
         verdict = "rejected"
+    elif vacuous:
+        verdict = "inconclusive"
     elif after["passed"] > before["passed"] or efficiency_gain:
         verdict = "eligible"
     else:
@@ -335,6 +368,10 @@ def compare(base, args, *, persist=True, proposal=None):
         "evidence": {**before["evidence"], **after["evidence"]},
         "claim": "Artifact comparison only; eligibility requires independent review and is not statistical proof.",
     }
+    if trigger:
+        comparison["trigger"] = {"cases": trigger["cases"], "minimum_rate": minimum, "rates": rates}
+    if vacuous:
+        comparison["vacuous"] = {"reason": VACUOUS, "rates": vacuous}
 
     def save(current):
         if current["status"] in ("accepted", "rejected"):

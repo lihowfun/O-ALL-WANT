@@ -33,6 +33,13 @@ All notable changes to this project will be documented in this file.
   batch file, so cmd.exe never parses the arguments again. `resolver_sha256()` hashes the
   resolver source for run manifests. No runner uses it yet; frozen eval contracts are unchanged.
   Evidence: static fixtures only.
+- OAW-03 (from thedotmack/claude-mem, Apache-2.0): an evaluation spec may declare an optional
+  `trigger` block (`cases`, `minimum_rate`, default 2/3) outside `assertions`. Candidate case
+  records then carry a boolean `triggered`; if the rate falls short on any designated case, a
+  candidate that is not rejected compares as `inconclusive` with `vacuous: mechanism did not
+  trigger`, and `decide` revalidation fails closed the same way. Specs without the block keep
+  their verdicts. The catalog comparison rules add a no-model trigger preflight before any paid
+  run. Evidence: static fixtures only.
 
 ### Changed
 
