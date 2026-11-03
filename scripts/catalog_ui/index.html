@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="referrer" content="no-referrer">
+<title>OAW 消化遊戲</title>
+<link rel="stylesheet" href="style.css">
+<script src="app.js" defer></script>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="logo" aria-hidden="true">🍽</span>
+    <div>
+      <h1>OAW 消化遊戲</h1>
+      <p class="sub" id="project-name">連線中…</p>
+    </div>
+  </div>
+  <div class="top-stats" id="top-stats" aria-label="漏斗"></div>
+</header>
+
+<div id="busy" class="busy" hidden role="status" aria-live="polite">
+  <div class="busy-track"><div class="busy-fill" id="busy-fill"></div></div>
+  <p id="busy-text"></p>
+</div>
+<div id="banner" class="banner" hidden role="alert"></div>
+
+<main class="layout">
+  <section id="my-oaw" class="panel my-oaw" aria-labelledby="my-oaw-title">
+    <h2 id="my-oaw-title"><span aria-hidden="true">🧬</span> 我的 OAW</h2>
+    <div id="my-oaw-body"><p class="muted">讀取中…</p></div>
+  </section>
+
+  <div class="main-col">
+    <section id="feed" class="panel feed" aria-labelledby="feed-title">
+      <h2 id="feed-title"><span aria-hidden="true">🥣</span> 投食區</h2>
+      <label for="feed-urls" class="label">貼上一個或多個 GitHub 網址（一行一個；同一個 repo 寫兩次會自動合併）</label>
+      <textarea id="feed-urls" rows="3" spellcheck="false" autocomplete="off" placeholder="https://github.com/owner/repo"></textarea>
+      <div class="row">
+        <button type="button" id="feed-go" class="btn primary big">送去試吃</button>
+        <span class="hint">免費：抓固定版本、封存在專案外、只讀不執行，跑靜態檢查</span>
+      </div>
+      <div id="feed-result" class="feed-result" aria-live="polite"></div>
+
+      <div class="scout">
+        <div class="scout-head">
+          <h3><span aria-hidden="true">🔭</span> 本週覓食</h3>
+          <button type="button" id="scout-run" class="btn">立即覓食</button>
+        </div>
+        <div id="scout-body"></div>
+      </div>
+
+      <details class="import-any">
+        <summary><span aria-hidden="true">🐘🐟</span> 匯入已有的消化紀錄（歷史證據）</summary>
+        <p class="hint">大象和金魚的報告只會顯示成「歷史證據」，不計入任何判定。資料夾裡放 digest.json、verify.json、goldfish-*.json、components.json、integration.json、proposals.md。</p>
+        <label for="import-dir" class="label">報告資料夾路徑</label>
+        <input id="import-dir" type="text" spellcheck="false" autocomplete="off">
+        <label for="import-food" class="label">屬於哪樣食物（可空白：依資料夾裡的 scout.json 判斷）</label>
+        <input id="import-food" type="text" spellcheck="false" autocomplete="off" placeholder="食物 id 或 owner/repo">
+        <div class="row"><button type="button" id="import-go" class="btn act">匯入</button></div>
+      </details>
+    </section>
+
+    <section id="foods" class="foods" aria-labelledby="foods-title">
+      <h2 id="foods-title" class="section-title"><span aria-hidden="true">🍱</span> 食物卡</h2>
+      <div id="food-cards" class="cards"></div>
+    </section>
+
+    <details class="panel rules">
+      <summary>不會變的規則</summary>
+      <ul id="rules"></ul>
+    </details>
+    <details class="panel log">
+      <summary>動作紀錄（引擎原文）</summary>
+      <div id="log"></div>
+    </details>
+  </div>
+</main>
+
+<div id="toasts" class="toasts" aria-live="polite"></div>
+
+<dialog id="dialog" aria-labelledby="dialog-title">
+  <h3 id="dialog-title"></h3>
+  <div id="dialog-body" class="dialog-body"></div>
+  <div class="dialog-actions">
+    <button type="button" id="dialog-cancel" class="btn">取消</button>
+    <button type="button" id="dialog-ok" class="btn primary">確認</button>
+  </div>
+</dialog>
+</body>
+</html>

@@ -6,7 +6,8 @@ outside the project, as a sealed tar that is read in memory and never
 extracted, executed or imported. Verdicts come from catalog_core.derive();
 stars only order the scout queue. Absorb, remove and restore preview by
 default and change the OAW-managed layer only with --apply, after a restore
-point. Paid tests are planned, never run, in v0.
+point. Paid tests are planned, never run, in v0. `play` opens the local game
+page and `menu` the same actions as a numbered terminal menu (catalog_play.py).
 """
 from __future__ import annotations
 
@@ -34,6 +35,9 @@ import urllib.request
 SCRIPTS = Path(__file__).resolve().parent
 if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
+if __name__ == "__main__":
+    # catalog_play imports `catalog`; let it reuse this module rather than load a second copy.
+    sys.modules.setdefault("catalog", sys.modules[__name__])
 import catalog_core as core  # noqa: E402
 import oaw  # noqa: E402
 import oaw_common  # noqa: E402
@@ -1572,6 +1576,10 @@ def parser() -> argparse.ArgumentParser:
     scout_commands.add_parser("list", parents=[common])
     pick = scout_commands.add_parser("pick", parents=[common])
     pick.add_argument("ranks", nargs="+", type=int)
+    play = commands.add_parser("play", parents=[common], help="open the local game page (127.0.0.1, per-session token)")
+    play.add_argument("--no-browser", action="store_true", help="print the URL without opening a browser")
+    play.add_argument("--port", type=int, default=0, help="port on 127.0.0.1 (default: a free port)")
+    commands.add_parser("menu", parents=[common], help="the same actions as a numbered terminal menu (Codex, no browser)")
     return root
 
 
@@ -1614,6 +1622,13 @@ def dispatch(args) -> dict:
         if args.scout_command == "list":
             return cmd_scout_list(target)
         return cmd_scout(target)
+    if command in ("play", "menu"):
+        import catalog_play
+        if command == "menu":
+            return catalog_play.cmd_menu(target)
+        if not 0 <= args.port <= 65535:
+            raise CatalogError("--port must be between 0 and 65535.")
+        return catalog_play.cmd_play(target, open_browser=not args.no_browser, port=args.port)
     raise CatalogError(f"Unknown command {command}")
 
 

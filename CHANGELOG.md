@@ -13,6 +13,10 @@ All notable changes to this project will be documented in this file.
   owner-confirmed standing policy, preview-first absorb/remove, named
   `2.0.0+build.N.<hash7>` builds with restore, static effect versus the default
   recipe, and `view.json`. Paid tests are planned, not run.
+- `catalog.py play`: a local game page on `127.0.0.1` (per-session token, Host check, no CORS,
+  JSON POST actions in a background thread, text-only rendering) with 我的 OAW, 投食區 and
+  食物卡 areas; `catalog.py menu`: the same actions as a numbered terminal menu;
+  `oaw_status.py` prints the catalog view with the same display rules.
 
 ### Fixed
 
