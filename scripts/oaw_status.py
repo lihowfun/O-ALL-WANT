@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
-"""Print OAW task progress and the current skill digest from project files.
+"""Print OAW task progress, the current skill digest and the catalog view from project files.
 
 The host-neutral counterpart of the Claude Code `oaw-digest-monitor` mod: any
-terminal, Codex included, reads the same `.oaw/progress.json` and
-`.oaw/catalog/status.json`. It only reads; a missing or invalid file is reported,
-never repaired. A progress percent without a basis is shown as `?`.
+terminal, Codex included, reads the same `.oaw/progress.json`,
+`.oaw/catalog/status.json` and `.oaw/catalog/view.json`. It only reads; a missing
+or invalid file is reported, never repaired. A progress percent without a basis
+is shown as `?`. The catalog display rules here are the ones the `catalog.py
+play` page and `catalog.py menu` follow: a verdict always carries its symbol and
+text, every effect line names its evidence level, quality is "未量測" without
+measured evidence, stars appear only as scout queue order, and imported reports
+are labelled 歷史證據.
 """
 
 import argparse
@@ -16,12 +21,35 @@ import sys
 
 PROGRESS_FILE = Path(".oaw/progress.json")
 STATUS_FILE = Path(".oaw/catalog/status.json")
+VIEW_FILE = Path(".oaw/catalog/view.json")
+VIEW_SCHEMA = "oaw-catalog-view/1"
+# Files build_view() reads; a newer one means view.json may be out of date.
+VIEW_SOURCES = ("registry.json", "decisions.jsonl", "builds.json", "policy.json", "scout.json", "effect.json")
 STALE_SECONDS = 600
 ICONS = {"done": "✅", "in_progress": "⏳", "waiting": "⏸", "todo": "○"}
 STAGES = {"ingest": "攝取", "quarantine": "隔離", "static": "靜態", "goldfish": "金魚", "behavior-ab": "A/B", "verdict": "判定"}
 VERDICTS = {"evolved": "進化", "parity": "齊平", "regressed": "退步", "pending": "進行中"}
 HEADLINES = {"nutritious": "營養", "no-gain": "沒營養", "untested": "未測", "incomplete": "證據不完整", "regressed": "變差",
              "diarrhea": "拉肚子", "risky": "有疑慮", "toxic": "有毒", "inedible": "不能吃"}
+LEVELS = {"measured": "實測", "static-measured": "靜態量測", "not-measured": "未量測", "historical-prior": "歷史證據"}
+DISPOSITIONS = {"absorb": "🟢 吸收", "excrete": "🔴 排掉", "hold": "🟡 暫留"}
+STEP_MARKS = ("①", "②", "③", "④")
+STEP_NAMES = ("找到", "試吃", "實測", "結果")
+METRICS = {"skills": "skill 數", "files": "檔案數", "bytes": "大小（bytes）",
+           "startup-loaded text bytes (codex)": "啟動載入文字 bytes（Codex）",
+           "startup-loaded text bytes (claude)": "啟動載入文字 bytes（Claude）", "hooks": "hooks",
+           "non-stdlib dependencies": "非標準函式庫相依", "host settings writes": "寫入 host 設定", "quality": "品質"}
+BUILD_KINDS = {"baseline": "基準版", "restore-point": "還原點", "absorb": "吸收", "remove": "移除"}
+CHIPS = {"free-checks-passed": "免費檢查通過", "rules-updated-free-T0-pending": "規則已更新，待重跑免費檢查"}
+INTEGRITY = {"git-object-verified": "git 物件驗證", "unverified-against-commit": "未對 commit 驗證"}
+PLAN_STATUS = (("waiting for standing policy", "等你設定常設預算"),
+               ("within policy", "在常設預算內（v0 尚未開放付費實測）"),
+               ("exceeds standing policy", "超過常設預算：需要你同意（v0 尚未開放付費實測）"),
+               ("taste first", "先試吃：免費靜態檢查決定付費計畫"),
+               ("no paid test: owner confirmed toxic", "不需實測：已確認有毒"),
+               ("no paid test: oaw cannot digest", "不需實測：OAW 無法消化"),
+               ("blocked", "被擋住：高嚴重度旗標要先分流"),
+               ("no paid test needed", "不需付費實測：沒有可吸收的成分"))
 _UNSAFE = re.compile("[\x00-\x1f\x7f-\x9f\u061c\u200b-\u200f\u202a-\u202e\u2060-\u2064\u2066-\u2069\ufeff]")
 
 
@@ -119,6 +147,276 @@ def render(project, progress, progress_note, digest, digest_note):
     return "\n".join(lines)
 
 
+# --------------------------------------------------------------------------- catalog view (view.json)
+
+def load_view(project):
+    """Return (view, note) for .oaw/catalog/view.json; note is None, 'missing' or 'invalid'."""
+    try:
+        data = json.loads((Path(project) / VIEW_FILE).read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return None, "missing"
+    except (OSError, ValueError):
+        return None, "invalid"
+    if not isinstance(data, dict) or data.get("schema") != VIEW_SCHEMA or not isinstance(data.get("foods"), list):
+        return None, "invalid"
+    return data, None
+
+
+def view_stale(project):
+    """True when a catalog source or the install manifest changed after view.json was written."""
+    project = Path(project)
+    folder = project / ".oaw" / "catalog"
+    try:
+        built = (project / VIEW_FILE).stat().st_mtime
+    except OSError:
+        return False
+    sources = [folder / name for name in VIEW_SOURCES] + [project / ".oaw" / "install.json"]
+    sources += list((folder / "evidence").glob("*/*.json")) + list((folder / "absorbed").glob("*.json"))
+    newest = 0.0
+    for path in sources:
+        try:
+            newest = max(newest, path.stat().st_mtime)
+        except OSError:
+            continue
+    return newest > built
+
+
+def level_label(code):
+    return LEVELS.get(code) or f"未知等級（{clean(code, 30)}）"
+
+
+def headline_label(verdict):
+    """Symbol and text together; an unknown word is unknown, never in progress."""
+    verdict = verdict if isinstance(verdict, dict) else {}
+    code = verdict.get("headline")
+    if code in HEADLINES:
+        return f"{clean(verdict.get('symbol'), 4) or ''} {HEADLINES[code]}".strip()
+    return f"未知（{clean(code, 40)}，請更新 OAW）"
+
+
+def plan_status_label(text):
+    folded = str(text or "").casefold()
+    for prefix, label in PLAN_STATUS:
+        if folded.startswith(prefix):
+            return label
+    return clean(text, 120) or "—"
+
+
+def chip_label(text):
+    match = re.fullmatch(r"open-flags:(\d+)", str(text))
+    if match:
+        return f"{match.group(1)} 個旗標待分流"
+    return CHIPS.get(text) or clean(text, 60)
+
+
+def quality_label(line):
+    """'加強' only next to measured evidence; otherwise 未量測."""
+    if line.get("level") != "measured":
+        return "未量測"
+    if line.get("note") == "enhanced":
+        return "加強（實測）"
+    return f"{clean(line.get('value'), 40)}（實測，未宣稱改善）"
+
+
+def step_states(food):
+    steps = food.get("steps") if isinstance(food.get("steps"), list) else []
+    verdict = food.get("verdict") or {}
+    states = []
+    for index, name in enumerate(STEP_NAMES):
+        step = steps[index] if index < len(steps) and isinstance(steps[index], dict) else {}
+        state = step.get("state")
+        if index == 3:
+            text = headline_label(verdict) if state == "done" else "·"
+        elif index == 2:
+            text = "✔ 實測" if state == "measured" else "· 未執行"
+        else:
+            text = "✔" if state == "done" else "·"
+        states.append(f"{STEP_MARKS[index]} {name} {text}")
+    return " → ".join(states)
+
+
+def safety_label(food):
+    verdict = (food.get("verdict") or {}).get("headline")
+    flags = food.get("flags") if isinstance(food.get("flags"), dict) else {}
+    steps = food.get("steps") if isinstance(food.get("steps"), list) else []
+    if verdict == "toxic":
+        return "經人工確認有毒"
+    if len(steps) < 2 or not isinstance(steps[1], dict) or steps[1].get("state") != "done":
+        return "尚未檢查"
+    if flags.get("open"):
+        return f"{flags['open']} 個旗標未分流（高 {flags.get('open_high', 0)}）"
+    tree = clean((food.get("pinned") or {}).get("tree_sha12"), 12)
+    return f"沒有觀察到有毒訊號（tree {tree}）" if tree else "沒有觀察到有毒訊號"
+
+
+def installed_skills(view):
+    """(name, tag) rows; tag is '', '新增' or '比預設少'.
+
+    A fresh static effect is the source. When it is stale (the layer changed after
+    it was computed), the current build's recorded skills are used instead, and
+    compared with the default recipe the effect names (same + removed).
+    """
+    my = view.get("my_oaw") or {}
+    effect = my.get("effect") if isinstance(my.get("effect"), dict) else {}
+    skills = effect.get("skills") if isinstance(effect.get("skills"), dict) else None
+    timeline = my.get("timeline") if isinstance(my.get("timeline"), list) else []
+    current = next((b for b in timeline if isinstance(b, dict) and b.get("current")), None)
+    if skills is not None and not effect.get("stale"):
+        present = list(skills.get("same", [])) + list(skills.get("added", []))
+        default = list(skills.get("same", [])) + list(skills.get("removed", []))
+    elif current is not None and my.get("current_matches_build") is not False:
+        present = list(current.get("skills") or [])
+        default = list(skills.get("same", [])) + list(skills.get("removed", [])) if skills is not None else None
+    elif skills is not None:
+        present = list(skills.get("same", [])) + list(skills.get("added", []))
+        default = list(skills.get("same", [])) + list(skills.get("removed", []))
+    else:
+        return None
+    if default is None:
+        return sorted((clean(name, 64), "") for name in set(present))
+    rows = [(clean(name, 64), "" if name in default else "新增") for name in set(present)]
+    rows += [(clean(name, 64), "比預設少") for name in set(default) - set(present)]
+    return sorted(rows, key=lambda row: (row[1] == "比預設少", row[0]))
+
+
+def effect_lines(effect, release="2.0.0"):
+    if not isinstance(effect, dict) or not isinstance(effect.get("lines"), list):
+        return ["  和預設比：尚未評估（catalog.py effect）"]
+    lines = [f"  和預設 {clean(effect.get('release') or release, 20)} 比" + ("（過期，請重新評估）" if effect.get("stale") else "") + "："]
+    for line in effect["lines"]:
+        if not isinstance(line, dict):
+            continue
+        if line.get("metric") == "quality":
+            lines.append(f"    品質：{quality_label(line)} [{level_label(line.get('level'))}]")
+            continue
+        delta = line.get("delta")
+        change = f"（{delta:+d}）" if isinstance(delta, int) and not isinstance(delta, bool) else ""
+        lines.append(f"    {METRICS.get(line.get('metric')) or clean(line.get('metric'), 60)}："
+                     f"{line.get('current')} 對 {line.get('default')}{change} [{level_label(line.get('level'))}]")
+    return lines
+
+
+def timeline_lines(timeline):
+    lines = []
+    for build in reversed([b for b in timeline or [] if isinstance(b, dict)]):
+        mark = "★ 目前" if build.get("current") else "  還原到這版：catalog.py restore " + clean(build.get("name"), 60)
+        lines.append(f"  {clean(build.get('name'), 60)} · {BUILD_KINDS.get(build.get('kind')) or clean(build.get('kind'), 20)}"
+                     f" · {clean(build.get('label'), 120)} · {clean(build.get('created_at'), 25)}")
+        lines.append(f"      {mark}")
+    return lines or ["  還沒有版本：第一次吸收或移除時，會先存一個基準版"]
+
+
+def my_oaw_lines(view):
+    my = view.get("my_oaw") or {}
+    timeline = my.get("timeline") if isinstance(my.get("timeline"), list) else []
+    current = next((b for b in timeline if isinstance(b, dict) and b.get("current")), None)
+    name = clean(my.get("current_build"), 60)
+    if name:
+        lines = [f"我的 OAW：{name}" + (f"「{clean(current.get('label'), 120)}」" if current else "")]
+    else:
+        lines = [f"我的 OAW：預設 {clean(view.get('release'), 20)}（尚未建立版本）"]
+    if name and my.get("current_matches_build") is False:
+        lines.append("  ⚠ 目前的安裝和記錄的版本不同（在 catalog 之外被改過）")
+    rows = installed_skills(view)
+    if rows is None:
+        lines.append("  skill：尚未評估（catalog.py effect）")
+    else:
+        lines.append("  skill：" + (", ".join(name + (f"（{tag}）" if tag else "") for name, tag in rows) or "（沒有）"))
+    lines += effect_lines(my.get("effect"), view.get("release") or "2.0.0")
+    lines.append("  版本時間線：")
+    lines += timeline_lines(timeline)
+    return lines
+
+
+def part_state(part):
+    """Owner decision and whether the part is in the current build (a restore can remove it)."""
+    if part.get("in_current_build"):
+        return "在目前版本中"
+    decision = part.get("decision")
+    if decision == "absorbed":
+        return "已吸收（不在目前版本）"
+    return {"excreted": "已排掉", "removed": "已移除", "absorbed as backlog item": "已記成待辦"}.get(decision) or clean(decision, 40) or ""
+
+
+def food_lines(food, detail=False):
+    verdict = food.get("verdict") or {}
+    pinned = food.get("pinned") or {}
+    counts = food.get("counts") or {}
+    historical = food.get("historical") if isinstance(food.get("historical"), list) else []
+    lines = [f"{headline_label(verdict)} · {clean(food.get('display'), 80)} [{clean(food.get('id'), 64)}]"
+             f" · {clean(pinned.get('commit7'), 12) or '未固定'} · {INTEGRITY.get(pinned.get('integrity')) or '未試吃'}"
+             f" · 證據：{level_label(verdict.get('level'))}",
+             "  " + step_states(food),
+             "  成分：" + " · ".join(f"{DISPOSITIONS[k]} {counts.get(k, 0)}" for k in DISPOSITIONS)
+             + (f" · 歷史證據 {len(historical)} 份（不計入判定）" if historical else ""),
+             f"  安全：{safety_label(food)}",
+             f"  實測：{plan_status_label((food.get('plan') or {}).get('status'))}"]
+    if not detail:
+        return lines
+    chips = [chip_label(c) for c in verdict.get("chips") or []]
+    if chips:
+        lines.append("  標示：" + "、".join(chips))
+    if food.get("allergens"):
+        lines.append("  過敏原：" + "、".join(clean(a, 40) for a in food["allergens"]))
+    for key in DISPOSITIONS:
+        parts = [c for c in food.get("components") or [] if isinstance(c, dict) and c.get("disposition") == key]
+        for part in parts:
+            lines.append(f"  {DISPOSITIONS[key]} {clean(part.get('id'), 80)} · {clean(part.get('kind'), 20)} · {clean(part.get('exec_class'), 10)}"
+                         + (f" · {part_state(part)}" if part_state(part) else ""))
+            lines.append(f"      {clean(part.get('reason'), 200)}" + (f" · 缺：{clean(part.get('missing_test'), 120)}" if part.get("missing_test") else ""))
+    for report in historical:
+        lines.append(f"  歷史證據（不計入判定）：{clean(report.get('evidence_id'), 80)}")
+        elephant = report.get("elephant") if isinstance(report.get("elephant"), dict) else None
+        if elephant:
+            lines.append(f"    🐘 大象：整合方式 {clean(elephant.get('integration_mode'), 40)} · 關卡 {len(elephant.get('gates') or [])}")
+        for fish in report.get("goldfish") or []:
+            severity = "、".join(f"{clean(k, 20)} {v}" for k, v in (fish.get("by_severity") or {}).items())
+            lines.append(f"    🐟 金魚 {clean(fish.get('reviewer'), 40)}：{fish.get('findings')} 項發現" + (f"（{severity}）" if severity else ""))
+        for part in report.get("components") or []:
+            if isinstance(part, dict):
+                lines.append(f"    {DISPOSITIONS.get(part.get('disposition'), '🟡 暫留')} {clean(part.get('id'), 80)} · {clean(part.get('name'), 80)}"
+                             + (f" · {part_state(part)}" if part_state(part) else ""))
+    return lines
+
+
+def scout_lines(view, limit=None):
+    scout = ((view.get("feeding") or {}).get("scout")) or {}
+    candidates = [c for c in scout.get("candidates") or [] if isinstance(c, dict)]
+    last = scout.get("last_run") if isinstance(scout.get("last_run"), dict) else None
+    lines = [f"本週覓食：候選 {len(candidates)} · 已自動濾掉 {scout.get('dropped_without_review', 0)} 個無關 repo（不經審查）"
+             + (f" · 上次 {clean(last.get('week'), 10)}" if last else " · 還沒覓食過")]
+    for item in candidates[:limit] if limit else candidates:
+        status = "已送去" if item.get("status") == "picked" else "候選"
+        lines.append(f"  {item.get('rank')}. {clean(item.get('display'), 60)} · ★{item.get('stars') or 0}（排隊依據，非品質） · {status}")
+        if item.get("description"):
+            lines.append(f"      {clean(item.get('description'), 120)}")
+    return lines
+
+
+def catalog_lines(view, stale=False):
+    funnel = view.get("funnel") or {}
+    lines = ["視圖可能過期：請執行 catalog.py view"] if stale else []
+    lines += my_oaw_lines(view)
+    lines.append(f"食物 {funnel.get('submitted', 0)} · 已試吃 {funnel.get('tasted', 0)} · 實測 {funnel.get('measured', 0)}"
+                 f" · 已吸收成分 {funnel.get('absorbed_parts', 0)}")
+    foods = [f for f in view.get("foods") or [] if isinstance(f, dict)]
+    for food in foods:
+        lines += food_lines(food)
+    if not foods:
+        lines.append("  還沒有食物：catalog.py play 或 catalog.py menu → 投食")
+    lines += scout_lines(view, limit=5)
+    return lines
+
+
+def catalog_summary(view, stale=False):
+    my = view.get("my_oaw") or {}
+    return {"current_build": my.get("current_build"), "stale": stale, "funnel": view.get("funnel"),
+            "quality": quality_label(((my.get("effect") or {}).get("quality")) or {}),
+            "foods": [{"id": f.get("id"), "headline": (f.get("verdict") or {}).get("headline"),
+                       "label": headline_label(f.get("verdict")), "steps": [s.get("state") for s in f.get("steps") or [] if isinstance(s, dict)]}
+                      for f in view.get("foods") or [] if isinstance(f, dict)]}
+
+
 def main(argv=None):
     for stream in (sys.stdout, sys.stderr):
         if hasattr(stream, "reconfigure"):
@@ -132,11 +430,20 @@ def main(argv=None):
     raw_digest, digest_note = load(project / STATUS_FILE)
     progress = progress_summary(raw_progress) if raw_progress else None
     digest = digest_summary(raw_digest) if raw_digest else None
+    view, view_note = load_view(project)
+    stale = view_stale(project) if view else False
     if args.json:
         print(json.dumps({"project": str(project), "progress": progress, "progress_note": progress_note,
-                          "digest": digest, "digest_note": digest_note}, ensure_ascii=False, indent=2))
+                          "digest": digest, "digest_note": digest_note,
+                          "catalog": catalog_summary(view, stale) if view else None, "catalog_note": view_note},
+                         ensure_ascii=False, indent=2))
     else:
-        print(render(project, progress, progress_note, digest, digest_note))
+        text = render(project, progress, progress_note, digest, digest_note)
+        if view:
+            text += "\n\n" + "\n".join(catalog_lines(view, stale))
+        elif view_note == "invalid":
+            text += "\n\n消化目錄：view.json 無效（請執行 catalog.py view）"
+        print(text)
     return 0
 
 
