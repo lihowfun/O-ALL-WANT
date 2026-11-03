@@ -30,14 +30,17 @@ EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
 def redaction_pairs():
     """Local paths and the account name to strip before results reach the public repository."""
     pairs = []
-    for path, label in ((tempfile.gettempdir(), "<tmp>"), (os.path.expanduser("~"), "~")):
-        path = os.path.abspath(path)
-        forms = {path, path.replace("\\", "/"), path.replace("\\", "\\\\")}
-        if re.match(r"[A-Za-z]:\\", path):  # Git Bash spelling, /c/Users/...
-            forms.add("/" + path[0].lower() + path[2:].replace("\\", "/"))
-        for form in forms:
-            if len(form) > 3:
-                pairs.append((form, label))
+    for base, label in ((tempfile.gettempdir(), "<tmp>"), (os.path.expanduser("~"), "~")):
+        # macOS reports the temp folder through /private, so cover the resolved path too.
+        for path in {os.path.abspath(base), os.path.realpath(base)}:
+            forms = {path, path.replace("\\", "/"), path.replace("\\", "\\\\")}
+            if re.match(r"[A-Za-z]:\\", path):  # Git Bash spelling, /c/Users/...
+                forms.add("/" + path[0].lower() + path[2:].replace("\\", "/"))
+            # Claude's project-folder spelling, ~/.claude/projects/-private-var-folders-...
+            forms.add(re.sub(r"[^A-Za-z0-9]", "-", path))
+            for form in forms:
+                if len(form) > 3:
+                    pairs.append((form, label))
     user = os.environ.get("USERNAME") or os.environ.get("USER") or ""
     return sorted(pairs, key=lambda p: -len(p[0])), user
 
