@@ -25,7 +25,8 @@ from urllib.parse import unquote, urlsplit
 
 SCHEMA_VERSION = 1
 RELEASE = "2.0.0"
-SCANNER_VERSION = 1
+# 2: inline code spans, imperative commands and any rule match in a SKILL.md body make it X1-inline.
+SCANNER_VERSION = 2
 VERDICT_RULES_VERSION = 1
 VIEW_SCHEMA = "oaw-catalog-view/1"
 
@@ -58,6 +59,10 @@ LIMITS = {"max_files": 5000, "max_total_bytes": 50 * 1024 * 1024, "max_file_byte
           "max_path": 240, "skill_body_bytes": 24000}
 TOKENS_PER_RUN = (600_000, 900_000)
 TOKEN_LABEL = "estimate: about 0.6-0.9M logical tokens per tool-using agent run"
+TOKEN_LABEL_ZH = "估計：每次會用工具的 agent run 約 0.6–0.9M 邏輯 tokens"
+# Names a food id must never take: `remove egm` and bundled skill names mean the bundled parts.
+RESERVED_FOOD_IDS = ("egm", "egm-bootstrap", "egm-brainstorm", "egm-draft", "egm-drift-report", "egm-resolve", "egm-review",
+                     "egm-review-loop", "oaw-evidence", "oaw-wiki", "oaw-improve", "oaw")
 SANDBOX_CONDITIONS = ("isolated-venv", "project-copy", "no-api-keys", "no-network", "disposable-vm")
 INSTALL_ALLOWED_SUFFIXES = (".md", ".txt")
 ROUTER_NAMES = ("claude.md", "agents.md", "gemini.md", ".cursorrules", ".windsurfrules", "copilot-instructions.md")
@@ -72,6 +77,58 @@ _RESERVED = {"con", "prn", "aux", "nul"} | {f"{p}{n}" for p in ("com", "lpt") fo
 
 class SourceError(ValueError):
     """An input that is not a supported food source."""
+
+
+# Known engine messages (English, for logs and the CLI) -> Traditional Chinese for the page and the menu.
+# A message that matches nothing keeps its English text; renderers then say so.
+ERRORS_ZH = (
+    (r"The weekly cap must be at least the per-food cap", "每週上限必須至少等於每樣食物的上限。"),
+    (r"Token caps must be whole numbers", "token 上限必須是 0 到 10^10 之間的整數。"),
+    (r"Sandbox conditions must be a nonempty subset", "試跑條件至少要勾一個，而且只能用列出的條件。"),
+    (r"Only github\.com repositories are supported", "只支援 github.com 上的 repo。"),
+    (r"Not a (?:GitHub )?repository(?: URL)?", "這不是 repo 網址。"),
+    (r"URL lacks OWNER/REPO", "網址缺少「擁有者/repo」。"),
+    (r"Invalid GitHub OWNER/REPO", "GitHub 的「擁有者/repo」格式不對。"),
+    (r"Only local file:// repository paths|Unsafe file:// repository path", "只接受本機的 file:// repo 路徑。"),
+    (r"git fetch failed", "抓不到這個 repo（git fetch 失敗）：網址打錯、repo 不存在，或連不上。"),
+    (r"Tarball download failed", "下載備用壓縮檔失敗：連不上 GitHub。"),
+    (r"Cannot fetch", "抓不到這個 repo。"),
+    (r"Refused: .*(?:limit|too many files)|exceeds the archive limits", "拒收：超過封存的大小或檔案數上限。"),
+    (r"Integrity failure", "完整性檢查失敗：同一個版本抓到不同的內容，保留原本的封存。"),
+    (r"Unknown food", "找不到這樣食物。"),
+    (r"needs an interactive terminal", "這一步要你本人在互動式終端機上確認（PowerShell／cmd，或 Git Bash 裡用 winpty）。"),
+    (r"confirmation code does not match|confirmation code has expired|No pending .* confirmation|code was refused",
+     "確認碼不對或已過期（每個碼只能試一次）：請重新送出取得新的碼。"),
+    (r"Too many wrong confirmation codes", "確認碼錯太多次：這次 play 不再接受確認，請重新啟動 catalog.py play。"),
+    (r"a confirmation code was shown on the terminal", "確認碼已印在終端機上。"),
+    (r"A (?:triage|removal) reason is required|reason is required", "請寫下原因（會記進決定紀錄）。"),
+    (r"Restore would overwrite", "還原會蓋掉不屬於目前安裝層的檔案（你自己的或自訂的檔案）：先移開或改名，或留在目前版本。"),
+    (r"not a restore point this LAB_HOME created|restore point is missing|outside the OAW-managed layer|lacks a valid install manifest",
+     "這個還原點不是這台電腦替這個專案建立的，或內容超出 OAW 安裝層：已拒絕，沒有還原。"),
+    (r"Edited files block|Edited absorbed files are protected", "你改過的檔案擋住了這個動作：先用 oaw.py migrate 處理。"),
+    (r"fails OAW's portable skill lint|would fail doctor", "這個 skill 不符合 OAW 的 skill 格式（doctor 會判失敗）：沒有安裝。"),
+    (r"already absorbed", "這個成分已經吸收過了。"),
+    (r"only parts proposed for absorption", "只有建議「吸收」的成分可以吸收。"),
+    (r"Install target already exists", "要安裝的位置已經有檔案：沒有覆蓋。"),
+    (r"is not in the installed recipe", "目前的安裝裡沒有這個 skill。"),
+    (r"is already installed", "這個 skill 已經裝著了。"),
+    (r"A removal never adds|A re-add never retires", "這個變更會順帶新增或停用別的 skill：已拒絕。"),
+    (r"receipt lists a path outside", "吸收收據列了 skill 資料夾以外的檔案：已拒絕，沒有刪除任何東西。"),
+    (r"No OAW install", "這個資料夾還沒有安裝 OAW：先執行 oaw.py init。"),
+    (r"LAB_HOME must be outside", "LAB_HOME 必須在專案和 OAW 框架之外：設定 OAW_LAB_HOME。"),
+    (r"has absorbed parts; remove them first", "這樣食物還有吸收中的成分：先移除，再忘掉它。"),
+    (r"Report directory not found|No digestion records", "找不到報告資料夾，或資料夾裡沒有消化紀錄。"),
+    (r"Scout could not reach GitHub", "覓食連不上 GitHub 搜尋。"),
+)
+
+
+def zh_error(message) -> str | None:
+    """Traditional Chinese for a known engine message, or None."""
+    text = str(message or "")
+    for pattern, chinese in ERRORS_ZH:
+        if re.search(pattern, text):
+            return chinese
+    return None
 
 
 # --------------------------------------------------------------------------- hashing / text
@@ -172,17 +229,34 @@ def dedupe_sources(inputs) -> dict:
         try:
             source = normalize_source(item)
         except SourceError as exc:
-            errors.append({"input": sanitize_text(item, 120), "error": str(exc)})
+            errors.append({"input": sanitize_text(item, 120), "error": str(exc), "error_zh": zh_error(exc)})
             continue
-        entry = foods.setdefault(source["key"], {"source": source, "inputs": []})
+        entry = foods.setdefault(source["key"], {"source": source, "inputs": [], "ignored": []})
         entry["inputs"].append(str(item).strip())
-    merges = [{"key": key, "inputs": entry["inputs"]} for key, entry in foods.items() if len(entry["inputs"]) > 1]
-    return {"foods": list(foods.values()), "merges": merges, "errors": errors}
+        # The first spelling defines the food; a different ref or subdirectory in a later one is reported, not adopted.
+        kept = entry["source"]
+        for field in ("ref", "subdir"):
+            if source[field] and source[field] != kept[field] and {"field": field, "value": source[field]} not in entry["ignored"]:
+                entry["ignored"].append({"field": field, "value": sanitize_text(source[field], 120)})
+    merges = []
+    for key, entry in foods.items():
+        if len(entry["inputs"]) > 1:
+            merge = {"key": key, "inputs": entry["inputs"]}
+            if entry["ignored"]:
+                merge["ignored"] = entry["ignored"]
+            merges.append(merge)
+    return {"foods": [{"source": e["source"], "inputs": e["inputs"]} for e in foods.values()], "merges": merges, "errors": errors}
 
 
 def food_id(source: dict, taken: dict) -> str:
-    """Short, stable registry id; `taken` maps existing ids to canonical keys."""
+    """Short, stable registry id; `taken` maps existing ids to canonical keys.
+
+    A repository named like a bundled part (egm, oaw-evidence, ...) gets an
+    owner-qualified id, so `remove egm` can never mean a food.
+    """
     for candidate in (slug(source["repo"]), slug(f"{source.get('owner') or 'local'}-{source['repo']}")):
+        if candidate in RESERVED_FOOD_IDS:
+            continue
         if taken.get(candidate) in (None, source["key"]):
             return candidate
     return slug(source["repo"], 55) + "-" + sha256_bytes(source["key"].encode())[:8]
@@ -616,12 +690,50 @@ def static_scan(files: dict, *, food: str, commit: str | None = None, integrity:
     return record
 
 
+_FENCE_SHELL = re.compile(r"(?im)^\s{0,3}(?:```|~~~)\s*(?:bash|sh|shell|zsh|console|powershell|pwsh|ps1|cmd|bat)\b")
+_COMMAND_WORDS = (r"curl|wget|bash|sh|zsh|fish|pwsh|powershell|iex|iwr|python3?|py|node|npx|uvx|uv|pip3?|pipx|npm|pnpm|yarn|bun|deno"
+                  r"|git|gh|rm|chmod|chown|mv|cp|sudo|make|docker|podman|kubectl|cargo|go|ruby|perl|php|java|ssh|scp|nc|eval|exec"
+                  r"|source|invoke-webrequest|invoke-expression|start-process|del|rmdir|claude|codex")
+# An inline code span holding a command word: `curl … | sh`, `rm -rf build`, `git push --force`.
+_INLINE_COMMAND = re.compile(r"`[^`\n]*(?<![\w./-])(?:" + _COMMAND_WORDS + r")(?![\w-])[^`\n]*`", re.IGNORECASE)
+# Imperative prose with a quoted command: "run `…`", "執行 `…`".
+_IMPERATIVE = re.compile(r"(?i)\b(?:run|execute|exec|invoke)\b[^\n`]{0,40}`[^`\n]+`|(?:執行|跑)[^\n`]{0,20}`[^`\n]+`")
+
+
+def inline_exec_signals(body: str) -> list:
+    """S-KIND for instruction text: why a SKILL.md body asks the agent to act (X1-inline)."""
+    normalized = _normalized(body)
+    signals = []
+    if _FENCE_SHELL.search(body):
+        signals.append("shell-fence")
+    if _INLINE_COMMAND.search(normalized):
+        signals.append("inline-command")
+    if _IMPERATIVE.search(normalized):
+        signals.append("imperative-command")
+    # Any flag rule in the body (network, home directory, pipes, updates...) whatever its severity or triage.
+    signals += sorted({rule for rule, pattern, *_rest in _COMPILED if pattern.search(normalized)})
+    return signals
+
+
+def portable_issues(data: bytes) -> list:
+    """The frontmatter rules OAW's doctor applies to installed skills (scripts/validate_skills.py)."""
+    try:
+        import validate_skills
+    except ImportError:  # the validator ships with the framework; without it the install-time lint still runs
+        return []
+    try:
+        validate_skills._frontmatter(data.decode("utf-8-sig", "replace"))
+    except ValueError as exc:
+        return [sanitize_text(str(exc), 120)]
+    return []
+
+
 def _skill_facts(path, data, files_in_skill, modes, skipped):
     text = data.decode("utf-8", "replace")
     fields, body = parse_frontmatter(text)
     name = fields.get("name", "")
     description = fields.get("description", "")
-    fence_shell = re.search(r"(?im)^\s{0,3}(?:```|~~~)\s*(?:bash|sh|shell|zsh|console|powershell|pwsh|ps1|cmd|bat)\b", body)
+    signals = inline_exec_signals(body)
     tools = [t.strip().split("(")[0].casefold() for t in re.split(r"[,\s]+", fields.get("allowed-tools", "")) if t.strip()]
     grants = sorted(t for t in tools if t and t not in READ_ONLY_TOOLS)
     skill_dir = str(PurePosixPath(path).parent)
@@ -639,7 +751,8 @@ def _skill_facts(path, data, files_in_skill, modes, skipped):
     return {"path": path, "dir": skill_dir, "name": sanitize_text(name, 64), "valid_name": bool(re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", name)) and len(name) <= 64,
             "description_bytes": len(description.encode("utf-8")), "name_bytes": len(name.encode("utf-8")),
             "description_ok": bool(description.strip()) and len(description) <= 1024 and "<" not in description and ">" not in description,
-            "body_bytes": len(body.encode("utf-8")), "inline_exec": bool(fence_shell), "tool_grants": grants,
+            "body_bytes": len(body.encode("utf-8")), "inline_exec": bool(signals), "inline_signals": signals[:12], "tool_grants": grants,
+            "portable_issues": portable_issues(data),
             "outside_allowlist": blocked[:20], "outside_allowlist_count": len(blocked)}
 
 
@@ -689,6 +802,13 @@ def _split_components(files, roles, modes, flags, hooks, mcp, plugins, auto_exec
         members = [m for m, owner in owner_of.items() if owner == skill]
         facts = _skill_facts(skill, files[skill], members, modes, set(skipped))
         has_code = any(roles[m] in ("executable", "manifest", "binary") for m in members)
+        # Other instruction files of the skill (references it ships) count as its instructions too.
+        for member in members:
+            if member != skill and roles[member] in ("instruction", "docs", "other") and PurePosixPath(member).suffix.casefold() in (".md", ".txt"):
+                extra = inline_exec_signals(files[member].decode("utf-8", "replace"))
+                if extra:
+                    facts["inline_exec"] = True
+                    facts["inline_signals"] = sorted(set(facts["inline_signals"]) | set(extra))[:12]
         exec_class = "X1" if has_code else ("X1-inline" if facts["inline_exec"] or facts["tool_grants"] else "X0")
         name = facts["name"] if facts["valid_name"] else (PurePosixPath(facts["dir"]).name or "root")
         add("skill:" + slug(name), "skill", name, members, exec_class, where=facts["dir"].rsplit("/", 2)[0] if facts["dir"] else "", skill=facts)
@@ -735,6 +855,13 @@ def evidence_class(record) -> str:
     return "ignored"
 
 
+def decisions_for(decisions, fid: str) -> list:
+    """One food's decisions after its latest `forget` record: a forgotten food starts over if fed again."""
+    mine = [d for d in decisions or () if isinstance(d, dict) and d.get("food") == fid]
+    cut = max((index for index, d in enumerate(mine) if d.get("kind") == "forget"), default=-1)
+    return mine[cut + 1:]
+
+
 def _valid_decision(decision) -> bool:
     if not isinstance(decision, dict) or decision.get("kind") not in DECISION_KINDS:
         return False
@@ -749,59 +876,106 @@ def _verdict(code, reasons, **extra):
             "reasons": list(reasons), **extra}
 
 
+MISSING_TESTS = {
+    "tx": ("sandbox trial in a disposable environment (TX) - paid, not enabled in v0", "在可拋棄環境（TX）試跑：付費，v0 尚未開放"),
+    "smaller-skill": ("re-implement a smaller OAW skill, then T0 again", "重新實作成較小的 OAW skill，再跑一次免費檢查"),
+    "fix-structure": ("fix structure, then T0 again", "修正結構後，再跑一次免費檢查"),
+    "fix-portable": ("fix structure (OAW portable frontmatter), then T0 again", "改成 OAW 可攜的 frontmatter，再跑一次免費檢查"),
+    "without-files": ("re-implement without those files", "不帶那些檔案重新實作"),
+    "license-check": ("owner license check", "由你確認授權"),
+    "triage": ("owner triage of the flags", "由你分流這些旗標"),
+    "reimplement-ab": ("behavior A/B (paid), after re-implementation", "重新實作後做行為 A/B（付費）"),
+    "method-backlog": ("elephant proposal (method backlog)", "大象提案（方法待辦）"),
+    "elephant": ("elephant proposal", "大象提案"),
+    "food-triage": ("owner triage", "由你分流"),
+    "retaste": ("taste again with the current free rules", "用目前的規則再試吃一次（免費）"),
+}
+
+
+def _signal_text(signals) -> tuple:
+    names = {"shell-fence": ("a shell code block", "shell 程式碼區塊"), "inline-command": ("an inline command", "行內指令"),
+             "imperative-command": ("a 'run …' instruction", "「執行 …」的指示")}
+    english = [names.get(s, (s, s))[0] for s in signals[:3]]
+    chinese = [names.get(s, (s, s))[1] for s in signals[:3]]
+    return ", ".join(english), "、".join(chinese)
+
+
 def propose_component(component: dict, open_flags: dict, license_info: dict) -> dict:
-    """Proposed disposition and the reason; executable or flagged parts never default to absorb."""
+    """Proposed disposition and the reason; executable or flagged parts never default to absorb.
+
+    Every reason has a stable `reason_code`, the English `reason` and the
+    Traditional Chinese `reason_zh`; `missing_test` likewise has `missing_zh`.
+    """
     own = [open_flags[f] for f in component.get("flag_ids", []) if f in open_flags]
     high = [f for f in own if f["severity"] == "high"]
     medium = [f for f in own if f["severity"] == "medium"]
     kind = component["kind"]
-    tx = "sandbox trial in a disposable environment (TX) - paid, not enabled in v0"
+    kinds_zh = {"hook-set": "hooks", "mcp-server": "MCP server", "agent": "agent", "command": "指令"}
 
-    def result(disposition, reason, missing="", owner_confirms=False, installable=False):
-        return {"disposition": disposition, "reason": reason, "missing_test": missing,
+    def result(disposition, code, reason, reason_zh, missing="", owner_confirms=False, installable=False):
+        missing_en, missing_zh = MISSING_TESTS[missing] if missing else ("", "")
+        return {"disposition": disposition, "reason_code": code, "reason": reason, "reason_zh": reason_zh,
+                "missing_code": missing, "missing_test": missing_en, "missing_zh": missing_zh,
                 "owner_confirms": owner_confirms, "installable": installable}
 
     if high:
         refs = ", ".join(f"{f['rule']} {f['path']}:{f['line']}" for f in high[:3])
-        return result("excrete", f"high-severity static flag(s): {refs}; static rules never mark toxic", owner_confirms=True)
+        return result("excrete", "high-flags", f"high-severity static flag(s): {refs}; static rules never mark toxic",
+                      f"高嚴重度靜態旗標：{refs}；靜態規則只會舉旗，不會判有毒", owner_confirms=True)
     if kind == "skill":
         skill = component["skill"]
         if skill["body_bytes"] > LIMITS["skill_body_bytes"]:
-            return result("hold", f"inedible as shipped: body {skill['body_bytes']} bytes > {LIMITS['skill_body_bytes']} (not harmful)",
-                          "re-implement a smaller OAW skill, then T0 again")
+            return result("hold", "skill-too-large", f"inedible as shipped: body {skill['body_bytes']} bytes > {LIMITS['skill_body_bytes']} (not harmful)",
+                          f"照原樣不能吃：本文 {skill['body_bytes']} bytes 超過 {LIMITS['skill_body_bytes']}（不是有害）", "smaller-skill")
         if not skill["valid_name"] or not skill.get("description_ok"):
-            return result("hold", "SKILL.md lacks a valid lowercase name or a portable description", "fix structure, then T0 again")
+            return result("hold", "skill-structure", "SKILL.md lacks a valid lowercase name or a portable description",
+                          "SKILL.md 缺少有效的小寫名稱或可攜的描述", "fix-structure")
+        if skill.get("portable_issues"):
+            issue = skill["portable_issues"][0]
+            return result("hold", "skill-portable", f"SKILL.md fails OAW's portable skill lint: {issue}",
+                          f"SKILL.md 不符合 OAW 的可攜 skill 格式：{issue}", "fix-portable")
         if component["exec_class"] != "X0":
-            detail = "bundles scripts" if component["exec_class"] == "X1" else "instructs shell/tool actions"
-            return result("hold", f"{component['exec_class']}: {detail}; never run on this machine", tx)
+            if component["exec_class"] == "X1":
+                return result("hold", "exec-x1", "X1: bundles scripts; never run on this machine",
+                              "X1：附帶腳本；永遠不在這台電腦上執行", "tx")
+            english, chinese = _signal_text(skill.get("inline_signals") or (["tool-grants"] if skill.get("tool_grants") else []))
+            return result("hold", "exec-x1-inline", f"X1-inline: instructs shell, network or tool actions ({english}); never run on this machine",
+                          f"X1-inline：指示 agent 執行 shell／網路／工具動作（{chinese}）；永遠不在這台電腦上執行", "tx")
         if skill["outside_allowlist_count"]:
-            return result("hold", f"{skill['outside_allowlist_count']} file(s) outside the install allowlist (.md/.txt, mode 644, no nested instructions)",
-                          "re-implement without those files")
+            count = skill["outside_allowlist_count"]
+            return result("hold", "outside-allowlist", f"{count} file(s) outside the install allowlist (.md/.txt, mode 644, no nested instructions)",
+                          f"{count} 個檔案不在安裝允許清單內（只收 .md／.txt、權限 644、不含巢狀指示檔）", "without-files")
         if license_info.get("distribution") == "unknown":
-            return result("hold", "license unknown: copying is not established", "owner license check")
+            return result("hold", "license-unknown", "license unknown: copying is not established", "授權不明：不能確定可以複製", "license-check")
         if medium:
             refs = ", ".join(f"{f['rule']} {f['path']}:{f['line']}" for f in medium[:3])
-            return result("hold", f"open flag(s): {refs}", "owner triage of the flags")
-        return result("absorb", "X0 text-only skill, no open flags, license " + str(license_info.get("spdx"))
-                      + "; quality not measured, no improvement claimed", "", installable=True)
+            return result("hold", "open-flags", f"open flag(s): {refs}", f"未分流的旗標：{refs}", "triage")
+        spdx = str(license_info.get("spdx"))
+        return result("absorb", "x0-skill", f"X0: the static rules found no shell, network or tool instructions; no open flags; license {spdx};"
+                      " quality not measured, no improvement claimed",
+                      f"X0：靜態規則沒有找到 shell／網路／工具指示；沒有未分流的旗標；授權 {spdx}；品質未量測，未宣稱改善", installable=True)
     if kind in ("hook-set", "mcp-server"):
-        return result("hold", f"{kind} auto-executes (X2); OAW never installs hooks or MCP servers", tx)
+        return result("hold", "auto-exec", f"{kind} auto-executes (X2); OAW never installs hooks or MCP servers",
+                      f"{kinds_zh[kind]} 會自動執行（X2）；OAW 永遠不代裝 hooks 或 MCP server", "tx")
     if kind == "plugin-manifest":
-        return result("hold", "host plugin manifest; plugins are installed by the owner through the host, never by OAW", tx)
+        return result("hold", "plugin", "host plugin manifest; plugins are installed by the owner through the host, never by OAW",
+                      "host plugin 清單：plugin 由你透過 host 安裝，OAW 不代裝", "tx")
     if kind == "executable":
-        return result("hold", "executable code; never run on this machine", tx)
+        return result("hold", "executable", "executable code; never run on this machine", "可執行的程式碼；永遠不在這台電腦上執行", "tx")
     if kind == "dependency-manifest":
-        return result("excrete", "package manifests conflict with OAW's stdlib-only runtime; nothing is installed", owner_confirms=True)
+        return result("excrete", "deps", "package manifests conflict with OAW's stdlib-only runtime; nothing is installed",
+                      "套件清單和 OAW 只用標準函式庫的原則衝突；不會安裝任何東西", owner_confirms=True)
     if kind == "instruction-file":
-        return result("excrete", "a second always-loaded instruction file conflicts with OAW's single AGENTS.md policy", owner_confirms=True)
+        return result("excrete", "instruction-file", "a second always-loaded instruction file conflicts with OAW's single AGENTS.md policy",
+                      "第二份常駐指示檔和 OAW 只用一份 AGENTS.md 的原則衝突", owner_confirms=True)
     if kind in ("agent", "command"):
-        return result("hold", f"{kind} prompt, not a native skill; needs re-implementation as an OAW skill",
-                      "behavior A/B (paid), after re-implementation")
+        return result("hold", "prompt", f"{kind} prompt, not a native skill; needs re-implementation as an OAW skill",
+                      f"{kinds_zh[kind]}提示詞，不是原生 skill：要重新實作成 OAW skill", "reimplement-ab")
     if kind == "binary":
-        return result("excrete", "binary files cannot be reviewed as text", owner_confirms=True)
+        return result("excrete", "binary", "binary files cannot be reviewed as text", "二進位檔沒辦法當文字審查", owner_confirms=True)
     if kind == "docs":
-        return result("hold", "reference material; never installed", "elephant proposal (method backlog)")
-    return result("hold", "not digestible as shipped", "elephant proposal")
+        return result("hold", "docs", "reference material; never installed", "參考資料；永遠不會安裝", "method-backlog")
+    return result("hold", "other", "not digestible as shipped", "照原樣沒辦法消化", "elephant")
 
 
 def derive(evidence, decisions=(), *, tier: str = "local") -> dict:
@@ -864,14 +1038,28 @@ def derive(evidence, decisions=(), *, tier: str = "local") -> dict:
             component_decisions.setdefault(cid, []).append(d)
     for component in s.get("components", []):
         proposal = propose_component(component, open_flags, s.get("license") or {})
-        if verdict["headline"] in ("toxic", "risky", "inedible") and proposal["disposition"] == "absorb":
-            proposal.update(disposition="hold", reason=f"food is {verdict['headline']}; parts inherit it until resolved",
-                            missing_test="owner triage", installable=False)
+        confirmed = sorted(set(component.get("flag_ids", [])) & set(toxic_refs))
+        if confirmed:
+            refs = ", ".join(confirmed[:3])
+            proposal.update(disposition="excrete", reason_code="owner-toxic", reason=f"owner-confirmed toxic: {refs}",
+                            reason_zh=f"你確認有毒：{refs}", owner_confirms=False, installable=False,
+                            missing_code="", missing_test="", missing_zh="")
+        elif verdict["headline"] in ("toxic", "risky", "inedible") and proposal["disposition"] == "absorb":
+            proposal.update(disposition="hold", reason_code="inherits-food", reason=f"food is {verdict['headline']}; parts inherit it until resolved",
+                            reason_zh=f"整樣食物是「{VERDICTS[verdict['headline']][3]}」；解決之前，成分一律跟著暫留",
+                            missing_code="food-triage", missing_test=MISSING_TESTS["food-triage"][0],
+                            missing_zh=MISSING_TESTS["food-triage"][1], installable=False)
+        elif stale and proposal["disposition"] == "absorb":
+            # A record from older rules cannot prove what the current rules would find.
+            proposal.update(disposition="hold", reason_code="rules-updated", reason="the scan rules changed since this taste; taste again (free)",
+                            reason_zh="試吃之後掃描規則更新了：再試吃一次（免費）", missing_code="retaste",
+                            missing_test=MISSING_TESTS["retaste"][0], missing_zh=MISSING_TESTS["retaste"][1], installable=False)
         decided = None
         for d in component_decisions.get(component["id"], []):
             if d["kind"] == "excrete":
-                proposal.update(disposition="excrete", reason="owner excreted: " + sanitize_text(d.get("reason", ""), 120),
-                                owner_confirms=False, installable=False)
+                owner_reason = sanitize_text(d.get("reason", ""), 120)
+                proposal.update(disposition="excrete", reason_code="owner-excreted", reason="owner excreted: " + owner_reason,
+                                reason_zh="你排掉的：" + owner_reason, owner_confirms=False, installable=False)
                 decided = "excreted"
             elif d["kind"] == "absorb" and proposal["disposition"] == "absorb" and decided != "excreted":
                 decided = "absorbed"
@@ -977,8 +1165,11 @@ def install_inventory(files: dict) -> dict:
             "host_settings_writes": sorted(p for p in files if p in _HOST_SETTING_PATHS)}
 
 
-def effect_vs_default(current: dict, default: dict, measured=()) -> dict:
-    """Effect of this build versus the default release. Quality is not measured without live evidence."""
+def effect_vs_default(current: dict, default: dict, measured=(), hosts=None) -> dict:
+    """Effect of this build versus the default release. Quality is not measured without live evidence.
+
+    With the install's `hosts`, a skill present on only some of them is listed in `skills.only_on`.
+    """
     lines = []
 
     def line(metric, now, base, level="static-measured", note=""):
@@ -1008,8 +1199,14 @@ def effect_vs_default(current: dict, default: dict, measured=()) -> dict:
                    "note": "no consented live comparison; never shown as enhanced"}
     quality.update(current=None, default=None, delta=None)
     lines.append(quality)
+    only_on = {}
+    if hosts:
+        for name, info in current["skills"].items():
+            present = sorted(set(info.get("hosts", [])) & set(hosts))
+            if present != sorted(set(hosts)):
+                only_on[name] = present
     return {"release": RELEASE, "skills": {"added": added, "removed": removed,
-                                           "same": sorted(set(current["skills"]) & set(default["skills"]))},
+                                           "same": sorted(set(current["skills"]) & set(default["skills"])), "only_on": only_on},
             "lines": lines, "quality": quality}
 
 
@@ -1029,7 +1226,21 @@ def validate_policy(per_food_tokens, weekly_tokens, sandbox) -> dict:
 
 
 def _tokens(runs):
-    return {"runs": runs, "min": runs * TOKENS_PER_RUN[0], "max": runs * TOKENS_PER_RUN[1], "label": TOKEN_LABEL}
+    return {"runs": runs, "min": runs * TOKENS_PER_RUN[0], "max": runs * TOKENS_PER_RUN[1], "label": TOKEN_LABEL, "label_zh": TOKEN_LABEL_ZH}
+
+
+# Traditional Chinese for every plan step: id -> (name, can prove, cannot prove).
+PLAN_STEPS_ZH = {
+    "T0": ("免費靜態檢查", ["檔案清單、授權、宣告的 hooks／MCP／腳本、旗標"], ["行為、品質、執行時的安全"]),
+    "T1": ("離線整合（名稱衝突、doctor／migrate 往返）", ["安裝相容性"], ["品質"]),
+    "T2a": ("人工分流高嚴重度旗標", ["每個旗標是良性、過敏原，還是有毒"], ["品質"]),
+    "G": ("金魚盲審我們的吸收草稿（2 位審查者）", ["草稿裡沒有根據的說法或和規則衝突的地方"], ["行為上的增益"]),
+    "TX": ("在可拋棄環境試跑可執行的成分", ["tripwire：宣告範圍外的寫入、連線、行程"], ["品質"]),
+    "T3a-smoke": ("行為 A/B 冒煙測試：有食物（C）對沒有（D），4 案例 × 2 次", ["決定性的退步；早期的沒增益訊號"], ["統計上的增益", "其他 host 或模型"]),
+    "T4": ("和現有配方整合（受害者檢查）", ["拉肚子：讓現有 skill 變差"], ["增益"]),
+    "P": ("齊平底線：OAW＋食物（C）對 單吃食物（B）", ["齊平或進化的說法"], ["其他 host"]),
+    "T3a": ("行為 A/B 完整測試：每組 8 案例 × 5 次", ["這套題庫上校準過的增益或退步"], ["其他任務、長期效果"]),
+}
 
 
 def decide_plan(food: str, derived: dict, historical=(), policy: dict | None = None) -> dict:
@@ -1076,15 +1287,23 @@ def decide_plan(food: str, derived: dict, historical=(), policy: dict | None = N
             steps.append({"id": "P", "name": "parity floor: OAW with the food (C) vs the food alone (B)", "cost": "paid",
                           "state": "planned", "can_prove": ["parity or evolution claim"], "cannot_prove": ["other hosts"], "tokens": _tokens(16)})
             steps.append({"id": "T3a", "name": "behavior A/B full: 8 cases x 5 runs per arm", "cost": "paid",
-                          "state": "only if the smoke shows no deterministic negative",
+                          "state": "only if the smoke shows no deterministic negative", "conditional": True,
                           "can_prove": ["calibrated gain or regression on this suite"], "cannot_prove": ["other tasks, long-term effects"],
                           "tokens": _tokens(80)})
         basis = [f"{len(candidates)} absorbable or skill-type part(s)", f"{len(methods)} historical method proposal(s)",
                  f"{len(executable)} executable part(s) on hold"]
+    for step in steps:
+        name_zh, can_zh, cannot_zh = PLAN_STEPS_ZH[step["id"]]
+        step.update(name_zh=name_zh, can_prove_zh=can_zh, cannot_prove_zh=cannot_zh, conditional=bool(step.get("conditional")))
     paid = [s for s in steps if s["tokens"]]
     paid.sort(key=lambda s: s["tokens"]["max"])
     free = [s for s in steps if not s["tokens"]]
-    total = {"min": sum(s["tokens"]["min"] for s in paid), "max": sum(s["tokens"]["max"] for s in paid), "label": TOKEN_LABEL}
+    # The least it can cost is the unconditional steps; a conditional step adds at most its own maximum.
+    unconditional = [s for s in paid if not s["conditional"]]
+    conditional = [s for s in paid if s["conditional"]]
+    total = {"min": sum(s["tokens"]["min"] for s in unconditional), "max": sum(s["tokens"]["max"] for s in paid),
+             "unconditional_max": sum(s["tokens"]["max"] for s in unconditional),
+             "conditional_max": sum(s["tokens"]["max"] for s in conditional), "label": TOKEN_LABEL, "label_zh": TOKEN_LABEL_ZH}
     if status is None:
         if not policy:
             status = "waiting for standing policy"
@@ -1145,17 +1364,19 @@ def imported_record(food: str, docs: dict, source_files: list, recorded_at: str)
     integration = docs.get("integration.json") if isinstance(docs.get("integration.json"), dict) else None
     proposals = docs.get("proposals.md") if isinstance(docs.get("proposals.md"), str) else None
     lists = lambda doc, key: [x for x in doc.get(key, []) if isinstance(x, dict)] if isinstance(doc.get(key), list) else []
+    # A list counts whatever its items are (the real records hold strings); a missing key is None, never 0.
+    count = lambda doc, key: len(doc[key]) if isinstance(doc.get(key), list) else None
     elephant = None
-    if digest:
+    if digest is not None:
         elephant = {"integration_mode": sanitize_text(digest.get("integration_mode"), 60),
                     "what_it_does": sanitize_text(digest.get("what_it_does"), 400),
                     "gates": [{"gate": sanitize_text(g.get("gate"), 60), "verdict": sanitize_text(g.get("verdict"), 20)} for g in lists(digest, "gates")[:40]],
-                    "nutrients": len(lists(digest, "nutrients")), "diarrhea_risks": len(lists(digest, "diarrhea_risks")),
-                    "proposed_ab_tests": len(lists(digest, "proposed_ab_tests"))}
+                    "nutrients": count(digest, "nutrients"), "diarrhea_risks": count(digest, "diarrhea_risks"),
+                    "proposed_ab_tests": count(digest, "proposed_ab_tests")}
     verified = None
-    if verify:
-        verified = {"checks": len(lists(verify, "checks")), "by_status": _count(c.get("status") for c in lists(verify, "checks")),
-                    "missed_issues": len(lists(verify, "missed_issues")),
+    if verify is not None:
+        verified = {"checks": count(verify, "checks"), "by_status": _count(c.get("status") for c in lists(verify, "checks")),
+                    "missed_issues": count(verify, "missed_issues"),
                     "integration_mode_agrees": verify.get("integration_mode_agrees") if isinstance(verify.get("integration_mode_agrees"), bool) else None}
     goldfish = []
     for name in sorted(n for n in docs if n.startswith("goldfish-") and isinstance(docs[n], dict)):
@@ -1165,14 +1386,47 @@ def imported_record(food: str, docs: dict, source_files: list, recorded_at: str)
                          "by_severity": _count(f.get("severity") for f in findings),
                          "summary": sanitize_text(doc.get("verdict_summary"), 300)})
     components = []
+
+    def hist_id(raw, item):
+        return "hist:" + re.sub(r"[^A-Za-z0-9._-]+", "-", raw)[:80] if raw else "hist:" + sha256_bytes(canonical_json(item).encode())[:8]
+
+    def text(value, limit):
+        return sanitize_text(value, limit) if isinstance(value, (str, int, float)) else ""
+
+    def entry(cid, name, canonical, revision1, *, history=None, split_of=None):
+        """`canonical` holds the fields in force; `revision1` fills a field only while the disposition is unchanged."""
+        disposition = canonical.get("disposition") if canonical.get("disposition") in DISPOSITIONS else "hold"
+        same = revision1 is not None and revision1.get("disposition") == canonical.get("disposition")
+
+        def pick(key, limit):
+            if canonical.get(key) not in (None, ""):
+                return text(canonical.get(key), limit)
+            return text(revision1.get(key), limit) if same else ""
+        corrections = canonical.get("claim_corrections") if isinstance(canonical.get("claim_corrections"), list) else []
+        reason = pick("reason", 300) or (text(corrections[0], 300) if corrections else "")
+        return {"id": cid, "kind": "method", "name": sanitize_text(name, 120), "disposition": disposition,
+                "proposed_by": "elephant (historical-prior)", "oaw_target": pick("oaw_target", 200),
+                "reason": reason, "missing_test": pick("missing_test", 200), "level": "historical-prior",
+                "revision": 2 if canonical is not revision1 else 1, "history": history, "split_of": split_of}
+
+    # Ledger revision 2: an `after_integration` object is canonical; a split lists parts with their own dispositions.
     for item in lists(ledger or {}, "components")[:300]:
         raw = str(item.get("id") or "")
-        cid = "hist:" + re.sub(r"[^A-Za-z0-9._-]+", "-", raw)[:80] if raw else "hist:" + sha256_bytes(canonical_json(item).encode())[:8]
-        disposition = item.get("disposition") if item.get("disposition") in DISPOSITIONS else "hold"
-        components.append({"id": cid, "kind": "method", "name": sanitize_text(item.get("name"), 120), "disposition": disposition,
-                           "proposed_by": "elephant (historical-prior)", "oaw_target": sanitize_text(item.get("oaw_target"), 200),
-                           "reason": sanitize_text(item.get("reason"), 300), "missing_test": sanitize_text(item.get("missing_test"), 200),
-                           "level": "historical-prior"})
+        after = item.get("after_integration") if isinstance(item.get("after_integration"), dict) else None
+        first = text(item.get("disposition"), 20)
+        if after is None:
+            components.append(entry(hist_id(raw, item), item.get("name"), item, item))
+            continue
+        changed = f"revision 1: {first}" if first and first != after.get("disposition") else None
+        parts = [p for p in after.get("parts", []) if isinstance(p, dict)] if isinstance(after.get("parts"), list) else []
+        if after.get("disposition") == "split" and parts:
+            for index, part in enumerate(parts[:20]):
+                part_raw = str(part.get("id") or f"{raw}/{index + 1}")
+                components.append(entry(hist_id(part_raw, part), f"{item.get('name') or raw} · {part_raw.rsplit('/', 1)[-1]}", part, None,
+                                        history=f"revision 1: {first}, split by integration" if first else "split by integration",
+                                        split_of=hist_id(raw, item)))
+            continue
+        components.append(entry(hist_id(raw, item), item.get("name"), after, item, history=changed))
     integration_summary = None
     if integration:
         integration_summary = {sanitize_text(k, 40): (sanitize_text(v, 160) if isinstance(v, (str, int, float, bool)) else f"{len(v)} item(s)")
@@ -1234,8 +1488,19 @@ def food_card(entry: dict, evidence: list, decisions: list, plan: dict | None = 
                    f"{derived['flags']['open']} open flag(s), {derived['flags']['open_high']} high" if s else "not checked")
     food_decisions = [{"at": d.get("at"), "kind": d.get("kind"), "components": d.get("components") or [], "outcome": d.get("outcome"),
                        "reason": sanitize_text(d.get("reason", ""), 160), "build": d.get("build")} for d in decisions]
+    triaged = {d["flag"]: d["outcome"] for d in decisions if _valid_decision(d) and d["kind"] == "triage"}
+    severity_rank = {"high": 0, "medium": 1, "low": 2}
+    flags = [{"id": sanitize_text(f.get("id"), 300), "rule": sanitize_text(f.get("rule"), 20), "path": sanitize_text(f.get("path"), 200),
+              "line": f.get("line") if isinstance(f.get("line"), int) else None, "severity": f.get("severity") if f.get("severity") in severity_rank else "low",
+              "meaning": sanitize_text(f.get("meaning"), 120), "allergen": sanitize_text(f.get("allergen"), 40) or None,
+              "triage": triaged.get(f.get("id"))}
+             for f in sorted((s or {}).get("flags", []), key=lambda f: (severity_rank.get(f.get("severity"), 3), str(f.get("id"))))
+             if isinstance(f, dict)][:80]
+    error = entry.get("last_error") if isinstance(entry.get("last_error"), dict) else None
     return {"id": entry["id"], "display": display, "repo": None if private else source.get("url"), "origin": entry.get("origin"),
-            "lifecycle": entry.get("lifecycle"),
+            "lifecycle": entry.get("lifecycle"), "flag_list": flags,
+            "last_error": {"at": error.get("at"), "error": sanitize_text(error.get("error"), 300),
+                           "error_zh": sanitize_text(error.get("error_zh"), 300)} if error else None,
             "pinned": {"commit": source.get("commit"), "commit7": (source.get("commit") or "")[:7] or None,
                        "integrity": source.get("integrity"), "tree_sha12": (s or {}).get("tree_sha256", "")[:12] or None},
             "steps": _steps(entry, derived, plan, bool(s)),
@@ -1259,25 +1524,31 @@ def build_view(state: dict) -> dict:
     receipts = state.get("receipts") or {}
     foods = []
     for fid, entry in sorted(registry.get("foods", {}).items()):
-        mine = [d for d in decisions if d.get("food") == fid]
+        mine = decisions_for(decisions, fid)
         card = food_card(entry, evidence.get(fid, []), mine, plans.get(fid))
-        present = (receipts.get(fid) or {}).get("components") or {}
+        # Only installed parts are in a build; a backlog note changes no code.
+        present = {cid for cid, part in ((receipts.get(fid) or {}).get("components") or {}).items()
+                   if isinstance(part, dict) and part.get("outcome") == "installed"}
         for part in card["components"]:
             part["in_current_build"] = part["id"] in present
         for report in card["historical"]:
             for part in report["components"]:
-                part["in_current_build"] = part["id"] in present
+                part["in_current_build"] = False
         foods.append(card)
     candidates = sorted(scout.get("candidates", {}).values(), key=lambda c: (-int(c.get("stars") or 0), c.get("key", "")))
-    timeline = [{"n": b.get("n"), "name": b.get("name"), "label": sanitize_text(b.get("label", ""), 160), "kind": b.get("kind"),
+    timeline = [{"n": b.get("n"), "name": b.get("name"), "label": sanitize_text(b.get("label", ""), 160),
+                 "label_zh": sanitize_text(b.get("label_zh", ""), 160) or None, "kind": b.get("kind"),
                  "created_at": b.get("created_at"), "skills": b.get("skills", []), "components": b.get("components", []),
                  "change": b.get("change", {}), "effect": b.get("effect"), "doctor": b.get("doctor"),
                  "current": b.get("name") == builds.get("current"), "restore": f"catalog.py restore {b.get('name')}"}
                 for b in builds.get("builds", [])]
+    backlog = {(f["id"], cid) for f in foods for d in f["decisions"] if d["kind"] == "absorb" and d["outcome"] == "backlog"
+               for cid in d["components"]}
     funnel = {"submitted": len(foods), "tasted": sum(1 for f in foods if f["steps"][1]["state"] == "done"),
               "measured": sum(1 for f in foods if f["verdict"]["level"] == "measured"),
-              "absorbed_parts": sum(1 for f in foods for c in f["components"] if c["decision"] == "absorbed")
-              + sum(1 for f in foods for d in f["decisions"] if d["kind"] == "absorb" and d["outcome"] == "backlog")}
+              # Installed parts present in the current layer; backlog notes are counted apart and change no code.
+              "absorbed_parts": sum(1 for f in foods for c in f["components"] if c.get("in_current_build")),
+              "backlog_items": len(backlog)}
     view = {
         "schema": VIEW_SCHEMA, "release": RELEASE,
         "generated_from": {name: record_sha256(state.get(name)) for name in ("registry", "evidence", "decisions", "builds", "policy", "scout", "plans", "effect", "receipts")},
