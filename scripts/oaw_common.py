@@ -57,6 +57,46 @@ def confined_path(root, *parts):
     return str(candidate)
 
 
+_DRIVE = re.compile(r"^[A-Za-z]:")
+
+
+def normalize_cited_path(text):
+    """Return a cited path as a project-relative POSIX path, identically on every OS.
+
+    Backslashes become '/', and empty and '.' segments are dropped. A leading
+    '/', a drive ('C:') in any segment or a '..' segment raises ValueError, so a
+    Windows-shaped path is rejected on Linux too, before any join or stat.
+    """
+    path = text.strip().replace("\\", "/")
+    parts = [part for part in path.split("/") if part not in ("", ".")]
+    if path.startswith("/") or ".." in parts or any(_DRIVE.match(part) for part in parts):
+        raise ValueError(f"Cited path is outside the project: {text}")
+    if not parts:
+        raise ValueError("Cited path is empty.")
+    return "/".join(parts)
+
+
+def exact_case_path(root, relative):
+    """Resolve a cited project-relative path only when every segment matches on-disk case.
+
+    Windows and macOS accept 'Scripts/A.py' for 'scripts/a.py'; comparing each
+    segment with its directory listing gives the case-sensitive verdict on every
+    OS. Returns the confined path, or None when a segment is missing or differs
+    in case. Raises ValueError for a path outside root, including via symlinks.
+    """
+    parts = normalize_cited_path(relative).split("/")
+    resolved = confined_path(root, *parts)
+    current = str(Path(root).resolve())
+    for part in parts:
+        try:
+            if part not in os.listdir(current):
+                return None
+        except OSError:
+            return None
+        current = os.path.join(current, part)
+    return resolved
+
+
 def _checked(path, root):
     return confined_path(root, path) if root is not None else str(Path(path).resolve())
 

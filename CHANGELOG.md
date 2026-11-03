@@ -26,6 +26,12 @@ All notable changes to this project will be documented in this file.
 - `docs/SKILL_INTAKE.md`: the official process for adding skills from now on (owner decisions
   D1-D19), with what is automated today, planned, or needs the owner, and how to operate it from
   the web page, the terminal menu and the CLI; linked from both READMEs.
+- `oaw_common.normalize_cited_path` and `exact_case_path` (OAW-02, only the part OAW-21 needs;
+  merge-derived from the graphify integration checks): cited paths are made project-relative
+  POSIX paths (backslashes folded, drives, absolute paths and `..` rejected on every OS) and
+  resolved segment by segment against directory listings, so a citation whose case differs
+  from the file is unresolved on Windows and macOS as on Linux. The hash-basis and byte-count
+  parts of OAW-02 are not built.
 
 ### Changed
 

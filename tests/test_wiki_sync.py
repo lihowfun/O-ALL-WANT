@@ -276,6 +276,22 @@ class WikiSyncTests(unittest.TestCase):
         self.assertNotEqual(completed.returncode, 0)
         self.assertNotIn("Traceback", completed.stderr)
 
+    def test_cited_paths_normalize_windows_forms_and_resolve_exact_case(self):
+        (self.base / "scripts").mkdir()
+        (self.base / "scripts/a.py").write_text("x = 1\n", encoding="utf-8")
+        for cited in ("scripts\\a.py", "./scripts/a.py", "scripts//./a.py"):
+            with self.subTest(cited=cited):
+                self.assertEqual(common.normalize_cited_path(cited), "scripts/a.py")
+                self.assertEqual(common.exact_case_path(str(self.base), cited), str(self.base / "scripts/a.py"))
+        for outside in ("/etc/a.py", "C:\\x\\a.py", "c:/x/a.py", "scripts/D:/a.py", "../a.py",
+                        "scripts/../../a.py", "\\\\server\\share\\a.py", ""):
+            with self.subTest(outside=outside), self.assertRaises(ValueError):
+                common.exact_case_path(str(self.base), outside)
+        # A case-insensitive file system accepts these; the directory listing comparison does not.
+        for wrong_case in ("Scripts/a.py", "scripts/A.py", "scripts/a.PY", "scripts/missing.py"):
+            with self.subTest(wrong_case=wrong_case):
+                self.assertIsNone(common.exact_case_path(str(self.base), wrong_case))
+
 
 REVIEWER_FALSE_POSITIVE_CORPUS = """# Agent Memory — synthetic negatives taken from the goldfish reviews
 
