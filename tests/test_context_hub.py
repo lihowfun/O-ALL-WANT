@@ -343,6 +343,155 @@ class ContextHubTests(unittest.TestCase):
         self.assertIn("NEEDLE", packet["results"][0]["excerpt"])
         self.assertIsNotNone(packet["continuation"])
 
+    def test_recall_default_output_is_byte_identical(self):
+        # Byte-golden of the default mode, recorded before --index existed. A deliberate
+        # change to default recall output must update these strings on purpose.
+        self.memory.parent.mkdir()
+        self.memory.write_text("# Memory\n---\n\n## [2026-10-28] [DECISION] Keep recall bounded\nContext line one.\n"
+                               "The needle sits on the third line of this entry.\n\n"
+                               "## [2026-10-27] [NOTE] Second needle entry\nDetails without the word.\n", encoding="utf-8")
+        (self.docs / "Topic.md").write_text("---\ntitle: Recall Topic\n---\n# Recall Topic\n\nBackground paragraph.\n"
+                                            "A Needle in the knowledge page.\n", encoding="utf-8")
+        first = (".agents/memory.md:4\n## [2026-10-28] [DECISION] Keep recall bounded\nContext line one.\n"
+                 "The needle sits on the third line of this entry.\n\n")
+        golden = {
+            "text": (first + ".agents/memory.md:8\n## [2026-10-27] [NOTE] Second needle entry\nDetails without the word.\n\n"
+                     "docs/knowledge/Topic.md:1\n---\ntitle: Recall Topic\n---\n# Recall Topic\n\nBackground paragraph.\n"
+                     "A Needle in the knowledge page.\n"),
+            "json": ('{"schema_version":1,"results":[{"source":".agents/memory.md","line":4,"kind":"memory",'
+                     '"excerpt":"## [2026-10-28] [DECISION] Keep recall bounded\\nContext line one.\\nThe needle sits on '
+                     'the third line of this entry.","truncated":false,"continuation":null},{"source":".agents/memory.md",'
+                     '"line":8,"kind":"memory","excerpt":"## [2026-10-27] [NOTE] Second needle entry\\nDetails without the '
+                     'word.","truncated":false,"continuation":null},{"source":"docs/knowledge/Topic.md","line":1,'
+                     '"kind":"knowledge","excerpt":"---\\ntitle: Recall Topic\\n---\\n# Recall Topic\\n\\nBackground '
+                     'paragraph.\\nA Needle in the knowledge page.","truncated":false,"continuation":null}],'
+                     '"truncated":false,"continuation":null}\n'),
+            "paged": first + "Next cursor: WzEsMSwiMDk4ODFmNmVkOTMzNjBhMmY2YWQ4MWY0IiwiMTA3YTE5NDNlMzU4ZDIzODI5MmZlNzRiIl0\n",
+        }
+        for name, kwargs in (("text", {}), ("json", {"json_out": True}), ("paged", {"limit": 1})):
+            with self.subTest(output=name):
+                self.assertEqual(self.quiet(hub.memory_recall, "needle", **kwargs)[1], golden[name])
+
+    def test_recall_index_rows_cite_match_line_and_fit_max_chars(self):
+        self.memory.parent.mkdir()
+        entries = [f"## [2026-10-{number + 10}] [NOTE] entry {number}\nfiller line\n" + "x" * 300
+                   + f"\nThe NEEDLE line {number} " + "y" * 400 + "\n" for number in range(12)]
+        self.memory.write_text("# Memory\n---\n\n" + "\n".join(entries), encoding="utf-8")
+        lines = self.memory.read_text(encoding="utf-8").split("\n")
+        rows, cursor = [], None
+        for _ in range(12):
+            _, output = self.quiet(hub.memory_recall, "needle", limit=5, cursor=cursor, max_chars=900,
+                                   json_out=True, index=True)
+            self.assertLessEqual(len(output), 900)
+            packet = json.loads(output)
+            self.assertEqual(packet["mode"], "index")
+            rows += packet["results"]
+            cursor = packet["continuation"]
+            if not cursor:
+                break
+        self.assertEqual(len(rows), 12)
+        for number, row in enumerate(rows):
+            self.assertEqual((row["kind"], row["date"], row["tag"], row["title"]),
+                             ("memory", f"2026-10-{number + 10}", "NOTE", f"entry {number}"))
+            self.assertTrue(row["match"].startswith(f"The NEEDLE line {number} "))
+            self.assertEqual(len(row["match"]), 120)
+            self.assertIn("NEEDLE", lines[row["line"] - 1])
+            self.assertEqual(lines[row["entry_line"] - 1], f"## [2026-10-{number + 10}] [NOTE] entry {number}")
+            self.assertEqual(row["entry_chars"], len(entries[number].rstrip()))
+        _, text = self.quiet(hub.memory_recall, "needle", max_chars=600, index=True)
+        self.assertLessEqual(len(text), 600)
+        header, quote = text.splitlines()[:2]
+        self.assertEqual(header, f".agents/memory.md:{rows[0]['line']}  2026-10-10 [NOTE] entry 0  "
+                                 f"({rows[0]['entry_chars']} chars)")
+        self.assertEqual(quote, "  > " + rows[0]["match"])
+        self.assertIn("Next cursor: ", text)
+        completed = self.cli("memory", "recall", "needle", "--index", "--limit", "1")
+        self.assertEqual(completed.returncode, 0, completed.stdout)
+        self.assertIn("  > The NEEDLE line 0 ", completed.stdout)
+
+    def test_recall_index_cursor_is_refused_by_default_mode(self):
+        self.memory.parent.mkdir()
+        self.memory.write_text("# Memory\n---\n## [2026-10-28] [NOTE] needle one\n## [2026-10-27] [NOTE] needle two\n",
+                               encoding="utf-8")
+        cursors = {}
+        for index in (True, False):
+            _, output = self.quiet(hub.memory_recall, "needle", limit=1, json_out=True, index=index)
+            cursors[index] = json.loads(output)["continuation"]
+        self.assertNotEqual(cursors[True], cursors[False])
+        for index in (True, False):
+            with self.subTest(index=index), self.assertRaisesRegex(ValueError, "Invalid recall cursor"):
+                self.quiet(hub.memory_recall, "needle", cursor=cursors[not index], index=index)
+            _, output = self.quiet(hub.memory_recall, "needle", cursor=cursors[index], json_out=True, index=index)
+            self.assertEqual(len(json.loads(output)["results"]), 1)
+        self.assertNotEqual(self.cli("memory", "recall", "needle", "--cursor", cursors[True]).returncode, 0)
+        self.assertNotEqual(self.cli("memory", "recall", "needle", "--index", "--cursor", cursors[False]).returncode, 0)
+
+    def test_recall_index_knowledge_page_row_uses_title_and_matched_line(self):
+        (self.docs / "Titled.md").write_text("---\ntitle: Front Title\n---\n# Heading Title\n\nintro\nA needle here.\n",
+                                             encoding="utf-8")
+        (self.docs / "Headed.md").write_text("intro line\n# Heading Only\n\nneedle on line four\n", encoding="utf-8")
+        (self.docs / "Plain_Page.md").write_text("no heading\nneedle\n", encoding="utf-8")
+        _, output = self.quiet(hub.memory_recall, "needle", json_out=True, index=True)
+        rows = {row["source"]: row for row in json.loads(output)["results"]}
+        expected = {"docs/knowledge/Titled.md": ("Front Title", 7, "A needle here."),
+                    "docs/knowledge/Headed.md": ("Heading Only", 4, "needle on line four"),
+                    "docs/knowledge/Plain_Page.md": ("Plain Page", 2, "needle")}
+        self.assertEqual(set(rows), set(expected))
+        for source, (title, line, match) in expected.items():
+            row = rows[source]
+            self.assertEqual((row["kind"], row["date"], row["tag"], row["entry_line"]), ("knowledge", None, None, 1))
+            self.assertEqual((row["title"], row["line"], row["match"]), (title, line, match))
+        _, text = self.quiet(hub.memory_recall, "needle", index=True)
+        self.assertIn("docs/knowledge/Titled.md:7  Front Title  (", text)
+        self.assertIn("  > A needle here.", text)
+        self.assertNotIn("None", text)
+
+    def test_recall_index_match_window_keeps_a_long_query_match(self):
+        # CM-05: the window is max(120, len(query) + 40), so a long query is never cut.
+        query = " ".join(["long recall query segment"] * 4)
+        self.assertGreater(len(query), 80)
+        line = "lead " * 80 + query + " tail" * 80
+        self.memory.parent.mkdir()
+        self.memory.write_text("# Memory\n---\n## [2026-10-28] [NOTE] long\n" + line + "\n", encoding="utf-8")
+        (self.docs / "Long.md").write_text("# Long\n\n" + line + "\n", encoding="utf-8")
+        _, output = self.quiet(hub.memory_recall, query.upper(), json_out=True, index=True)
+        rows = json.loads(output)["results"]
+        self.assertEqual([(row["source"], row["line"]) for row in rows],
+                         [(".agents/memory.md", 4), ("docs/knowledge/Long.md", 3)])
+        for row in rows:
+            self.assertIn(query, row["match"])
+            self.assertGreater(len(row["match"]), 120)
+            self.assertLessEqual(len(row["match"]), len(query) + 40)
+        _, text = self.quiet(hub.memory_recall, query, index=True)
+        quotes = [row for row in text.splitlines() if row.startswith("  > ")]
+        self.assertEqual(len(quotes), 2)
+        for quote in quotes:
+            self.assertIn(query, quote)
+        # A row whose complete match cannot fit is refused, never cut.
+        self.memory.write_text("# Memory\n---\n## [2026-10-28] [NOTE] longest\n" + "z" * 480 + "\n", encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "too small"):
+            self.quiet(hub.memory_recall, "z" * 480, max_chars=512, index=True)
+
+    def test_recall_index_fixture_byte_counts(self):
+        # Static-measured output sizes on a fixed fixture, not a model benchmark: 30
+        # entries of about 1.5 KB. Only "index is shorter" is asserted as a property;
+        # the pinned sizes record the evidence and change only with the output format.
+        self.memory.parent.mkdir()
+        filler = "Context words for a realistic entry body. " * 17
+        entries = [f"## [2026-10-{number % 28 + 1:02d}] [NOTE] fixture entry {number}\n{filler}\n"
+                   f"The needle detail {number} sits mid entry.\n{filler}\n" for number in range(30)]
+        self.memory.write_text("# Memory\n---\n\n" + "\n".join(entries), encoding="utf-8")
+        sizes = {}
+        for index in (False, True):
+            for json_out in (False, True):
+                _, output = self.quiet(hub.memory_recall, "needle", limit=30, max_chars=1000000,
+                                       json_out=json_out, index=index)
+                sizes[("index" if index else "default", "json" if json_out else "text")] = len(output.encode("utf-8"))
+        for form in ("text", "json"):
+            self.assertLess(sizes[("index", form)], sizes[("default", form)])
+        self.assertEqual(sizes, {("default", "text"): 31079, ("default", "json"): 32810,
+                                 ("index", "text"): 3350, ("index", "json"): 6054})
+
 
 if __name__ == "__main__":
     unittest.main()

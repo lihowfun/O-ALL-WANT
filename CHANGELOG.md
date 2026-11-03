@@ -26,6 +26,14 @@ All notable changes to this project will be documented in this file.
 - `docs/SKILL_INTAKE.md`: the official process for adding skills from now on (owner decisions
   D1-D19), with what is automated today, planned, or needs the owner, and how to operate it from
   the web page, the terminal menu and the CLI; linked from both READMEs.
+- OAW-15 (food: claude-mem, index-then-fetch recall): `context_hub.py memory recall --index` returns
+  one row per hit (`source:line` of the match, date, tag or page title, entry size, and a `match`
+  window of at most max(120, query length + 40) characters that holds the complete match) under the
+  same `--limit`, `--max-chars` and cursor rules; the mode is bound into the cursor hash, so a cursor
+  from one mode is refused by the other. CLI only: documented in `--help` and
+  `docs/CLI_Reference.md`; no skill text changed. Default recall output is unchanged and pinned by a
+  byte-golden test. Evidence: static fixture output sizes (30 entries of about 1.5 KB: 3,350 vs
+  31,079 bytes of text), not a model benchmark; no improvement is claimed.
 
 ### Changed
 

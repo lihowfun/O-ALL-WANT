@@ -41,10 +41,12 @@ python3 scripts/context_hub.py get TOPIC
 python3 scripts/context_hub.py annotate TOPIC NOTE
 python3 scripts/context_hub.py memory add NOTE
 python3 scripts/context_hub.py memory show [--last N]
-python3 scripts/context_hub.py memory recall QUERY [--limit N] [--cursor TOKEN] [--max-chars N] [--json]
+python3 scripts/context_hub.py memory recall QUERY [--limit N] [--cursor TOKEN] [--max-chars N] [--json] [--index]
 ```
 
 Recall bounds the complete rendered output and returns continuation when records or excerpts remain. Keep the same query/options for continuation. Source positions and revisions identify evidence, not verified truth. The legacy `bootstrap`, `setup`, `context --lane ...`, and `lesson` conveniences remain available through `--help`; v2 policy does not require them.
+
+`--index` returns one short row per hit instead of an excerpt: `source:line` of the matching line, the memory entry's date, tag and title (for a knowledge page: its frontmatter title, first `# ` heading or file name), the entry's size in characters, and a `match` window from the matching line of at most max(120, query length + 40) characters that always holds the complete match. Text output prints two lines per hit; JSON rows also carry `entry_line` and `kind`, and the packet adds `"mode": "index"`. `--limit`, `--max-chars` and continuation work as in the default mode. A cursor is bound to its mode, so the other mode refuses it. Read the cited line in the source for the full entry.
 
 `memory add`, `lesson` and `annotate` refuse a note that contains a credential: a vendor-prefixed token (GitHub, GitLab, Slack, OpenAI, Anthropic, AWS access key ID, Google, Stripe, Hugging Face, npm, Docker Hub, SendGrid, DigitalOcean, Shopify, PyPI, JWT), a PEM private-key header, a Slack or Discord webhook URL, a password in a URL's userinfo, or an AWS secret access key or session token next to its key name. The check is on by default and has no override flag. A refused write exits 1, names the matched pattern ids without printing the value, and writes nothing; use a placeholder such as `<GITHUB_PAT>` or `scheme://user:${DB_PASS}@host`. Generic `password=`/`TOKEN=` assignments are not checked. Only these CLI writes are guarded: a direct edit of `.agents/memory.md` bypasses the check, and a refused value is already in the command line and the host transcript.
 
