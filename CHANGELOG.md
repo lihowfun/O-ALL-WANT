@@ -26,6 +26,13 @@ All notable changes to this project will be documented in this file.
 - `docs/SKILL_INTAKE.md`: the official process for adding skills from now on (owner decisions
   D1-D19), with what is automated today, planned, or needs the owner, and how to operate it from
   the web page, the terminal menu and the CLI; linked from both READMEs.
+- OAW-01 (from microsoft/TokenEconomizer, Apache-2.0): `oaw_common.resolve_cli()` returns the
+  argv that starts a CLI with `shell=False`. It searches only absolute `PATH` entries, never the
+  current directory. On Windows it reads an npm `.cmd`/`.ps1` shim (at most 8 KB) and starts its
+  `node.exe` + script or native `.exe` inside the shim's `node_modules`, and refuses any other
+  batch file, so cmd.exe never parses the arguments again. `resolver_sha256()` hashes the
+  resolver source for run manifests. No runner uses it yet; frozen eval contracts are unchanged.
+  Evidence: static fixtures only.
 
 ### Changed
 
