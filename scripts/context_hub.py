@@ -17,8 +17,8 @@ import os
 import re
 from datetime import datetime
 from oaw_common import (
-    append_annotation, atomic_write, confined_path, locked_update,
-    validate_topic_id,
+    append_annotation, atomic_write, confined_path, evidence_write_refusal,
+    locked_update, validate_topic_id,
 )
 
 # ─── Configuration ────────────────────────────────────────────────────────────
@@ -44,6 +44,13 @@ def _locked_write(filepath, content):
 def _topic_path(topic):
     validate_topic_id(topic, allow_meta=True)
     return confined_path(BASE_DIR, DOCS_DIR, f"{topic}.md")
+
+
+def _refuse_unsafe_note(note):
+    """Refuse an evidence write before any file is opened; the note is never echoed."""
+    refusal = evidence_write_refusal(note)
+    if refusal:
+        raise ValueError(refusal)
 
 
 def _strip_tag_prefix(note):
@@ -254,6 +261,7 @@ def get(topic):
 
 def annotate(topic, note):
     """Annotate a knowledge topic with a structured finding."""
+    _refuse_unsafe_note(note)
     file_path = _topic_path(topic)
     if not os.path.exists(file_path):
         print(f"Topic '{topic}' not found. Cannot annotate.")
@@ -285,7 +293,8 @@ def annotate(topic, note):
 # ─── Memory ───────────────────────────────────────────────────────────────────
 
 def memory_add(note):
-    """Add a structured entry to the rolling memory."""
+    """Add a structured entry to the rolling memory (lesson writes through here too)."""
+    _refuse_unsafe_note(note)
     timestamp = datetime.now().strftime("%Y-%m-%d")
 
     # Auto-detect tag
@@ -366,11 +375,42 @@ def _decode_recall_cursor(cursor, query_hash, snapshot):
     return data[1]
 
 
+_MEMORY_HEADER = re.compile(r"## \[([^\]\n]*)\][ \t]*(?:\[(\w+)\])?[ \t]*(.*)")
+
+
+# Adapted from claude-mem plugin/skills/mem-search/SKILL.md:35-54 (Apache-2.0); modified: index-then-fetch re-implemented as a recall mode whose fetch is a host Read of the cited line.
+def _index_row(label, kind, content, entry_start, entry, match, title, width):
+    """One recall --index row: the match line, the entry header or page title, a match window.
+
+    The window stays on the matched line, holds the complete match and is at
+    most width characters; width leaves room for the whole query.
+    """
+    date = tag = None
+    if kind == "memory":
+        first = entry.split("\n", 1)[0]
+        header = _MEMORY_HEADER.fullmatch(first)
+        date, tag, title = header.groups() if header else (None, None, first[3:])
+    line_start = entry.rfind("\n", 0, match.start()) + 1
+    line_end = entry.find("\n", match.end())
+    line_end = len(entry) if line_end < 0 else line_end
+    left = max(line_start, min(match.start() - (width - len(match.group())) // 2, line_end - width))
+    right = min(line_end, left + width)
+    window = entry[left:match.start()].lstrip() + match.group() + entry[match.end():right].rstrip()
+    return {"source": label, "line": content.count("\n", 0, entry_start + match.start()) + 1,
+            "entry_line": content.count("\n", 0, entry_start) + 1, "kind": kind, "date": date, "tag": tag,
+            "title": title.strip()[:120], "match": window, "entry_chars": len(entry)}
+
+
 def _render_recall(packet, json_out):
     if json_out:
         return json.dumps(packet, ensure_ascii=False, separators=(",", ":"))
     lines = []
     for item in packet["results"]:
+        if packet.get("mode") == "index":
+            heading = " ".join(part for part in (item["date"], item["tag"] and f"[{item['tag']}]", item["title"]) if part)
+            lines.append(f"{item['source']}:{item['line']}  {heading}  ({item['entry_chars']} chars)")
+            lines.append(f"  > {item['match']}")
+            continue
         lines.append(f"{item['source']}:{item['line']}")
         lines.append(item["excerpt"])
         if item["truncated"]:
@@ -383,13 +423,15 @@ def _render_recall(packet, json_out):
     return "\n".join(lines).rstrip()
 
 
-def memory_recall(query, limit=8, cursor=None, max_chars=12000, json_out=False):
+def memory_recall(query, limit=8, cursor=None, max_chars=12000, json_out=False, index=False):
     """Return bounded, cited excerpts; a cursor continues at the next entry.
 
     An entry never contributes more than 2,000 characters. The complete printed
     response (including JSON framing and its newline) respects max_chars. An
     entry's continuation cites its full source; the packet's continuation pages
     through additional matching entries. Cursors reject changed source snapshots.
+    With index=True each hit is one short row instead of an excerpt. The mode is
+    bound into the cursor, so a cursor from one mode is refused by the other.
     """
     if not query.strip() or len(query) > 512:
         raise ValueError("Recall requires a non-empty query of at most 512 characters.")
@@ -414,10 +456,18 @@ def memory_recall(query, limit=8, cursor=None, max_chars=12000, json_out=False):
             chunks = [(match.start(), starts[i + 1].start() if i + 1 < len(starts) else len(content)) for i, match in enumerate(starts)]
         else:
             chunks = [(0, len(content))]
+        title = None
+        if index and not memory:
+            metadata, body = _parse_frontmatter(content)
+            title = _page_title(os.path.basename(path), body, metadata)
         for start, end in chunks:
             entry = content[start:end].rstrip()
             match = pattern.search(entry)
             if match is None:
+                continue
+            if index:
+                hits.append(_index_row(label, "memory" if memory else "knowledge", content, start, entry, match,
+                                       title, max(120, len(query) + 40)))
                 continue
             # Keep each entry independent even when adjacent lines all match.
             excerpt_start = max(0, match.start() - 200)
@@ -436,14 +486,28 @@ def memory_recall(query, limit=8, cursor=None, max_chars=12000, json_out=False):
                 scan(os.path.join(docs, filename), "docs/knowledge/" + filename)
 
     snapshot = digest.hexdigest()[:24]
-    query_hash = hashlib.sha256(query.encode("utf-8")).hexdigest()[:24]
+    # The default hash stays sha256(query), so default cursors are unchanged.
+    query_hash = hashlib.sha256((("index\0" + query) if index else query).encode("utf-8")).hexdigest()[:24]
     start = _decode_recall_cursor(cursor, query_hash, snapshot)
     if start > len(hits):
         raise ValueError("Recall cursor is beyond the end of the results.")
     packet = {"schema_version": 1, "results": [], "truncated": False, "continuation": None}
-    index = start
-    while index < len(hits) and len(packet["results"]) < limit:
-        hit = dict(hits[index])
+    position = start
+    if index:
+        packet = {"schema_version": 1, "mode": "index", "results": [], "truncated": False, "continuation": None}
+        # Rows have a bounded length, so whole rows are added while the response fits.
+        while position < len(hits) and len(packet["results"]) < limit:
+            more = position + 1 < len(hits)
+            proposed = dict(packet, results=packet["results"] + [hits[position]], truncated=more,
+                            continuation=_recall_cursor(position + 1, query_hash, snapshot) if more else None)
+            if len(_render_recall(proposed, json_out)) + 1 > max_chars:
+                if not packet["results"]:
+                    raise ValueError("--max-chars is too small for this result's provenance; increase it.")
+                break
+            packet = proposed
+            position += 1
+    while not index and position < len(hits) and len(packet["results"]) < limit:
+        hit = dict(hits[position])
 
         def candidate(length):
             excerpt = hit["text"][:length]
@@ -451,10 +515,10 @@ def memory_recall(query, limit=8, cursor=None, max_chars=12000, json_out=False):
             item = {"source": hit["source"], "line": hit["line"], "kind": hit["kind"],
                     "excerpt": excerpt, "truncated": truncated,
                     "continuation": {"source": hit["source"], "line": hit["line"]} if truncated else None}
-            more = index + 1 < len(hits)
+            more = position + 1 < len(hits)
             return {"schema_version": 1, "results": packet["results"] + [item],
                     "truncated": more or any(row["truncated"] for row in packet["results"]) or truncated,
-                    "continuation": _recall_cursor(index + 1, query_hash, snapshot) if more else None}
+                    "continuation": _recall_cursor(position + 1, query_hash, snapshot) if more else None}
 
         fitting = None
         for trim_prefix in (False, True):
@@ -485,9 +549,9 @@ def memory_recall(query, limit=8, cursor=None, max_chars=12000, json_out=False):
                 raise ValueError("--max-chars is too small for this result's provenance; increase it.")
             break
         packet = fitting
-        index += 1
-    if index < len(hits):
-        packet["continuation"] = _recall_cursor(index, query_hash, snapshot)
+        position += 1
+    if position < len(hits):
+        packet["continuation"] = _recall_cursor(position, query_hash, snapshot)
         packet["truncated"] = True
     output = _render_recall(packet, json_out)
     if len(output) + 1 > max_chars:
@@ -787,6 +851,10 @@ Commands:
     p_recall.add_argument("--max-chars", type=int, default=12000,
                           help="Total printed character budget, including JSON framing (512-1000000).")
     p_recall.add_argument("--json", action="store_true", dest="json_out", help="Emit structured provenance and continuation.")
+    p_recall.add_argument("--index", action="store_true",
+                          help="One short row per hit (source:line of the match, date, tag or title, entry size, "
+                               "match window) instead of excerpts; read the cited line for the full entry. "
+                               "Cursors are bound to the mode.")
 
     # Lesson
     p_lesson = subparsers.add_parser("lesson", help="Record a lesson learned (mistake + correction).")
@@ -829,7 +897,7 @@ Commands:
         elif args.mem_action == "show":
             memory_show(args.last)
         elif args.mem_action == "recall":
-            return memory_recall(args.query, args.limit, args.cursor, args.max_chars, args.json_out)
+            return memory_recall(args.query, args.limit, args.cursor, args.max_chars, args.json_out, index=args.index)
     elif args.command == "lesson":
         lesson(args.mistake, args.correction)
     elif args.command == "status":
