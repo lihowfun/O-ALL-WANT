@@ -10,7 +10,7 @@
 
 ```bash
 python3 scripts/oaw.py init --target /path/to/project        # 專案還沒裝 OAW 時先裝
-python3 scripts/catalog.py play --target /path/to/project    # 開本機遊戲頁（Claude、Codex 都能用）
+python3 scripts/catalog.py ui --target /path/to/project    # 開本機遊戲頁（Claude、Codex 都能用）
 python3 scripts/catalog.py menu --target /path/to/project    # 同樣的功能，用終端數字選單（Codex／沒有瀏覽器時）
 python3 scripts/oaw_status.py --project /path/to/project     # 只看目前狀態，不做任何動作
 ```

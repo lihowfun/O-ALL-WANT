@@ -1,4 +1,4 @@
-"""Local game page (`catalog.py play`) and terminal menu (`catalog.py menu`) for the OAW catalog.
+"""Local web page (`catalog.py ui`) and terminal menu (`catalog.py menu`) for the OAW catalog.
 
 Both front ends call the same action layer, which calls only the catalog
 engine (catalog.py, catalog_core.py); both display `.oaw/catalog/view.json`
@@ -10,7 +10,7 @@ headers are ever sent, actions are JSON POSTs only, and the static files carry
 a strict Content-Security-Policy. Food-derived strings are data: JSON responses
 escape <, > and & so no payload is ever markup, and the page sets text with
 textContent only. Owner confirmation codes live only in this process's memory
-and are printed on the interactive terminal that runs `play` or `menu`; they
+and are printed on the interactive terminal that runs `ui` or `menu`; they
 never appear in an API response or on disk, and a session stops accepting codes
 after three wrong ones. Without an interactive terminal no code is issued.
 """
@@ -316,7 +316,7 @@ class Job:
         return data
 
 
-class PlayApp:
+class UiApp:
     """Runs one engine action at a time in a background thread."""
 
     def __init__(self, target: Path, token: str):
@@ -333,7 +333,7 @@ class PlayApp:
             self.current, self.jobs[job.id] = job, job
             for old in list(self.jobs)[:-KEEP_JOBS]:
                 del self.jobs[old]
-        threading.Thread(target=self._run, args=(job,), name=f"oaw-play-{action}", daemon=True).start()
+        threading.Thread(target=self._run, args=(job,), name=f"oaw-ui-{action}", daemon=True).start()
         return job
 
     def _run(self, job: Job):
@@ -342,7 +342,7 @@ class PlayApp:
         except Exception as exc:  # an engine bug must not kill the server or leak a traceback to the page
             traceback.print_exc()
             envelope = {"ok": False, "code": 2, "status": "error", "error": f"internal error: {type(exc).__name__}",
-                        "error_zh": "內部錯誤（細節在啟動 play 的終端機）。", "lines": []}
+                        "error_zh": "內部錯誤（細節在啟動 ui 的終端機）。", "lines": []}
         job.finish(envelope)
 
     def busy(self):
@@ -362,8 +362,8 @@ class PlayApp:
 
 # --------------------------------------------------------------------------- HTTP
 
-class PlayHandler(http.server.BaseHTTPRequestHandler):
-    server_version = "oaw-play/0"
+class UiHandler(http.server.BaseHTTPRequestHandler):
+    server_version = "oaw-catalog-ui/0"
     sys_version = ""
     timeout = 30
 
@@ -468,12 +468,12 @@ class PlayHandler(http.server.BaseHTTPRequestHandler):
     do_PUT = do_DELETE = do_PATCH = do_OPTIONS = do_HEAD = do_TRACE = do_CONNECT = _refuse
 
 
-class PlayServer(http.server.ThreadingHTTPServer):
+class UiServer(http.server.ThreadingHTTPServer):
     daemon_threads = True
     allow_reuse_address = False
 
-    def __init__(self, app: PlayApp, port: int = 0):
-        super().__init__(("127.0.0.1", port), PlayHandler)
+    def __init__(self, app: UiApp, port: int = 0):
+        super().__init__(("127.0.0.1", port), UiHandler)
         self.app = app
         bound = self.server_address[1]
         self.allowed_hosts = {f"127.0.0.1:{bound}", f"localhost:{bound}"}
@@ -481,15 +481,15 @@ class PlayServer(http.server.ThreadingHTTPServer):
         self.url = f"http://127.0.0.1:{bound}/#t={app.token}"
 
 
-def start_server(target: Path, *, port: int = 0, token: str | None = None, auto_effect: bool = True) -> PlayServer:
+def start_server(target: Path, *, port: int = 0, token: str | None = None, auto_effect: bool = True) -> UiServer:
     """Bind 127.0.0.1 and serve in a background thread; the caller stops it with shutdown()."""
     try:
         catalog.refresh_view(target)
     except (catalog.CatalogError, OSError, ValueError) as exc:
         print(f"catalog warning: view.json not refreshed: {exc}", file=sys.stderr)
-    app = PlayApp(target, token or secrets.token_urlsafe(32))
-    server = PlayServer(app, port)
-    threading.Thread(target=server.serve_forever, kwargs={"poll_interval": 0.25}, name="oaw-play-http", daemon=True).start()
+    app = UiApp(target, token or secrets.token_urlsafe(32))
+    server = UiServer(app, port)
+    threading.Thread(target=server.serve_forever, kwargs={"poll_interval": 0.25}, name="oaw-ui-http", daemon=True).start()
     if auto_effect and (target / oaw.MANIFEST_PATH).is_file():
         view, _note = oaw_status.load_view(target)
         effect = ((view or {}).get("my_oaw") or {}).get("effect")
@@ -498,9 +498,9 @@ def start_server(target: Path, *, port: int = 0, token: str | None = None, auto_
     return server
 
 
-def cmd_play(target: Path, *, open_browser: bool = True, port: int = 0) -> dict:
+def cmd_ui(target: Path, *, open_browser: bool = True, port: int = 0) -> dict:
     server = start_server(target, port=port)
-    print(f"OAW 消化遊戲：{server.url}", flush=True)
+    print(f"OAW 消化系統：{server.url}", flush=True)
     print("只接受本機 127.0.0.1；網址裡是這次的通行碼，不要分享。確認碼會印在這個終端機。按 Ctrl+C 結束。", flush=True)
     if open_browser:
         try:
@@ -516,7 +516,7 @@ def cmd_play(target: Path, *, open_browser: bool = True, port: int = 0) -> dict:
     finally:
         server.shutdown()
         server.server_close()
-    return {"status": "stopped", "lines": ["OAW 消化遊戲已結束（play stopped）"]}
+    return {"status": "stopped", "lines": ["OAW 消化系統網頁已結束（ui stopped）"]}
 
 
 # --------------------------------------------------------------------------- terminal menu
@@ -592,7 +592,7 @@ class Menu:
                 view = self.view()
                 funnel = view.get("funnel") or {}
                 self.write("")
-                self.write(f"OAW 消化遊戲（終端選單） · {self.target}")
+                self.write(f"OAW 消化系統（終端選單） · {self.target}")
                 self.write(oaw_status.my_oaw_lines(view)[0] + f" · 食物 {funnel.get('submitted', 0)} · 已試吃 {funnel.get('tasted', 0)}"
                            f" · 實測 {funnel.get('measured', 0)} · 已吸收成分 {funnel.get('absorbed_parts', 0)}")
                 for key, label, _handler in self.items:

@@ -99,7 +99,7 @@ ERRORS_ZH = (
     (r"needs an interactive terminal", "這一步要你本人在互動式終端機上確認（PowerShell／cmd，或 Git Bash 裡用 winpty）。"),
     (r"confirmation code does not match|confirmation code has expired|No pending .* confirmation|code was refused",
      "確認碼不對或已過期（每個碼只能試一次）：請重新送出取得新的碼。"),
-    (r"Too many wrong confirmation codes", "確認碼錯太多次：這次 play 不再接受確認，請重新啟動 catalog.py play。"),
+    (r"Too many wrong confirmation codes", "確認碼錯太多次：這次啟動不再接受確認，請重新啟動 catalog.py ui 或 menu。"),
     (r"a confirmation code was shown on the terminal", "確認碼已印在終端機上。"),
     (r"A (?:triage|removal) reason is required|reason is required", "請寫下原因（會記進決定紀錄）。"),
     (r"Restore would overwrite", "還原會蓋掉不屬於目前安裝層的檔案（你自己的或自訂的檔案）：先移開或改名，或留在目前版本。"),

@@ -16,7 +16,7 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_TEST_MODULES = ("test_context_hub", "test_gate", "test_improvement", "test_install", "test_skills", "test_wiki_sync",
                          "test_egm_pilot", "test_egm_local", "test_status", "test_egm_integration",
-                         "test_catalog_core", "test_catalog", "test_catalog_play")
+                         "test_catalog_core", "test_catalog", "test_catalog_ui")
 MINIMUM_TESTS = 255  # POSIX count; Windows adds junction cases.
 SUMMARY_MARKER = "OAW-TEST-SUMMARY "
 
@@ -104,7 +104,7 @@ def cli_check():
                 "context_hub.py": ("memory", "search"), "wiki_sync.py": ("refresh", "lint"),
                 "improvement.py": ("propose", "compare", "decide"),
                 "catalog.py": ("add", "taste", "import-report", "plan", "policy", "absorb", "remove", "restore", "effect", "view", "scout",
-                               "readd", "forget", "play", "menu")}
+                               "readd", "forget", "ui", "menu")}
     for script, commands in required.items():
         process = run([sys.executable, str(ROOT / "scripts" / script), "--help"])
         if process.returncode or any(command not in process.stdout for command in commands):

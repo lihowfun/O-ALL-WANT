@@ -225,11 +225,11 @@ Full list: [CLI Reference](docs/CLI_Reference.md) · [Self-improvement guide](do
 Feed a skill repository to OAW like food. It is tasted for free (sealed outside the project, read-only, never executed) and split into parts to absorb, excrete or hold. Every absorption or removal becomes a named build that you can restore in one step.
 
 ```bash
-python3 scripts/catalog.py play --target /path/to/project   # local game page on 127.0.0.1
+python3 scripts/catalog.py ui --target /path/to/project   # local game page on 127.0.0.1
 python3 scripts/catalog.py menu --target /path/to/project   # the same actions as a terminal menu
 ```
 
-v0 plans paid tests but does not run them, so quality always shows as "not measured". How to play, what each button does, safety rules and where data lives: [CATALOG_PLAY](docs/CATALOG_PLAY.md) (Traditional Chinese).
+v0 plans paid tests but does not run them, so quality always shows as "not measured". How to play, what each button does, safety rules and where data lives: [SKILL_INTAKE](docs/SKILL_INTAKE.md) (Traditional Chinese).
 
 ---
 

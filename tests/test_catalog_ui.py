@@ -1,4 +1,4 @@
-"""Catalog game page and terminal menu: loopback server guards, API round trip, markup safety, menu smoke.
+"""Catalog web page and terminal menu: loopback server guards, API round trip, markup safety, menu smoke.
 
 Offline: a local file:// git fixture food and an imported report folder. The
 server is started in-process on 127.0.0.1 and spoken to with http.client.
@@ -22,7 +22,7 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import catalog  # noqa: E402
-import catalog_play as play  # noqa: E402
+import catalog_ui_server as ui  # noqa: E402
 import oaw  # noqa: E402
 import oaw_status  # noqa: E402
 
@@ -37,10 +37,10 @@ def skill_md(name):
             "Write one note per decision and cite the source file.\n").encode()
 
 
-class PlayCase(unittest.TestCase):
+class UiCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.template_dir = tempfile.TemporaryDirectory(prefix="oaw-play-template-")
+        cls.template_dir = tempfile.TemporaryDirectory(prefix="oaw-ui-template-")
         cls.template = Path(cls.template_dir.name).resolve() / "project"
         oaw.apply_plan(oaw.plan_install(cls.template, "minimal", False), migrate=False)
 
@@ -49,7 +49,7 @@ class PlayCase(unittest.TestCase):
         cls.template_dir.cleanup()
 
     def setUp(self):
-        self.temporary = tempfile.TemporaryDirectory(prefix="oaw-play-")
+        self.temporary = tempfile.TemporaryDirectory(prefix="oaw-ui-")
         self.addCleanup(self.temporary.cleanup)
         self.base = Path(self.temporary.name).resolve()
         self.project = self.base / "project"
@@ -102,7 +102,7 @@ class PlayCase(unittest.TestCase):
 
     def start(self, **kwargs):
         with redirect_stderr(io.StringIO()):
-            server = play.start_server(self.project, auto_effect=kwargs.pop("auto_effect", False), **kwargs)
+            server = ui.start_server(self.project, auto_effect=kwargs.pop("auto_effect", False), **kwargs)
         self.addCleanup(server.server_close)
         self.addCleanup(server.shutdown)
         self.server, self.port, self.token = server, server.server_address[1], server.app.token
@@ -113,7 +113,7 @@ class PlayCase(unittest.TestCase):
         self.addCleanup(connection.close)
         sent = {"Host": host or f"127.0.0.1:{self.port}"}
         if token:
-            sent[play.TOKEN_HEADER] = self.token if token is True else token
+            sent[ui.TOKEN_HEADER] = self.token if token is True else token
         data = None
         if body is not None:
             data = body if isinstance(body, bytes) else json.dumps(body).encode("utf-8")
@@ -144,14 +144,14 @@ class PlayCase(unittest.TestCase):
         return envelope
 
 
-class ServerGuardTests(PlayCase):
+class ServerGuardTests(UiCase):
     def test_server_binds_loopback_on_a_free_port_with_a_session_token(self):
         server = self.start()
         self.assertEqual(server.server_address[0], "127.0.0.1")
         self.assertNotEqual(self.port, 0)
         self.assertGreaterEqual(len(self.token), 32)
         self.assertEqual(server.url, f"http://127.0.0.1:{self.port}/#t={self.token}")
-        other = play.PlayServer(play.PlayApp(self.project, "x" * 40), 0)
+        other = ui.UiServer(ui.UiApp(self.project, "x" * 40), 0)
         self.addCleanup(other.server_close)
         self.assertEqual(other.server_address[0], "127.0.0.1")
         self.assertNotEqual(other.server_address[1], self.port)
@@ -196,7 +196,7 @@ class ServerGuardTests(PlayCase):
         self.assertEqual(self.request("POST", "/api/action/view", {}, headers={"Sec-Fetch-Site": "cross-site"})[0], 403)
         self.assertEqual(self.request("POST", "/api/action/nope", {})[0], 404)
         self.assertEqual(self.request("POST", "/api/action/view", b"[1]")[0], 400)
-        self.assertEqual(self.request("POST", "/api/action/view", b"{}", headers={"Content-Length": str(play.MAX_BODY + 1)})[0], 413)
+        self.assertEqual(self.request("POST", "/api/action/view", b"{}", headers={"Content-Length": str(ui.MAX_BODY + 1)})[0], 413)
         self.assertEqual(self.request("POST", "/api/view", {})[0], 405)
         self.assertEqual(self.request("DELETE", "/api/view")[0], 405)
         status, _headers, raw = self.request("POST", "/api/action/view", {}, headers={"Origin": f"http://127.0.0.1:{self.port}",
@@ -214,7 +214,7 @@ class ServerGuardTests(PlayCase):
 
         def broken(target, params, progress):
             raise RuntimeError("secret detail C:\\Users\\someone")
-        with patch.dict(play.ACTIONS, {"view": slow, "builds": broken}):
+        with patch.dict(ui.ACTIONS, {"view": slow, "builds": broken}):
             status, _headers, raw = self.request("POST", "/api/action/view", {})
             self.assertEqual(status, 202)
             job = json.loads(raw)["job"]
@@ -242,7 +242,18 @@ class ServerGuardTests(PlayCase):
             self.assertEqual(envelope["code"], 2, (name, params))
 
 
-class MarkupSafetyTests(PlayCase):
+class NamingTests(unittest.TestCase):
+    def test_the_web_command_is_ui_with_no_old_alias(self):
+        args = catalog.parser().parse_args(["ui", "--no-browser", "--port", "0"])
+        self.assertEqual((args.command, args.no_browser, args.port), ("ui", True, 0))
+        for old in ("play",):
+            with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+                catalog.parser().parse_args([old])
+        self.assertFalse((ROOT / "scripts" / "catalog_play.py").exists())
+        self.assertTrue(callable(ui.cmd_ui))
+
+
+class MarkupSafetyTests(UiCase):
     def test_food_strings_are_escaped_in_api_payloads_and_never_markup(self):
         self.start()
         folder = self.hostile_report()
@@ -262,7 +273,7 @@ class MarkupSafetyTests(PlayCase):
         self.assertIn("<script>alert(1)</script>", report["elephant"]["what_it_does"])
         self.assertIn("<img src=x onerror=alert(2)>", report["goldfish"][0]["summary"])
         self.assertEqual(food["verdict"]["headline"], "untested")
-        self.assertEqual(play.encode_json({"a": "<\u2028>"}), b'{"a":"\\u003c\\u2028\\u003e"}')
+        self.assertEqual(ui.encode_json({"a": "<\u2028>"}), b'{"a":"\\u003c\\u2028\\u003e"}')
 
     def test_page_sets_text_only_and_loads_nothing_external(self):
         script = (UI / "app.js").read_text(encoding="utf-8")
@@ -294,7 +305,7 @@ class MarkupSafetyTests(PlayCase):
 
 
 @unittest.skipUnless(GIT, "git is required for local fixture repositories")
-class RoundTripTests(PlayCase):
+class RoundTripTests(UiCase):
     def test_feed_absorb_restore_through_the_api(self):
         self.start()
         repo = self.make_food()
@@ -395,8 +406,8 @@ class RoundTripTests(PlayCase):
         self.assertTrue(locked["error_zh"].startswith("確認碼錯太多次"))
         self.assertEqual(len(self.codes), 3)
         with patch.object(catalog, "terminal_write", return_value=False):
-            other = play.PlayApp(self.project, "y" * 40)
-            envelope = play.run_action(self.project, "policy-set", params, confirmer=other.confirmer)
+            other = ui.UiApp(self.project, "y" * 40)
+            envelope = ui.run_action(self.project, "policy-set", params, confirmer=other.confirmer)
         self.assertEqual(envelope["code"], 2)
         self.assertIn("interactive terminal", envelope["error"])
         self.assertFalse((self.project / ".oaw/catalog/policy.json").exists())
@@ -416,7 +427,7 @@ class RoundTripTests(PlayCase):
 
 
 @unittest.skipUnless(GIT, "git is required for local fixture repositories")
-class MenuTests(PlayCase):
+class MenuTests(UiCase):
     def scripted(self, answers):
         """input() replacement; the string CODE is replaced by the last terminal code."""
         queue = list(answers)
@@ -445,7 +456,7 @@ class MenuTests(PlayCase):
             "13", "1", "y", "",                         # re-add EGM: preview, then an empty reason cancels
             "42",                                       # unknown choice
             "0"])
-        result = play.cmd_menu(self.project, read=read, write=out.append)
+        result = ui.cmd_menu(self.project, read=read, write=out.append)
         self.assertEqual(result["status"], "menu")
         text = "\n".join(out)
         self.assertIn("merged:", text)
@@ -478,7 +489,7 @@ class MenuTests(PlayCase):
         self.assertIn("已離開選單", out.getvalue())
 
 
-class StatusViewTests(PlayCase):
+class StatusViewTests(UiCase):
     def test_oaw_status_shows_the_catalog_view_with_the_same_rules(self):
         self.hostile_report()
         with redirect_stdout(io.StringIO()):

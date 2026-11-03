@@ -225,11 +225,11 @@ OAW 不會偷改 host 設定。`doctor` 會把「支援」和「已啟用」分�
 把 skill repo 當成食物餵給 OAW。系統會免費試吃（封存在專案外、只讀、不執行），再拆成吸收、排掉、暫留三種成分。每次吸收或移除都會產生一個有名字、可以一鍵還原的版本。
 
 ```bash
-python3 scripts/catalog.py play --target /path/to/project   # 本機遊戲頁（127.0.0.1）
+python3 scripts/catalog.py ui --target /path/to/project   # 本機遊戲頁（127.0.0.1）
 python3 scripts/catalog.py menu --target /path/to/project   # 同樣的功能，用終端選單
 ```
 
-v0 只規劃付費實測、不執行，所以品質一律顯示「未量測」。玩法、每個按鈕的作用、安全規則和資料放在哪裡：[CATALOG_PLAY](docs/CATALOG_PLAY.md)。
+v0 只規劃付費實測、不執行，所以品質一律顯示「未量測」。玩法、每個按鈕的作用、安全規則和資料放在哪裡：[SKILL_INTAKE](docs/SKILL_INTAKE.md)。
 
 ---
 

@@ -1,4 +1,4 @@
-// OAW 消化遊戲 (catalog.py play). No frameworks, no external resources.
+// OAW 消化系統 (catalog.py ui). No frameworks, no external resources.
 // Every food-derived string is set with textContent or a text node; this file never
 // assigns markup. Display rules are kept in step with scripts/oaw_status.py.
 'use strict';
@@ -181,8 +181,8 @@
     const match = /(?:^#|[#&])t=([A-Za-z0-9_-]{20,})/.exec(location.hash);
     let token = match ? match[1] : '';
     try {
-      if (token) sessionStorage.setItem('oaw-play-token', token);
-      else token = sessionStorage.getItem('oaw-play-token') || '';
+      if (token) sessionStorage.setItem('oaw-ui-token', token);
+      else token = sessionStorage.getItem('oaw-ui-token') || '';
     } catch (e) { /* storage blocked: the token lives only in this page */ }
     if (match) {
       try { history.replaceState(null, '', location.pathname); } catch (e) { /* keep the URL as is */ }
@@ -206,8 +206,8 @@
     try {
       response = await fetch(path, init);
     } catch (e) {
-      banner('連不上本機的遊戲伺服器：它可能已經關掉了。在終端重新執行 python3 scripts/catalog.py play。');
-      throw new Error('連不上本機的遊戲伺服器');
+      banner('連不上本機的網頁伺服器：它可能已經關掉了。在終端重新執行 python3 scripts/catalog.py ui。');
+      throw new Error('連不上本機的網頁伺服器');
     }
     let data = null;
     try { data = await response.json(); } catch (e) { data = null; }
@@ -554,7 +554,7 @@
     out.append(el('p', { class: 'muted small', text: '原型 v0 只顯示計畫和預估花費，不會真的執行付費實測。' }));
     if (S.policyPending) {
       const code = el('input', { type: 'text', inputmode: 'numeric', maxlength: '6', class: 'code', id: 'policy-code', placeholder: '6 位數', autocomplete: 'off' });
-      out.append(el('p', { class: 'notice', text: '確認碼已印在啟動 catalog.py play 的終端機上（不會出現在網頁）。' }),
+      out.append(el('p', { class: 'notice', text: '確認碼已印在啟動 catalog.py ui 的終端機上（不會出現在網頁）。' }),
         el('div', { class: 'row' }, el('label', { for: 'policy-code', class: 'small', text: '確認碼' }), code,
           el('button', { type: 'button', class: 'btn primary act', text: '確認', onclick: () => confirmPolicy(code.value.trim()) }),
           el('button', { type: 'button', class: 'btn act', text: '取消', onclick: () => { S.policyPending = null; renderMy(); } })));
@@ -604,7 +604,7 @@
     if (envelope.code === 4) {
       S.policyPending = params;
       renderMy();
-      toast('確認碼已印在啟動 play 的終端機上。', 'info');
+      toast('確認碼已印在啟動 ui 的終端機上。', 'info');
     } else report(envelope, '常設預算已設定');
   }
 
@@ -1103,7 +1103,7 @@
     const answer = await ask({ title: r.creates_build ? `吸收 ${txt(food.display, 60)} 的 ${ids.length} 個成分？` : `把 ${ids.length} 個歷史提案記成待辦？`,
       lines: lines, ok: r.creates_build ? '確認吸收' : '記成待辦', reason: true });
     if (!answer) return;
-    const done = await run('absorb', { food: food.id, components: ids, apply: true, reason: answer.reason || '由遊戲頁吸收' }, r.creates_build ? '吸收中' : '記成待辦');
+    const done = await run('absorb', { food: food.id, components: ids, apply: true, reason: answer.reason || '由網頁吸收' }, r.creates_build ? '吸收中' : '記成待辦');
     if (done && done.ok) {
       S.selected.delete(food.id);
       renderCards();
@@ -1168,7 +1168,7 @@
     for (const path of preview.result.evidence || []) lines.push('刪除  ' + txt(path, 200));
     const answer = await ask({ title: `忘掉 ${txt(food.display, 60)}？`, lines: lines, ok: '確認忘掉', reason: true, danger: true });
     if (!answer) return;
-    report(await run('forget', { food: food.id, apply: true, reason: answer.reason || '由遊戲頁忘掉' }, `忘掉 ${food.id}`), `已忘掉 ${txt(food.id, 64)}`);
+    report(await run('forget', { food: food.id, apply: true, reason: answer.reason || '由網頁忘掉' }, `忘掉 ${food.id}`), `已忘掉 ${txt(food.id, 64)}`);
   }
 
   async function restoreFlow(build) {

@@ -6,8 +6,9 @@ outside the project, as a sealed tar that is read in memory and never
 extracted, executed or imported. Verdicts come from catalog_core.derive();
 stars only order the scout queue. Absorb, remove and restore preview by
 default and change the OAW-managed layer only with --apply, after a restore
-point. Paid tests are planned, never run, in v0. `play` opens the local game
-page and `menu` the same actions as a numbered terminal menu (catalog_play.py).
+point. Paid tests are planned, never run, in v0. `ui` opens the local web page
+and `menu` the same actions as a numbered terminal menu (catalog_ui_server.py).
+The official intake process both show is docs/SKILL_INTAKE.md.
 """
 from __future__ import annotations
 
@@ -37,7 +38,7 @@ SCRIPTS = Path(__file__).resolve().parent
 if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 if __name__ == "__main__":
-    # catalog_play imports `catalog`; let it reuse this module rather than load a second copy.
+    # catalog_ui_server imports `catalog`; let it reuse this module rather than load a second copy.
     sys.modules.setdefault("catalog", sys.modules[__name__])
 import catalog_core as core  # noqa: E402
 import oaw  # noqa: E402
@@ -706,7 +707,7 @@ def cmd_show(target: Path, ident: str) -> dict:
 #
 # A code is a speed bump against an agent running catalog commands on the owner's
 # behalf, not authentication. It never touches disk: the CLI shows it on its own
-# interactive terminal and reads it back in the same process; `play` and `menu`
+# interactive terminal and reads it back in the same process; `ui` and `menu`
 # keep it in memory and show it on the terminal that runs them. Without an
 # interactive stdin and stderr there is no code at all, so an agent's redirected
 # or hidden console gets a refusal. Anyone who can type into the owner's terminal
@@ -750,7 +751,7 @@ def no_terminal(action: str) -> CatalogError:
 
 
 class ConfirmationChannel:
-    """Owner codes for a long-running front end (play, menu), kept only in this process's memory.
+    """Owner codes for a long-running front end (ui, menu), kept only in this process's memory.
 
     Each code is shown on this process's interactive terminal, is bound to the
     exact settings, expires after CODE_TTL and allows one attempt. After
@@ -765,7 +766,7 @@ class ConfirmationChannel:
     def confirm(self, action: str, params_sha: str, code) -> None:
         with self.lock:
             if self.failures >= self.attempts:
-                raise CatalogError("Too many wrong confirmation codes in this session; restart catalog.py play or menu.")
+                raise CatalogError("Too many wrong confirmation codes in this session; restart catalog.py ui or menu.")
             if code is None:
                 fresh = new_code()
                 if not terminal_write(f"\nOAW owner confirmation for {action}: {fresh}\n"
@@ -1962,9 +1963,9 @@ def parser() -> argparse.ArgumentParser:
     scout_commands.add_parser("list", parents=[common])
     pick = scout_commands.add_parser("pick", parents=[common])
     pick.add_argument("ranks", nargs="+", type=int)
-    play = commands.add_parser("play", parents=[common], help="open the local game page (127.0.0.1, per-session token)")
-    play.add_argument("--no-browser", action="store_true", help="print the URL without opening a browser")
-    play.add_argument("--port", type=int, default=0, help="port on 127.0.0.1 (default: a free port)")
+    ui = commands.add_parser("ui", parents=[common], help="open the local intake pipeline page (127.0.0.1, per-session token)")
+    ui.add_argument("--no-browser", action="store_true", help="print the URL without opening a browser")
+    ui.add_argument("--port", type=int, default=0, help="port on 127.0.0.1 (default: a free port)")
     commands.add_parser("menu", parents=[common], help="the same actions as a numbered terminal menu (Codex, no browser)")
     return root
 
@@ -2012,13 +2013,13 @@ def dispatch(args) -> dict:
         if args.scout_command == "list":
             return cmd_scout_list(target)
         return cmd_scout(target)
-    if command in ("play", "menu"):
-        import catalog_play
+    if command in ("ui", "menu"):
+        import catalog_ui_server
         if command == "menu":
-            return catalog_play.cmd_menu(target)
+            return catalog_ui_server.cmd_menu(target)
         if not 0 <= args.port <= 65535:
             raise CatalogError("--port must be between 0 and 65535.")
-        return catalog_play.cmd_play(target, open_browser=not args.no_browser, port=args.port)
+        return catalog_ui_server.cmd_ui(target, open_browser=not args.no_browser, port=args.port)
     raise CatalogError(f"Unknown command {command}")
 
 

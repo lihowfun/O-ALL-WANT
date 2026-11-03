@@ -6,7 +6,7 @@ terminal, Codex included, reads the same `.oaw/progress.json`,
 `.oaw/catalog/status.json` and `.oaw/catalog/view.json`. It only reads; a missing
 or invalid file is reported, never repaired. A progress percent without a basis
 is shown as `?`. The catalog display rules here are the ones the `catalog.py
-play` page and `catalog.py menu` follow: a verdict always carries its symbol and
+ui` page and `catalog.py menu` follow: a verdict always carries its symbol and
 text, every effect line names its evidence level, quality is "未量測" without
 measured evidence, stars appear only as scout queue order, and imported reports
 are labelled 歷史證據.
@@ -460,7 +460,7 @@ def catalog_lines(view, stale=False):
     for food in foods:
         lines += food_lines(food)
     if not foods:
-        lines.append("  還沒有食物：catalog.py play 或 catalog.py menu → 投食")
+        lines.append("  還沒有食物：catalog.py ui 或 catalog.py menu → 你點名")
     lines += scout_lines(view, limit=5)
     return lines
 
