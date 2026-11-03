@@ -27,6 +27,12 @@ The path must exist with the same case on every OS: each segment is compared wit
 
 Evidence level: resolution rules are static-measured by fixture tests. Agent behavior is not measured; parity, no improvement claimed.
 
+```bash
+python3 scripts/wiki_sync.py cites scripts/a.py::Store [--json]
+```
+
+`cites` lists the notes that cite a file or symbol, using the same parser and the same raw/manual scope as `lint`. A target `Class` also matches `Class::method`; paths must match exactly, with backslashes folded. It matches note text, not code, so after a rename or delete it still lists the notes that cite the old name while `lint` reports them as unresolved. It never writes to `docs/`; refresh the listed notes yourself, then run `refresh` and `lint`. No match prints `No notes cite ...` and exits 0. Evidence level: static-measured by modify, rename and delete fixtures; agent use is not measured.
+
 ## Memory citation check (prototype)
 
 ```bash

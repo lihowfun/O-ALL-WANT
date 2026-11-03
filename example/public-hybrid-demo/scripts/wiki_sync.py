@@ -1405,6 +1405,53 @@ def promote_candidates(
     return 0
 
 
+def _citation_target(target):
+    """Split `path[::Symbol...]` into its normalized path, chain and display form."""
+    path, separator, chain = target.strip().partition("::")
+    relative = normalize_cited_path(path)
+    names = _CHAIN_SEPARATOR.split(chain) if separator else []
+    if separator and not all(re.fullmatch(r"[A-Za-z_]\w*", name) for name in names):
+        raise ValueError(f"Invalid symbol in citation target: {target}")
+    return relative, names, relative + separator + chain
+
+
+def cites(target, json_out=False):
+    """List raw notes and manual pages whose path::Symbol citations name target.
+
+    Advisory and read-only, like promote-candidates. It matches the text of the
+    notes with the lint's parser, never the code, so a renamed or deleted file
+    still lists the notes that cite it. A target Class also matches Class::method.
+    """
+    import json as _json
+
+    relative, chain, display = _citation_target(target)
+    notes = [(source["relative_path"], source["content"], source["topic_id"]) for source in _discover_raw_sources()]
+    # Compiled pages repeat their raw notes, so only manual pages are scanned, as in lint.
+    notes += [("docs/knowledge/" + page["filename"], page["content"], page["id"])
+              for page in _load_knowledge_pages() if page["build_origin"] not in ("wiki_sync", "template")]
+    results = []
+    for source, content, topic_id in notes:
+        for line, citation, path, names in _iter_code_citations(content):
+            try:
+                cited = normalize_cited_path(path)
+            except ValueError:
+                continue
+            if cited == relative and names[:len(chain)] == chain:
+                results.append({"source": source, "line": line, "citation": citation, "topic_id": topic_id})
+
+    if json_out:
+        print(_json.dumps({"schema_version": 1, "target": display, "results": results}, indent=2))
+        return 0
+    if not results:
+        print(f"No notes cite {display}.")
+        return 0
+    for result in results:
+        print(f"{result['source']}:{result['line']}  {result['citation']}  topic={result['topic_id']}")
+    print("Advisory: refresh these notes, then run `wiki_sync.py refresh <topic>` and `lint`. "
+          "This command does not modify docs/.")
+    return 0
+
+
 # memory-check: one manual, read-only, offline pass over .agents/memory.md.
 # Entry text is only string-matched; it is never executed, followed or rewritten.
 MEMORY_CHECK_WALK_LIMIT = 100_000
@@ -1707,11 +1754,13 @@ Commands:
   %(prog)s update-state --phase ...     Update a phase row in docs/knowledge/CURRENT_STATE.md
   %(prog)s promote-candidates           List T3+ memory entries suitable for wiki promotion
   %(prog)s memory-check [--json]        List memory entries citing project paths that are gone
+  %(prog)s cites PATH[::Symbol]         List raw/manual notes citing a file or symbol
 
 Non-interactive flags on add-experiment / update-state exist so AI workflows
 can call them without prompting the user. `promote-candidates` is advisory —
 it never writes to docs/knowledge/. `memory-check` is a read-only, manual
 report; it never edits memory.md or decides that an entry is superseded.
+`cites` is read-only and advisory; it never writes to docs/.
         """,
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -1817,6 +1866,16 @@ report; it never edits memory.md or decides that an entry is superseded.
         help=f"Maximum findings listed, 1-{MEMORY_CHECK_MAX_LIMIT} (default: 50); counts stay complete.",
     )
 
+    p_cites = subparsers.add_parser(
+        "cites",
+        help="List raw notes and manual pages citing PATH or PATH::Symbol (read-only, advisory).",
+    )
+    p_cites.add_argument("target", help="Project-relative path, optionally with ::Symbol[::Member].")
+    p_cites.add_argument(
+        "--json", action="store_true", dest="json_out",
+        help="Emit machine-readable JSON (schema_version 1) instead of text.",
+    )
+
     args = parser.parse_args()
 
     try:
@@ -1862,6 +1921,11 @@ report; it never edits memory.md or decides that an entry is superseded.
             if hasattr(sys.stdout, "reconfigure"):
                 sys.stdout.reconfigure(errors="backslashreplace")
             raise SystemExit(memory_check(limit=args.limit, json_out=args.json_out))
+        elif args.command == "cites":
+            # Note names and topics can hold any Unicode; escape what the console cannot encode.
+            if hasattr(sys.stdout, "reconfigure"):
+                sys.stdout.reconfigure(errors="backslashreplace")
+            raise SystemExit(cites(args.target, json_out=args.json_out))
     except (ValueError, OSError, RuntimeError) as exc:
         print(f"❌ {exc}")
         raise SystemExit(1) from exc

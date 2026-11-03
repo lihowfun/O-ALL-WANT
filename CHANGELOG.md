@@ -40,6 +40,12 @@ All notable changes to this project will be documented in this file.
   with an indentation-scoped regex fallback, other files get a whole-word text check; a bad or
   unreadable cited file gives a warning, never a traceback. Warnings are grouped per note.
   Static evidence only: fixture tests; agent effect not measured.
+- `wiki_sync.py cites PATH[::Symbol] [--json]` (OAW-22; food: graphify@8e6a6d2 `affected`
+  reverse lookup, re-implemented as a stdlib index over the OAW-21 citation parser, no graph):
+  lists the raw notes and manual pages that cite a file, a symbol or its members, with line
+  and topic. Read-only and advisory; a renamed or deleted file still lists its citing notes;
+  exit 0 with an empty list when nothing cites it. No skill text points to it yet (held for
+  HOLD-12). Static evidence only: modify/rename/delete fixture tests.
 
 ### Changed
 

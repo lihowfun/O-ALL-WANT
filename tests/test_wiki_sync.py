@@ -341,8 +341,20 @@ class WikiSyncTests(unittest.TestCase):
         return "\n".join(f"See `{citation}`." for citation in citations)
 
     def flagged(self, output):
-        line = next((line for line in output.splitlines() if "code citations in" in line), "")
-        return sorted(part.split("`")[1] for part in line.split(": ", 1)[-1].split("; ") if "`" in part)
+        """Citations named in code-citation warnings, across notes (strict mode prints them twice)."""
+        lines = [line.split(": ", 1)[-1] for line in output.splitlines() if "code citations in" in line]
+        return sorted({part.split("`")[1] for line in lines for part in line.split("; ") if "`" in part})
+
+    def citing(self, target):
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            self.assertEqual(wiki.cites(target, json_out=True), 0)
+        return [(result["source"], result["line"], result["citation"]) for result in json.loads(output.getvalue())["results"]]
+
+    def cites_cli(self, *arguments):
+        environment = dict(os.environ, AGENT_MEMORY_BASE_DIR=str(self.base), PYTHONIOENCODING="utf-8", PYTHONDONTWRITEBYTECODE="1")
+        return subprocess.run([sys.executable, str(SCRIPTS / "wiki_sync.py"), "cites", *arguments],
+                              env=environment, capture_output=True, text=True, encoding="utf-8")
 
     def test_code_citation_resolves_def_class_member_and_constant(self):
         self.cited("scripts/store.py", CITED_PY)
@@ -473,6 +485,113 @@ class WikiSyncTests(unittest.TestCase):
         self.assertEqual(result, 0, output)
         self.assertEqual(self.flagged(output), ["config/settings.json::retry", "docs/guide.md::Budget"])
         self.assertIn("`config/settings.json::retry` at line 13 (name not found, text check)", output)
+
+    def test_cites_path_and_symbol_prefix(self):
+        self.raw("Alpha", self.spans("scripts/store.py::Store", "scripts/store.py::Store::get", "scripts/store.py::Store.get",
+                                     "scripts/store.py::helper", "scripts/other.py::Store", "scripts/store.py::Storehouse"),
+                 name="a.md")
+        page = self.manual("Manual", "2025-01-01")
+        page.write_text(page.read_text(encoding="utf-8") + self.spans("scripts/store.py::Store::get") + "\n", encoding="utf-8")
+        alpha, manual = "docs/raw/a.md", "docs/knowledge/Manual.md"
+        expected = {
+            "scripts/store.py": [(alpha, 12, "scripts/store.py::Store"), (alpha, 13, "scripts/store.py::Store::get"),
+                                 (alpha, 14, "scripts/store.py::Store.get"), (alpha, 15, "scripts/store.py::helper"),
+                                 (alpha, 17, "scripts/store.py::Storehouse"), (manual, 15, "scripts/store.py::Store::get")],
+            "scripts/store.py::Store": [(alpha, 12, "scripts/store.py::Store"), (alpha, 13, "scripts/store.py::Store::get"),
+                                        (alpha, 14, "scripts/store.py::Store.get"), (manual, 15, "scripts/store.py::Store::get")],
+            "scripts/store.py::Store::get": [(alpha, 13, "scripts/store.py::Store::get"), (alpha, 14, "scripts/store.py::Store.get"),
+                                             (manual, 15, "scripts/store.py::Store::get")],
+            "scripts\\store.py::helper": [(alpha, 15, "scripts/store.py::helper")],
+            "Scripts/store.py": [],
+            "scripts/store.py::get": [],
+        }
+        expected["scripts/store.py::Store.get"] = expected["scripts/store.py::Store::get"]
+        expected["./scripts/store.py::helper"] = expected["scripts\\store.py::helper"]
+        for target, results in expected.items():
+            with self.subTest(target=target):
+                self.assertEqual(self.citing(target), results)
+
+    def test_cites_modify_rename_delete(self):
+        store = self.cited("scripts/store.py", CITED_PY)
+        self.raw("Alpha", self.spans("scripts/store.py::Store::get"), name="a.md")
+        self.raw("Beta", self.spans("scripts/store.py::helper"), name="b.md")
+        page = self.manual("Manual", "2025-01-01")
+        page.write_text(page.read_text(encoding="utf-8") + self.spans("scripts/store.py::Store") + "\n", encoding="utf-8")
+        alpha, beta, manual = "docs/raw/a.md", "docs/raw/b.md", "docs/knowledge/Manual.md"
+        # Fixed before any change: cites matches note text, so the sets never move; lint flags what broke.
+        expected = {"scripts/store.py::helper": {beta}, "scripts/store.py::Store": {alpha, manual},
+                    "scripts/store.py": {alpha, beta, manual}}
+        steps = (("modify", lambda: store.write_text(CITED_PY.replace("hidden = 1", "hidden = 2"), encoding="utf-8"), []),
+                 ("rename", lambda: store.write_text(CITED_PY.replace("def helper", "def assist"), encoding="utf-8"),
+                  ["scripts/store.py::helper"]),
+                 ("delete", store.unlink, ["scripts/store.py::Store", "scripts/store.py::Store::get", "scripts/store.py::helper"]))
+        for step, change, broken in steps:
+            change()
+            with self.subTest(step=step):
+                for target, sources in expected.items():
+                    self.assertEqual({source for source, _line, _citation in self.citing(target)}, sources)
+                result, output = self.quiet(wiki.lint)
+                self.assertEqual(result, 0, output)
+                self.assertEqual(self.flagged(output), broken)
+
+    def test_cites_is_read_only(self):
+        self.cited("scripts/store.py", CITED_PY)
+        self.raw(body=self.spans("scripts/store.py::helper"))
+        self.quiet(wiki.build)
+
+        def snapshot():
+            return {str(path.relative_to(self.base)): path.read_bytes() if path.is_file() else None
+                    for path in self.base.rglob("*")}
+
+        before = snapshot()
+        for arguments in (("scripts/store.py",), ("scripts/store.py::helper", "--json"), ("scripts/gone.py",)):
+            completed = self.cites_cli(*arguments)
+            self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+        with contextlib.ExitStack() as stack:
+            for name in ("atomic_write", "locked_update", "_write"):
+                stack.enter_context(patch.object(wiki, name, side_effect=AssertionError(name)))
+            self.assertEqual(self.citing("scripts/store.py"), [("docs/raw/source.md", 12, "scripts/store.py::helper")])
+        self.assertEqual(snapshot(), before)
+
+    def test_cites_json_schema(self):
+        self.raw("Alpha", self.spans("scripts/store.py::helper"), name="a.md")
+        completed = self.cites_cli("scripts\\store.py::helper", "--json")
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertEqual(json.loads(completed.stdout), {
+            "schema_version": 1, "target": "scripts/store.py::helper",
+            "results": [{"source": "docs/raw/a.md", "line": 12, "citation": "scripts/store.py::helper", "topic_id": "Alpha"}]})
+        empty = self.cites_cli("scripts/gone.py", "--json")
+        self.assertEqual((empty.returncode, json.loads(empty.stdout)),
+                         (0, {"schema_version": 1, "target": "scripts/gone.py", "results": []}))
+        text = self.cites_cli("scripts/store.py::helper").stdout.splitlines()
+        self.assertEqual(text[0], "docs/raw/a.md:12  scripts/store.py::helper  topic=Alpha")
+        self.assertEqual(text[-1], "Advisory: refresh these notes, then run `wiki_sync.py refresh <topic>` and `lint`. "
+                                   "This command does not modify docs/.")
+        nothing = self.cites_cli("scripts/gone.py")
+        self.assertEqual((nothing.returncode, nothing.stdout), (0, "No notes cite scripts/gone.py.\n"))
+
+    def test_cites_skips_fences_and_compiled_duplicates(self):
+        self.raw(body="Live: `scripts/store.py::helper`.\n\n```md\n`scripts/store.py::helper`\n```\n\n"
+                      "~~~\n`scripts/store.py::helper`\n~~~\n")
+        self.cited("docs/raw/_draft.md", self.spans("scripts/store.py::helper"))
+        self.quiet(wiki.build)
+        self.assertEqual((self.knowledge / "Topic.md").read_text(encoding="utf-8").count("`scripts/store.py::helper`"), 3)
+        template = self.manual("Template", "2025-01-01")
+        template.write_text(template.read_text(encoding="utf-8").replace("build_origin: manual", "build_origin: template")
+                            + self.spans("scripts/store.py::helper") + "\n", encoding="utf-8")
+        self.assertEqual(self.citing("scripts/store.py::helper"), [("docs/raw/source.md", 12, "scripts/store.py::helper")])
+
+    def test_cites_rejects_outside_target_without_traceback(self):
+        self.raw(body=self.spans("scripts/store.py::helper"))
+        for target in ("../x.py", "/etc/x.py", "C:\\x\\y.py::f", "scripts/D:/x.py", "scripts/../../x.py",
+                       "scripts/store.py::", "scripts/store.py::1bad", ""):
+            completed = self.cites_cli(target)
+            with self.subTest(target=target):
+                self.assertEqual(completed.returncode, 1, completed.stdout + completed.stderr)
+                self.assertTrue(completed.stdout.startswith("❌"), completed.stdout)
+                self.assertNotIn("Traceback", completed.stdout + completed.stderr)
+        with self.assertRaises(ValueError):
+            wiki.cites("../x.py")
 
 
 REVIEWER_FALSE_POSITIVE_CORPUS = """# Agent Memory — synthetic negatives taken from the goldfish reviews

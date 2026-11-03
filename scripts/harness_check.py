@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_TEST_MODULES = ("test_context_hub", "test_gate", "test_improvement", "test_install", "test_skills", "test_wiki_sync",
                          "test_egm_pilot", "test_egm_local", "test_status", "test_egm_integration",
                          "test_catalog_core", "test_catalog", "test_catalog_ui")
-MINIMUM_TESTS = 303  # POSIX count; Windows adds junction cases.
+MINIMUM_TESTS = 309  # POSIX count; Windows adds junction cases.
 SUMMARY_MARKER = "OAW-TEST-SUMMARY "
 
 
@@ -101,7 +101,7 @@ def syntax_check():
 
 def cli_check():
     required = {"oaw.py": ("init", "migrate", "doctor"),
-                "context_hub.py": ("memory", "search"), "wiki_sync.py": ("refresh", "lint"),
+                "context_hub.py": ("memory", "search"), "wiki_sync.py": ("refresh", "lint", "cites"),
                 "improvement.py": ("propose", "compare", "decide"),
                 "catalog.py": ("add", "taste", "import-report", "plan", "policy", "absorb", "remove", "restore", "effect", "view", "scout",
                                "readd", "forget", "ui", "menu")}
