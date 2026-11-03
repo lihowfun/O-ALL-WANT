@@ -34,6 +34,26 @@ All notable changes to this project will be documented in this file.
   `docs/CLI_Reference.md`; no skill text changed. Default recall output is unchanged and pinned by a
   byte-golden test. Evidence: static fixture output sizes (30 entries of about 1.5 KB: 3,350 vs
   31,079 bytes of text), not a model benchmark; no improvement is claimed.
+- `oaw_common.normalize_cited_path` and `exact_case_path` (OAW-02, only the part OAW-21 needs;
+  merge-derived from the graphify integration checks): cited paths are made project-relative
+  POSIX paths (backslashes folded, drives, absolute paths and `..` rejected on every OS) and
+  resolved segment by segment against directory listings, so a citation whose case differs
+  from the file is unresolved on Windows and macOS as on Linux. The hash-basis and byte-count
+  parts of OAW-02 are not built.
+- `wiki_sync.py lint` checks backticked `path::Symbol` code citations (OAW-21; food:
+  graphify@8e6a6d2, method re-implemented with the standard library, no code copied). Only
+  whole single-backtick spans with a project-root-relative path and a file extension count,
+  only in raw notes and manual pages; paths resolve with exact case (OAW-02); `.py` names are
+  read with `ast` (functions, classes, `Class::method` or `Class.method`, module-level names)
+  with an indentation-scoped regex fallback, other files get a whole-word text check; a bad or
+  unreadable cited file gives a warning, never a traceback. Warnings are grouped per note.
+  Static evidence only: fixture tests; agent effect not measured.
+- `wiki_sync.py cites PATH[::Symbol] [--json]` (OAW-22; food: graphify@8e6a6d2 `affected`
+  reverse lookup, re-implemented as a stdlib index over the OAW-21 citation parser, no graph):
+  lists the raw notes and manual pages that cite a file, a symbol or its members, with line
+  and topic. Read-only and advisory; a renamed or deleted file still lists its citing notes;
+  exit 0 with an empty list when nothing cites it. No skill text points to it yet (held for
+  HOLD-12). Static evidence only: modify/rename/delete fixture tests.
 
 ### Changed
 
@@ -45,6 +65,9 @@ All notable changes to this project will be documented in this file.
   override flag; use a placeholder. Generic `password=`/`TOKEN=` assignments are not checked, and
   only the CLI write path is guarded. Evidence: one positive and one negative fixture per pattern
   (static).
+- Strict-mode change (OAW-21): an unresolved `path::Symbol` code citation is a new soft lint
+  warning, so `wiki_sync.py lint --strict` now fails on it, like on every other soft warning.
+  Default `lint` still exits 0 for it.
 - The unreleased catalog prototype is named for what it is (D19): the web command is
   `catalog.py ui` (server `catalog_ui_server.py`), the guide is `docs/SKILL_INTAKE.md`, and the
   four-step food track gives way to the nine-stage intake pipeline.

@@ -19,6 +19,20 @@ Build/refresh preserve manual pages. Topic IDs are portable identifiers, not pat
 
 Keep citations, dates, scope and conflicting evidence visible. An annotation is a note, not an instruction or a verified fact. Review a proposed durable conclusion against current authoritative sources before sharing it. No memory write or evidence-tier promotion is mandatory after rendering.
 
+## Code citations
+
+`lint` checks code citations in raw notes and manual pages. A citation is a single-backtick span that is exactly a project-root-relative path with a file extension, `::` and a name: `scripts/wiki_sync.py::lint`, `scripts/a.py::Store::get` or `scripts/a.py::Store.get`. Bare names, spans such as `std::vector` and fenced code are not citations. Compiled pages are skipped because they repeat their raw notes, so each bad citation is reported once.
+
+The path must exist with the same case on every OS: each segment is compared with its directory listing, backslashes are folded to `/`, and absolute paths, drives and `..` are reported as outside the project. In a `.py` file the name chain must be a module-level or class-level `def`, `class` or simple assignment, read with `ast` (the file is parsed, never imported or run); a file this Python cannot parse falls back to an indentation-scoped line scan. Other files get a text check only: each name must appear as a whole word. Unreadable files and files over 1 MB are reported, never a traceback. Unresolved citations are one warning line per note with whole-file line numbers; like every soft warning, they are errors under `--strict`.
+
+Evidence level: resolution rules are static-measured by fixture tests. Agent behavior is not measured; parity, no improvement claimed.
+
+```bash
+python3 scripts/wiki_sync.py cites scripts/a.py::Store [--json]
+```
+
+`cites` lists the notes that cite a file or symbol, using the same parser and the same raw/manual scope as `lint`. A target `Class` also matches `Class::method`; paths must match exactly, with backslashes folded. It matches note text, not code, so after a rename or delete it still lists the notes that cite the old name while `lint` reports them as unresolved. It never writes to `docs/`; refresh the listed notes yourself, then run `refresh` and `lint`. No match prints `No notes cite ...` and exits 0. Evidence level: static-measured by modify, rename and delete fixtures; agent use is not measured.
+
 ## Memory citation check (prototype)
 
 ```bash

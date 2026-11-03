@@ -61,7 +61,12 @@ python3 scripts/wiki_sync.py lint [--strict]
 python3 scripts/wiki_sync.py stale [--threshold DAYS]
 python3 scripts/wiki_sync.py cross-check
 python3 scripts/wiki_sync.py memory-check [--json] [--limit N]
+python3 scripts/wiki_sync.py cites PATH[::Symbol] [--json]
 ```
+
+`lint` also warns about backticked `path::Symbol` code citations in raw notes and manual pages that do not resolve (path missing or differing in case, symbol not defined, or outside the project), one line per note; `--strict` makes them errors like every other warning. See [code citations](Wiki_Sync_Guide.md#code-citations).
+
+`cites` is the reverse lookup: it lists the raw notes and manual pages whose `path::Symbol` citations name PATH, or PATH::Symbol and its members, with line and topic. It is read-only and advisory and exits 0 with an empty list when nothing cites the target; an absolute, drive or `..` target exits 1. `--json` returns `schema_version: 1` with `target` and `results` (`source`, `line`, `citation`, `topic_id`).
 
 `memory-check` is a manual, read-only report of `.agents/memory.md` entries whose cited project paths are missing. It exits 0 whenever the check completes (advisory, also when the file is absent), 1 on a handled error such as non-UTF-8 input, and 2 on a usage error. `--limit` (1–500, default 50) truncates findings, never counts. See [memory citation check](Wiki_Sync_Guide.md#memory-citation-check-prototype).
 

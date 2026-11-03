@@ -31,6 +31,41 @@ def _experiment_worker(base, start, number):
             wiki.add_experiment(f"writer_{number}_entry_{entry}", "accepted", "result", "conclusion")
 
 
+CITED_PY = '''"""Fixture module for path::Symbol citations; it is parsed, never imported."""
+import os
+
+LIMIT = 3
+TIMEOUT: float = 1.5
+if os.name == "nt":
+    WINDOWS_ONLY = True
+try:
+    import json
+except ImportError:
+    FALLBACK = None
+
+
+class Store:
+    CAPACITY = 10
+
+    def get(self, key):
+        local_name = key
+        return local_name
+
+    class Inner:
+        def deep(self):
+            pass
+
+
+async def fetch():
+    pass
+
+
+def helper():
+    hidden = 1
+    return hidden
+'''
+
+
 class WikiSyncTests(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory(prefix=".wiki-fixture-", dir=Path(__file__).parent)
@@ -275,6 +310,288 @@ class WikiSyncTests(unittest.TestCase):
                                    env=environment, capture_output=True, text=True, encoding="utf-8")
         self.assertNotEqual(completed.returncode, 0)
         self.assertNotIn("Traceback", completed.stderr)
+
+    def test_cited_paths_normalize_windows_forms_and_resolve_exact_case(self):
+        (self.base / "scripts").mkdir()
+        (self.base / "scripts/a.py").write_text("x = 1\n", encoding="utf-8")
+        for cited in ("scripts\\a.py", "./scripts/a.py", "scripts//./a.py"):
+            with self.subTest(cited=cited):
+                self.assertEqual(common.normalize_cited_path(cited), "scripts/a.py")
+                self.assertEqual(common.exact_case_path(str(self.base), cited), str(self.base / "scripts/a.py"))
+        for outside in ("/etc/a.py", "C:\\x\\a.py", "c:/x/a.py", "scripts/D:/a.py", "../a.py",
+                        "scripts/../../a.py", "\\\\server\\share\\a.py", ""):
+            with self.subTest(outside=outside), self.assertRaises(ValueError):
+                common.exact_case_path(str(self.base), outside)
+        # A case-insensitive file system accepts these; the directory listing comparison does not.
+        for wrong_case in ("Scripts/a.py", "scripts/A.py", "scripts/a.PY", "scripts/missing.py"):
+            with self.subTest(wrong_case=wrong_case):
+                self.assertIsNone(common.exact_case_path(str(self.base), wrong_case))
+
+    def cited(self, relative, content):
+        path = self.base / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        if isinstance(content, bytes):
+            path.write_bytes(content)
+        else:
+            path.write_text(content, encoding="utf-8")
+        return path
+
+    @staticmethod
+    def spans(*citations):
+        return "\n".join(f"See `{citation}`." for citation in citations)
+
+    def flagged(self, output):
+        """Citations named in code-citation warnings, across notes (strict mode prints them twice)."""
+        lines = [line.split(": ", 1)[-1] for line in output.splitlines() if "code citations in" in line]
+        return sorted({part.split("`")[1] for line in lines for part in line.split("; ") if "`" in part})
+
+    def citing(self, target):
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            self.assertEqual(wiki.cites(target, json_out=True), 0)
+        return [(result["source"], result["line"], result["citation"]) for result in json.loads(output.getvalue())["results"]]
+
+    def cites_cli(self, *arguments):
+        environment = dict(os.environ, AGENT_MEMORY_BASE_DIR=str(self.base), PYTHONIOENCODING="utf-8", PYTHONDONTWRITEBYTECODE="1")
+        return subprocess.run([sys.executable, str(SCRIPTS / "wiki_sync.py"), "cites", *arguments],
+                              env=environment, capture_output=True, text=True, encoding="utf-8")
+
+    def test_code_citation_resolves_def_class_member_and_constant(self):
+        self.cited("scripts/store.py", CITED_PY)
+        good = [f"scripts/store.py::{chain}" for chain in (
+            "Store", "Store::get", "Store.get", "Store::Inner::deep", "Store::CAPACITY", "LIMIT", "TIMEOUT",
+            "WINDOWS_ONLY", "FALLBACK", "fetch", "helper")]
+        self.raw(body=self.spans(*good))
+        page = self.manual("Manual", "2025-01-01")
+        page.write_text(page.read_text(encoding="utf-8") + self.spans("scripts/store.py::Store::get") + "\n",
+                        encoding="utf-8")
+        self.assertEqual([citation for _line, citation, _path, _chain in wiki._iter_code_citations(self.spans(*good))],
+                         good)
+        result, output = self.quiet(wiki.lint)
+        self.assertEqual(result, 0, output)
+        self.assertNotIn("code citations", output)
+
+    def test_code_citation_missing_symbol_or_path_warns_and_strict_fails(self):
+        self.cited("scripts/store.py", CITED_PY)
+        self.raw(body=self.spans("scripts/store.py::helper", "scripts/store.py::missing", "scripts/gone.py::f"))
+        result, output = self.quiet(wiki.lint)
+        self.assertEqual(result, 0, output)
+        # Line numbers count from the top of the raw file, frontmatter included.
+        expected = ("code citations in docs/raw/source.md: `scripts/store.py::missing` at line 13 (symbol not found); "
+                    "`scripts/gone.py::f` at line 14 (path not found, case-sensitive)")
+        self.assertIn("⚠️", output)
+        self.assertIn(expected, output)
+        result, output = self.quiet(wiki.lint, strict=True)
+        self.assertEqual(result, 1)
+        self.assertIn("❌ wiki_sync lint found unresolved issues:", output)
+        self.assertEqual(output.count(expected), 2)
+
+    def test_code_citation_reported_once_after_build(self):
+        self.cited("scripts/store.py", CITED_PY)
+        self.raw(body=self.spans("scripts/store.py::missing"))
+        self.quiet(wiki.build)
+        self.assertIn("`scripts/store.py::missing`", (self.knowledge / "Topic.md").read_text(encoding="utf-8"))
+        manual = self.manual("Manual", "2025-01-01")
+        manual.write_text(manual.read_text(encoding="utf-8") + self.spans("scripts/store.py::absent") + "\n",
+                          encoding="utf-8")
+        template = self.manual("Template", "2025-01-01")
+        template.write_text(template.read_text(encoding="utf-8").replace("build_origin: manual", "build_origin: template")
+                            + self.spans("scripts/store.py::placeholder") + "\n", encoding="utf-8")
+        result, output = self.quiet(wiki.lint)
+        self.assertEqual(result, 0, output)
+        self.assertEqual(output.count("`scripts/store.py::missing`"), 1)
+        self.assertIn("code citations in docs/raw/source.md:", output)
+        self.assertIn("code citations in Manual.md: `scripts/store.py::absent` at line 15 (symbol not found)", output)
+        self.assertNotIn("placeholder`", output)
+
+    def test_code_citation_unparsable_file_warns_without_traceback(self):
+        self.cited("scripts/broken.py", "def f(:\n    pass\n")
+        self.cited("scripts/nul.py", b"def g():\n    pass\n\x00\n")
+        self.cited("scripts/latin.py", b"# \xff\ndef h():\n    pass\n")
+        self.cited("scripts/big.py", "x = 1\n" + "#" * wiki.CODE_CITATION_MAX_BYTES + "\n")
+        self.raw(body=self.spans("scripts/broken.py::f", "scripts/broken.py::missing", "scripts/nul.py::g",
+                                 "scripts/nul.py::absent", "scripts/latin.py::h", "scripts/big.py::x"))
+        environment = dict(os.environ, AGENT_MEMORY_BASE_DIR=str(self.base), PYTHONIOENCODING="utf-8", PYTHONDONTWRITEBYTECODE="1")
+        for arguments, code in (((), 0), (("--strict",), 1)):
+            completed = subprocess.run([sys.executable, str(SCRIPTS / "wiki_sync.py"), "lint", *arguments],
+                                       env=environment, capture_output=True, text=True, encoding="utf-8")
+            with self.subTest(arguments=arguments):
+                self.assertEqual(completed.returncode, code, completed.stdout + completed.stderr)
+                self.assertNotIn("Traceback", completed.stdout + completed.stderr)
+                self.assertEqual(self.flagged(completed.stdout), sorted([
+                    "scripts/broken.py::missing", "scripts/nul.py::absent", "scripts/latin.py::h", "scripts/big.py::x"]))
+                for reason in ("`scripts/broken.py::missing` at line 13 (symbol not found; file did not parse, regex fallback)",
+                               "`scripts/latin.py::h` at line 16 (unreadable: not UTF-8 text)",
+                               "`scripts/big.py::x` at line 17 (file over 1 MB, not checked)"):
+                    self.assertIn(reason, completed.stdout)
+
+    def test_code_citation_fallback_matches_ast_verdicts(self):
+        self.cited("scripts/store.py", CITED_PY)
+        chains = ("helper", "fetch", "Store", "Store::get", "Store.get", "Store::Inner::deep", "Store::CAPACITY",
+                  "LIMIT", "TIMEOUT", "WINDOWS_ONLY", "FALLBACK", "missing", "helper::hidden",
+                  "Store::get::local_name", "Store::missing", "LIMIT::real")
+        self.raw(body=self.spans(*(f"scripts/store.py::{chain}" for chain in chains)))
+        _result, parsed = self.quiet(wiki.lint)
+        with patch.object(wiki.ast, "parse", side_effect=SyntaxError("forced")):
+            _result, fallback = self.quiet(wiki.lint)
+        unresolved = sorted(f"scripts/store.py::{chain}" for chain in
+                            ("missing", "helper::hidden", "Store::get::local_name", "Store::missing", "LIMIT::real"))
+        self.assertEqual(self.flagged(parsed), unresolved)
+        self.assertEqual(self.flagged(fallback), unresolved)
+        self.assertNotIn("regex fallback", parsed)
+        self.assertEqual(fallback.count("regex fallback"), len(unresolved))
+
+    def test_code_citation_ignores_bare_names_std_vector_and_fences(self):
+        body = ("Run `build`, keep `True`, use `std::vector`, `crate::mod` and `Foo::bar`; "
+                "``scripts/gone.py::f``, `scripts/gone.py::f()` and plain scripts/gone.py::f.\n\n"
+                "```python\n`scripts/gone.py::f`\n```\n\n~~~~\n```\n`scripts/gone.py::g`\n~~~~\n\n"
+                "Live control: `scripts/gone.py::live`.\n")
+        self.raw(body=body)
+        self.cited("docs/raw/_draft.md", self.spans("scripts/gone.py::draft"))
+        self.assertEqual([citation for _line, citation, _path, _chain in wiki._iter_code_citations(body)],
+                         ["scripts/gone.py::live"])
+        result, output = self.quiet(wiki.lint)
+        self.assertEqual(result, 0, output)
+        self.assertEqual(self.flagged(output), ["scripts/gone.py::live"])
+        for skipped in ("::f", "::g", "::draft", "std::vector", "crate::mod", "Foo::bar"):
+            self.assertNotIn(skipped, output)
+
+    def test_code_citation_case_mismatch_unresolved_on_every_os(self):
+        self.cited("scripts/store.py", CITED_PY)
+        self.raw(body=self.spans("Scripts/store.py::helper", "scripts/Store.py::helper", "scripts\\store.py::helper",
+                                 "./scripts/store.py::Store::get"))
+        result, output = self.quiet(wiki.lint)
+        self.assertEqual(result, 0, output)
+        self.assertEqual(self.flagged(output), ["Scripts/store.py::helper", "scripts/Store.py::helper"])
+        self.assertIn("`Scripts/store.py::helper` at line 12 (path not found, case-sensitive)", output)
+
+    def test_code_citation_outside_project_warns(self):
+        (self.top / "x.py").write_text("def f():\n    pass\n", encoding="utf-8")
+        outside = ("../x.py::f", "../../x.py::f", "/etc/x.py::f", "C:\\x\\y.py::f", "scripts/../../x.py::f")
+        self.raw(body=self.spans(*outside))
+        with patch.object(wiki, "_safe_read", wraps=wiki._safe_read) as reads:
+            result, output = self.quiet(wiki.lint)
+        self.assertEqual(result, 0, output)
+        self.assertEqual(self.flagged(output), sorted(outside))
+        self.assertEqual(output.count("(outside the project)"), len(outside))
+        self.assertNotIn(str(self.top / "x.py"), [str(call.args[0]) for call in reads.call_args_list])
+
+    def test_code_citation_non_python_whole_word(self):
+        self.cited("config/settings.json", '{"retry_limit": 3, "mode": "fast"}\n')
+        self.cited("docs/guide.md", "# Guide\n\n## Retry budget\n\nRetries stop after three attempts.\n")
+        self.raw(body=self.spans("config/settings.json::retry_limit", "config/settings.json::retry",
+                                 "docs/guide.md::Retry::budget", "docs/guide.md::Budget", "config/settings.json::mode"))
+        result, output = self.quiet(wiki.lint)
+        self.assertEqual(result, 0, output)
+        self.assertEqual(self.flagged(output), ["config/settings.json::retry", "docs/guide.md::Budget"])
+        self.assertIn("`config/settings.json::retry` at line 13 (name not found, text check)", output)
+
+    def test_cites_path_and_symbol_prefix(self):
+        self.raw("Alpha", self.spans("scripts/store.py::Store", "scripts/store.py::Store::get", "scripts/store.py::Store.get",
+                                     "scripts/store.py::helper", "scripts/other.py::Store", "scripts/store.py::Storehouse"),
+                 name="a.md")
+        page = self.manual("Manual", "2025-01-01")
+        page.write_text(page.read_text(encoding="utf-8") + self.spans("scripts/store.py::Store::get") + "\n", encoding="utf-8")
+        alpha, manual = "docs/raw/a.md", "docs/knowledge/Manual.md"
+        expected = {
+            "scripts/store.py": [(alpha, 12, "scripts/store.py::Store"), (alpha, 13, "scripts/store.py::Store::get"),
+                                 (alpha, 14, "scripts/store.py::Store.get"), (alpha, 15, "scripts/store.py::helper"),
+                                 (alpha, 17, "scripts/store.py::Storehouse"), (manual, 15, "scripts/store.py::Store::get")],
+            "scripts/store.py::Store": [(alpha, 12, "scripts/store.py::Store"), (alpha, 13, "scripts/store.py::Store::get"),
+                                        (alpha, 14, "scripts/store.py::Store.get"), (manual, 15, "scripts/store.py::Store::get")],
+            "scripts/store.py::Store::get": [(alpha, 13, "scripts/store.py::Store::get"), (alpha, 14, "scripts/store.py::Store.get"),
+                                             (manual, 15, "scripts/store.py::Store::get")],
+            "scripts\\store.py::helper": [(alpha, 15, "scripts/store.py::helper")],
+            "Scripts/store.py": [],
+            "scripts/store.py::get": [],
+        }
+        expected["scripts/store.py::Store.get"] = expected["scripts/store.py::Store::get"]
+        expected["./scripts/store.py::helper"] = expected["scripts\\store.py::helper"]
+        for target, results in expected.items():
+            with self.subTest(target=target):
+                self.assertEqual(self.citing(target), results)
+
+    def test_cites_modify_rename_delete(self):
+        store = self.cited("scripts/store.py", CITED_PY)
+        self.raw("Alpha", self.spans("scripts/store.py::Store::get"), name="a.md")
+        self.raw("Beta", self.spans("scripts/store.py::helper"), name="b.md")
+        page = self.manual("Manual", "2025-01-01")
+        page.write_text(page.read_text(encoding="utf-8") + self.spans("scripts/store.py::Store") + "\n", encoding="utf-8")
+        alpha, beta, manual = "docs/raw/a.md", "docs/raw/b.md", "docs/knowledge/Manual.md"
+        # Fixed before any change: cites matches note text, so the sets never move; lint flags what broke.
+        expected = {"scripts/store.py::helper": {beta}, "scripts/store.py::Store": {alpha, manual},
+                    "scripts/store.py": {alpha, beta, manual}}
+        steps = (("modify", lambda: store.write_text(CITED_PY.replace("hidden = 1", "hidden = 2"), encoding="utf-8"), []),
+                 ("rename", lambda: store.write_text(CITED_PY.replace("def helper", "def assist"), encoding="utf-8"),
+                  ["scripts/store.py::helper"]),
+                 ("delete", store.unlink, ["scripts/store.py::Store", "scripts/store.py::Store::get", "scripts/store.py::helper"]))
+        for step, change, broken in steps:
+            change()
+            with self.subTest(step=step):
+                for target, sources in expected.items():
+                    self.assertEqual({source for source, _line, _citation in self.citing(target)}, sources)
+                result, output = self.quiet(wiki.lint)
+                self.assertEqual(result, 0, output)
+                self.assertEqual(self.flagged(output), broken)
+
+    def test_cites_is_read_only(self):
+        self.cited("scripts/store.py", CITED_PY)
+        self.raw(body=self.spans("scripts/store.py::helper"))
+        self.quiet(wiki.build)
+
+        def snapshot():
+            return {str(path.relative_to(self.base)): path.read_bytes() if path.is_file() else None
+                    for path in self.base.rglob("*")}
+
+        before = snapshot()
+        for arguments in (("scripts/store.py",), ("scripts/store.py::helper", "--json"), ("scripts/gone.py",)):
+            completed = self.cites_cli(*arguments)
+            self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+        with contextlib.ExitStack() as stack:
+            for name in ("atomic_write", "locked_update", "_write"):
+                stack.enter_context(patch.object(wiki, name, side_effect=AssertionError(name)))
+            self.assertEqual(self.citing("scripts/store.py"), [("docs/raw/source.md", 12, "scripts/store.py::helper")])
+        self.assertEqual(snapshot(), before)
+
+    def test_cites_json_schema(self):
+        self.raw("Alpha", self.spans("scripts/store.py::helper"), name="a.md")
+        completed = self.cites_cli("scripts\\store.py::helper", "--json")
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertEqual(json.loads(completed.stdout), {
+            "schema_version": 1, "target": "scripts/store.py::helper",
+            "results": [{"source": "docs/raw/a.md", "line": 12, "citation": "scripts/store.py::helper", "topic_id": "Alpha"}]})
+        empty = self.cites_cli("scripts/gone.py", "--json")
+        self.assertEqual((empty.returncode, json.loads(empty.stdout)),
+                         (0, {"schema_version": 1, "target": "scripts/gone.py", "results": []}))
+        text = self.cites_cli("scripts/store.py::helper").stdout.splitlines()
+        self.assertEqual(text[0], "docs/raw/a.md:12  scripts/store.py::helper  topic=Alpha")
+        self.assertEqual(text[-1], "Advisory: refresh these notes, then run `wiki_sync.py refresh <topic>` and `lint`. "
+                                   "This command does not modify docs/.")
+        nothing = self.cites_cli("scripts/gone.py")
+        self.assertEqual((nothing.returncode, nothing.stdout), (0, "No notes cite scripts/gone.py.\n"))
+
+    def test_cites_skips_fences_and_compiled_duplicates(self):
+        self.raw(body="Live: `scripts/store.py::helper`.\n\n```md\n`scripts/store.py::helper`\n```\n\n"
+                      "~~~\n`scripts/store.py::helper`\n~~~\n")
+        self.cited("docs/raw/_draft.md", self.spans("scripts/store.py::helper"))
+        self.quiet(wiki.build)
+        self.assertEqual((self.knowledge / "Topic.md").read_text(encoding="utf-8").count("`scripts/store.py::helper`"), 3)
+        template = self.manual("Template", "2025-01-01")
+        template.write_text(template.read_text(encoding="utf-8").replace("build_origin: manual", "build_origin: template")
+                            + self.spans("scripts/store.py::helper") + "\n", encoding="utf-8")
+        self.assertEqual(self.citing("scripts/store.py::helper"), [("docs/raw/source.md", 12, "scripts/store.py::helper")])
+
+    def test_cites_rejects_outside_target_without_traceback(self):
+        self.raw(body=self.spans("scripts/store.py::helper"))
+        for target in ("../x.py", "/etc/x.py", "C:\\x\\y.py::f", "scripts/D:/x.py", "scripts/../../x.py",
+                       "scripts/store.py::", "scripts/store.py::1bad", ""):
+            completed = self.cites_cli(target)
+            with self.subTest(target=target):
+                self.assertEqual(completed.returncode, 1, completed.stdout + completed.stderr)
+                self.assertTrue(completed.stdout.startswith("❌"), completed.stdout)
+                self.assertNotIn("Traceback", completed.stdout + completed.stderr)
+        with self.assertRaises(ValueError):
+            wiki.cites("../x.py")
 
 
 REVIEWER_FALSE_POSITIVE_CORPUS = """# Agent Memory — synthetic negatives taken from the goldfish reviews
