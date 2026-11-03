@@ -16,16 +16,17 @@ python3 scripts/oaw_status.py --project /path/to/project     # 只看目前狀�
 ```
 
 - `play` 只綁 `127.0.0.1`，會印出並開啟 `http://127.0.0.1:<port>/#t=<通行碼>`，按 Ctrl+C 結束。要用印出來的完整網址開，少了 `#t=…` 頁面會拒絕連線。加 `--no-browser` 只印網址，`--port N` 指定埠號。
-- `menu` 是 1–12 的數字選單，0 離開，不需要 curses。
+- `menu` 是 1–13 的數字選單，0 離開，不需要 curses。
+- 在一欄寬的畫面（手機）上，投食區排在最上面，「我的 OAW」接在後面。
 - 網頁、`menu`、`oaw_status.py` 讀的是同一份 `.oaw/catalog/view.json`，顯示規則也一樣。
 
 ## 畫面上的三塊
 
-1. **我的 OAW**：目前版本（例如 `2.0.0+build.2.c51132c`）和它的說明、裝了哪些 skill、和預設 `2.0.0` 比多了或少了什麼。每一行都標證據等級：靜態量測或未量測。下面是版本時間線和常設預算。
+1. **我的 OAW**：目前版本（例如 `2.0.0+build.2.c51132c`）和它的說明、裝了哪些 skill、和預設 `2.0.0` 比多了或少了什麼。每一行都標證據等級：靜態量測或未量測。只裝到其中一個 host 的 skill 會標「只在 Codex」或「只在 Claude」。下面是版本時間線（每一版都能展開，看它有哪些 skill、吸收了哪些成分、和預設比的每一行與證據等級）和常設預算。
 2. **投食區**：貼 GitHub 網址、本週覓食清單，以及匯入已有的大象／金魚消化紀錄。
 3. **食物卡**：每樣食物一張卡，大徽章是判定，下面是四步進度：
    `① 找到 → ② 試吃（免費） → ③ 實測（付費，依常設預算） → ④ 結果`
-   成分分成 🟢 吸收、🔴 排掉（附原因）、🟡 暫留（附缺哪個測試）。
+   成分分成 🟢 吸收、🔴 排掉（附原因）、🟡 暫留（附缺哪個測試）。徽章下面直接寫出判定依據；有旗標時列出每個旗標的規則、位置和嚴重度，並告訴你去哪裡分流。標「建議（尚未經你確認）」的排掉只是靜態規則的建議。試吃失敗的原因會留在卡片上。
 
 ## 每個按鈕做什麼
 
@@ -37,25 +38,27 @@ python3 scripts/oaw_status.py --project /path/to/project     # 只看目前狀�
 | 匯入 | 投食區 → 匯入已有的消化紀錄 | 把一個消化資料夾（`digest.json`、`verify.json`、`goldfish-*.json`、`components.json`、`integration.json`、`proposals.md`）存成**歷史證據**，只顯示、不計入判定。食物欄空白時依資料夾裡的 `scout.json` 判斷是哪樣食物 | `import-report FOOD DIR` |
 | 🐘 大象報告／🐟 金魚報告 | 食物卡 | 打開匯入的報告，標示「歷史證據 · 不計入判定」。評審的自由文字預設收起，並標成不受信任 | `show FOOD` |
 | 實測… | 食物卡 | 顯示系統自己規劃的測試，從便宜的排起，每一步寫明能證明和不能證明什麼，以及 token 預估。**開始實測**按鈕是停用的：v0 不執行付費測試 | `plan FOOD` |
-| 吸收選中的成分 | 食物卡 | 先預覽要寫哪些檔案，確認後先存還原點，再安裝選中的純文字 skill（其他成分記成 backlog，不改程式），產生新版本，並重新評估和預設的差異 | `absorb FOOD --components ID[,ID] [--apply]` |
-| 排掉／移除 | 食物卡 | 移除這樣食物已安裝的 skill。先預覽，確認後先存還原點，再移除；你改過的檔案受保護，不會被刪 | `remove FOOD [--apply]` |
-| 移除／移除 EGM | 我的 OAW → skill 清單 | 移除單一 skill；EGM 整組一起移除。內建 skill 和 EGM 走 `oaw.py` 的安裝計畫：先預覽，套用時先備份到 `.oaw/backups/`、存還原點，再移除。重新加回來要再測一次（決定 D6） | `remove SKILL\|egm [--apply]` |
+| 吸收選中的成分 | 食物卡 | 先預覽要寫哪些檔案，確認後先存還原點，再安裝選中的純文字 skill，產生新版本，並重新評估和預設的差異。安裝前先用 doctor 的同一套 skill 檢查，不合格就不裝。只選了歷史提案時，只記成待辦（寫進決定紀錄），不改任何檔案，也不產生新版本 | `absorb FOOD --components ID[,ID] [--apply]` |
+| 排掉／移除 | 食物卡 | 移除這樣食物已安裝的全部 skill。先預覽，確認後先存還原點，再移除；你改過的檔案受保護，不會被刪。原因必填 | `remove FOOD --food --reason TEXT [--apply]` |
+| 移除／移除 EGM | 我的 OAW → skill 清單 | 移除單一 skill；EGM 整組一起移除。內建 skill 和 EGM 走 `oaw.py` 的安裝計畫：先預覽，套用時先備份到 `.oaw/backups/`、存還原點，再移除。原因必填（決定 D6） | `remove SKILL\|egm --reason TEXT [--apply]` |
+| 加回／加回 EGM | 我的 OAW → 比預設少 | 經 `oaw.py migrate` 加回內建 skill 或整組 EGM：先預覽，套用時先備份、存還原點；之後吸收的東西都保留。加回的 skill 算「未測」，要重新測試（決定 D6）。原因必填 | `readd SKILL\|egm --reason TEXT [--apply]` |
+| 忘掉這樣食物 | 食物卡（沒有已安裝的成分時） | 從食物卡拿掉：刪掉登記和證據摘要；決定紀錄保留，重新投食時從頭開始 | `forget FOOD [--apply]` |
 | 重新評估 | 我的 OAW → 和預設比 | 重新比對目前安裝和全新的預設安裝。每一行都是靜態量測，品質一律「未量測」 | `effect` |
-| 還原到這版 | 我的 OAW → 版本時間線 | 列出會寫入和刪除的檔案，確認後先把目前安裝存成一版，再切回那一版，最後跑 doctor。只動 OAW 安裝層，不動你的專案資料 | `builds`、`restore BUILD [--apply]` |
-| 設定常設預算 | 我的 OAW | 設定每樣食物和每週的付費 token 上限，以及試跑的沙箱條件。送出後確認碼只印在終端，你把它輸回頁面才生效 | `policy show`、`policy set ... [--confirm CODE]` |
+| 還原到這版 | 我的 OAW → 版本時間線 | 列出會寫入和刪除的檔案，確認後先把目前安裝存成一版，再切回那一版，最後跑 doctor。只動 OAW 安裝層，不動你的專案資料：你宣告的自訂檔（例如保留的 `AGENTS.md`）照原樣留著；不屬於目前安裝層的現有檔案會擋住還原，不會被蓋掉 | `builds`、`restore BUILD [--apply]` |
+| 設定常設預算 | 我的 OAW | 設定每樣食物和每週的付費 token 上限，以及試跑的沙箱條件。送出後確認碼只印在終端，你把它輸回頁面才生效 | `policy show`、`policy set ...` |
 | 分流旗標 | 只在 `menu`（第 12 項）和 CLI | 處理靜態檢查舉的旗：`--benign`（誤報）、`--allergen`（只是限制，不是有毒）、`--confirm-toxic`（你確認有毒）。`--benign`／`--allergen` 需要終端確認碼 | `triage FOOD FLAG ... --reason TEXT` |
 
-CLI 的 `absorb`、`remove`、`restore` 沒加 `--apply` 時都只預覽。每個指令都可以加 `--json`。結束碼：`0` 完成、`2` 拒絕或失敗、`4` 等你輸入確認碼。
+CLI 的 `absorb`、`remove`、`readd`、`restore`、`forget` 沒加 `--apply` 時都只預覽。每個指令都可以加 `--json`。結束碼：`0` 完成、`2` 拒絕或失敗、`4` 網頁或選單在等你輸入確認碼。頁面和選單的錯誤訊息是中文；引擎的英文原文留在「動作紀錄」。
 
 ### 確認碼怎麼用
 
 設定常設預算和分流旗標（`--benign`／`--allergen`）屬於只有 owner 能做的變更：
 
-1. 第一次執行時，系統在**互動終端**印出 6 位數確認碼，指令以結束碼 `4` 停下。
-2. 你把同一個指令加上 `--confirm CODE` 再跑一次（網頁上是把碼輸回對話框）。
-3. 確認碼 10 分鐘內有效，只能用一次；輸錯就作廢，要重新申請。沒有互動終端時會直接拒絕。
+- **CLI**：在你自己開的**互動終端**（PowerShell、cmd；Git Bash 請用 `winpty`）執行 `policy set ...` 或 `triage ...`。終端印出 6 位數確認碼，同一個指令接著請你把它打回去，對了才生效。沒有 `--confirm` 參數，也不會寫任何待確認檔。
+- **網頁和 `menu`**：確認碼印在啟動 `play` 或 `menu` 的那個終端，只存在那個程序的記憶體裡；你把它輸回頁面或選單。10 分鐘內有效、只能試一次、綁定那一組設定；同一次 `play` 錯三次就不再接受確認，要重新啟動。
+- 沒有互動終端（stdin 和 stderr 不是終端機，例如 agent 在背景、把輸出導到檔案）時，根本不會產生確認碼，指令直接拒絕。
 
-確認碼不會出現在網頁或任何 API 回應裡。請自己輸入，不要貼給 agent。在 Windows 上請在你自己開的 PowerShell 或 cmd 視窗執行 `play` 或 `menu`；如果是從背景程序啟動，確認碼會印在沒人看得到的地方。
+**這只是減速帶，不是身分驗證。** 確認碼擋住的是「agent 透過 catalog 指令替你設定」這條路；任何能在你的終端打字的人或程式（包括在 PTY 裡跑指令的 agent），都能看到並輸入確認碼。`policy.json` 和 `decisions.jsonl` 是沒有簽章的專案檔，對專案有寫入權的程式可以直接改它們；所以紀錄裡寫的是 `confirmed_via: code typed back on an interactive terminal (unauthenticated)`，不會寫「由 owner 確認」。請自己輸入確認碼，不要貼給 agent。
 
 ## 一個完整的回合（CLI）
 
@@ -70,20 +73,31 @@ python3 scripts/catalog.py effect --target $P                         # 和預�
 python3 scripts/catalog.py builds --target $P                         # 版本時間線
 python3 scripts/catalog.py restore build.1 --target $P                # 預覽還原
 python3 scripts/catalog.py restore build.1 --apply --target $P        # 還原後自動跑 doctor
+python3 scripts/catalog.py remove egm --target $P                     # 預覽移除整組 EGM
+python3 scripts/catalog.py remove egm --reason "試試沒有 EGM" --apply --target $P
+python3 scripts/catalog.py readd egm --reason "試完了" --apply --target $P   # 加回，保留之後的其他變更
 ```
 
-版本名稱遵守 SemVer 2.0：預設 release 是 `2.0.0`，專案組合是 build metadata `2.0.0+build.N.<hash7>`，`hash7` 是內容 hash 的前 7 碼。第一次吸收或移除前，系統會自動存一版「baseline」。內容相同的組合沿用同一個版本，不會重複建立。`restore` 可以寫完整名稱，也可以寫 `build.N` 或 `N`。
+版本名稱遵守 SemVer 2.0：預設 release 是 `2.0.0`，專案組合是 build metadata `2.0.0+build.N.<hash7>`，`hash7` 是內容 hash 的前 7 碼。第一次吸收或移除前，系統會自動存一版「baseline」；每一版（包括 baseline 和還原點）都記下和預設比的評估。內容相同的組合沿用同一個版本，不會重複建立。`restore` 可以寫完整名稱，也可以寫 `build.N` 或 `N`。
+
+`remove` 的名稱只代表一件事：`egm` 是整組 EGM，內建 skill 名稱是那個 skill，其他名稱是你吸收進來的那一個 skill；要移除一樣食物的全部 skill，加 `--food`。食物的 id 不會取 `egm` 或內建 skill 的名稱。
 
 ## 原型 v0 不做的事
 
 - **不跑付費實測**：行為 A/B、整合測試、齊平底線、對我們草稿的金魚盲審都只列計畫和預估花費。所以 v0 不會出現「營養」或「進化」，品質一律顯示「未量測」。
 - **不產生大象和金魚報告**：v0 只匯入已經做好的消化紀錄，而且標成歷史證據、不計入判定。
 - **免費的離線整合檢查（T1）還沒做**：計畫裡會顯示「not available in v0」。
-- **只吸收純文字 skill**：hooks、MCP server、腳本、manifest 等成分只記成 backlog 項目，不安裝，也不在你的電腦上執行。
+- **只吸收純文字 skill**：hooks、MCP server、腳本、manifest 等成分只記成待辦，不安裝，也不在你的電腦上執行。SKILL.md（或它附帶的說明檔）裡只要叫 agent 執行指令（程式碼區塊、行內指令、「執行 `…`」），或碰到任何旗標規則（網路、家目錄、`curl | sh`…），就算 `X1-inline`，要在可拋棄環境測過才能吸收；旗標分流成良性也一樣。規則更新後，舊的試吃紀錄要重新試吃才能吸收。
 - **來源只限 github.com 和本機 `file://` repo**。私有 repo 抓不到，因為 GitHub token 不會交給 git；`GITHUB_TOKEN` 只用在覓食搜尋。
 - **試吃抓整份 depth-1 快照**（有大小上限），還沒做只抓需要檔案的部分 clone。
 - **分流旗標不在網頁上**：有高嚴重度旗標的食物，卡片會請你改用 `menu`。
 - hash 鏈事件紀錄、`catalog.py check` 重算 gate、`install.json` schema 2 都還沒做。
+
+### 已知問題（還沒修）
+
+- **Claude mod 原型**（`oaw-digest-monitor`，不在這個 repo）還沒讀 `status.json` 的可選欄位 `headline`、`stop_reason`：免費試吃完成時它會顯示「完成 · 進行中」，試吃失敗時會一直顯示進行中。終端的 `oaw_status.py`、`menu` 和網頁顯示的是正確的「未測」或「已停止：原因」。
+- **吸收的 skill 只裝到吸收當時的 host**：之後才加上第二個 host 時，畫面會標「只在 Codex／只在 Claude」，但還沒有「補裝到另一個 host」的動作，doctor 也還沒有對應的警告（設計 §8.4 D5）。要補裝，先移除再吸收一次。
+- **還原寫入的 `install.json` 和那一版不完全相同時**（例如保留了你的自訂檔），結果會記成一個新的版本，而不是沿用原本的名字。
 
 已驗證的範圍：gate 和端到端 smoke 只在 Windows／Python 3.13 跑過，POSIX 還沒實際跑。
 
@@ -92,7 +106,8 @@ python3 scripts/catalog.py restore build.1 --apply --target $P        # 還原�
 - **沒有證據就沒有判定**。判定只由 `catalog_core.derive()` 從證據算出來；星數、作者和名氣只決定覓食清單的排序。
 - **食物不進專案，也不執行**。試吃只把食物封存成 `LAB_HOME` 裡的唯讀 tar，在記憶體裡讀，不解壓、不 import、不執行。git 抓取關掉 hooks、不 checkout，只接受 https 和 `file://`。沒有 git 時改抓 codeload tarball，並標成 `unverified-against-commit`。
 - **只有你能判「有毒」**。靜態規則只會舉旗：高嚴重度旗標讓食物變成「有疑慮」，只有 owner 的 `--confirm-toxic` 會讓它變成「有毒」。
-- **先預覽、再備份、才動手**。吸收、移除、還原都是先預覽；套用前先存還原點。還原只寫入或刪除 OAW 管理的路徑，不碰專案紀錄。
+- **先預覽、再備份、才動手**。吸收、移除、加回、還原都是先預覽；套用前先存還原點。還原只寫入或刪除 OAW 自己會安裝的路徑（OAW 的範本、吸收進來的 skill 文字、EGM runtime、吸收收據），絕不碰 `.git/`、host 設定（`.claude/settings*.json`、`.codex/`、`.mcp.json`）或專案紀錄；還原點只接受這台電腦替這個專案建立、而且記在 `LAB_HOME` 索引裡的那些，`builds.json` 寫什麼都不算數。
+- **移除只刪查得到的檔案**：吸收收據是會 commit 的共用資料，所以移除前會逐檔確認它在那個 skill 的資料夾裡、在 `install.json` 裡、hash 也相同；有一個不符就整個拒絕。
 - **常設預算只設定一次**（決定 D11）：之後系統在預算內自己決定怎麼測，超過預算才會問你。要吸收哪些成分仍然由你決定。v0 不會真的花錢。
 - **「加強」只在有實測證據時出現**，否則一律寫「未量測」。執行中只顯示進度，不顯示即時分數。
 - **遊戲頁只給你自己用**：只綁 `127.0.0.1`，每次啟動換一個通行碼，拒絕其他 Host 和跨站請求，動作只接受 JSON POST，一次只跑一個動作。食物裡的文字一律當成純文字顯示，不渲染食物附帶的 HTML、SVG 或圖片。
@@ -130,6 +145,6 @@ python3 scripts/catalog.py restore build.1 --apply --target $P        # 還原�
 |---|---|
 | `foods/<food>/<commit>/source.tar`、`inventory.json` | 封存的食物快照（唯讀）和檔案清單 |
 | `builds/<專案代碼>/<hash>.tar` | 每個版本的還原點 |
-| `pending/` | 等待確認碼的請求，只存確認碼的雜湊 |
+| `builds/<專案代碼>/index.json` | 這台電腦替這個專案建立過的還原點（還原只接受這裡列的） |
 
 還原點只存在建立它的那台電腦的 `LAB_HOME`。刪掉 `builds/` 就不能再還原到那些版本；隊友 clone 專案後看得到 `builds.json`，但不能用你的還原點。

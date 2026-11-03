@@ -26,6 +26,27 @@ All notable changes to this project will be documented in this file.
   unknown instead of in progress, and strips control/bidi characters.
 - `catalog.py restore --apply` re-evaluates the effect versus the default, so no view keeps
   showing the skills of the layer that was replaced.
+- Catalog owner codes never touch disk: the CLI reads the code back on its own interactive
+  terminal (no `--confirm`, no pending file, no hidden-console fallback), `play`/`menu` keep codes
+  in memory and lock after three wrong ones, and records say the confirmation is unauthenticated.
+- `catalog.py restore` accepts only restore points its `LAB_HOME` indexed for the project, never
+  writes paths OAW does not install (`.git/`, host settings, `.mcp.json`, project records),
+  keeps custom files custom and refuses to overwrite other unmanaged files.
+- `catalog.py remove` deletes only receipt paths inside one absorbed skill folder that match the
+  install manifest, never adds skills to an explicit empty recipe, requires `--reason` with
+  `--apply`, and names one thing (`--food` for a whole food); `readd` re-adds `egm` or a bundled
+  skill through `oaw.py migrate` and keeps later changes.
+- Static checks hold a SKILL.md that tells the agent to run commands (inline code spans,
+  imperative commands, any flag rule) as `X1-inline`, even after triage; scanner rules version 2.
+- `absorb` stages a skill in `LAB_HOME` and runs doctor's own skill lint before installing;
+  backlog-only selections make no build and are no longer shown as in the current build.
+- The tarball fallback caps unpacked bytes while streaming and runs only after git transport errors.
+- Imported reports count list items of any type (missing lists show `—`, not 0) and use the
+  ledger's canonical `after_integration` dispositions, including split parts.
+- The game page: progress dots are neutral and the result dot takes the verdict colour; builds
+  expand to their skills, components and effect lines; flags, verdict reasons, failed-taste
+  reasons and one-host skills are shown; engine reasons, plans, build labels and known errors
+  are in Traditional Chinese; phone layout starts at the feeding area; dark-mode contrast tokens.
 
 ## [2.0.0] — Proposed, updated 2026-10-30
 
