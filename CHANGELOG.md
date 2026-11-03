@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+
+- Skill catalog prototype v0 (`scripts/catalog.py`, pure `scripts/catalog_core.py`):
+  batch intake with duplicate merging, weekly scout with a relevance filter,
+  sealed tasting in `LAB_HOME` with free static checks and component split,
+  historical-prior report import, system test plans with token estimates, an
+  owner-confirmed standing policy, preview-first absorb/remove, named
+  `2.0.0+build.N.<hash7>` builds with restore, static effect versus the default
+  recipe, and `view.json`. Paid tests are planned, not run.
+
+### Fixed
+
+- `oaw_status.py` shows a catalog headline, reports unknown verdict words as
+  unknown instead of in progress, and strips control/bidi characters.
+
 ## [2.0.0] — Proposed, updated 2026-10-30
 
 V2 includes the complete current OAW toolkit and pinned EGM, with selectable native skills. Breaking upgrade prepared for independent review. No tag or release

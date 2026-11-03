@@ -72,6 +72,35 @@ python3 scripts/improvement.py --base-dir PROJECT decide ID --decision accept|re
 
 Paths are project-relative. A proposal stores its concrete git text diff and fixed evaluation contract. Comparison returns eligible (exit 0), rejected (1) or inconclusive (3); malformed/mismatched inputs return 2. Eligible means ready for explicit review, not automatic approval, deployment, statistical proof, or patch application. See [SELF_IMPROVEMENT](SELF_IMPROVEMENT.md).
 
+## Skill catalog (prototype v0)
+
+Run from the OAW source checkout, like `oaw.py`. Every command accepts `--target PROJECT` and `--json`.
+
+```bash
+python3 scripts/catalog.py add URL [URL ...] [--ref REF]
+python3 scripts/catalog.py list
+python3 scripts/catalog.py show FOOD
+python3 scripts/catalog.py taste FOOD [--ref REF]
+python3 scripts/catalog.py triage FOOD FLAG --benign|--allergen|--confirm-toxic --reason TEXT [--confirm CODE]
+python3 scripts/catalog.py import-report FOOD DIR
+python3 scripts/catalog.py plan FOOD
+python3 scripts/catalog.py policy show
+python3 scripts/catalog.py policy set --per-food-tokens N --weekly-tokens N --sandbox isolated-venv,project-copy,no-api-keys [--confirm CODE]
+python3 scripts/catalog.py absorb FOOD --components ID[,ID ...] [--reason TEXT] [--apply]
+python3 scripts/catalog.py remove SKILL|egm|FOOD [--reason TEXT] [--apply]
+python3 scripts/catalog.py builds
+python3 scripts/catalog.py restore BUILD [--apply]
+python3 scripts/catalog.py effect
+python3 scripts/catalog.py view
+python3 scripts/catalog.py scout [list | pick N [N ...]]
+```
+
+`add` merges duplicate repositories (case, `.git`, trailing slash, SSH and tree URLs). `taste` pins a snapshot with a hardened git fetch (no hooks, no checkout, https or local file URLs only) and seals it as a read-only tar in `LAB_HOME`, outside the project: `%LOCALAPPDATA%\oaw\lab`, `~/Library/Application Support/oaw/lab` or `$XDG_DATA_HOME/oaw/lab`, overridable with `OAW_LAB_HOME`. Without git it falls back to a codeload tarball marked `unverified-against-commit`. The free T0 checks read the tar in memory; nothing is extracted, executed or imported. Static rules only raise flags: a high-severity flag makes the food `risky`, and only an owner `triage --confirm-toxic` makes it `toxic`. Each food is split into components (skills, hook sets, MCP servers, scripts, manifests, instruction files, docs) proposed as absorb, excrete or hold; executable or flagged parts never default to absorb.
+
+Verdicts come from `catalog_core.derive()`, which reads evidence and owner decisions only; stars, authors and requests are not inputs. `import-report` stores an Elephant/Goldfish digestion directory as `historical-prior` evidence that is shown separately and never counted. `plan` is the system's test plan, cheapest first, with token estimates (about 0.6-0.9M logical tokens per tool-using agent run); v0 never runs paid tests. `policy set` and `triage --benign|--allergen` print a one-time code on the interactive terminal and exit 4 until the same command is repeated with `--confirm CODE`; a wrong code is burned.
+
+`absorb`, `remove` and `restore` only preview without `--apply`. Applying first snapshots the OAW-managed layer (install manifest, managed files, `.oaw/integrations/`, absorb receipts) into `LAB_HOME`, then names the result `2.0.0+build.N.<hash7>`. Only text-only skills proposed for absorption are installed; other parts are recorded as backlog items. Bundled skills and `egm` are removed through `oaw.py migrate`. `restore` writes or deletes only OAW-managed paths, never project records, then runs doctor. `effect` compares the install with a fresh default recipe: every line is `static-measured`, and quality stays `not measured` without consented live evidence. `view` writes `.oaw/catalog/view.json` for every renderer; `status.json` keeps schema 1. A generated `.oaw/catalog/.gitignore` keeps only `builds.json` and `absorbed/*.json` committable. Exit codes: 0 done, 2 refused or failed, 4 waiting for the owner's code.
+
 ## Repository validation
 
 ```bash

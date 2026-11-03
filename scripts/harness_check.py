@@ -15,8 +15,9 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_TEST_MODULES = ("test_context_hub", "test_gate", "test_improvement", "test_install", "test_skills", "test_wiki_sync",
-                         "test_egm_pilot", "test_egm_local", "test_status", "test_egm_integration")
-MINIMUM_TESTS = 159  # POSIX count; Windows adds junction cases.
+                         "test_egm_pilot", "test_egm_local", "test_status", "test_egm_integration",
+                         "test_catalog_core", "test_catalog")
+MINIMUM_TESTS = 200  # POSIX count; Windows adds junction cases.
 SUMMARY_MARKER = "OAW-TEST-SUMMARY "
 
 
@@ -101,7 +102,8 @@ def syntax_check():
 def cli_check():
     required = {"oaw.py": ("init", "migrate", "doctor"),
                 "context_hub.py": ("memory", "search"), "wiki_sync.py": ("refresh", "lint"),
-                "improvement.py": ("propose", "compare", "decide")}
+                "improvement.py": ("propose", "compare", "decide"),
+                "catalog.py": ("add", "taste", "import-report", "plan", "policy", "absorb", "remove", "restore", "effect", "view", "scout")}
     for script, commands in required.items():
         process = run([sys.executable, str(ROOT / "scripts" / script), "--help"])
         if process.returncode or any(command not in process.stdout for command in commands):
