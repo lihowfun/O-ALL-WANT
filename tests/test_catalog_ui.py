@@ -320,7 +320,12 @@ class RoundTripTests(UiCase):
         payload = self.api("/api/view")
         self.assertFalse(payload["stale"])
         card = payload["view"]["foods"][0]
-        self.assertEqual([s["state"] for s in card["steps"]], ["done", "done", "not-run", "done"])
+        self.assertTrue(card["tasted"])
+        stage = card["pipeline"]
+        self.assertEqual((stage["stage"], stage["state"]), ("approve", "current"))
+        self.assertEqual([stage["stages"][sid] for sid in payload["view"]["pipeline"]["order"]],
+                         ["done", "done", "done", "done", "planned", "planned", "done", "current", "todo"])
+        self.assertEqual([a["id"] for a in stage["actions"]], ["absorb", "forget"])
         part = next(c for c in card["components"] if c["disposition"] == "absorb")
         self.assertEqual(part["id"], "skill:sweet-notes")
 
@@ -337,6 +342,9 @@ class RoundTripTests(UiCase):
         self.assertRegex(absorbed["build"], r"^2\.0\.0\+build\.2\.[0-9a-f]{7}$")
         view = self.api("/api/view")["view"]
         self.assertEqual(view["my_oaw"]["current_build"], absorbed["build"])
+        stage = view["foods"][0]["pipeline"]
+        self.assertEqual((stage["stage"], stage["state"], [a["id"] for a in stage["actions"]]), ("build", "current", ["remove-food"]))
+        self.assertEqual(stage["actions"][0]["params"], {"name": "sweet-notes", "food": True})
         rows = oaw_status.installed_skills(view)
         self.assertIn(("sweet-notes", "新增"), rows)
         self.assertFalse([row for row in rows if row[1] == "比預設少"])
@@ -357,6 +365,11 @@ class RoundTripTests(UiCase):
         self.assertNotIn("sweet-notes", dict(oaw_status.installed_skills(view)))
         part = next(c for c in view["foods"][0]["components"] if c["id"] == "skill:sweet-notes")
         self.assertEqual(oaw_status.part_state(part), "已吸收（不在目前版本）")
+        # Restored away: the food stays on 版本 and offers the build that holds it again.
+        stage = view["foods"][0]["pipeline"]
+        self.assertEqual((stage["stage"], stage["note_zh"]), ("build", "已還原掉：吸收的成分不在目前版本"))
+        self.assertEqual([(a["id"], a["params"]) for a in stage["actions"]],
+                         [("restore", {"build": absorbed["build"]}), ("forget", {"food": "sweet-notes"})])
 
     def test_policy_code_is_shown_on_the_terminal_never_in_a_response(self):
         self.start()
@@ -448,7 +461,7 @@ class MenuTests(UiCase):
             "2", f"{uri} {uri}/",                      # feed: one food, merged
             "4", "1", "",                               # card (Enter: neither taste nor forget)
             "7", "1",                                   # plan
-            "5", "1", "1", "y", "menu test",            # absorb skill:sweet-notes
+            "a", "1", "y", "menu test",                 # 核准 stage letter: absorb skill:sweet-notes
             "1",                                        # my OAW
             "11", "y", "20,000,000", "60000000", "1 3", "CODE",  # standing policy with the terminal code
             "9", "2", "y",                              # restore the baseline (oldest listed last)
@@ -461,9 +474,11 @@ class MenuTests(UiCase):
         text = "\n".join(out)
         self.assertIn("merged:", text)
         self.assertIn("試吃完成 1 樣", text)
-        self.assertIn("① 找到 ✔ → ② 試吃 ✔ → ③ 實測 · 未執行", text)
+        self.assertIn("sweet-notes  入口 ● 封存 ● 靜態 ● 計畫 ● 盲審 ┄ 實測 ┄ 分流 ● 核准 ◉ 版本 ○  等你核准：1 個成分可以吸收", text)
+        self.assertIn("a. sweet-notes · 核准 · 吸收選中的成分…", text)
+        self.assertIn("這一站：核准（目前）", text)
         self.assertIn("🟢 吸收 skill:sweet-notes", text)
-        self.assertIn("原型 v0 不執行付費實測", text)
+        self.assertIn("實測還是規劃中", text)
         self.assertIn("已吸收：新版本 2.0.0+build.2.", text)
         self.assertIn("品質：未量測（沒有實測證據）", text)
         self.assertIn("sweet-notes（新增）", text)
@@ -478,6 +493,26 @@ class MenuTests(UiCase):
         self.assertFalse((self.project / ".agents/skills/sweet-notes").exists())
         self.assertTrue(json.loads((self.project / ".oaw/catalog/policy.json").read_text(encoding="utf-8"))["sandbox"])
         self.assertTrue(any("確認碼" in prompt for prompt in prompts))
+
+    def test_stage_letters_run_each_stage_action_in_order(self):
+        uri = self.make_food().as_uri()
+        out = []
+        read, _prompts = self.scripted([
+            "2", uri,                      # 你點名 → tasted, waits on 核准
+            "a", "1", "y", "letter test",  # 核准: 吸收選中的成分…
+            "a", "y", "letter test",       # 版本: 移除
+            "a", "y",                      # 版本 (removed): 排掉（忘掉這樣食物）
+            "0"])
+        ui.cmd_menu(self.project, read=read, write=out.append)
+        text = "\n".join(out)
+        for line in ("a. sweet-notes · 核准 · 吸收選中的成分…", "b. sweet-notes · 核准 · 排掉（忘掉這樣食物）",
+                     "版本 ◉  在目前版本中（1 個成分）", "a. sweet-notes · 版本 · 移除",
+                     "版本 ●  已移除（再加回要重新測試）", "a. sweet-notes · 版本 · 排掉（忘掉這樣食物）",
+                     "forgot sweet-notes", "還沒有食物：在「你點名」貼上 GitHub 網址"):
+            self.assertIn(line, text)
+        self.assertNotIn("Traceback", text)
+        self.assertFalse((self.project / ".agents/skills/sweet-notes").exists())
+        self.assertEqual(json.loads((self.project / ".oaw/catalog/registry.json").read_text(encoding="utf-8"))["foods"], {})
 
     def test_menu_ends_cleanly_on_end_of_input_through_the_cli(self):
         out, err = io.StringIO(), io.StringIO()
@@ -517,7 +552,8 @@ class StatusViewTests(UiCase):
 
     def test_terminal_cards_keep_the_suggestion_marker_level_and_flags(self):
         food = {"id": "x", "display": "a/x", "verdict": {"headline": "risky", "symbol": "▲"}, "flags": {"open": 1, "open_high": 1},
-                "steps": [{"state": "done"}, {"state": "done"}, {"state": "not-run"}, {"state": "done"}],
+                "tasted": True, "pipeline": {"stage": "static", "stage_label_zh": "靜態", "state": "blocked", "state_zh": "卡住",
+                                             "note_zh": "1 個高嚴重度旗標待分流：到終端 catalog.py menu"},
                 "components": [{"id": "skill:x", "kind": "skill", "exec_class": "X0", "disposition": "excrete", "owner_confirms": True,
                                 "level": "static-measured", "reason": "high-severity static flag(s)", "reason_zh": "高嚴重度靜態旗標"}],
                 "flag_list": [{"id": "F-PIPE:x.sh:2", "rule": "F-PIPE", "path": "x.sh", "line": 2, "severity": "high",
@@ -547,6 +583,29 @@ class StatusViewTests(UiCase):
         self.assertNotIn("class: 'ok'", script)
         for flow in ("readdFlow", "forgetFlow", "buildDetails", "reasonRequired", "error_zh", "flag_list", "label_zh"):
             self.assertIn(flow, script)
+
+    def test_ascii_pipeline_is_one_line_per_food_from_view_json(self):
+        core = catalog.core
+        clean = core.static_scan({"skills/a/SKILL.md": skill_md("a"), "LICENSE": MIT}, food="tasted-one", commit="a" * 40,
+                                 integrity="git-object-verified")
+        entry = lambda fid, lifecycle: {"id": fid, "display": "x/" + fid, "origin": "url", "lifecycle": lifecycle,  # noqa: E731
+                                        "source": {"kind": "github", "url": "https://github.com/x/" + fid}}
+        view = core.build_view({"registry": {"foods": {"found-one": entry("found-one", "found"), "tasted-one": entry("tasted-one", "tasted")}},
+                                "evidence": {"tasted-one": [clean]}})
+        view = json.loads(json.dumps(view, sort_keys=True))  # view.json is written with sorted keys
+        lines = oaw_status.pipeline_lines(view)
+        self.assertEqual(lines[0], "流程（● 完成 ◉ 目前 ⊗ 卡住 ○ 還沒到 ┄ 規劃中 – 不需要）")
+        self.assertEqual(lines[1], "  自動：封存 靜態 版本 · 需要你：核准 · 部分自動：入口 計畫 分流 · 規劃中：盲審 實測")
+        self.assertEqual(lines[2:], [
+            "  found-one   入口 ◉ 封存 ○ 靜態 ○ 計畫 ○ 盲審 ┄ 實測 ┄ 分流 ○ 核准 ○ 版本 ○  等你送去試吃",
+            "  tasted-one  入口 ● 封存 ● 靜態 ● 計畫 ● 盲審 ┄ 實測 ┄ 分流 ● 核准 ◉ 版本 ○  等你核准：1 個成分可以吸收"])
+        self.assertEqual([(food["id"], action["id"]) for food, action in oaw_status.stage_actions(view)],
+                         [("found-one", "taste"), ("found-one", "forget"), ("tasted-one", "absorb"), ("tasted-one", "forget")])
+        view["foods"][0]["pipeline"]["stages"]["review"] = "warp-speed"
+        self.assertIn("盲審 ? 實測", oaw_status.pipeline_lines(view)[2])
+        self.assertEqual(oaw_status.pipeline_lines({"foods": []}), ["流程：view.json 沒有站別表（請執行 catalog.py view）"])
+        empty = core.build_view({})
+        self.assertEqual(oaw_status.pipeline_lines(empty)[-1], "  " + core.PIPELINE_EMPTY_ZH)
 
     def test_stale_effect_falls_back_to_the_recorded_build(self):
         view = {"my_oaw": {"current_matches_build": True,

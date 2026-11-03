@@ -28,7 +28,8 @@ RELEASE = "2.0.0"
 # 2: inline code spans, imperative commands and any rule match in a SKILL.md body make it X1-inline.
 SCANNER_VERSION = 2
 VERDICT_RULES_VERSION = 1
-VIEW_SCHEMA = "oaw-catalog-view/1"
+# 2: the intake pipeline (stage table plus each food's stage) replaces the four-step track.
+VIEW_SCHEMA = "oaw-catalog-view/2"
 
 # code: (symbol, ascii, English, Traditional Chinese)
 VERDICTS = {
@@ -1454,17 +1455,198 @@ def historical_summary(record: dict) -> dict:
             "integration": record.get("integration"), "proposals": record.get("proposals")}
 
 
-def _steps(entry, derived, plan, has_static):
-    paid_note = plan["status"] if plan else "waiting for standing policy"
-    return [
-        {"step": "found", "label_zh": "找到", "state": "done", "summary": entry.get("origin", "url")},
-        {"step": "taste", "label_zh": "試吃（免費）", "state": "done" if has_static else "todo", "free": True,
-         "summary": (f"{derived['flags']['total']} flag(s), {derived['flags']['open_high']} high open" if has_static else "not tasted")},
-        {"step": "measure", "label_zh": "實測（付費，依常設預算）", "state": "measured" if derived.get("level") == "measured" else "not-run",
-         "paid": True, "summary": paid_note},
-        {"step": "result", "label_zh": "結果", "state": "done" if has_static else "pending",
-         "summary": f"{derived['symbol']} {derived['label']}"},
-    ]
+# --------------------------------------------------------------------------- intake pipeline (D19)
+#
+# The one stage table of the official skill-intake process (docs/SKILL_INTAKE.md). build_view() maps every
+# food onto it and writes both into view.json; the web page, `catalog.py menu` and oaw_status.py draw only that.
+# automation: automated (runs by itself today), owner (waits for the owner), mixed (part automated, part owner
+# or planned), planned (part of the process, not automated yet: drawn, never the current stage, no action).
+
+PIPELINE_AUTOMATION = {"automated": "自動", "owner": "需要你", "mixed": "部分自動", "planned": "規劃中"}
+# Per-food stage state -> (symbol, Traditional Chinese); every renderer uses these.
+PIPELINE_STATES = {"done": ("●", "完成"), "current": ("◉", "目前"), "blocked": ("⊗", "卡住"), "todo": ("○", "還沒到"),
+                   "planned": ("┄", "規劃中"), "skipped": ("–", "不需要")}
+
+
+def _stage(sid, label_zh, label, automation, decisions, summary_zh, steps, actions):
+    return {"id": sid, "label_zh": label_zh, "label": label, "automation": automation, "decisions": list(decisions),
+            "summary_zh": summary_zh, "steps": [{"label_zh": text, "automation": kind} for text, kind in steps],
+            "actions": list(actions)}
+
+
+PIPELINE_INLETS = (
+    {"id": "scout", "label_zh": "每週偵查 → 相關性過濾 → 你確認", "decisions": ["D4"],
+     "steps": [{"label_zh": "每週偵查：搜尋 GitHub，只記錄候選", "automation": "automated"},
+               {"label_zh": "相關性過濾：和 coding agent skill／harness 無關的不經審查就濾掉；星數只決定排序", "automation": "automated"},
+               {"label_zh": "你確認要試哪些", "automation": "owner"}]},
+    {"id": "named", "label_zh": "你點名", "decisions": ["D4"],
+     "steps": [{"label_zh": "你給 repo 網址，可以一次很多個；同一個 repo 只收一次", "automation": "owner"}]},
+)
+
+PIPELINE_STAGES = (
+    _stage("intake", "入口", "intake", "mixed", ("D4",), "兩條入口匯成一份食物清單，等你送去試吃。",
+           (("偵查、相關性過濾、批次去重", "automated"), ("你確認或點名", "owner")), ("taste", "forget")),
+    _stage("quarantine", "封存", "quarantine", "automated", ("D7", "D13"),
+           "固定在 pinned SHA，唯讀封存在專案外的 LAB_HOME；不解壓、不 import、不執行。",
+           (("hardened git fetch，固定版本", "automated"), ("唯讀 tar，放在專案外", "automated")), ("taste", "forget")),
+    _stage("static", "靜態", "static checks", "automated", ("D5", "D7"), "免費靜態檢查，把食物拆成成分；靜態規則只舉旗，不判有毒。",
+           (("檔案角色、授權、hooks／MCP／腳本、旗標", "automated"), ("拆成成分", "automated"), ("高嚴重度旗標由你分流（終端）", "owner")),
+           ("taste", "triage", "forget")),
+    _stage("plan", "計畫", "plan", "mixed", ("D10", "D11"), "Elephant 依紀錄的決定擬測試計畫和吸收提案，最便宜、又能分辨的測試排前面。",
+           (("系統測試計畫：依證據自動產生", "automated"), ("Elephant 吸收提案：目前只能匯入，標成歷史證據", "mixed")), ()),
+    _stage("review", "盲審", "blind review", "planned", ("D10", "D15"), "Goldfish 在驗證過的零脈絡下盲審我們的草稿，Elephant 解決發現。",
+           (("Goldfish 零脈絡盲審（啟動 recipe、argv、init event 都要記錄）", "planned"), ("Elephant 解決發現", "planned")), ()),
+    _stage("test", "實測", "tests", "planned", ("D11", "D13", "D17"), "在常設政策內由便宜到貴自動跑；會執行食物程式碼的只在可拋棄沙箱（level 2）。",
+           (("離線整合 T1", "planned"), ("可拋棄沙箱試跑 TX", "planned"), ("行為 A/B", "planned")), ()),
+    _stage("sort", "分流", "verdicts", "mixed", ("D2", "D5", "D16", "D17", "D18"),
+           "每個成分判定吸收／排掉／暫留，附原因和證據等級；再做整合檢查和齊平底線。",
+           (("成分判定（今天只有靜態量測）", "automated"), ("整合檢查：退步、觸發衝突、context 預算、指示衝突", "planned"),
+            ("齊平底線：OAW 吃完 對 單吃食物", "planned")), ("forget",)),
+    _stage("approve", "核准", "owner approval", "owner", ("D7", "D11"), "你決定吸收哪些成分；系統不會自動安裝或套用。",
+           (("你勾選成分，先預覽再確認", "owner"),), ("absorb", "forget")),
+    _stage("build", "版本", "build", "automated", ("D3", "D6", "D12", "D14"),
+           "每次吸收或移除都產生 2.0.0+build.N.<hash7> 和還原點，列出和預設比的效果與證據等級；可一鍵線性還原，任何 skill（含 EGM）都能移除。",
+           (("還原點 → 安裝 → 版本 → 和預設比", "automated"), ("還原到任何一版", "owner"), ("移除（含 EGM）、加回", "owner")),
+           ("remove-food", "restore", "absorb", "forget")),
+)
+PIPELINE_ORDER = tuple(stage["id"] for stage in PIPELINE_STAGES)
+# Action id -> the engine action it calls (the page's /api/action/NAME, the menu's run_action name), its label, and
+# where it runs. A terminal action needs an owner code: the page shows it as text; only the menu and the CLI run it.
+PIPELINE_ACTIONS = {
+    "taste": {"endpoint": "taste", "label_zh": "送去試吃", "where": "both"},
+    "forget": {"endpoint": "forget", "label_zh": "排掉（忘掉這樣食物）", "where": "both"},
+    "triage": {"endpoint": "triage", "label_zh": "分流旗標（終端確認碼）", "where": "terminal"},
+    "absorb": {"endpoint": "absorb", "label_zh": "吸收選中的成分…", "where": "both"},
+    "remove-food": {"endpoint": "remove", "label_zh": "移除", "where": "both"},
+    "restore": {"endpoint": "restore", "label_zh": "還原到這版", "where": "both"},
+}
+PIPELINE_EMPTY_ZH = "還沒有食物：在「你點名」貼上 GitHub 網址按「送去試吃」，或在「每週偵查」按「立即偵查」再勾選候選。"
+# status.json stages a running taste reports -> the pipeline stage the page shows the food on meanwhile.
+LIVE_STAGES = {"ingest": "intake", "quarantine": "quarantine", "static": "static"}
+
+
+def food_pipeline(card: dict) -> dict:
+    """Where one food card sits on PIPELINE_STAGES, every stage's state, and its current stage's actions.
+
+    The card's components must already carry `in_current_build`. Planned stages are never the current stage
+    and never carry an action: until they are automated a food is shown passing them (┄).
+    """
+    fid = card["id"]
+    verdict = card.get("verdict") or {}
+    headline = verdict.get("headline")
+    parts = [c for c in card.get("components") or [] if isinstance(c, dict)]
+    history = [c for r in card.get("historical") or [] for c in r.get("components") or [] if isinstance(c, dict)]
+    in_build = [c for c in parts if c.get("in_current_build")]
+    open_parts = [c for c in parts if c.get("disposition") == "absorb" and not c.get("decision") and not c.get("in_current_build")]
+    open_history = [c for c in history if c.get("disposition") == "absorb" and not c.get("decision")]
+    restored_away = [c for c in parts if c.get("decision") == "absorbed" and not c.get("in_current_build")]
+    removed = [c for c in parts if c.get("decision") == "removed" and not c.get("in_current_build")]
+    backlog = [c for c in history if c.get("decision")]
+    holds = [c for c in parts if c.get("disposition") == "hold" and not c.get("decision")]
+    states = {s["id"]: "planned" if s["automation"] == "planned" else "todo" for s in PIPELINE_STAGES}
+    if verdict.get("level") == "measured":
+        states["test"] = "done"  # a consented live record is test evidence; nothing in v0 produces one yet
+
+    def reach(stage, state, *, skip_planned=False):
+        for sid in PIPELINE_ORDER[:PIPELINE_ORDER.index(stage)]:
+            if states[sid] == "todo":
+                states[sid] = "done"
+            elif states[sid] == "planned" and skip_planned:
+                states[sid] = "skipped"
+        states[stage] = state
+        return stage
+
+    bad = headline in ("toxic", "risky", "regressed", "diarrhea")
+    wanted = []  # (action id, label or None, params or None)
+    if in_build:
+        stage = reach("build", "blocked" if bad else "current")
+        note = f"在目前版本中（{len(in_build)} 個成分）" + (f"，但判定是「{VERDICTS[headline][3]}」：建議移除" if bad else "")
+        wanted.append(("remove-food", None, {"name": fid, "food": True}))
+        if headline == "risky":
+            wanted.append(("triage", None, None))
+        if (open_parts or open_history) and not bad:
+            wanted.append(("absorb", "吸收其他成分…", None))
+    elif not card.get("tasted"):
+        error = card.get("last_error") if isinstance(card.get("last_error"), dict) else None
+        if error:
+            stage = reach("quarantine", "blocked")
+            note = "試吃失敗：" + sanitize_text(error.get("error_zh") or error.get("error"), 160)
+            wanted += [("taste", "再送去試吃", None), ("forget", None, None)]
+        else:
+            stage = reach("intake", "current")
+            reports = len(card.get("historical") or [])
+            note = "等你送去試吃" + (f"（已匯入 {reports} 份歷史證據，不計入判定）" if reports else "")
+            wanted += [("taste", None, None), ("forget", None, None)]
+    elif headline == "toxic":
+        stage = reach("sort", "blocked", skip_planned=True)
+        note = "你確認有毒：整樣排掉，不會進專案"
+        wanted.append(("forget", None, None))
+    elif headline == "risky":
+        stage = reach("static", "blocked")
+        open_high = (card.get("flags") or {}).get("open_high") or 0
+        note = (f"{open_high} 個高嚴重度旗標待分流：到終端 catalog.py menu" if open_high
+                else "你擋下了這樣食物：" + sanitize_text("；".join(str(r) for r in verdict.get("reasons") or []), 120))
+        wanted += [("triage", None, None), ("forget", None, None)]
+    elif verdict.get("stale"):
+        stage = reach("static", "current")
+        note = "掃描規則更新了：用新規則再試吃（免費）才能吸收"
+        wanted += [("taste", "用新規則再試吃（免費）", None), ("forget", None, None)]
+    elif headline in ("inedible", "regressed", "diarrhea"):
+        stage = reach("sort", "blocked", skip_planned=headline == "inedible")
+        note = {"inedible": "OAW 照原樣沒辦法消化（不是說它有害）", "regressed": "實測變差：不吸收",
+                "diarrhea": "拉肚子：會傷到現有配方"}[headline]
+        wanted.append(("forget", None, None))
+    elif open_parts or open_history:
+        stage = reach("approve", "current")
+        note = f"等你核准：{len(open_parts)} 個成分可以吸收" + (f"，{len(open_history)} 個歷史提案可以記成待辦" if open_history else "")
+        wanted += [("absorb", None, None), ("forget", None, None)]
+    elif restored_away:
+        stage = reach("build", "current")
+        builds = [d.get("build") for d in card.get("decisions") or [] if d.get("kind") == "absorb" and d.get("build")]
+        note = "已還原掉：吸收的成分不在目前版本"
+        if builds:
+            wanted.append(("restore", f"還原到這版（{sanitize_text(builds[-1], 40)}）", {"build": builds[-1]}))
+        wanted.append(("forget", None, None))
+    elif removed:
+        stage = reach("build", "done")
+        note = "已移除（再加回要重新測試）"
+        wanted.append(("forget", None, None))
+    elif backlog:
+        stage = reach("approve", "done")
+        states["build"] = "skipped"
+        note = f"已記成待辦 {len(backlog)} 項（未改程式，沒有新版本）"
+        wanted.append(("forget", None, None))
+    else:
+        stage = reach("sort", "current")
+        note = f"暫留 {len(holds)} 個成分：缺的測試還在規劃中（看食物卡）" if holds else "沒有可以吸收的成分"
+        wanted.append(("forget", None, None))
+    actions = []
+    for aid, label, params in wanted:
+        spec = PIPELINE_ACTIONS[aid]
+        actions.append({"id": aid, "stage": stage, "endpoint": spec["endpoint"], "where": spec["where"],
+                        "label_zh": label or spec["label_zh"], "params": params or {"food": fid}})
+    label_zh = next(s["label_zh"] for s in PIPELINE_STAGES if s["id"] == stage)
+    parity = headline == "nutritious"  # derive() gives nutritious only with a measured parity floor
+    return {"stage": stage, "stage_label_zh": label_zh, "state": states[stage], "state_zh": PIPELINE_STATES[states[stage]][1],
+            "stages": states, "note_zh": note, "actions": actions,
+            "details": [{"stage": "plan", "id": "plan", "label_zh": "看計畫"}] if card.get("tasted") and card.get("plan") else [],
+            "parity": {"state": "measured" if parity else "not-tested",
+                       "label": "parity vs food alone: " + ("measured" if parity else "not tested"),
+                       "label_zh": "和單吃食物比（齊平底線）：" + ("實測" if parity else "未測")}}
+
+
+def pipeline_table() -> dict:
+    """The stage table, inlets and display vocabulary, as written into view.json."""
+    return {"stages": copy_json(PIPELINE_STAGES), "inlets": copy_json(PIPELINE_INLETS), "order": list(PIPELINE_ORDER),
+            "automation_zh": dict(PIPELINE_AUTOMATION), "symbols": {k: v[0] for k, v in PIPELINE_STATES.items()},
+            # view.json is written with sorted keys, so the display order travels as lists.
+            "legend": list(PIPELINE_STATES), "automation_order": list(PIPELINE_AUTOMATION),
+            "states_zh": {k: v[1] for k, v in PIPELINE_STATES.items()}, "actions": copy_json(PIPELINE_ACTIONS),
+            "live_stages": dict(LIVE_STAGES), "empty_zh": PIPELINE_EMPTY_ZH}
+
+
+def copy_json(value):
+    return json.loads(json.dumps(value, ensure_ascii=False))
 
 
 def food_card(entry: dict, evidence: list, decisions: list, plan: dict | None = None) -> dict:
@@ -1503,13 +1685,27 @@ def food_card(entry: dict, evidence: list, decisions: list, plan: dict | None = 
                            "error_zh": sanitize_text(error.get("error_zh"), 300)} if error else None,
             "pinned": {"commit": source.get("commit"), "commit7": (source.get("commit") or "")[:7] or None,
                        "integrity": source.get("integrity"), "tree_sha12": (s or {}).get("tree_sha256", "")[:12] or None},
-            "steps": _steps(entry, derived, plan, bool(s)),
+            "tasted": bool(s),
             "verdict": {k: derived[k] for k in ("headline", "symbol", "ascii", "label", "label_zh", "reasons", "chips", "badges", "level", "stale")},
             "safety_text": safety_text, "exec_class": derived["exec_class"], "allergens": derived["allergens"],
             "flags": derived["flags"], "license": (s or {}).get("license", {}).get("spdx") if s else None,
             "components": derived["components"], "counts": counts, "historical": historical,
             "plan": {"status": plan["status"], "plan_id": plan["plan_id"], "estimate": plan["estimate"]} if plan else None,
             "decisions": food_decisions}
+
+
+def place_card(card: dict, receipt) -> dict:
+    """Mark which parts the current layer holds (from the absorb receipt), then put the card on the pipeline."""
+    # Only installed parts are in a build; a backlog note changes no code.
+    present = {cid for cid, part in ((receipt or {}).get("components") or {}).items()
+               if isinstance(part, dict) and part.get("outcome") == "installed"}
+    for part in card["components"]:
+        part["in_current_build"] = part["id"] in present
+    for report in card["historical"]:
+        for part in report["components"]:
+            part["in_current_build"] = False
+    card["pipeline"] = food_pipeline(card)
+    return card
 
 
 def build_view(state: dict) -> dict:
@@ -1525,16 +1721,7 @@ def build_view(state: dict) -> dict:
     foods = []
     for fid, entry in sorted(registry.get("foods", {}).items()):
         mine = decisions_for(decisions, fid)
-        card = food_card(entry, evidence.get(fid, []), mine, plans.get(fid))
-        # Only installed parts are in a build; a backlog note changes no code.
-        present = {cid for cid, part in ((receipts.get(fid) or {}).get("components") or {}).items()
-                   if isinstance(part, dict) and part.get("outcome") == "installed"}
-        for part in card["components"]:
-            part["in_current_build"] = part["id"] in present
-        for report in card["historical"]:
-            for part in report["components"]:
-                part["in_current_build"] = False
-        foods.append(card)
+        foods.append(place_card(food_card(entry, evidence.get(fid, []), mine, plans.get(fid)), receipts.get(fid)))
     candidates = sorted(scout.get("candidates", {}).values(), key=lambda c: (-int(c.get("stars") or 0), c.get("key", "")))
     timeline = [{"n": b.get("n"), "name": b.get("name"), "label": sanitize_text(b.get("label", ""), 160),
                  "label_zh": sanitize_text(b.get("label_zh", ""), 160) or None, "kind": b.get("kind"),
@@ -1544,11 +1731,12 @@ def build_view(state: dict) -> dict:
                 for b in builds.get("builds", [])]
     backlog = {(f["id"], cid) for f in foods for d in f["decisions"] if d["kind"] == "absorb" and d["outcome"] == "backlog"
                for cid in d["components"]}
-    funnel = {"submitted": len(foods), "tasted": sum(1 for f in foods if f["steps"][1]["state"] == "done"),
+    funnel = {"submitted": len(foods), "tasted": sum(1 for f in foods if f["tasted"]),
               "measured": sum(1 for f in foods if f["verdict"]["level"] == "measured"),
               # Installed parts present in the current layer; backlog notes are counted apart and change no code.
               "absorbed_parts": sum(1 for f in foods for c in f["components"] if c.get("in_current_build")),
-              "backlog_items": len(backlog)}
+              "backlog_items": len(backlog),
+              "by_stage": {sid: sum(1 for f in foods if f["pipeline"]["stage"] == sid) for sid in PIPELINE_ORDER}}
     view = {
         "schema": VIEW_SCHEMA, "release": RELEASE,
         "generated_from": {name: record_sha256(state.get(name)) for name in ("registry", "evidence", "decisions", "builds", "policy", "scout", "plans", "effect", "receipts")},
@@ -1566,7 +1754,7 @@ def build_view(state: dict) -> dict:
                                               "description": sanitize_text(c.get("description"), 160), "stars": c.get("stars"),
                                               "relevance": c.get("relevance"), "status": c.get("status", "candidate"),
                                               "weeks_seen": c.get("weeks_seen", [])} for i, c in enumerate(candidates)]}},
-        "foods": foods, "funnel": funnel,
+        "pipeline": pipeline_table(), "foods": foods, "funnel": funnel,
         "policy": {"set": bool(policy), **({k: policy[k] for k in ("per_food_token_cap", "weekly_token_cap", "sandbox", "set_at") if k in policy} if policy else {}),
                    "paid_runs_enabled": False, "note": "v0 shows plans and estimates only; paid runs are not implemented"},
         "honesty": ["No evidence, no verdict; stars only order the scout queue.",

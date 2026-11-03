@@ -2,7 +2,10 @@
 
 Both front ends call the same action layer, which calls only the catalog
 engine (catalog.py, catalog_core.py); both display `.oaw/catalog/view.json`
-with the display rules in oaw_status.py.
+with the display rules in oaw_status.py. Their main screen is the intake
+pipeline of docs/SKILL_INTAKE.md: the stage table and each food's stage and
+current-stage actions come from view.json, so the page's stage buttons and the
+menu's lettered stage actions are the same engine calls.
 
 The page server binds 127.0.0.1 on a free port. Every API call needs the
 per-session token header and a Host header naming that address; no CORS
@@ -525,8 +528,16 @@ class MenuExit(Exception):
     """End of input or the owner chose to leave."""
 
 
+# Letters for the stage actions on the menu's main screen; q stays "quit".
+STAGE_KEYS = "abcdefghijklmnoprstuvwxyz"
+
+
 class Menu:
-    """Numbered terminal menu with the same actions and display rules as the page (no curses)."""
+    """Terminal menu with the same pipeline, stage actions and display rules as the page (no curses).
+
+    The main screen prints the intake pipeline (one line per food, from view.json), then every food's
+    current-stage actions as letters, then the numbered screens.
+    """
 
     def __init__(self, target: Path, read=None, write=None):
         # input()/print() are looked up at call time, so a wrapper or a test can replace them.
@@ -535,12 +546,13 @@ class Menu:
         self.write = write or (lambda text: print(text, flush=True))
         # Codes live in this menu's memory and are shown on its terminal, like the page's.
         self.confirmer = catalog.ConfirmationChannel()
-        self.items = (("1", "我的 OAW（版本、skill、和預設比）", self.my_oaw), ("2", "投食：貼 GitHub 網址，送去試吃", self.feed),
-                      ("3", "本週覓食", self.scout), ("4", "食物卡（送去試吃、忘掉）", self.cards), ("5", "吸收選中的成分", self.absorb),
-                      ("6", "排掉／移除", self.remove), ("7", "實測…（系統的測試計畫）", self.plan),
-                      ("8", "匯入 🐘 大象／🐟 金魚報告", self.import_report), ("9", "版本時間線／還原到這版", self.restore),
-                      ("10", "重新評估和預設的差異", self.effect), ("11", "常設預算", self.policy), ("12", "分流旗標", self.triage),
-                      ("13", "加回 EGM／內建 skill", self.readd))
+        self.items = (("1", "我的 OAW（版本、skill、和預設比）", self.my_oaw), ("2", "入口：你點名（貼 GitHub 網址，送去試吃）", self.feed),
+                      ("3", "入口：每週偵查 → 相關性過濾 → 你確認", self.scout), ("4", "食物卡（送去試吃、忘掉）", self.cards),
+                      ("5", "核准：吸收選中的成分", self.absorb), ("6", "版本：移除 skill／EGM", self.remove),
+                      ("7", "計畫：系統的測試計畫", self.plan), ("8", "計畫：匯入 🐘 Elephant／🐟 Goldfish 紀錄", self.import_report),
+                      ("9", "版本：時間線／還原到這版", self.restore), ("10", "版本：重新評估和預設的差異", self.effect),
+                      ("11", "實測：常設預算", self.policy), ("12", "靜態：分流旗標", self.triage),
+                      ("13", "版本：加回 EGM／內建 skill", self.readd))
 
     # ---- io
     def ask(self, prompt: str) -> str:
@@ -595,13 +607,20 @@ class Menu:
                 self.write(f"OAW 消化系統（終端選單） · {self.target}")
                 self.write(oaw_status.my_oaw_lines(view)[0] + f" · 食物 {funnel.get('submitted', 0)} · 已試吃 {funnel.get('tasted', 0)}"
                            f" · 實測 {funnel.get('measured', 0)} · 已吸收成分 {funnel.get('absorbed_parts', 0)}")
+                for line in oaw_status.pipeline_lines(view):
+                    self.write(line)
+                actions = self.stage_choices(view)
                 for key, label, _handler in self.items:
                     self.write(f"{key:>3}  {label}")
                 self.write("  0  離開")
-                choice = self.ask("請選擇：")
+                choice = self.ask("請選擇（字母 = 這一站的動作，數字 = 畫面）：")
                 if choice in ("0", "q", "quit", "exit"):
                     break
-                handler = next((h for key, _label, h in self.items if key == choice), None)
+                if choice.casefold() in actions:
+                    food, action = actions[choice.casefold()]
+                    handler = lambda food=food, action=action: self.stage_action(food, action)  # noqa: E731
+                else:
+                    handler = next((h for key, _label, h in self.items if key == choice), None)
                 if handler is None:
                     self.write("沒有這個選項。")
                     continue
@@ -611,6 +630,51 @@ class Menu:
                     self.write(f"錯誤：{core.sanitize_text(str(exc), 300)}")
         except MenuExit:
             self.write("")
+
+    # ---- stage actions (the same ones the page puts on the pipeline)
+    def stage_choices(self, view) -> dict:
+        """Print every food's current-stage actions with a letter; return letter -> (food, action)."""
+        pairs = oaw_status.stage_actions(view)
+        if not pairs:
+            return {}
+        self.write("這一站可以做：")
+        choices = {}
+        for key, (food, action) in zip(STAGE_KEYS, pairs):
+            stage = oaw_status.clean((food.get("pipeline") or {}).get("stage_label_zh"), 8)
+            where = "（終端確認碼）" if action.get("where") == "terminal" else ""
+            self.write(f"  {key}. {oaw_status.clean(food.get('id'), 64)} · {stage} · {oaw_status.clean(action.get('label_zh'), 60)}"
+                       + ("" if "終端" in str(action.get("label_zh")) else where))
+            choices[key] = (food, action)
+        if len(pairs) > len(STAGE_KEYS):
+            self.write(f"  還有 {len(pairs) - len(STAGE_KEYS)} 個動作沒有列出：用 4 食物卡。")
+        return choices
+
+    def stage_action(self, food: dict, action: dict) -> None:
+        """Run one pipeline action through the same engine calls as the page's stage buttons."""
+        kind, fid = action.get("id"), food["id"]
+        params = action.get("params") if isinstance(action.get("params"), dict) else {}
+        if kind == "taste":
+            if self.do("taste", {"food": fid})["ok"]:
+                self.write("  試吃完成：看上面的流程。")
+        elif kind == "forget":
+            self.forget(food)
+        elif kind == "absorb":
+            self.absorb(food)
+        elif kind == "remove-food":
+            if self.do("remove", {"name": fid, "food": True, "apply": False})["ok"] and self.yes(f"確定移除 {fid} 已安裝的部分？會先存還原點"):
+                reason = self.reason()
+                if reason:
+                    self.do("remove", {"name": fid, "food": True, "apply": True, "reason": reason})
+        elif kind == "restore" and isinstance(params.get("build"), str):
+            self.restore_to(params["build"])
+        elif kind == "triage":
+            self.triage(food)
+        else:
+            self.write("  這個動作不在終端選單裡。")
+
+    def forget(self, food: dict) -> None:
+        if self.do("forget", {"food": food["id"], "apply": False})["ok"] and self.yes(f"確定忘掉 {food['id']}？"):
+            self.do("forget", {"food": food["id"], "apply": True, "reason": "由終端選單忘掉"})
 
     # ---- helpers
     def choose_food(self, view=None):
@@ -670,8 +734,7 @@ class Menu:
             return
         for line in oaw_status.food_lines(food, detail=True):
             self.write(line)
-        steps = food.get("steps") if isinstance(food.get("steps"), list) else []
-        tasted = len(steps) > 1 and isinstance(steps[1], dict) and steps[1].get("state") == "done"
+        tasted = bool(food.get("tasted"))
         installed = any(c.get("in_current_build") for c in food.get("components") or [] if isinstance(c, dict))
         choices = (["t = 送去試吃（免費、封存在專案外）"] if not tasted else []) + (["f = 忘掉這樣食物"] if not installed else [])
         if not choices:
@@ -681,11 +744,10 @@ class Menu:
             if self.do("taste", {"food": food["id"]})["ok"]:
                 self.write("  試吃完成；再選 4 看結果。")
         elif answer == "f" and not installed:
-            if self.do("forget", {"food": food["id"], "apply": False})["ok"] and self.yes(f"確定忘掉 {food['id']}？"):
-                self.do("forget", {"food": food["id"], "apply": True, "reason": "由終端選單忘掉"})
+            self.forget(food)
 
-    def absorb(self):
-        food = self.choose_food()
+    def absorb(self, food=None):
+        food = food or self.choose_food()
         if not food:
             return
         options = [(c["id"], c.get("name"), "靜態量測") for c in food.get("components", [])
@@ -762,7 +824,7 @@ class Menu:
     def plan(self):
         food = self.choose_food()
         if food and self.do("plan", {"food": food["id"]})["ok"]:
-            self.write("  原型 v0 不執行付費實測：只顯示系統規劃的測試和預估花費。")
+            self.write("  實測還是規劃中：原型 v0 只顯示系統規劃的測試和預估花費，不執行付費實測。")
 
     def import_report(self):
         directory = self.ask("報告資料夾路徑（digest.json、goldfish-*.json、components.json…）：")
@@ -791,9 +853,10 @@ class Menu:
         for index, build in enumerate(timeline, 1):
             self.write(f"  {index}. {build.get('name')}" + ("（目前）" if build.get("current") else ""))
         picks = self.numbers(self.ask("還原到第幾版（Enter 返回）："), len(timeline))
-        if not picks:
-            return
-        name = timeline[picks[0] - 1]["name"]
+        if picks:
+            self.restore_to(timeline[picks[0] - 1]["name"])
+
+    def restore_to(self, name: str) -> None:
         if self.do("restore", {"build": name, "apply": False})["ok"] and self.yes(f"確定還原到 {name}？只動 OAW 安裝層"):
             self.do("restore", {"build": name, "apply": True})
 
@@ -819,8 +882,8 @@ class Menu:
             self.confirm_code("policy-set", {"per_food_tokens": per_food, "weekly_tokens": weekly,
                                              "sandbox": [core.SANDBOX_CONDITIONS[i - 1] for i in picks]})
 
-    def triage(self):
-        food = self.choose_food()
+    def triage(self, food=None):
+        food = food or self.choose_food()
         if not food:
             return
         static = catalog.latest_static(catalog.load_evidence(self.target, food["id"]))

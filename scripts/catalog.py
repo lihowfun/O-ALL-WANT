@@ -673,13 +673,14 @@ def cmd_show(target: Path, ident: str) -> dict:
     derived = core.derive(evidence, decisions)
     historical = [r for r in evidence if core.evidence_class(r) == "historical"]
     plan = core.decide_plan(fid, derived, historical, load_policy(target))
-    card = core.food_card(entry, evidence, decisions, plan)
-    v = card["verdict"]
+    card = core.place_card(core.food_card(entry, evidence, decisions, plan), load_receipts(target).get(fid))
+    v, stage = card["verdict"], card["pipeline"]
     lines = [f"{card['display']} [{fid}] · {v['symbol']} {v['label']} ({v['label_zh']}) · evidence: {v['level']}",
              f"  pinned: {card['pinned']['commit7'] or '-'} ({card['pinned']['integrity'] or 'not tasted'}) · license {card['license'] or '-'} · exec {card['exec_class'] or '-'}",
              f"  safety: {card['safety_text']}",
              f"  allergens: {', '.join(card['allergens']) or 'none'}",
-             "  steps: " + " → ".join(f"{s['label_zh']}:{s['state']}" for s in card["steps"]),
+             f"  stage: {stage['stage']} ({stage['state']}) · " + " ".join(f"{sid}:{state}" for sid, state in stage["stages"].items()),
+             f"  next: {stage['note_zh']}" + "".join(f" · [{a['label_zh']}]" for a in stage["actions"]),
              f"  reasons: {'; '.join(v['reasons'])}" + (f" · chips: {', '.join(v['chips'])}" if v["chips"] else "")]
     static = latest_static(evidence)
     if static:

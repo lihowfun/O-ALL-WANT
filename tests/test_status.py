@@ -59,7 +59,7 @@ class StatusTests(unittest.TestCase):
                   "stage": "behavior-ab", "progress": {"done": 42, "total": 90}, "verdict_so_far": "parity",
                   "updated_at": now.isoformat()}
         self.write(".oaw/catalog/status.json", status)
-        self.assertIn("正在消化：egm-review · A/B 42/90 · 齊平", self.run_cli())
+        self.assertIn("正在消化：egm-review · 實測 42/90 · 齊平", self.run_cli())
         status["updated_at"] = (now - timedelta(minutes=30)).isoformat()
         self.write(".oaw/catalog/status.json", status)
         self.assertIn("可能已中斷", self.run_cli())

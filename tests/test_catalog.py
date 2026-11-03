@@ -783,7 +783,8 @@ class CatalogCliTests(unittest.TestCase):
         model = json.loads((self.project / ".oaw/catalog/view.json").read_text(encoding="utf-8"))
         self.assertEqual(model["schema"], core.VIEW_SCHEMA)
         food = model["foods"][0]
-        self.assertEqual([s["state"] for s in food["steps"]], ["done", "done", "not-run", "done"])
+        self.assertEqual((food["tasted"], food["pipeline"]["stage"], food["pipeline"]["state"]), (True, "approve", "current"))
+        self.assertIn("核准 ◉ 版本 ○  等你核准", "\n".join(oaw_status.pipeline_lines(model)))
         self.assertEqual(food["plan"]["status"], "waiting for standing policy")
         self.assertFalse(food["components"][0]["in_current_build"])
 

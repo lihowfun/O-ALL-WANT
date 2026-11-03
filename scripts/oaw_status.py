@@ -6,10 +6,11 @@ terminal, Codex included, reads the same `.oaw/progress.json`,
 `.oaw/catalog/status.json` and `.oaw/catalog/view.json`. It only reads; a missing
 or invalid file is reported, never repaired. A progress percent without a basis
 is shown as `?`. The catalog display rules here are the ones the `catalog.py
-ui` page and `catalog.py menu` follow: a verdict always carries its symbol and
-text, every effect line names its evidence level, quality is "未量測" without
-measured evidence, stars appear only as scout queue order, and imported reports
-are labelled 歷史證據.
+ui` page and `catalog.py menu` follow: every food is one line on the intake
+pipeline that view.json carries (the stage table of docs/SKILL_INTAKE.md), a
+verdict always carries its symbol and text, every effect line names its
+evidence level, quality is "未量測" without measured evidence, stars appear only
+as scout queue order, and imported reports are labelled 歷史證據.
 """
 
 import argparse
@@ -22,19 +23,18 @@ import sys
 PROGRESS_FILE = Path(".oaw/progress.json")
 STATUS_FILE = Path(".oaw/catalog/status.json")
 VIEW_FILE = Path(".oaw/catalog/view.json")
-VIEW_SCHEMA = "oaw-catalog-view/1"
+VIEW_SCHEMA = "oaw-catalog-view/2"
 # Files build_view() reads; a newer one means view.json may be out of date.
 VIEW_SOURCES = ("registry.json", "decisions.jsonl", "builds.json", "policy.json", "scout.json", "effect.json")
 STALE_SECONDS = 600
 ICONS = {"done": "✅", "in_progress": "⏳", "waiting": "⏸", "todo": "○"}
-STAGES = {"ingest": "攝取", "quarantine": "隔離", "static": "靜態", "goldfish": "金魚", "behavior-ab": "A/B", "verdict": "判定"}
+# status.json stages, named like the intake pipeline stages they belong to.
+STAGES = {"ingest": "入口", "quarantine": "封存", "static": "靜態", "goldfish": "盲審", "behavior-ab": "實測", "verdict": "分流"}
 VERDICTS = {"evolved": "進化", "parity": "齊平", "regressed": "退步", "pending": "進行中"}
 HEADLINES = {"nutritious": "營養", "no-gain": "沒營養", "untested": "未測", "incomplete": "證據不完整", "regressed": "變差",
              "diarrhea": "拉肚子", "risky": "有疑慮", "toxic": "有毒", "inedible": "不能吃"}
 LEVELS = {"measured": "實測", "static-measured": "靜態量測", "not-measured": "未量測", "historical-prior": "歷史證據"}
 DISPOSITIONS = {"absorb": "🟢 吸收", "excrete": "🔴 排掉", "hold": "🟡 暫留"}
-STEP_MARKS = ("①", "②", "③", "④")
-STEP_NAMES = ("找到", "試吃", "實測", "結果")
 METRICS = {"skills": "skill 數", "files": "檔案數", "bytes": "大小（bytes）",
            "startup-loaded text bytes (codex)": "啟動載入文字 bytes（Codex）",
            "startup-loaded text bytes (claude)": "啟動載入文字 bytes（Claude）", "hooks": "hooks",
@@ -220,30 +220,77 @@ def quality_label(line):
     return f"{clean(line.get('value'), 40)}（實測，未宣稱改善）"
 
 
-def step_states(food):
-    steps = food.get("steps") if isinstance(food.get("steps"), list) else []
-    verdict = food.get("verdict") or {}
-    states = []
-    for index, name in enumerate(STEP_NAMES):
-        step = steps[index] if index < len(steps) and isinstance(steps[index], dict) else {}
-        state = step.get("state")
-        if index == 3:
-            text = headline_label(verdict) if state == "done" else "·"
-        elif index == 2:
-            text = "✔ 實測" if state == "measured" else "· 未執行"
-        else:
-            text = "✔" if state == "done" else "·"
-        states.append(f"{STEP_MARKS[index]} {name} {text}")
-    return " → ".join(states)
+# --------------------------------------------------------------------------- intake pipeline (view.json "pipeline")
+
+def pipeline_table(view):
+    """The stage table view.json carries; None for a view without one."""
+    table = view.get("pipeline") if isinstance(view, dict) else None
+    if not isinstance(table, dict) or not isinstance(table.get("stages"), list):
+        return None
+    return table
+
+
+def pipeline_legend(table):
+    symbols, names = table.get("symbols") or {}, table.get("states_zh") or {}
+    order = [k for k in table.get("legend") or [] if k in symbols] + sorted(set(symbols) - set(table.get("legend") or []))
+    return "流程（" + " ".join(f"{clean(symbols.get(k), 2)} {clean(names.get(k), 8)}" for k in order) + "）"
+
+
+def pipeline_cells(food, table):
+    """'入口 ● 封存 ● 靜態 ◉ …' for one food; an unknown state shows ?, never a guess."""
+    symbols = table.get("symbols") or {}
+    states = ((food.get("pipeline") or {}).get("stages")) or {}
+    return " ".join(f"{clean(stage.get('label_zh'), 6)} {clean(symbols.get(states.get(stage.get('id'))), 2) or '?'}"
+                    for stage in table["stages"] if isinstance(stage, dict))
+
+
+def pipeline_line(food, table, width=0):
+    pipeline = food.get("pipeline") if isinstance(food.get("pipeline"), dict) else {}
+    note = clean(pipeline.get("note_zh"), 120)
+    return f"  {clean(food.get('id'), 64):<{width}}  {pipeline_cells(food, table)}" + (f"  {note}" if note else "")
+
+
+def pipeline_automation_line(table):
+    names = table.get("automation_zh") or {}
+    groups = {}
+    for stage in table["stages"]:
+        if isinstance(stage, dict):
+            groups.setdefault(stage.get("automation"), []).append(clean(stage.get("label_zh"), 6))
+    order = [k for k in table.get("automation_order") or [] if k in groups] + [k for k in groups if k not in (table.get("automation_order") or [])]
+    return "  " + " · ".join(f"{clean(names.get(kind), 8) or clean(kind, 12)}：{' '.join(groups[kind])}" for kind in order)
+
+
+def pipeline_lines(view):
+    """The same stage table as the web page: one line per food, from view.json."""
+    table = pipeline_table(view)
+    if table is None:
+        return ["流程：view.json 沒有站別表（請執行 catalog.py view）"]
+    foods = [f for f in view.get("foods") or [] if isinstance(f, dict)]
+    lines = [pipeline_legend(table), pipeline_automation_line(table)]
+    width = min(28, max([len(clean(f.get("id"), 64) or "") for f in foods] or [0]))
+    lines += [pipeline_line(food, table, width) for food in foods]
+    if not foods:
+        lines.append("  " + (clean(table.get("empty_zh"), 200) or "還沒有食物"))
+    return lines
+
+
+def stage_actions(view):
+    """(food, action) pairs for every food's current stage, in view order: the menu's lettered choices."""
+    pairs = []
+    for food in view.get("foods") or []:
+        if isinstance(food, dict):
+            for action in ((food.get("pipeline") or {}).get("actions")) or []:
+                if isinstance(action, dict):
+                    pairs.append((food, action))
+    return pairs
 
 
 def safety_label(food):
     verdict = (food.get("verdict") or {}).get("headline")
     flags = food.get("flags") if isinstance(food.get("flags"), dict) else {}
-    steps = food.get("steps") if isinstance(food.get("steps"), list) else []
     if verdict == "toxic":
         return "經人工確認有毒"
-    if len(steps) < 2 or not isinstance(steps[1], dict) or steps[1].get("state") != "done":
+    if not food.get("tasted"):
         return "尚未檢查"
     if flags.get("open"):
         return f"{flags['open']} 個旗標未分流（高 {flags.get('open_high', 0)}）"
@@ -382,14 +429,17 @@ def food_lines(food, detail=False):
     pinned = food.get("pinned") or {}
     counts = food.get("counts") or {}
     historical = food.get("historical") if isinstance(food.get("historical"), list) else []
+    pipeline = food.get("pipeline") if isinstance(food.get("pipeline"), dict) else {}
+    parity = clean((pipeline.get("parity") or {}).get("label_zh"), 60)
     lines = [f"{headline_label(verdict)} · {clean(food.get('display'), 80)} [{clean(food.get('id'), 64)}]"
              f" · {clean(pinned.get('commit7'), 12) or '未固定'} · {INTEGRITY.get(pinned.get('integrity')) or '未試吃'}"
              f" · 證據：{level_label(verdict.get('level'))}",
-             "  " + step_states(food),
+             f"  這一站：{clean(pipeline.get('stage_label_zh'), 8) or '?'}（{clean(pipeline.get('state_zh'), 8) or '?'}）"
+             f" · {clean(pipeline.get('note_zh'), 160) or '—'}",
              "  成分：" + " · ".join(f"{DISPOSITIONS[k]} {counts.get(k, 0)}" for k in DISPOSITIONS)
              + (f" · 歷史證據 {len(historical)} 份（不計入判定）" if historical else ""),
              f"  安全：{safety_label(food)}",
-             f"  實測：{plan_status_label((food.get('plan') or {}).get('status'))}"]
+             f"  實測：{plan_status_label((food.get('plan') or {}).get('status'))}" + (f" · {parity}" if parity else "")]
     if not detail:
         return lines
     chips = [chip_label(c) for c in verdict.get("chips") or []]
@@ -456,11 +506,12 @@ def catalog_lines(view, stale=False):
     lines += my_oaw_lines(view)
     lines.append(f"食物 {funnel.get('submitted', 0)} · 已試吃 {funnel.get('tasted', 0)} · 實測 {funnel.get('measured', 0)}"
                  f" · 已吸收成分 {funnel.get('absorbed_parts', 0)}" + (f" · 待辦 {funnel['backlog_items']}" if funnel.get("backlog_items") else ""))
+    lines += pipeline_lines(view)
     foods = [f for f in view.get("foods") or [] if isinstance(f, dict)]
     for food in foods:
         lines += food_lines(food)
     if not foods:
-        lines.append("  還沒有食物：catalog.py ui 或 catalog.py menu → 你點名")
+        lines.append("  操作：catalog.py ui（網頁）或 catalog.py menu（終端選單）")
     lines += scout_lines(view, limit=5)
     return lines
 
@@ -470,7 +521,8 @@ def catalog_summary(view, stale=False):
     return {"current_build": my.get("current_build"), "stale": stale, "funnel": view.get("funnel"),
             "quality": quality_label(((my.get("effect") or {}).get("quality")) or {}),
             "foods": [{"id": f.get("id"), "headline": (f.get("verdict") or {}).get("headline"),
-                       "label": headline_label(f.get("verdict")), "steps": [s.get("state") for s in f.get("steps") or [] if isinstance(s, dict)]}
+                       "label": headline_label(f.get("verdict")), "stage": (f.get("pipeline") or {}).get("stage"),
+                       "stages": (f.get("pipeline") or {}).get("stages")}
                       for f in view.get("foods") or [] if isinstance(f, dict)]}
 
 

