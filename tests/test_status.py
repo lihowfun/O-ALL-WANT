@@ -75,7 +75,7 @@ class StatusTests(unittest.TestCase):
                   "updated_at": datetime.now(timezone.utc).isoformat()}
         self.write(".oaw/catalog/status.json", status)
         text = self.run_cli()
-        self.assertIn("正在消化：food [2J · 完成 3/3 · 未測", text)
+        self.assertIn("最近一次試吃：food [2J · 完成 3/3 · 未測", text)  # a finished taste is no longer "being digested"
         self.assertNotIn(chr(0x202E), text)
         status.pop("headline")
         status["verdict_so_far"] = "glorious"

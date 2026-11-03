@@ -41,12 +41,11 @@ METRICS = {"skills": "skill 數", "files": "檔案數", "bytes": "大小（bytes
            "non-stdlib dependencies": "非標準函式庫相依", "host settings writes": "寫入 host 設定", "quality": "品質"}
 BUILD_KINDS = {"baseline": "基準版", "restore-point": "還原點", "absorb": "吸收", "remove": "移除", "restore": "還原", "readd": "加回"}
 HOST_NAMES = {"codex": "Codex", "claude": "Claude"}
-OWNER_CONFIRMS = "建議（尚未經你確認）"
 CHIPS = {"free-checks-passed": "免費檢查通過", "rules-updated-free-T0-pending": "規則已更新，待重跑免費檢查"}
 INTEGRITY = {"git-object-verified": "git 物件驗證", "unverified-against-commit": "未對 commit 驗證"}
 PLAN_STATUS = (("waiting for standing policy", "等你設定常設預算"),
-               ("within policy", "在常設預算內（v0 尚未開放付費實測）"),
-               ("exceeds standing policy", "超過常設預算：需要你同意（v0 尚未開放付費實測）"),
+               ("within policy", "第 0/1 階段在常設預算內；第 2 階段和第二個 host 要先問你（v0 尚未開放付費實測）"),
+               ("exceeds standing policy", "第 0/1 階段超過常設預算：需要你同意（v0 尚未開放付費實測）"),
                ("taste first", "先試吃：免費靜態檢查決定付費計畫"),
                ("no paid test: owner confirmed toxic", "不需實測：已確認有毒"),
                ("no paid test: oaw cannot digest", "不需實測：OAW 無法消化"),
@@ -143,7 +142,9 @@ def render(project, progress, progress_note, digest, digest_note):
     else:
         count = f" {digest['done']}/{digest['total']}" if digest["total"] else ""
         stalled = f" · 已停止：{digest['stop_reason']}" if digest["stop_reason"] else " · 可能已中斷" if digest["stalled"] else ""
-        lines.append(f"正在消化：{digest['skill']} · {digest['stage_label']}{count} · {digest['verdict']}{stalled}")
+        # A finished or stopped taste is the latest one, no longer "being digested".
+        title = "最近一次試吃" if digest["stage"] == "done" or digest["stop_reason"] else "正在消化"
+        lines.append(f"{title}：{digest['skill']} · {digest['stage_label']}{count} · {digest['verdict']}{stalled}")
         if digest["source"]:
             lines.append(f"  來源：{digest['source']}" + (f" · host：{digest['host']}" if digest["host"] else ""))
     return "\n".join(lines)
@@ -409,7 +410,8 @@ def my_oaw_lines(view):
 def part_state(part):
     """Owner decision and whether the part is in the current build (a restore can remove it)."""
     if part.get("in_current_build"):
-        return "在目前版本中"
+        # D6: a removed part a restore brought back was not tested again.
+        return "在目前版本中（移除後又還原回來：要重新測試）" if part.get("decision") == "removed" else "在目前版本中"
     decision = part.get("decision")
     if decision == "absorbed":
         return "已吸收（不在目前版本）"
@@ -442,6 +444,9 @@ def food_lines(food, detail=False):
              f"  實測：{plan_status_label((food.get('plan') or {}).get('status'))}" + (f" · {parity}" if parity else "")]
     if not detail:
         return lines
+    reasons = verdict.get("reasons_zh") or verdict.get("reasons") or []
+    if reasons:
+        lines.append("  判定依據：" + "；".join(clean(r, 160) for r in reasons))
     chips = [chip_label(c) for c in verdict.get("chips") or []]
     if chips:
         lines.append("  標示：" + "、".join(chips))
@@ -451,7 +456,6 @@ def food_lines(food, detail=False):
         parts = [c for c in food.get("components") or [] if isinstance(c, dict) and c.get("disposition") == key]
         for part in parts:
             lines.append(f"  {DISPOSITIONS[key]} {clean(part.get('id'), 80)} · {clean(part.get('kind'), 20)} · {clean(part.get('exec_class'), 10)}"
-                         + (f" · {OWNER_CONFIRMS}" if part.get("owner_confirms") else "")
                          + f" · {level_label(part.get('level'))}"
                          + (f" · {part_state(part)}" if part_state(part) else ""))
             lines.append(f"      {part_reason(part)}" + (f" · 缺：{part_missing(part)}" if part_missing(part) else ""))
@@ -460,7 +464,7 @@ def food_lines(food, detail=False):
     for flag in open_flags[:12]:
         triage = {"confirm-toxic": " · 你確認有毒"}.get(flag.get("triage"), "")
         lines.append(f"  旗標 [{clean(flag.get('severity'), 8)}] {clean(flag.get('rule'), 16)} {clean(flag.get('path'), 80)}:{flag.get('line')}"
-                     f" · {clean(flag.get('meaning'), 80)}{triage}")
+                     f" · {clean(flag.get('meaning_zh') or flag.get('meaning'), 80)}{triage}")
     if (food.get("flags") or {}).get("open"):
         lines.append("  分流：catalog.py menu → 12 分流旗標（良性、過敏原或確認有毒）")
     if isinstance(food.get("last_error"), dict):
@@ -470,7 +474,7 @@ def food_lines(food, detail=False):
         lines.append(f"  歷史證據（不計入判定）：{clean(report.get('evidence_id'), 80)}")
         elephant = report.get("elephant") if isinstance(report.get("elephant"), dict) else None
         if elephant:
-            lines.append(f"    🐘 Elephant：整合方式 {clean(elephant.get('integration_mode'), 40)} · 關卡 {len(elephant.get('gates') or [])}"
+            lines.append(f"    🐘 Elephant：整合方式 {clean(elephant.get('integration_mode'), 40)} · 關口 {len(elephant.get('gates') or [])}"
                          f" · 養分／拉肚子風險／提議的 A/B {count_text(elephant.get('nutrients'))}／{count_text(elephant.get('diarrhea_risks'))}"
                          f"／{count_text(elephant.get('proposed_ab_tests'))}")
         verify = report.get("verify") if isinstance(report.get("verify"), dict) else None

@@ -56,6 +56,23 @@ All notable changes to this project will be documented in this file.
 - The tarball fallback caps unpacked bytes while streaming and runs only after git transport errors.
 - Imported reports count list items of any type (missing lists show `—`, not 0) and use the
   ledger's canonical `after_integration` dispositions, including split parts.
+- The official process follows binding D17: a static-only `X0` skill is held for a behavior A/B
+  (`x0-text-ab`, amber), never shown as a green absorb; only consented live evidence naming the
+  component makes it absorbable. The effect counts measured evidence only for foods in the layer.
+- `absorb` ships the food's root license/notice files and an `OAW-UPSTREAM.md` attribution note
+  with the copied text, and refuses a removed part until it is tasted again (D6).
+- `add` and `scout pick` taste at once (`--no-taste` only registers); the scout searches by
+  recency, never by stars; a pending owner code is exit 3 (D14 CLI contract).
+- Stage table: 靜態, 計畫 and 版本 are mixed, the scout is owner-started (no schedule), T4 and the
+  parity floor run under 實測, D18, the D3 citation list and the D14 release target are planned
+  steps, and a passed stage with planned steps shows ◐ 部分完成; a removed food shows ⊖ 已移除 and
+  offers a new taste. Plans tag D13 stages and compare only Stage 0/1 with the per-food cap.
+- High-severity flags hold their parts until triage; rule excretes are final. The page and the
+  menu use one absorb rule, show Chinese reasons, flag meanings and plan costs, call the forget
+  action 忘掉這樣食物, title imported Goldfish records 零脈絡未驗證 with unrecorded launch fields,
+  keep a tasting token from gliding back to 入口, show the stages on narrow screens with no food,
+  and show a copyable `menu` command for owner-code steps; the menu checks for a terminal before
+  asking for a triage reason.
 - The web page: passed stages are neutral and only the food token takes the verdict colour; builds
   expand to their skills, components and effect lines; flags, verdict reasons, failed-taste
   reasons and one-host skills are shown; engine reasons, plans, build labels and known errors

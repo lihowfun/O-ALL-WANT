@@ -19,7 +19,7 @@
   };
   const DISPOSITIONS = { absorb: ['🟢', '吸收'], excrete: ['🔴', '排掉'], hold: ['🟡', '暫留'] };
   // Per-food stage states the engine writes; anything else is drawn as unknown, never guessed.
-  const STAGE_STATES = ['done', 'current', 'blocked', 'todo', 'planned', 'skipped'];
+  const STAGE_STATES = ['done', 'partial', 'current', 'blocked', 'removed', 'todo', 'planned', 'skipped'];
   const METRICS = {
     'skills': 'skill 數', 'files': '檔案數', 'bytes': '大小（bytes）',
     'startup-loaded text bytes (codex)': '啟動載入文字 bytes（Codex）',
@@ -30,13 +30,12 @@
   const HOSTS = { 'codex': 'Codex', 'claude': 'Claude' };
   const SEVERITY = { 'high': '高', 'medium': '中', 'low': '低' };
   const TRIAGE = { 'benign': '已判良性', 'allergen': '已判過敏原', 'confirm-toxic': '你確認有毒' };
-  const OWNER_CONFIRMS = '建議（尚未經你確認）';
   const CHIPS = { 'free-checks-passed': '免費檢查通過', 'rules-updated-free-T0-pending': '規則已更新，待重跑免費檢查' };
   const INTEGRITY = { 'git-object-verified': 'git 物件驗證', 'unverified-against-commit': '未對 commit 驗證' };
   const PLAN_STATUS = [
     ['waiting for standing policy', '等你設定常設預算'],
-    ['within policy', '在常設預算內（v0 尚未開放付費實測）'],
-    ['exceeds standing policy', '超過常設預算：需要你同意（v0 尚未開放付費實測）'],
+    ['within policy', '第 0/1 階段在常設預算內；第 2 階段和第二個 host 要先問你（v0 尚未開放付費實測）'],
+    ['exceeds standing policy', '第 0/1 階段超過常設預算：需要你同意（v0 尚未開放付費實測）'],
     ['taste first', '先試吃：免費靜態檢查決定付費計畫'],
     ['no paid test: owner confirmed toxic', '不需實測：已確認有毒'],
     ['no paid test: oaw cannot digest', '不需實測：OAW 無法消化'],
@@ -47,6 +46,8 @@
     'T0': '免費靜態檢查', 'T1': '離線整合', 'T2a': '人工分流旗標', 'G': 'Goldfish 盲審我們的吸收草稿', 'TX': '可拋棄環境試跑',
     'T3a-smoke': '行為 A/B 冒煙測試', 'T4': '和現有配方整合', 'P': '齊平底線（OAW＋食物 對 單吃食物）', 'T3a': '行為 A/B 完整測試'
   };
+  // D13 (PRE-01): Stage 0/1 count against the per-food cap; Stage 2 always asks the owner first.
+  const D13_STAGES = { 0: '第 0 階段（免費）', 1: '第 1 階段（篩選）', 2: '第 2 階段：先問你', overhead: '消化系統開銷' };
   const PLAN_STATES = {
     'done': '已完成', 'next': '下一步', 'planned': '已規劃', 'not available in v0': 'v0 尚未提供',
     'only if the smoke shows no deterministic negative': '冒煙沒有決定性負面才跑'
@@ -75,6 +76,7 @@
     '執行中只顯示進度和花費，不顯示即時分數。',
     '「加強」只在有實測證據時出現，否則一律顯示「未量測」。',
     'Elephant 和 Goldfish 的報告是匯入的歷史證據：只顯示，不計入判定。',
+    '模型面向的 skill 文字要過行為 A/B 才能吸收（D17）；原型 v0 還沒有 A/B，所以食物的 skill 一律暫留。',
     '規劃中的站（Goldfish 零脈絡盲審、付費實測）畫出來但不能按，也不會被當成已經做過。',
     'Claude 和 Codex（這個網頁、catalog.py menu、oaw_status.py）讀的是同一份 view.json 和同一張站別表。'
   ];
@@ -109,7 +111,7 @@
 
   // Same rule as oaw_status.part_state().
   function partState(part) {
-    if (part.in_current_build) return '在目前版本中';
+    if (part.in_current_build) return part.decision === 'removed' ? '在目前版本中（移除後又還原回來：要重新測試）' : '在目前版本中';
     if (part.decision === 'absorbed') return '已吸收（不在目前版本）';
     return DECISIONS[part.decision] || (part.decision ? txt(part.decision, 40) : '');
   }
@@ -255,11 +257,13 @@
     return { food: String(digest.skill), stage: String(map[digest.stage]) };
   }
 
+  // The last live stage is kept until the job is over and the final view is loaded (run/trackBackground clear it),
+  // so a status.json stage outside live_stages (for example done 3/3) never sends the token back to an older view.
   async function follow(job, label) {
     while (job && job.state === 'running') {
       showBusy(label, job);
       const live = liveStage(job);
-      if (JSON.stringify(live) !== JSON.stringify(S.live)) {
+      if (live && JSON.stringify(live) !== JSON.stringify(S.live)) {
         S.live = live;
         // A food fed a moment ago is already in view.json at 入口: fetch it, then move its token.
         await refresh(true);
@@ -267,8 +271,13 @@
       await sleep(450);
       job = (await api('/api/job/' + encodeURIComponent(job.id))).job;
     }
-    if (S.live) S.live = null;
     return job;
+  }
+
+  // Clears the live stage and loads the final view in one render.
+  async function settle() {
+    S.live = null;
+    await refresh(true);
   }
 
   // Runs one engine action as a background job and returns its envelope (or null).
@@ -291,7 +300,7 @@
     } finally {
       S.busy = false;
       hideBusy();
-      await refresh(true);
+      await settle();
     }
     return envelope;
   }
@@ -308,7 +317,7 @@
     } catch (e) { /* the banner explains connection problems */ } finally {
       S.busy = false;
       hideBusy();
-      await refresh(true);
+      await settle();
     }
   }
 
@@ -356,7 +365,7 @@
   function report(envelope, okMessage) {
     if (!envelope) return;
     if (envelope.ok) toast(okMessage || '完成', 'good');
-    else if (envelope.code === 4) toast('等你輸入終端上的確認碼。', 'info');
+    else if (envelope.code === 3) toast('等你輸入終端上的確認碼。', 'info');
     else toast('沒有完成：' + errorText(envelope), 'bad');
   }
 
@@ -366,7 +375,7 @@
     const box = $('log');
     box.replaceChildren(...S.log.map((entry) => {
       const env = entry.envelope || {};
-      const mark = env.ok ? '✔' : env.code === 4 ? '⏸' : '✖';
+      const mark = env.ok ? '✔' : env.code === 3 ? '⏸' : '✖';
       return el('details', { class: 'log-entry' },
         el('summary', { text: `${mark} ${entry.at.toLocaleTimeString('zh-TW', { hour12: false })} ${txt(entry.label, 80)}` }),
         el('pre', { class: 'log-lines', text: (env.lines || [env.error || '']).map((line) => txt(line, 400)).join('\n') }));
@@ -477,8 +486,18 @@
     return '';
   }
 
+  // Where each food's token stands now: the live stage while a taste runs, else the engine's stage.
+  function hereOf(table, food) {
+    const live = S.live && S.live.food === food.id && table.order.includes(S.live.stage) ? S.live.stage : null;
+    return live || (food.pipeline || {}).stage;
+  }
+
   function headRow(table) {
-    const counts = (S.view.funnel && S.view.funnel.by_stage) || {};
+    const counts = {};
+    for (const food of (S.view && Array.isArray(S.view.foods) ? S.view.foods : []).filter(Boolean)) {
+      const at = hereOf(table, food);
+      counts[at] = (counts[at] || 0) + 1;
+    }
     const row = el('div', { class: 'trow thead', role: 'row' }, el('div', { class: 'tcell tlabel', role: 'columnheader', text: '食物' }));
     table.stages.forEach((stage, index) => {
       const planned = stageIsPlanned(stage);
@@ -511,10 +530,13 @@
     const family = FAMILY[verdict.headline] || 'unknown';
     const counts = food.counts || {};
     const parts = Array.isArray(food.components) ? food.components.length : 0;
+    const abHolds = Number.isInteger((food.pipeline || {}).ab_holds) ? food.pipeline.ab_holds : 0;
     const label = `${txt(food.display, 60)}：在「${txt(stage.label_zh, 8)}」（${working ? '試吃中' : stateName(table, state)}）`
-      + `；判定 ${headlineLabel(verdict)}` + (parts ? `；成分 吸收 ${counts.absorb || 0}、排掉 ${counts.excrete || 0}、暫留 ${counts.hold || 0}` : '');
+      + `；判定 ${headlineLabel(verdict)}` + (parts ? `；成分 吸收 ${counts.absorb || 0}、排掉 ${counts.excrete || 0}、暫留 ${counts.hold || 0}` : '')
+      + (abHolds ? `（其中 ${abHolds} 個 skill 文字缺行為 A/B，D17）` : '');
     return el('button', { type: 'button', class: `token fam-${family} st-${state}${working ? ' working' : ''}`, 'data-food': food.id,
-      'data-stage': stage.id, 'aria-label': label, title: '打開食物卡', onclick: () => openFood(food.id) },
+      'data-stage': stage.id, 'data-engine': txt((food.pipeline || {}).stage, 20), 'aria-label': label, title: '打開食物卡',
+      onclick: () => openFood(food.id) },
       el('span', { class: 'tok-sym', 'aria-hidden': 'true', text: txt(verdict.symbol, 3) || '?' }), pips(food));
   }
 
@@ -523,8 +545,8 @@
     const actions = ((food.pipeline || {}).actions || []).filter((action) => action && action.stage === stage.id);
     actions.forEach((action, index) => {
       if (action.where === 'terminal') {
-        // Owner codes stay on the terminal: the page names the step and where to do it.
-        box.append(el('span', { class: 'term-hint', title: '確認碼只印在終端：在終端執行 python3 scripts/catalog.py menu', text: `${txt(action.label_zh, 40)} → 終端 catalog.py menu` }));
+        // Owner codes stay on the terminal: the page shows the full command and where to go in the menu.
+        box.append(terminalHint(action));
         return;
       }
       const danger = action.id === 'forget' || action.id === 'remove-food';
@@ -534,12 +556,39 @@
     return box;
   }
 
+  function terminalHint(action) {
+    const command = txt((S.meta && S.meta.menu_command) || 'python scripts/catalog.py menu --target <專案>', 600);
+    const code = el('code', { class: 'term-cmd', text: command });
+    const copy = el('button', { type: 'button', class: 'btn tiny', text: '複製指令', onclick: async () => {
+      try {
+        await navigator.clipboard.writeText(command);
+        toast('已複製：貼到你自己開的 PowerShell 或 cmd（Git Bash 請用 winpty）。', 'info');
+      } catch (e) {
+        const more = code.closest('details');
+        if (more) more.open = true;
+        const range = document.createRange();
+        range.selectNodeContents(code);
+        const chosen = window.getSelection();
+        chosen.removeAllRanges();
+        chosen.addRange(range);
+        toast('瀏覽器不讓網頁複製：指令已選取，按 Ctrl+C。', 'warn');
+      }
+    } });
+    // Compact in a stage column: the copy button carries the full command; the command itself folds out.
+    return el('div', { class: 'term-hint' },
+      el('span', { text: `${txt(action.label_zh, 40)}：確認碼只在終端。` }), copy,
+      el('details', { class: 'term-more' }, el('summary', { text: '看指令' }),
+        el('span', { class: 'small', text: '在你自己開的終端（PowerShell、cmd）執行：' }), code,
+        el('span', { class: 'small', text: '然後按這一站的字母（例如 a），或選「12 靜態：分流旗標」。' })));
+  }
+
   function laneCell(table, food, stage, state, here, working) {
     const known = STAGE_STATES.includes(state) ? state : 'unknown';
     const planned = stageIsPlanned(stage);
     const cell = el('div', { class: `tcell cell st-${known}${here ? ' here' : ''}`, role: 'cell', 'data-stage': stage.id },
       el('span', { class: 'cell-head' }, el('span', { class: 'cell-stage', text: txt(stage.label_zh, 8) }),
-        el('span', { class: 'cell-state', text: here && working ? '試吃中' : stateName(table, known === 'unknown' ? state : known) })));
+        el('span', { class: 'cell-state', text: here && working ? '試吃中' : stateName(table, known === 'unknown' ? state : known) }),
+        automationChip(table, stage.automation)));
     if (here) {
       cell.append(token(table, food, stage, known, working),
         el('p', { class: 'cell-note', text: working ? '試吃中…（只顯示進度，不顯示分數）' : txt((food.pipeline || {}).note_zh, 160) }));
@@ -561,7 +610,7 @@
     const pipeline = food.pipeline || {};
     const states = pipeline.stages || {};
     const live = S.live && S.live.food === food.id && table.order.includes(S.live.stage) ? S.live.stage : null;
-    const here = live || pipeline.stage;
+    const here = hereOf(table, food);
     const verdict = food.verdict || {};
     const family = FAMILY[verdict.headline] || 'unknown';
     const row = el('div', { class: `trow lane fam-${family}${S.selectedFood === food.id ? ' selected' : ''}`, role: 'row', 'data-food': food.id },
@@ -584,7 +633,7 @@
   function capturePositions() {
     const seen = new Map();
     for (const node of document.querySelectorAll('#track .token[data-food]')) {
-      seen.set(node.dataset.food, { rect: node.getBoundingClientRect(), stage: node.dataset.stage });
+      seen.set(node.dataset.food, { rect: node.getBoundingClientRect(), stage: node.dataset.stage, engine: node.dataset.engine });
     }
     return seen;
   }
@@ -593,9 +642,13 @@
   // with reduced motion it simply appears there.
   function animateMoves(before) {
     if (!before.size || reducedMotion()) return;
+    const order = (pipeTable() || {}).order || [];
     for (const node of document.querySelectorAll('#track .token[data-food]')) {
       const prev = before.get(node.dataset.food);
       if (!prev || prev.stage === node.dataset.stage) continue;
+      // A glide backwards is drawn only when the engine moved the food back, never for a stale view.
+      const back = order.indexOf(node.dataset.stage) < order.indexOf(prev.stage);
+      if (back && prev.engine === node.dataset.engine) continue;
       const now = node.getBoundingClientRect();
       const dx = prev.rect.left - now.left;
       const dy = prev.rect.top - now.top;
@@ -610,6 +663,28 @@
         if (cell) cell.classList.add('arrived');
       }, { once: true });
     }
+  }
+
+  // No food yet: the stage list as one lane without a token. Narrow screens show it (their header row is hidden).
+  function stageList(table) {
+    const row = el('div', { class: 'trow lane stage-list', role: 'row', 'aria-label': '流程的九站（還沒有食物）' },
+      el('div', { class: 'tcell tlabel', role: 'rowheader' }, el('span', { class: 'muted small', text: '流程的九站' })));
+    table.stages.forEach((stage, index) => {
+      const planned = stageIsPlanned(stage);
+      const state = planned ? 'planned' : 'todo';
+      row.append(el('div', { class: `tcell cell st-${state}`, role: 'cell', 'data-stage': stage.id },
+        el('span', { class: 'cell-head' }, el('span', { class: 'cell-stage', text: `${index + 1} ${txt(stage.label_zh, 8)}` }),
+          automationChip(table, stage.automation)),
+        el('span', { class: `dot mark st-${state}`, title: `${txt(stage.label_zh, 8)}：${txt((table.automation_zh || {})[stage.automation], 10)}` })));
+    });
+    return row;
+  }
+
+  // The header buttons (匯入紀錄, 版本與 skill) for narrow screens, where the header row is hidden.
+  function renderTools(table) {
+    const box = $('pipe-tools');
+    if (!box) return;
+    box.replaceChildren(...table.stages.filter((stage) => !stageIsPlanned(stage)).map(stageButtons).filter(Boolean));
   }
 
   function renderGuide(table) {
@@ -639,7 +714,8 @@
     }
     renderLegend(table);
     track.style.setProperty('--stages', String(table.stages.length));
-    track.replaceChildren(headRow(table), ...foods.map((food) => lane(table, food)));
+    track.replaceChildren(headRow(table), ...(foods.length ? foods.map((food) => lane(table, food)) : [stageList(table)]));
+    renderTools(table);
     // Real data only: no food means the empty pipeline, the two inlets and one sentence.
     empty.hidden = foods.length > 0;
     empty.textContent = foods.length ? '' : txt(table.empty_zh, 200);
@@ -885,7 +961,7 @@
     const params = { per_food_tokens: perFood, weekly_tokens: weekly, sandbox: draft.sandbox.slice() };
     const envelope = await run('policy-set', params, '設定常設預算');
     if (!envelope) return;
-    if (envelope.code === 4) {
+    if (envelope.code === 3) {
       S.policyPending = params;
       renderMy();
       toast('確認碼已印在啟動 ui 的終端機上。', 'info');
@@ -949,7 +1025,7 @@
     for (const merge of r.merges || []) {
       const inputs = (merge.inputs || []).map((i) => txt(i, 300));
       const ignored = (merge.ignored || []).map((x) => `${x.field === 'ref' ? 'ref' : '子目錄'} ${txt(x.value, 80)}`);
-      items.push(el('li', { class: 'merge', title: inputs.join('\n') },
+      items.push(el('li', { class: 'feed-merge', title: inputs.join('\n') },
         `合併：${inputs.length} 個寫法是同一個 repo → `, el('span', { class: 'mono', text: mid(merge.key, 90) }),
         '（只試吃一次）' + (ignored.length ? `；用第一個寫法，已忽略 ${ignored.join('、')}` : '')));
     }
@@ -976,7 +1052,16 @@
     const parts = [`試吃完成 ${(r.tasted || []).length} 樣`];
     if ((r.merges || []).length) parts.push(`合併 ${r.merges.length} 組重複`);
     if ((r.failed || []).length) parts.push(`失敗 ${r.failed.length}`);
-    toast(parts.join(' · '), (r.failed || []).length || (r.errors || []).length ? 'warn' : 'good');
+    toast(parts.join(' · '), feedTone(r));
+  }
+
+  // Green only when every tasted food is measured nutritious; otherwise the worst family wins.
+  function feedTone(r) {
+    const families = (r.tasted || []).map((t) => FAMILY[t.verdict] || 'unknown');
+    if (families.includes('bad')) return 'bad';
+    if ((r.failed || []).length || (r.errors || []).length || families.some((f) => ['amber', 'warn', 'dark', 'unknown'].includes(f))) return 'warn';
+    if (families.length && families.every((f) => f === 'good')) return 'good';
+    return 'neutral';
   }
 
   async function feed() {
@@ -1057,8 +1142,8 @@
 
   function partRow(food, part, key) {
     const selected = selection(food.id);
-    const selectable = part.disposition === 'absorb' && !part.decision && !part.in_current_build;
     const historical = part.level === 'historical-prior';
+    const selectable = historical ? part.disposition === 'absorb' && !part.decision : part.can_absorb === true;
     const id = uid('part');
     const status = partState(part);
     const mark = selectable
@@ -1068,7 +1153,7 @@
       } })
       : el('span', { class: 'part-mark', 'aria-hidden': 'true', text: key === 'absorb' ? '•' : key === 'excrete' ? '×' : '…' });
     const tags = el('span', { class: 'part-tags' }, chip(KINDS[part.kind] || txt(part.kind, 20)), part.exec_class ? chip(txt(part.exec_class, 10)) : '',
-      part.owner_confirms ? chip(OWNER_CONFIRMS, 'warn') : '', status ? chip(status) : '',
+      part.missing_code === 'ab' ? chip('缺行為 A/B（靜態檢查通過）', 'amber') : '', status ? chip(status, part.in_current_build && part.decision === 'removed' ? 'warn' : '') : '',
       part.history ? chip(txt(part.history, 40)) : '', levelChip(part.level));
     if (historical) {
       // Report text is data written by someone else: fenced and collapsed, never styled like an OAW-derived reason.
@@ -1160,9 +1245,17 @@
     return panel;
   }
 
+  // D15: what a goldfish record must state about its launch; anything missing is shown as 未記錄, never assumed.
+  const LAUNCH_FIELDS = [['method', '啟動方式'], ['host_version', 'host 版本'], ['inherited_context', '繼承的脈絡'], ['init_event_check', 'init event 檢查']];
+
+  function launchValue(launch, key) {
+    const value = launch && launch[key];
+    return value === null || value === undefined || value === '' ? el('span', { class: 'muted', text: '未記錄' }) : el('span', { text: txt(value, 160) });
+  }
+
   function goldfishPanel(food) {
     const reports = food.historical || [];
-    const panel = el('div', { class: 'inner goldfish' }, el('h4', { text: '🐟 Goldfish 報告（零脈絡盲審）' }), chip('歷史證據 · 不計入判定', 'lv-historical-prior'));
+    const panel = el('div', { class: 'inner goldfish' }, el('h4', { text: '🐟 Goldfish 報告（匯入；零脈絡未驗證）' }), chip('歷史證據 · 不計入判定', 'lv-historical-prior'));
     const fishes = reports.flatMap((r) => r.goldfish || []);
     if (!fishes.length) {
       panel.append(el('p', { class: 'muted', text: reports.length ? '這份紀錄沒有 Goldfish 審查。' : '還沒有匯入 Goldfish 報告。' }));
@@ -1173,6 +1266,8 @@
       panel.append(el('div', { class: 'fish' },
         el('div', { class: 'fish-head' }, el('span', { class: 'mono', text: txt(fish.reviewer, 40) }), chip(`${fmt(fish.findings)} 項發現`),
           Object.entries(fish.by_severity || {}).map(([k, n]) => chip(`${txt(k, 20)} ${n}`))),
+        el('ul', { class: 'fish-launch small' }, LAUNCH_FIELDS.map(([key, name]) => el('li', {},
+          `${name}：`, launchValue(fish.launch, key)))),
         fish.summary ? untrusted('Goldfish 的結論', fish.summary) : ''));
     }
     panel.append(el('p', { class: 'muted small', text: 'Goldfish 審的是我們的吸收草稿才算數；只審食物本身不能取代（D10）。零脈絡要驗證過（D15）：盲審這一站還是規劃中。' }));
@@ -1192,7 +1287,9 @@
     for (const step of plan.steps || []) {
       list.append(el('li', { class: 'pstep' + (step.state === 'done' ? ' done' : '') },
         el('div', { class: 'pstep-head' }, el('span', { class: 'mono', text: txt(step.id, 12) }), el('strong', { text: PLAN_STEPS[step.id] || txt(step.name, 100) }),
-          chip(PLAN_STATES[step.state] || txt(step.state, 60)), chip(step.tokens ? tokensText(step.tokens) : step.cost === 'free' ? '免費' : txt(step.cost, 30)),
+          chip(PLAN_STATES[step.state] || txt(step.state, 60)), chip(step.tokens ? tokensText(step.tokens) : txt(step.cost_zh || step.cost, 30)),
+          D13_STAGES[step.d13_stage] ? chip(D13_STAGES[step.d13_stage], step.d13_stage === 2 ? 'warn' : '') : '',
+          step.sandbox_level ? chip(`沙箱 level ${txt(step.sandbox_level, 2)}`) : '',
           step.conditional ? chip('條件式') : ''),
         el('div', { class: 'small muted', text: txt(step.name_zh || step.name, 160) }),
         el('div', { class: 'small', text: '能證明：' + (step.can_prove_zh || step.can_prove || []).map((x) => txt(x, 120)).join('；') }),
@@ -1203,7 +1300,9 @@
     const fixed = Number.isFinite(estimate.unconditional_max) ? { min: estimate.min, max: estimate.unconditional_max } : estimate;
     const extra = Number.isFinite(estimate.conditional_max) && estimate.conditional_max > 0
       ? `；另加最多 ${(estimate.conditional_max / 1e6).toFixed(1)}M tokens（條件式，只在冒煙測試沒有決定性負面時才跑）` : '';
-    panel.append(list, kv('付費預估合計', tokensText(fixed) + extra),
+    const screening = Number.isFinite(estimate.screening_max) ? `第 0/1 階段最多 ${(estimate.screening_max / 1e6).toFixed(1)}M tokens（和常設預算比）` : '';
+    panel.append(list, kv('付費預估合計', tokensText(fixed) + extra), screening ? kv('常設預算比的是', screening) : '',
+      plan.second_host_zh ? el('p', { class: 'muted small', text: txt(plan.second_host_zh, 160) }) : '',
       el('p', { class: 'muted small', text: txt(estimate.label_zh || estimate.label, 160) }),
       el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn', disabled: true, text: '實測（依常設政策）：規劃中' }),
         el('span', { class: 'hint', text: '實測這一站還沒自動化：原型 v0 只顯示系統規劃的測試和預估花費。' + (policySet ? '' : '也還沒設定常設預算（在「版本：我的 OAW」）。') })));
@@ -1236,7 +1335,7 @@
           el('span', { class: 'badge-sym', 'aria-hidden': 'true', text: txt(verdict.symbol, 3) || '?' }),
           el('span', { class: 'badge-text', text: headlineLabel(verdict) })),
         el('div', { class: 'card-title' }, el('h3', { text: txt(food.display, 80) }), el('p', { class: 'meta mono', text: meta }))),
-      (verdict.reasons || []).length ? el('p', { class: 'verdict-reasons', text: '判定依據：' + verdict.reasons.map((r) => txt(r, 160)).join('；') }) : '',
+      (verdict.reasons || []).length ? el('p', { class: 'verdict-reasons', text: '判定依據：' + (verdict.reasons_zh || verdict.reasons).map((r) => txt(r, 160)).join('；') }) : '',
       el('p', { class: 'stage-now' }, el('span', { class: 'k', text: '這一站' }),
         `${txt(pipeline.stage_label_zh, 8) || '?'}（${txt(pipeline.state_zh, 8) || '?'}）· ${txt(pipeline.note_zh, 160) || '—'}`),
       pipeline.parity ? el('p', { class: 'small muted', text: txt(pipeline.parity.label_zh, 60) }) : '');
@@ -1260,7 +1359,7 @@
         el('ul', { class: 'flag-list' }, flagList.map((f) => el('li', {},
           chip(SEVERITY[f.severity] || txt(f.severity, 8), 'sev-' + (SEVERITY[f.severity] ? f.severity : 'low')),
           el('span', { class: 'mono', text: `${txt(f.rule, 16)} ${mid(f.path, 60)}${f.line ? ':' + f.line : ''}` }),
-          el('span', { text: txt(f.meaning, 120) }), f.triage ? chip(TRIAGE[f.triage] || txt(f.triage, 20)) : '')))));
+          el('span', { text: txt(f.meaning_zh || f.meaning, 120) }), f.triage ? chip(TRIAGE[f.triage] || txt(f.triage, 20)) : '')))));
     }
     if (parts.length) node.append(groups(food, parts, '沒有可以直接吸收的成分。'));
     else node.append(el('p', { class: 'muted small', text: tasted ? '沒有拆出成分。' : '試吃後會把食物拆成成分，分成吸收／排掉／暫留。' }));
@@ -1278,7 +1377,7 @@
       el('button', { type: 'button', class: 'btn act toggle' + (open.plan ? ' on' : ''), 'aria-pressed': String(open.plan), text: '看計畫', onclick: () => planFlow(food) }),
       el('button', { type: 'button', class: 'btn primary act absorb-btn', 'data-food': food.id, disabled: !selected.size,
         text: selected.size ? `吸收選中的成分（${selected.size}）` : '吸收選中的成分', onclick: () => absorbFlow(food) }),
-      el('button', { type: 'button', class: 'btn danger act', disabled: !installed, text: '排掉／移除',
+      el('button', { type: 'button', class: 'btn danger act', disabled: !installed, text: '移除已安裝的部分',
         title: installed ? '移除這樣食物已安裝的 skill（先預覽）' : '還沒有吸收任何會安裝的成分', onclick: () => removeFlow(food.id, food) }),
       installed ? '' : el('button', { type: 'button', class: 'btn act', text: '忘掉這樣食物', title: '從食物卡拿掉（先預覽）；決定紀錄會保留', onclick: () => forgetFlow(food) })));
     return node;
@@ -1305,7 +1404,7 @@
   // 核准: choose the parts on the pipeline, then the usual preview and confirmation.
   async function absorbChoose(food) {
     const parts = (Array.isArray(food.components) ? food.components : [])
-      .filter((part) => part && part.disposition === 'absorb' && !part.decision && !part.in_current_build)
+      .filter((part) => part && part.can_absorb === true)
       .map((part) => ({ id: part.id, label: txt(part.name || part.id, 80), sub: `${txt(part.id, 80)} · ${LEVELS[part.level] || txt(part.level, 20)} · ${txt(part.reason_zh || part.reason, 160)}` }));
     const history = (food.historical || []).flatMap((report) => report.components || [])
       .filter((part) => part && part.disposition === 'absorb' && !part.decision)
@@ -1316,7 +1415,7 @@
       return;
     }
     const ids = await askChoose({ title: `核准：吸收 ${txt(food.display, 60)} 的哪些成分？`, items: items, ok: '下一步：預覽',
-      note: '先預覽要寫哪些檔案，你確認後才吸收：先存還原點，再產生新版本，並評估和預設比的差異（品質：未量測）。' });
+      note: '先預覽要寫哪些檔案，你確認後才吸收：先存還原點，再產生新版本，並評估和預設比的差異（每一行標證據等級）。' });
     if (ids && ids.length) await absorbFlow(food, ids);
   }
 
@@ -1352,7 +1451,8 @@
     }
     const r = preview.result || {};
     const lines = r.creates_build
-      ? ['先存一個還原點，再產生新版本，並立刻評估和預設 2.0.0 比的差異（靜態量測；品質未量測）。']
+      ? ['先存一個還原點，再產生新版本，並立刻評估和預設 2.0.0 比的差異（每一行標證據等級）。',
+        'skill 文字照原樣複製（還沒重新實作成 OAW 部件），附上食物的授權檔和出處說明 OAW-UPSTREAM.md。']
       : ['只把歷史提案記成待辦（寫進決定紀錄）：不改任何安裝檔，也不產生新版本。'];
     for (const s of r.selections || []) lines.push(`${s.id}：${s.outcome === 'installed' ? '安裝 skill ' + s.name : '記成待辦項目（不改程式）'}`);
     if ((r.writes || []).length) lines.push('會新增的檔案：', ...r.writes, '另外會寫入吸收收據：.oaw/catalog/absorbed/' + txt(food.id, 64) + '.json');
@@ -1366,7 +1466,7 @@
       const res = done.result || {};
       if (res.build) {
         const doctor = (res.doctor || {}).status;
-        toast(`已吸收：新版本 ${txt(res.build, 60)} · doctor：${txt(doctor, 20)}（品質：未量測）`, doctor === 'healthy' ? 'good' : 'warn');
+        toast(`已吸收：新版本 ${txt(res.build, 60)} · doctor：${txt(doctor, 20)}`, doctor === 'healthy' ? 'info' : 'warn');
       } else toast(`已記成待辦 ${(res.backlog || []).length} 項（未改程式，沒有新版本）`, 'info');
     } else report(done);
   }
@@ -1381,7 +1481,7 @@
       return;
     }
     const r = preview.result || {};
-    const lines = ['先備份並存一個還原點，再移除；之後可以用「還原到這版」一鍵加回來（加回來的 skill 要重新測試）。'];
+    const lines = ['先備份並存一個還原點，再移除；之後可以用「還原到這版」一鍵加回來，但加回來的 skill 會標「要重新測試」（D6）。'];
     for (const a of r.actions || []) lines.push(`${PLAN_ACTIONS[a.action] || txt(a.action, 20)}  ${txt(a.path, 200)}`);
     for (const path of r.deletes || []) lines.push(`刪除  ${txt(path, 200)}`);
     const conflicts = r.conflicts || [];

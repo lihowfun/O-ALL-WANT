@@ -229,7 +229,7 @@ python3 scripts/catalog.py ui --target /path/to/project     # 本機網頁：流
 python3 scripts/catalog.py menu --target /path/to/project   # 同樣的站別和動作，用終端選單
 ```
 
-v0 只規劃付費實測和 Goldfish 零脈絡盲審、不執行，所以這兩站標「規劃中」，品質一律顯示「未量測」。正式流程、今天哪些已自動、怎麼操作、安全規則和資料放在哪裡：[SKILL_INTAKE](docs/SKILL_INTAKE.md)。
+v0 只規劃付費實測和 Goldfish 零脈絡盲審、不執行，所以這兩站標「規劃中」，品質一律顯示「未量測」。模型面向的 skill 文字要先過行為 A/B 才能吸收，所以 v0 會把每樣食物的 skill 暫留在分流站。正式流程、今天哪些已自動、怎麼操作、安全規則和資料放在哪裡：[SKILL_INTAKE](docs/SKILL_INTAKE.md)。
 
 ---
 

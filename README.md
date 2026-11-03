@@ -229,7 +229,7 @@ python3 scripts/catalog.py ui --target /path/to/project     # the animated pipel
 python3 scripts/catalog.py menu --target /path/to/project   # the same stages and actions in a terminal
 ```
 
-v0 plans paid tests and the zero-context Goldfish review but does not run them, so those stages are marked planned and quality always shows as "not measured". The process, what is automated today, how to operate it, safety rules and where data lives: [SKILL_INTAKE](docs/SKILL_INTAKE.md) (Traditional Chinese).
+v0 plans paid tests and the zero-context Goldfish review but does not run them, so those stages are marked planned and quality always shows as "not measured". Model-facing skill text needs a behavior A/B before it can be absorbed, so v0 holds every food skill at the verdict stage. The process, what is automated today, how to operate it, safety rules and where data lives: [SKILL_INTAKE](docs/SKILL_INTAKE.md) (Traditional Chinese).
 
 ---
 

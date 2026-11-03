@@ -69,7 +69,7 @@ flowchart LR
 
 ### 每一關的閘門
 
-| 關卡 | 檢查內容 | 不通過時 |
+| 關口 | 檢查內容 | 不通過時 |
 |---|---|---|
 | 攝取 | 固定到 commit SHA。拒絕 symlink、repo 外路徑、二進位執行檔與過大的 repo。記錄檔案清單和雜湊 | 不建立紀錄 |
 | 授權 | 偵測 LICENSE。必須是允許再散布的授權（Apache-2.0、MIT、BSD 等）。Apache-2.0 要保留 LICENSE/NOTICE，修改處要標示 | `rejected` |
@@ -210,7 +210,7 @@ OAW 吃進一個 skill 之後，必須至少和「直接用那個 skill」一樣
 |---|---|---|
 | 使用 | 7 個 skill、9 個 reviewer persona、文件標準（透過官方 plugin 安裝） | `design-review` pack |
 | 使用 | 30 個 `test_scenarios.yaml` 情境（轉成 JSON，附授權） | catalog 行為消化的回歸套件 |
-| 採用方法 | 金魚審查：零上下文 reviewer | catalog 消化流程的一個關卡 |
+| 採用方法 | 金魚審查：零上下文 reviewer | catalog 消化流程的一個關口 |
 | 採用方法 | required/forbidden pattern 斷言格式 | catalog 情境 schema |
 | 採用方法 | 24,000 bytes 本文上限 | `validate_skills.py` |
 | 採用方法 | Harness 測試紀錄表 | `catalog/hosts.json` |
@@ -269,7 +269,7 @@ catalog/
 |---|---|---|
 | Skill 數量 | 7 個（brainstorm、draft、review、review-loop、resolve、bootstrap、drift-report），加上 9 個 reviewer persona 和文件標準 | 必須整套一起裝，不能只挑單一 skill |
 | 呼叫方式 | 7 個都是 `disable-model-invocation: true`，只能手動呼叫 | 不會干擾原生的自動觸發，適合當 pack |
-| 本文大小 | 2,807 到 23,610 bytes。bootstrap 離 24,000 的上限只差 390 bytes | 結構關卡會通過，但要列入監控 |
+| 本文大小 | 2,807 到 23,610 bytes。bootstrap 離 24,000 的上限只差 390 bytes | 結構關口會通過，但要列入監控 |
 | 測試情境 | 共 30 個情境，用 required/forbidden pattern 斷言 | 可直接轉成行為消化的固定案例 |
 | 安全標記 | 5 處 "bypass"，全是正常的流程用語 | 證明安全掃描必須是「標記後人工判斷」 |
 | Host 需求 | 需要能開新 subagent 的 session；作者驗證過 Claude Code 2.1.308、Codex 0.163.0 | 寫進 host 版本矩陣的初始值 |
@@ -306,7 +306,7 @@ EGM 的實測提前到 P1–P5 之前，不等 catalog 整套蓋完。證據先�
 
 ### 要從 EGM 吸收進 OAW 本身的做法
 
-- **金魚審查**：成為消化流程的一個固定關卡。
+- **金魚審查**：成為消化流程的一個固定關口。
 - **`test_scenarios` 斷言格式**：成為所有 catalog skill 的行為測試格式。
 - **本文大小閘門**：加進 `validate_skills.py`。
 - **Harness 測試紀錄表**：成為 `hosts.json` 和文件中的版本矩陣。
@@ -371,7 +371,7 @@ OAW 是 Claude Code 和 Codex 共用的 harness。**任何只有一個 host 能�
 | 呈現層 | 適用範圍 | 內容 |
 |---|---|---|
 | 終端動畫 | **通用**：Claude Code、Codex、任何終端機 | `catalog.py` 自己在終端畫出進度：stage 列加上動態圖示，非 TTY 或 CI 環境自動改成純文字輸出 |
-| Claude mod `oaw-digest-monitor` | Claude Code（terminal、desktop、VS Code） | 對話旁的 **pane**：顯示正在消化的 skill、五個關卡的動畫、A/B/C 三組進度，以及目前的判定。另有一行**狀態列**，例如 `🍽 egm-review · A/B 42/90 · 齊平`。判定出爐時跳 toast |
+| Claude mod `oaw-digest-monitor` | Claude Code（terminal、desktop、VS Code） | 對話旁的 **pane**：顯示正在消化的 skill、五個關口的動畫、A/B/C 三組進度，以及目前的判定。另有一行**狀態列**，例如 `🍽 egm-review · A/B 42/90 · 齊平`。判定出爐時跳 toast |
 | README 動畫 | GitHub 文件 | `docs/assets/skill-metabolism.svg`：說明整條代謝流程的循環動畫（見下方） |
 | Codex 專屬 UI | 目前沒有 | 沒有查到 Codex 有對等的 UI 擴充介面，所以不做假設。P8 時再查一次 Codex 文件；如果出現了，就把它當成一個新的 catalog 項目，走同一套消化流程加進來 |
 

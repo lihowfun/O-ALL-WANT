@@ -24,6 +24,7 @@ from datetime import datetime, timezone
 import hmac
 import http.server
 import json
+import os
 from pathlib import Path
 import re
 import secrets
@@ -138,27 +139,12 @@ def act_add(target, params, progress):
 
 
 def act_feed(target, params, progress):
-    """送去試吃: add (or pick from the scout list), then taste every food not tasted yet."""
+    """送去試吃: add (or pick from the scout list), then taste every food not tasted yet (the CLI `add` does the same)."""
     if "scout_keys" in params:
         added = _pick_keys(target, _texts(params, "scout_keys", limit=200))
     else:
         added = act_add(target, params, progress)
-    registry = catalog.load_registry(target)
-    ids = list(dict.fromkeys(added["added"] + [e["id"] for e in added["existing"]]))
-    queue = [fid for fid in ids if registry.get("foods", {}).get(fid, {}).get("lifecycle") == "found"]
-    tasted, failed = [], []
-    for index, fid in enumerate(queue):
-        progress(f"試吃 {index + 1}/{len(queue)}：{fid}（封存在專案外 → 免費靜態檢查）", index, len(queue))
-        try:
-            tasted.append(catalog.cmd_taste(target, fid))
-        except catalog.CatalogError as exc:
-            failed.append({"food": fid, "error": core.sanitize_text(str(exc), 300), "error_zh": core.zh_error(exc)})
-    lines = list(added["lines"]) + [line for result in tasted for line in result["lines"]]
-    lines += [f"taste failed: {item['food']}: {item['error']}" for item in failed]
-    return {"status": "fed", "added": added["added"], "merges": added["merges"], "existing": added["existing"],
-            "errors": added["errors"], "already_tasted": [fid for fid in ids if fid not in queue],
-            "tasted": [{k: r.get(k) for k in ("food", "verdict", "files", "integrity", "commit", "components")} for r in tasted],
-            "failed": failed, "lines": lines}
+    return catalog.feed_foods(target, added, progress)
 
 
 def act_taste(target, params, progress):
@@ -266,7 +252,7 @@ CONFIRMED_ACTIONS = ("policy-set", "triage")
 
 
 def run_action(target: Path, name: str, params=None, progress=None, confirmer=None) -> dict:
-    """One engine action as an envelope: ok, code (0 done, 2 refused/failed, 4 waiting for the owner's code).
+    """One engine action as an envelope: ok, code (0 done, 2 refused/failed, 3 waiting for the owner's code).
 
     `error` keeps the engine's English text (the 動作紀錄 log shows it); `error_zh` is the
     Traditional Chinese message for a known error, or None.
@@ -283,7 +269,7 @@ def run_action(target: Path, name: str, params=None, progress=None, confirmer=No
         else:
             result = handler(target, params, progress)
     except catalog.NeedsConfirmation as exc:
-        return {"ok": False, "code": 4, "status": "needs-confirmation", "error": str(exc), "error_zh": core.zh_error(exc), "lines": [str(exc)]}
+        return {"ok": False, "code": 3, "status": "needs-confirmation", "error": str(exc), "error_zh": core.zh_error(exc), "lines": [str(exc)]}
     except (ActionError, catalog.CatalogError, oaw.InstallError, core.SourceError, OSError, ValueError) as exc:
         return {"ok": False, "code": 2, "status": "error", "error": core.sanitize_text(str(exc), 600), "error_zh": core.zh_error(exc),
                 "lines": [f"catalog error: {exc}"]}
@@ -307,7 +293,7 @@ class Job:
 
     def finish(self, envelope: dict):
         self.envelope, self.finished_at = envelope, now_iso()
-        self.state = "done" if envelope.get("ok") else "needs-confirmation" if envelope.get("code") == 4 else "error"
+        self.state = "done" if envelope.get("ok") else "needs-confirmation" if envelope.get("code") == 3 else "error"
         self.done.set()
 
     def public(self, target: Path) -> dict:
@@ -360,7 +346,13 @@ class UiApp:
         return {"release": core.RELEASE, "project": str(self.target), "project_name": self.target.name,
                 "installed": (self.target / oaw.MANIFEST_PATH).is_file(), "sandbox_conditions": list(core.SANDBOX_CONDITIONS),
                 "token_label": core.TOKEN_LABEL, "token_label_zh": core.TOKEN_LABEL_ZH, "egm_skills": list(oaw.EGM_SKILLS), "bundled_skills": list(oaw.BUNDLED_SKILLS),
-                "actions": sorted(ACTIONS), "paid_runs_enabled": False}
+                "actions": sorted(ACTIONS), "paid_runs_enabled": False, "menu_command": menu_command(self.target)}
+
+
+def menu_command(target: Path) -> str:
+    """The full terminal command for this project's menu (where owner codes are typed), for the page to show."""
+    launcher = "python" if os.name == "nt" else "python3"
+    return f'{launcher} "{Path(catalog.__file__).resolve()}" menu --target "{target}"'
 
 
 # --------------------------------------------------------------------------- HTTP
@@ -551,7 +543,7 @@ class Menu:
                       ("5", "核准：吸收選中的成分", self.absorb), ("6", "版本：移除 skill／EGM", self.remove),
                       ("7", "計畫：系統的測試計畫", self.plan), ("8", "計畫：匯入 🐘 Elephant／🐟 Goldfish 紀錄", self.import_report),
                       ("9", "版本：時間線／還原到這版", self.restore), ("10", "版本：重新評估和預設的差異", self.effect),
-                      ("11", "實測：常設預算", self.policy), ("12", "靜態：分流旗標", self.triage),
+                      ("11", "版本：常設預算", self.policy), ("12", "靜態：分流旗標", self.triage),
                       ("13", "版本：加回 EGM／內建 skill", self.readd))
 
     # ---- io
@@ -689,7 +681,7 @@ class Menu:
 
     def confirm_code(self, action: str, params: dict) -> dict:
         envelope = self.do(action, params)
-        if envelope["code"] == 4:
+        if envelope["code"] == 3:
             code = self.ask("輸入這個終端上剛顯示的 6 位數確認碼：")
             envelope = self.do(action, {**params, "confirm": code})
         if envelope["ok"]:
@@ -750,12 +742,12 @@ class Menu:
         food = food or self.choose_food()
         if not food:
             return
-        options = [(c["id"], c.get("name"), "靜態量測") for c in food.get("components", [])
-                   if c.get("disposition") == "absorb" and not c.get("decision")]
+        options = [(c["id"], c.get("name"), oaw_status.level_label(c.get("level"))) for c in food.get("components", [])
+                   if c.get("can_absorb")]
         options += [(c["id"], c.get("name"), "歷史證據，只記成待辦") for r in food.get("historical", []) for c in r.get("components", [])
                     if c.get("disposition") == "absorb" and not c.get("decision")]
         if not options:
-            self.write("  這樣食物目前沒有可以吸收的成分（只有 🟢 吸收 的成分能選）。")
+            self.write("  這樣食物目前沒有可以吸收的成分（只有 🟢 吸收 的成分能選；skill 文字要過行為 A/B，D17）。")
             return
         for index, (cid, name, basis) in enumerate(options, 1):
             self.write(f"  {index}. 🟢 {cid} · {oaw_status.clean(name, 60)} · {basis}")
@@ -772,7 +764,9 @@ class Menu:
             done = self.do("absorb", {**params, "apply": True, "reason": reason})
             if done["ok"] and done["result"].get("build"):
                 doctor = (done["result"].get("doctor") or {}).get("status")
-                self.write(f"  已吸收：新版本 {done['result']['build']} · doctor：{doctor} · 品質：未量測（沒有實測證據）。")
+                lines = (done["result"].get("effect") or {}).get("lines") or []
+                quality = oaw_status.quality_label(next((line for line in lines if line.get("metric") == "quality"), {}))
+                self.write(f"  已吸收：新版本 {done['result']['build']} · doctor：{doctor} · 品質：{quality}。")
             elif done["ok"]:
                 self.write("  已記成待辦（未改程式）。")
 
@@ -888,17 +882,32 @@ class Menu:
             return
         static = catalog.latest_static(catalog.load_evidence(self.target, food["id"]))
         decided = {d.get("flag") for d in catalog.load_decisions(self.target) if d.get("food") == food["id"] and d.get("kind") == "triage"}
-        flags = [f for f in (static or {}).get("flags", []) if f.get("id") not in decided and f.get("severity") in ("high", "medium")]
+        pending = [f for f in (static or {}).get("flags", []) if f.get("id") not in decided]
+        flags = [f for f in pending if f.get("severity") in ("high", "medium")]
+        low = len(pending) - len(flags)
+        if low:
+            self.write(f"  另有 {low} 個低嚴重度旗標不需分流（只記錄，不擋吸收）。")
         if not flags:
             self.write("  沒有待分流的旗標。")
             return
+        coded = catalog.interactive()
+        if not coded:
+            self.write("  這個終端不是互動式終端機：良性、過敏原要確認碼，這裡只能「確認有毒」。"
+                       "要分流成良性或過敏原，請自己在 PowerShell／cmd（Git Bash 請用 winpty）執行 catalog.py menu。")
         flags.sort(key=lambda f: (f.get("severity") != "high", f.get("id")))
         for index, flag in enumerate(flags[:40], 1):
-            self.write(f"  {index}. [{flag.get('severity')}] {flag.get('rule')} {oaw_status.clean(flag.get('path'), 80)}:{flag.get('line')} · {flag.get('meaning')}")
+            meaning = core.FLAG_MEANINGS_ZH.get(flag.get("rule")) or flag.get("meaning")
+            self.write(f"  {index}. [{flag.get('severity')}] {flag.get('rule')} {oaw_status.clean(flag.get('path'), 80)}:{flag.get('line')} · {meaning}")
         picks = self.numbers(self.ask("選旗標編號："), min(len(flags), 40))
         if not picks:
             return
-        outcome = {"b": "benign", "a": "allergen", "t": "confirm-toxic"}.get(self.ask("b = 良性、a = 過敏原、t = 確認有毒：").casefold())
+        choices = "b = 良性、a = 過敏原、t = 確認有毒：" if coded else "t = 確認有毒（Enter 返回）："
+        outcome = {"b": "benign", "a": "allergen", "t": "confirm-toxic"}.get(self.ask(choices).casefold())
+        if outcome in ("benign", "allergen") and not coded:
+            self.write("  良性、過敏原要在互動式終端機輸入確認碼：已取消，沒有記錄任何東西。")
+            return
+        if not outcome:
+            return
         reason = self.ask("原因（必填）：")
         if outcome and reason:
             self.confirm_code("triage", {"food": food["id"], "flag": flags[picks[0] - 1]["id"], "outcome": outcome, "reason": reason})

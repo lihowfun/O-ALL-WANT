@@ -118,6 +118,7 @@ ERRORS_ZH = (
     (r"No OAW install", "這個資料夾還沒有安裝 OAW：先執行 oaw.py init。"),
     (r"LAB_HOME must be outside", "LAB_HOME 必須在專案和 OAW 框架之外：設定 OAW_LAB_HOME。"),
     (r"has absorbed parts; remove them first", "這樣食物還有吸收中的成分：先移除，再忘掉它。"),
+    (r"was removed; re-adding it needs a new taste", "這個成分移除過：再加回要先重新試吃（免費），才能再吸收（D6）。"),
     (r"Report directory not found|No digestion records", "找不到報告資料夾，或資料夾裡沒有消化紀錄。"),
     (r"Scout could not reach GitHub", "偵查連不上 GitHub 搜尋。"),
 )
@@ -130,6 +131,46 @@ def zh_error(message) -> str | None:
         if re.search(pattern, text):
             return chinese
     return None
+
+
+# Verdict reasons derive() writes (English) -> Traditional Chinese; an unknown reason keeps its English text.
+REASONS_ZH = (
+    (r"^no static record \(taste not run\)$", lambda m: "沒有靜態紀錄（還沒試吃）"),
+    (r"^owner-confirmed: (.+)$", lambda m: "你確認有毒：" + m.group(1)),
+    (r"^(\d+) high-severity flag\(s\) not triaged$", lambda m: f"{m.group(1)} 個高嚴重度旗標還沒分流"),
+    (r"^owner (?:block|reject): ?(.*)$", lambda m: "你擋下了這樣食物：" + m.group(1)),
+    (r"^no measured evidence \(paid tests not run\)$", lambda m: "沒有實測證據（付費實測還沒跑）"),
+    (r"^measured regression$", lambda m: "實測變差"),
+    (r"^unconfirmed-negative", lambda m: "未確認的負面結果：只有一組；不能吸收，也沒證明有害"),
+    (r"^measured evidence is incomplete$", lambda m: "實測證據不完整"),
+    (r"^no gain observed under this specification$", lambda m: "這個規格下沒有觀察到增益"),
+    (r"^harms the current recipe$", lambda m: "會傷到現有配方"),
+    (r"^integration-not-complete$", lambda m: "整合檢查還沒完成"),
+    (r"^parity-floor-not-run$", lambda m: "齊平底線還沒跑"),
+    (r"^measured gain with parity floor$", lambda m: "實測有增益，也過了齊平底線"),
+)
+# Static flag rule -> Traditional Chinese meaning (the English meaning stays in the record).
+FLAG_MEANINGS_ZH = {
+    "F-PIPE": "把下載的內容直接交給 shell 執行", "F-EXEC": "執行解碼或下載來的程式碼",
+    "F-HOST": "動到 host agent 設定或 MCP 註冊", "F-GLOBAL": "動到使用者的全域設定", "F-UPDATE": "自己更新或安裝軟體",
+    "F-BG": "啟動背景或排程的行程", "F-WRITE-INSTR": "寫入 agent 指示檔", "S-HOME": "提到家目錄", "S-NET": "網路功能",
+    "S-MODEL": "自己呼叫模型", "S-DEP": "自動執行的指令用了沒固定版本的套件", "S-HOOK": "宣告會自動執行的 hooks",
+    "S-HOOK-CTX": "hooks 會把內容寫進 context", "S-MCP": "宣告 MCP server", "S-LIFECYCLE": "安裝時會執行套件腳本",
+    "F-HID": "隱藏或雙向控制字元", "S-SHADOW": "放在 sys.path 上時，Python import 或啟動時就會執行",
+    "S-BUILD": "安裝時會執行 build backend 的程式碼", "S-NEST": "巢狀的常駐指示檔", "F-LINK": "記錄了 symlink，沒有跟進",
+    "F-ARC": "記錄了 submodule，沒有抓取", "F-PARTIAL": "超過大小上限的檔案沒有存，也沒有掃描",
+    "S-EXCL": "屬於 V2 排除的類別（你解除之前只能放在本機）", "S-LIC": "沒有認得的授權：不能確定可以轉發",
+    "S-BUD": "skill 本文超過大小上限",
+}
+
+
+def reason_zh(reason) -> str:
+    text = str(reason or "")
+    for pattern, render in REASONS_ZH:
+        match = re.match(pattern, text)
+        if match:
+            return render(match)
+    return text
 
 
 # --------------------------------------------------------------------------- hashing / text
@@ -889,6 +930,7 @@ MISSING_TESTS = {
     "method-backlog": ("elephant proposal (method backlog)", "Elephant 提案（方法待辦）"),
     "elephant": ("elephant proposal", "Elephant 提案"),
     "food-triage": ("owner triage", "由你分流"),
+    "ab": ("behavior A/B (paid): model-facing text is held behind an A/B (D17)", "行為 A/B（付費）：模型面向的文字要過 A/B 才能吸收（D17）"),
     "retaste": ("taste again with the current free rules", "用目前的規則再試吃一次（免費）"),
 }
 
@@ -901,9 +943,13 @@ def _signal_text(signals) -> tuple:
     return ", ".join(english), "、".join(chinese)
 
 
-def propose_component(component: dict, open_flags: dict, license_info: dict) -> dict:
+def propose_component(component: dict, open_flags: dict, license_info: dict, ab_passed: bool = False) -> dict:
     """Proposed disposition and the reason; executable or flagged parts never default to absorb.
 
+    D17: a model-facing line (a skill's text) is held behind a behavior A/B, so an X0 skill becomes
+    absorbable only with `ab_passed` (a consented live A/B with a gain and a parity floor covering it).
+    A high-severity flag holds its part until the owner triages it. A rule excrete (package manifests,
+    a second instruction file, binaries) is final: it applies an OAW policy, not a guess.
     Every reason has a stable `reason_code`, the English `reason` and the
     Traditional Chinese `reason_zh`; `missing_test` likewise has `missing_zh`.
     """
@@ -921,8 +967,8 @@ def propose_component(component: dict, open_flags: dict, license_info: dict) -> 
 
     if high:
         refs = ", ".join(f"{f['rule']} {f['path']}:{f['line']}" for f in high[:3])
-        return result("excrete", "high-flags", f"high-severity static flag(s): {refs}; static rules never mark toxic",
-                      f"高嚴重度靜態旗標：{refs}；靜態規則只會舉旗，不會判有毒", owner_confirms=True)
+        return result("hold", "high-flags", f"high-severity static flag(s): {refs}; held until the owner triages them (static rules never mark toxic)",
+                      f"高嚴重度靜態旗標：{refs}；你分流之前暫留（靜態規則只會舉旗，不會判有毒）", "triage")
     if kind == "skill":
         skill = component["skill"]
         if skill["body_bytes"] > LIMITS["skill_body_bytes"]:
@@ -952,9 +998,15 @@ def propose_component(component: dict, open_flags: dict, license_info: dict) -> 
             refs = ", ".join(f"{f['rule']} {f['path']}:{f['line']}" for f in medium[:3])
             return result("hold", "open-flags", f"open flag(s): {refs}", f"未分流的旗標：{refs}", "triage")
         spdx = str(license_info.get("spdx"))
-        return result("absorb", "x0-skill", f"X0: the static rules found no shell, network or tool instructions; no open flags; license {spdx};"
-                      " quality not measured, no improvement claimed",
-                      f"X0：靜態規則沒有找到 shell／網路／工具指示；沒有未分流的旗標；授權 {spdx}；品質未量測，未宣稱改善", installable=True)
+        if not ab_passed:
+            return result("hold", "x0-text-ab", f"X0 skill text passed the static checks (no shell, network or tool instructions; no open flags;"
+                          f" license {spdx}); model-facing text is held behind a behavior A/B (D17)",
+                          f"X0 skill 文字通過靜態檢查（沒有 shell／網路／工具指示、沒有未分流的旗標、授權 {spdx}）；"
+                          "模型面向的文字要過行為 A/B 才能吸收（D17）", "ab")
+        return result("absorb", "x0-skill", f"X0 skill text: static checks passed (license {spdx}) and a consented behavior A/B with a"
+                      " parity floor covers it (D17); copied unchanged with its license and an attribution note",
+                      f"X0 skill 文字：靜態檢查通過（授權 {spdx}），而且有經同意的行為 A/B（含齊平底線）涵蓋它（D17）；"
+                      "照原樣複製，附上授權和出處說明", installable=True)
     if kind in ("hook-set", "mcp-server"):
         return result("hold", "auto-exec", f"{kind} auto-executes (X2); OAW never installs hooks or MCP servers",
                       f"{kinds_zh[kind]} 會自動執行（X2）；OAW 永遠不代裝 hooks 或 MCP server", "tx")
@@ -964,16 +1016,17 @@ def propose_component(component: dict, open_flags: dict, license_info: dict) -> 
     if kind == "executable":
         return result("hold", "executable", "executable code; never run on this machine", "可執行的程式碼；永遠不在這台電腦上執行", "tx")
     if kind == "dependency-manifest":
-        return result("excrete", "deps", "package manifests conflict with OAW's stdlib-only runtime; nothing is installed",
-                      "套件清單和 OAW 只用標準函式庫的原則衝突；不會安裝任何東西", owner_confirms=True)
+        return result("excrete", "deps", "package manifests conflict with OAW's stdlib-only runtime; nothing is installed (rule excrete, final)",
+                      "套件清單和 OAW 只用標準函式庫的原則衝突；不會安裝任何東西（依規則排掉，是最終的）")
     if kind == "instruction-file":
-        return result("excrete", "instruction-file", "a second always-loaded instruction file conflicts with OAW's single AGENTS.md policy",
-                      "第二份常駐指示檔和 OAW 只用一份 AGENTS.md 的原則衝突", owner_confirms=True)
+        return result("excrete", "instruction-file", "a second always-loaded instruction file conflicts with OAW's single AGENTS.md policy"
+                      " (rule excrete, final)", "第二份常駐指示檔和 OAW 只用一份 AGENTS.md 的原則衝突（依規則排掉，是最終的）")
     if kind in ("agent", "command"):
         return result("hold", "prompt", f"{kind} prompt, not a native skill; needs re-implementation as an OAW skill",
                       f"{kinds_zh[kind]}提示詞，不是原生 skill：要重新實作成 OAW skill", "reimplement-ab")
     if kind == "binary":
-        return result("excrete", "binary", "binary files cannot be reviewed as text", "二進位檔沒辦法當文字審查", owner_confirms=True)
+        return result("excrete", "binary", "binary files cannot be reviewed as text (rule excrete, final)",
+                      "二進位檔沒辦法當文字審查（依規則排掉，是最終的）")
     if kind == "docs":
         return result("hold", "docs", "reference material; never installed", "參考資料；永遠不會安裝", "method-backlog")
     return result("hold", "other", "not digestible as shipped", "照原樣沒辦法消化", "elephant")
@@ -1001,6 +1054,7 @@ def derive(evidence, decisions=(), *, tier: str = "local") -> dict:
     if not static:
         verdict = (_verdict("toxic", ["owner-confirmed: " + r for r in toxic_refs]) if toxic_refs
                    else _verdict("untested", ["no static record (taste not run)"]))
+        verdict["reasons_zh"] = [reason_zh(r) for r in verdict["reasons"]]
         return {**base, **verdict, "level": "not-measured", "safety": "toxic" if toxic_refs else "unknown",
                 "exec_class": None, "allergens": [], "flags": {"total": 0, "open": 0, "open_high": 0, "triaged": 0},
                 "components": [], "inputs": []}
@@ -1037,25 +1091,29 @@ def derive(evidence, decisions=(), *, tier: str = "local") -> dict:
     for d in decisions:
         for cid in d.get("components") or ([d["component"]] if isinstance(d.get("component"), str) else []):
             component_decisions.setdefault(cid, []).append(d)
+    # D17: a consented live A/B with a gain covers only the components it names, and only a nutritious food passes.
+    ab_covered = {cid for r in live if r.get("result") == "gain" for cid in (r.get("components") or []) if isinstance(cid, str)}
+    ab_ok = verdict["headline"] == "nutritious"
+    tasted_at = str(s.get("recorded_at") or "")
     for component in s.get("components", []):
-        proposal = propose_component(component, open_flags, s.get("license") or {})
+        proposal = propose_component(component, open_flags, s.get("license") or {}, ab_passed=ab_ok and component["id"] in ab_covered)
         confirmed = sorted(set(component.get("flag_ids", [])) & set(toxic_refs))
         if confirmed:
             refs = ", ".join(confirmed[:3])
             proposal.update(disposition="excrete", reason_code="owner-toxic", reason=f"owner-confirmed toxic: {refs}",
                             reason_zh=f"你確認有毒：{refs}", owner_confirms=False, installable=False,
                             missing_code="", missing_test="", missing_zh="")
-        elif verdict["headline"] in ("toxic", "risky", "inedible") and proposal["disposition"] == "absorb":
+        elif verdict["headline"] in ("toxic", "risky", "inedible") and proposal["reason_code"] in ("x0-skill", "x0-text-ab"):
             proposal.update(disposition="hold", reason_code="inherits-food", reason=f"food is {verdict['headline']}; parts inherit it until resolved",
                             reason_zh=f"整樣食物是「{VERDICTS[verdict['headline']][3]}」；解決之前，成分一律跟著暫留",
                             missing_code="food-triage", missing_test=MISSING_TESTS["food-triage"][0],
                             missing_zh=MISSING_TESTS["food-triage"][1], installable=False)
-        elif stale and proposal["disposition"] == "absorb":
+        elif stale and proposal["reason_code"] in ("x0-skill", "x0-text-ab"):
             # A record from older rules cannot prove what the current rules would find.
             proposal.update(disposition="hold", reason_code="rules-updated", reason="the scan rules changed since this taste; taste again (free)",
                             reason_zh="試吃之後掃描規則更新了：再試吃一次（免費）", missing_code="retaste",
                             missing_test=MISSING_TESTS["retaste"][0], missing_zh=MISSING_TESTS["retaste"][1], installable=False)
-        decided = None
+        decided, removed_at = None, None
         for d in component_decisions.get(component["id"], []):
             if d["kind"] == "excrete":
                 owner_reason = sanitize_text(d.get("reason", ""), 120)
@@ -1063,15 +1121,19 @@ def derive(evidence, decisions=(), *, tier: str = "local") -> dict:
                                 reason_zh="你排掉的：" + owner_reason, owner_confirms=False, installable=False)
                 decided = "excreted"
             elif d["kind"] == "absorb" and proposal["disposition"] == "absorb" and decided != "excreted":
-                decided = "absorbed"
+                decided, removed_at = "absorbed", None
             elif d["kind"] == "remove" and decided == "absorbed":
-                decided = "removed"
+                decided, removed_at = "removed", str(d.get("at") or "")
+        # D6: re-adding a removed part needs a taste recorded after the removal (free), never the old one.
+        retested = decided == "removed" and bool(removed_at) and tasted_at > removed_at
         colour, label_zh = DISPOSITIONS[proposal["disposition"]]
         components.append({"id": component["id"], "kind": component["kind"], "name": component.get("name"),
                            "file_count": component.get("file_count"), "bytes": component.get("bytes"),
                            "exec_class": component.get("exec_class"), **proposal, "colour": colour, "label_zh": label_zh,
-                           "level": "static-measured", "decision": decided,
+                           "level": "measured" if proposal["reason_code"] == "x0-skill" else "static-measured",
+                           "decision": decided, "retested_after_remove": retested,
                            "open_flags": [f for f in component.get("flag_ids", []) if f in open_flags]})
+    verdict["reasons_zh"] = [reason_zh(r) for r in verdict["reasons"]]
     return {**base, **verdict, "chips": chips + verdict.pop("chips", []), "stale": stale,
             "level": "measured" if live and verdict["headline"] not in ("toxic", "risky", "inedible") else "static-measured",
             "safety": safety, "exec_class": s.get("exec_class"), "allergens": list(s.get("allergens", [])),
@@ -1244,8 +1306,20 @@ PLAN_STEPS_ZH = {
 }
 
 
+# D13 (PRE-01): which stage each plan step belongs to. Stage 0/1 count against the per-food screening cap; Stage 2
+# (and a second host) always asks the owner first; goldfish reviews are digestion-system overhead with their own cap.
+PLAN_D13_STAGE = {"T0": 0, "T1": 0, "T2a": 0, "G": "overhead", "TX": 1, "T3a-smoke": 1, "T4": 2, "P": 2, "T3a": 2}
+COST_ZH = {"free": "免費", "free (owner time)": "免費（你的時間）", "paid": "付費"}
+SECOND_HOST = ("a second host asks the owner first (D13); the Codex half stays untested until the owner logs in to Codex CLI",
+               "第二個 host 一律先問你（D13）；你登入 Codex CLI 之前，Codex 的一半一律記成「未測」")
+
+
 def decide_plan(food: str, derived: dict, historical=(), policy: dict | None = None) -> dict:
-    """D11: the system picks the food's tests from its evidence, cheapest first."""
+    """D11: the system picks the food's tests from its evidence, cheapest first.
+
+    D13: only Stage 0/1 steps are compared with the per-food cap; a Stage 2 step never runs "within policy".
+    A step that executes the food needs sandbox level 2, which this machine does not have yet.
+    """
     components = derived.get("components", [])
     has_static = bool(derived.get("inputs"))
     executable = [c for c in components if c["disposition"] == "hold" and c["exec_class"] in ("X1", "X1-inline", "X2")]
@@ -1295,7 +1369,11 @@ def decide_plan(food: str, derived: dict, historical=(), policy: dict | None = N
                  f"{len(executable)} executable part(s) on hold"]
     for step in steps:
         name_zh, can_zh, cannot_zh = PLAN_STEPS_ZH[step["id"]]
-        step.update(name_zh=name_zh, can_prove_zh=can_zh, cannot_prove_zh=cannot_zh, conditional=bool(step.get("conditional")))
+        stage = PLAN_D13_STAGE[step["id"]]
+        level = None if not step["tokens"] else 2 if step["id"] == "TX" or (step["id"] == "P" and executable) else 1
+        step.update(name_zh=name_zh, can_prove_zh=can_zh, cannot_prove_zh=cannot_zh, conditional=bool(step.get("conditional")),
+                    cost_zh=COST_ZH.get(step["cost"], step["cost"]), d13_stage=stage, sandbox_level=level,
+                    asks_owner=stage == 2)
     paid = [s for s in steps if s["tokens"]]
     paid.sort(key=lambda s: s["tokens"]["max"])
     free = [s for s in steps if not s["tokens"]]
@@ -1304,16 +1382,21 @@ def decide_plan(food: str, derived: dict, historical=(), policy: dict | None = N
     conditional = [s for s in paid if s["conditional"]]
     total = {"min": sum(s["tokens"]["min"] for s in unconditional), "max": sum(s["tokens"]["max"] for s in paid),
              "unconditional_max": sum(s["tokens"]["max"] for s in unconditional),
-             "conditional_max": sum(s["tokens"]["max"] for s in conditional), "label": TOKEN_LABEL, "label_zh": TOKEN_LABEL_ZH}
+             "conditional_max": sum(s["tokens"]["max"] for s in conditional),
+             "screening_max": sum(s["tokens"]["max"] for s in paid if s["d13_stage"] in (0, 1)),
+             "stage2_max": sum(s["tokens"]["max"] for s in paid if s["d13_stage"] == 2),
+             "overhead_max": sum(s["tokens"]["max"] for s in paid if s["d13_stage"] == "overhead"),
+             "label": TOKEN_LABEL, "label_zh": TOKEN_LABEL_ZH}
     if status is None:
         if not policy:
             status = "waiting for standing policy"
-        elif total["max"] <= policy.get("per_food_token_cap", -1):
-            status = "within policy - paid runs not enabled in v0"
+        elif total["screening_max"] <= policy.get("per_food_token_cap", -1):
+            status = "within policy for Stage 0/1 - Stage 2 and a second host ask the owner first; paid runs not enabled in v0"
         else:
-            status = "exceeds standing policy - owner approval needed (paid runs not enabled in v0)"
+            status = "exceeds standing policy for Stage 0/1 - owner approval needed (paid runs not enabled in v0)"
     plan = {"schema_version": SCHEMA_VERSION, "food": food, "decided_by": "system (D11), from evidence; owner sets only the standing policy",
             "headline": headline, "basis": basis, "steps": free + paid, "estimate": total, "status": status,
+            "second_host": SECOND_HOST[0], "second_host_zh": SECOND_HOST[1],
             "paid_runs_enabled": False, "policy_sha256": record_sha256(policy) if policy else None}
     plan["plan_id"] = "p-" + record_sha256({k: v for k, v in plan.items() if k != "policy_sha256"})[:12]
     return plan
@@ -1383,9 +1466,15 @@ def imported_record(food: str, docs: dict, source_files: list, recorded_at: str)
     for name in sorted(n for n in docs if n.startswith("goldfish-") and isinstance(docs[n], dict)):
         doc = docs[name]
         findings = lists(doc, "findings")
+        # D15: zero context is verified, not assumed; a record that does not state its launch shows "not recorded".
+        launch_doc = doc.get("launch") if isinstance(doc.get("launch"), dict) else doc
+        launch = {key: (sanitize_text(launch_doc.get(source), 160) if isinstance(launch_doc.get(source), (str, int, float, bool)) else None)
+                  for key, source in (("method", "launch_method" if launch_doc is doc else "method"), ("host_version", "host_version"),
+                                      ("inherited_context", "inherited_context"), ("init_event_check", "init_event_check"))}
         goldfish.append({"reviewer": sanitize_text(doc.get("reviewer") or name[:-5], 40), "file": name, "findings": len(findings),
                          "by_severity": _count(f.get("severity") for f in findings),
-                         "summary": sanitize_text(doc.get("verdict_summary"), 300)})
+                         "summary": sanitize_text(doc.get("verdict_summary"), 300), "launch": launch,
+                         "zero_context": "verified" if all(launch.values()) else "not verified"})
     components = []
 
     def hist_id(raw, item):
@@ -1463,9 +1552,10 @@ def historical_summary(record: dict) -> dict:
 # or planned), planned (part of the process, not automated yet: drawn, never the current stage, no action).
 
 PIPELINE_AUTOMATION = {"automated": "自動", "owner": "需要你", "mixed": "部分自動", "planned": "規劃中"}
-# Per-food stage state -> (symbol, Traditional Chinese); every renderer uses these.
-PIPELINE_STATES = {"done": ("●", "完成"), "current": ("◉", "目前"), "blocked": ("⊗", "卡住"), "todo": ("○", "還沒到"),
-                   "planned": ("┄", "規劃中"), "skipped": ("–", "不需要")}
+# Per-food stage state -> (symbol, Traditional Chinese); every renderer uses these. `partial`: a passed stage
+# whose planned steps never ran (so ● would overclaim); `removed`: the food's parts were removed from the build.
+PIPELINE_STATES = {"done": ("●", "完成"), "partial": ("◐", "部分完成"), "current": ("◉", "目前"), "blocked": ("⊗", "卡住"),
+                   "removed": ("⊖", "已移除"), "todo": ("○", "還沒到"), "planned": ("┄", "規劃中"), "skipped": ("–", "不需要")}
 
 
 def _stage(sid, label_zh, label, automation, decisions, summary_zh, steps, actions):
@@ -1474,47 +1564,62 @@ def _stage(sid, label_zh, label, automation, decisions, summary_zh, steps, actio
             "actions": list(actions)}
 
 
+# The two inlets are the front of stage 1 (入口) and fall under its decision (D4).
 PIPELINE_INLETS = (
-    {"id": "scout", "label_zh": "每週偵查 → 相關性過濾 → 你確認", "decisions": ["D4"],
-     "steps": [{"label_zh": "每週偵查：搜尋 GitHub，只記錄候選", "automation": "automated"},
+    {"id": "scout", "label_zh": "每週偵查 → 相關性過濾 → 你確認",
+     "steps": [{"label_zh": "你按「立即偵查」，每週一次：沒有排程，漏掉的一週就看不到那週推送的 repo", "automation": "owner"},
+               {"label_zh": "系統依更新時間搜尋 GitHub 最近 7 天推送的 repo，只記錄候選", "automation": "automated"},
                {"label_zh": "相關性過濾：和 coding agent skill／harness 無關的不經審查就濾掉；星數只決定排序", "automation": "automated"},
-               {"label_zh": "你確認要試哪些", "automation": "owner"}]},
-    {"id": "named", "label_zh": "你點名", "decisions": ["D4"],
-     "steps": [{"label_zh": "你給 repo 網址，可以一次很多個；同一個 repo 只收一次", "automation": "owner"}]},
+               {"label_zh": "你勾選要試哪些", "automation": "owner"}]},
+    {"id": "named", "label_zh": "你點名",
+     "steps": [{"label_zh": "你給 repo 網址，可以一次很多個", "automation": "owner"}]},
 )
 
 PIPELINE_STAGES = (
-    _stage("intake", "入口", "intake", "mixed", ("D4",), "兩條入口匯成一份食物清單，等你送去試吃。",
-           (("偵查、相關性過濾、批次去重", "automated"), ("你確認或點名", "owner")), ("taste", "forget")),
-    _stage("quarantine", "封存", "quarantine", "automated", ("D7", "D13"),
+    _stage("intake", "入口", "intake", "mixed", ("D4",),
+           "你勾選或點名就是同意試吃（D4）：兩條入口匯成一份食物清單，同一個 repo 只收一次，接著立刻免費試吃。",
+           (("你勾選偵查候選或點名 repo：這就是確認", "owner"), ("批次去重：同一個 repo 只收一次", "automated"),
+            ("確認後立刻送去免費試吃，不再逐樣問你", "automated")), ("taste", "forget")),
+    _stage("quarantine", "封存", "quarantine", "automated", ("D7",),
            "固定在 pinned SHA，唯讀封存在專案外的 LAB_HOME；不解壓、不 import、不執行。",
            (("hardened git fetch，固定版本", "automated"), ("唯讀 tar，放在專案外", "automated")), ("taste", "forget")),
-    _stage("static", "靜態", "static checks", "automated", ("D5", "D7"), "免費靜態檢查，把食物拆成成分；靜態規則只舉旗，不判有毒。",
-           (("檔案角色、授權、hooks／MCP／腳本、旗標", "automated"), ("拆成成分", "automated"), ("高嚴重度旗標由你分流（終端）", "owner")),
+    _stage("static", "靜態", "static checks", "mixed", ("D5", "D7"), "免費靜態檢查，把食物拆成成分；靜態規則只舉旗，不判有毒。",
+           (("檔案角色、授權、hooks／MCP／腳本、旗標", "automated"), ("拆成成分", "automated"), ("高嚴重度旗標由你分流（終端確認碼）", "owner")),
            ("taste", "triage", "forget")),
-    _stage("plan", "計畫", "plan", "mixed", ("D10", "D11"), "Elephant 依紀錄的決定擬測試計畫和吸收提案，最便宜、又能分辨的測試排前面。",
-           (("系統測試計畫：依證據自動產生", "automated"), ("Elephant 吸收提案：目前只能匯入，標成歷史證據", "mixed")), ()),
+    _stage("plan", "計畫", "plan", "mixed", ("D10", "D11"), "系統依證據擬測試計畫，最便宜、又能分辨的測試排前面；Elephant 擬吸收提案。",
+           (("系統測試計畫：依證據自動產生", "automated"), ("Elephant 依紀錄的決定擬吸收提案（今天只能匯入，標成歷史證據，不計入判定）", "planned")), ()),
     _stage("review", "盲審", "blind review", "planned", ("D10", "D15"), "Goldfish 在驗證過的零脈絡下盲審我們的草稿，Elephant 解決發現。",
            (("Goldfish 零脈絡盲審（啟動 recipe、argv、init event 都要記錄）", "planned"), ("Elephant 解決發現", "planned")), ()),
-    _stage("test", "實測", "tests", "planned", ("D11", "D13", "D17"), "在常設政策內由便宜到貴自動跑；會執行食物程式碼的只在可拋棄沙箱（level 2）。",
-           (("離線整合 T1", "planned"), ("可拋棄沙箱試跑 TX", "planned"), ("行為 A/B", "planned")), ()),
+    _stage("test", "實測", "tests", "planned", ("D11", "D13"),
+           "在常設政策內由便宜到貴自動跑：每個暫留先跑免費 Stage 0；會執行食物程式碼的只在可拋棄沙箱（level 2）。",
+           (("離線整合 T1：名稱碰撞、doctor／migrate 往返", "planned"), ("可拋棄沙箱試跑 TX（level 2）", "planned"),
+            ("行為 A/B：模型面向的文字要過", "planned"), ("整合檢查 T4：退步、觸發衝突、context 預算、指示衝突", "planned"),
+            ("齊平底線 P：OAW 吃完 對 單吃食物（C ≥ B）", "planned")), ()),
     _stage("sort", "分流", "verdicts", "mixed", ("D2", "D5", "D16", "D17", "D18"),
-           "每個成分判定吸收／排掉／暫留，附原因和證據等級；再做整合檢查和齊平底線。",
-           (("成分判定（今天只有靜態量測）", "automated"), ("整合檢查：退步、觸發衝突、context 預算、指示衝突", "planned"),
-            ("齊平底線：OAW 吃完 對 單吃食物", "planned")), ("forget",)),
+           "每個成分判定吸收／排掉／暫留，附原因和證據等級；整合檢查和齊平底線的關口在這裡套用。",
+           (("成分判定（今天只有靜態量測）", "automated"), ("模型面向的文字和機制拆開：文字過 A/B 才能吸收", "automated"),
+            ("套用整合檢查（T4）和齊平底線（P）的關口", "planned"),
+            ("沒建的項目寫「未量測（規劃：<等級>）」，規劃的等級另放一欄", "planned")), ("forget",)),
     _stage("approve", "核准", "owner approval", "owner", ("D7", "D11"), "你決定吸收哪些成分；系統不會自動安裝或套用。",
            (("你勾選成分，先預覽再確認", "owner"),), ("absorb", "forget")),
-    _stage("build", "版本", "build", "automated", ("D3", "D6", "D12", "D14"),
+    _stage("build", "版本", "build", "mixed", ("D3", "D6", "D12", "D14"),
            "每次吸收或移除都產生 2.0.0+build.N.<hash7> 和還原點，列出和預設比的效果與證據等級；可一鍵線性還原，任何 skill（含 EGM）都能移除。",
-           (("還原點 → 安裝 → 版本 → 和預設比", "automated"), ("還原到任何一版", "owner"), ("移除（含 EGM）、加回", "owner")),
-           ("remove-food", "restore", "absorb", "forget")),
+           (("還原點 → 安裝 → 版本 → 和預設比", "automated"),
+            ("吸收時照原樣複製 skill 文字，附上食物的授權檔和出處說明（重新實作成 OAW 部件還沒做）", "automated"),
+            ("還原到任何一版（線性：只有移除版本，沒有逐項開關）", "owner"), ("移除（含 EGM）、加回：再加回要重新測試", "owner"),
+            ("每版引用清單：用在哪裡／沒採用的原因", "planned"),
+            ("release 目標：2.0.0 打 tag 之後，相容的新增進 2.x、不相容的等 3.0.0", "planned")),
+           ("remove-food", "restore", "taste", "absorb", "forget")),
 )
 PIPELINE_ORDER = tuple(stage["id"] for stage in PIPELINE_STAGES)
+# A stage that is not planned as a whole but has planned steps is `partial` once passed: ● would claim those steps ran.
+PARTIAL_STAGES = frozenset(s["id"] for s in PIPELINE_STAGES
+                           if s["automation"] != "planned" and any(step["automation"] == "planned" for step in s["steps"]))
 # Action id -> the engine action it calls (the page's /api/action/NAME, the menu's run_action name), its label, and
 # where it runs. A terminal action needs an owner code: the page shows it as text; only the menu and the CLI run it.
 PIPELINE_ACTIONS = {
     "taste": {"endpoint": "taste", "label_zh": "送去試吃", "where": "both"},
-    "forget": {"endpoint": "forget", "label_zh": "排掉（忘掉）", "where": "both"},
+    "forget": {"endpoint": "forget", "label_zh": "忘掉這樣食物", "where": "both"},
     "triage": {"endpoint": "triage", "label_zh": "分流旗標（終端確認碼）", "where": "terminal"},
     "absorb": {"endpoint": "absorb", "label_zh": "吸收選中的成分…", "where": "both"},
     "remove-food": {"endpoint": "remove", "label_zh": "移除", "where": "both"},
@@ -1525,11 +1630,22 @@ PIPELINE_EMPTY_ZH = "還沒有食物：在「你點名」貼上 GitHub 網址按
 LIVE_STAGES = {"ingest": "intake", "quarantine": "quarantine", "static": "static"}
 
 
+def can_absorb(part: dict) -> bool:
+    """One rule for the page, the menu and the CLI: an absorb proposal not in the build and not decided yet.
+
+    A removed part counts again only after a taste recorded after its removal (D6: re-adding needs testing again).
+    """
+    if part.get("disposition") != "absorb" or part.get("in_current_build"):
+        return False
+    return not part.get("decision") or (part.get("decision") == "removed" and bool(part.get("retested_after_remove")))
+
+
 def food_pipeline(card: dict) -> dict:
     """Where one food card sits on PIPELINE_STAGES, every stage's state, and its current stage's actions.
 
     The card's components must already carry `in_current_build`. Planned stages are never the current stage
-    and never carry an action: until they are automated a food is shown passing them (┄).
+    and never carry an action: until they are automated a food is shown passing them (┄). A passed stage with
+    planned steps is `partial` (◐), never `done`.
     """
     fid = card["id"]
     verdict = card.get("verdict") or {}
@@ -1537,12 +1653,14 @@ def food_pipeline(card: dict) -> dict:
     parts = [c for c in card.get("components") or [] if isinstance(c, dict)]
     history = [c for r in card.get("historical") or [] for c in r.get("components") or [] if isinstance(c, dict)]
     in_build = [c for c in parts if c.get("in_current_build")]
-    open_parts = [c for c in parts if c.get("disposition") == "absorb" and not c.get("decision") and not c.get("in_current_build")]
+    open_parts = [c for c in parts if can_absorb(c)]
     open_history = [c for c in history if c.get("disposition") == "absorb" and not c.get("decision")]
     restored_away = [c for c in parts if c.get("decision") == "absorbed" and not c.get("in_current_build")]
-    removed = [c for c in parts if c.get("decision") == "removed" and not c.get("in_current_build")]
+    removed = [c for c in parts if c.get("decision") == "removed" and not c.get("in_current_build") and not can_absorb(c)]
+    readded = [c for c in in_build if c.get("decision") == "removed"]
     backlog = [c for c in history if c.get("decision")]
     holds = [c for c in parts if c.get("disposition") == "hold" and not c.get("decision")]
+    ab_holds = [c for c in holds if c.get("missing_code") == "ab"]
     states = {s["id"]: "planned" if s["automation"] == "planned" else "todo" for s in PIPELINE_STAGES}
     if verdict.get("level") == "measured":
         states["test"] = "done"  # a consented live record is test evidence; nothing in v0 produces one yet
@@ -1550,20 +1668,25 @@ def food_pipeline(card: dict) -> dict:
     def reach(stage, state, *, skip_planned=False):
         for sid in PIPELINE_ORDER[:PIPELINE_ORDER.index(stage)]:
             if states[sid] == "todo":
-                states[sid] = "done"
+                states[sid] = "partial" if sid in PARTIAL_STAGES else "done"
             elif states[sid] == "planned" and skip_planned:
                 states[sid] = "skipped"
         states[stage] = state
         return stage
 
+    parity_zh = "和單吃食物比：" + ("實測" if headline == "nutritious" else "未測")
     bad = headline in ("toxic", "risky", "regressed", "diarrhea")
     wanted = []  # (action id, label or None, params or None)
     if in_build:
         stage = reach("build", "blocked" if bad else "current")
         note = f"在目前版本中（{len(in_build)} 個成分）" + (f"，但判定是「{VERDICTS[headline][3]}」：建議移除" if bad else "")
+        if readded:
+            note += f"；{len(readded)} 個是移除後又被還原回來的：要重新測試（D6）"
         wanted.append(("remove-food", None, {"name": fid, "food": True}))
         if headline == "risky":
             wanted.append(("triage", None, None))
+        if readded:
+            wanted.append(("taste", "重新試吃（免費）", None))
         if (open_parts or open_history) and not bad:
             wanted.append(("absorb", "吸收其他成分…", None))
     elif not card.get("tasted"):
@@ -1608,9 +1731,9 @@ def food_pipeline(card: dict) -> dict:
             wanted.append(("restore", f"還原到這版（{sanitize_text(builds[-1], 40)}）", {"build": builds[-1]}))
         wanted.append(("forget", None, None))
     elif removed:
-        stage = reach("build", "done")
-        note = "已移除（再加回要重新測試）"
-        wanted.append(("forget", None, None))
+        stage = reach("build", "removed")
+        note = "已移除：要再加回，先重新送去試吃（免費），再核准（D6）"
+        wanted += [("taste", "再送去試吃（免費）", None), ("forget", None, None)]
     elif backlog:
         stage = reach("approve", "done")
         states["build"] = "skipped"
@@ -1618,7 +1741,12 @@ def food_pipeline(card: dict) -> dict:
         wanted.append(("forget", None, None))
     else:
         stage = reach("sort", "current")
-        note = f"暫留 {len(holds)} 個成分：缺的測試還在規劃中（看食物卡）" if holds else "沒有可以吸收的成分"
+        if holds:
+            note = f"暫留 {len(holds)} 個成分" + (f"（{len(ab_holds)} 個 skill 文字缺行為 A/B，D17）" if ab_holds else "") + \
+                   "：缺的測試還在規劃中（看食物卡）"
+        else:
+            note = "沒有可以吸收的成分"
+        note += "；" + parity_zh
         wanted.append(("forget", None, None))
     actions = []
     for aid, label, params in wanted:
@@ -1627,9 +1755,11 @@ def food_pipeline(card: dict) -> dict:
                         "label_zh": label or spec["label_zh"], "params": params or {"food": fid}})
     label_zh = next(s["label_zh"] for s in PIPELINE_STAGES if s["id"] == stage)
     parity = headline == "nutritious"  # derive() gives nutritious only with a measured parity floor
+    # 看計畫 sits on the 計畫 cell only once the food has passed it; before that the plan is in the food card.
+    plan_reached = states["plan"] in ("done", "partial")
     return {"stage": stage, "stage_label_zh": label_zh, "state": states[stage], "state_zh": PIPELINE_STATES[states[stage]][1],
-            "stages": states, "note_zh": note, "actions": actions,
-            "details": [{"stage": "plan", "id": "plan", "label_zh": "看計畫"}] if card.get("tasted") and card.get("plan") else [],
+            "stages": states, "note_zh": note, "actions": actions, "ab_holds": len(ab_holds), "readded_untested": len(readded),
+            "details": [{"stage": "plan", "id": "plan", "label_zh": "看計畫"}] if card.get("tasted") and card.get("plan") and plan_reached else [],
             "parity": {"state": "measured" if parity else "not-tested",
                        "label": "parity vs food alone: " + ("measured" if parity else "not tested"),
                        "label_zh": "和單吃食物比（齊平底線）：" + ("實測" if parity else "未測")}}
@@ -1674,7 +1804,8 @@ def food_card(entry: dict, evidence: list, decisions: list, plan: dict | None = 
     severity_rank = {"high": 0, "medium": 1, "low": 2}
     flags = [{"id": sanitize_text(f.get("id"), 300), "rule": sanitize_text(f.get("rule"), 20), "path": sanitize_text(f.get("path"), 200),
               "line": f.get("line") if isinstance(f.get("line"), int) else None, "severity": f.get("severity") if f.get("severity") in severity_rank else "low",
-              "meaning": sanitize_text(f.get("meaning"), 120), "allergen": sanitize_text(f.get("allergen"), 40) or None,
+              "meaning": sanitize_text(f.get("meaning"), 120), "meaning_zh": FLAG_MEANINGS_ZH.get(f.get("rule")),
+              "allergen": sanitize_text(f.get("allergen"), 40) or None,
               "triage": triaged.get(f.get("id"))}
              for f in sorted((s or {}).get("flags", []), key=lambda f: (severity_rank.get(f.get("severity"), 3), str(f.get("id"))))
              if isinstance(f, dict)][:80]
@@ -1686,7 +1817,8 @@ def food_card(entry: dict, evidence: list, decisions: list, plan: dict | None = 
             "pinned": {"commit": source.get("commit"), "commit7": (source.get("commit") or "")[:7] or None,
                        "integrity": source.get("integrity"), "tree_sha12": (s or {}).get("tree_sha256", "")[:12] or None},
             "tasted": bool(s),
-            "verdict": {k: derived[k] for k in ("headline", "symbol", "ascii", "label", "label_zh", "reasons", "chips", "badges", "level", "stale")},
+            "verdict": {k: derived[k] for k in ("headline", "symbol", "ascii", "label", "label_zh", "reasons", "reasons_zh", "chips", "badges",
+                                                "level", "stale")},
             "safety_text": safety_text, "exec_class": derived["exec_class"], "allergens": derived["allergens"],
             "flags": derived["flags"], "license": (s or {}).get("license", {}).get("spdx") if s else None,
             "components": derived["components"], "counts": counts, "historical": historical,
@@ -1701,6 +1833,7 @@ def place_card(card: dict, receipt) -> dict:
                if isinstance(part, dict) and part.get("outcome") == "installed"}
     for part in card["components"]:
         part["in_current_build"] = part["id"] in present
+        part["can_absorb"] = can_absorb(part)
     for report in card["historical"]:
         for part in report["components"]:
             part["in_current_build"] = False

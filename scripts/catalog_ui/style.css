@@ -287,7 +287,7 @@ table.effect td.quality-value { vertical-align: middle; }
 .feed-result { margin-top: 10px; padding: 10px 12px; border-radius: 10px; background: var(--surface-2); }
 .feed-lines { list-style: none; padding: 0; margin: 0 0 6px; font-size: .88rem; display: grid; gap: 3px; }
 .feed-lines .fam-line { color: var(--fam); }
-.feed-lines .merge { color: var(--accent); }
+.feed-lines .feed-merge { color: var(--accent); }
 .feed-lines .bad { color: var(--bad); }
 .scout { margin-top: 18px; padding-top: 12px; border-top: 1px solid var(--line); }
 .scout-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
@@ -410,7 +410,8 @@ table.effect td.quality-value { vertical-align: middle; }
 /* One cell per stage: a connector at dot height, solid where the food has been, dashed where a stage is planned. */
 .cell { position: relative; display: grid; justify-items: center; align-content: start; gap: 5px; padding: 10px 4px 12px; text-align: center; }
 .cell::before { content: ""; position: absolute; top: 26px; left: 0; right: 0; height: 3px; background: var(--line); }
-.cell.st-done::before { background: var(--accent); }
+.cell.st-done::before, .cell.st-partial::before { background: var(--accent); }
+.cell.st-removed .token { opacity: .55; border-style: dotted; }
 .cell.here::before { background: linear-gradient(90deg, var(--accent) 50%, var(--line) 50%); }
 .cell.st-planned::before, .cell.st-skipped::before { height: 0; background: none; border-top: 3px dashed var(--line); }
 .cell-head { display: none; }
@@ -426,6 +427,9 @@ table.effect td.quality-value { vertical-align: middle; }
   border: 3px solid var(--line);
 }
 .dot.st-done { background: var(--accent); border-color: var(--accent); }
+/* Partly done: a passed stage whose planned steps never ran is half filled, never a full done dot. */
+.dot.st-partial { background: linear-gradient(90deg, var(--accent) 50%, var(--surface) 50%); border-color: var(--accent); }
+.dot.st-removed { background: var(--surface); border-color: var(--muted); border-style: dotted; }
 .dot.st-current { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent); }
 .dot.st-blocked { border-color: var(--bad); background: var(--bad-bg); }
 .dot.st-planned { border-style: dashed; border-color: var(--muted); }
@@ -472,7 +476,16 @@ table.effect td.quality-value { vertical-align: middle; }
 .cell-actions { display: grid; gap: 4px; width: 100%; }
 .cell-actions .btn { width: 100%; min-height: 32px; padding: 3px 6px; font-size: .76rem; line-height: 1.25; }
 .btn.link { min-height: 24px; padding: 0 6px; border-color: transparent; background: none; color: var(--accent); font-size: .72rem; }
-.term-hint { font-size: .72rem; color: var(--amber); overflow-wrap: anywhere; }
+.term-hint { display: grid; gap: 4px; justify-items: start; text-align: left; font-size: .72rem; color: var(--amber); overflow-wrap: anywhere; }
+.term-cmd { display: block; max-width: 100%; padding: 3px 6px; border-radius: 6px; background: var(--surface-2); color: var(--ink);
+  font-family: var(--mono); font-size: .7rem; user-select: all; overflow-wrap: anywhere; }
+.term-more summary { cursor: pointer; color: var(--accent); }
+.term-more > :not(summary) { display: block; margin-top: 3px; }
+.fish-launch { margin: 4px 0; padding-left: 16px; }
+/* The stage list shown when there is no food: narrow screens only (wide screens have the header row). */
+.stage-list { display: none; }
+.pipe-tools { display: none; }
+.cell-head .chip { font-size: .68rem; }
 .pipe-empty { margin: 14px 0 4px; padding: 12px 14px; border: 2px dashed var(--line); border-radius: 12px; color: var(--muted); text-align: center; }
 
 .stage-guide { margin-top: 12px; font-size: .88rem; }
@@ -513,6 +526,8 @@ table.effect td.quality-value { vertical-align: middle; }
   .cell > .cell-note, .cell > .cell-actions, .cell > .btn.link { grid-column: 2; }
   .cell-actions { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
   .pips { max-width: 40px; }
+  .trow.stage-list { display: grid; }
+  .pipe-tools { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 }
 
 /* ---------------------------------------------------------------- food cards */
@@ -643,6 +658,7 @@ table.effect td.quality-value { vertical-align: middle; }
 }
 .toast.in { opacity: 1; transform: none; }
 .toast.good { border-left-color: var(--good); }
+.toast.neutral { border-left-color: var(--gray); }
 .toast.warn { border-left-color: var(--amber); }
 .toast.bad { border-left-color: var(--bad); }
 dialog {

@@ -319,9 +319,34 @@ def add_foods(target: Path, inputs, *, origin="url", ref=None, scout=None) -> di
     lines += [f"already registered: {e['id']} (merged {', '.join(e['inputs'])})" for e in existing]
     lines += [f"refused: {e['input']}: {e['error']}" for e in batch["errors"]]
     if added:
-        lines.append("next: catalog.py taste ID  (free, sealed, nothing runs)")
+        lines.append("next: catalog.py taste ID  (free, sealed, nothing runs; `add` without --no-taste does this at once)")
     return {"status": "added" if added else "unchanged", "added": added, "merges": batch["merges"],
             "existing": existing, "errors": batch["errors"], "lines": lines}
+
+
+def feed_foods(target: Path, added: dict, progress=None) -> dict:
+    """D4 + D11: naming or picking a food is the owner's confirmation; every food not tasted yet is tasted at once (free T0).
+
+    `added` is the result of add_foods() or cmd_scout_pick(). The web page's 送去試吃 and the CLI's `add` and
+    `scout pick` (without --no-taste) both come here, so the two front ends follow one rule (D8).
+    """
+    progress = progress or (lambda *_args: None)
+    registry = load_registry(target)
+    ids = list(dict.fromkeys(added["added"] + [e["id"] for e in added["existing"]]))
+    queue = [fid for fid in ids if registry.get("foods", {}).get(fid, {}).get("lifecycle") == "found"]
+    tasted, failed = [], []
+    for index, fid in enumerate(queue):
+        progress(f"試吃 {index + 1}/{len(queue)}：{fid}（封存在專案外 → 免費靜態檢查）", index, len(queue))
+        try:
+            tasted.append(cmd_taste(target, fid))
+        except CatalogError as exc:
+            failed.append({"food": fid, "error": core.sanitize_text(str(exc), 300), "error_zh": core.zh_error(exc)})
+    lines = [line for line in added["lines"] if not line.startswith("next: ")] + [line for result in tasted for line in result["lines"]]
+    lines += [f"taste failed: {item['food']}: {item['error']}" for item in failed]
+    return {"status": "fed", "added": added["added"], "merges": added["merges"], "existing": added["existing"],
+            "errors": added["errors"], "already_tasted": [fid for fid in ids if fid not in queue],
+            "tasted": [{k: r.get(k) for k in ("food", "verdict", "files", "integrity", "commit", "components")} for r in tasted],
+            "failed": failed, "lines": lines}
 
 
 # --------------------------------------------------------------------------- fetch and seal
@@ -688,9 +713,8 @@ def cmd_show(target: Path, ident: str) -> dict:
             lines.append(f"  flag {flag['severity']:6} {flag['rule']:12} {flag['path']}:{flag['line']} {flag['meaning']}")
     for component in card["components"]:
         mark = {"absorb": "[+]", "excrete": "[x]", "hold": "[~]"}[component["disposition"]]
-        confirm = " (suggested; owner confirms)" if component["owner_confirms"] else ""
         decided = f" · owner: {component['decision']}" if component["decision"] else ""
-        lines.append(f"  {mark} {component['disposition']:7} {component['id']}{confirm}{decided}")
+        lines.append(f"  {mark} {component['disposition']:7} {component['id']}{decided}")
         lines.append(f"        {core.sanitize_text(component['reason'], 160)}" + (f" · missing: {component['missing_test']}" if component["missing_test"] else ""))
     for report in card["historical"]:
         lines.append(f"  historical-prior (not counted): {report['evidence_id']}")
@@ -1285,7 +1309,11 @@ def compute_effect(target: Path, lab: Path) -> dict:
     finally:
         rmtree(scratch)
     registry = load_registry(target)
-    measured = [r for fid in registry.get("foods", {}) for r in load_evidence(target, fid) if core.evidence_class(r) == "live"]
+    # Measured evidence speaks only for foods whose parts this layer holds (their absorb receipts are part of it).
+    present = {fid for fid, receipt in load_receipts(target).items()
+               if any(isinstance(p, dict) and p.get("outcome") == "installed" for p in (receipt.get("components") or {}).values())}
+    measured = [r for fid in registry.get("foods", {}) if fid in present for r in load_evidence(target, fid)
+                if core.evidence_class(r) == "live"]
     effect = core.effect_vs_default(core.install_inventory(current), core.install_inventory(default), measured, hosts=hosts)
     effect.update(computed_at=now_iso(), layer_hash=layer_hash(files),
                   default_recipe={"profile": "minimal", "with_improve": False, "hosts": hosts, "skills": oaw.default_skills("minimal", False)},
@@ -1323,7 +1351,7 @@ def safe_effect(target: Path, lab: Path) -> dict:
 
 def effect_summary(effect: dict) -> dict:
     return {"skills": effect["skills"], "quality": effect["quality"]["value"],
-            "lines": [{k: line.get(k) for k in ("metric", "current", "default", "delta", "level", "value")} for line in effect["lines"]]}
+            "lines": [{k: line.get(k) for k in ("metric", "current", "default", "delta", "level", "value", "note")} for line in effect["lines"]]}
 
 
 # --------------------------------------------------------------------------- absorb / remove
@@ -1358,6 +1386,35 @@ def stage_lint(lab: Path, name: str, files: dict) -> list:
         rmtree(scratch)
 
 
+_LICENSE_NAME = re.compile(r"(?i)(?:license|licence|notice|copying)(?:\.[a-z]+)?")
+UPSTREAM_NOTE = "OAW-UPSTREAM.md"
+
+
+def upstream_note(entry: dict, static: dict, selection: dict, package: dict) -> bytes:
+    """The attribution note absorb installs beside the copied text: source, pinned commit, license files, modifications.
+
+    Deterministic (no timestamps), so absorbing the same pinned food twice gives the same bytes and build.
+    """
+    source = entry["source"]
+    origin = source.get("url") if source.get("kind") == "github" else f"a local repository ({private_ref(source)})"
+    licenses = sorted(p for p in package if _LICENSE_NAME.fullmatch(PurePosixPath(p).name))
+    spdx = ((static or {}).get("license") or {}).get("spdx") or "unknown"
+    copied = sorted(p for p in package if p not in licenses)
+    lines = ["# Where this skill came from", "",
+             "OAW's skill catalog absorbed this skill from an outside repository (a food). The text is upstream text,",
+             "copied unchanged; OAW has not re-implemented it.", "",
+             f"- Food: {entry['id']}",
+             f"- Source: {origin}",
+             f"- Pinned commit: {source.get('commit') or 'none'} ({source.get('integrity') or 'integrity unknown'})",
+             f"- Sealed snapshot tree SHA-256: {(static or {}).get('tree_sha256')}",
+             f"- Skill folder in the food: {selection['skill']['dir'] or '(repository root)'}",
+             f"- Copied unchanged: {', '.join(copied)}",
+             f"- License: {spdx}; " + (f"license files shipped here: {', '.join(licenses)}" if licenses else "no license file shipped"),
+             "- Modifications: none",
+             f"- Absorbed component: {selection['id']}", ""]
+    return "\n".join(core.sanitize_text(line, 400) if line else "" for line in lines).encode("utf-8")
+
+
 def cmd_absorb(target: Path, ident: str, component_ids, reason: str, apply: bool) -> dict:
     registry = load_registry(target)
     entry = resolve_food(registry, ident)
@@ -1383,6 +1440,8 @@ def cmd_absorb(target: Path, ident: str, component_ids, reason: str, apply: bool
             component = current[cid]
             if component["decision"] == "absorbed":
                 raise CatalogError(f"{cid} is already absorbed.")
+            if component["decision"] == "removed" and not component.get("retested_after_remove"):
+                raise CatalogError(f"{cid} was removed; re-adding it needs a new taste (free): run `catalog.py taste {fid}`, then absorb (D6).")
             if component["disposition"] != "absorb":
                 raise CatalogError(f"{cid} is {component['disposition']}: {component['reason']}; only parts proposed for absorption can be absorbed.")
             fact = facts[cid]
@@ -1421,6 +1480,14 @@ def cmd_absorb(target: Path, ident: str, component_ids, reason: str, apply: bool
             relative = member[len(skill["dir"]) + 1:] if skill["dir"] else member
             relative = "SKILL.md" if relative.casefold() == "skill.md" else relative
             package[relative] = sealed[member]
+        # D14 licence route, D3: the food's own license and notice files travel with the text, plus where it came from.
+        for member in sorted(sealed):
+            if "/" in member or not _LICENSE_NAME.fullmatch(member) or any(p.casefold() == member.casefold() for p in package):
+                continue
+            package[member] = sealed[member]
+        if any(p.casefold() == UPSTREAM_NOTE.casefold() for p in package):
+            raise CatalogError(f"{selection['id']} already ships a file named {UPSTREAM_NOTE}; nothing was installed.")
+        package[UPSTREAM_NOTE] = upstream_note(entry, static, selection, package)
         # The same lint doctor runs: a skill that would make the project unhealthy is never installed.
         issues = stage_lint(lab, selection["name"], package)
         if issues:
@@ -1748,7 +1815,12 @@ def iso_week(moment: datetime) -> str:
     return f"{year}-W{week:02d}"
 
 
-def cmd_scout(target: Path, per_query: int = 30, days: int = 7) -> dict:
+def cmd_scout(target: Path, per_query: int = 100, days: int = 7, max_pages: int = 3) -> dict:
+    """D4: search by recency (repos pushed in the last `days`), filter for relevance, accumulate candidates.
+
+    Stars never decide what is fetched: GitHub is asked for the most recently updated repos, page by page, and
+    stars only order the candidate list afterwards. Results beyond `max_pages` pages are counted as not fetched.
+    """
     moment = datetime.now(timezone.utc)
     since = (moment - timedelta(days=days)).date().isoformat()
     headers = {"Accept": "application/vnd.github+json", "User-Agent": "oaw-catalog/0", "X-GitHub-Api-Version": "2022-11-28"}
@@ -1756,17 +1828,29 @@ def cmd_scout(target: Path, per_query: int = 30, days: int = 7) -> dict:
     if token:
         headers["Authorization"] = "Bearer " + token
     seen, kept, dropped, errors = {}, {}, [], []
+    size = max(1, min(per_query, 100))
+    not_fetched = 0
     for query in SCOUT_QUERIES:
-        url = GITHUB_API + "?" + urllib.parse.urlencode({"q": f"{query} pushed:>={since}", "sort": "stars", "order": "desc",
-                                                         "per_page": max(1, min(per_query, 100))})
-        try:
-            items = http_json(url, headers).get("items") or []
-        except (urllib.error.URLError, OSError, ValueError) as exc:
-            errors.append(core.sanitize_text(f"{query}: {exc}", 160))
-            continue
-        for item in items:
-            if isinstance(item, dict) and isinstance(item.get("html_url"), str):
-                seen.setdefault(item["html_url"], item)
+        fetched = 0
+        for page in range(1, max_pages + 1):
+            url = GITHUB_API + "?" + urllib.parse.urlencode({"q": f"{query} pushed:>={since}", "sort": "updated", "order": "desc",
+                                                             "per_page": size, "page": page})
+            try:
+                doc = http_json(url, headers)
+            except (urllib.error.URLError, OSError, ValueError) as exc:
+                errors.append(core.sanitize_text(f"{query}: {exc}", 160))
+                break
+            items = doc.get("items") or []
+            fetched += len(items)
+            for item in items:
+                if isinstance(item, dict) and isinstance(item.get("html_url"), str):
+                    seen.setdefault(item["html_url"], item)
+            total = doc.get("total_count")
+            total = min(total, 1000) if isinstance(total, int) and not isinstance(total, bool) else fetched
+            if len(items) < size or fetched >= total:
+                break
+        else:
+            not_fetched += max(0, total - fetched)
     if errors and not seen:
         raise CatalogError("Scout could not reach GitHub search: " + "; ".join(errors[:2]))
     for url, item in seen.items():
@@ -1798,14 +1882,17 @@ def cmd_scout(target: Path, per_query: int = 30, days: int = 7) -> dict:
                 current["weeks_seen"].append(week)
         pool["dropped_total"] = int(pool.get("dropped_total", 0)) + len(dropped)
         pool.setdefault("runs", []).append({"at": now_iso(), "week": week, "queries": len(SCOUT_QUERIES), "seen": len(seen),
-                                            "kept": len(kept), "dropped": len(dropped), "errors": errors})
+                                            "kept": len(kept), "dropped": len(dropped), "errors": errors, "days": days,
+                                            "order": "updated", "not_fetched": not_fetched})
         del pool["runs"][:-52]
     update_json(target, ("scout.json",), mutate, {"schema_version": 1, "candidates": {}, "runs": [], "dropped_total": 0})
     update_view(target)
     result = cmd_scout_list(target)
-    result["lines"] = [f"scout {week}: {len(seen)} seen · {len(kept)} kept · {len(dropped)} dropped without review"
-                       + (f" · {len(errors)} query error(s)" if errors else "")] + result["lines"]
-    result.update(status="scouted", kept=len(kept), dropped=dropped, errors=errors)
+    result["lines"] = [f"scout {week}: repos pushed in the last {days} days, newest first · {len(seen)} seen · {len(kept)} kept"
+                       f" · {len(dropped)} dropped without review" + (f" · {len(errors)} query error(s)" if errors else "")
+                       + (f" · {not_fetched} older result(s) not fetched (cut by recency, never by stars)" if not_fetched else ""),
+                       "run this once a week: there is no schedule, and a skipped week's repos are not searched again"] + result["lines"]
+    result.update(status="scouted", kept=len(kept), dropped=dropped, errors=errors, not_fetched=not_fetched)
     return result
 
 
@@ -1819,7 +1906,8 @@ def cmd_scout_list(target: Path) -> dict:
     lines = ["rank  stars (queue order only, not quality)  status     repo"]
     lines += [f"{i:>4}  {c.get('stars', 0):>7}  {c.get('status', 'candidate'):10} {core.sanitize_text(c['display'], 60)} · {core.sanitize_text(c.get('description'), 80)}"
               for i, c in enumerate(ordered, 1)]
-    lines.append("pick: catalog.py scout pick N [N ...]  (nothing is tasted until you pick and taste)")
+    lines.append("pick: catalog.py scout pick N [N ...]  (your pick is the confirmation: picked foods are tasted at once, free;"
+                 " --no-taste only registers them)")
     return {"status": "scout", "candidates": ordered, "lines": lines}
 
 
@@ -1909,6 +1997,7 @@ def parser() -> argparse.ArgumentParser:
     add = commands.add_parser("add", parents=[common], help="feed one or more GitHub repositories (duplicates merge)")
     add.add_argument("urls", nargs="+")
     add.add_argument("--ref", help="branch, tag or commit to pin (default: the default branch)")
+    add.add_argument("--no-taste", action="store_true", help="only register; by default every new food is tasted at once (free T0)")
     commands.add_parser("list", parents=[common], help="list foods and their verdicts")
     show = commands.add_parser("show", parents=[common], help="nutrition card for one food")
     show.add_argument("food")
@@ -1964,6 +2053,7 @@ def parser() -> argparse.ArgumentParser:
     scout_commands.add_parser("list", parents=[common])
     pick = scout_commands.add_parser("pick", parents=[common])
     pick.add_argument("ranks", nargs="+", type=int)
+    pick.add_argument("--no-taste", action="store_true", help="only register; by default each pick is tasted at once (free T0)")
     ui = commands.add_parser("ui", parents=[common], help="open the local intake pipeline page (127.0.0.1, per-session token)")
     ui.add_argument("--no-browser", action="store_true", help="print the URL without opening a browser")
     ui.add_argument("--port", type=int, default=0, help="port on 127.0.0.1 (default: a free port)")
@@ -1977,7 +2067,7 @@ def dispatch(args) -> dict:
     if command == "add":
         result = add_foods(target, args.urls, ref=args.ref)
         update_view(target)
-        return result
+        return result if args.no_taste else feed_foods(target, result)
     if command == "list":
         return cmd_list(target)
     if command == "show":
@@ -2010,7 +2100,8 @@ def dispatch(args) -> dict:
         return cmd_view(target)
     if command == "scout":
         if args.scout_command == "pick":
-            return cmd_scout_pick(target, args.ranks)
+            result = cmd_scout_pick(target, args.ranks)
+            return result if args.no_taste else feed_foods(target, result)
         if args.scout_command == "list":
             return cmd_scout_list(target)
         return cmd_scout(target)
@@ -2034,9 +2125,11 @@ def main(argv=None) -> int:
         if sys.version_info < (3, 10):
             raise CatalogError("Python 3.10+ is required.")
         result = dispatch(args)
-        code = 0
+        # A batch whose free taste failed for some food is not "done": the result lists what failed.
+        code = 2 if result.get("status") == "fed" and result.get("failed") else 0
     except NeedsConfirmation as exc:
-        result, code = {"status": "needs-confirmation", "error": str(exc), "lines": [str(exc)]}, 4
+        # D14 CLI contract: 3 = a choice is needed (here: the owner's confirmation code).
+        result, code = {"status": "needs-confirmation", "error": str(exc), "lines": [str(exc)]}, 3
     except (CatalogError, oaw.InstallError, core.SourceError, OSError, ValueError) as exc:
         result, code = {"status": "error", "error": str(exc), "lines": [f"catalog error: {exc}"]}, 2
     if as_json:
