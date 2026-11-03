@@ -18,7 +18,7 @@
       <p class="sub" id="project-name">連線中…</p>
     </div>
   </div>
-  <div class="top-stats" id="top-stats" aria-label="漏斗"></div>
+  <div class="top-stats" id="top-stats" aria-label="數量"></div>
 </header>
 
 <div id="busy" class="busy" hidden role="status" aria-live="polite">
@@ -28,33 +28,53 @@
 <div id="banner" class="banner" hidden role="alert"></div>
 
 <main class="layout">
-  <section id="my-oaw" class="panel my-oaw" aria-labelledby="my-oaw-title">
-    <h2 id="my-oaw-title"><span aria-hidden="true">🧬</span> 我的 OAW</h2>
-    <div id="my-oaw-body"><p class="muted">讀取中…</p></div>
-  </section>
-
-  <div class="main-col">
-    <section id="feed" class="panel feed" aria-labelledby="feed-title">
-      <h2 id="feed-title"><span aria-hidden="true">🥣</span> 投食區</h2>
-      <label for="feed-urls" class="label">貼上一個或多個 GitHub 網址（一行一個；同一個 repo 寫兩次會自動合併）</label>
-      <textarea id="feed-urls" rows="3" spellcheck="false" autocomplete="off" placeholder="https://github.com/owner/repo"></textarea>
-      <div class="row">
-        <button type="button" id="feed-go" class="btn primary big">送去試吃</button>
-        <span class="hint">免費：抓固定版本、封存在專案外、只讀不執行，跑靜態檢查</span>
+  <section id="pipeline" class="panel pipeline" aria-labelledby="pipeline-title">
+    <div class="pipe-head">
+      <div>
+        <h2 id="pipeline-title">新增 skill 的流程</h2>
+        <p class="hint">每樣食物是一個圖示，停在它目前的站；這一站能做的事，就是圖示下面的按鈕。標「規劃中」的站還沒自動化，不能按。</p>
       </div>
-      <div id="feed-result" class="feed-result" aria-live="polite"></div>
+      <p class="legend" id="legend" aria-label="圖例"></p>
+    </div>
 
-      <div class="scout">
-        <div class="scout-head">
-          <h3><span aria-hidden="true">🔭</span> 本週覓食</h3>
-          <button type="button" id="scout-run" class="btn">立即覓食</button>
-        </div>
+    <div class="inlets" id="inlets">
+      <div class="inlet" id="inlet-scout">
+        <h3><span class="inlet-tag" aria-hidden="true">A</span> 每週偵查 → 相關性過濾 → 你確認</h3>
+        <p class="hint">偵查只記錄候選；和 coding agent skill／harness 無關的不經審查就濾掉；星數只決定排序。只有你勾選的才會送去試吃。</p>
+        <div class="row"><button type="button" id="scout-run" class="btn act">立即偵查</button></div>
         <div id="scout-body"></div>
       </div>
+      <div class="inlet" id="inlet-named">
+        <h3><span class="inlet-tag" aria-hidden="true">B</span> 你點名</h3>
+        <label for="feed-urls" class="label">貼上一個或多個 GitHub 網址（一行一個；同一個 repo 寫兩次只收一次）</label>
+        <textarea id="feed-urls" rows="2" spellcheck="false" autocomplete="off" placeholder="https://github.com/owner/repo"></textarea>
+        <div class="row">
+          <button type="button" id="feed-go" class="btn primary act">送去試吃</button>
+          <span class="hint">免費：固定版本、封存在專案外、只讀不執行</span>
+        </div>
+        <div id="feed-result" class="feed-result" aria-live="polite"></div>
+      </div>
+      <div class="merge" aria-hidden="true"><span class="merge-label">兩條入口匯進 ① 入口</span></div>
+    </div>
 
-      <details class="import-any">
-        <summary><span aria-hidden="true">🐘🐟</span> 匯入已有的消化紀錄（歷史證據）</summary>
-        <p class="hint">大象和金魚的報告只會顯示成「歷史證據」，不計入任何判定。資料夾裡放 digest.json、verify.json、goldfish-*.json、components.json、integration.json、proposals.md。</p>
+    <div class="track-wrap">
+      <div class="track" id="track" role="table" aria-label="每樣食物在流程上的位置"></div>
+    </div>
+    <p id="pipe-empty" class="pipe-empty" hidden></p>
+
+    <details class="stage-guide">
+      <summary>每一站在做什麼（自動／需要你／規劃中）</summary>
+      <ol id="stage-guide"></ol>
+    </details>
+  </section>
+
+  <div class="below">
+    <section id="detail" class="panel detail" aria-labelledby="detail-title">
+      <h2 id="detail-title"><span aria-hidden="true">🍱</span> 食物卡</h2>
+      <div id="detail-body"></div>
+      <details class="import-any" id="import-any">
+        <summary><span aria-hidden="true">🐘🐟</span> 計畫：匯入已有的 Elephant／Goldfish 消化紀錄（歷史證據）</summary>
+        <p class="hint">匯入的紀錄只顯示成「歷史證據」，不計入任何判定。資料夾裡放 digest.json、verify.json、goldfish-*.json、components.json、integration.json、proposals.md。</p>
         <label for="import-dir" class="label">報告資料夾路徑</label>
         <input id="import-dir" type="text" spellcheck="false" autocomplete="off">
         <label for="import-food" class="label">屬於哪樣食物（可空白：依資料夾裡的 scout.json 判斷）</label>
@@ -63,20 +83,20 @@
       </details>
     </section>
 
-    <section id="foods" class="foods" aria-labelledby="foods-title">
-      <h2 id="foods-title" class="section-title"><span aria-hidden="true">🍱</span> 食物卡</h2>
-      <div id="food-cards" class="cards"></div>
+    <section id="my-oaw" class="panel my-oaw" aria-labelledby="my-oaw-title">
+      <h2 id="my-oaw-title"><span aria-hidden="true">🧬</span> 版本：我的 OAW</h2>
+      <div id="my-oaw-body"><p class="muted">讀取中…</p></div>
     </section>
-
-    <details class="panel rules">
-      <summary>不會變的規則</summary>
-      <ul id="rules"></ul>
-    </details>
-    <details class="panel log">
-      <summary>動作紀錄（引擎原文）</summary>
-      <div id="log"></div>
-    </details>
   </div>
+
+  <details class="panel rules">
+    <summary>不會變的規則</summary>
+    <ul id="rules"></ul>
+  </details>
+  <details class="panel log">
+    <summary>動作紀錄（引擎原文）</summary>
+    <div id="log"></div>
+  </details>
 </main>
 
 <div id="toasts" class="toasts" aria-live="polite"></div>

@@ -470,7 +470,7 @@ def food_lines(food, detail=False):
         lines.append(f"  歷史證據（不計入判定）：{clean(report.get('evidence_id'), 80)}")
         elephant = report.get("elephant") if isinstance(report.get("elephant"), dict) else None
         if elephant:
-            lines.append(f"    🐘 大象：整合方式 {clean(elephant.get('integration_mode'), 40)} · 關卡 {len(elephant.get('gates') or [])}"
+            lines.append(f"    🐘 Elephant：整合方式 {clean(elephant.get('integration_mode'), 40)} · 關卡 {len(elephant.get('gates') or [])}"
                          f" · 養分／拉肚子風險／提議的 A/B {count_text(elephant.get('nutrients'))}／{count_text(elephant.get('diarrhea_risks'))}"
                          f"／{count_text(elephant.get('proposed_ab_tests'))}")
         verify = report.get("verify") if isinstance(report.get("verify"), dict) else None
@@ -478,7 +478,7 @@ def food_lines(food, detail=False):
             lines.append(f"    查證 {count_text(verify.get('checks'))} 項 · 漏掉 {count_text(verify.get('missed_issues'))}")
         for fish in report.get("goldfish") or []:
             severity = "、".join(f"{clean(k, 20)} {v}" for k, v in (fish.get("by_severity") or {}).items())
-            lines.append(f"    🐟 金魚 {clean(fish.get('reviewer'), 40)}：{fish.get('findings')} 項發現" + (f"（{severity}）" if severity else ""))
+            lines.append(f"    🐟 Goldfish {clean(fish.get('reviewer'), 40)}：{fish.get('findings')} 項發現" + (f"（{severity}）" if severity else ""))
         for part in report.get("components") or []:
             if isinstance(part, dict):
                 lines.append(f"    {DISPOSITIONS.get(part.get('disposition'), '🟡 暫留')} {clean(part.get('id'), 80)} · {clean(part.get('name'), 80)}"
@@ -490,8 +490,8 @@ def scout_lines(view, limit=None):
     scout = ((view.get("feeding") or {}).get("scout")) or {}
     candidates = [c for c in scout.get("candidates") or [] if isinstance(c, dict)]
     last = scout.get("last_run") if isinstance(scout.get("last_run"), dict) else None
-    lines = [f"本週覓食：候選 {len(candidates)} · 已自動濾掉 {scout.get('dropped_without_review', 0)} 個無關 repo（不經審查）"
-             + (f" · 上次 {clean(last.get('week'), 10)}" if last else " · 還沒覓食過")]
+    lines = [f"每週偵查：候選 {len(candidates)} · 已自動濾掉 {scout.get('dropped_without_review', 0)} 個無關 repo（不經審查）"
+             + (f" · 上次 {clean(last.get('week'), 10)}" if last else " · 還沒偵查過")]
     for item in candidates[:limit] if limit else candidates:
         status = "已送去" if item.get("status") == "picked" else "候選"
         lines.append(f"  {item.get('rank')}. {clean(item.get('display'), 60)} · ★{item.get('stars') or 0}（排隊依據，非品質） · {status}")

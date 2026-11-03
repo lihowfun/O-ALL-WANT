@@ -680,7 +680,7 @@ class Menu:
     def choose_food(self, view=None):
         foods = [f for f in (view or self.view()).get("foods", []) if isinstance(f, dict)]
         if not foods:
-            self.write("還沒有食物：先選 2 投食，或 3 本週覓食。")
+            self.write("還沒有食物：先選 2 你點名，或 3 每週偵查。")
             return None
         for index, food in enumerate(foods, 1):
             self.write(f"  {index}. {oaw_status.headline_label(food.get('verdict'))} · {oaw_status.clean(food.get('display'), 60)} [{food.get('id')}]")
@@ -714,7 +714,7 @@ class Menu:
         for line in oaw_status.scout_lines(view):
             self.write(line)
         candidates = ((view.get("feeding") or {}).get("scout") or {}).get("candidates") or []
-        answer = self.ask("s = 立即覓食（連網搜尋 GitHub）；輸入編號 = 送去試吃；Enter = 返回：")
+        answer = self.ask("s = 立即偵查（連網搜尋 GitHub）；輸入編號 = 你確認、送去試吃；Enter = 返回：")
         if answer.casefold() == "s":
             if self.do("scout")["ok"]:
                 for line in oaw_status.scout_lines(self.view()):

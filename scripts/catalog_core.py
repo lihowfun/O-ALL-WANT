@@ -119,7 +119,7 @@ ERRORS_ZH = (
     (r"LAB_HOME must be outside", "LAB_HOME 必須在專案和 OAW 框架之外：設定 OAW_LAB_HOME。"),
     (r"has absorbed parts; remove them first", "這樣食物還有吸收中的成分：先移除，再忘掉它。"),
     (r"Report directory not found|No digestion records", "找不到報告資料夾，或資料夾裡沒有消化紀錄。"),
-    (r"Scout could not reach GitHub", "覓食連不上 GitHub 搜尋。"),
+    (r"Scout could not reach GitHub", "偵查連不上 GitHub 搜尋。"),
 )
 
 
@@ -886,8 +886,8 @@ MISSING_TESTS = {
     "license-check": ("owner license check", "由你確認授權"),
     "triage": ("owner triage of the flags", "由你分流這些旗標"),
     "reimplement-ab": ("behavior A/B (paid), after re-implementation", "重新實作後做行為 A/B（付費）"),
-    "method-backlog": ("elephant proposal (method backlog)", "大象提案（方法待辦）"),
-    "elephant": ("elephant proposal", "大象提案"),
+    "method-backlog": ("elephant proposal (method backlog)", "Elephant 提案（方法待辦）"),
+    "elephant": ("elephant proposal", "Elephant 提案"),
     "food-triage": ("owner triage", "由你分流"),
     "retaste": ("taste again with the current free rules", "用目前的規則再試吃一次（免費）"),
 }
@@ -1235,7 +1235,7 @@ PLAN_STEPS_ZH = {
     "T0": ("免費靜態檢查", ["檔案清單、授權、宣告的 hooks／MCP／腳本、旗標"], ["行為、品質、執行時的安全"]),
     "T1": ("離線整合（名稱衝突、doctor／migrate 往返）", ["安裝相容性"], ["品質"]),
     "T2a": ("人工分流高嚴重度旗標", ["每個旗標是良性、過敏原，還是有毒"], ["品質"]),
-    "G": ("金魚盲審我們的吸收草稿（2 位審查者）", ["草稿裡沒有根據的說法或和規則衝突的地方"], ["行為上的增益"]),
+    "G": ("Goldfish 盲審我們的吸收草稿（2 位審查者）", ["草稿裡沒有根據的說法或和規則衝突的地方"], ["行為上的增益"]),
     "TX": ("在可拋棄環境試跑可執行的成分", ["tripwire：宣告範圍外的寫入、連線、行程"], ["品質"]),
     "T3a-smoke": ("行為 A/B 冒煙測試：有食物（C）對沒有（D），4 案例 × 2 次", ["決定性的退步；早期的沒增益訊號"], ["統計上的增益", "其他 host 或模型"]),
     "T4": ("和現有配方整合（受害者檢查）", ["拉肚子：讓現有 skill 變差"], ["增益"]),
@@ -1514,7 +1514,7 @@ PIPELINE_ORDER = tuple(stage["id"] for stage in PIPELINE_STAGES)
 # where it runs. A terminal action needs an owner code: the page shows it as text; only the menu and the CLI run it.
 PIPELINE_ACTIONS = {
     "taste": {"endpoint": "taste", "label_zh": "送去試吃", "where": "both"},
-    "forget": {"endpoint": "forget", "label_zh": "排掉（忘掉這樣食物）", "where": "both"},
+    "forget": {"endpoint": "forget", "label_zh": "排掉（忘掉）", "where": "both"},
     "triage": {"endpoint": "triage", "label_zh": "分流旗標（終端確認碼）", "where": "terminal"},
     "absorb": {"endpoint": "absorb", "label_zh": "吸收選中的成分…", "where": "both"},
     "remove-food": {"endpoint": "remove", "label_zh": "移除", "where": "both"},
@@ -1584,7 +1584,7 @@ def food_pipeline(card: dict) -> dict:
     elif headline == "risky":
         stage = reach("static", "blocked")
         open_high = (card.get("flags") or {}).get("open_high") or 0
-        note = (f"{open_high} 個高嚴重度旗標待分流：到終端 catalog.py menu" if open_high
+        note = (f"{open_high} 個高嚴重度旗標待你分流" if open_high
                 else "你擋下了這樣食物：" + sanitize_text("；".join(str(r) for r in verdict.get("reasons") or []), 120))
         wanted += [("triage", None, None), ("forget", None, None)]
     elif verdict.get("stale"):

