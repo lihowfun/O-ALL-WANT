@@ -204,6 +204,94 @@ class ContextHubTests(unittest.TestCase):
         self.assertIn(".agents/skills/example/SKILL.md", output)
         self.assertIn(".claude/skills/example/SKILL.md", output)
 
+    def secret_fixtures(self):
+        """One positive and one negative note per credential pattern, built at run time.
+
+        No real-looking token literal sits in the repository, so secret scanners
+        and push protection stay quiet; every value below is fake.
+        """
+        hexa, word = "0123456789abcdef" * 4, "Ab3" * 30
+        return {
+            "url_credentials": (["clone https://deploy:" + "Hunter2x" + "@git.example.com/repo.git",
+                                 "redis://:" + "pw9" + "@cache:6379/0"],
+                                ["postgres://app:${DB_PASS}@db/prod", "https://user:<PASSWORD>@host",
+                                 "https://user@host", "https://host:8080/a@b", "git@github.com:org/repo"]),
+            "aws_access_key": (["key AKIA" + "ABCDEFGHIJKLMNOP"], ["the AKIA prefix and AKIA1234 in prose"]),
+            "aws_secret_key": (["aws_secret_access_key = " + word[:40], '"SecretAccessKey": "' + "A/b+" * 10 + '"'],
+                               ["AWS_SECRET_ACCESS_KEY=" + word[:39], "AWS_SECRET_ACCESS_KEY=<AWS_SECRET>"]),
+            "aws_session_token": (["AWS_SESSION_TOKEN=" + word * 2], ["aws_session_token = " + word[:40]]),
+            "github_pat": (["token gh" + "p_" + "A" * 36, "權杖gh" + "o_" + "A" * 36, "github" + "_pat_" + "B" * 82],
+                           ["gh" + "p_" + "A" * 10]),
+            "openai_key": (["sk" + "-proj-" + word[:30]], ["use sk-learn or sk-123 here"]),
+            "anthropic_key": (["sk" + "-ant-api03-" + word[:30]], ["the sk-ant- prefix alone"]),
+            "slack_token": (["xo" + "xb-" + "1234567890-abcdef"], ["xoxb-123"]),
+            "slack_webhook": (["https://hooks.slack.com/services/T0000/B0000/" + word[:24]],
+                              ["https://example.com/hooks.slack.com/services/T0000/B0000/" + word[:24]]),
+            "discord_webhook": (["https://discord.com/api/webhooks/" + "1" * 18 + "/" + word[:68]],
+                                ["https://discord.com/api/webhooks/" + "1" * 18 + "/short"]),
+            "jwt": (["ey" + "JhbGciOiJIUzI1NiJ9.ey" + "JzdWIiOiIxIn0.sig_value"], ["eyJhbGciOi has one part"]),
+            "private_key_pem": (["-----BEGIN " + "OPENSSH PRIVATE" + " KEY-----"], ["-----BEGIN " + "PUBLIC" + " KEY-----"]),
+            "stripe_key": (["sk" + "_live_" + word[:24], "wh" + "sec_" + word[:32]], ["sk_live_short"]),
+            "google_api_key": (["AI" + "za" + "S" * 35], ["AIza" + "S" * 10]),
+            "gitlab_token": (["gl" + "pat-" + word[:20]], ["glpat-short"]),
+            "huggingface_token": (["h" + "f_" + word[:34]], ["hf_" + word[:10]]),
+            "npm_token": (["np" + "m_" + word[:36]], ["npm_" + word[:35]]),
+            "docker_pat": (["dckr" + "_pat_" + word[:27]], ["dckr_pat_" + word[:5]]),
+            "sendgrid_key": (["S" + "G." + word[:22] + "." + word[:43]], ["SG." + word[:22] + "." + word[:10]]),
+            "digitalocean_token": (["do" + "p_v1_" + hexa], ["dop_v1_" + "g" * 64]),
+            "shopify_token": (["shp" + "at_" + hexa[:32]], ["shpat_" + "z" * 32]),
+            "pypi_token": (["py" + "pi-AgE" + word[:60]], ["pypi-AgE" + word[:10]]),
+        }
+
+    def test_secret_patterns_compile_at_import(self):
+        code = (f"import re, sys; sys.path.insert(0, {str(SCRIPTS)!r}); import oaw_common; "
+                "assert all(p.flags & re.ASCII for _n, p in oaw_common.SECRET_PATTERNS); "
+                "print(','.join(n for n, _p in oaw_common.SECRET_PATTERNS))")
+        completed = subprocess.run([sys.executable, "-I", "-c", code], capture_output=True, text=True)
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertEqual(completed.stdout.strip().split(","), [name for name, _pattern in common.SECRET_PATTERNS])
+
+    def test_each_secret_pattern_has_positive_and_negative_fixture(self):
+        fixtures = self.secret_fixtures()
+        self.assertEqual(sorted(fixtures), sorted(name for name, _pattern in common.SECRET_PATTERNS))
+        for name, (positives, negatives) in fixtures.items():
+            for text in positives:
+                with self.subTest(name=name, case="positive"):
+                    self.assertIn(name, common.find_secret_names(text))
+                    refusal = common.evidence_write_refusal("note " + text)
+                    self.assertIn(name, refusal)
+                    self.assertNotIn(text, refusal)
+            for text in negatives:
+                with self.subTest(name=name, case="negative"):
+                    self.assertNotIn(name, common.find_secret_names(text))
+        for text in ("postgres://app:${DB_PASS}@db", "https://user@host", "https://host:8080/a@b",
+                     "git@github.com:org/repo", "set password=hunter2 and API_TOKEN=abcdef123456 in prose"):
+            self.assertIsNone(common.evidence_write_refusal(text), text)
+
+    def test_secret_refusal_leaves_file_unchanged_and_never_prints_value(self):
+        token = "gh" + "p_" + "Z" * 36
+        page = self.docs / "Topic.md"
+        page.write_text("# Topic\n\nbody\n", encoding="utf-8")
+        page_bytes = page.read_bytes()
+        attempts = (("memory", "add", "[NOTE] use " + token), ("lesson", "pasted " + token, "use a placeholder"),
+                    ("annotate", "Topic", "[FINDING] token " + token))
+        for args in attempts:
+            with self.subTest(command=args[0]):
+                completed = self.cli(*args)
+                self.assertEqual(completed.returncode, 1)
+                self.assertIn("github_pat", completed.stdout)
+                self.assertNotIn(token, completed.stdout + completed.stderr)
+                self.assertFalse(self.memory.exists())
+        self.assertEqual(page.read_bytes(), page_bytes)
+        self.memory.parent.mkdir()
+        self.memory.write_text("# Memory\n\n---\n", encoding="utf-8")
+        memory_bytes = self.memory.read_bytes()
+        with self.assertRaisesRegex(ValueError, "url_credentials"):
+            self.quiet(hub.memory_add, "[NOTE] db at postgres://app:" + "Hunter2x" + "@db/prod")
+        self.assertEqual(self.memory.read_bytes(), memory_bytes)
+        self.assertEqual(self.cli("memory", "add", "[NOTE] db at postgres://app:${DB_PASS}@db/prod").returncode, 0)
+        self.assertIn("${DB_PASS}", self.memory.read_text(encoding="utf-8"))
+
     def test_recall_budgets_json_and_pages_independent_entries(self):
         self.memory.parent.mkdir()
         huge = "needle \"\\ quoted\n" * 3000

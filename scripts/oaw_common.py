@@ -28,6 +28,40 @@ _RESERVED = {"con", "prn", "aux", "nul"} | {
     prefix + str(number) for prefix in ("com", "lpt") for number in range(1, 10)
 }
 
+# Credential shapes refused on evidence writes, because memory and annotations
+# are committed project files. Only vendor-prefixed or key-anchored shapes:
+# generic password=/TOKEN= heuristics stay out (too many false positives).
+# re.ASCII keeps \w and \b ASCII-only, so a token right after CJK text still matches.
+# Adapted from claude-mem src/utils/redaction.ts:108-177 (Apache-2.0); modified: variable-width lookbehinds rewritten as consuming matches, PEM header only, refusal instead of redaction, generic and claude_mem_key patterns dropped.
+SECRET_PATTERNS = tuple((name, re.compile(pattern, re.ASCII | flags)) for name, pattern, flags in (
+    ("url_credentials", r"\b[a-z][a-z0-9+.-]*://[^\s:/@'\"<>]*:(?![${<])[^\s/@'\"<>]+@", re.IGNORECASE),
+    ("aws_access_key", r"(?:AKIA|ASIA)[0-9A-Z]{16}", 0),
+    ("aws_secret_key", r"(?i:aws_secret_access_key|\bSecretAccessKey)[\"']?\s*[:=]\s*[\"']?"
+                       r"[A-Za-z0-9/+=]{40}(?![A-Za-z0-9/+=])", 0),
+    ("aws_session_token", r"(?i:\baws_session_token|\bSessionToken)[\"']?\s*[:=]\s*[\"']?[A-Za-z0-9/+=]{100,}", 0),
+    ("github_pat", r"\bgh[oprsu]_[A-Za-z0-9]{36}\b|\bgithub_pat_[A-Za-z0-9_]{82}\b", 0),
+    ("openai_key", r"\bsk-(?!ant-)[A-Za-z0-9_-]{20,}(?!\w)", 0),
+    ("anthropic_key", r"\bsk-ant-[A-Za-z0-9_-]{20,}(?!\w)", 0),
+    ("slack_token", r"\b(?:xox[abeprs]|xapp)-[A-Za-z0-9-]{10,}(?!\w)", 0),
+    ("jwt", r"\beyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+(?!\w)", 0),
+    ("private_key_pem", r"-----BEGIN (?:RSA |DSA |EC |OPENSSH |PGP |ENCRYPTED )?PRIVATE KEY(?: BLOCK)?-----", 0),
+    ("stripe_key", r"\b(?:(?:sk|pk|rk)_(?:live|test)_[A-Za-z0-9]{24,}|whsec_[A-Za-z0-9]{32,})\b", 0),
+    ("google_api_key", r"\bAIza[0-9A-Za-z_-]{35}(?!\w)", 0),
+    ("gitlab_token", r"\bgl(?:pat|dt|rt)-[A-Za-z0-9_-]{20,}(?:\.[A-Za-z0-9_-]+)*(?!\w)", 0),
+    ("huggingface_token", r"\bhf_[A-Za-z0-9]{30,}\b", 0),
+    ("npm_token", r"\bnpm_[A-Za-z0-9]{36}\b", 0),
+    ("docker_pat", r"\bdckr_pat_[A-Za-z0-9_-]{27,}(?!\w)", 0),
+    ("sendgrid_key", r"\bSG\.[A-Za-z0-9_-]{22}\.[A-Za-z0-9_-]{43}(?![\w-])", 0),
+    ("digitalocean_token", r"\bdo[opr]_v1_[a-f0-9]{64}\b", 0),
+    ("shopify_token", r"\bshp(?:at|ca|pa|ss)_[a-fA-F0-9]{32}\b", 0),
+    ("pypi_token", r"\bpypi-AgE[A-Za-z0-9_-]{50,}(?!\w)", 0),
+    # Webhook URLs carry their secret in the path; the host must start the URL's host part.
+    ("slack_webhook", r"(?:^|//|@|[^\w./@%-])(?i:hooks\.slack\.com)/(?:services|workflows|triggers)/"
+                      r"T[A-Z0-9]+/[A-Z0-9]+/(?:[0-9]+/)?[A-Za-z0-9]{20,}(?!\w)", 0),
+    ("discord_webhook", r"(?:^|//|@|[^\w./@%-])(?i:(?:(?:ptb|canary)\.)?discord(?:app)?\.com)/api/(?:v\d+/)?"
+                        r"webhooks/[0-9]{17,20}/[A-Za-z0-9_-]{60,}(?![\w-])", 0),
+))
+
 
 def validate_topic_id(topic, allow_meta=False):
     """Accept a single portable filename stem, never a relative/absolute path."""
@@ -38,6 +72,25 @@ def validate_topic_id(topic, allow_meta=False):
     if not allow_meta and topic.casefold() in {"index", "log"}:
         raise ValueError(f"Topic ID {topic!r} is reserved for generated metadata.")
     return topic
+
+
+def find_secret_names(text):
+    """Names of the SECRET_PATTERNS found in text, never the matched values."""
+    return [name for name, pattern in SECRET_PATTERNS if pattern.search(text)]
+
+
+def evidence_write_refusal(text):
+    """Return why an evidence write must be refused, or None to allow it.
+
+    The one guard for the Context Hub CLI write path (memory add, lesson,
+    annotate). It refuses instead of stripping and never echoes the text. A
+    direct edit of the files bypasses it.
+    """
+    names = find_secret_names(text)
+    if names:
+        return (f"Refused: the note appears to contain a credential ({', '.join(names)}); nothing was written. "
+                f"Replace it with a placeholder such as <{names[0].upper()}>.")
+    return None
 
 
 def confined_path(root, *parts):

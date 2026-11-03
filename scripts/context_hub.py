@@ -17,8 +17,8 @@ import os
 import re
 from datetime import datetime
 from oaw_common import (
-    append_annotation, atomic_write, confined_path, locked_update,
-    validate_topic_id,
+    append_annotation, atomic_write, confined_path, evidence_write_refusal,
+    locked_update, validate_topic_id,
 )
 
 # ─── Configuration ────────────────────────────────────────────────────────────
@@ -44,6 +44,13 @@ def _locked_write(filepath, content):
 def _topic_path(topic):
     validate_topic_id(topic, allow_meta=True)
     return confined_path(BASE_DIR, DOCS_DIR, f"{topic}.md")
+
+
+def _refuse_unsafe_note(note):
+    """Refuse an evidence write before any file is opened; the note is never echoed."""
+    refusal = evidence_write_refusal(note)
+    if refusal:
+        raise ValueError(refusal)
 
 
 def _strip_tag_prefix(note):
@@ -254,6 +261,7 @@ def get(topic):
 
 def annotate(topic, note):
     """Annotate a knowledge topic with a structured finding."""
+    _refuse_unsafe_note(note)
     file_path = _topic_path(topic)
     if not os.path.exists(file_path):
         print(f"Topic '{topic}' not found. Cannot annotate.")
@@ -285,7 +293,8 @@ def annotate(topic, note):
 # ─── Memory ───────────────────────────────────────────────────────────────────
 
 def memory_add(note):
-    """Add a structured entry to the rolling memory."""
+    """Add a structured entry to the rolling memory (lesson writes through here too)."""
+    _refuse_unsafe_note(note)
     timestamp = datetime.now().strftime("%Y-%m-%d")
 
     # Auto-detect tag

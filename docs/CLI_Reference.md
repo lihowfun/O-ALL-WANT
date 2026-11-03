@@ -46,6 +46,8 @@ python3 scripts/context_hub.py memory recall QUERY [--limit N] [--cursor TOKEN] 
 
 Recall bounds the complete rendered output and returns continuation when records or excerpts remain. Keep the same query/options for continuation. Source positions and revisions identify evidence, not verified truth. The legacy `bootstrap`, `setup`, `context --lane ...`, and `lesson` conveniences remain available through `--help`; v2 policy does not require them.
 
+`memory add`, `lesson` and `annotate` refuse a note that contains a credential: a vendor-prefixed token (GitHub, GitLab, Slack, OpenAI, Anthropic, AWS access key ID, Google, Stripe, Hugging Face, npm, Docker Hub, SendGrid, DigitalOcean, Shopify, PyPI, JWT), a PEM private-key header, a Slack or Discord webhook URL, a password in a URL's userinfo, or an AWS secret access key or session token next to its key name. The check is on by default and has no override flag. A refused write exits 1, names the matched pattern ids without printing the value, and writes nothing; use a placeholder such as `<GITHUB_PAT>` or `scheme://user:${DB_PASS}@host`. Generic `password=`/`TOKEN=` assignments are not checked. Only these CLI writes are guarded: a direct edit of `.agents/memory.md` bypasses the check, and a refused value is already in the command line and the host transcript.
+
 Topic identifiers cannot contain path separators/traversal or reserved output names. Missing topics and invalid operations return nonzero. Source and state paths are confined to the project, including symlink boundaries. Writer locks cover the complete read-modify-write transaction. Stable `.NAME.oaw.lock` sidecars are synchronization state; do not delete them while writers are running.
 
 ## Knowledge profile

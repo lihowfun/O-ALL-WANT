@@ -29,6 +29,14 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- OAW-12 (food: claude-mem, prefixed credential patterns): default behavior change. `context_hub.py
+  memory add`, `lesson` and `annotate` now refuse a note that contains a vendor-prefixed token, a PEM
+  private-key header, a Slack/Discord webhook URL, a password in URL userinfo, or a key-anchored AWS
+  secret access key or session token (`oaw_common.SECRET_PATTERNS`, `evidence_write_refusal`). A
+  refused write exits 1, names the pattern ids without printing the value and writes nothing. No
+  override flag; use a placeholder. Generic `password=`/`TOKEN=` assignments are not checked, and
+  only the CLI write path is guarded. Evidence: one positive and one negative fixture per pattern
+  (static).
 - The unreleased catalog prototype is named for what it is (D19): the web command is
   `catalog.py ui` (server `catalog_ui_server.py`), the guide is `docs/SKILL_INTAKE.md`, and the
   four-step food track gives way to the nine-stage intake pipeline.
