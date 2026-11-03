@@ -70,6 +70,11 @@ class ImprovementTests(unittest.TestCase):
         for row in self.candidate["cases"]:
             row["triggered"] = row["case_id"] == case and row["repeat"] <= fired
 
+    @staticmethod
+    def usage(run, coverage="complete", overhead=0, grading=0):
+        for row in run["cases"]:
+            row.update(usage_coverage=coverage, overhead_tokens=overhead, grading_tokens=grading)
+
     def test_eligible_decision_never_applies_patch(self):
         self.assertEqual(self.compare()["verdict"], "eligible")
         result = self.decide()
@@ -249,6 +254,95 @@ class ImprovementTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Revalidated comparison is no longer eligible"):
             self.decide()
         self.assertEqual(imp.load_candidate(self.base, self.id)["status"], "evaluated")
+
+    def test_overhead_tokens_added_to_arm_and_reported_separately(self):
+        self.use_spec(usage_coverage="required", overhead_fields=["judge"])
+        self.usage(self.baseline)
+        self.usage(self.candidate, overhead=30)  # own tokens drop 100 -> 80, but its judge spends 30 per case
+        comparison = self.compare()
+        self.assertEqual(comparison["metrics"]["tokens"], {"baseline": 600, "candidate": 660, "relative_change": 0.1})
+        self.assertEqual(comparison["verdict"], "inconclusive")  # the apparent 20% saving is gone
+        self.assertEqual(comparison["usage"], {
+            "overhead_fields": ["judge"],
+            "baseline": {"tokens": 600, "overhead_tokens": 0, "grading_tokens": 0, "coverage": "complete", "overhead_frac": 0.0},
+            "candidate": {"tokens": 480, "overhead_tokens": 180, "grading_tokens": 0, "coverage": "complete",
+                          "overhead_frac": 180 / 660}})
+        self.assertNotIn("efficiency_blocked", comparison)
+        original = copy.deepcopy(self.candidate)
+        for field, value in (("usage_coverage", None), ("usage_coverage", "partial"), ("overhead_tokens", 1.5),
+                             ("overhead_tokens", -1), ("grading_tokens", "7")):
+            self.candidate = copy.deepcopy(original)
+            self.candidate["cases"][0][field] = value
+            if value is None:
+                del self.candidate["cases"][0][field]
+            with self.subTest(field=field, value=value), self.assertRaises(ValueError):
+                self.compare()
+        legacy = {key: value for key, value in self.spec.items() if key not in ("usage_coverage", "overhead_fields")}
+        for invalid in ({"usage_coverage": "optional"}, {"overhead_fields": ["judge"]},
+                        {"usage_coverage": "required", "overhead_fields": []}):
+            with self.subTest(spec=invalid), self.assertRaises(ValueError):
+                imp.validate_spec({**legacy, **invalid})
+
+    def test_incomplete_coverage_blocks_efficiency_gain(self):
+        self.use_spec(usage_coverage="required")
+        self.usage(self.baseline)
+        self.usage(self.candidate)
+        self.assertEqual(self.compare()["verdict"], "eligible")  # complete in both arms: the 20% drop counts
+        for arm in (self.candidate, self.baseline):
+            self.usage(self.baseline)
+            self.usage(self.candidate)
+            arm["cases"][2]["usage_coverage"] = "incomplete"
+            comparison = self.compare()
+            self.assertEqual(comparison["verdict"], "inconclusive")
+            self.assertEqual(comparison["efficiency_blocked"], "usage coverage incomplete")
+        self.baseline["cases"][0]["assertions"]["correct"] = False  # a pass-count gain needs no usage claim
+        self.assertEqual(self.compare()["verdict"], "eligible")
+
+    def test_incomplete_coverage_still_detects_resource_regression(self):
+        self.use_spec(usage_coverage="required")
+        self.usage(self.baseline)
+        self.usage(self.candidate, coverage="incomplete", overhead=40)  # observed 120 per case is a lower bound
+        comparison = self.compare()
+        self.assertEqual(comparison["verdict"], "rejected")
+        self.assertEqual(comparison["resource_regressions"], ["tokens"])
+        self.assertEqual(comparison["usage"]["candidate"]["coverage"], "incomplete")
+
+    def test_grading_tokens_never_counted_as_candidate_cost(self):
+        self.use_spec(usage_coverage="required")
+        self.usage(self.baseline)
+        self.usage(self.candidate, grading=1000)
+        comparison = self.compare()
+        self.assertEqual(comparison["verdict"], "eligible")
+        self.assertEqual(comparison["metrics"]["tokens"]["candidate"], 480)
+        self.assertEqual(comparison["usage"]["candidate"]["grading_tokens"], 6000)
+        self.assertEqual(comparison["usage"]["candidate"]["overhead_frac"], 0.0)
+
+    def test_spec_without_coverage_field_keeps_old_verdicts(self):
+        scenarios = {"eligible": lambda: None,
+                     "inconclusive": lambda: [row.update(tokens=100) for row in self.candidate["cases"]],
+                     "rejected": lambda: self.candidate["checks"].update(regression=False)}
+        for verdict, change in scenarios.items():
+            with self.subTest(verdict=verdict):
+                self.use_spec()
+                change()
+                plain = self.compare()
+                self.usage(self.baseline, coverage="incomplete", overhead=500, grading=7)
+                self.usage(self.candidate, coverage="incomplete", overhead=900, grading=7)
+                annotated = self.compare()
+                self.assertEqual((plain["verdict"], annotated["verdict"]), (verdict, verdict))
+                self.assertEqual(annotated["metrics"], plain["metrics"])
+                self.assertEqual(set(annotated), set(plain))
+                self.assertFalse({"usage", "efficiency_blocked"} & set(annotated))
+
+    def test_decide_revalidates_legacy_proposal_as_eligible(self):
+        # Runs from a newer runner carry usage fields; the stored legacy spec ignores them, also on revalidation.
+        self.usage(self.baseline, coverage="incomplete")
+        self.usage(self.candidate, coverage="incomplete", overhead=50)
+        self.assertEqual(self.compare()["verdict"], "eligible")
+        self.assertEqual(self.decide()["status"], "accepted")
+        stored = imp.load_candidate(self.base, self.id)
+        self.assertNotIn("usage_coverage", stored["evaluation"])
+        self.assertNotIn("usage", stored["comparisons"][0])
 
     def test_patch_headers_cannot_escape_target_and_hunk_text_is_not_a_header(self):
         patch = "diff --git a/policy.md b/policy.md\n--- a/policy.md\n+++ b/policy.md\n@@ -1 +1 @@\n--- ordinary removed line\n+new\n"

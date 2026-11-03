@@ -22,6 +22,7 @@ MATCHED_FIELDS = ("model", "effort", "host", "host_version", "environment")
 METRICS = ("tokens", "latency_ms", "cost_usd")
 TRIGGER_RATE = 2 / 3  # default trigger minimum_rate: 2 of 3, 4 of 5 repeats
 VACUOUS = "vacuous: mechanism did not trigger"
+COVERAGE = ("complete", "incomplete")
 
 
 def timestamp():
@@ -103,6 +104,13 @@ def validate_spec(spec):
             raise ValueError("trigger minimum_rate must be greater than 0 and at most 1")
         if {"trigger", "triggered"} & set(spec["assertions"]):
             raise ValueError("The trigger is recorded outside assertions; remove it from assertions")
+    # Spec-declared, so schema-1 specs and stored proposals keep their verdicts (no SCHEMA bump).
+    if "usage_coverage" in spec and spec["usage_coverage"] != "required":
+        raise ValueError('usage_coverage must be "required" when present')
+    if "overhead_fields" in spec:
+        if "usage_coverage" not in spec:
+            raise ValueError("overhead_fields requires usage_coverage")
+        names(spec["overhead_fields"], "overhead_fields")
     return spec
 
 
@@ -270,6 +278,7 @@ def validate_run(base, run, proposal, variant):
     evidence = {}
     # Only the candidate reports whether its mechanism fired; it never enters rows or regressions.
     triggered = {name: 0 for name in spec["trigger"]["cases"]} if "trigger" in spec and variant == "candidate" else None
+    usage = {"tokens": 0, "overhead_tokens": 0, "grading_tokens": 0, "coverage": "complete"} if "usage_coverage" in spec else None
     for case in cases:
         if not isinstance(case, dict) or type(case.get("repeat")) is not int:
             raise ValueError(f"{variant} invalid case record")
@@ -294,12 +303,26 @@ def validate_run(base, run, proposal, variant):
             evidence[ref] = digest(path.read_bytes())
         for metric in METRICS:
             totals[metric] += number(case.get(metric), metric, integer=metric == "tokens")
+        if usage is not None:
+            if case.get("usage_coverage") not in COVERAGE:
+                raise ValueError(f"{variant} case {key} requires usage_coverage complete or incomplete (spec requires it)")
+            overhead = number(case.get("overhead_tokens", 0), "overhead_tokens", integer=True)
+            usage["tokens"] += case["tokens"]
+            usage["overhead_tokens"] += overhead
+            usage["grading_tokens"] += number(case.get("grading_tokens", 0), "grading_tokens", integer=True)
+            totals["tokens"] += overhead  # charged to the arm it serves; grading tokens never are
+            if case["usage_coverage"] == "incomplete":
+                usage["coverage"] = "incomplete"
     if seen != expected:
         raise ValueError(f"{variant} run does not cover the fixed evaluation cases/repeats")
     successes = sum(all(assertions.values()) for assertions in rows.values())
     result = {"passed": successes, "total": len(rows), "metrics": totals, "evidence": evidence, "rows": rows}
     if triggered is not None:
         result["triggered"] = triggered
+    if usage is not None:
+        # Adapted from tokeneconomizer tokeneconomizer/plugin/accounting.py (Apache-2.0); modified: per-run artifact totals, grading listed apart.
+        spent = usage["tokens"] + usage["overhead_tokens"]
+        result["usage"] = {**usage, "overhead_frac": usage["overhead_tokens"] / spent if spent else 0.0}
     return result
 
 
@@ -334,11 +357,14 @@ def compare(base, args, *, persist=True, proposal=None):
     deltas = {}
     efficiency_gain = False
     resource_regressions = []
+    # An efficiency claim needs complete usage in both arms. Resource regressions still use the
+    # observed totals: with incomplete coverage they are lower bounds, so an excess is certain.
+    covered = "usage_coverage" not in limits or before["usage"]["coverage"] == after["usage"]["coverage"] == "complete"
     for name in METRICS:
         old, new = before["metrics"][name], after["metrics"][name]
         relative = (new - old) / old if old else (0 if new == 0 else None)
         deltas[name] = {"baseline": old, "candidate": new, "relative_change": relative}
-        efficiency_gain |= old > 0 and new < old and (old - new) / old >= improvement
+        efficiency_gain |= covered and old > 0 and new < old and (old - new) / old >= improvement
         if (old == 0 and new > 0) or (relative is not None and relative > max_regression):
             resource_regressions.append(name)
     trigger, vacuous = limits.get("trigger"), {}
@@ -372,6 +398,11 @@ def compare(base, args, *, persist=True, proposal=None):
         comparison["trigger"] = {"cases": trigger["cases"], "minimum_rate": minimum, "rates": rates}
     if vacuous:
         comparison["vacuous"] = {"reason": VACUOUS, "rates": vacuous}
+    if "usage_coverage" in limits:
+        comparison["usage"] = {"overhead_fields": limits.get("overhead_fields", []),
+                               "baseline": before["usage"], "candidate": after["usage"]}
+        if not covered:
+            comparison["efficiency_blocked"] = "usage coverage incomplete"
 
     def save(current):
         if current["status"] in ("accepted", "rejected"):

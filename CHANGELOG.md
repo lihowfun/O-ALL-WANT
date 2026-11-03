@@ -40,6 +40,14 @@ All notable changes to this project will be documented in this file.
   trigger`, and `decide` revalidation fails closed the same way. Specs without the block keep
   their verdicts. The catalog comparison rules add a no-model trigger preflight before any paid
   run. Evidence: static fixtures only.
+- OAW-04 (from microsoft/TokenEconomizer, Apache-2.0): an evaluation spec may declare
+  `"usage_coverage": "required"` (and `overhead_fields` for the report). Case records then carry
+  `usage_coverage` and may carry `overhead_tokens`, added to that arm's tokens, and
+  `grading_tokens`, reported but never counted as cost. The comparison reports each arm's
+  tokens, overhead, `overhead_frac`, grading tokens and coverage; an efficiency gain counts only
+  when coverage is complete in both arms (`efficiency_blocked` otherwise), while resource
+  regressions still use the observed lower bounds. Spec-declared, so schema-1 specs and stored
+  proposals keep their verdicts; no schema bump. Evidence: static fixtures only.
 
 ### Changed
 
