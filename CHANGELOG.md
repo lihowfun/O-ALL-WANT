@@ -18,6 +18,8 @@ All notable changes to this project will be documented in this file.
 
 - `oaw_status.py` shows a catalog headline, reports unknown verdict words as
   unknown instead of in progress, and strips control/bidi characters.
+- `catalog.py restore --apply` re-evaluates the effect versus the default, so no view keeps
+  showing the skills of the layer that was replaced.
 
 ## [2.0.0] — Proposed, updated 2026-10-30
 

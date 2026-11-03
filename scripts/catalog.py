@@ -1026,6 +1026,8 @@ def cmd_restore(target: Path, ident: str, apply: bool) -> dict:
     except (OSError, oaw.InstallError) as exc:
         raise CatalogError(f"Restore failed; the previous install is kept as {before['name']}: {exc}") from exc
     doctor = doctor_summary(target)
+    # Re-evaluate against the default so every renderer shows the restored layer, not the one before it.
+    effect = safe_effect(target, lab)
 
     def mutate(builds):
         builds["current"] = build["name"]
@@ -1033,10 +1035,11 @@ def cmd_restore(target: Path, ident: str, apply: bool) -> dict:
                                                  "label": f"restored from {before['name']}"})
     update_json(target, ("builds.json",), mutate, load_builds(target))
     update_view(target)
-    lines.append(f"restored {build['name']} · previous install kept as {before['name']} · doctor: {doctor['status']}")
+    lines.append(f"restored {build['name']} · previous install kept as {before['name']} · doctor: {doctor['status']}"
+                 f" · quality: {effect.get('quality', 'not computed')}")
     lines += [f"  FAIL {f}" for f in doctor["fail"]]
     return {"status": "restored", "build": build["name"], "restore_point": before["name"], "doctor": doctor,
-            "writes": writes, "deletes": deletes, "lines": lines}
+            "effect": effect, "writes": writes, "deletes": deletes, "lines": lines}
 
 
 # --------------------------------------------------------------------------- effect

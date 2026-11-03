@@ -400,6 +400,10 @@ class CatalogCliTests(unittest.TestCase):
         for relative, data in records.items():
             self.assertEqual((self.project / relative).read_bytes(), data)
         self.assertEqual(self.cli("builds")["matches"], first)
+        # The effect is re-evaluated for the restored layer, so no renderer keeps the replaced skill list.
+        self.assertEqual(restored["effect"]["skills"]["added"], [])
+        effect = json.loads((self.project / ".oaw/catalog/view.json").read_text(encoding="utf-8"))["my_oaw"]["effect"]
+        self.assertEqual((effect["skills"]["added"], effect.get("stale")), ([], None))
         self.cli("restore", second, "--apply")
         self.assertEqual(installed.read_bytes(), skill_md("sweet-notes"))
         self.assertEqual(self.project_snapshot(), outside)
