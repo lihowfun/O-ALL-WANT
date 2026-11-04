@@ -55,6 +55,7 @@ EVIDENCE_LEVELS = {
     "not-measured": "not measured",
     "historical-prior": "imported historical report; never counted in a verdict",
 }
+EVIDENCE_LEVELS_ZH = {"measured": "實測", "static-measured": "靜態量測", "not-measured": "未量測", "historical-prior": "歷史證據"}
 LIVE_PROVENANCE = ("runner-live", "operator-run")
 DISPOSITIONS = {"absorb": ("green", "吸收"), "excrete": ("red", "排掉"), "hold": ("amber", "暫留")}
 DECISION_KINDS = ("triage", "absorb", "excrete", "remove", "block", "reject")
@@ -138,6 +139,12 @@ ERRORS_ZH = (
     (r"was removed; re-adding it needs a new taste", "這個成分移除過：再加回要先重新試吃（免費），才能再吸收（D6）。"),
     (r"Report directory not found|No digestion records", "找不到報告資料夾，或資料夾裡沒有消化紀錄。"),
     (r"Scout could not reach GitHub", "偵查連不上 GitHub 搜尋。"),
+    (r"A question is at most", "問題太長：最多 500 字。"),
+    (r"A question is empty", "問題是空的：先寫下你想問什麼。"),
+    (r"Too many open questions", "問題已經記滿了，而且都還沒回答：先在對話裡處理，再用 catalog.py questions --answered 編號 標成已回答。"),
+    (r"food, stage and question must be text", "要寫明哪樣食物、哪一站和問題的文字。"),
+    (r"Unknown pipeline stage", "沒有這一站。"),
+    (r"Unknown question", "找不到這個問題編號。"),
 )
 
 
@@ -1822,12 +1829,20 @@ PIPELINE_AUTOMATION = {"automated": "自動", "owner": "需要你", "mixed": "�
 # whose planned steps never ran (so ● would overclaim); `removed`: the food's parts were removed from the build.
 PIPELINE_STATES = {"done": ("●", "完成"), "partial": ("◐", "部分完成"), "current": ("◉", "目前"), "blocked": ("⊗", "卡住"),
                    "removed": ("⊖", "已移除"), "todo": ("○", "還沒到"), "planned": ("┄", "規劃中"), "skipped": ("–", "不需要")}
+# The organ each stage is drawn as on the page's digestive tract (D23); a caption, never a claim about the stage.
+PIPELINE_ORGANS_ZH = {"intake": "口", "quarantine": "食道", "static": "胃", "plan": "十二指腸", "review": "肝", "test": "小腸",
+                      "sort": "大腸", "approve": "門靜脈", "build": "全身"}
+# Who a food waits on (the page draws it as the food's badge): owner = only the owner can move it (blue "!"),
+# optional = only optional owner decisions are left (grey "?"), planned = it waits for a step that is not
+# automated yet, so nothing moves it today, none = at rest. A taste running right now is live page state
+# (status.json), never view data.
+PIPELINE_WAITING_ZH = {"owner": "等你", "optional": "只有可選的決定", "planned": "等規劃中的步驟（還沒自動化）", "none": "沒有待辦"}
 
 
 def _stage(sid, label_zh, label, automation, decisions, summary_zh, steps, actions):
-    return {"id": sid, "label_zh": label_zh, "label": label, "automation": automation, "decisions": list(decisions),
-            "summary_zh": summary_zh, "steps": [{"label_zh": text, "automation": kind} for text, kind in steps],
-            "actions": list(actions)}
+    return {"id": sid, "label_zh": label_zh, "label": label, "organ_zh": PIPELINE_ORGANS_ZH[sid], "automation": automation,
+            "decisions": list(decisions), "summary_zh": summary_zh,
+            "steps": [{"label_zh": text, "automation": kind} for text, kind in steps], "actions": list(actions)}
 
 
 # The two inlets are the front of stage 1 (入口) and fall under its decision (D4).
@@ -1900,6 +1915,26 @@ PIPELINE_EMPTY_ZH = "還沒有食物：在「你點名」貼上 GitHub 網址或
 LIVE_STAGES = {"ingest": "intake", "quarantine": "quarantine", "static": "static"}
 
 
+# The rule or decision a food's blocker rests on (docs/SKILL_INTAKE.md), for the page's blocker explanation.
+BLOCKER_BASIS_ZH = {
+    "D4": "D4：你勾選或點名就是同意試吃；只登記（--no-taste）或匯入時登記的食物，要按「送去試吃」",
+    "D5": "D5：判定以成分為單位，每個成分都要有證據",
+    "D6": "D6：任何吸收的 skill 都能移除；移除後再加回要重新測試",
+    "D7": "D7：不自動安裝或套用；食物只封存在專案外，絕不執行",
+    "D7-static": "D5、D7：靜態規則只舉旗、不判有毒；有高嚴重度旗標的成分在你分流之前一律暫留",
+    "D11": "D7、D11：你決定吸收哪些成分；系統不會自動安裝或套用",
+    "D14": "D14：還原是線性的：只有移除版本，沒有逐項開關",
+    "D17": "D17：模型面向的 skill 文字要過行為 A/B 才能吸收；A/B runner 還是規劃中",
+    "paper": "D5、D21：論文的想法要重新實作成 OAW 程式和測試，不複製原文；替論文拆成分要 Elephant（規劃中）",
+    "rescan": "第 3 站：掃描規則更新後，舊的試吃紀錄要用新規則再試吃（免費）才能吸收",
+    "backlog": "第 8 站：匯入的歷史提案只記成待辦，不改任何檔案，也不產生新版本",
+    "toxic": "只有你能判「有毒」；你確認後整樣排掉",
+    "import": "這樣食物是匯入紀錄時登記的；匯入只讀紀錄，不試吃也不連網",
+}
+# A hold the owner can clear today (flags: catalog.py menu → 12); other missing tests wait for planned steps.
+OWNER_MISSING = frozenset({"triage"})
+
+
 def can_absorb(part: dict) -> bool:
     """One rule for the page, the menu and the CLI: an absorb proposal not in the build and not decided yet.
 
@@ -1910,16 +1945,44 @@ def can_absorb(part: dict) -> bool:
     return not part.get("decision") or (part.get("decision") == "removed" and bool(part.get("retested_after_remove")))
 
 
+def _flag_lines(card: dict, limit: int = 3) -> list:
+    """Open high-severity flags as '<rule> <path>:<line>：<meaning>' (the card's own flag list)."""
+    open_high = [f for f in card.get("flag_list") or [] if isinstance(f, dict) and f.get("severity") == "high" and not f.get("triage")]
+    lines = [f"{sanitize_text(f.get('rule'), 20)} {sanitize_text(f.get('path'), 80)}" + (f":{f['line']}" if isinstance(f.get("line"), int) else "")
+             + "：" + sanitize_text(f.get("meaning_zh") or f.get("meaning"), 80) for f in open_high[:limit]]
+    if len(open_high) > limit:
+        lines.append(f"另有 {len(open_high) - limit} 個高嚴重度旗標（看食物卡的旗標）")
+    return lines
+
+
+def _missing_lines(holds: list, limit: int = 4) -> list:
+    """What the held parts still need, as the components state it (missing_zh), counted per kind."""
+    counts = {}
+    for part in holds:
+        text = sanitize_text(part.get("missing_zh") or part.get("missing_test"), 120)
+        if text:
+            counts[text] = counts.get(text, 0) + 1
+    lines = [f"缺：{text}（{n} 個成分）" for text, n in sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))[:limit]]
+    if len(counts) > limit:
+        lines.append(f"另有 {len(counts) - limit} 種缺的測試（看食物卡）")
+    return lines
+
+
 def food_pipeline(card: dict) -> dict:
     """Where one food card sits on PIPELINE_STAGES, every stage's state, and its current stage's actions.
 
     The card's components must already carry `in_current_build`. Planned stages are never the current stage
     and never carry an action: until they are automated a food is shown passing them (┄). A passed stage with
     planned steps is `partial` (◐), never `done`.
+
+    `waiting_on` says who the food waits on (PIPELINE_WAITING_ZH) and `blocker` explains it from the card's
+    own data: where it stops (`where_zh`), the rule or decision behind it (`basis_zh`), what happens if the
+    owner does nothing (`if_ignored_zh`) and what the records cannot say (`unknown_zh`).
     """
     fid = card["id"]
     verdict = card.get("verdict") or {}
     headline = verdict.get("headline")
+    reasons = [sanitize_text(r, 160) for r in verdict.get("reasons_zh") or verdict.get("reasons") or []]
     parts = [c for c in card.get("components") or [] if isinstance(c, dict)]
     history = [c for r in card.get("historical") or [] for c in r.get("components") or [] if isinstance(c, dict)]
     in_build = [c for c in parts if c.get("in_current_build")]
@@ -1946,10 +2009,12 @@ def food_pipeline(card: dict) -> dict:
 
     parity_zh = "和單吃食物比：" + ("實測" if headline == "nutritious" else "未測")
     bad = headline in ("toxic", "risky", "regressed", "diarrhea")
+    verdict_zh = VERDICTS[headline][3] if headline in VERDICTS else sanitize_text(headline, 20)
     wanted = []  # (action id, label or None, params or None)
+    unknown = []
     if in_build:
         stage = reach("build", "blocked" if bad else "current")
-        note = f"在目前版本中（{len(in_build)} 個成分）" + (f"，但判定是「{VERDICTS[headline][3]}」：建議移除" if bad else "")
+        note = f"在目前版本中（{len(in_build)} 個成分）" + (f"，但判定是「{verdict_zh}」：建議移除" if bad else "")
         if readded:
             note += f"；{len(readded)} 個是移除後又被還原回來的：要重新測試（D6）"
         wanted.append(("remove-food", None, {"name": fid, "food": True}))
@@ -1959,42 +2024,81 @@ def food_pipeline(card: dict) -> dict:
             wanted.append(("taste", "重新試吃（免費）", None))
         if (open_parts or open_history) and not bad:
             wanted.append(("absorb", "吸收其他成分…", None))
+        if bad:
+            waiting, where = "owner", f"版本：在目前版本中，但判定是「{verdict_zh}」"
+            basis = reasons + _flag_lines(card) + [BLOCKER_BASIS_ZH["D6"]]
+            ignored = "這些成分會留在目前版本裡：系統不會自己移除（D7）"
+        elif readded:
+            waiting, where = "owner", f"版本：{len(readded)} 個成分是移除後又被還原回來的"
+            basis, ignored = [BLOCKER_BASIS_ZH["D6"]], "它們留在目前版本，但在重新試吃之前一律當成未測"
+        else:
+            waiting = "optional" if open_parts or open_history else "none"
+            where = f"沒有卡點：在目前版本中（{len(in_build)} 個成分）" + ("；還有成分可以吸收（可選）" if waiting == "optional" else "")
+            basis = [BLOCKER_BASIS_ZH["D6"]] + ([BLOCKER_BASIS_ZH["D11"]] if waiting == "optional" else [])
+            ignored = "什麼都不會變：它留在目前版本" + ("，其他成分留在核准" if waiting == "optional" else "")
     elif not card.get("tasted"):
         error = card.get("last_error") if isinstance(card.get("last_error"), dict) else None
         if error:
             stage = reach("quarantine", "blocked")
-            note = "試吃失敗：" + sanitize_text(error.get("error_zh") or error.get("error"), 160)
+            failure = sanitize_text(error.get("error_zh") or error.get("error"), 160)
+            note = "試吃失敗：" + failure
             wanted += [("taste", "再送去試吃", None), ("forget", None, None)]
+            waiting, where = "owner", "封存：試吃失敗（" + failure + "）"
+            basis, ignored = [BLOCKER_BASIS_ZH["D7"]], "這樣食物停在封存：不會被檢查，也不會被吸收"
         else:
             stage = reach("intake", "current")
             reports = len(card.get("historical") or [])
             note = "等你送去試吃" + (f"（已匯入 {reports} 份歷史證據，不計入判定）" if reports else "")
             wanted += [("taste", None, None), ("forget", None, None)]
+            waiting, where = "owner", "入口：還沒送去試吃"
+            basis = [BLOCKER_BASIS_ZH["D4"]] + ([BLOCKER_BASIS_ZH["import"]] if card.get("origin") == "import" else [])
+            ignored = "它一直停在入口：不封存、不檢查，也不會被吸收"
+            if card.get("origin") != "import":
+                unknown.append("紀錄沒有寫當初為什麼沒有試吃（例如用 --no-taste 只登記）")
     elif headline == "toxic":
         stage = reach("sort", "blocked", skip_planned=True)
         note = "你確認有毒：整樣排掉，不會進專案"
         wanted.append(("forget", None, None))
+        waiting, where = "none", "沒有卡點：你確認有毒，整樣排掉"
+        basis, ignored = reasons + [BLOCKER_BASIS_ZH["toxic"]], "不會進專案；「忘掉這樣食物」可以把它從食物卡拿掉（可選）"
     elif headline == "risky":
         stage = reach("static", "blocked")
         open_high = (card.get("flags") or {}).get("open_high") or 0
         note = (f"{open_high} 個高嚴重度旗標待你分流" if open_high
                 else "你擋下了這樣食物：" + sanitize_text("；".join(str(r) for r in verdict.get("reasons") or []), 120))
         wanted += [("triage", None, None), ("forget", None, None)]
+        if open_high:
+            waiting, where = "owner", f"靜態：{open_high} 個高嚴重度旗標待你分流"
+            basis = [BLOCKER_BASIS_ZH["D7-static"]] + _flag_lines(card)
+            ignored = "這樣食物停在靜態：帶旗標的成分一直暫留，整樣食物不會往下走，也不會被吸收"
+        else:
+            waiting, where = "none", "沒有卡點：你擋下了這樣食物"
+            basis, ignored = reasons, "它停在靜態，不會被吸收"
     elif verdict.get("stale"):
         stage = reach("static", "current")
         note = "掃描規則更新了：用新規則再試吃（免費）才能吸收"
         wanted += [("taste", "用新規則再試吃（免費）", None), ("forget", None, None)]
+        waiting, where = "owner", "靜態：掃描規則更新了，要用新規則再試吃"
+        basis, ignored = [BLOCKER_BASIS_ZH["rescan"]], "判定停在舊規則的結果：成分一律暫留，不能吸收"
     elif headline in ("inedible", "regressed", "diarrhea"):
         stage = reach("sort", "blocked", skip_planned=headline == "inedible")
         note = {"inedible": "OAW 照原樣沒辦法消化（不是說它有害）", "regressed": "實測變差：不吸收",
                 "diarrhea": "拉肚子：會傷到現有配方"}[headline]
         wanted.append(("forget", None, None))
+        waiting, where = "none", "沒有卡點：" + note
+        basis, ignored = reasons, "不會被吸收；「忘掉這樣食物」可以把它從食物卡拿掉（可選）"
     elif open_parts or open_history:
         stage = reach("approve", "current")
+        paper = card.get("kind") == "paper"
         note = (f"等你核准：{len(open_history)} 個歷史提案可以記成待辦（論文的想法要重新實作成 OAW 程式和測試，不複製原文；D5、D21）"
-                if card.get("kind") == "paper" else
+                if paper else
                 f"等你核准：{len(open_parts)} 個成分可以吸收" + (f"，{len(open_history)} 個歷史提案可以記成待辦" if open_history else ""))
         wanted += [("absorb", None, None), ("forget", None, None)]
+        waiting = "owner"
+        where = "核准：" + (f"{len(open_history)} 個歷史提案等你決定要不要記成待辦" if paper else
+                           f"{len(open_parts)} 個成分等你決定要不要吸收" + (f"，{len(open_history)} 個歷史提案等你決定" if open_history else ""))
+        basis = ([BLOCKER_BASIS_ZH["paper"]] if paper else [BLOCKER_BASIS_ZH["D11"]]) + ([BLOCKER_BASIS_ZH["backlog"]] if open_history else [])
+        ignored = "成分一直停在核准，不會被安裝；其他食物不受影響"
     elif restored_away:
         stage = reach("build", "current")
         builds = [d.get("build") for d in card.get("decisions") or [] if d.get("kind") == "absorb" and d.get("build")]
@@ -2002,27 +2106,49 @@ def food_pipeline(card: dict) -> dict:
         if builds:
             wanted.append(("restore", f"還原到這版（{sanitize_text(builds[-1], 40)}）", {"build": builds[-1]}))
         wanted.append(("forget", None, None))
+        waiting, where = "optional", "沒有卡點：吸收的成分被還原掉了，不在目前版本"
+        basis, ignored = [BLOCKER_BASIS_ZH["D14"]], "目前版本不變；想要回來就按「還原到這版」"
     elif removed:
         stage = reach("build", "removed")
         note = "已移除：要再加回，先重新送去試吃（免費），再核准（D6）"
         wanted += [("taste", "再送去試吃（免費）", None), ("forget", None, None)]
+        waiting, where = "optional", "沒有卡點：你移除了它"
+        basis, ignored = [BLOCKER_BASIS_ZH["D6"]], "它不會自己加回；要加回，先重新送去試吃（免費），再核准"
     elif backlog:
         stage = reach("approve", "done")
         states["build"] = "skipped"
         note = f"已記成待辦 {len(backlog)} 項（未改程式，沒有新版本）"
         wanted.append(("forget", None, None))
+        waiting, where = "none", f"沒有卡點：已記成待辦 {len(backlog)} 項（未改程式）"
+        basis = [BLOCKER_BASIS_ZH["backlog"]] + ([BLOCKER_BASIS_ZH["paper"]] if card.get("kind") == "paper" else [])
+        ignored = "待辦留在決定紀錄裡；要實作成 OAW 程式和測試，才會進版本"
     elif card.get("kind") == "paper" and not parts and not history:
         # Splitting a paper into components needs a model: the food waits where the split belongs, nothing is invented.
         stage = reach("static", "current")
         note = "論文已封存（固定 arXiv 版本＋sha256）；" + PAPER_COMPONENTS_NOTE_ZH + "（計畫：匯入紀錄）"
         wanted.append(("forget", None, None))
+        waiting, where = "planned", "靜態：論文的成分還沒拆"
+        basis = [BLOCKER_BASIS_ZH["paper"]]
+        ignored = "論文停在靜態，不會往下走；匯入已有的消化紀錄（計畫：匯入紀錄）就能往下"
+        unknown.append("Elephant 替論文拆成分什麼時候做好：沒有排程，紀錄裡也沒寫")
     else:
         stage = reach("sort", "current")
         if holds:
             note = f"暫留 {len(holds)} 個成分" + (f"（{len(ab_holds)} 個 skill 文字缺行為 A/B，D17）" if ab_holds else "") + \
                    "：缺的測試還在規劃中（看食物卡）"
+            owner_holds = [c for c in holds if c.get("missing_code") in OWNER_MISSING]
+            waiting = "owner" if owner_holds else "planned"
+            where = f"分流：暫留 {len(holds)} 個成分" + (f"（{len(owner_holds)} 個等你分流旗標）" if owner_holds else "")
+            basis = ([BLOCKER_BASIS_ZH["D17"]] if ab_holds else []) + _missing_lines(holds) + [parity_zh + "（D16）"]
+            ignored = ("這些成分一直暫留，不會被吸收" +
+                       ("；旗標在終端分流：catalog.py menu → 12 分流旗標" if owner_holds else
+                        "：缺的測試（行為 A/B、沙箱試跑）還是規劃中，v0 沒辦法讓它們往下走"))
+            if not owner_holds:
+                unknown.append("缺的測試什麼時候會自動跑：v0 沒有排程，也沒有時間表")
         else:
             note = "沒有可以吸收的成分"
+            waiting, where = "none", "沒有卡點：沒有可以吸收的成分"
+            basis, ignored = [BLOCKER_BASIS_ZH["D5"]], "它停在分流；「忘掉這樣食物」可以把它從食物卡拿掉（可選）"
         note += "；" + parity_zh
         wanted.append(("forget", None, None))
     actions = []
@@ -2039,7 +2165,10 @@ def food_pipeline(card: dict) -> dict:
             "details": [{"stage": "plan", "id": "plan", "label_zh": "看計畫"}] if card.get("tasted") and card.get("plan") and plan_reached else [],
             "parity": {"state": "measured" if parity else "not-tested",
                        "label": "parity vs food alone: " + ("measured" if parity else "not tested"),
-                       "label_zh": "和單吃食物比（齊平底線）：" + ("實測" if parity else "未測")}}
+                       "label_zh": "和單吃食物比（齊平底線）：" + ("實測" if parity else "未測")},
+            "waiting_on": waiting, "waiting_zh": PIPELINE_WAITING_ZH[waiting],
+            "blocker": {"where_zh": where, "basis_zh": [b for b in basis if b] or ["紀錄裡沒有寫依據"],
+                        "if_ignored_zh": ignored, "unknown_zh": unknown}}
 
 
 def pipeline_table() -> dict:
@@ -2113,6 +2242,54 @@ def food_card(entry: dict, evidence: list, decisions: list, plan: dict | None = 
             "components": derived["components"], "counts": counts, "historical": historical,
             "plan": {"status": plan["status"], "plan_id": plan["plan_id"], "estimate": plan["estimate"]} if plan else None,
             "decisions": food_decisions}
+
+
+def food_source_zh(card: dict) -> str:
+    """Where a food comes from and what it is pinned to: a repository's commit, a paper's arXiv version plus sha256."""
+    pinned = card.get("pinned") or {}
+    if card.get("kind") == "paper":
+        paper = card.get("paper") or {}
+        arxiv = sanitize_text(paper.get("arxiv_id"), 40)
+        version = sanitize_text(pinned.get("version") or paper.get("version"), 8)
+        sha = sanitize_text(pinned.get("pdf_sha12"), 12)
+        where = f"arXiv:{arxiv}" if arxiv else "本機 PDF"
+        if sha:
+            return where + (f" {version}" if version else "") + f" · sha256 {sha}"
+        # Before the taste only the record's own version is known; nothing is pinned yet.
+        return where + (f"（紀錄寫的版本 {version}）" if version else "") + " · 還沒封存（未固定版本）"
+    url = sanitize_text(card.get("repo"), 200) or "本機 repo（路徑不公開）"
+    commit = sanitize_text(pinned.get("commit7"), 12)
+    return url + (f" @ {commit}" if commit else " · 還沒封存（未固定版本）")
+
+
+def question_brief(card: dict, question: dict) -> str:
+    """The owner's question with the food's facts from view.json, as text to paste into a Claude conversation."""
+    pipeline = card.get("pipeline") or {}
+    blocker = pipeline.get("blocker") or {}
+    counts = card.get("counts") or {}
+    stage = next((s for s in PIPELINE_STAGES if s["id"] == question.get("stage")), None)
+    lines = [f"關於 OAW 消化道的問題（{sanitize_text(question.get('time'), 30)}，問題編號 {sanitize_text(question.get('id'), 20)}）",
+             f"食物：{sanitize_text(card.get('display'), 80)}（{sanitize_text(card.get('id'), 64)}，{'論文' if card.get('kind') == 'paper' else 'repo'}）",
+             "來源：" + food_source_zh(card),
+             f"問的時候在：{stage['label_zh'] if stage else sanitize_text(question.get('stage'), 20)}"
+             f"（現在：{sanitize_text(pipeline.get('stage_label_zh'), 8)} · {sanitize_text(pipeline.get('state_zh'), 8)}"
+             f" · {sanitize_text(pipeline.get('waiting_zh'), 30)}）",
+             "說明：" + sanitize_text(pipeline.get("note_zh"), 300),
+             "卡在哪：" + (sanitize_text(blocker.get("where_zh"), 200) or "紀錄裡沒有寫"),
+             "依據：" + ("；".join(sanitize_text(b, 200) for b in blocker.get("basis_zh") or []) or "紀錄裡沒有寫"),
+             "你不處理會怎樣：" + (sanitize_text(blocker.get("if_ignored_zh"), 200) or "紀錄裡沒有寫")]
+    if blocker.get("unknown_zh"):
+        lines.append("紀錄沒寫的：" + "；".join(sanitize_text(u, 200) for u in blocker["unknown_zh"]))
+    verdict = card.get("verdict") or {}
+    level = verdict.get("level")
+    lines.append(f"成分：吸收 {counts.get('absorb', 0)}、暫留 {counts.get('hold', 0)}、排掉 {counts.get('excrete', 0)}"
+                 f" · 判定 {sanitize_text(verdict.get('label_zh'), 20)}（{EVIDENCE_LEVELS_ZH.get(level) or sanitize_text(level, 30)}）")
+    proposals = [c for r in card.get("historical") or [] for c in r.get("components") or [] if isinstance(c, dict)]
+    if proposals:
+        tally = {k: sum(1 for c in proposals if c.get("disposition") == k) for k in DISPOSITIONS}
+        lines.append(f"匯入紀錄的提案（歷史證據，不計入判定）：吸收 {tally['absorb']}、暫留 {tally['hold']}、排掉 {tally['excrete']}")
+    lines.append("問題：" + sanitize_text(question.get("question"), 1000))
+    return "\n".join(lines)
 
 
 def place_card(card: dict, receipt) -> dict:

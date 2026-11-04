@@ -1,9 +1,9 @@
-// OAW 消化系統 (catalog.py ui). No frameworks, no external resources.
-// The main screen is the intake pipeline of docs/SKILL_INTAKE.md: the stage table, each food's
-// stage and its current-stage actions all come from view.json (catalog_core.PIPELINE_STAGES), so
-// the page, catalog.py menu and oaw_status.py show the same thing. Every food-derived string is
-// set with textContent or a text node; this file never assigns markup. Display rules are kept in
-// step with scripts/oaw_status.py.
+// OAW 消化道 (catalog.py ui). No frameworks, no external resources.
+// The main screen is the intake process of docs/SKILL_INTAKE.md drawn as one digestive tract: the stage
+// table, each food's stage, who it waits on, its blocker explanation and its current-stage actions all come
+// from view.json (catalog_core.PIPELINE_STAGES and food_pipeline), so the page, catalog.py menu and
+// oaw_status.py show the same thing. Every food-derived string is set with textContent or a text node;
+// this file never assigns markup. Display rules are kept in step with scripts/oaw_status.py.
 'use strict';
 
 (function () {
@@ -20,6 +20,10 @@
   const DISPOSITIONS = { absorb: ['🟢', '吸收'], excrete: ['🔴', '排掉'], hold: ['🟡', '暫留'] };
   // Per-food stage states the engine writes; anything else is drawn as unknown, never guessed.
   const STAGE_STATES = ['done', 'partial', 'current', 'blocked', 'removed', 'todo', 'planned', 'skipped'];
+  // Who a food waits on (catalog_core.PIPELINE_WAITING_ZH): the bolus badge. A running taste is the spinning ring.
+  const WAITING = ['owner', 'optional', 'planned', 'none'];
+  const BADGES = { owner: '!', optional: '?' };
+  const FOOD_HUES = 8;
   const METRICS = {
     'skills': 'skill 數', 'files': '檔案數', 'bytes': '大小（bytes）',
     'startup-loaded text bytes (codex)': '啟動載入文字 bytes（Codex）',
@@ -73,6 +77,8 @@
     'plan': '實測計畫', 'absorb': '吸收', 'remove': '移除', 'builds': '版本', 'restore': '還原', 'effect': '評估',
     'policy-show': '常設預算', 'policy-set': '設定常設預算', 'triage': '分流', 'view': '更新視圖'
   };
+  // The three preset questions about a blocker; a question is recorded for Claude to answer in the conversation.
+  const PRESET_QUESTIONS = ['這個卡點是什麼意思？', '不處理會怎樣？', '你建議怎麼做？為什麼？'];
   const RULES = [
     '沒有證據就沒有判定。星數和名氣只決定排序。',
     '食物不進專案，也不在你的電腦上執行，直到你按下吸收並安裝。',
@@ -82,15 +88,19 @@
     'Elephant 和 Goldfish 的報告是匯入的歷史證據：只顯示，不計入判定。',
     '模型面向的 skill 文字要過行為 A/B 才能吸收（D17）；原型 v0 還沒有 A/B，所以食物的 skill 一律暫留。',
     '規劃中的站（Goldfish 零脈絡盲審、付費實測）畫出來但不能按，也不會被當成已經做過。',
+    '轉圈只代表系統這一刻真的在處理（例如試吃中）；其他時候食物停著，卡點說明寫它在等什麼。',
     'Claude 和 Codex（這個網頁、catalog.py menu、oaw_status.py）讀的是同一份 view.json 和同一張站別表。'
   ];
-  const UNSAFE = /[\u0000-\u001f\u007f-\u009f\u061c\u200b-\u200f\u202a-\u202e\u2060-\u2064\u2066-\u2069\ufeff]/g;
+  const UNSAFE = /[\u0000-\u001f\u007f-\u009f؜​-‏‪-‮⁠-⁤⁦-⁩﻿]/g;
+  // An SVG element namespace is an identifier, not a resource: nothing is fetched from it.
+  const SVG_NS = 'http://www.w3.org/2000/svg';
 
   // ------------------------------------------------------------------ state
   const S = {
     token: '', meta: null, view: null, viewNote: null, sig: null, busy: false, lastAutoView: 0,
     selectedFood: null, live: null, selected: new Map(), open: new Map(), plans: new Map(), importPath: new Map(),
-    scoutSel: new Set(), feedResult: null, policyOpen: false, policyDraft: null, policyPending: null, log: [], uid: 0
+    scoutSel: new Set(), feedResult: null, policyOpen: false, policyDraft: null, policyPending: null, log: [], uid: 0,
+    questions: [], asked: new Map(), bolusAt: new Map(), shape: null
   };
   const $ = (id) => document.getElementById(id);
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -137,6 +147,18 @@
         node.append(kid instanceof Node ? kid : document.createTextNode(String(kid)));
       }
     }
+    return node;
+  }
+
+  // The same for the tract's SVG: attributes are geometry and class names only; text goes in as text nodes.
+  function svg(tag, attrs, parent, text) {
+    const node = document.createElementNS(SVG_NS, tag);
+    for (const [key, value] of Object.entries(attrs || {})) {
+      if (value === undefined || value === null || value === false || key === 'style') continue;
+      node.setAttribute(key, String(value));
+    }
+    if (text !== undefined) node.textContent = String(text);
+    if (parent) parent.append(node);
     return node;
   }
 
@@ -229,6 +251,7 @@
     if (!response.ok && response.status !== 202) {
       const error = new Error((data && data.error) || `HTTP ${response.status}`);
       error.status = response.status;
+      error.zh = data && data.error_zh;
       throw error;
     }
     return data;
@@ -255,7 +278,7 @@
     document.body.classList.remove('is-busy');
   }
 
-  // While a taste runs, status.json says which stage it is in; the food's token stands there meanwhile.
+  // While a taste runs, status.json says which stage it is in; the food's bolus stands there meanwhile.
   function liveStage(job) {
     const digest = job && job.state === 'running' ? job.digest : null;
     const map = (S.view && S.view.pipeline && S.view.pipeline.live_stages) || {};
@@ -264,14 +287,14 @@
   }
 
   // The last live stage is kept until the job is over and the final view is loaded (run/trackBackground clear it),
-  // so a status.json stage outside live_stages (for example done 3/3) never sends the token back to an older view.
+  // so a status.json stage outside live_stages (for example done 3/3) never sends the bolus back to an older view.
   async function follow(job, label) {
     while (job && job.state === 'running') {
       showBusy(label, job);
       const live = liveStage(job);
       if (live && JSON.stringify(live) !== JSON.stringify(S.live)) {
         S.live = live;
-        // A food fed a moment ago is already in view.json at 入口: fetch it, then move its token.
+        // A food fed a moment ago is already in view.json at 入口: fetch it, then move its bolus.
         await refresh(true);
       }
       await sleep(450);
@@ -336,6 +359,7 @@
   async function refresh(force) {
     let data;
     try { data = await api('/api/view'); } catch (e) { return; }
+    S.questions = Array.isArray(data.questions) ? data.questions.filter(Boolean) : [];
     const sig = data.view ? JSON.stringify([data.view.generated_at, data.view.generated_from]) : 'none:' + data.note;
     if (force || (sig !== S.sig && !editing())) {
       S.sig = sig;
@@ -388,6 +412,23 @@
     }));
   }
 
+  // Copies text; when the browser refuses, the text is selected for Ctrl+C instead.
+  async function copyText(text, node, okMessage) {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast(okMessage, 'info');
+    } catch (e) {
+      const more = node.closest('details');
+      if (more) more.open = true;
+      const range = document.createRange();
+      range.selectNodeContents(node);
+      const chosen = window.getSelection();
+      chosen.removeAllRanges();
+      chosen.addRange(range);
+      toast('瀏覽器不讓網頁複製：內容已選取，按 Ctrl+C。', 'warn');
+    }
+  }
+
   function ask(options) {
     const dialog = $('dialog');
     const lines = options.lines || [];
@@ -429,7 +470,7 @@
     });
   }
 
-  // 核准 on the pipeline: pick the parts to absorb; the preview and the confirmation follow.
+  // 核准 on the tract: pick the parts to absorb; the preview and the confirmation follow.
   function askChoose(options) {
     const dialog = $('dialog');
     const ok = $('dialog-ok');
@@ -452,39 +493,384 @@
     return openDialog(() => Array.from(chosen));
   }
 
-  // ------------------------------------------------------------------ render: top and my OAW
+  // ------------------------------------------------------------------ render
   function render() {
     renderTop();
     renderPipeline();
+    renderPicker();
     renderScout();
     renderDetail();
     renderMy();
     renderFeedResult();
   }
 
-  // ------------------------------------------------------------------ render: the intake pipeline
   function pipeTable() {
     const table = S.view && S.view.pipeline;
     return table && Array.isArray(table.stages) && table.stages.length ? table : null;
   }
 
+  const viewFoods = () => (S.view && Array.isArray(S.view.foods) ? S.view.foods.filter(Boolean) : []);
   const stageIsPlanned = (stage) => stage.automation === 'planned';
   const stateName = (table, state) => txt((table.states_zh || {})[state], 10) || `未知狀態（${txt(state, 20)}）`;
+  const automationName = (table, kind) => txt((table.automation_zh || {})[kind], 10) || txt(kind, 20);
 
   function automationChip(table, kind) {
     const known = ['automated', 'owner', 'mixed', 'planned'].includes(kind);
-    return chip(txt((table.automation_zh || {})[kind], 10) || txt(kind, 20), 'auto auto-' + (known ? kind : 'unknown'));
+    return chip(automationName(table, kind), 'auto auto-' + (known ? kind : 'unknown'));
   }
 
-  function renderLegend(table) {
-    const order = (table.legend || []).filter((k) => STAGE_STATES.includes(k));
-    $('legend').replaceChildren(...order.map((state) => el('span', { class: 'leg' },
-      el('span', { class: `dot st-${state}`, 'aria-hidden': 'true' }), el('span', { text: stateName(table, state) }))));
+  // Where each food's bolus stands now: the live stage while a taste runs, else the engine's stage.
+  function hereOf(table, food) {
+    const live = S.live && S.live.food === food.id && table.order.includes(S.live.stage) ? S.live.stage : null;
+    return live || (food.pipeline || {}).stage;
   }
 
+  // The bolus of one food, from view data only: its stop, its colour, its badge and whether it is moving.
+  //   running: a taste is running on it right now (status.json) -> the spinning ring
+  //   owner: only the owner can move it -> blue "!"; optional: only optional decisions -> grey "?"
+  //   planned: it waits for a step that is not automated yet -> a still dotted ring; none: at rest
+  function bolusOf(table, food, index) {
+    const pipeline = food.pipeline || {};
+    const running = !!(S.live && S.live.food === food.id);
+    const waiting = WAITING.includes(pipeline.waiting_on) ? pipeline.waiting_on : 'unknown';
+    return {
+      stage: hereOf(table, food), running: running, waiting: waiting,
+      badge: running ? '' : BADGES[waiting] || '', ring: running ? 'spin' : waiting === 'planned' ? 'rest' : '',
+      hue: 'f-' + ((index % FOOD_HUES) + 1), mono: monogram(food)
+    };
+  }
+
+  // Two letters for a repository (owner/repo-name -> RN), 論 for a paper.
+  function monogram(food) {
+    if (food.kind === 'paper') return '論';
+    const name = txt(food.display || food.id, 80).split('/').pop() || '?';
+    const words = name.replace(/([a-z])([A-Z])/g, '$1 $2').split(/[\s._-]+/).filter(Boolean);
+    const letters = words.length > 1 ? words[0][0] + words[1][0] : name.slice(0, 2);
+    return letters.toUpperCase();
+  }
+
+  function waitingText(table, food) {
+    const pipeline = food.pipeline || {};
+    if (S.live && S.live.food === food.id) return '自動：系統正在處理（只顯示進度，不顯示分數）';
+    return txt(pipeline.waiting_zh, 30) || '未知（請重新整理視圖）';
+  }
+
+  // ---- the tract: two shapes, stops on the path, boluses at their stops
+  // Wide: five stops along the top, a bend, four back along the bottom. Tall (phones): one wavy column.
+  function tractShape(narrow, count) {
+    if (narrow) {
+      const stops = [];
+      for (let i = 0; i < count; i += 1) stops.push([70, 80 + i * 98]);
+      return { kind: 'tall', w: 360, h: stops[count - 1][1] + 70, tube: 26, stops: stops, wiggle: 26 };
+    }
+    const top = Math.ceil(count / 2);
+    const stops = [];
+    for (let i = 0; i < top; i += 1) stops.push([130 + i * (710 / Math.max(1, top - 1)), 96]);
+    const bottom = count - top;
+    for (let i = 0; i < bottom; i += 1) stops.push([760 - i * (530 / Math.max(1, bottom - 1)), 286]);
+    return { kind: 'wide', w: 1000, h: 380, tube: 30, stops: stops, wiggle: 12 };
+  }
+
+  // A path through every stop: gentle waves between neighbours on one row, a bend where the rows meet.
+  function tractPath(shape) {
+    const pts = shape.stops;
+    let d = `M ${pts[0][0]} ${pts[0][1]}`;
+    for (let i = 1; i < pts.length; i += 1) {
+      const [x1, y1] = pts[i - 1];
+      const [x2, y2] = pts[i];
+      const w = (i % 2 ? 1 : -1) * shape.wiggle;
+      if (shape.kind === 'tall') {
+        d += ` C ${x1 + w} ${y1 + (y2 - y1) / 3}, ${x2 + w} ${y1 + 2 * (y2 - y1) / 3}, ${x2} ${y2}`;
+      } else if (y1 === y2) {
+        d += ` C ${x1 + (x2 - x1) / 3} ${y1 + w}, ${x1 + 2 * (x2 - x1) / 3} ${y2 - w}, ${x2} ${y2}`;
+      } else {
+        d += ` C ${x1 + 120} ${y1}, ${x2 + 200} ${y2}, ${x2} ${y2}`;
+      }
+    }
+    return d;
+  }
+
+  function renderPipeline() {
+    const table = pipeTable();
+    const box = $('tract');
+    const empty = $('pipe-empty');
+    const foods = viewFoods();
+    if (!table) {
+      box.replaceChildren();
+      $('legend').replaceChildren();
+      empty.hidden = false;
+      empty.textContent = S.view ? 'view.json 沒有站別表：在終端執行 python3 scripts/catalog.py view。' : (S.viewNote === 'invalid' ? 'view.json 無效：在終端執行 catalog.py view。' : '讀取中…');
+      return;
+    }
+    pickDefault(foods);
+    drawTract(table, foods);
+    renderLegend();
+    renderTools(table);
+    // Real data only: no food means the empty tract, the two inlets and one sentence.
+    empty.hidden = foods.length > 0;
+    empty.textContent = foods.length ? '' : txt(table.empty_zh, 200);
+    renderGuide(table);
+  }
+
+  // The selected food stays selected; otherwise the first one that waits on the owner, else the first one.
+  function pickDefault(foods) {
+    if (foods.some((food) => food.id === S.selectedFood)) return;
+    const first = foods.find((food) => (food.pipeline || {}).waiting_on === 'owner') || foods[0];
+    S.selectedFood = first ? first.id : null;
+  }
+
+  function drawTract(table, foods) {
+    const box = $('tract');
+    const narrow = (box.parentNode.clientWidth || 1000) < 620;
+    const shape = tractShape(narrow, table.stages.length);
+    S.shape = shape.kind;
+    box.setAttribute('viewBox', `0 0 ${shape.w} ${shape.h}`);
+    box.replaceChildren();
+    const d = tractPath(shape);
+    const selected = foods.find((food) => food.id === S.selectedFood) || null;
+    const selectedIndex = selected ? foods.indexOf(selected) : -1;
+    box.setAttribute('class', `tract-svg ${shape.kind}` + (selected ? ` f-${(selectedIndex % FOOD_HUES) + 1}` : ''));
+    svg('title', {}, box, `消化道：${table.stages.length} 站，${foods.length} 樣食物`);
+    // The probe is the tube wall itself; every stop and bolus is measured along it.
+    const wall = svg('path', { class: 'wall', d: d, 'stroke-width': shape.tube }, box);
+    const total = wall.getTotalLength();
+    const stopLen = nearestLengths(wall, total, shape.stops);
+    drawInlets(box, shape);
+    drawExits(box, shape, table, foods);
+    // Draw the tube on top of the branches.
+    box.append(wall);
+    svg('path', { class: 'lumen', d: d, 'stroke-width': shape.tube - 10 }, box);
+    svg('path', { class: 'wave', d: d, 'stroke-width': 5 }, box);
+    if (selected) {
+      const at = table.order.indexOf(hereOf(table, selected));
+      if (at >= 0) svg('path', { class: 'trail', d: d, 'stroke-width': 6, 'stroke-dasharray': `${stopLen[at].toFixed(1)} ${total.toFixed(1)}` }, box);
+    }
+    const states = selected ? ((selected.pipeline || {}).stages || {}) : {};
+    table.stages.forEach((stage, index) => drawStop(box, shape, table, stage, index, states[stage.id]));
+    drawBoluses(box, shape, table, foods, wall, stopLen, total);
+  }
+
+  // Path length at each stop: the sampled point nearest to it (the path passes through every stop).
+  function nearestLengths(path, total, points) {
+    const samples = [];
+    for (let i = 0; i <= 600; i += 1) {
+      const len = (total * i) / 600;
+      samples.push([len, path.getPointAtLength(len)]);
+    }
+    let from = 0;
+    return points.map(([x, y]) => {
+      // Stops come in path order, so each search starts where the previous stop was found.
+      let best = from;
+      let bestDist = Infinity;
+      for (let i = from; i < samples.length; i += 1) {
+        const p = samples[i][1];
+        const dist = (p.x - x) * (p.x - x) + (p.y - y) * (p.y - y);
+        if (dist < bestDist) { bestDist = dist; best = i; }
+      }
+      from = best;
+      return samples[best][0];
+    });
+  }
+
+  // The two inlets join at the mouth (入口); each opens its form on the right.
+  function drawInlets(box, shape) {
+    const [mx, my] = shape.stops[0];
+    const inlets = shape.kind === 'tall'
+      ? [{ id: 'inlet-scout', tag: 'A 偵查', from: [22, 30], to: [62, my - 16], text: [22, 20], anchor: 'start' },
+        { id: 'inlet-named', tag: 'B 點名', from: [150, 30], to: [78, my - 16], text: [150, 20], anchor: 'middle' }]
+      : [{ id: 'inlet-scout', tag: 'A 每週偵查', from: [22, 40], to: [mx - 16, my - 4], text: [12, 30], anchor: 'start' },
+        { id: 'inlet-named', tag: 'B 你點名', from: [22, 160], to: [mx - 16, my + 4], text: [12, 182], anchor: 'start' }];
+    for (const inlet of inlets) {
+      const g = svg('g', { class: 'inlet', tabindex: 0, role: 'button', 'aria-label': `入口 ${inlet.tag}：打開「餵一樣新食物」的表單` }, box);
+      const bend = shape.kind === 'tall' ? [inlet.from[0], inlet.to[1]] : [(inlet.from[0] + inlet.to[0]) / 2, inlet.to[1]];
+      svg('path', { class: 'inlet-line', d: `M ${inlet.from[0]} ${inlet.from[1]} Q ${bend[0]} ${bend[1]}, ${inlet.to[0]} ${inlet.to[1]}` }, g);
+      svg('text', { x: inlet.text[0], y: inlet.text[1], 'text-anchor': inlet.anchor }, g, inlet.tag);
+      const open = () => {
+        const target = $(inlet.id);
+        if (!target) return;
+        target.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth', block: 'center' });
+        const field = target.querySelector('textarea, button');
+        if (field) field.focus({ preventScroll: true });
+      };
+      g.addEventListener('click', open);
+      g.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
+    }
+  }
+
+  // Side exits at 分流 (大腸): parts excreted and parts held; at 版本 (全身): parts in the current build.
+  function drawExits(box, shape, table, foods) {
+    const sum = (key) => foods.reduce((n, food) => n + (Number.isInteger((food.counts || {})[key]) ? food.counts[key] : 0), 0);
+    const funnel = (S.view && S.view.funnel) || {};
+    const sort = table.order.indexOf('sort');
+    const build = table.order.indexOf('build');
+    const bins = [];
+    if (sort >= 0) {
+      const [sx, sy] = shape.stops[sort];
+      if (shape.kind === 'tall') {
+        bins.push({ key: 'excrete', label: '排掉', n: sum('excrete'), from: [sx, sy], at: [192, sy + 52] });
+        bins.push({ key: 'hold', label: '暫留', n: sum('hold'), from: [sx, sy], at: [302, sy + 52] });
+      } else {
+        bins.push({ key: 'excrete', label: '排掉', n: sum('excrete'), from: [sx, sy], at: [sx - 62, sy - 96] });
+        bins.push({ key: 'hold', label: '暫留', n: sum('hold'), from: [sx, sy], at: [sx + 62, sy - 96] });
+      }
+    }
+    if (build >= 0) {
+      const [bx, by] = shape.stops[build];
+      bins.push({ key: 'absorbed', label: '在目前版本', n: Number.isInteger(funnel.absorbed_parts) ? funnel.absorbed_parts : 0,
+        from: [bx, by], at: shape.kind === 'tall' ? [302, by - 46] : [bx, by - 96] });
+    }
+    // Every branch first, then the bins on top of them.
+    for (const bin of bins) {
+      const [fx, fy] = bin.from;
+      const [tx, ty] = bin.at;
+      const edge = shape.kind === 'tall' ? [tx - 52, ty] : [tx, ty + 22];
+      svg('path', { class: 'branch' + (bin.key === 'absorbed' ? ' absorbed' : ''), d: `M ${fx} ${fy} Q ${fx} ${edge[1]}, ${edge[0]} ${edge[1]}` }, box);
+    }
+    for (const bin of bins) {
+      const [tx, ty] = bin.at;
+      const g = svg('g', { class: `bin ${bin.key}`, role: 'img', 'aria-label': `${bin.label}的成分：${bin.n} 個` }, box);
+      svg('rect', { x: tx - 52, y: ty - 22, width: 104, height: 44, rx: 12 }, g);
+      svg('text', { x: tx, y: ty - 2, 'text-anchor': 'middle', class: 'n' }, g, String(bin.n));
+      svg('text', { x: tx, y: ty + 15, 'text-anchor': 'middle' }, g, `${bin.label}的成分`);
+    }
+  }
+
+  // One stop: its stage name, organ caption and automation; planned stops are dashed and carry no action.
+  function drawStop(box, shape, table, stage, index, state) {
+    const [x, y] = shape.stops[index];
+    const known = STAGE_STATES.includes(state) ? state : '';
+    const auto = ['automated', 'owner', 'mixed', 'planned'].includes(stage.automation) ? stage.automation : 'unknown';
+    const g = svg('g', { class: `stop auto-${auto}${known ? ' st-' + known : ''}`, 'data-stage': stage.id }, box);
+    svg('title', {}, g, `${index + 1} ${txt(stage.label_zh, 8)}（${txt(stage.organ_zh, 6)}）· ${automationName(table, stage.automation)}：${txt(stage.summary_zh, 300)}`);
+    svg('circle', { class: 'dot', cx: x, cy: y, r: 9 }, g);
+    let lx = x;
+    let ly = y;
+    let anchor = 'middle';
+    if (shape.kind === 'tall') {
+      lx = x + 48;
+      ly = y - 3;
+      anchor = 'start';
+    } else {
+      ly = y < shape.h / 2 ? y - 46 : y + 40;
+    }
+    svg('text', { x: lx, y: ly, 'text-anchor': anchor }, g, txt(stage.label_zh, 8));
+    svg('text', { x: lx, y: ly + 16, 'text-anchor': anchor, class: 'organ' }, g, `${txt(stage.organ_zh, 6)} · ${automationName(table, stage.automation)}`);
+  }
+
+  // Several foods at one stop line up along the tube; a crowded stop shows "+N" (every food is in the picker).
+  function drawBoluses(box, shape, table, foods, wall, stopLen, total) {
+    const most = shape.kind === 'tall' ? 2 : 4;
+    const gap = shape.kind === 'tall' ? 46 : 40;
+    const byStop = new Map();
+    foods.forEach((food, index) => {
+      const bolus = bolusOf(table, food, index);
+      const at = table.order.indexOf(bolus.stage);
+      if (at < 0) return;
+      if (!byStop.has(at)) byStop.set(at, []);
+      byStop.get(at).push({ food: food, bolus: bolus });
+    });
+    const seen = new Map();
+    for (const [at, list] of byStop) {
+      // The selected food is always among the drawn ones.
+      list.sort((a, b) => (b.food.id === S.selectedFood) - (a.food.id === S.selectedFood));
+      const shown = list.slice(0, most);
+      shown.forEach((item, j) => {
+        const len = Math.max(0, Math.min(total, stopLen[at] + (j - (shown.length - 1) / 2) * gap));
+        const p = wall.getPointAtLength(len);
+        drawBolus(box, table, item.food, item.bolus, p, j);
+        seen.set(item.food.id, { len: len, stage: item.bolus.stage, engine: (item.food.pipeline || {}).stage, shape: shape.kind });
+      });
+      if (list.length > most) {
+        const [x, y] = shape.stops[at];
+        const more = list.length - most;
+        const g = svg('g', { class: 'more', role: 'img', 'aria-label': `這一站還有 ${more} 樣（在下面的食物列表）` }, box);
+        const mx = shape.kind === 'tall' ? x - 52 : x;
+        const my = shape.kind === 'tall' ? y : y + (y < shape.h / 2 ? 30 : -30);
+        svg('rect', { x: mx - 18, y: my - 11, width: 36, height: 22, rx: 11 }, g);
+        svg('text', { x: mx, y: my + 4, 'text-anchor': 'middle' }, g, `+${more}`);
+      }
+    }
+    animateMoves(wall, seen, table);
+    S.bolusAt = seen;
+  }
+
+  function drawBolus(box, table, food, bolus, p, j) {
+    const selected = food.id === S.selectedFood;
+    const pipeline = food.pipeline || {};
+    const stage = table.stages.find((s) => s.id === bolus.stage) || {};
+    const label = `${txt(food.display, 60)}：在「${txt(stage.label_zh, 8)}」（${bolus.running ? '處理中' : txt(pipeline.state_zh, 8)}）`
+      + `；${waitingText(table, food)}；${txt(pipeline.note_zh, 160)}`;
+    const g = svg('g', { class: `bolus ${bolus.hue} w-${bolus.waiting}${selected ? ' sel' : ''}${bolus.running ? ' live' : ''}`,
+      tabindex: 0, role: 'button', 'aria-pressed': String(selected), 'aria-label': label, 'data-food': food.id, 'data-stage': bolus.stage }, box);
+    svg('title', {}, g, label);
+    const glide = svg('g', { class: 'glide' }, g);
+    const inner = svg('g', { class: 'bob' }, glide);
+    inner.style.animationDelay = `${(j * 0.4).toFixed(1)}s`;
+    const r = selected ? 18 : 16;
+    if (bolus.ring) svg('circle', { class: `ring ${bolus.ring}`, cx: p.x.toFixed(1), cy: p.y.toFixed(1), r: r + 6 }, inner);
+    svg('circle', { class: 'halo', cx: p.x.toFixed(1), cy: p.y.toFixed(1), r: r + 3 }, inner);
+    svg('circle', { class: 'body', cx: p.x.toFixed(1), cy: p.y.toFixed(1), r: r }, inner);
+    svg('text', { class: 'mono-t', x: p.x.toFixed(1), y: (p.y + 4).toFixed(1), 'text-anchor': 'middle' }, inner, bolus.mono);
+    if (bolus.badge) {
+      const badge = svg('g', { class: `badge ${bolus.waiting}` }, inner);
+      svg('circle', { cx: (p.x + 14).toFixed(1), cy: (p.y - 14).toFixed(1), r: 9 }, badge);
+      svg('text', { x: (p.x + 14).toFixed(1), y: (p.y - 10).toFixed(1), 'text-anchor': 'middle' }, badge, bolus.badge);
+    }
+    g.addEventListener('click', () => selectFood(food.id, true));
+    g.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        selectFood(food.id, true);
+      }
+    });
+  }
+
+  // A bolus whose stop changed glides along the tube from where it stood; with reduced motion it simply appears.
+  function animateMoves(wall, now, table) {
+    const before = S.bolusAt;
+    if (!before.size || reducedMotion()) return;
+    for (const [id, to] of now) {
+      const from = before.get(id);
+      if (!from || from.shape !== to.shape || from.stage === to.stage) continue;
+      // A glide backwards is drawn only when the engine moved the food back, never for a stale view.
+      const back = table.order.indexOf(to.stage) < table.order.indexOf(from.stage);
+      if (back && from.engine === to.engine) continue;
+      const node = $('tract').querySelector(`.bolus[data-food="${CSS.escape(id)}"] .glide`);
+      if (node) glide(node, wall, from.len, to.len);
+    }
+  }
+
+  function glide(node, wall, from, to) {
+    const end = wall.getPointAtLength(to);
+    const started = performance.now();
+    const step = (time) => {
+      if (!node.isConnected) return;
+      const t = Math.min(1, (time - started) / 900);
+      const eased = 1 - Math.pow(1 - t, 3);
+      const p = wall.getPointAtLength(from + (to - from) * eased);
+      if (t < 1) {
+        node.setAttribute('transform', `translate(${(p.x - end.x).toFixed(1)} ${(p.y - end.y).toFixed(1)})`);
+        requestAnimationFrame(step);
+      } else node.removeAttribute('transform');
+    };
+    requestAnimationFrame(step);
+  }
+
+  function renderLegend() {
+    const item = (cls, mark, text) => el('span', { class: 'leg' }, el('i', { class: cls, 'aria-hidden': 'true', text: mark }), el('span', { text: text }));
+    $('legend').replaceChildren(
+      item('l-live', '', '轉圈：系統正在處理（例如試吃中）'),
+      item('l-owner', '!', '在等你'),
+      item('l-optional', '?', '只有可選的決定'),
+      item('l-rest', '', '停著：等規劃中的步驟（還沒自動化）'),
+      item('l-planned', '', '虛線的站：規劃中，不能按'),
+      item('l-absorb', '', '在目前版本'), item('l-hold', '', '暫留'), item('l-excrete', '', '排掉'));
+  }
+
+  // The 計畫 and 版本 tools (no planned stage ever carries a button).
   function stageButtons(stage) {
     if (stage.id === 'plan') {
-      return el('button', { type: 'button', class: 'btn tiny', text: '匯入紀錄', title: '匯入 Elephant／Goldfish 消化紀錄（歷史證據）', onclick: openImport });
+      return el('button', { type: 'button', class: 'btn tiny', text: '計畫：匯入紀錄', title: '匯入 Elephant／Goldfish 消化紀錄（歷史證據）', onclick: openImport });
     }
     if (stage.id === 'build') {
       return el('button', { type: 'button', class: 'btn tiny', text: '版本與 skill', title: '目前版本、skill、和預設比、版本時間線、常設預算', onclick: () => jump('my-oaw') });
@@ -492,62 +878,181 @@
     return '';
   }
 
-  // Where each food's token stands now: the live stage while a taste runs, else the engine's stage.
-  function hereOf(table, food) {
-    const live = S.live && S.live.food === food.id && table.order.includes(S.live.stage) ? S.live.stage : null;
-    return live || (food.pipeline || {}).stage;
+  function renderTools(table) {
+    $('pipe-tools').replaceChildren(...table.stages.map((stage) => (stageIsPlanned(stage) ? '' : stageButtons(stage))).filter(Boolean));
   }
 
-  function headRow(table) {
-    const counts = {};
-    for (const food of (S.view && Array.isArray(S.view.foods) ? S.view.foods : []).filter(Boolean)) {
-      const at = hereOf(table, food);
-      counts[at] = (counts[at] || 0) + 1;
+  function renderGuide(table) {
+    const inlets = (table.inlets || []).map((inlet) => el('li', { class: 'guide-inlet' },
+      el('strong', { text: `入口：${txt(inlet.label_zh, 60)}` }),
+      el('ul', {}, (inlet.steps || []).map((step) => el('li', {}, txt(step.label_zh, 160), ' ', automationChip(table, step.automation))))));
+    const stages = table.stages.map((stage, index) => el('li', { class: stageIsPlanned(stage) ? 'planned' : '' },
+      el('div', { class: 'guide-head' }, el('strong', { text: `${index + 1} ${txt(stage.label_zh, 8)}（${txt(stage.organ_zh, 6)}）` }), automationChip(table, stage.automation),
+        el('span', { class: 'muted small', text: (stage.decisions || []).map((d) => txt(d, 6)).join('、') })),
+      el('p', { class: 'small', text: txt(stage.summary_zh, 300) }),
+      el('ul', {}, (stage.steps || []).map((step) => el('li', { class: 'small' }, txt(step.label_zh, 160), ' ', automationChip(table, step.automation))))));
+    $('stage-guide').replaceChildren(...inlets, ...stages);
+  }
+
+  // ---- the food picker
+  function renderPicker() {
+    const table = pipeTable();
+    const foods = viewFoods();
+    const box = $('pick');
+    box.hidden = !foods.length || !table;
+    if (!table) return;
+    box.replaceChildren(...foods.map((food, index) => {
+      const bolus = bolusOf(table, food, index);
+      const flag = bolus.badge ? el('span', { class: `flag ${bolus.waiting}`, 'aria-hidden': 'true', text: bolus.badge }) : '';
+      const where = `${txt(food.display, 80)}：${txt((food.pipeline || {}).stage_label_zh, 8)} · ${waitingText(table, food)}`;
+      return el('button', { type: 'button', class: bolus.hue, 'aria-pressed': String(food.id === S.selectedFood), 'aria-label': where, title: where,
+        onclick: () => selectFood(food.id, false) },
+      el('span', { class: 'dotm', 'aria-hidden': 'true', text: bolus.mono }), el('span', { class: 'name', text: txt(food.display, 60) }), flag);
+    }));
+  }
+
+  function selectFood(foodId, fromTract) {
+    // The tract and the picker are redrawn: keyboard focus goes back to the same food's bolus or button.
+    const focused = document.activeElement;
+    const where = focused && focused.closest ? (focused.closest('#tract') ? 'tract' : focused.closest('#pick') ? 'pick' : '') : '';
+    S.selectedFood = foodId;
+    renderPipeline();
+    renderPicker();
+    renderDetail();
+    if (where === 'tract') {
+      const again = $('tract').querySelector(`.bolus[data-food="${CSS.escape(foodId)}"]`);
+      if (again) again.focus({ preventScroll: true });
+    } else if (where === 'pick') {
+      const again = $('pick').querySelector('button[aria-pressed="true"]');
+      if (again) again.focus({ preventScroll: true });
     }
-    const row = el('div', { class: 'trow thead', role: 'row' }, el('div', { class: 'tcell tlabel', role: 'columnheader', text: '食物' }));
-    table.stages.forEach((stage, index) => {
-      const planned = stageIsPlanned(stage);
-      const count = Number.isInteger(counts[stage.id]) ? counts[stage.id] : 0;
-      // A planned stage has nothing to press: its header is text only.
-      row.append(el('div', { class: `tcell stage-head${planned ? ' planned' : ''}${index === 0 ? ' inlet-target' : ''}`, role: 'columnheader',
-        'data-stage': stage.id, title: txt(stage.summary_zh, 300) },
-        el('div', { class: 'sh-top' }, el('span', { class: 'sh-num', text: String(index + 1) }), el('span', { class: 'sh-name', text: txt(stage.label_zh, 8) })),
-        automationChip(table, stage.automation),
-        count ? el('span', { class: 'sh-count', text: `${count} 樣在這裡` }) : '',
-        planned ? '' : stageButtons(stage)));
+    if (fromTract) {
+      const detail = $('detail');
+      if (detail.getBoundingClientRect().top > window.innerHeight * 0.75) jump('detail');
+    }
+  }
+
+  function jump(id) {
+    const node = $(id);
+    if (node) node.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth', block: 'start' });
+  }
+
+  function openFood(foodId) {
+    selectFood(foodId, false);
+    jump('detail');
+  }
+
+  function openImport() {
+    $('import-any').open = true;
+    $('import-any').scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth', block: 'center' });
+    $('import-dir').focus({ preventScroll: true });
+  }
+
+  // ---- the selected food
+  function renderDetail() {
+    const body = $('detail-body');
+    const table = pipeTable();
+    const foods = viewFoods();
+    const index = foods.findIndex((item) => item.id === S.selectedFood);
+    const food = index >= 0 ? foods[index] : null;
+    const title = $('detail-title');
+    if (!food || !table) {
+      title.replaceChildren('食物');
+      body.replaceChildren(el('p', { class: 'muted', text: foods.length
+        ? '點消化道上的食物，或上面的名字，看它在哪、卡在哪、能做什麼。'
+        : '還沒有食物：從「餵一樣新食物」的任一個入口加入。' }));
+      return;
+    }
+    const bolus = bolusOf(table, food, index);
+    $('detail').className = `panel detail ${bolus.hue}`;
+    title.replaceChildren(el('span', { class: 'dotm', 'aria-hidden': 'true', text: bolus.mono }), el('span', { text: txt(food.display, 80) }));
+    body.replaceChildren(
+      el('p', { class: 'meta', text: sourceLine(food) }),
+      stepsBar(table, food, bolus),
+      nowBox(table, food, bolus),
+      blockerBox(table, food, bolus),
+      currentActions(table, food, bolus),
+      askBox(table, food, bolus),
+      splitBar(food),
+      card(food));
+  }
+
+  // A repository is pinned to a commit; a paper to an arXiv version plus the sha256 of its sealed PDF.
+  function pinText(food) {
+    const pinned = food.pinned || {};
+    if (food.kind === 'paper') {
+      const paper = food.paper || {};
+      const id = paper.arxiv_id ? `arXiv:${txt(paper.arxiv_id, 40)}` : '本機 PDF';
+      return pinned.pdf_sha12 ? `${id}${pinned.version ? ' ' + txt(pinned.version, 8) : ''} · sha256 ${txt(pinned.pdf_sha12, 12)}` : `${id} · 未固定版本`;
+    }
+    return pinned.commit7 ? '@' + txt(pinned.commit7, 12) : '未固定版本';
+  }
+
+  function sourceLine(food) {
+    const pinned = food.pinned || {};
+    const where = food.kind === 'paper' ? '' : (food.repo ? mid(food.repo, 80) : '本機 repo（路徑不公開）');
+    return [txt(food.id, 64), food.kind === 'paper' ? '論文' : 'repo', ORIGINS[food.origin] || '', where, pinText(food),
+      INTEGRITY[pinned.integrity] || '', food.license ? txt(food.license, 40) : '', food.exec_class ? '執行等級 ' + txt(food.exec_class, 10) : '']
+      .filter(Boolean).join(' · ');
+  }
+
+  // The nine stages as one segmented bar; the current one pulses (blue when it waits on the owner).
+  function stepsBar(table, food, bolus) {
+    const states = (food.pipeline || {}).stages || {};
+    const here = bolus.stage;
+    const live = bolus.running;
+    const at = table.order.indexOf(here);
+    const segs = table.stages.map((stage, index) => {
+      let state = states[stage.id];
+      if (live) state = stage.id === here ? 'current' : stageIsPlanned(stage) ? 'planned' : index < at ? 'done' : 'todo';
+      const known = STAGE_STATES.includes(state) ? state : 'unknown';
+      return el('div', { class: `seg st-${known}${stage.id === here ? ' w-' + bolus.waiting : ''}`,
+        title: `${txt(stage.label_zh, 8)}（${txt(stage.organ_zh, 6)}）：${stateName(table, state)}` });
     });
-    return row;
+    const names = table.stages.map((stage) => el('span', { class: stage.id === here ? 'here' : '', text: txt(stage.label_zh, 8) }));
+    const summary = table.stages.map((stage, index) => `${txt(stage.label_zh, 8)} ${stateName(table, live ? (stage.id === here ? 'current' : index < at ? 'done' : 'todo') : states[stage.id])}`).join('、');
+    const wrap = el('div', {},
+      el('div', { class: 'steps', role: 'img', 'aria-label': `九站進度：${summary}` }, segs),
+      el('div', { class: 'stepnames', 'aria-hidden': 'true' }, names));
+    wrap.style.setProperty('--stages', String(table.stages.length));
+    return wrap;
   }
 
-  function pips(food) {
-    const parts = (Array.isArray(food.components) ? food.components : []).filter(Boolean);
-    if (!parts.length) return '';
-    const box = el('span', { class: 'pips', 'aria-hidden': 'true' });
-    for (const part of parts.slice(0, 12)) {
-      const key = DISPOSITIONS[part.disposition] ? part.disposition : 'unknown';
-      box.append(el('span', { class: `pip d-${key}${part.in_current_build ? ' built' : ''}` }));
+  function nowBox(table, food, bolus) {
+    const pipeline = food.pipeline || {};
+    const stage = table.stages.find((s) => s.id === bolus.stage) || {};
+    const who = `現在 · ${txt(stage.label_zh, 8)}（${txt(stage.organ_zh, 6)}） · ${bolus.running ? '處理中' : txt(pipeline.state_zh, 8)} · ${waitingText(table, food)}`;
+    return el('div', { class: `now w-${bolus.running ? 'live' : bolus.waiting}` },
+      el('div', { class: 'who', text: who }),
+      el('p', { text: bolus.running ? '試吃中…（只顯示進度，不顯示分數）' : txt(pipeline.note_zh, 300) || '—' }),
+      pipeline.parity ? el('p', { class: 'why', text: txt(pipeline.parity.label_zh, 60) }) : '');
+  }
+
+  // 卡在哪 / 依據 / 你不處理會怎樣, straight from view.json (catalog_core.food_pipeline); nothing is made up here.
+  function blockerBox(table, food, bolus) {
+    const blocker = (food.pipeline || {}).blocker;
+    const box = el('section', { class: `explain w-${bolus.waiting}`, 'aria-label': '卡點說明' }, el('h3', { text: '卡點說明' }));
+    if (!blocker || typeof blocker !== 'object') {
+      box.append(el('p', { class: 'muted', text: 'view.json 沒有卡點說明：在終端執行 catalog.py view 重算。' }));
+      return box;
     }
-    if (parts.length > 12) box.append(el('span', { class: 'pip-more', text: `+${parts.length - 12}` }));
+    const basis = (Array.isArray(blocker.basis_zh) ? blocker.basis_zh : []).filter(Boolean);
+    const unknown = (Array.isArray(blocker.unknown_zh) ? blocker.unknown_zh : []).filter(Boolean);
+    box.append(el('dl', {},
+      el('dt', { text: '卡在哪' }), el('dd', { text: txt(blocker.where_zh, 300) || '紀錄裡沒有寫' }),
+      el('dt', { text: '依據' }), el('dd', {}, basis.length ? el('ul', {}, basis.map((b) => el('li', { text: txt(b, 300) }))) : '紀錄裡沒有寫'),
+      el('dt', { text: '你不處理會怎樣' }), el('dd', { text: txt(blocker.if_ignored_zh, 300) || '紀錄裡沒有寫' }),
+      unknown.length ? el('dt', { text: '紀錄沒寫的' }) : '',
+      unknown.length ? el('dd', {}, el('ul', {}, unknown.map((u) => el('li', { text: txt(u, 300) })))) : ''));
     return box;
   }
 
-  function token(table, food, stage, state, working) {
-    const verdict = food.verdict || {};
-    const family = FAMILY[verdict.headline] || 'unknown';
-    const counts = food.counts || {};
-    const parts = Array.isArray(food.components) ? food.components.length : 0;
-    const abHolds = Number.isInteger((food.pipeline || {}).ab_holds) ? food.pipeline.ab_holds : 0;
-    const label = `${txt(food.display, 60)}：在「${txt(stage.label_zh, 8)}」（${working ? '試吃中' : stateName(table, state)}）`
-      + `；判定 ${headlineLabel(verdict)}` + (parts ? `；成分 吸收 ${counts.absorb || 0}、排掉 ${counts.excrete || 0}、暫留 ${counts.hold || 0}` : '')
-      + (abHolds ? `（其中 ${abHolds} 個 skill 文字缺行為 A/B，D17）` : '');
-    return el('button', { type: 'button', class: `token fam-${family} st-${state}${working ? ' working' : ''}`, 'data-food': food.id,
-      'data-stage': stage.id, 'data-engine': txt((food.pipeline || {}).stage, 20), 'aria-label': label, title: '打開食物卡',
-      onclick: () => openFood(food.id) },
-      el('span', { class: 'tok-sym', 'aria-hidden': 'true', text: txt(verdict.symbol, 3) || '?' }), pips(food));
-  }
-
-  function stageActionButtons(food, stage) {
-    const box = el('div', { class: 'cell-actions' });
+  // The current stage's real actions (catalog_core.PIPELINE_ACTIONS); a terminal action is text, never a button.
+  function currentActions(table, food, bolus) {
+    const stage = table.stages.find((s) => s.id === bolus.stage);
+    const box = el('div', { class: 'acts', 'aria-label': '這一站能做的事' });
+    // Planned stages never carry an action; nothing runs while a taste is in progress.
+    if (!stage || stageIsPlanned(stage) || bolus.running) return box;
     const actions = ((food.pipeline || {}).actions || []).filter((action) => action && action.stage === stage.id);
     actions.forEach((action, index) => {
       if (action.where === 'terminal') {
@@ -556,9 +1061,12 @@
         return;
       }
       const danger = action.id === 'forget' || action.id === 'remove-food';
-      box.append(el('button', { type: 'button', class: `btn tiny act${index === 0 && !danger ? ' primary' : ''}${danger ? ' danger' : ''}`,
+      box.append(el('button', { type: 'button', class: `btn act${index === 0 && !danger ? ' primary' : ''}${danger ? ' danger' : ''}`,
         text: txt(action.label_zh, 40), onclick: () => stageAction(food, action) }));
     });
+    for (const detail of ((food.pipeline || {}).details || [])) {
+      if (detail && detail.id === 'plan') box.append(el('button', { type: 'button', class: 'btn link', text: txt(detail.label_zh, 20), onclick: () => planFlow(food, true) }));
+    }
     return box;
   }
 
@@ -570,17 +1078,9 @@
         await navigator.clipboard.writeText(command);
         toast('已複製：貼到你自己開的 PowerShell 或 cmd（Git Bash 請用 winpty）。', 'info');
       } catch (e) {
-        const more = code.closest('details');
-        if (more) more.open = true;
-        const range = document.createRange();
-        range.selectNodeContents(code);
-        const chosen = window.getSelection();
-        chosen.removeAllRanges();
-        chosen.addRange(range);
-        toast('瀏覽器不讓網頁複製：指令已選取，按 Ctrl+C。', 'warn');
+        await copyText(command, code, '');
       }
     } });
-    // Compact in a stage column: the copy button carries the full command; the command itself folds out.
     return el('div', { class: 'term-hint' },
       el('span', { text: `${txt(action.label_zh, 40)}：確認碼只在終端。` }), copy,
       el('details', { class: 'term-more' }, el('summary', { text: '看指令' }),
@@ -588,191 +1088,109 @@
         el('span', { class: 'small', text: '然後按這一站的字母（例如 a），或選「12 靜態：分流旗標」。' })));
   }
 
-  function laneCell(table, food, stage, state, here, working) {
-    const known = STAGE_STATES.includes(state) ? state : 'unknown';
-    const planned = stageIsPlanned(stage);
-    const cell = el('div', { class: `tcell cell st-${known}${here ? ' here' : ''}`, role: 'cell', 'data-stage': stage.id },
-      el('span', { class: 'cell-head' }, el('span', { class: 'cell-stage', text: txt(stage.label_zh, 8) }),
-        el('span', { class: 'cell-state', text: here && working ? '試吃中' : stateName(table, known === 'unknown' ? state : known) }),
-        automationChip(table, stage.automation)));
-    if (here) {
-      cell.append(token(table, food, stage, known, working),
-        el('p', { class: 'cell-note', text: working ? '試吃中…（只顯示進度，不顯示分數）' : txt((food.pipeline || {}).note_zh, 160) }));
-    } else {
-      cell.append(el('span', { class: `dot mark st-${known}`, title: `${txt(stage.label_zh, 8)}：${stateName(table, known === 'unknown' ? state : known)}` }));
+  // Asking about the blocker: the page has no model, so the question is recorded for Claude to answer.
+  function askBox(table, food, bolus) {
+    const limit = (S.meta && S.meta.question_chars) || 500;
+    const input = el('input', { type: 'text', id: uid('askq'), maxlength: String(limit), autocomplete: 'off', placeholder: '例如：這個旗標在我的專案會怎樣？' });
+    const go = (question) => askQuestion(food, bolus.stage, question);
+    const form = el('form', { onsubmit: (e) => {
+      e.preventDefault();
+      const question = input.value.trim();
+      if (!question) { toast('先寫下你想問什麼。', 'warn'); input.focus(); return; }
+      go(question);
+    } },
+    el('label', { for: input.id, class: 'hint', text: `你的問題（最多 ${limit} 字）` }), input,
+    el('button', { type: 'submit', class: 'btn primary', text: '記下問題' }));
+    form.querySelector('label').style.flexBasis = '100%';
+    const box = el('section', { class: 'explain ask', 'aria-label': '問這個卡點' },
+      el('h3', { text: '看不懂？問這個卡點' }),
+      el('p', { class: 'hint', text: '這個網頁沒有模型：問題會記在專案的 .oaw/catalog/questions.jsonl，Claude 會在對話裡回答。' }),
+      el('div', { class: 'q' }, PRESET_QUESTIONS.map((q) => el('button', { type: 'button', text: q, onclick: () => go(q) }))),
+      form);
+    const last = S.asked.get(food.id);
+    if (last) {
+      const pre = el('pre', { text: last.brief });
+      box.append(el('p', { class: 'done', role: 'status', text: `已記下，Claude 會在對話裡回答（問題編號 ${txt(last.id, 20)}）。` }),
+        el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn', text: '複製問題和這樣食物的資料',
+          onclick: () => copyText(last.brief, pre, '已複製：貼到和 Claude 的對話裡。') })),
+        el('details', {}, el('summary', { class: 'small', text: '要貼給 Claude 的內容' }), pre));
     }
-    // Planned stages are drawn but never offer an action.
-    if (planned) return cell;
-    if (here && !working) cell.append(stageActionButtons(food, stage));
-    for (const detail of ((food.pipeline || {}).details || [])) {
-      if (detail && detail.stage === stage.id && detail.id === 'plan') {
-        cell.append(el('button', { type: 'button', class: 'btn tiny link', text: txt(detail.label_zh, 20), onclick: () => planFlow(food, true) }));
-      }
+    const open = S.questions.filter((q) => q.food === food.id);
+    if (open.length) {
+      box.append(el('p', { class: 'subhead', text: `還沒回答的問題（${open.length}）` }),
+        el('ul', { class: 'asked' }, open.slice(-5).reverse().map((q) => el('li', { text: `${when(q.time)} · ${txt(q.question, 200)}` }))));
     }
-    return cell;
+    return box;
   }
 
-  function lane(table, food) {
-    const pipeline = food.pipeline || {};
-    const states = pipeline.stages || {};
-    const live = S.live && S.live.food === food.id && table.order.includes(S.live.stage) ? S.live.stage : null;
-    const here = hereOf(table, food);
-    const verdict = food.verdict || {};
-    const family = FAMILY[verdict.headline] || 'unknown';
-    const row = el('div', { class: `trow lane fam-${family}${S.selectedFood === food.id ? ' selected' : ''}`, role: 'row', 'data-food': food.id },
-      el('div', { class: 'tcell tlabel', role: 'rowheader' },
-        el('button', { type: 'button', class: 'food-name', text: txt(food.display, 60), title: '打開食物卡', onclick: () => openFood(food.id) }),
-        el('span', { class: 'lane-chips' }, el('span', { class: `vchip fam-${family}`, text: `${txt(verdict.symbol, 3)} ${headlineLabel(verdict)}` }),
-          levelChip(verdict.level), food.kind === 'paper' ? chip('論文') : '')));
-    const at = table.order.indexOf(here);
-    table.stages.forEach((stage, index) => {
-      let state = states[stage.id];
-      if (live) {
-        // While tasting, only the stages before the live one are done; nothing is claimed beyond it.
-        state = stage.id === live ? 'current' : stageIsPlanned(stage) ? 'planned' : index < at ? 'done' : 'todo';
-      }
-      row.append(laneCell(table, food, stage, state, stage.id === here, !!live && stage.id === live));
-    });
-    return row;
-  }
-
-  function capturePositions() {
-    const seen = new Map();
-    for (const node of document.querySelectorAll('#track .token[data-food]')) {
-      seen.set(node.dataset.food, { rect: node.getBoundingClientRect(), stage: node.dataset.stage, engine: node.dataset.engine });
-    }
-    return seen;
-  }
-
-  // A token whose stage changed glides from where it stood to its new stage (a CSS transition);
-  // with reduced motion it simply appears there.
-  function animateMoves(before) {
-    if (!before.size || reducedMotion()) return;
-    const order = (pipeTable() || {}).order || [];
-    for (const node of document.querySelectorAll('#track .token[data-food]')) {
-      const prev = before.get(node.dataset.food);
-      if (!prev || prev.stage === node.dataset.stage) continue;
-      // A glide backwards is drawn only when the engine moved the food back, never for a stale view.
-      const back = order.indexOf(node.dataset.stage) < order.indexOf(prev.stage);
-      if (back && prev.engine === node.dataset.engine) continue;
-      const now = node.getBoundingClientRect();
-      const dx = prev.rect.left - now.left;
-      const dy = prev.rect.top - now.top;
-      if (!dx && !dy) continue;
-      node.style.transform = `translate(${dx}px, ${dy}px)`;
-      node.getBoundingClientRect();
-      node.classList.add('travel');
-      node.style.transform = '';
-      const cell = node.closest('.cell');
-      node.addEventListener('transitionend', () => {
-        node.classList.remove('travel');
-        if (cell) cell.classList.add('arrived');
-      }, { once: true });
-    }
-  }
-
-  // No food yet: the stage list as one lane without a token. Narrow screens show it (their header row is hidden).
-  function stageList(table) {
-    const row = el('div', { class: 'trow lane stage-list', role: 'row', 'aria-label': '流程的九站（還沒有食物）' },
-      el('div', { class: 'tcell tlabel', role: 'rowheader' }, el('span', { class: 'muted small', text: '流程的九站' })));
-    table.stages.forEach((stage, index) => {
-      const planned = stageIsPlanned(stage);
-      const state = planned ? 'planned' : 'todo';
-      row.append(el('div', { class: `tcell cell st-${state}`, role: 'cell', 'data-stage': stage.id },
-        el('span', { class: 'cell-head' }, el('span', { class: 'cell-stage', text: `${index + 1} ${txt(stage.label_zh, 8)}` }),
-          automationChip(table, stage.automation)),
-        el('span', { class: `dot mark st-${state}`, title: `${txt(stage.label_zh, 8)}：${txt((table.automation_zh || {})[stage.automation], 10)}` })));
-    });
-    return row;
-  }
-
-  // The header buttons (匯入紀錄, 版本與 skill) for narrow screens, where the header row is hidden.
-  function renderTools(table) {
-    const box = $('pipe-tools');
-    if (!box) return;
-    box.replaceChildren(...table.stages.filter((stage) => !stageIsPlanned(stage)).map(stageButtons).filter(Boolean));
-  }
-
-  function renderGuide(table) {
-    const inlets = (table.inlets || []).map((inlet) => el('li', { class: 'guide-inlet' },
-      el('strong', { text: `入口：${txt(inlet.label_zh, 60)}` }),
-      el('ul', {}, (inlet.steps || []).map((step) => el('li', {}, txt(step.label_zh, 160), ' ', automationChip(table, step.automation))))));
-    const stages = table.stages.map((stage, index) => el('li', { class: stageIsPlanned(stage) ? 'planned' : '' },
-      el('div', { class: 'guide-head' }, el('strong', { text: `${index + 1} ${txt(stage.label_zh, 8)}` }), automationChip(table, stage.automation),
-        el('span', { class: 'muted small', text: (stage.decisions || []).map((d) => txt(d, 6)).join('、') })),
-      el('p', { class: 'small', text: txt(stage.summary_zh, 300) }),
-      el('ul', {}, (stage.steps || []).map((step) => el('li', { class: 'small' }, txt(step.label_zh, 160), ' ', automationChip(table, step.automation))))));
-    $('stage-guide').replaceChildren(...inlets, ...stages);
-  }
-
-  function renderPipeline() {
-    const before = capturePositions();
-    const table = pipeTable();
-    const track = $('track');
-    const empty = $('pipe-empty');
-    const foods = S.view && Array.isArray(S.view.foods) ? S.view.foods.filter(Boolean) : [];
-    if (!table) {
-      track.replaceChildren();
-      $('legend').replaceChildren();
-      empty.hidden = false;
-      empty.textContent = S.view ? 'view.json 沒有站別表：在終端執行 python3 scripts/catalog.py view。' : (S.viewNote === 'invalid' ? 'view.json 無效：在終端執行 catalog.py view。' : '讀取中…');
+  async function askQuestion(food, stage, question) {
+    let data;
+    try {
+      data = await api('/api/question', { food: food.id, stage: stage, question: question });
+    } catch (e) {
+      if (e.status !== 403) toast('沒有記下：' + txt(e.zh || e.message, 200), 'bad');
       return;
     }
-    renderLegend(table);
-    track.style.setProperty('--stages', String(table.stages.length));
-    track.replaceChildren(headRow(table), ...(foods.length ? foods.map((food) => lane(table, food)) : [stageList(table)]));
-    renderTools(table);
-    // Real data only: no food means the empty pipeline, the two inlets and one sentence.
-    empty.hidden = foods.length > 0;
-    empty.textContent = foods.length ? '' : txt(table.empty_zh, 200);
-    renderGuide(table);
-    animateMoves(before);
-  }
-
-  function jump(id) {
-    const node = $(id);
-    if (node) node.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth', block: 'start' });
-  }
-
-  function openFood(foodId) {
-    S.selectedFood = foodId;
-    renderPipeline();
+    const record = data.question || {};
+    S.asked.set(food.id, { id: record.id, brief: typeof data.brief === 'string' ? data.brief.slice(0, 6000) : '' });
+    S.questions = S.questions.concat([{ id: record.id, time: record.time, food: record.food, stage: record.stage, question: record.question }]);
+    toast('已記下，Claude 會在對話裡回答。', 'good');
     renderDetail();
-    jump('detail');
   }
 
-  function openImport() {
-    $('import-any').open = true;
-    jump('detail');
-    $('import-dir').focus();
-  }
-
-  function renderDetail() {
-    const body = $('detail-body');
-    const foods = S.view && Array.isArray(S.view.foods) ? S.view.foods.filter(Boolean) : [];
-    const food = foods.find((item) => item.id === S.selectedFood);
-    if (!food) {
-      $('detail-title').textContent = '🍱 食物卡';
-      body.replaceChildren(el('p', { class: 'muted', text: foods.length
-        ? '點流程上的食物名稱或圖示，看它的食物卡：成分、旗標、判定依據、計畫、Elephant／Goldfish 紀錄。'
-        : '還沒有食物：先從上面任一個入口加入。' }));
-      return;
+  // Absorb / hold / excrete across this food's live components; without them, an imported record's proposals,
+  // labelled as historical evidence that no verdict counts.
+  function splitBar(food) {
+    let counts = food.counts || {};
+    let n = (key) => (Number.isInteger(counts[key]) ? counts[key] : 0);
+    let all = n('absorb') + n('hold') + n('excrete');
+    const wrap = el('div', {});
+    const proposals = (food.historical || []).flatMap((report) => report.components || []).filter(Boolean);
+    const historical = !all && proposals.length > 0;
+    if (historical) {
+      counts = {};
+      for (const key of ['absorb', 'hold', 'excrete']) counts[key] = proposals.filter((part) => part.disposition === key).length;
+      n = (key) => counts[key];
+      all = n('absorb') + n('hold') + n('excrete');
+      wrap.append(el('p', { class: 'subhead', text: '匯入紀錄的提案（歷史證據，不計入判定；試吃後才有自己的成分判定）' }));
     }
-    $('detail-title').textContent = `🍱 食物卡：${txt(food.display, 60)}`;
-    body.replaceChildren(card(food), el('div', { class: 'row' },
-      el('button', { type: 'button', class: 'btn tiny', text: '收起食物卡', onclick: () => { S.selectedFood = null; renderPipeline(); renderDetail(); } })));
+    if (!all) {
+      wrap.append(el('p', { class: 'muted small', text: food.kind === 'paper'
+        ? txt(food.components_note_zh, 200) || '論文的成分要由 Elephant 拆（規劃中），或匯入已有的消化紀錄。'
+        : food.tasted ? '沒有拆出成分。' : '試吃後會把食物拆成成分，分成吸收／暫留／排掉。' }));
+      return wrap;
+    }
+    const bar = el('div', { class: 'split', role: 'img',
+      'aria-label': `${historical ? '匯入紀錄的提案：' : ''}吸收 ${n('absorb')}、暫留 ${n('hold')}、排掉 ${n('excrete')}` });
+    for (const key of ['absorb', 'hold', 'excrete']) {
+      const part = el('span', { class: 's-' + key });
+      part.style.width = `${(n(key) / all) * 100}%`;
+      bar.append(part);
+    }
+    const word = historical ? '提議' : '';
+    wrap.append(bar, el('div', { class: 'keys' },
+      el('span', {}, historical ? '紀錄拆成 ' : '拆成 ', el('b', { text: String(all) }), ' 個成分'),
+      el('span', {}, historical ? '提議吸收 ' : '可吸收 ', el('b', { text: String(n('absorb')) })),
+      el('span', {}, `${word}暫留 `, el('b', { text: String(n('hold')) })), el('span', {}, `${word}排掉 `, el('b', { text: String(n('excrete')) }))));
+    return wrap;
   }
 
+  // ------------------------------------------------------------------ render: top and my OAW
   function renderTop() {
     const meta = S.meta || {};
     const name = $('project-name');
     name.textContent = meta.project ? `${txt(meta.project_name, 60)} · ${mid(meta.project, 64)}` : '';
     name.title = meta.project ? txt(meta.project, 400) : '';
     const funnel = (S.view && S.view.funnel) || {};
+    const foods = viewFoods();
+    const count = (waiting) => foods.filter((food) => (food.pipeline || {}).waiting_on === waiting).length;
+    const live = S.live ? 1 : 0;
+    const stat = (cls, label, value) => el('span', { class: cls }, label, ' ', el('b', { text: String(value) }));
     $('top-stats').replaceChildren(
-      chip(`食物 ${funnel.submitted || 0}`), chip(`已試吃 ${funnel.tasted || 0}`),
-      chip(`實測 ${funnel.measured || 0}`), chip(`已吸收成分 ${funnel.absorbed_parts || 0}（在目前版本）`),
-      funnel.backlog_items ? chip(`待辦 ${funnel.backlog_items}（未改程式）`) : '');
+      stat('', '消化道裡', `${funnel.submitted || 0} 樣`), stat('t-owner', '等你', count('owner')), stat('', '可選決定', count('optional')),
+      stat('', '等規劃中的步驟', count('planned')), stat('t-live', '正在處理', live),
+      stat('', '已試吃', funnel.tasted || 0), stat('', '在目前版本的成分', funnel.absorbed_parts || 0),
+      funnel.backlog_items ? stat('', '待辦（未改程式）', funnel.backlog_items) : '');
   }
 
   // Same rule as oaw_status.installed_skills(): a fresh effect first, else the current build's skills.
@@ -1009,7 +1427,9 @@
       el('div', { class: 'build-name mono', text: txt(my.current_build || view.release, 60) }),
       el('div', { class: 'build-label', text: current ? txt(current.label_zh || current.label, 160) : '還沒有建立版本：第一次吸收或移除時，會先存一個基準版。' }),
       my.current_build && my.current_matches_build === false ? el('p', { class: 'notice warn', text: '⚠ 目前的安裝和記錄的版本不同（在 catalog 之外被改過）。' }) : ''));
-    kids.push(skillsBlock(view), effectBlock(my.effect, view.release || '2.0.0'), timelineBlock(timeline), policyBlock(view.policy || {}));
+    kids.push(el('div', { class: 'my-grid' },
+      el('div', {}, skillsBlock(view), effectBlock(my.effect, view.release || '2.0.0')),
+      el('div', {}, timelineBlock(timeline), policyBlock(view.policy || {}))));
     body.replaceChildren(...kids);
   }
 
@@ -1135,7 +1555,7 @@
     box.replaceChildren(head, list, el('div', { class: 'row' }, go));
   }
 
-  // ------------------------------------------------------------------ render: food cards
+  // ------------------------------------------------------------------ render: the food card
   function selection(foodId) {
     if (!S.selected.has(foodId)) S.selected.set(foodId, new Set());
     return S.selected.get(foodId);
@@ -1335,6 +1755,7 @@
     }
   }
 
+  // The food card under the selected food: verdict, safety, flags, components, reports, plan and card actions.
   function card(food) {
     const verdict = food.verdict || {};
     const family = FAMILY[verdict.headline] || 'unknown';
@@ -1342,24 +1763,14 @@
     const open = openState(food.id);
     const parts = Array.isArray(food.components) ? food.components : [];
     const installed = parts.some((part) => part.in_current_build);
-    const pipeline = food.pipeline || {};
-    const pinned = food.pinned || {};
-    // A repository is pinned to a commit; a paper to an arXiv version plus the sha256 of its sealed PDF.
-    const pin = food.kind === 'paper'
-      ? (pinned.pdf_sha12 ? `${pinned.version ? 'arXiv ' + txt(pinned.version, 8) : '本機 PDF'} · sha256 ${txt(pinned.pdf_sha12, 12)}` : '未固定版本')
-      : pinned.commit7 ? '@' + txt(pinned.commit7, 12) : '未固定版本';
-    const meta = [txt(food.id, 64), food.kind === 'paper' ? '論文' : '', ORIGINS[food.origin] || '', pin, INTEGRITY[pinned.integrity] || '',
-      food.license ? txt(food.license, 40) : '', food.exec_class ? '執行等級 ' + txt(food.exec_class, 10) : ''].filter(Boolean).join(' · ');
     const node = el('article', { class: `card fam-${family}`, 'data-food': food.id },
       el('header', { class: 'card-head' },
         el('div', { class: `badge fam-${family}` },
           el('span', { class: 'badge-sym', 'aria-hidden': 'true', text: txt(verdict.symbol, 3) || '?' }),
           el('span', { class: 'badge-text', text: headlineLabel(verdict) })),
-        el('div', { class: 'card-title' }, el('h3', { text: txt(food.display, 80) }), el('p', { class: 'meta mono', text: meta }))),
+        el('div', { class: 'card-title' }, el('h3', { text: '食物卡' }),
+          el('p', { class: 'small muted', text: '成分、旗標、判定依據、計畫、Elephant／Goldfish 紀錄' }))),
       (verdict.reasons || []).length ? el('p', { class: 'verdict-reasons', text: '判定依據：' + (verdict.reasons_zh || verdict.reasons).map((r) => txt(r, 160)).join('；') }) : '',
-      el('p', { class: 'stage-now' }, el('span', { class: 'k', text: '這一站' }),
-        `${txt(pipeline.stage_label_zh, 8) || '?'}（${txt(pipeline.state_zh, 8) || '?'}）· ${txt(pipeline.note_zh, 160) || '—'}`),
-      pipeline.parity ? el('p', { class: 'small muted', text: txt(pipeline.parity.label_zh, 60) }) : '',
       food.paper ? paperBlock(food.paper) : '');
     const chips = [levelChip(verdict.level)];
     for (const c of verdict.chips || []) chips.push(chip(chipLabel(c)));
@@ -1383,9 +1794,7 @@
           el('span', { class: 'mono', text: `${txt(f.rule, 16)} ${mid(f.path, 60)}${f.line ? ':' + f.line : ''}` }),
           el('span', { text: txt(f.meaning_zh || f.meaning, 120) }), f.triage ? chip(TRIAGE[f.triage] || txt(f.triage, 20)) : '')))));
     }
-    if (parts.length) node.append(groups(food, parts, '沒有可以直接吸收的成分。'));
-    else if (food.kind === 'paper') node.append(el('p', { class: 'muted small', text: txt(food.components_note_zh, 200) || '論文的成分要由 Elephant 拆（規劃中），或匯入已有的消化紀錄；v0 不會自己拆，也不會編造成分。' }));
-    else node.append(el('p', { class: 'muted small', text: tasted ? '沒有拆出成分。' : '試吃後會把食物拆成成分，分成吸收／排掉／暫留。' }));
+    if (parts.length) node.append(el('p', { class: 'subhead', text: '成分' }), groups(food, parts, '沒有可以直接吸收的成分。'));
     if (open.elephant) node.append(elephantPanel(food));
     if (open.goldfish) node.append(goldfishPanel(food));
     if (open.plan) node.append(planPanel(food));
@@ -1439,7 +1848,7 @@
     return null;
   }
 
-  // 核准: choose the parts on the pipeline, then the usual preview and confirmation.
+  // 核准: choose the parts, then the usual preview and confirmation.
   async function absorbChoose(food) {
     const parts = (Array.isArray(food.components) ? food.components : [])
       .filter((part) => part && part.can_absorb === true)
@@ -1461,7 +1870,7 @@
     report(await run('taste', { food: food.id }, `試吃 ${food.id}`), `${food.id} 試吃完成`);
   }
 
-  // `show` (from the 計畫 stage on the pipeline) always opens the card on the plan.
+  // `show` (from the current stage's 看計畫) always opens the card on the plan.
   async function planFlow(food, show) {
     const open = openState(food.id);
     if (open.plan && !show) {
@@ -1624,6 +2033,15 @@
     $('import-go').addEventListener('click', importAny);
     $('feed-urls').addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) feed();
+    });
+    // The tract switches between its wide and tall shapes with the space it has.
+    let resizing = null;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizing);
+      resizing = setTimeout(() => {
+        const narrow = ($('tract').parentNode.clientWidth || 1000) < 620;
+        if (S.view && (narrow ? 'tall' : 'wide') !== S.shape) renderPipeline();
+      }, 150);
     });
     renderPipeline();
     renderDetail();

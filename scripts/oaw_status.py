@@ -23,6 +23,7 @@ import sys
 PROGRESS_FILE = Path(".oaw/progress.json")
 STATUS_FILE = Path(".oaw/catalog/status.json")
 VIEW_FILE = Path(".oaw/catalog/view.json")
+QUESTIONS_FILE = Path(".oaw/catalog/questions.jsonl")
 VIEW_SCHEMA = "oaw-catalog-view/2"
 # Files build_view() reads; a newer one means view.json may be out of date.
 VIEW_SOURCES = ("registry.json", "decisions.jsonl", "builds.json", "policy.json", "scout.json", "effect.json")
@@ -478,6 +479,7 @@ def food_lines(food, detail=False):
     if not detail:
         return lines
     lines += paper_lines(food.get("paper"))
+    lines += blocker_lines(pipeline)
     if food.get("components_note_zh"):
         lines.append(f"  成分：{clean(food.get('components_note_zh'), 200)}")
     reasons = verdict.get("reasons_zh") or verdict.get("reasons") or []
@@ -531,6 +533,40 @@ def food_lines(food, detail=False):
                 lines.append(f"    {DISPOSITIONS.get(part.get('disposition'), '🟡 暫留')} {clean(part.get('id'), 80)} · {clean(part.get('name'), 80)}"
                              + (f" · {part_state(part)}" if part_state(part) else ""))
     return lines
+
+
+def blocker_lines(pipeline):
+    """The page's blocker explanation as terminal lines (view.json pipeline.blocker); nothing when absent."""
+    blocker = pipeline.get("blocker") if isinstance(pipeline.get("blocker"), dict) else None
+    if not blocker:
+        return []
+    lines = [f"  卡在哪：{clean(blocker.get('where_zh'), 200) or '—'}" + (f" · {clean(pipeline.get('waiting_zh'), 30)}" if pipeline.get("waiting_zh") else "")]
+    basis = [clean(b, 200) for b in blocker.get("basis_zh") or [] if b]
+    if basis:
+        lines.append("  依據：" + "；".join(basis))
+    if blocker.get("if_ignored_zh"):
+        lines.append(f"  你不處理會怎樣：{clean(blocker.get('if_ignored_zh'), 200)}")
+    unknown = [clean(u, 200) for u in blocker.get("unknown_zh") or [] if u]
+    if unknown:
+        lines.append("  紀錄沒寫的：" + "；".join(unknown))
+    return lines
+
+
+def open_questions(project):
+    """How many questions the owner recorded on the page are still unanswered (0 without the file)."""
+    try:
+        text = (Path(project) / QUESTIONS_FILE).read_text(encoding="utf-8")
+    except (OSError, UnicodeError):
+        return 0
+    count = 0
+    for line in text.splitlines():
+        try:
+            record = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(record, dict) and isinstance(record.get("question"), str) and record.get("status") != "answered":
+            count += 1
+    return count
 
 
 def scout_lines(view, limit=None):
@@ -588,10 +624,12 @@ def main(argv=None):
     digest = digest_summary(raw_digest) if raw_digest else None
     view, view_note = load_view(project)
     stale = view_stale(project) if view else False
+    questions = open_questions(project)
     if args.json:
         print(json.dumps({"project": str(project), "progress": progress, "progress_note": progress_note,
                           "digest": digest, "digest_note": digest_note,
-                          "catalog": catalog_summary(view, stale) if view else None, "catalog_note": view_note},
+                          "catalog": catalog_summary(view, stale) if view else None, "catalog_note": view_note,
+                          "open_questions": questions},
                          ensure_ascii=False, indent=2))
     else:
         text = render(project, progress, progress_note, digest, digest_note)
@@ -599,6 +637,8 @@ def main(argv=None):
             text += "\n\n" + "\n".join(catalog_lines(view, stale))
         elif view_note == "invalid":
             text += "\n\n消化目錄：view.json 無效（請執行 catalog.py view）"
+        if questions:
+            text += f"\n\n你在網頁上問的問題：{questions} 個還沒回答（catalog.py questions 列出；Claude 在對話裡回答）"
         print(text)
     return 0
 

