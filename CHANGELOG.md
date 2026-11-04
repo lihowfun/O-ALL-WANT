@@ -6,6 +6,10 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Code-map Stage 0-alpha evaluation harness (`evals/code-map/`, owner decision D24): a pre-registered,
+  zero-model-token question set (39 questions in four classes) on a pinned corpus of this repository,
+  a simulated native-search baseline (`native_search.py`) and a scorer (`score.py`) that runs each arm
+  as a subprocess. No results yet.
 - Skill catalog prototype v0 (`scripts/catalog.py`, pure `scripts/catalog_core.py`):
   batch intake with duplicate merging, weekly scout with a relevance filter,
   sealed tasting in `LAB_HOME` with free static checks and component split,
