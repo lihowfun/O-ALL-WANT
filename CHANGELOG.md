@@ -32,7 +32,8 @@ All notable changes to this project will be documented in this file.
   same `--limit`, `--max-chars` and cursor rules; the mode is bound into the cursor hash, so a cursor
   from one mode is refused by the other. CLI only: documented in `--help` and
   `docs/CLI_Reference.md`; no skill text changed. Default recall output is unchanged and pinned by a
-  byte-golden test. Evidence: static fixture output sizes (30 entries of about 1.5 KB: 3,350 vs
+  byte-golden test (verified against the 790177e recall code). `--index` refuses a query with a line
+  break, and a row's date and tag are cut to 40 characters like the 120-character title (EV-06). Evidence: static fixture output sizes (30 entries of about 1.5 KB: 3,350 vs
   31,079 bytes of text), not a model benchmark; no improvement is claimed.
 - `oaw_common.normalize_cited_path` and `exact_case_path` (OAW-02, only the part OAW-21 needs;
   merge-derived from the graphify integration checks): cited paths are made project-relative

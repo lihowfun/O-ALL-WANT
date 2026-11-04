@@ -390,7 +390,8 @@ def _index_row(label, kind, content, entry_start, entry, match, title, width):
     """One recall --index row: the match line, the entry header or page title, a match window.
 
     The window stays on the matched line, holds the complete match and is at
-    most width characters; width leaves room for the whole query.
+    most width characters; width leaves room for the whole query. Header fields
+    are capped (date and tag 40, title 120), so every row has a bounded length.
     """
     date = tag = None
     if kind == "memory":
@@ -404,7 +405,8 @@ def _index_row(label, kind, content, entry_start, entry, match, title, width):
     right = min(line_end, left + width)
     window = entry[left:match.start()].lstrip() + match.group() + entry[match.end():right].rstrip()
     return {"source": label, "line": content.count("\n", 0, entry_start + match.start()) + 1,
-            "entry_line": content.count("\n", 0, entry_start) + 1, "kind": kind, "date": date, "tag": tag,
+            "entry_line": content.count("\n", 0, entry_start) + 1, "kind": kind,
+            "date": date and date[:40], "tag": tag and tag[:40],
             "title": title.strip()[:120], "match": window, "entry_chars": len(entry)}
 
 
@@ -442,6 +444,9 @@ def memory_recall(query, limit=8, cursor=None, max_chars=12000, json_out=False, 
     """
     if not query.strip() or len(query) > 512:
         raise ValueError("Recall requires a non-empty query of at most 512 characters.")
+    if index and ("\n" in query or "\r" in query):
+        # An index row quotes one line; a match spanning lines would break the two-line text form.
+        raise ValueError("Recall --index requires a single-line query.")
     if not 1 <= limit <= 100:
         raise ValueError("Recall --limit must be between 1 and 100.")
     if not 512 <= max_chars <= 1000000:

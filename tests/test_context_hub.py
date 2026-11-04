@@ -371,6 +371,9 @@ class ContextHubTests(unittest.TestCase):
     def test_recall_default_output_is_byte_identical(self):
         # Byte-golden of the default mode, recorded before --index existed. A deliberate
         # change to default recall output must update these strings on purpose.
+        # Provenance: this test passes unchanged against scripts/context_hub.py and
+        # scripts/oaw_common.py from 790177e (the parent of OAW-15); to re-check, copy
+        # those two files into a scratch scripts/ beside this test file and run this test.
         self.memory.parent.mkdir()
         self.memory.write_text("# Memory\n---\n\n## [2026-10-28] [DECISION] Keep recall bounded\nContext line one.\n"
                                "The needle sits on the third line of this entry.\n\n"
@@ -496,6 +499,22 @@ class ContextHubTests(unittest.TestCase):
         self.memory.write_text("# Memory\n---\n## [2026-10-28] [NOTE] longest\n" + "z" * 480 + "\n", encoding="utf-8")
         with self.assertRaisesRegex(ValueError, "too small"):
             self.quiet(hub.memory_recall, "z" * 480, max_chars=512, index=True)
+
+    def test_recall_index_rejects_multiline_query_and_caps_header_fields(self):
+        self.memory.parent.mkdir()
+        self.memory.write_text("# Memory\n---\n## [" + "d" * 3000 + "] [" + "T" * 3000 + "] " + "t" * 3000
+                               + "\nfirst needle line\nsecond line\n", encoding="utf-8")
+        for query in ("needle line\nsecond", "needle\r"):
+            with self.subTest(query=query), self.assertRaisesRegex(ValueError, "single-line query"):
+                self.quiet(hub.memory_recall, query, index=True)
+        # The default mode keeps accepting it: its excerpts already span lines.
+        self.assertIn("second line", self.quiet(hub.memory_recall, "needle line\nsecond")[1])
+        _, output = self.quiet(hub.memory_recall, "needle", json_out=True, index=True)
+        row = json.loads(output)["results"][0]
+        self.assertEqual((row["date"], row["tag"], row["title"]), ("d" * 40, "T" * 40, "t" * 120))
+        _, text = self.quiet(hub.memory_recall, "needle", index=True, max_chars=512)
+        self.assertEqual(len(text.splitlines()), 2)
+        self.assertLess(len(text.splitlines()[0]), 260)
 
     def test_recall_index_fixture_byte_counts(self):
         # Static-measured output sizes on a fixed fixture, not a model benchmark: 30
