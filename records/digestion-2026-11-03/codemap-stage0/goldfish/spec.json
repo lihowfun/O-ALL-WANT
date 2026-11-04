@@ -1,0 +1,15 @@
+{
+ "groups": [
+  {
+   "name": "codemap-questions",
+   "id_prefix": "QS",
+   "base": "710f775",
+   "head": "237ada0",
+   "paths": [
+    "evals/code-map/questions.json",
+    "evals/code-map/PREREG.md"
+   ],
+   "design": "### Stage 0-alpha question set (D24) - review the evaluation, not code\nThis packet's diff adds a frozen evaluation: questions.json (39 questions in four classes: a concept to definition, b callers, c change impact taken from git commit subjects, d module import path) and PREREG.md (corpus, metrics, the pre-registered pass rule). Two arms will answer every question: R, a keyword search that simulates an agent's first native grep, and S, a code index built with Python's ast; neither arm's code is shown here on purpose. Review for: question text that names or obviously reveals its target file or identifier; gold answers that are ambiguous, incomplete or contradict the question as far as the packet shows; classes or wording that favour one arm by design (for example ast-only facts, or keywords copied from identifiers); commit-subject questions whose gold includes files unrelated to the subject; loopholes in the pass rule or metrics; anything that would let a result be reinterpreted after the fact. Use severity blocker only for something that would make the comparison meaningless.\n"
+  }
+ ]
+}

@@ -1,0 +1,258 @@
+{
+ "packet": "codemap-questions.md",
+ "packet_sha256": "318f29e197ddbc032eff20b2210d992af602f95a5d8736641c8d50d60f91c2a0",
+ "started_at": "2026-11-04T03:08:46.721782+00:00",
+ "launch": {
+  "argv": [
+   "claude",
+   "-p",
+   "--tools",
+   "",
+   "--strict-mcp-config",
+   "--disable-slash-commands",
+   "--setting-sources",
+   "project",
+   "--output-format",
+   "stream-json",
+   "--verbose"
+  ],
+  "stdin": "packet",
+  "cwd": "fresh empty temp folder"
+ },
+ "exit_code": 0,
+ "timed_out": false,
+ "stderr_tail": "",
+ "init_event": {
+  "cwd": "<tmp>/oaw-goldfish-cngq1pd8",
+  "model": "claude-opus-5-5",
+  "claude_code_version": "2.1.318",
+  "permissionMode": "default",
+  "apiKeySource": "none",
+  "memory_paths": {
+   "auto": "~/.claude/projects/-tmp-oaw-goldfish-cngq1pd8/memory/"
+  },
+  "output_style": "default",
+  "tools": [],
+  "mcp_servers": [],
+  "slash_commands": [],
+  "skills": [],
+  "plugins": [
+   {
+    "name": "cc-plugin-sec-default",
+    "path": "builtin",
+    "source": "cc-plugin-sec-default@builtin"
+   },
+   {
+    "name": "cc-plugin-agents-md",
+    "path": "builtin",
+    "source": "cc-plugin-agents-md@builtin"
+   },
+   {
+    "name": "cc-plugin-telemetry",
+    "path": "builtin",
+    "source": "cc-plugin-telemetry@builtin"
+   },
+   {
+    "name": "cc-plugin-privacy",
+    "path": "builtin",
+    "source": "cc-plugin-privacy@builtin"
+   },
+   {
+    "name": "cc-plugin-plugin-authoring",
+    "path": "builtin",
+    "source": "cc-plugin-plugin-authoring@builtin"
+   }
+  ],
+  "agents": [
+   "claude",
+   "Explore",
+   "general-purpose",
+   "Plan",
+   "statusline-setup",
+   "web-fetch"
+  ]
+ },
+ "init_checks": {
+  "tools": true,
+  "mcp_servers": true,
+  "slash_commands": true,
+  "skills": true,
+  "plugins_builtin_only": true,
+  "agents_unusable_without_tools": true,
+  "cwd_is_fresh_temp": true,
+  "no_instruction_files_above_cwd": true,
+  "auto_memory_empty": true
+ },
+ "init_checks_passed": true,
+ "instruction_files_above_cwd": [],
+ "billing_source": "none",
+ "canary": "Not 'none'. Before this packet I received a system prompt and context: (1) agent and harness rules covering markdown output, permission modes, pasted-content handling, they/them pronoun default, confirming hard-to-reverse or outward-facing actions, faithful reporting, and acting rather than surveying; (2) a security-assistance policy covering authorized testing, CTF and defensive use; (3) a description of a persistent file-based memory at ~/.claude/projects/-tmp-oaw-goldfish-cngq1pd8/memory/ with a MEMORY.md index convention (no memory contents or MEMORY.md index were actually shown to me); (4) environment facts: working dir <tmp>/oaw-goldfish-cngq1pd8, not a git repo, Linux on WSL2, bash, date 2026-11-04, model Opus 5.5 / Claude 5 model IDs, Claude Code surfaces and fast mode, rules for handling untrusted downloads; (5) a context-management note and a rule against recreating existing games; (6) a system reminder giving the user's email address (<email>) for identification only. No CLAUDE.md, no settings file, no project facts about OAW, and no tool calls were made.",
+ "zero_context_verified": false,
+ "usage": {
+  "input_tokens": 2,
+  "cache_creation_input_tokens": 28745,
+  "cache_read_input_tokens": 649,
+  "output_tokens": 8449,
+  "output_tokens_details": {
+   "thinking_tokens": 4306
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 28745,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "global",
+  "iterations": [
+   {
+    "input_tokens": 2,
+    "output_tokens": 8449,
+    "cache_read_input_tokens": 649,
+    "cache_creation_input_tokens": 28745,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 28745
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "total_cost_usd": 0.39907780000000004,
+ "review": {
+  "canary": "Not 'none'. Before this packet I received a system prompt and context: (1) agent and harness rules covering markdown output, permission modes, pasted-content handling, they/them pronoun default, confirming hard-to-reverse or outward-facing actions, faithful reporting, and acting rather than surveying; (2) a security-assistance policy covering authorized testing, CTF and defensive use; (3) a description of a persistent file-based memory at ~/.claude/projects/-tmp-oaw-goldfish-cngq1pd8/memory/ with a MEMORY.md index convention (no memory contents or MEMORY.md index were actually shown to me); (4) environment facts: working dir <tmp>/oaw-goldfish-cngq1pd8, not a git repo, Linux on WSL2, bash, date 2026-11-04, model Opus 5.5 / Claude 5 model IDs, Claude Code surfaces and fast mode, rules for handling untrusted downloads; (5) a context-management note and a rule against recreating existing games; (6) a system reminder giving the user's email address (<email>) for identification only. No CLAUDE.md, no settings file, no project facts about OAW, and no tool calls were made.",
+  "findings": [
+   {
+    "id": "QS-01",
+    "unit": "Stage 0-alpha question set (D24)",
+    "file": "evals/code-map/PREREG.md",
+    "line": "Pass rule section",
+    "finding": "Because the gate is 'at least one class' and class d has n=5, a single extra class-d hit (0.2 >= 0.15) passes S, while classes a, b and c need two. The pass decision effectively rests on one question in the class whose task (an import graph) structurally favours an ast index, with four uncorrected chances to pass.",
+    "severity": "major",
+    "kind": "design_mismatch",
+    "evidence": "S passes Stage 0-alpha if, in at least one class,\n`top5(S) - top5(R) >= 0.15` ... one question moves top-5 by 1/12 (a), 1/9 (b), 1/13 (c) or 1/5 (d).",
+    "suggested_fix": "Require a minimum absolute number of questions gained (for example >= 2) per class, or exclude d from the gate or pool classes, and state this before the run."
+   },
+   {
+    "id": "QS-02",
+    "unit": "Stage 0-alpha question set (D24)",
+    "file": "evals/code-map/PREREG.md",
+    "line": "Arms / Metrics",
+    "finding": "Ranking is scored from the separate --json run, but the byte condition of the gate uses only the text-mode run. An arm can print terse text and full JSON, satisfying 'bytes not more than R' without its ranked answer being any shorter.",
+    "severity": "major",
+    "kind": "design_mismatch",
+    "evidence": "once per question in text mode and once with `--json` ... Result paths are read from the JSON results ... text output bytes: stdout of the text-mode run",
+    "suggested_fix": "Score ranks from the same run whose bytes are counted, or require the text output to list the same ranked files as the JSON output and check it."
+   },
+   {
+    "id": "QS-03",
+    "unit": "Stage 0-alpha question set (D24)",
+    "file": "evals/code-map/PREREG.md",
+    "line": "Frozen files / Arms (S)",
+    "finding": "Only questions.json, native_search.py and score.py are hashed. Arm S (scripts/code_index.py or 'its final path') is not frozen before the questions are committed to the same repository, so the claim that S's author 'did not see these questions' cannot be verified, and S could be changed after the questions are visible. The no-retune clause applies only after a Fail.",
+    "severity": "major",
+    "kind": "design_mismatch",
+    "evidence": "run as `py -3 {repo}/scripts/code_index.py {sub} {args}` (or its final path) ... Fail: ... S is not retuned against these questions",
+    "suggested_fix": "Record S's commit and file hashes (or require S to be frozen at a commit that predates 237ada0) in PREREG before the full run, and forbid S changes after the questions land."
+   },
+   {
+    "id": "QS-04",
+    "unit": "Stage 0-alpha question set (D24)",
+    "file": "evals/code-map/questions.json",
+    "line": "b04, b05",
+    "finding": "The disambiguation that defines the gold (zero-argument pipeline_table in the core, not oaw_status's; text-plus-root atomic_write, not oaw.py's) appears only in the question text. The arms receive just the bare symbol, so neither can know which function is meant. These items measure an arm's default collision behaviour, not its ability to answer.",
+    "severity": "major",
+    "kind": "design_mismatch",
+    "evidence": "\"text\": \"Which files call `pipeline_table`, the zero-argument builder in the pure intake core ...\", \"command\": {\"sub\": \"callers\", \"args\": [\"pipeline_table\"]}; similarly \"args\": [\"atomic_write\"] for b05",
+    "suggested_fix": "Pass the defining module as an argument (for example callers scripts/catalog_core.py::pipeline_table) to both arms, or score b04/b05 against the union and report them separately."
+   },
+   {
+    "id": "QS-05",
+    "unit": "Stage 0-alpha question set (D24)",
+    "file": "evals/code-map/questions.json",
+    "line": "class b (b01-b09)",
+    "finding": "Most class-b gold sets are small, and for most of them the defining or a heavily calling file is in the gold. A whole-word grep will likely put a gold file in the top 5 nearly always, so top-5, the gate metric, is probably saturated for both arms and cannot discriminate. Precision and recall, where the real difference lies, are not part of the gate.",
+    "severity": "minor",
+    "kind": "weak_test",
+    "evidence": "b06 gold files: [\"scripts/catalog.py\", \"scripts/oaw.py\"]; b08 gold: [\"scripts/catalog_ui_server.py\", \"tests/test_catalog_ui.py\"]; pass rule uses only top5",
+    "suggested_fix": "State in advance that class b is expected to be uninformative for the gate, or gate class b on recall/precision instead."
+   },
+   {
+    "id": "QS-06",
+    "unit": "Stage 0-alpha question set (D24)",
+    "file": "evals/code-map/questions.json",
+    "line": "c13 (also c04)",
+    "finding": "Class-c gold is every changed code file of the commit, filtered only for tests, example copies and harness bookkeeping, not for relevance to the subject. In c13 the packet does not show why scripts/wiki_sync.py relates to 'coexist with native plugin skills and pin EGM review sources'. In c04, the gold oaw_common.py change is a 3-line alias the difficulty note admits is unreachable from the words.",
+    "severity": "minor",
+    "kind": "unclear",
+    "evidence": "c13 gold files include \"scripts/wiki_sync.py\" with no stated link to the subject; c04 difficulty: \"The oaw_common.py change is a 3-line alias (markdown_lines) that the lint needs; hard to reach from the words.\"",
+    "suggested_fix": "Record per gold file why it relates to the subject, or note that unrelated co-changed files lower the reachable recall equally for both arms."
+   },
+   {
+    "id": "QS-07",
+    "unit": "Stage 0-alpha question set (D24)",
+    "file": "evals/code-map/questions.json",
+    "line": "b05 call_sites",
+    "finding": "The only call sites listed for context_hub.py (line 41) and wiki_sync.py (line 110) are near the top of each file, where imports or module-level aliases or wrappers usually sit. If these are wrappers or aliases (for example `atomic_write = oaw_common.atomic_write`), the in-file callers of the local name are not counted and an alias line is not a call. The packet cannot confirm which.",
+    "severity": "minor",
+    "kind": "unclear",
+    "evidence": "\"call_sites\": [\"scripts/catalog.py:97\", \"scripts/catalog.py:102\", \"scripts/context_hub.py:41\", \"scripts/wiki_sync.py:110\"]",
+    "suggested_fix": "Note in gold_method what the code at context_hub.py:41 and wiki_sync.py:110 is, and how local wrappers or aliases are treated."
+   },
+   {
+    "id": "QS-08",
+    "unit": "Stage 0-alpha question set (D24)",
+    "file": "evals/code-map/questions.json",
+    "line": "a10, a12, b04 text",
+    "finding": "The leak check forbids only the full gold stem, but some question words point at the gold path: 'status printer' (oaw_status.py), 'pilot scorer' (egm-pilot/pilot_common.py, and a12's difficulty note says it points to score.py instead), and 'intake core' (catalog_core.py). An arm that ranks by path tokens gets an unequal hint on these items.",
+    "severity": "minor",
+    "kind": "unclear",
+    "evidence": "a10: \"How does the terminal status printer decide...\"; a12: \"In the pilot scorer, where are lines...\"; b04: \"the zero-argument builder in the pure intake core\"",
+    "suggested_fix": "Extend score.py check to flag stem segments of 4+ characters (status, pilot, core) and record each allowed exception under difficulty."
+   },
+   {
+    "id": "QS-09",
+    "unit": "Stage 0-alpha question set (D24)",
+    "file": "evals/code-map/PREREG.md",
+    "line": "Frozen files paragraph",
+    "finding": "score.py may still be changed before the full run, with new hashes added, and score.py implements path normalization, generated-copy equivalence and the gate. A post-hoc scorer change could therefore alter results while the questions and pass-rule text stay 'unchanged'. PREREG.md itself is not hashed anywhere.",
+    "severity": "minor",
+    "kind": "design_mismatch",
+    "evidence": "A harness fix before the full run must be added here with its reason and new hashes; the questions and the pass rule do not change.",
+    "suggested_fix": "Allow harness fixes only for infrastructure failures, never after any S output is seen, and record the PREREG.md hash (or its commit) in results.json."
+   },
+   {
+    "id": "QS-10",
+    "unit": "Stage 0-alpha question set (D24)",
+    "file": "evals/code-map/PREREG.md",
+    "line": "Metrics / error handling",
+    "finding": "Errors and timeouts are scored as whatever was returned, and those runs still count toward summed text bytes. An arm that fails fast with empty output on hard questions lowers its byte total, which helps it satisfy the byte half of the gate.",
+    "severity": "minor",
+    "kind": "design_mismatch",
+    "evidence": "A run that exits non-zero, times out (300 s) or prints invalid JSON is flagged as an error; whatever it returned is still scored",
+    "suggested_fix": "Exclude erroring questions from the byte comparison for both arms, or make any S error in a class disqualify that class from the gate."
+   }
+  ],
+  "coverage": {
+   "reviewed": [
+    "evals/code-map/questions.json (all 39 questions, gold and gold_method)",
+    "evals/code-map/PREREG.md (corpus, frozen files, arms, metrics, pass rule, limits, harness check)"
+   ],
+   "not_reviewed": [
+    "native_search.py and score.py (not shown)",
+    "arm S code (not shown)",
+    "the corpus itself, so gold line numbers, call sites and import edges could not be verified",
+    "D24 decision text in ingest/DECISIONS.md"
+   ]
+  },
+  "summary": "The question texts mostly avoid gold identifiers, and the gold methods are documented carefully, but the gate has loopholes. One class-d question can pass S, bytes are measured on a different run from the one used for ranks, and S is not frozen before the questions become visible in the repository. b04 and b05 define their gold through disambiguation that the arms never receive, and several smaller items (class-b top-5 saturation, unexplained class-c co-changes, partial-stem hints) should be stated or fixed before the full run."
+ },
+ "raw_result_if_unparsed": null,
+ "host_version": "2.1.318 (Claude Code)",
+ "api_key_allowed": false,
+ "local_paths_redacted": true
+}
