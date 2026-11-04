@@ -30,6 +30,15 @@ GIT = shutil.which("git")
 UI = ROOT / "scripts" / "catalog_ui"
 MIT = b"MIT License\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\n"
 HOSTILE = "<script>alert(1)</script> & <img src=x onerror=alert(2)> <svg onload=alert(3)>"
+# An arXiv OAI-PMH arXivRaw answer, written by hand from the documented shape (tests never reach arXiv).
+ARXIV_RAW = ('<?xml version="1.0" encoding="UTF-8"?><OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/"><GetRecord><record><metadata>'
+             '<arXivRaw xmlns="http://arxiv.org/OAI/arXivRaw/"><id>2606.03979</id>'
+             '<version version="v1"><date>Tue, 2 Jun 2026 17:59:59 GMT</date></version>'
+             '<version version="v2"><date>Fri, 10 Jul 2026 09:00:00 GMT</date></version>'
+             "<title>Language Models Need Sleep: Learning to Self-Modify and Consolidate Memories</title>"
+             "<authors>Ali Behrouz, Farnoosh Hashemi, Adel Javanmard, Vahab Mirrokni</authors>"
+             "<license>http://creativecommons.org/licenses/by/4.0/</license><abstract>Wake and sleep.</abstract>"
+             "</arXivRaw></metadata></record></GetRecord></OAI-PMH>").encode("utf-8")
 
 
 def skill_md(name):
@@ -659,6 +668,44 @@ class MenuTests(UiCase):
         self.assertFalse(any("原因" in prompt for prompt in prompts))
         self.assertTrue(any(prompt.startswith("t = 確認有毒") for prompt in prompts))
         self.assertEqual([d for d in catalog.load_decisions(self.project) if d.get("kind") == "triage"], [])
+
+    def test_a_paper_card_shows_title_authors_version_and_license_on_every_front_end(self):
+        """A paper in the menu, on the page and in oaw_status: its arXiv version + sha256 pin, title, authors and license."""
+        def fake(url, *, limit, **_kw):
+            return ARXIV_RAW if url.startswith(catalog.ARXIV_OAI) else b"%PDF-1.7\n%paper\n"
+        out = []
+        read, _prompts = self.scripted(["2", "arXiv:2606.03979", "4", "1", "", "0"])
+        with patch.object(catalog, "https_get", side_effect=fake):
+            ui.cmd_menu(self.project, read=read, write=out.append)
+        text = "\n".join(out)
+        for line in ("2  入口：你點名（貼 GitHub repo 或 arXiv 論文網址，送去試吃）",
+                     "arxiv-2606-03979  入口 ● 封存 ● 靜態 ◉ 計畫 ○ 盲審 ┄ 實測 ┄ 分流 ○ 核准 ○ 版本 ○  論文已封存（固定 arXiv 版本＋sha256）",
+                     "a. arxiv-2606-03979 · 靜態 · 忘掉這樣食物",
+                     "○ 未測 · arXiv:2606.03979 [arxiv-2606-03979] · 論文 arXiv v2 · sha256 ",
+                     "  論文：Language Models Need Sleep: Learning to Self-Modify and Consolidate Memories",
+                     "    作者：Ali Behrouz、Farnoosh Hashemi、Adel Javanmard、Vahab Mirrokni · 版本 v2（2026-07-10） · 授權 CC-BY-4.0：可引用原文（要附出處）",
+                     "  成分：論文的成分要由 Elephant 拆（規劃中）", "  安全：論文：只封存 PDF，不解析、不執行（sha256 ",
+                     "  實測：還沒有成分：論文要由 Elephant 拆成分（規劃中），或匯入已有的消化紀錄"):
+            self.assertIn(line, text)
+        self.assertNotIn("未固定", text)
+        self.assertNotIn("Traceback", text)
+        self.start()
+        food = self.api("/api/view")["view"]["foods"][0]
+        self.assertEqual((food["kind"], food["pinned"]["version"], food["paper"]["license"], food["paper"]["reuse"], food["paper"]["authors_total"]),
+                         ("paper", "v2", "CC-BY-4.0", "quote-with-attribution", 4))
+        self.assertEqual(food["paper"]["title"], "Language Models Need Sleep: Learning to Self-Modify and Consolidate Memories")
+        script = (UI / "app.js").read_text(encoding="utf-8")
+        for needle in ("food.paper ? paperBlock(food.paper) : ''", "food.kind === 'paper'", "'sha256-recorded'", "'no components yet'",
+                       "kv('授權'", "kv('作者'", "kv('版本'"):
+            self.assertIn(needle, script)
+        page = (UI / "index.html").read_text(encoding="utf-8")
+        self.assertIn("貼上一個或多個 GitHub repo 或 arXiv 論文網址", page)
+        self.assertIn('placeholder="https://github.com/owner/repo&#10;arxiv.org/abs/2606.03979 或 arXiv:2606.03979"', page)
+        status = io.StringIO()
+        with redirect_stdout(status):
+            oaw_status.main(["--project", str(self.project)])
+        self.assertIn("· 論文 arXiv v2 · sha256 ", status.getvalue())
+        self.assertIn("來源：arXiv:2606.03979@v2", status.getvalue())
 
     def test_menu_ends_cleanly_on_end_of_input_through_the_cli(self):
         out, err = io.StringIO(), io.StringIO()

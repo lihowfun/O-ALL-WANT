@@ -571,6 +571,9 @@ table.effect td.quality-value { vertical-align: middle; }
 .safety { font-size: .86rem; }
 .k { display: inline-block; min-width: 3em; margin-right: 6px; color: var(--muted); font-size: .8rem; }
 .kv { font-size: .86rem; margin: 3px 0; }
+/* A paper card's title, authors, version and license. */
+.paper { margin: 8px 0; padding: 6px 10px; border-left: 3px solid var(--line); overflow-wrap: anywhere; }
+.paper-title { margin: 0 0 4px; font-weight: 650; }
 
 .parts { display: grid; gap: 8px; margin: 8px 0; }
 .group { border-left: 4px solid var(--g); background: var(--g-bg); border-radius: 10px; padding: 6px 10px; }
@@ -585,6 +588,7 @@ table.effect td.quality-value { vertical-align: middle; }
 .flag-list li { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: baseline; overflow-wrap: anywhere; }
 .chip.sev-high { background: var(--bad-bg); color: var(--bad); }
 .chip.sev-medium { background: var(--amber-bg); color: var(--amber); }
+.chip.sev-info { background: var(--info-bg); color: var(--accent); }
 .verdict-reasons { margin: 2px 0 6px; font-size: .82rem; color: var(--muted); overflow-wrap: anywhere; }
 .group > summary { display: flex; justify-content: space-between; gap: 8px; cursor: pointer; font-weight: 650; list-style: none; padding: 2px 0; }
 .group > summary::-webkit-details-marker { display: none; }

@@ -28,10 +28,13 @@
   };
   const BUILD_KINDS = { 'baseline': '基準版', 'restore-point': '還原點', 'absorb': '吸收', 'remove': '移除', 'restore': '還原', 'readd': '加回' };
   const HOSTS = { 'codex': 'Codex', 'claude': 'Claude' };
-  const SEVERITY = { 'high': '高', 'medium': '中', 'low': '低' };
+  const SEVERITY = { 'high': '高', 'medium': '中', 'low': '低', 'info': '資訊' };
   const TRIAGE = { 'benign': '已判良性', 'allergen': '已判過敏原', 'confirm-toxic': '你確認有毒' };
   const CHIPS = { 'free-checks-passed': '免費檢查通過', 'rules-updated-free-T0-pending': '規則已更新，待重跑免費檢查' };
-  const INTEGRITY = { 'git-object-verified': 'git 物件驗證', 'unverified-against-commit': '未對 commit 驗證' };
+  const INTEGRITY = { 'git-object-verified': 'git 物件驗證', 'unverified-against-commit': '未對 commit 驗證',
+    'sha256-recorded': '已記 sha256（arXiv 沒有可驗證的 hash）' };
+  // A paper's license rule (catalog_core.paper_license): what OAW may reuse from it.
+  const REUSE = { 'quote-with-attribution': '可引用原文（要附出處）', 'ideas-only': '只取想法：重新實作，不複製原文' };
   const PLAN_STATUS = [
     ['waiting for standing policy', '等你設定常設預算'],
     ['within policy', '第 0/1 階段在常設預算內；第 2 階段和第二個 host 要先問你（v0 尚未開放付費實測）'],
@@ -40,7 +43,8 @@
     ['no paid test: owner confirmed toxic', '不需實測：已確認有毒'],
     ['no paid test: oaw cannot digest', '不需實測：OAW 無法消化'],
     ['blocked', '被擋住：高嚴重度旗標要先分流'],
-    ['no paid test needed', '不需付費實測：沒有可吸收的成分']
+    ['no paid test needed', '不需付費實測：沒有可吸收的成分'],
+    ['no components yet', '還沒有成分：論文要由 Elephant 拆成分（規劃中），或匯入已有的消化紀錄']
   ];
   const PLAN_STEPS = {
     'T0': '免費靜態檢查', 'T1': '離線整合', 'T2a': '人工分流旗標', 'G': 'Goldfish 盲審我們的吸收草稿', 'TX': '可拋棄環境試跑',
@@ -169,6 +173,8 @@
     if ((food.verdict || {}).headline === 'toxic') return '經人工確認有毒';
     if (!food.tasted) return '尚未檢查';
     if (flags.open) return `${flags.open} 個旗標未分流（高 ${flags.open_high || 0}）`;
+    const pdf = txt((food.pinned || {}).pdf_sha12, 12);
+    if (food.kind === 'paper') return `論文：只封存 PDF，不解析、不執行${pdf ? `（sha256 ${pdf}）` : ''}`;
     const tree = txt((food.pinned || {}).tree_sha12, 12);
     return tree ? `沒有觀察到有毒訊號（tree ${tree}）` : '沒有觀察到有毒訊號';
   }
@@ -617,7 +623,7 @@
       el('div', { class: 'tcell tlabel', role: 'rowheader' },
         el('button', { type: 'button', class: 'food-name', text: txt(food.display, 60), title: '打開食物卡', onclick: () => openFood(food.id) }),
         el('span', { class: 'lane-chips' }, el('span', { class: `vchip fam-${family}`, text: `${txt(verdict.symbol, 3)} ${headlineLabel(verdict)}` }),
-          levelChip(verdict.level))));
+          levelChip(verdict.level), food.kind === 'paper' ? chip('論文') : '')));
     const at = table.order.indexOf(here);
     table.stages.forEach((stage, index) => {
       let state = states[stage.id];
@@ -1068,7 +1074,7 @@
     const area = $('feed-urls');
     const urls = area.value.split(/[\s,]+/).filter(Boolean);
     if (!urls.length) {
-      toast('先貼上至少一個 GitHub 網址。', 'warn');
+      toast('先貼上至少一個 GitHub repo 或 arXiv 論文網址。', 'warn');
       area.focus();
       return;
     }
@@ -1205,7 +1211,7 @@
       report(await run('import-report', { food: food.id, directory: directory }, `匯入 ${food.id} 的報告`), '已匯入：標成歷史證據，不計入判定');
     } });
     return el('div', { class: 'import' },
-      el('label', { for: input.id, class: 'small', text: '放 digest.json、verify.json、goldfish-*.json、components.json、integration.json、proposals.md 的資料夾' }),
+      el('label', { for: input.id, class: 'small', text: '放 digest.json、verify.json、goldfish-*.json、components.json、integration.json、proposals.md 的資料夾（論文的紀錄：components.json、goldfish-*.json、skeptic.json、digest.md…）' }),
       el('div', { class: 'row' }, input, go));
   }
 
@@ -1234,6 +1240,17 @@
       }
       if (r.proposals && (r.proposals.headings || []).length) {
         panel.append(untrusted(`吸收提案的章節（${r.proposals.headings.length}）`, r.proposals.headings.map((h) => txt(h, 120)).join('\n')));
+      }
+      if (r.paper) {
+        panel.append(kv('論文（紀錄裡寫的）', `${txt(r.paper.title, 160) || '—'} · ${txt(r.paper.version, 8) || '沒有版本'} · ${txt(r.paper.license, 40) || '授權不明'}`));
+      }
+      for (const review of r.reviews || []) {
+        const severity = Object.entries(review.by_severity || {}).map(([k, n]) => `${txt(k, 20)} ${n}`).join('、');
+        panel.append(kv(`其他審查（${txt(review.reviewer, 40)}）`, `${fmt(review.findings)} 項發現${severity ? '（' + severity + '）' : ''}`));
+      }
+      if ((r.documents || []).length) {
+        panel.append(untrusted(`紀錄文件（${r.documents.length}）`, r.documents.map((d) => `${txt(d.name, 60)}（${fmt(d.bytes)} bytes）：`
+          + (d.headings || []).map((h) => txt(h, 120)).join('；')).join('\n')));
       }
       if ((r.components || []).length) {
         panel.append(el('h5', { text: `Elephant 提的成分分流（${r.components.length}）` }),
@@ -1327,7 +1344,11 @@
     const installed = parts.some((part) => part.in_current_build);
     const pipeline = food.pipeline || {};
     const pinned = food.pinned || {};
-    const meta = [txt(food.id, 64), ORIGINS[food.origin] || '', pinned.commit7 ? '@' + txt(pinned.commit7, 12) : '未固定版本', INTEGRITY[pinned.integrity] || '',
+    // A repository is pinned to a commit; a paper to an arXiv version plus the sha256 of its sealed PDF.
+    const pin = food.kind === 'paper'
+      ? (pinned.pdf_sha12 ? `${pinned.version ? 'arXiv ' + txt(pinned.version, 8) : '本機 PDF'} · sha256 ${txt(pinned.pdf_sha12, 12)}` : '未固定版本')
+      : pinned.commit7 ? '@' + txt(pinned.commit7, 12) : '未固定版本';
+    const meta = [txt(food.id, 64), food.kind === 'paper' ? '論文' : '', ORIGINS[food.origin] || '', pin, INTEGRITY[pinned.integrity] || '',
       food.license ? txt(food.license, 40) : '', food.exec_class ? '執行等級 ' + txt(food.exec_class, 10) : ''].filter(Boolean).join(' · ');
     const node = el('article', { class: `card fam-${family}`, 'data-food': food.id },
       el('header', { class: 'card-head' },
@@ -1338,7 +1359,8 @@
       (verdict.reasons || []).length ? el('p', { class: 'verdict-reasons', text: '判定依據：' + (verdict.reasons_zh || verdict.reasons).map((r) => txt(r, 160)).join('；') }) : '',
       el('p', { class: 'stage-now' }, el('span', { class: 'k', text: '這一站' }),
         `${txt(pipeline.stage_label_zh, 8) || '?'}（${txt(pipeline.state_zh, 8) || '?'}）· ${txt(pipeline.note_zh, 160) || '—'}`),
-      pipeline.parity ? el('p', { class: 'small muted', text: txt(pipeline.parity.label_zh, 60) }) : '');
+      pipeline.parity ? el('p', { class: 'small muted', text: txt(pipeline.parity.label_zh, 60) }) : '',
+      food.paper ? paperBlock(food.paper) : '');
     const chips = [levelChip(verdict.level)];
     for (const c of verdict.chips || []) chips.push(chip(chipLabel(c)));
     if (verdict.stale) chips.push(chip('⟲ 需重測', 'warn'));
@@ -1362,6 +1384,7 @@
           el('span', { text: txt(f.meaning_zh || f.meaning, 120) }), f.triage ? chip(TRIAGE[f.triage] || txt(f.triage, 20)) : '')))));
     }
     if (parts.length) node.append(groups(food, parts, '沒有可以直接吸收的成分。'));
+    else if (food.kind === 'paper') node.append(el('p', { class: 'muted small', text: txt(food.components_note_zh, 200) || '論文的成分要由 Elephant 拆（規劃中），或匯入已有的消化紀錄；v0 不會自己拆，也不會編造成分。' }));
     else node.append(el('p', { class: 'muted small', text: tasted ? '沒有拆出成分。' : '試吃後會把食物拆成成分，分成吸收／排掉／暫留。' }));
     if (open.elephant) node.append(elephantPanel(food));
     if (open.goldfish) node.append(goldfishPanel(food));
@@ -1381,6 +1404,21 @@
         title: installed ? '移除這樣食物已安裝的 skill（先預覽）' : '還沒有吸收任何會安裝的成分', onclick: () => removeFlow(food.id, food) }),
       installed ? '' : el('button', { type: 'button', class: 'btn act', text: '忘掉這樣食物', title: '從食物卡拿掉（先預覽）；決定紀錄會保留', onclick: () => forgetFlow(food) })));
     return node;
+  }
+
+  // A paper's title, authors, version and license (from the sealed taste, or as an imported record states them).
+  function paperBlock(paper) {
+    const authors = (paper.authors || []).map((a) => txt(a, 80));
+    const total = Number.isInteger(paper.authors_total) ? paper.authors_total : authors.length;
+    const more = total > authors.length ? `（共 ${total} 位）` : '';
+    const version = paper.version ? txt(paper.version, 8) + (paper.version_date ? `（${txt(paper.version_date, 20)}）` : '') : '沒有版本（本機 PDF）';
+    return el('div', { class: 'paper' },
+      el('p', { class: 'paper-title', text: txt(paper.title, 300) || '（沒有標題：本機 PDF 只記檔案本身）' }),
+      kv('作者', authors.length ? authors.join('、') + more : '未記錄'),
+      kv('版本', version + (paper.arxiv_id ? ` · arXiv:${txt(paper.arxiv_id, 40)}` : '')),
+      kv('授權', `${txt(paper.license, 60) || '不明'}` + (REUSE[paper.reuse] ? ` · ${REUSE[paper.reuse]}` : '')),
+      Number.isInteger(paper.abstract_chars) ? kv('摘要', `${fmt(paper.abstract_chars)} 字元（摘要原文留在 LAB_HOME，不進專案）`) : '',
+      paper.from === 'imported' ? el('p', { class: 'muted small', text: '這是匯入的紀錄自己寫的（歷史證據）；試吃後改用封存的中繼資料。' }) : '');
   }
 
   function togglePanel(foodId, name) {
