@@ -18,7 +18,7 @@ REQUIRED_TEST_MODULES = ("test_context_hub", "test_gate", "test_improvement", "t
                          "test_egm_pilot", "test_egm_local", "test_status", "test_egm_integration",
                          "test_catalog_core", "test_catalog", "test_catalog_ui", "test_cli_resolve",
                          "test_goldfish_review", "test_codemap_eval")
-MINIMUM_TESTS = 397  # POSIX count; Windows adds junction cases.
+MINIMUM_TESTS = 401  # POSIX count; Windows adds junction cases.
 SUMMARY_MARKER = "OAW-TEST-SUMMARY "
 
 

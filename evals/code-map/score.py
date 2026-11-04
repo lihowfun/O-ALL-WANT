@@ -9,14 +9,21 @@
   score.py run --questions Q --corpus CORPUS --arm NAME=TEMPLATE [--arm ...] --out DIR
       Run every question once per arm and write results.json and results.md. The
       corpus file list must match the frozen one, and the questions' sha256 must
-      match the one recorded in the PREREG.md beside them (or --prereg).
+      match the one recorded in the PREREG.md beside them (or --prereg). On a full
+      run under PREREG.md, the sha256 of every .py file an arm template names must
+      be recorded there (the arm freeze); harness files whose hashes are not
+      recorded make the run a recorded deviation.
 
 An arm is a command template run as a subprocess with cwd = a fresh copy of the
 corpus, once in text mode (output bytes, wall time) and once in JSON mode (the
-ranking). Placeholders: {sub} the subcommand, {args} its arguments (expands to
-several argv items), {json} where the JSON flag goes (appended as --json when
-absent), {python} this interpreter, {repo} this repository, {corpus} the arm's
-corpus copy. The scorer never imports an arm. Standard library only.
+ranking). A ranked file counts only if its path also appears in the text-mode
+output. A run that exits non-zero, times out, prints invalid JSON, prints no
+text or returns no results has failed: it is a miss for that arm, and its
+question leaves the byte comparison for both arms. Placeholders: {sub} the
+subcommand, {args} its arguments (expands to several argv items), {json} where
+the JSON flag goes (appended as --json when absent), {python} this interpreter,
+{repo} this repository, {corpus} the arm's corpus copy. The scorer never imports
+an arm. Standard library only.
 """
 from __future__ import annotations
 
@@ -43,7 +50,9 @@ SUBCOMMANDS = {"a": "find", "b": "callers", "c": "find", "d": "path"}
 TOP_K = 5
 RANK_CUTOFF = 10
 PASS_DELTA = 0.15
+MIN_GAINED_QUESTIONS = 2  # pre-result clarification of D24: the 0.15 margin must be at least 2 questions
 EPSILON = 1e-9
+PATH_WORD_MIN = 4
 GENERATED_PREFIX = "example/"
 DEFAULT_TIMEOUT = 300
 
@@ -102,16 +111,18 @@ def load_questions(path: Path) -> tuple[dict, str]:
     return document, sha256_bytes(data)
 
 
-def prereg_status(prereg: Path | None, questions_sha: str) -> str:
+def prereg_status(prereg: Path | None, questions_sha: str) -> tuple[str, str | None, str | None]:
+    """(status, PREREG text, PREREG sha256); refuses questions whose hash PREREG does not record."""
     if prereg is None:
-        return "not checked"
-    text = prereg.read_text(encoding="utf-8")
+        return "not checked", None, None
+    data = prereg.read_bytes()
+    text = data.decode("utf-8")
     recorded = re.findall(r"questions\.json sha256:\s*`?([0-9a-f]{64})`?", text)
     if not recorded:
         raise ScoreError(f"{prereg} records no 'questions.json sha256:' line")
     if questions_sha not in recorded:
         raise ScoreError(f"questions.json sha256 {questions_sha} differs from the one recorded in {prereg}")
-    return "matches PREREG"
+    return "matches PREREG", text, sha256_bytes(data)
 
 
 def symbol_span(source: str, symbol: str) -> tuple[int, int] | None:
@@ -141,6 +152,18 @@ def forbidden_names(question: dict) -> set[str]:
         for part in gold["symbol"].split("."):
             names.add(part.lstrip("_").casefold())
     return names
+
+
+def path_words(question: dict) -> set[str]:
+    """Words of 4+ characters in the gold files' folder and stem names (status, pilot, core, ...).
+
+    A question may list unavoidable ones under `allowed_path_words` (recorded under difficulty)."""
+    words = set()
+    for path in question["gold"]["files"]:
+        pure = PurePosixPath(path)
+        for part in (*pure.parts[:-1], pure.stem):
+            words.update(word.casefold() for word in re.split(r"[_\-.]", part) if len(word) >= PATH_WORD_MIN)
+    return words - {word.casefold() for word in question.get("allowed_path_words", [])}
 
 
 def check_questions(document: dict, corpus: Path) -> list[str]:
@@ -186,7 +209,9 @@ def check_questions(document: dict, corpus: Path) -> list[str]:
         if kind == "b":
             symbol = command.get("args", [""])[0]
             defined = gold.get("defined_in", "")
-            if defined not in files or symbol_span((corpus / defined).read_text(encoding="utf-8"), symbol) is None:
+            qualifier, _, name = symbol.rpartition(".")
+            if (defined not in files or symbol_span((corpus / defined).read_text(encoding="utf-8"), name) is None
+                    or (qualifier and qualifier != PurePosixPath(defined).stem)):
                 problems.append(f"{where} {symbol} is not defined in {defined}")
         if kind == "c" and not re.fullmatch(r"[0-9a-f]{40}", gold.get("commit", "")):
             problems.append(f"{where} class c needs the full commit hash")
@@ -207,6 +232,9 @@ def check_questions(document: dict, corpus: Path) -> list[str]:
         for name in sorted(forbidden_names(question)):
             if name and name in text:
                 problems.append(f"{where} question text names its target ({name})")
+        for word in sorted(path_words(question)):
+            if word in text:
+                problems.append(f"{where} question text uses a word of a gold path ({word}); reword or allow it")
     for kind, (low, high) in {"a": (8, 12), "b": (6, 10), "c": (10, 14), "d": (4, 6)}.items():
         if not low <= counts[kind] <= high:
             problems.append(f"class {kind}: {counts[kind]} questions, expected {low}-{high}")
@@ -313,11 +341,15 @@ def canonical(path: str, gold: set[str], twins: dict[str, set[str]]) -> str:
     return matching[0] if matching else min(sources)
 
 
-def score_question(question: dict, paths: list[str], lines: list, twins: dict[str, set[str]]) -> dict:
+def score_question(question: dict, paths: list[str], lines: list, twins: dict[str, set[str]],
+                   shown: str | None = None) -> dict:
+    """Rank metrics from the JSON order. With `shown` (the text-mode output), a gold file counts only
+    when its path, as the arm reported it, also appears in that text."""
     gold = set(question["gold"]["files"])
-    ordered, first_line = [], {}
+    ordered, first_line, reported = [], {}, {}
     for path, line in zip(paths, lines):
         name = canonical(path, gold, twins)
+        reported.setdefault(name, set()).add(path)
         if name not in first_line:
             first_line[name] = line
             ordered.append(name)
@@ -325,11 +357,17 @@ def score_question(question: dict, paths: list[str], lines: list, twins: dict[st
         endpoints = {canonical(path, gold, twins) for path in question["command"]["args"]}
         ordered = [path for path in ordered if path not in endpoints]
     top = ordered[:RANK_CUTOFF]
-    rank = next((index + 1 for index, path in enumerate(top) if path in gold), None)
-    found = [path for path in top if path in gold]
-    result = {"ranked": top, "hit1": bool(top) and top[0] in gold, "hit5": any(path in gold for path in top[:TOP_K]),
+    text = None if shown is None else shown.replace("\\", "/")
+
+    def counts(path: str) -> bool:
+        return path in gold and (text is None or any(item in text for item in reported[path] | {path}))
+
+    rank = next((index + 1 for index, path in enumerate(top) if counts(path)), None)
+    found = [path for path in top if counts(path)]
+    result = {"ranked": top, "hit1": bool(top) and counts(top[0]), "hit5": any(counts(path) for path in top[:TOP_K]),
               "rr": 1 / rank if rank else 0.0, "precision": len(found) / len(top) if top else 0.0,
-              "recall": len(found) / len(gold)}
+              "recall": len(found) / len(gold),
+              "gold_not_in_text": sum(path in gold and not counts(path) for path in top)}
     if question["class"] == "a":
         first, last = question["gold"]["lines"]
         line = first_line.get(top[0]) if top else None
@@ -349,11 +387,14 @@ def summarize(rows: list[dict]) -> dict:
             continue
         mean = lambda key: round(statistics.fmean(row[key] for row in selected), 4)  # noqa: E731
         entry = {"n": len(selected), "top1": mean("hit1"), "top5": mean("hit5"), "mrr": mean("rr"),
+                 "top5_hits": sum(row["hit5"] for row in selected),
                  "text_bytes": sum(row["text_bytes"] for row in selected),
+                 "json_bytes": sum(row["json_bytes"] for row in selected),
                  "median_text_bytes": statistics.median(row["text_bytes"] for row in selected),
                  "seconds": round(sum(row["seconds"] for row in selected), 3),
                  "median_seconds": round(statistics.median(row["seconds"] for row in selected), 3),
-                 "errors": sum(bool(row["error"]) for row in selected)}
+                 "errors": sum(bool(row["error"]) for row in selected),
+                 "gold_not_in_text": sum(row["gold_not_in_text"] for row in selected)}
         if kind in ("b", "c"):
             entry["precision"], entry["recall"] = mean("precision"), mean("recall")
         if kind == "a":
@@ -362,30 +403,45 @@ def summarize(rows: list[dict]) -> dict:
     return summary
 
 
-def gate(summary: dict, baseline: str, partial: bool) -> dict:
-    """D24: some class where the arm's top-5 file hit rate beats the baseline by >= 0.15
-    while its text output bytes in that class are not more than the baseline's."""
+GATE_RULE = (f"in one class: top-5 rate delta >= {PASS_DELTA}, at least {MIN_GAINED_QUESTIONS} more top-5 hits, and "
+             "text bytes <= baseline over the questions where neither arm failed")
+
+
+def gate(rows: list[dict], baseline: str, partial: bool) -> dict:
+    """D24 with its pre-result clarification: in some class the arm's top-5 file hit rate beats the
+    baseline by >= 0.15 and by at least 2 questions, while its text output bytes are not more than
+    the baseline's over the questions where neither arm failed."""
     if partial:
         return {"evaluated": False, "reason": "partial run (--ids); the pre-registered rule needs every question"}
-    if baseline not in summary:
+    arms = list(dict.fromkeys(row["arm"] for row in rows))
+    if baseline not in arms:
         return {"evaluated": False, "reason": f"baseline arm {baseline} was not run"}
+    by_arm = {arm: {row["id"]: row for row in rows if row["arm"] == arm} for arm in arms}
     verdicts = {}
-    for arm, classes in summary.items():
+    for arm in arms:
         if arm == baseline:
             continue
-        rows = {}
-        for kind, entry in classes.items():
-            base = summary[baseline].get(kind)
-            if base is None:
+        classes = {}
+        for kind in CLASSES:
+            ids = [qid for qid, row in by_arm[arm].items() if row["class"] == kind and qid in by_arm[baseline]]
+            if not ids:
                 continue
-            delta = round(entry["top5"] - base["top5"], 4)
-            fewer_bytes = entry["text_bytes"] <= base["text_bytes"]
-            rows[kind] = {"top5_delta": delta, "text_bytes": entry["text_bytes"], "baseline_text_bytes": base["text_bytes"],
-                          "passes": delta >= PASS_DELTA - EPSILON and fewer_bytes}
-        passing = [kind for kind, value in rows.items() if value["passes"]]
-        verdicts[arm] = {"classes": rows, "passing_classes": passing, "pass": bool(passing)}
-    return {"evaluated": True, "baseline": baseline, "rule": f"top5 delta >= {PASS_DELTA} and text bytes <= baseline in one class",
-            "arms": verdicts}
+            mine, base = [by_arm[arm][qid] for qid in ids], [by_arm[baseline][qid] for qid in ids]
+            gained = sum(row["hit5"] for row in mine) - sum(row["hit5"] for row in base)
+            delta = round(gained / len(ids), 4)
+            compared = [qid for qid in ids if not by_arm[arm][qid]["failed"] and not by_arm[baseline][qid]["failed"]]
+            text_bytes = sum(by_arm[arm][qid]["text_bytes"] for qid in compared)
+            base_bytes = sum(by_arm[baseline][qid]["text_bytes"] for qid in compared)
+            classes[kind] = {"n": len(ids), "top5_delta": delta, "top5_hits_gained": gained,
+                             "bytes_compared_questions": len(compared), "bytes_excluded_questions": len(ids) - len(compared),
+                             "text_bytes": text_bytes, "baseline_text_bytes": base_bytes,
+                             "json_bytes": sum(by_arm[arm][qid]["json_bytes"] for qid in compared),
+                             "baseline_json_bytes": sum(by_arm[baseline][qid]["json_bytes"] for qid in compared),
+                             "passes": (delta >= PASS_DELTA - EPSILON and gained >= MIN_GAINED_QUESTIONS
+                                        and bool(compared) and text_bytes <= base_bytes)}
+        passing = [kind for kind, value in classes.items() if value["passes"]]
+        verdicts[arm] = {"classes": classes, "passing_classes": passing, "pass": bool(passing)}
+    return {"evaluated": True, "baseline": baseline, "rule": GATE_RULE, "arms": verdicts}
 
 
 # --------------------------------------------------------------------------- run
@@ -394,7 +450,13 @@ def run(args) -> int:
     questions_path, corpus = Path(args.questions).resolve(), Path(args.corpus).resolve()
     document, questions_sha = load_questions(questions_path)
     sibling = questions_path.parent / "PREREG.md"
-    prereg = prereg_status(Path(args.prereg) if args.prereg else sibling if sibling.is_file() else None, questions_sha)
+    prereg, prereg_text, prereg_sha = prereg_status(Path(args.prereg) if args.prereg else sibling if sibling.is_file() else None,
+                                                    questions_sha)
+    harness = {name: sha256_bytes((Path(__file__).parent / name).read_bytes()) for name in ("score.py", "native_search.py")}
+    deviations = []
+    if prereg_text is not None:
+        deviations += [f"{name} sha256 {digest} is not recorded in PREREG.md" for name, digest in harness.items()
+                       if digest not in prereg_text]
     identity = corpus_identity(corpus)
     expected = document.get("corpus", {}).get("file_list_sha256")
     if expected != identity["file_list_sha256"] and not args.allow_corpus_mismatch:
@@ -410,13 +472,23 @@ def run(args) -> int:
         if unknown:
             raise ScoreError(f"unknown question ids: {', '.join(sorted(unknown))}")
         selected = [question for question in selected if question["id"] in wanted]
+    partial = len(selected) != len(document["questions"])
     twins = generated_twins(corpus)
     rows, arm_info = [], {}
     with tempfile.TemporaryDirectory(prefix="codemap-score-") as temporary:
+        workdirs, unfrozen = {}, []
         for arm, template in arms.items():
-            workdir = Path(temporary) / arm / "corpus"
+            workdir = workdirs[arm] = Path(temporary) / arm / "corpus"
             shutil.copytree(corpus, workdir, symlinks=True)
-            info = {"template": template, "files_sha256": template_files(template, workdir)}
+            arm_info[arm] = {"template": template, "files_sha256": template_files(template, workdir)}
+            unfrozen += [f"arm {arm}: {token} sha256 {digest} is not recorded in PREREG.md"
+                         for token, digest in arm_info[arm]["files_sha256"].items()
+                         if token.endswith(".py") and prereg_text is not None and digest not in prereg_text]
+        if unfrozen and not partial and not args.allow_unfrozen_arm:
+            raise ScoreError("; ".join(unfrozen) + " (freeze the arm in PREREG.md before a full run)")
+        deviations += unfrozen
+        for arm, template in arms.items():
+            workdir, info = workdirs[arm], arm_info[arm]
             if arm in setups:
                 setup = invoke(expand(setups[arm], sub=None, args=[], json_mode=False, workdir=workdir), workdir, args.timeout)
                 info["setup"] = {"template": setups[arm], "exit": setup["exit"], "seconds": round(setup["seconds"], 3),
@@ -431,26 +503,32 @@ def run(args) -> int:
                 json_run = invoke(expand(template, sub=command["sub"], args=command["args"], json_mode=True, workdir=workdir),
                                   workdir, args.timeout)
                 error = None
+                text = text_run["stdout"].decode("utf-8", "replace")
                 try:
                     paths, lines, error = ranked_paths(json.loads(json_run["stdout"].decode("utf-8")), workdir)
                 except (UnicodeError, ValueError):
                     paths, lines, error = [], [], "JSON output is not valid JSON"
                 if text_run["exit"] != 0 or json_run["exit"] != 0:
                     error = f"exit text={text_run['exit']} json={json_run['exit']}: {(json_run['stderr'] or text_run['stderr']).strip()[-300:]}"
-                metrics = score_question(question, paths, lines, twins)
+                elif error is None and not text.strip():
+                    error = "empty text output"
+                elif error is None and not paths:
+                    error = "no results"
+                failed = error is not None
+                metrics = score_question(question, [] if failed else paths, [] if failed else lines, twins, shown=text)
                 rows.append({"arm": arm, "id": question["id"], "class": question["class"], **metrics,
+                             "returned": paths[:RANK_CUTOFF] if failed else None,
                              "text_bytes": len(text_run["stdout"]), "json_bytes": len(json_run["stdout"]),
                              "seconds": round(text_run["seconds"], 4), "json_seconds": round(json_run["seconds"], 4),
-                             "error": error})
+                             "failed": failed, "error": error})
     summary = {arm: summarize([row for row in rows if row["arm"] == arm]) for arm in arms}
-    partial = len(selected) != len(document["questions"])
     report = {"schema_version": SCHEMA_VERSION, "questions": questions_path.name, "questions_sha256": questions_sha,
-              "prereg": prereg, "corpus": {**identity, "commit": document.get("corpus", {}).get("commit")},
+              "prereg": prereg, "prereg_sha256": prereg_sha,
+              "corpus": {**identity, "commit": document.get("corpus", {}).get("commit")},
               "partial": partial, "question_ids": [question["id"] for question in selected],
-              "harness_sha256": {name: sha256_bytes((Path(__file__).parent / name).read_bytes())
-                                 for name in ("score.py", "native_search.py")},
+              "harness_sha256": harness, "deviations": deviations,
               "top_k": TOP_K, "rank_cutoff": RANK_CUTOFF, "arms": arm_info, "summary": summary,
-              "gate": gate(summary, args.baseline, partial), "rows": rows,
+              "gate": gate(rows, args.baseline, partial), "rows": rows,
               "platform": {"python": sys.version.split()[0], "os": sys.platform}}
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
@@ -467,16 +545,17 @@ def render_markdown(report: dict) -> str:
              f"- corpus: commit {report['corpus']['commit']}, {report['corpus']['files']} files, "
              f"file list `{report['corpus']['file_list_sha256']}`",
              f"- questions run: {len(report['question_ids'])}; top-k {report['top_k']}; MRR and precision/recall over the "
-             f"first {report['rank_cutoff']} distinct files", "",
-             "| arm | class | n | top-1 | top-5 | MRR | P@10 | R@10 | text bytes | seconds | errors |",
-             "|---|---|---|---|---|---|---|---|---|---|---|"]
+             f"first {report['rank_cutoff']} distinct files; a file counts only if the text output shows it",
+             f"- deviations: {'; '.join(report['deviations']) or 'none'}", "",
+             "| arm | class | n | top-1 | top-5 | top-5 hits | MRR | P@10 | R@10 | text bytes | JSON bytes | seconds | failed |",
+             "|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for arm, classes in report["summary"].items():
         for kind, entry in classes.items():
             precision = f"{entry['precision']:.3f}" if "precision" in entry else "-"
             recall = f"{entry['recall']:.3f}" if "recall" in entry else "-"
             lines.append(f"| {arm} | {kind} ({CLASS_NAMES[kind]}) | {entry['n']} | {entry['top1']:.3f} | {entry['top5']:.3f} | "
-                         f"{entry['mrr']:.3f} | {precision} | {recall} | {entry['text_bytes']} | {entry['seconds']:.2f} | "
-                         f"{entry['errors']} |")
+                         f"{entry['top5_hits']} | {entry['mrr']:.3f} | {precision} | {recall} | {entry['text_bytes']} | "
+                         f"{entry['json_bytes']} | {entry['seconds']:.2f} | {entry['errors']} |")
     result = report["gate"]
     lines.append("")
     if not result["evaluated"]:
@@ -485,7 +564,12 @@ def render_markdown(report: dict) -> str:
         for arm, verdict in result["arms"].items():
             passing = ", ".join(verdict["passing_classes"]) or "none"
             lines.append(f"Gate for {arm} vs {result['baseline']}: {'PASS' if verdict['pass'] else 'FAIL'} "
-                         f"(passing classes: {passing}; {result['rule']}).")
+                         f"(passing classes: {passing}; rule: {result['rule']}).")
+            for kind, value in verdict["classes"].items():
+                lines.append(f"- {kind}: top-5 delta {value['top5_delta']:+.3f} ({value['top5_hits_gained']:+d} questions); "
+                             f"text bytes {value['text_bytes']} vs {value['baseline_text_bytes']} over "
+                             f"{value['bytes_compared_questions']} questions ({value['bytes_excluded_questions']} excluded "
+                             f"after a failure); JSON bytes {value['json_bytes']} vs {value['baseline_json_bytes']}")
     return "\n".join(lines) + "\n"
 
 
@@ -509,6 +593,8 @@ def main(argv=None) -> int:
     scoring.add_argument("--ids", help="comma-separated question ids (a partial run never evaluates the gate)")
     scoring.add_argument("--prereg", help="PREREG.md whose recorded questions.json sha256 must match")
     scoring.add_argument("--allow-corpus-mismatch", action="store_true")
+    scoring.add_argument("--allow-unfrozen-arm", action="store_true",
+                         help="run an arm whose files PREREG.md does not record; the results list it as a deviation")
     scoring.add_argument("--timeout", type=float, default=DEFAULT_TIMEOUT)
     scoring.add_argument("--out", required=True)
     args = parser.parse_args(argv)

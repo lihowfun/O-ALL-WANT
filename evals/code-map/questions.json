@@ -2,6 +2,7 @@
   "schema_version": 1,
   "title": "OAW code-map Stage 0-alpha questions (D24)",
   "frozen_on": "2026-11-04",
+  "amendment": "A1, 2026-11-04: goldfish review QS-01..QS-10 resolved before any arm-S result (see PREREG.md)",
   "corpus": {
     "repository": "OAW (this repository)",
     "commit": "6481437f14705dacf18f5b7d713003598e2f0bfe",
@@ -20,7 +21,9 @@
   "scoring_rules": [
     "Gold paths are corpus-relative POSIX paths. A result under example/ whose bytes equal a file outside example/ counts as that file (generated copies), and repeated files keep their first rank.",
     "Class d drops the two endpoints from the ranked list before scoring; gold is the set of intermediate modules of every accepted shortest chain.",
-    "top-1/top-5: a gold file at rank 1 / within ranks 1-5. MRR, precision and recall use the first 10 distinct files."
+    "top-1/top-5: a gold file at rank 1 / within ranks 1-5. MRR, precision and recall use the first 10 distinct files.",
+    "A ranked gold file counts only if its path also appears in the arm's text-mode output.",
+    "A failed run (non-zero exit, timeout, invalid JSON, empty text output or no results) is a miss for that arm; questions where either arm failed leave the byte comparison."
   ],
   "questions": [
     {
@@ -187,11 +190,11 @@
     {
       "id": "a08",
       "class": "a",
-      "text": "Where is the title of a memory entry turned into a candidate wiki page id by joining its first few Latin words in capitalized form, with a short hash fallback when the title has no Latin words?",
+      "text": "Where is the title of a memory entry turned into a candidate knowledge-page id by joining its first few Latin words in capitalized form, with a short hash fallback when the title has no Latin words?",
       "command": {
         "sub": "find",
         "args": [
-          "Where is the title of a memory entry turned into a candidate wiki page id by joining its first few Latin words in capitalized form, with a short hash fallback when the title has no Latin words?"
+          "Where is the title of a memory entry turned into a candidate knowledge-page id by joining its first few Latin words in capitalized form, with a short hash fallback when the title has no Latin words?"
         ]
       },
       "gold": {
@@ -205,7 +208,7 @@
         ]
       },
       "gold_method": "Read the definition in the pinned corpus and confirmed the behaviour line by line; grepped the corpus for other code with the same behaviour. It takes up to five [A-Za-z0-9]+ words, capitalizes and joins them with '_', else returns Topic_<sha1[:8]>. catalog_core.slug is a different, lowercase hyphen slug for food ids.",
-      "difficulty": "No identifier word in the text. Distractors: catalog_core.slug, _count_entry_citations and promote_candidates in the same file, docs/wiki prompts."
+      "difficulty": "No identifier word in the text; amendment A1 replaced 'wiki' (a word of the gold file name) with 'knowledge-page'. Distractors: catalog_core.slug, _count_entry_citations and promote_candidates in the same file, docs/wiki prompts."
     },
     {
       "id": "a09",
@@ -233,11 +236,11 @@
     {
       "id": "a10",
       "class": "a",
-      "text": "How does the terminal status printer decide that the cached catalog summary it reads is out of date because a catalog record or the install manifest changed after the summary was written?",
+      "text": "Which check decides that the cached catalog summary shown in the terminal is out of date because a catalog record or the install manifest changed after the summary was written?",
       "command": {
         "sub": "find",
         "args": [
-          "How does the terminal status printer decide that the cached catalog summary it reads is out of date because a catalog record or the install manifest changed after the summary was written?"
+          "Which check decides that the cached catalog summary shown in the terminal is out of date because a catalog record or the install manifest changed after the summary was written?"
         ]
       },
       "gold": {
@@ -251,7 +254,7 @@
         ]
       },
       "gold_method": "Read the definition in the pinned corpus and confirmed the behaviour line by line; grepped the corpus for other code with the same behaviour. It compares the mtime of .oaw/catalog/view.json with the newest mtime of VIEW_SOURCES, install.json, evidence and absorbed receipts. catalog.py has a similar-sounding view_state that builds the view instead.",
-      "difficulty": "No identifier word in the text. Distractors: catalog.py (view_state, refresh_view), catalog_ui_server.py, catalog_core.build_view."
+      "difficulty": "No identifier word in the text; amendment A1 removed 'status printer' ('status' is a word of the gold file name). Distractors: catalog.py (view_state, refresh_view), catalog_ui_server.py, catalog_core.build_view."
     },
     {
       "id": "a11",
@@ -279,11 +282,11 @@
     {
       "id": "a12",
       "class": "a",
-      "text": "In the pilot scorer, where are lines of a reviewer's answer removed when they only repeat lines of the draft under review, so that quoting the draft does not count as finding a planted defect?",
+      "text": "Where are lines of a reviewer's answer removed when they only repeat lines of the draft under review, so that quoting the draft does not count as finding a planted defect?",
       "command": {
         "sub": "find",
         "args": [
-          "In the pilot scorer, where are lines of a reviewer's answer removed when they only repeat lines of the draft under review, so that quoting the draft does not count as finding a planted defect?"
+          "Where are lines of a reviewer's answer removed when they only repeat lines of the draft under review, so that quoting the draft does not count as finding a planted defect?"
         ]
       },
       "gold": {
@@ -297,7 +300,7 @@
         ]
       },
       "gold_method": "Read the definition in the pinned corpus and confirmed the behaviour line by line; grepped the corpus for other code with the same behaviour. It drops every output line whose normalized form equals a normalized source line of at least 12 characters; evals/egm-pilot/score.py only calls the shared helpers.",
-      "difficulty": "No identifier word in the text. Distractor: evals/egm-pilot/score.py, which the words 'pilot scorer' point to; evals/egm-local (another blind-review study)."
+      "difficulty": "No identifier word in the text; amendment A1 removed 'In the pilot scorer' ('pilot' is a word of the gold path). Distractors: evals/egm-pilot/score.py (calls the helper), evals/egm-local (another blind-review study)."
     },
     {
       "id": "b01",
@@ -328,7 +331,7 @@
           "scripts/wiki_sync.py:21 (import only)"
         ]
       },
-      "gold_method": "grep -rnw over every corpus file (all extensions), then each hit read by hand: definition lines, comments, docstrings, Markdown, strings and same-name functions of other modules removed; generated example/ copies are not gold (they are scored as their source). The defining module counts because exact_case_path calls it.",
+      "gold_method": "grep -rnw over every corpus file (all extensions), then each hit read by hand: definition lines, comments, docstrings, Markdown, strings and same-name functions of other modules removed; generated example/ copies are not gold (they are scored as their source). Only direct call sites count: the callers of a local wrapper are not added. The defining module counts because exact_case_path calls it.",
       "difficulty": "Small set; the defining file is also a caller."
     },
     {
@@ -372,7 +375,7 @@
           "scripts/oaw_common.py:261 (error message)"
         ]
       },
-      "gold_method": "grep -rnw over every corpus file (all extensions), then each hit read by hand: definition lines, comments, docstrings, Markdown, strings and same-name functions of other modules removed; generated example/ copies are not gold (they are scored as their source). oaw_common.atomic_write calls it, so the defining module counts.",
+      "gold_method": "grep -rnw over every corpus file (all extensions), then each hit read by hand: definition lines, comments, docstrings, Markdown, strings and same-name functions of other modules removed; generated example/ copies are not gold (they are scored as their source). Only direct call sites count: the callers of a local wrapper are not added. oaw_common.atomic_write calls it, so the defining module counts.",
       "difficulty": "Largest caller set (6 files); a string-only test mention is a precision trap."
     },
     {
@@ -408,17 +411,17 @@
           "tests/test_install.py:38 (fake validator source inside a string)"
         ]
       },
-      "gold_method": "grep -rnw over every corpus file (all extensions), then each hit read by hand: definition lines, comments, docstrings, Markdown, strings and same-name functions of other modules removed; generated example/ copies are not gold (they are scored as their source). scripts/oaw.py calls it on a module loaded with importlib (module.lint_skill_file), which is a real call.",
+      "gold_method": "grep -rnw over every corpus file (all extensions), then each hit read by hand: definition lines, comments, docstrings, Markdown, strings and same-name functions of other modules removed; generated example/ copies are not gold (they are scored as their source). Only direct call sites count: the callers of a local wrapper are not added. scripts/oaw.py calls it on a module loaded with importlib (module.lint_skill_file), which is a real call.",
       "difficulty": "One call goes through a dynamically loaded module; one mention is a definition inside a string."
     },
     {
       "id": "b04",
       "class": "b",
-      "text": "Which files call `pipeline_table`, the zero-argument builder in the pure intake core that returns the stage table written into the view file? The status printer's one-argument function of the same name and its callers do not count.",
+      "text": "Which files call `catalog_core.pipeline_table`, the zero-argument builder that returns the intake stage table written into the view file? The one-argument function of the same name in another module, and its callers, do not count.",
       "command": {
         "sub": "callers",
         "args": [
-          "pipeline_table"
+          "catalog_core.pipeline_table"
         ]
       },
       "gold": {
@@ -436,17 +439,17 @@
           "scripts/oaw_status.py:226 and 266 (a different pipeline_table(view) and its own call)"
         ]
       },
-      "gold_method": "grep -rnw over every corpus file (all extensions), then each hit read by hand: definition lines, comments, docstrings, Markdown, strings and same-name functions of other modules removed; generated example/ copies are not gold (they are scored as their source). build_view in the defining module calls it.",
-      "difficulty": "Same-name collision with oaw_status.pipeline_table; a name-only search cannot tell them apart."
+      "gold_method": "grep -rnw over every corpus file (all extensions), then each hit read by hand: definition lines, comments, docstrings, Markdown, strings and same-name functions of other modules removed; generated example/ copies are not gold (they are scored as their source). Only direct call sites count: the callers of a local wrapper are not added. build_view in the defining module calls it. Amendment A1: both arms receive the module-qualified symbol.",
+      "difficulty": "Same-name collision with oaw_status.pipeline_table, told apart only by the module qualifier both arms receive; 'pure intake core' was removed from the text ('core' is a word of the gold file name)."
     },
     {
       "id": "b05",
       "class": "b",
-      "text": "Which files call the `atomic_write` that takes text and an optional root boundary (the shared evidence helper), not the installer's bytes-writing function of the same name?",
+      "text": "Which files call `oaw_common.atomic_write`, the text writer with an optional root boundary? The installer's bytes-writing function of the same name, and its callers, do not count.",
       "command": {
         "sub": "callers",
         "args": [
-          "atomic_write"
+          "oaw_common.atomic_write"
         ]
       },
       "gold": {
@@ -469,8 +472,8 @@
           "tests/test_wiki_sync.py:551, 865, 904 (strings)"
         ]
       },
-      "gold_method": "grep -rnw over every corpus file (all extensions), then each hit read by hand: definition lines, comments, docstrings, Markdown, strings and same-name functions of other modules removed; generated example/ copies are not gold (they are scored as their source). Each call's receiver or import was checked: catalog.py uses both functions, through oaw_common. and oaw.",
-      "difficulty": "Same-name collision; scripts/oaw.py has the most mentions but is not a caller."
+      "gold_method": "grep -rnw over every corpus file (all extensions), then each hit read by hand: definition lines, comments, docstrings, Markdown, strings and same-name functions of other modules removed; generated example/ copies are not gold (they are scored as their source). Only direct call sites count: the callers of a local wrapper are not added. Each call's receiver or import was checked: catalog.py uses both functions, through oaw_common. and oaw. Re-read for QS-07: context_hub.py:41 is the body of its local wrapper _locked_write and wiki_sync.py:110 the body of its local wrapper _write; both are real calls, nothing aliases the function (no `x = atomic_write` anywhere), and the wrappers' own callers are in the same files, so the file-level gold is unchanged. Amendment A1: both arms receive the module-qualified symbol.",
+      "difficulty": "Same-name collision with oaw.atomic_write, told apart only by the module qualifier both arms receive; scripts/oaw.py has the most mentions but is not a caller."
     },
     {
       "id": "b06",
@@ -500,7 +503,7 @@
           "scripts/catalog.py:1172 (docstring; the file is a caller anyway)"
         ]
       },
-      "gold_method": "grep -rnw over every corpus file (all extensions), then each hit read by hand: definition lines, comments, docstrings, Markdown, strings and same-name functions of other modules removed; generated example/ copies are not gold (they are scored as their source). The importlib loaders of oaw.py in evals/ and tests/ were checked; none calls read_manifest.",
+      "gold_method": "grep -rnw over every corpus file (all extensions), then each hit read by hand: definition lines, comments, docstrings, Markdown, strings and same-name functions of other modules removed; generated example/ copies are not gold (they are scored as their source). Only direct call sites count: the callers of a local wrapper are not added. The importlib loaders of oaw.py in evals/ and tests/ were checked; none calls read_manifest.",
       "difficulty": "Small set; the defining file calls it three times."
     },
     {
@@ -529,7 +532,7 @@
           "scripts/catalog_core.py:7 (module docstring)"
         ]
       },
-      "gold_method": "grep -rnw over every corpus file (all extensions), then each hit read by hand: definition lines, comments, docstrings, Markdown, strings and same-name functions of other modules removed; generated example/ copies are not gold (they are scored as their source). The defining module only mentions it in its docstring, so it is not a caller.",
+      "gold_method": "grep -rnw over every corpus file (all extensions), then each hit read by hand: definition lines, comments, docstrings, Markdown, strings and same-name functions of other modules removed; generated example/ copies are not gold (they are scored as their source). Only direct call sites count: the callers of a local wrapper are not added. The defining module only mentions it in its docstring, so it is not a caller.",
       "difficulty": "The defining file mentions the name but does not call it."
     },
     {
@@ -557,7 +560,7 @@
           "scripts/catalog_core.py:1618 (comment)"
         ]
       },
-      "gold_method": "grep -rnw over every corpus file (all extensions), then each hit read by hand: definition lines, comments, docstrings, Markdown, strings and same-name functions of other modules removed; generated example/ copies are not gold (they are scored as their source). UiApp and Menu in the defining module call it.",
+      "gold_method": "grep -rnw over every corpus file (all extensions), then each hit read by hand: definition lines, comments, docstrings, Markdown, strings and same-name functions of other modules removed; generated example/ copies are not gold (they are scored as their source). Only direct call sites count: the callers of a local wrapper are not added. UiApp and Menu in the defining module call it.",
       "difficulty": "A comment in another module names it."
     },
     {
@@ -604,7 +607,7 @@
           "docs/CLI_Reference.md and CHANGELOG.md describe 'memory recall' in prose (not the identifier)"
         ]
       },
-      "gold_method": "grep -rnw over every corpus file (all extensions), then each hit read by hand: definition lines, comments, docstrings, Markdown, strings and same-name functions of other modules removed; generated example/ copies are not gold (they are scored as their source). evals/skill-value/test_fixtures.py loads context_hub.py with importlib as `recall` and calls recall.memory_recall.",
+      "gold_method": "grep -rnw over every corpus file (all extensions), then each hit read by hand: definition lines, comments, docstrings, Markdown, strings and same-name functions of other modules removed; generated example/ copies are not gold (they are scored as their source). Only direct call sites count: the callers of a local wrapper are not added. evals/skill-value/test_fixtures.py loads context_hub.py with importlib as `recall` and calls recall.memory_recall.",
       "difficulty": "One caller sits outside tests/ under evals/ and reaches the module through importlib."
     },
     {
@@ -637,9 +640,13 @@
             "docs/CLI_Reference.md",
             "docs/Wiki_Sync_Guide.md"
           ]
+        },
+        "file_notes": {
+          "scripts/wiki_sync.py": "adds the cites command",
+          "scripts/harness_check.py": "registers the cites CLI contract"
         }
       },
-      "gold_method": "git diff-tree -r --name-only on the commit; kept .py/.js/.html/.css/.sh files that exist at 6481437 and are not tests (tests/, test_*.py) or generated copies (example/); scripts/harness_check.py is dropped when its only change is test bookkeeping (MINIMUM_TESTS / REQUIRED_TEST_MODULES); each kept diff read by hand. Question text = the subject without its type(scope) prefix and OAW id.",
+      "gold_method": "git diff-tree -r --name-only on the commit; kept .py/.js/.html/.css/.sh files that exist at 6481437 and are not tests (tests/, test_*.py) or generated copies (example/); scripts/harness_check.py is dropped when its only change is test bookkeeping (MINIMUM_TESTS / REQUIRED_TEST_MODULES); each kept diff read by hand. Question text = the subject without its type(scope) prefix and OAW id. Every kept file is gold by rule, whether or not the subject names its role, and the same gold applies to both arms; gold.file_notes says how each file relates to the subject.",
       "difficulty": "harness_check.py is gold because the commit registers the new cites CLI contract there (besides the test count)."
     },
     {
@@ -674,9 +681,12 @@
             "docs/CLI_Reference.md",
             "docs/SELF_IMPROVEMENT.md"
           ]
+        },
+        "file_notes": {
+          "scripts/improvement.py": "charges overhead tokens to the arm and blocks efficiency gains on incomplete coverage"
         }
       },
-      "gold_method": "git diff-tree -r --name-only on the commit; kept .py/.js/.html/.css/.sh files that exist at 6481437 and are not tests (tests/, test_*.py) or generated copies (example/); scripts/harness_check.py is dropped when its only change is test bookkeeping (MINIMUM_TESTS / REQUIRED_TEST_MODULES); each kept diff read by hand. Question text = the subject without its type(scope) prefix and OAW id.",
+      "gold_method": "git diff-tree -r --name-only on the commit; kept .py/.js/.html/.css/.sh files that exist at 6481437 and are not tests (tests/, test_*.py) or generated copies (example/); scripts/harness_check.py is dropped when its only change is test bookkeeping (MINIMUM_TESTS / REQUIRED_TEST_MODULES); each kept diff read by hand. Question text = the subject without its type(scope) prefix and OAW id. Every kept file is gold by rule, whether or not the subject names its role, and the same gold applies to both arms; gold.file_notes says how each file relates to the subject.",
       "difficulty": "Domain words (arm, overhead, coverage) also fill the eval protocols under evals/."
     },
     {
@@ -712,9 +722,12 @@
             "CHANGELOG.md",
             "docs/CLI_Reference.md"
           ]
+        },
+        "file_notes": {
+          "scripts/context_hub.py": "adds memory recall --index rows"
         }
       },
-      "gold_method": "git diff-tree -r --name-only on the commit; kept .py/.js/.html/.css/.sh files that exist at 6481437 and are not tests (tests/, test_*.py) or generated copies (example/); scripts/harness_check.py is dropped when its only change is test bookkeeping (MINIMUM_TESTS / REQUIRED_TEST_MODULES); each kept diff read by hand. Question text = the subject without its type(scope) prefix and OAW id.",
+      "gold_method": "git diff-tree -r --name-only on the commit; kept .py/.js/.html/.css/.sh files that exist at 6481437 and are not tests (tests/, test_*.py) or generated copies (example/); scripts/harness_check.py is dropped when its only change is test bookkeeping (MINIMUM_TESTS / REQUIRED_TEST_MODULES); each kept diff read by hand. Question text = the subject without its type(scope) prefix and OAW id. Every kept file is gold by rule, whether or not the subject names its role, and the same gold applies to both arms; gold.file_notes says how each file relates to the subject.",
       "difficulty": "Short; 'index' and 'rows' are common words."
     },
     {
@@ -753,9 +766,13 @@
             "docs/CLI_Reference.md",
             "docs/Wiki_Sync_Guide.md"
           ]
+        },
+        "file_notes": {
+          "scripts/wiki_sync.py": "lints path::Symbol citations",
+          "scripts/oaw_common.py": "exports markdown_lines, which the lint uses to skip fenced code (a 3-line alias)"
         }
       },
-      "gold_method": "git diff-tree -r --name-only on the commit; kept .py/.js/.html/.css/.sh files that exist at 6481437 and are not tests (tests/, test_*.py) or generated copies (example/); scripts/harness_check.py is dropped when its only change is test bookkeeping (MINIMUM_TESTS / REQUIRED_TEST_MODULES); each kept diff read by hand. Question text = the subject without its type(scope) prefix and OAW id.",
+      "gold_method": "git diff-tree -r --name-only on the commit; kept .py/.js/.html/.css/.sh files that exist at 6481437 and are not tests (tests/, test_*.py) or generated copies (example/); scripts/harness_check.py is dropped when its only change is test bookkeeping (MINIMUM_TESTS / REQUIRED_TEST_MODULES); each kept diff read by hand. Question text = the subject without its type(scope) prefix and OAW id. Every kept file is gold by rule, whether or not the subject names its role, and the same gold applies to both arms; gold.file_notes says how each file relates to the subject.",
       "difficulty": "The oaw_common.py change is a 3-line alias (markdown_lines) that the lint needs; hard to reach from the words."
     },
     {
@@ -794,9 +811,13 @@
             "CHANGELOG.md",
             "docs/CLI_Reference.md"
           ]
+        },
+        "file_notes": {
+          "scripts/oaw_common.py": "adds SECRET_PATTERNS and evidence_write_refusal",
+          "scripts/context_hub.py": "applies the refusal on memory add, lesson and annotate"
         }
       },
-      "gold_method": "git diff-tree -r --name-only on the commit; kept .py/.js/.html/.css/.sh files that exist at 6481437 and are not tests (tests/, test_*.py) or generated copies (example/); scripts/harness_check.py is dropped when its only change is test bookkeeping (MINIMUM_TESTS / REQUIRED_TEST_MODULES); each kept diff read by hand. Question text = the subject without its type(scope) prefix and OAW id.",
+      "gold_method": "git diff-tree -r --name-only on the commit; kept .py/.js/.html/.css/.sh files that exist at 6481437 and are not tests (tests/, test_*.py) or generated copies (example/); scripts/harness_check.py is dropped when its only change is test bookkeeping (MINIMUM_TESTS / REQUIRED_TEST_MODULES); each kept diff read by hand. Question text = the subject without its type(scope) prefix and OAW id. Every kept file is gold by rule, whether or not the subject names its role, and the same gold applies to both arms; gold.file_notes says how each file relates to the subject.",
       "difficulty": "Two files: the guard and the CLI write path that applies it."
     },
     {
@@ -819,9 +840,12 @@
           "tests": [
             "tests/test_catalog_core.py"
           ]
+        },
+        "file_notes": {
+          "scripts/catalog_core.py": "holds skills whose text asks the agent to act and reads canonical ledgers"
         }
       },
-      "gold_method": "git diff-tree -r --name-only on the commit; kept .py/.js/.html/.css/.sh files that exist at 6481437 and are not tests (tests/, test_*.py) or generated copies (example/); scripts/harness_check.py is dropped when its only change is test bookkeeping (MINIMUM_TESTS / REQUIRED_TEST_MODULES); each kept diff read by hand. Question text = the subject without its type(scope) prefix and OAW id.",
+      "gold_method": "git diff-tree -r --name-only on the commit; kept .py/.js/.html/.css/.sh files that exist at 6481437 and are not tests (tests/, test_*.py) or generated copies (example/); scripts/harness_check.py is dropped when its only change is test bookkeeping (MINIMUM_TESTS / REQUIRED_TEST_MODULES); each kept diff read by hand. Question text = the subject without its type(scope) prefix and OAW id. Every kept file is gold by rule, whether or not the subject names its role, and the same gold applies to both arms; gold.file_notes says how each file relates to the subject.",
       "difficulty": "Abstract wording; 'ledgers' is rare in code."
     },
     {
@@ -840,9 +864,12 @@
         ],
         "commit": "7cf72f87cbe351df4594515b1b66a23713cc656f",
         "subject": "feat(status): print the catalog view from view.json",
-        "excluded_changed_files": {}
+        "excluded_changed_files": {},
+        "file_notes": {
+          "scripts/oaw_status.py": "prints the catalog view from .oaw/catalog/view.json"
+        }
       },
-      "gold_method": "git diff-tree -r --name-only on the commit; kept .py/.js/.html/.css/.sh files that exist at 6481437 and are not tests (tests/, test_*.py) or generated copies (example/); scripts/harness_check.py is dropped when its only change is test bookkeeping (MINIMUM_TESTS / REQUIRED_TEST_MODULES); each kept diff read by hand. Question text = the subject without its type(scope) prefix and OAW id.",
+      "gold_method": "git diff-tree -r --name-only on the commit; kept .py/.js/.html/.css/.sh files that exist at 6481437 and are not tests (tests/, test_*.py) or generated copies (example/); scripts/harness_check.py is dropped when its only change is test bookkeeping (MINIMUM_TESTS / REQUIRED_TEST_MODULES); each kept diff read by hand. Question text = the subject without its type(scope) prefix and OAW id. Every kept file is gold by rule, whether or not the subject names its role, and the same gold applies to both arms; gold.file_notes says how each file relates to the subject.",
       "difficulty": "'view.json' replaced by 'the generated view file' (a file name). 'catalog view' points at catalog.py, which is not gold."
     },
     {
@@ -868,9 +895,12 @@
           "docs": [
             "CHANGELOG.md"
           ]
+        },
+        "file_notes": {
+          "scripts/catalog.py": "restore runs the static effect evaluation again"
         }
       },
-      "gold_method": "git diff-tree -r --name-only on the commit; kept .py/.js/.html/.css/.sh files that exist at 6481437 and are not tests (tests/, test_*.py) or generated copies (example/); scripts/harness_check.py is dropped when its only change is test bookkeeping (MINIMUM_TESTS / REQUIRED_TEST_MODULES); each kept diff read by hand. Question text = the subject without its type(scope) prefix and OAW id.",
+      "gold_method": "git diff-tree -r --name-only on the commit; kept .py/.js/.html/.css/.sh files that exist at 6481437 and are not tests (tests/, test_*.py) or generated copies (example/); scripts/harness_check.py is dropped when its only change is test bookkeeping (MINIMUM_TESTS / REQUIRED_TEST_MODULES); each kept diff read by hand. Question text = the subject without its type(scope) prefix and OAW id. Every kept file is gold by rule, whether or not the subject names its role, and the same gold applies to both arms; gold.file_notes says how each file relates to the subject.",
       "difficulty": "Short and generic ('effect', 'restore')."
     },
     {
@@ -896,9 +926,12 @@
           "docs": [
             "docs/SKILL_VALUE_EXPERIMENT.md"
           ]
+        },
+        "file_notes": {
+          "evals/skill-value/experiment.py": "cli_command passes --approve-for-me without --sandbox"
         }
       },
-      "gold_method": "git diff-tree -r --name-only on the commit; kept .py/.js/.html/.css/.sh files that exist at 6481437 and are not tests (tests/, test_*.py) or generated copies (example/); scripts/harness_check.py is dropped when its only change is test bookkeeping (MINIMUM_TESTS / REQUIRED_TEST_MODULES); each kept diff read by hand. Question text = the subject without its type(scope) prefix and OAW id.",
+      "gold_method": "git diff-tree -r --name-only on the commit; kept .py/.js/.html/.css/.sh files that exist at 6481437 and are not tests (tests/, test_*.py) or generated copies (example/); scripts/harness_check.py is dropped when its only change is test bookkeeping (MINIMUM_TESTS / REQUIRED_TEST_MODULES); each kept diff read by hand. Question text = the subject without its type(scope) prefix and OAW id. Every kept file is gold by rule, whether or not the subject names its role, and the same gold applies to both arms; gold.file_notes says how each file relates to the subject.",
       "difficulty": "Gold under evals/; the code says --approve-for-me and --sandbox, not 'approval shortcut'."
     },
     {
@@ -932,9 +965,13 @@
             "docs/plans/v2.0.0-execution.md",
             "docs/validation/v2.0.0-local.md"
           ]
+        },
+        "file_notes": {
+          "scripts/oaw.py": "is_path_alias and framework_root handle macOS root aliases",
+          "scripts/harness_check.py": "configure_stdio makes Windows diagnostics UTF-8"
         }
       },
-      "gold_method": "git diff-tree -r --name-only on the commit; kept .py/.js/.html/.css/.sh files that exist at 6481437 and are not tests (tests/, test_*.py) or generated copies (example/); scripts/harness_check.py is dropped when its only change is test bookkeeping (MINIMUM_TESTS / REQUIRED_TEST_MODULES); each kept diff read by hand. Question text = the subject without its type(scope) prefix and OAW id.",
+      "gold_method": "git diff-tree -r --name-only on the commit; kept .py/.js/.html/.css/.sh files that exist at 6481437 and are not tests (tests/, test_*.py) or generated copies (example/); scripts/harness_check.py is dropped when its only change is test bookkeeping (MINIMUM_TESTS / REQUIRED_TEST_MODULES); each kept diff read by hand. Question text = the subject without its type(scope) prefix and OAW id. Every kept file is gold by rule, whether or not the subject names its role, and the same gold applies to both arms; gold.file_notes says how each file relates to the subject.",
       "difficulty": "harness_check.py is gold (configure_stdio added); the CI workflow is not a code file under the rule."
     },
     {
@@ -960,9 +997,12 @@
           "docs": [
             "evals/egm-local/README.md"
           ]
+        },
+        "file_notes": {
+          "evals/egm-local/anonymize.py": "exports the original method files to the blind graders"
         }
       },
-      "gold_method": "git diff-tree -r --name-only on the commit; kept .py/.js/.html/.css/.sh files that exist at 6481437 and are not tests (tests/, test_*.py) or generated copies (example/); scripts/harness_check.py is dropped when its only change is test bookkeeping (MINIMUM_TESTS / REQUIRED_TEST_MODULES); each kept diff read by hand. Question text = the subject without its type(scope) prefix and OAW id.",
+      "gold_method": "git diff-tree -r --name-only on the commit; kept .py/.js/.html/.css/.sh files that exist at 6481437 and are not tests (tests/, test_*.py) or generated copies (example/); scripts/harness_check.py is dropped when its only change is test bookkeeping (MINIMUM_TESTS / REQUIRED_TEST_MODULES); each kept diff read by hand. Question text = the subject without its type(scope) prefix and OAW id. Every kept file is gold by rule, whether or not the subject names its role, and the same gold applies to both arms; gold.file_notes says how each file relates to the subject.",
       "difficulty": "Gold under evals/; many eval prompts and READMEs talk about blind graders."
     },
     {
@@ -991,9 +1031,15 @@
             "tests/test_catalog_ui.py",
             "tests/test_status.py"
           ]
+        },
+        "file_notes": {
+          "scripts/catalog_core.py": "defines the stage table and food_pipeline",
+          "scripts/catalog.py": "show prints each food's stage",
+          "scripts/catalog_ui_server.py": "the page and the menu draw the stage table",
+          "scripts/oaw_status.py": "prints the stage table lines"
         }
       },
-      "gold_method": "git diff-tree -r --name-only on the commit; kept .py/.js/.html/.css/.sh files that exist at 6481437 and are not tests (tests/, test_*.py) or generated copies (example/); scripts/harness_check.py is dropped when its only change is test bookkeeping (MINIMUM_TESTS / REQUIRED_TEST_MODULES); each kept diff read by hand. Question text = the subject without its type(scope) prefix and OAW id.",
+      "gold_method": "git diff-tree -r --name-only on the commit; kept .py/.js/.html/.css/.sh files that exist at 6481437 and are not tests (tests/, test_*.py) or generated copies (example/); scripts/harness_check.py is dropped when its only change is test bookkeeping (MINIMUM_TESTS / REQUIRED_TEST_MODULES); each kept diff read by hand. Question text = the subject without its type(scope) prefix and OAW id. Every kept file is gold by rule, whether or not the subject names its role, and the same gold applies to both arms; gold.file_notes says how each file relates to the subject.",
       "difficulty": "Four gold files; recall is the hard part."
     },
     {
@@ -1043,10 +1089,19 @@
             "docs/reviews/2026-10-29-pr4-egm.md",
             "docs/validation/v2.0.0-local.md"
           ]
+        },
+        "file_notes": {
+          "scripts/oaw.py": "doctor validates only the skills in the install inventory, so native plugin skills coexist",
+          "scripts/validate_skills.py": "find_skill_files(managed_only) limits linting to OAW-managed packages",
+          "scripts/wiki_sync.py": "lint uses managed_only=True, so plugin skills are not held to OAW's subset",
+          "scripts/harness_check.py": "the version check verifies the pinned source ledger (pins EGM review sources)"
         }
       },
-      "gold_method": "git diff-tree -r --name-only on the commit; kept .py/.js/.html/.css/.sh files that exist at 6481437 and are not tests (tests/, test_*.py) or generated copies (example/); scripts/harness_check.py is dropped when its only change is test bookkeeping (MINIMUM_TESTS / REQUIRED_TEST_MODULES); each kept diff read by hand. Question text = the subject without its type(scope) prefix and OAW id.",
-      "difficulty": "Four gold files; harness_check.py is gold (source-ledger check added). The skill template is Markdown, outside the code-file rule."
+      "gold_method": "git diff-tree -r --name-only on the commit; kept .py/.js/.html/.css/.sh files that exist at 6481437 and are not tests (tests/, test_*.py) or generated copies (example/); scripts/harness_check.py is dropped when its only change is test bookkeeping (MINIMUM_TESTS / REQUIRED_TEST_MODULES); each kept diff read by hand. Question text = the subject without its type(scope) prefix and OAW id. Every kept file is gold by rule, whether or not the subject names its role, and the same gold applies to both arms; gold.file_notes says how each file relates to the subject.",
+      "difficulty": "Four gold files; harness_check.py is gold (source-ledger check added). The skill template is Markdown, outside the code-file rule. 'skills' is a word of scripts/validate_skills.py, kept because a class-c text is the commit subject itself.",
+      "allowed_path_words": [
+        "skills"
+      ]
     },
     {
       "id": "d01",
