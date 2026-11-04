@@ -1,0 +1,323 @@
+{
+  "schema": "oaw-goldfish-resolution/1",
+  "base": "6481437",
+  "head": "3b0655e",
+  "findings": [
+    {
+      "id": "CT-01",
+      "severity": "major",
+      "verdict": "fixed",
+      "reason": "_cited_file catches RuntimeError (Path.resolve on a symlink loop, Python 3.10-3.12) as 'unreadable: symlink loop'; cites only normalizes text and resolves nothing.",
+      "commit": "ccbb4ce",
+      "tests": [
+        "tests/test_wiki_sync.py::test_code_citation_symlink_loop_is_a_per_file_problem"
+      ]
+    },
+    {
+      "id": "CT-02",
+      "severity": "minor",
+      "verdict": "fixed",
+      "reason": "Fallback reads annotation-only names (x: int) like ast does; RETRIES and Store::label added to the parity fixture.",
+      "commit": "ccbb4ce",
+      "tests": [
+        "tests/test_wiki_sync.py::test_code_citation_fallback_matches_ast_verdicts"
+      ]
+    },
+    {
+      "id": "CT-03",
+      "severity": "minor",
+      "verdict": "fixed",
+      "reason": "ast walks Match case bodies, ast.TypeAlias (getattr, 3.12+) and tuple/list/starred targets; the fallback reads unpacking, chained assignments and type lines.",
+      "commit": "ccbb4ce",
+      "tests": [
+        "tests/test_wiki_sync.py::test_code_citation_fallback_matches_ast_verdicts",
+        "tests/test_wiki_sync.py::test_code_citation_type_alias_resolves_on_every_python"
+      ]
+    },
+    {
+      "id": "CT-04",
+      "severity": "minor",
+      "verdict": "fixed",
+      "reason": "A dotted token counts as a path only with a directory part or a known extension that is not a product name (_MC_EXTENSIONS/_MC_NOT_FILES); os.path::join, System.IO::File, v2.0::x, node.js::fs are skipped.",
+      "commit": "ccbb4ce",
+      "tests": [
+        "tests/test_wiki_sync.py::test_code_citation_needs_a_directory_or_known_extension"
+      ]
+    },
+    {
+      "id": "CT-05",
+      "severity": "minor",
+      "verdict": "fixed",
+      "reason": "Fallback scans statement starts only: a light lexer skips lines inside brackets, strings and backslash continuations; keyword names are ignored.",
+      "commit": "ccbb4ce",
+      "tests": [
+        "tests/test_wiki_sync.py::test_code_citation_fallback_matches_ast_verdicts"
+      ]
+    },
+    {
+      "id": "CT-06",
+      "severity": "minor",
+      "verdict": "fixed",
+      "reason": "_safe_read did not strip a BOM; _cited_file now drops a leading U+FEFF before ast or the line scan.",
+      "commit": "ccbb4ce",
+      "tests": [
+        "tests/test_wiki_sync.py::test_code_citation_reads_a_file_with_utf8_bom"
+      ]
+    },
+    {
+      "id": "CT-07",
+      "severity": "minor",
+      "verdict": "fixed",
+      "reason": "Test now emulates a case-insensitive disk by patching os.listdir, so the per-segment comparison is proven on Linux too (CI also runs windows-latest and macos-latest).",
+      "commit": "ccbb4ce",
+      "tests": [
+        "tests/test_wiki_sync.py::test_cited_paths_normalize_windows_forms_and_resolve_exact_case"
+      ]
+    },
+    {
+      "id": "CT-08",
+      "severity": "minor",
+      "verdict": "fixed",
+      "reason": "docs/UPGRADING.md gains a strict-lint section for the OAW-21 warning.",
+      "commit": "ccbb4ce",
+      "tests": []
+    },
+    {
+      "id": "CT-09",
+      "severity": "minor",
+      "verdict": "fixed",
+      "reason": "oaw_common.lf_sha256 + HASH_BASIS (CRLF folded to LF, cross-checked against evals/egm-pilot file_digest) built and used by resolver_sha256; the LF byte count and workspace-root normalization stay unbuilt and are recorded in CHANGELOG.",
+      "commit": "3b0655e",
+      "tests": [
+        "tests/test_cli_resolve.py::test_lf_sha256_is_the_shared_evidence_hash_basis",
+        "tests/test_cli_resolve.py::test_resolver_hash_covers_only_the_resolver_source"
+      ]
+    },
+    {
+      "id": "CT-10",
+      "severity": "minor",
+      "verdict": "rejected",
+      "reason": "tests/test_cli_resolve.py is in 6481437 (148 lines); 337-293 = 44 = 6 cli_resolve + 13 improvement + 9 context_hub + 16 wiki_sync POSIX tests; other units were reviewed in their own packets (packet-builder scope, see EV-09).",
+      "commit": null,
+      "tests": []
+    },
+    {
+      "id": "CT-11",
+      "severity": "minor",
+      "verdict": "rejected",
+      "reason": "_load_knowledge_pages already stores 'content' (scripts/wiki_sync.py _load_knowledge_pages, unchanged by the diff); the manual-page citation tests exercise it.",
+      "commit": null,
+      "tests": []
+    },
+    {
+      "id": "CT-12",
+      "severity": "minor",
+      "verdict": "documented",
+      "reason": "Only fenced code is skipped by design: indented blocks need CommonMark list context to detect; documented in Wiki_Sync_Guide (put examples in a fence) and the _iter_code_citations docstring.",
+      "commit": "ccbb4ce",
+      "tests": []
+    },
+    {
+      "id": "CT-13",
+      "severity": "minor",
+      "verdict": "documented",
+      "reason": "cites uses lint's loader, so invalid raw metadata stops both with the same error (exit 1, no traceback); pinned by a test and documented in CLI_Reference.",
+      "commit": "ccbb4ce",
+      "tests": [
+        "tests/test_wiki_sync.py::test_cites_needs_valid_raw_metadata_like_lint"
+      ]
+    },
+    {
+      "id": "EV-01",
+      "severity": "minor",
+      "verdict": "fixed",
+      "reason": "openai_key needs a sk-proj-/sk-svcacct-/sk-admin-/sk-None- kind or a legacy alphanumeric run with a digit and no trailing hyphen; kebab-case prose negatives added.",
+      "commit": "37e4101",
+      "tests": [
+        "tests/test_context_hub.py::test_each_secret_pattern_has_positive_and_negative_fixture"
+      ]
+    },
+    {
+      "id": "EV-02",
+      "severity": "minor",
+      "verdict": "fixed",
+      "reason": "First-character lookahead replaced by whole-placeholder exemptions (${X}, $UPPER, {x}, {{x}}, %s, %(x)s, ***), so $ecret is refused; literal user:pass/password stays refused because the approved OAW-12 design requires doc examples to use placeholders.",
+      "commit": "37e4101",
+      "tests": [
+        "tests/test_context_hub.py::test_each_secret_pattern_has_positive_and_negative_fixture"
+      ]
+    },
+    {
+      "id": "EV-03",
+      "severity": "minor",
+      "verdict": "fixed",
+      "reason": "URL scheme bounded to 32 characters and JWT start anchored outside a base64url run (also quadratic); 120,000-character adversarial notes scan in about 0.3 s instead of minutes.",
+      "commit": "37e4101",
+      "tests": [
+        "tests/test_context_hub.py::test_secret_scan_is_linear_on_long_notes"
+      ]
+    },
+    {
+      "id": "EV-04",
+      "severity": "minor",
+      "verdict": "fixed",
+      "reason": "aws_access_key wrapped in (?<![A-Za-z0-9])...(?![A-Za-z0-9]); embedded-in-blob and 17-character negatives added.",
+      "commit": "37e4101",
+      "tests": [
+        "tests/test_context_hub.py::test_each_secret_pattern_has_positive_and_negative_fixture"
+      ]
+    },
+    {
+      "id": "EV-05",
+      "severity": "minor",
+      "verdict": "documented",
+      "reason": "No in-repo importer besides the CLI (grep); annotate already raised ValueError for invalid or meta topics. Docstrings and CLI_Reference now state the ValueError for Python callers.",
+      "commit": "37e4101",
+      "tests": []
+    },
+    {
+      "id": "EV-06",
+      "severity": "minor",
+      "verdict": "fixed",
+      "reason": "--index refuses a query containing a line break; memory header date and tag are cut to 40 characters like the 120-character title.",
+      "commit": "050141c",
+      "tests": [
+        "tests/test_context_hub.py::test_recall_index_rejects_multiline_query_and_caps_header_fields"
+      ]
+    },
+    {
+      "id": "EV-07",
+      "severity": "minor",
+      "verdict": "documented",
+      "reason": "Verified: the byte-golden test passes unchanged against 790177e scripts/context_hub.py and oaw_common.py; the provenance and re-check method are recorded in the test.",
+      "commit": "050141c",
+      "tests": [
+        "tests/test_context_hub.py::test_recall_default_output_is_byte_identical"
+      ]
+    },
+    {
+      "id": "EV-08",
+      "severity": "minor",
+      "verdict": "rejected",
+      "reason": "_page_title is pre-existing (scripts/context_hub.py _page_title, unchanged by the diff) and its frontmatter, heading and file-name fallbacks are asserted by test_recall_index_knowledge_page_row_uses_title_and_matched_line.",
+      "commit": null,
+      "tests": []
+    },
+    {
+      "id": "EV-09",
+      "severity": "major",
+      "verdict": "rejected",
+      "reason": "Packet-builder artifact, not a code defect: shared files (harness_check.py, CHANGELOG, docs, oaw_common.py) were diffed whole, so other groups' units appeared; they were reviewed in their own packets. Next packet builder should filter shared-file hunks by group.",
+      "commit": null,
+      "tests": []
+    },
+    {
+      "id": "EV-10",
+      "severity": "minor",
+      "verdict": "fixed",
+      "reason": "Every negative fixture must also pass evidence_write_refusal as a whole; prose false-positive fixtures (sk-learn-..., placeholders) added.",
+      "commit": "37e4101",
+      "tests": [
+        "tests/test_context_hub.py::test_each_secret_pattern_has_positive_and_negative_fixture"
+      ]
+    },
+    {
+      "id": "MS-01",
+      "severity": "major",
+      "verdict": "fixed",
+      "reason": "A resource regression over an incomplete baseline is listed as uncertain_resource_regressions and the verdict is inconclusive; over a complete baseline it still rejects.",
+      "commit": "c195425",
+      "tests": [
+        "tests/test_improvement.py::test_incomplete_baseline_makes_resource_regression_uncertain"
+      ]
+    },
+    {
+      "id": "MS-02",
+      "severity": "minor",
+      "verdict": "fixed",
+      "reason": "Added the incomplete-baseline case (complete and incomplete candidate, old == 0 path, pass gain).",
+      "commit": "c195425",
+      "tests": [
+        "tests/test_improvement.py::test_incomplete_baseline_makes_resource_regression_uncertain"
+      ]
+    },
+    {
+      "id": "MS-03",
+      "severity": "minor",
+      "verdict": "documented",
+      "reason": "SELF_IMPROVEMENT: overhead_tokens is a token count; cost_usd and latency_ms are the runner's totals and must include the overhead; the coverage block covers all metrics deliberately.",
+      "commit": "c195425",
+      "tests": []
+    },
+    {
+      "id": "MS-04",
+      "severity": "minor",
+      "verdict": "documented",
+      "reason": "Exact decimal comparison was already documented (0.667 needs 3 of 3); added to CLI_Reference and pinned with a subtest.",
+      "commit": "c195425",
+      "tests": [
+        "tests/test_improvement.py::test_trigger_rate_boundary_two_thirds"
+      ]
+    },
+    {
+      "id": "MS-05",
+      "severity": "minor",
+      "verdict": "fixed",
+      "reason": "The test now captures decide's fresh comparison and asserts the vacuous reason with no other regression or failed check.",
+      "commit": "c195425",
+      "tests": [
+        "tests/test_improvement.py::test_decide_revalidation_fails_closed_on_vacuous_comparison"
+      ]
+    },
+    {
+      "id": "MS-06",
+      "severity": "minor",
+      "verdict": "documented",
+      "reason": "A version/feature field would be ignored by older copies too (they validate only schema_version and their own fields) and OAW-04 rules out a schema bump; documented how to recognise older-copy comparisons and that enforcing decide fails closed.",
+      "commit": "c195425",
+      "tests": []
+    },
+    {
+      "id": "MS-07",
+      "severity": "minor",
+      "verdict": "documented",
+      "reason": "Kept lexical by decision: it confines the shim's text; links inside node_modules are trusted like the package code (writers there can already rewrite shim or script), and realpath would refuse every npm link package. Reasoning in code and CHANGELOG; pinned by a symlink test.",
+      "commit": "3b0655e",
+      "tests": [
+        "tests/test_cli_resolve.py::test_link_inside_node_modules_is_trusted"
+      ]
+    },
+    {
+      "id": "MS-08",
+      "severity": "minor",
+      "verdict": "documented",
+      "reason": "platform selects the shim policy only; paths use the host os.path because files are read on the host. Windows parsing runs on the windows-latest CI job (and locally on Windows); documented in resolve_cli.",
+      "commit": "3b0655e",
+      "tests": []
+    },
+    {
+      "id": "MS-09",
+      "severity": "minor",
+      "verdict": "documented",
+      "reason": "Runner and manifest wiring (cli_argv, resolver_sha256, hash_basis) is recorded in CHANGELOG as deferred to the new eval registrations; frozen contracts unchanged.",
+      "commit": "3b0655e",
+      "tests": []
+    },
+    {
+      "id": "MS-10",
+      "severity": "minor",
+      "verdict": "rejected",
+      "reason": "tests/test_cli_resolve.py is in 6481437 (6 POSIX tests + 1 Windows junction test); the +44 floor is 6 + 13 + 9 + 16 across the four new-test modules (see CT-10).",
+      "commit": null,
+      "tests": []
+    },
+    {
+      "id": "MS-11",
+      "severity": "minor",
+      "verdict": "documented",
+      "reason": "resolver_sha256 documents that only the marked block is hashed and that manifests also record the Python version.",
+      "commit": "3b0655e",
+      "tests": []
+    }
+  ]
+}
