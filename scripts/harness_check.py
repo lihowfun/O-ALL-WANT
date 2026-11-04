@@ -20,6 +20,9 @@ REQUIRED_TEST_MODULES = ("test_context_hub", "test_gate", "test_improvement", "t
                          "test_goldfish_review", "test_codemap_eval", "test_code_index")
 MINIMUM_TESTS = 426  # POSIX count; Windows adds junction cases.
 SUMMARY_MARKER = "OAW-TEST-SUMMARY "
+# Per-check subprocess limit: a guard against a hung command, not a test budget. The full
+# suite took 372-480 s on Windows 11 with 393-423 tests (2026-11-04), over the old 360 s.
+CHECK_TIMEOUT = 900
 
 
 def configure_stdio():
@@ -44,7 +47,7 @@ def run(command, *, cwd=ROOT, env=None):
     if env:
         environment.update(env)
     return subprocess.run(command, cwd=cwd, env=environment, capture_output=True,
-                          text=True, encoding="utf-8", errors="replace", timeout=360)
+                          text=True, encoding="utf-8", errors="replace", timeout=CHECK_TIMEOUT)
 
 
 def command_check(name, command):
