@@ -73,6 +73,10 @@ Codex's project path is `.agents/skills`; Claude Code's native project skills pa
 
 Customized v1 flat workflows are preserved as files, but their format is not native registration. Migrate worthwhile workflows deliberately; do not bring back always-active logging or generic rules that the host already handles.
 
+## Stricter lint after the unreleased citation check
+
+`wiki_sync.py lint` now warns about backticked `path::Symbol` code citations in raw notes and manual pages that do not resolve (OAW-21). Like every soft warning, these are errors under `lint --strict`, so a project that runs `--strict` in CI can start failing after the upgrade. Fix or remove the citation, or move an example into a fenced code block; default `lint` still exits 0. See [code citations](Wiki_Sync_Guide.md#code-citations).
+
 ## What was taken from the Hermes branch
 
 The complete read-modify-write locking fix was adapted into a shared, stable-sidecar/atomic-write helper and tested. The branch was not merged wholesale. Mandatory nudges, manually reported usage counters and step-count skill review are not part of v2. Bounded recall is implemented independently with source positions and continuation.

@@ -36,16 +36,37 @@ import os
 
 LIMIT = 3
 TIMEOUT: float = 1.5
+RETRIES: int
+FIRST, *REST = 1, 2, 3
+(LEFT, RIGHT) = (0, 1)
+LOW = HIGH = 0
 if os.name == "nt":
     WINDOWS_ONLY = True
 try:
     import json
 except ImportError:
     FALLBACK = None
+match os.sep:
+    case "/":
+        SEPARATOR = "slash"
+    case _:
+        SEPARATOR = "other"
+SETTINGS = dict(
+    timeout=5,
+    retries=2,
+)
+MODULES = {
+    os: "module",
+}
+NOTE = """
+def not_a_function():
+    quoted = 1
+"""
 
 
 class Store:
     CAPACITY = 10
+    label: str
 
     def get(self, key):
         local_name = key
@@ -326,6 +347,17 @@ class WikiSyncTests(unittest.TestCase):
         for wrong_case in ("Scripts/a.py", "scripts/A.py", "scripts/a.PY", "scripts/missing.py"):
             with self.subTest(wrong_case=wrong_case):
                 self.assertIsNone(common.exact_case_path(str(self.base), wrong_case))
+        # On a case-sensitive runner the lines above pass even for a plain exists() check, so emulate
+        # a case-insensitive disk whose stored names differ in case: the file opens, yet the listing
+        # comparison must still refuse it (goldfish CT-07).
+        real_listdir = os.listdir
+        with patch.object(common.os, "listdir", side_effect=lambda path: [name.swapcase() for name in real_listdir(path)]):
+            self.assertTrue((self.base / "scripts/a.py").is_file())
+            self.assertIsNone(common.exact_case_path(str(self.base), "scripts/a.py"))
+        with patch.object(common.os, "listdir", side_effect=lambda path: [name.upper() if name == "a.py" else name
+                                                                          for name in real_listdir(path)]):
+            self.assertIsNone(common.exact_case_path(str(self.base), "scripts/a.py"))
+            self.assertIsNone(common.exact_case_path(str(self.base), "scripts\\a.py"))
 
     def cited(self, relative, content):
         path = self.base / relative
@@ -427,15 +459,20 @@ class WikiSyncTests(unittest.TestCase):
 
     def test_code_citation_fallback_matches_ast_verdicts(self):
         self.cited("scripts/store.py", CITED_PY)
+        # Annotation-only names, unpacking, chained and match-case assignments resolve in both modes;
+        # call keywords, dict keys and code inside a string resolve in neither (goldfish CT-02/03/05).
         chains = ("helper", "fetch", "Store", "Store::get", "Store.get", "Store::Inner::deep", "Store::CAPACITY",
-                  "LIMIT", "TIMEOUT", "WINDOWS_ONLY", "FALLBACK", "missing", "helper::hidden",
-                  "Store::get::local_name", "Store::missing", "LIMIT::real")
+                  "LIMIT", "TIMEOUT", "WINDOWS_ONLY", "FALLBACK", "RETRIES", "FIRST", "REST", "LEFT", "RIGHT",
+                  "LOW", "HIGH", "SEPARATOR", "SETTINGS", "MODULES", "NOTE", "Store::label",
+                  "missing", "helper::hidden", "Store::get::local_name", "Store::missing", "LIMIT::real",
+                  "timeout", "retries", "os", "not_a_function", "quoted")
         self.raw(body=self.spans(*(f"scripts/store.py::{chain}" for chain in chains)))
         _result, parsed = self.quiet(wiki.lint)
         with patch.object(wiki.ast, "parse", side_effect=SyntaxError("forced")):
             _result, fallback = self.quiet(wiki.lint)
         unresolved = sorted(f"scripts/store.py::{chain}" for chain in
-                            ("missing", "helper::hidden", "Store::get::local_name", "Store::missing", "LIMIT::real"))
+                            ("missing", "helper::hidden", "Store::get::local_name", "Store::missing", "LIMIT::real",
+                             "timeout", "retries", "os", "not_a_function", "quoted"))
         self.assertEqual(self.flagged(parsed), unresolved)
         self.assertEqual(self.flagged(fallback), unresolved)
         self.assertNotIn("regex fallback", parsed)
@@ -485,6 +522,76 @@ class WikiSyncTests(unittest.TestCase):
         self.assertEqual(result, 0, output)
         self.assertEqual(self.flagged(output), ["config/settings.json::retry", "docs/guide.md::Budget"])
         self.assertIn("`config/settings.json::retry` at line 13 (name not found, text check)", output)
+
+    def test_code_citation_symlink_loop_is_a_per_file_problem(self):
+        self.cited("scripts/store.py", CITED_PY)
+        self.raw(body=self.spans("scripts/loop.py::f", "scripts/store.py::helper", "scripts/store.py::gone"))
+        # Python 3.10-3.12 raise RuntimeError from Path.resolve() on a loop; it stays one citation's verdict.
+        real_exact = wiki.exact_case_path
+
+        def looping(root, relative):
+            if relative == "scripts/loop.py":
+                raise RuntimeError("Symlink loop from 'scripts/loop.py'")
+            return real_exact(root, relative)
+
+        with patch.object(wiki, "exact_case_path", side_effect=looping):
+            result, output = self.quiet(wiki.lint)
+        self.assertEqual(result, 0, output)
+        self.assertIn("`scripts/loop.py::f` at line 12 (unreadable: symlink loop)", output)
+        self.assertEqual(self.flagged(output), ["scripts/loop.py::f", "scripts/store.py::gone"])
+        try:
+            os.symlink(self.base / "scripts/loop_b.py", self.base / "scripts/loop.py")
+            os.symlink(self.base / "scripts/loop.py", self.base / "scripts/loop_b.py")
+        except (OSError, NotImplementedError) as exc:
+            self.skipTest(f"Symlink creation unavailable: {exc}")
+        environment = dict(os.environ, AGENT_MEMORY_BASE_DIR=str(self.base), PYTHONIOENCODING="utf-8", PYTHONDONTWRITEBYTECODE="1")
+        for arguments, code in (((), 0), (("--strict",), 1)):
+            completed = subprocess.run([sys.executable, str(SCRIPTS / "wiki_sync.py"), "lint", *arguments],
+                                       env=environment, capture_output=True, text=True, encoding="utf-8")
+            with self.subTest(arguments=arguments):
+                self.assertEqual(completed.returncode, code, completed.stdout + completed.stderr)
+                self.assertNotIn("Traceback", completed.stdout + completed.stderr)
+                self.assertEqual(self.flagged(completed.stdout), ["scripts/loop.py::f", "scripts/store.py::gone"])
+
+    def test_code_citation_type_alias_resolves_on_every_python(self):
+        aliases = "type Vector = list[float]\ntype Pair[T] = tuple[T, T]\ntype = 'a plain name'\n"
+        self.cited("scripts/aliases.py", aliases)
+        self.raw(body=self.spans("scripts/aliases.py::Vector", "scripts/aliases.py::Pair", "scripts/aliases.py::type",
+                                 "scripts/aliases.py::T"))
+        names, parsed = wiki._python_names(aliases)
+        self.assertEqual(parsed, sys.version_info >= (3, 12))  # older Pythons read it with the line scan
+        self.assertEqual(sorted(names), ["Pair", "Vector", "type"])
+        result, output = self.quiet(wiki.lint)
+        self.assertEqual(result, 0, output)
+        self.assertEqual(self.flagged(output), ["scripts/aliases.py::T"])
+
+    def test_code_citation_reads_a_file_with_utf8_bom(self):
+        self.cited("scripts/bom.py", b"\xef\xbb\xbfdef first():\n    pass\n\nLATER = 1\n")
+        self.cited("docs/bom.md", b"\xef\xbb\xbfRetry budget\n")
+        self.raw(body=self.spans("scripts/bom.py::first", "scripts/bom.py::LATER", "docs/bom.md::Retry"))
+        with patch.object(wiki, "_python_names", wraps=wiki._python_names) as reads:
+            result, output = self.quiet(wiki.lint)
+        self.assertEqual(result, 0, output)
+        self.assertNotIn("code citations", output)
+        self.assertEqual(reads.call_args.args[0], "def first():\n    pass\n\nLATER = 1\n")
+        with patch.object(wiki.ast, "parse", side_effect=SyntaxError("forced")):  # the line scan sees line 1 too
+            result, output = self.quiet(wiki.lint)
+        self.assertEqual(result, 0, output)
+        self.assertNotIn("code citations", output)
+
+    def test_code_citation_needs_a_directory_or_known_extension(self):
+        self.cited("setup.py", "def main():\n    pass\n")
+        self.cited("README.md", "# Install\n")
+        body = self.spans("os.path::join", "System.IO::File", "v2.0::x", "node.js::fs", "Next.js::Router",
+                          "setup.py::main", "README.md::Install", "setup.py::absent", "web/app.vue::Component")
+        self.raw(body=body)
+        self.assertEqual([citation for _line, citation, _path, _chain in wiki._iter_code_citations(body)],
+                         ["setup.py::main", "README.md::Install", "setup.py::absent", "web/app.vue::Component"])
+        result, output = self.quiet(wiki.lint)
+        self.assertEqual(result, 0, output)
+        self.assertEqual(self.flagged(output), ["setup.py::absent", "web/app.vue::Component"])
+        for skipped in ("os.path", "System.IO", "v2.0", "node.js", "Next.js"):
+            self.assertNotIn(skipped, output)
 
     def test_cites_path_and_symbol_prefix(self):
         self.raw("Alpha", self.spans("scripts/store.py::Store", "scripts/store.py::Store::get", "scripts/store.py::Store.get",
@@ -592,6 +699,23 @@ class WikiSyncTests(unittest.TestCase):
                 self.assertNotIn("Traceback", completed.stdout + completed.stderr)
         with self.assertRaises(ValueError):
             wiki.cites("../x.py")
+
+    def test_cites_needs_valid_raw_metadata_like_lint(self):
+        # cites reads notes with lint's loader, so a malformed raw note stops both with the same error.
+        self.raw(body=self.spans("scripts/store.py::helper"))
+        for bad, reason in (("topic_id: ../escape", "Topic IDs"), ("last_updated:\n  - 2025-01-01", "scalar last_updated")):
+            (self.raw_dir / "bad.md").write_text(f"---\nsource_id: bad\n{bad}\n---\n\n# Bad\n", encoding="utf-8")
+            environment = dict(os.environ, AGENT_MEMORY_BASE_DIR=str(self.base), PYTHONIOENCODING="utf-8",
+                               PYTHONDONTWRITEBYTECODE="1")
+            lint = subprocess.run([sys.executable, str(SCRIPTS / "wiki_sync.py"), "lint"], env=environment,
+                                  capture_output=True, text=True, encoding="utf-8")
+            completed = self.cites_cli("scripts/store.py")
+            with self.subTest(bad=bad):
+                self.assertEqual((completed.returncode, lint.returncode), (1, 1), completed.stdout + lint.stdout)
+                self.assertTrue(completed.stdout.startswith("❌"), completed.stdout)
+                self.assertIn(reason, completed.stdout)
+                self.assertEqual(completed.stdout, lint.stdout)
+                self.assertNotIn("Traceback", completed.stdout + completed.stderr)
 
 
 REVIEWER_FALSE_POSITIVE_CORPUS = """# Agent Memory — synthetic negatives taken from the goldfish reviews

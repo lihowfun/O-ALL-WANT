@@ -109,7 +109,7 @@
     "scripts/improvement.py": "14272a8511a75a84c890adfab619b73097975e14bfed6909742e179475680bfe",
     "scripts/oaw_common.py": "96dd607f9511f07ed1e0d4795801a736950ed0a69017cdbfee0d0af5a9737eea",
     "scripts/validate_skills.py": "ebcd392ea41c7c9ac732fbb3fe6207b0a82bfdb81e3840c8c4bc076d585b0385",
-    "scripts/wiki_sync.py": "98ac2292d7582c79c89d1f89edded4fea6322b597f020fdbc0b8f255d05bcdac"
+    "scripts/wiki_sync.py": "934c426df2bc39c4f0b1d972c81693975688cc66e67b5ecc0944e3475c920050"
   },
   "pending_conflicts": [],
   "profile": "knowledge",

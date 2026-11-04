@@ -48,6 +48,13 @@ All notable changes to this project will be documented in this file.
   read with `ast` (functions, classes, `Class::method` or `Class.method`, module-level names)
   with an indentation-scoped regex fallback, other files get a whole-word text check; a bad or
   unreadable cited file gives a warning, never a traceback. Warnings are grouped per note.
+  After the goldfish diff review: a symlink loop is one citation's `unreadable` verdict on
+  Python 3.10-3.12 too (CT-01); `ast` and the fallback both read annotation-only names,
+  unpacking and chained targets, `match` case bodies and `type X = ...` aliases (CT-02, CT-03);
+  the fallback skips lines inside brackets, strings and backslash continuations (CT-05); a
+  UTF-8 BOM is dropped before parsing (CT-06); a dotted token counts only with a directory
+  part or a known file extension, so `os.path::join` and `node.js::fs` are not citations
+  (CT-04). Only fenced code is skipped (CT-12).
   Static evidence only: fixture tests; agent effect not measured.
 - `wiki_sync.py cites PATH[::Symbol] [--json]` (OAW-22; food: graphify@8e6a6d2 `affected`
   reverse lookup, re-implemented as a stdlib index over the OAW-21 citation parser, no graph):
@@ -95,7 +102,7 @@ All notable changes to this project will be documented in this file.
   positive and negative fixtures per pattern, negatives also pass the whole guard (static).
 - Strict-mode change (OAW-21): an unresolved `path::Symbol` code citation is a new soft lint
   warning, so `wiki_sync.py lint --strict` now fails on it, like on every other soft warning.
-  Default `lint` still exits 0 for it.
+  Default `lint` still exits 0 for it. Also noted in `docs/UPGRADING.md`.
 - The unreleased catalog prototype is named for what it is (D19): the web command is
   `catalog.py ui` (server `catalog_ui_server.py`), the guide is `docs/SKILL_INTAKE.md`, and the
   four-step food track gives way to the nine-stage intake pipeline.

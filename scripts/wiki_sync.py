@@ -9,6 +9,7 @@ and vector-DB-free.
 
 import argparse
 import ast
+import keyword
 import os
 import re
 import sys
@@ -559,35 +560,62 @@ def _check_links(path, content, kind, where, issues, warnings):
 
 
 # A code citation is a whole single-backtick span `path.ext::Name[::Member]` (or Name.Member).
-# The path needs an extension, so `std::vector`, `crate::mod` and bare names never count.
+# The path needs an extension and a directory part or a known file extension, so `std::vector`,
+# `crate::mod`, `os.path::join`, `System.IO::File` and bare names never count.
 _CODE_SPAN = re.compile(r"(?<!`)`([^`\n]+)`(?!`)")
 _CODE_CITATION = re.compile(r"(?P<path>(?:[A-Za-z]:)?[A-Za-z0-9_./\\-]+\.[A-Za-z0-9]+)"
                             r"::(?P<chain>[A-Za-z_]\w*(?:(?:::|\.)[A-Za-z_]\w*)*)")
 _CHAIN_SEPARATOR = re.compile(r"::|\.")
 CODE_CITATION_MAX_BYTES = 1024 * 1024
 _PY_DEFINITION = re.compile(r"^\s*(async\s+def|def|class)\s+([A-Za-z_]\w*)\b")
+# name = ..., name: T = ... and chained a = b = ...; name: T alone; a, *b = ... or (a, b) = ...; type X = ...
 _PY_ASSIGNMENT = re.compile(r"^\s*([A-Za-z_]\w*)\s*(?::[^=\n]*)?=(?!=)")
-_PY_BLOCKS = (ast.If, ast.Try, ast.With, ast.AsyncWith, ast.For, ast.AsyncFor, ast.While) + (
-    (ast.TryStar,) if hasattr(ast, "TryStar") else ())
+_PY_CHAINED = re.compile(r"\s*([A-Za-z_]\w*)\s*=(?!=)")
+_PY_ANNOTATION = re.compile(r"^\s*([A-Za-z_]\w*)\s*:\s*[^\s=#][^=]*$")
+_PY_UNPACKING = re.compile(r"^\s*[(\[]?\s*(\*?[A-Za-z_]\w*(?:\s*,\s*\*?[A-Za-z_]\w*)+)\s*,?\s*[)\]]?\s*=(?!=)")
+_PY_TYPE_LINE = re.compile(r"^\s*type\s+([A-Za-z_]\w*)\s*(?:\[[^\]\n]*\])?\s*=(?!=)")
+_PY_BLOCKS = tuple(getattr(ast, name) for name in (
+    "If", "Try", "TryStar", "With", "AsyncWith", "For", "AsyncFor", "While") if hasattr(ast, name))
+_PY_MATCH = tuple(getattr(ast, name) for name in ("Match",) if hasattr(ast, name))
+_PY_TYPE_ALIAS = tuple(getattr(ast, name) for name in ("TypeAlias",) if hasattr(ast, name))  # 3.12+
+
+
+def _is_cited_path(path):
+    """A directory part, or a top-level file with a known extension that is not a product name."""
+    if "/" in path or "\\" in path:
+        return True
+    return path.rsplit(".", 1)[-1].lower() in _MC_EXTENSIONS and path.lower() not in _MC_NOT_FILES
 
 
 def _iter_code_citations(text):
     """Yield (line, citation, path, chain) for path::Symbol code spans outside fences.
 
     Lines count from the start of the file. Citations are project-root-relative
-    because code spans are never rebased (see _map_markdown_links).
+    because code spans are never rebased (see _map_markdown_links). Only fenced
+    code is skipped; indented code blocks and HTML comments are still read.
     """
     for number, (_offset, line, in_code) in enumerate(markdown_lines(text), start=1):
         if in_code:
             continue
         for span in _CODE_SPAN.finditer(line):
             match = _CODE_CITATION.fullmatch(span.group(1).strip())
-            if match:
+            if match and _is_cited_path(match.group("path")):
                 yield number, match.group(0), match.group("path"), _CHAIN_SEPARATOR.split(match.group("chain"))
 
 
+def _target_names(target):
+    """Names bound by an assignment target, through tuple, list and starred unpacking."""
+    if isinstance(target, ast.Name):
+        return [target.id]
+    if isinstance(target, (ast.Tuple, ast.List)):
+        return [name for element in target.elts for name in _target_names(element)]
+    if isinstance(target, ast.Starred):
+        return _target_names(target.value)
+    return []
+
+
 def _collect_python_names(statements, names):
-    """Module and class scopes: defs, classes and simple assignment targets, never function bodies."""
+    """Module and class scopes: defs, classes, assignment and type-alias names, never function bodies."""
     for node in statements:
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             names.setdefault(node.name, {})
@@ -595,8 +623,13 @@ def _collect_python_names(statements, names):
             _collect_python_names(node.body, names.setdefault(node.name, {}))
         elif isinstance(node, (ast.Assign, ast.AnnAssign)):
             for target in node.targets if isinstance(node, ast.Assign) else [node.target]:
-                if isinstance(target, ast.Name):
-                    names.setdefault(target.id, {})
+                for name in _target_names(target):
+                    names.setdefault(name, {})
+        elif isinstance(node, _PY_TYPE_ALIAS):
+            names.setdefault(node.name.id, {})
+        elif isinstance(node, _PY_MATCH):
+            for case in node.cases:
+                _collect_python_names(case.body, names)
         elif isinstance(node, _PY_BLOCKS):
             for field in ("body", "orelse", "finalbody"):
                 _collect_python_names(getattr(node, field, []), names)
@@ -604,11 +637,62 @@ def _collect_python_names(statements, names):
                 _collect_python_names(handler.body, names)
 
 
+def _closing_quote(line, start, quote):
+    """Index of the quote that closes a string at or after start, skipping escaped quotes, or -1."""
+    while True:
+        end = line.find(quote, start)
+        if end < 0:
+            return end
+        backslashes = 0
+        while end > backslashes and line[end - backslashes - 1] == "\\":
+            backslashes += 1
+        if backslashes % 2 == 0:
+            return end
+        start = end + 1
+
+
+def _python_statement_lines(text):
+    """Yield the lines that start a statement: never inside brackets, a string or a backslash continuation.
+
+    A light lexer for files that do not parse: it tracks strings, comments and
+    bracket depth, so keyword arguments of a multi-line call and code inside a
+    triple-quoted string are not taken for definitions.
+    """
+    depth, quote, continued = 0, None, False
+    for line in text.splitlines():
+        if not depth and quote is None and not continued:
+            yield line
+        index, continued = 0, False
+        while index < len(line):
+            if quote:
+                end = _closing_quote(line, index, quote)
+                if end < 0:
+                    if len(quote) == 1 and not line.endswith("\\"):
+                        quote = None  # an unterminated one-line string ends with its line
+                    break
+                index, quote = end + len(quote), None
+                continue
+            char = line[index]
+            if char == "#":
+                break
+            if char in "'\"":
+                quote = char * 3 if line.startswith(char * 3, index) else char
+                index += len(quote)
+                continue
+            if char in "([{":
+                depth += 1
+            elif char in ")]}":
+                depth = max(depth - 1, 0)
+            index += 1
+        else:
+            continued = line.endswith("\\")
+
+
 def _python_names_by_regex(text):
     """Indentation-scoped def/class/assignment scan for files this Python cannot parse."""
     names = {}
     scopes = [(-1, names)]  # (header indent, members); members is None inside a function.
-    for line in text.splitlines():
+    for line in _python_statement_lines(text):
         stripped = line.strip()
         if not stripped or stripped.startswith("#"):
             continue
@@ -621,9 +705,24 @@ def _python_names_by_regex(text):
             child = members.setdefault(definition.group(2), {}) if members is not None else None
             scopes.append((indent, child if definition.group(1) == "class" else None))
             continue
-        assignment = _PY_ASSIGNMENT.match(line)
-        if assignment and members is not None:
-            members.setdefault(assignment.group(1), {})
+        if members is None:
+            continue
+        found = []
+        alias, unpacking = _PY_TYPE_LINE.match(line), _PY_UNPACKING.match(line)
+        assignment = _PY_ASSIGNMENT.match(line) or _PY_ANNOTATION.match(line)
+        if alias:
+            found = [alias.group(1)]
+        elif unpacking:
+            found = re.findall(r"[A-Za-z_]\w*", unpacking.group(1))
+        elif assignment:
+            found = [assignment.group(1)]
+            chained = _PY_CHAINED.match(line, assignment.end()) if line[assignment.end() - 1] == "=" else None
+            while chained:  # a = b = 0
+                found.append(chained.group(1))
+                chained = _PY_CHAINED.match(line, chained.end())
+        if found and not any(keyword.iskeyword(name) for name in found):
+            for name in found:
+                members.setdefault(name, {})
     return names
 
 
@@ -656,7 +755,7 @@ def _cited_file(relative, cache):
             elif os.path.getsize(path) > CODE_CITATION_MAX_BYTES:
                 cache[relative] = ("problem", "file over 1 MB, not checked")
             else:
-                text = _safe_read(path)
+                text = _safe_read(path).removeprefix("﻿")  # a Windows editor's BOM is not code
                 if relative.endswith(".py"):
                     names, parsed = _python_names(text)
                     cache[relative] = ("python" if parsed else "regex", names)
@@ -666,6 +765,8 @@ def _cited_file(relative, cache):
             cache[relative] = ("problem", "unreadable: not UTF-8 text")
         except ValueError:
             cache[relative] = ("problem", "outside the project")
+        except RuntimeError:  # Path.resolve() on a symlink loop before Python 3.13
+            cache[relative] = ("problem", "unreadable: symlink loop")
         except OSError as exc:
             cache[relative] = ("problem", f"unreadable: {exc.strerror or type(exc).__name__}")
     return cache[relative]
