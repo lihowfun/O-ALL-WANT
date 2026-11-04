@@ -250,3 +250,19 @@ feature, round or kit.
 - First tasting: graphify 0.9.101 (records/digestion-2026-11-03/taste-graphify/).
 - Proposed in the same review but not decided by the owner: no gate without a tool to pass it; calibrate cost
   estimates from measured runs; a unit with no real caller is not absorbed; batch process changes.
+
+## D26. Fair tasting of popular foods (2026-11-04, owner in chat: "Graphify 幾千幾萬顆星啊 你認真跑出來 我們18顆星的比較好？我不是妄自菲薄 而是要建立最佳流程 ... 一定程度上算是可信 我們可以參照 順便建立好最佳skill吸收效率流程"; "3 個skills 用公正方式好好審"; "儘量減少我登入什麼有的沒的操作 你就直接現有環境跑"; refines D25)
+- Stars, authorship and activity are a prior, not proof: a popular food is assumed useful, and tasting finds
+  where. When OAW beats a popular food, suspect the test first: rerun on a repo that is not ours and check
+  the food was configured as its authors recommend before concluding.
+- Taste the food the way its authors intend: official install (project scope when it offers one), its
+  recommended configuration (for example ignore files), its own workflow; test its own claim at the agent level,
+  not a tool-output proxy.
+- Questions are written by a fresh agent that knows the food's claim but not OAW's implementation, frozen in
+  records before any run; same model, prompt and limits in every arm; answers graded blind.
+- Verdicts: plug in (default for a popular food that works; OAW connects to it, as with vendored EGM), absorb
+  the mechanism (stdlib rebuild of the part that carries the value), or decline.
+- Runs use the existing WSL Claude Code login on the subscription; no extra owner login. User-level installs
+  are backed up and restored; project-scope installs are preferred. D13 caps per food stay.
+- Proposed by Claude, not objected to: the owner acts at entry (link) and release (merge) only; the steps
+  become a reusable tasting kit (install recipe plus questions per food).
