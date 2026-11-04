@@ -239,6 +239,12 @@ class ImprovementTests(unittest.TestCase):
                 self.use_spec(repeats=repeats, trigger={"cases": ["handoff"]})
                 self.mark_triggered(fired)
                 self.assertEqual(self.compare()["verdict"], verdict)
+        # A written decimal compares exactly, as documented: 0.667 is stricter than 2/3 (goldfish MS-04).
+        for fired, verdict in ((2, "inconclusive"), (3, "eligible")):
+            with self.subTest(minimum_rate=0.667, fired=fired):
+                self.use_spec(repeats=3, trigger={"cases": ["handoff"], "minimum_rate": 0.667})
+                self.mark_triggered(fired)
+                self.assertEqual(self.compare()["verdict"], verdict)
 
     def test_decide_revalidation_fails_closed_on_vacuous_comparison(self):
         self.use_spec(trigger={"cases": ["handoff"]})
@@ -251,8 +257,21 @@ class ImprovementTests(unittest.TestCase):
             current["comparisons"][-1]["verdict"] = "eligible"
 
         imp.record(self.base, self.id, recorded_by_older_tool)
-        with self.assertRaisesRegex(ValueError, "Revalidated comparison is no longer eligible"):
+        fresh = []
+
+        def revalidation(*args, **kwargs):
+            fresh.append(original(*args, **kwargs))
+            return fresh[-1]
+
+        original = imp.compare
+        with patch.object(imp, "compare", side_effect=revalidation), \
+                self.assertRaisesRegex(ValueError, "Revalidated comparison is no longer eligible"):
             self.decide()
+        # The refusal comes from the re-applied trigger, not from changed evidence or another check.
+        self.assertEqual(len(fresh), 1)
+        self.assertEqual((fresh[0]["verdict"], fresh[0]["vacuous"]["reason"]), ("inconclusive", imp.VACUOUS))
+        self.assertEqual((fresh[0]["quality_regressions"], fresh[0]["failed_checks"], fresh[0]["resource_regressions"]),
+                         ([], [], []))
         self.assertEqual(imp.load_candidate(self.base, self.id)["status"], "evaluated")
 
     def test_overhead_tokens_added_to_arm_and_reported_separately(self):
@@ -306,6 +325,26 @@ class ImprovementTests(unittest.TestCase):
         self.assertEqual(comparison["verdict"], "rejected")
         self.assertEqual(comparison["resource_regressions"], ["tokens"])
         self.assertEqual(comparison["usage"]["candidate"]["coverage"], "incomplete")
+        self.assertNotIn("uncertain_resource_regressions", comparison)
+
+    def test_incomplete_baseline_makes_resource_regression_uncertain(self):
+        # An incomplete baseline total is an undercount, so a larger candidate total proves nothing.
+        self.use_spec(usage_coverage="required")
+        for coverage in ("complete", "incomplete"):
+            with self.subTest(candidate=coverage):
+                self.usage(self.baseline, coverage="incomplete")
+                self.usage(self.candidate, coverage=coverage, overhead=40)  # 120 against 100 per case
+                comparison = self.compare()
+                self.assertEqual(comparison["verdict"], "inconclusive")
+                self.assertEqual(comparison["resource_regressions"], [])
+                self.assertEqual(comparison["uncertain_resource_regressions"], ["tokens"])
+        self.baseline["cases"][0]["assertions"]["correct"] = False  # a pass gain cannot outweigh it either
+        self.assertEqual(self.compare()["verdict"], "inconclusive")
+        for row in self.baseline["cases"]:
+            row["tokens"] = 0  # the old == 0 and new > 0 path is uncertain too
+        self.assertEqual(self.compare()["uncertain_resource_regressions"], ["tokens"])
+        self.candidate["checks"]["regression"] = False  # a certain failure still rejects
+        self.assertEqual(self.compare()["verdict"], "rejected")
 
     def test_grading_tokens_never_counted_as_candidate_cost(self):
         self.use_spec(usage_coverage="required")

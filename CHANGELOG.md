@@ -82,7 +82,9 @@ All notable changes to this project will be documented in this file.
   `grading_tokens`, reported but never counted as cost. The comparison reports each arm's
   tokens, overhead, `overhead_frac`, grading tokens and coverage; an efficiency gain counts only
   when coverage is complete in both arms (`efficiency_blocked` otherwise), while resource
-  regressions still use the observed lower bounds. Spec-declared, so schema-1 specs and stored
+  regressions use the observed lower bounds: certain (rejected) over a complete baseline, and
+  `uncertain_resource_regressions` with an inconclusive verdict over an incomplete baseline,
+  whose total is an undercount (goldfish MS-01). Spec-declared, so schema-1 specs and stored
   proposals keep their verdicts; no schema bump. Evidence: static fixtures only.
 
 ### Changed
