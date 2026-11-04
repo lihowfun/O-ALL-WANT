@@ -260,7 +260,10 @@ def get(topic):
 # ─── Annotate ─────────────────────────────────────────────────────────────────
 
 def annotate(topic, note):
-    """Annotate a knowledge topic with a structured finding."""
+    """Annotate a knowledge topic with a structured finding.
+
+    Raises ValueError, as for an invalid or meta topic, when the note holds a credential.
+    """
     _refuse_unsafe_note(note)
     file_path = _topic_path(topic)
     if not os.path.exists(file_path):
@@ -293,7 +296,11 @@ def annotate(topic, note):
 # ─── Memory ───────────────────────────────────────────────────────────────────
 
 def memory_add(note):
-    """Add a structured entry to the rolling memory (lesson writes through here too)."""
+    """Add a structured entry to the rolling memory (lesson writes through here too).
+
+    Raises ValueError before any file is opened when the note holds a credential;
+    the CLI reports it and exits 1. No other in-repo caller imports this function.
+    """
     _refuse_unsafe_note(note)
     timestamp = datetime.now().strftime("%Y-%m-%d")
 

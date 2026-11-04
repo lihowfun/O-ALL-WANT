@@ -85,8 +85,13 @@ All notable changes to this project will be documented in this file.
   secret access key or session token (`oaw_common.SECRET_PATTERNS`, `evidence_write_refusal`). A
   refused write exits 1, names the pattern ids without printing the value and writes nothing. No
   override flag; use a placeholder. Generic `password=`/`TOKEN=` assignments are not checked, and
-  only the CLI write path is guarded. Evidence: one positive and one negative fixture per pattern
-  (static).
+  only the CLI write path is guarded. After the goldfish diff review: a URL password is exempt only
+  when it is wholly a placeholder (`${DB_PASS}`, `$DB_PASS`, `{db_pass}`, `%s`, `***`), so `$ecret`
+  is refused (EV-02); `openai_key` needs a `sk-proj-`/`sk-svcacct-`/`sk-admin-`/`sk-None-` kind or a
+  legacy alphanumeric run with a digit, so `sk-learn-compatible-api` prose passes (EV-01);
+  `aws_access_key` must stand alone, not inside a longer base64 run (EV-04); the URL scheme and
+  the JWT start are bounded, so a 120,000-character note scans in linear time (EV-03). Evidence:
+  positive and negative fixtures per pattern, negatives also pass the whole guard (static).
 - Strict-mode change (OAW-21): an unresolved `path::Symbol` code citation is a new soft lint
   warning, so `wiki_sync.py lint --strict` now fails on it, like on every other soft warning.
   Default `lint` still exits 0 for it.

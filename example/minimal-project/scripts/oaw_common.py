@@ -33,18 +33,28 @@ _RESERVED = {"con", "prn", "aux", "nul"} | {
 # are committed project files. Only vendor-prefixed or key-anchored shapes:
 # generic password=/TOKEN= heuristics stay out (too many false positives).
 # re.ASCII keeps \w and \b ASCII-only, so a token right after CJK text still matches.
-# Adapted from claude-mem src/utils/redaction.ts:108-177 (Apache-2.0); modified: variable-width lookbehinds rewritten as consuming matches, PEM header only, refusal instead of redaction, generic and claude_mem_key patterns dropped.
+# Every start is bounded (a 32-character scheme, a JWT only outside a base64url run), so a
+# long note scans in linear time.
+# Adapted from claude-mem src/utils/redaction.ts:108-177 (Apache-2.0); modified: variable-width lookbehinds rewritten as consuming matches, PEM header only, refusal instead of redaction, generic and claude_mem_key patterns dropped, url_credentials/openai_key/aws_access_key/jwt bounded or anchored.
 SECRET_PATTERNS = tuple((name, re.compile(pattern, re.ASCII | flags)) for name, pattern, flags in (
-    ("url_credentials", r"\b[a-z][a-z0-9+.-]*://[^\s:/@'\"<>]*:(?![${<])[^\s/@'\"<>]+@", re.IGNORECASE),
-    ("aws_access_key", r"(?:AKIA|ASIA)[0-9A-Z]{16}", 0),
+    # A password that is wholly a placeholder (${DB_PASS}, $DB_PASS, {db_pass}, {{db_pass}}, %s,
+    # %(pw)s, ***) is exempt; <PASSWORD> never matches because '<' ends the value. A literal
+    # user:pass or user:password is refused: documentation examples use a placeholder.
+    ("url_credentials", r"\b[a-z][a-z0-9+.-]{0,31}://[^\s:/@'\"<>]*:"
+                        r"(?!(?:\$\{[^}\s/@'\"<>]*\}|(?-i:\$[A-Z_][A-Z0-9_]*)|\{\{?[^{}\s/@'\"<>]*\}\}?"
+                        r"|%(?:\(\w+\))?s|\*+)@)[^\s/@'\"<>]+@", re.IGNORECASE),
+    ("aws_access_key", r"(?<![A-Za-z0-9])(?:AKIA|ASIA)[0-9A-Z]{16}(?![A-Za-z0-9])", 0),
     ("aws_secret_key", r"(?i:aws_secret_access_key|\bSecretAccessKey)[\"']?\s*[:=]\s*[\"']?"
                        r"[A-Za-z0-9/+=]{40}(?![A-Za-z0-9/+=])", 0),
     ("aws_session_token", r"(?i:\baws_session_token|\bSessionToken)[\"']?\s*[:=]\s*[\"']?[A-Za-z0-9/+=]{100,}", 0),
     ("github_pat", r"\bgh[oprsu]_[A-Za-z0-9]{36}\b|\bgithub_pat_[A-Za-z0-9_]{82}\b", 0),
-    ("openai_key", r"\bsk-(?!ant-)[A-Za-z0-9_-]{20,}(?!\w)", 0),
+    # Project, service-account and admin keys name their kind; a legacy key is one alphanumeric
+    # run with a digit, so kebab-case prose such as sk-learn-compatible-api is not a key.
+    ("openai_key", r"\bsk-(?:(?:proj|svcacct|admin|None)-[A-Za-z0-9_-]{20,}(?!\w)"
+                   r"|(?=[A-Za-z]*[0-9])[A-Za-z0-9]{20,}(?![\w-]))", 0),
     ("anthropic_key", r"\bsk-ant-[A-Za-z0-9_-]{20,}(?!\w)", 0),
     ("slack_token", r"\b(?:xox[abeprs]|xapp)-[A-Za-z0-9-]{10,}(?!\w)", 0),
-    ("jwt", r"\beyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+(?!\w)", 0),
+    ("jwt", r"(?<![A-Za-z0-9_-])eyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+(?!\w)", 0),
     ("private_key_pem", r"-----BEGIN (?:RSA |DSA |EC |OPENSSH |PGP |ENCRYPTED )?PRIVATE KEY(?: BLOCK)?-----", 0),
     ("stripe_key", r"\b(?:(?:sk|pk|rk)_(?:live|test)_[A-Za-z0-9]{24,}|whsec_[A-Za-z0-9]{32,})\b", 0),
     ("google_api_key", r"\bAIza[0-9A-Za-z_-]{35}(?!\w)", 0),
