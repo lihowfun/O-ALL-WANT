@@ -150,6 +150,14 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- `wiki_sync.py memory-check` (prototype) after the goldfish diff review: line numbers count only
+  line breaks, not U+2028 or form feeds (SL-01); calls such as `res.json()` and prose such as
+  `A:B` are skipped (SL-02, SL-05); a top-level symlink or junction is never followed and bare
+  names are judged by the walk only, by exact NFC name on every OS (SL-03, SL-04); a fence that
+  closes later hides heading-shaped examples (SL-08); autolinks `<path>` are unwrapped and the
+  placeholder characters are documented (SL-11); text output escapes every control, format and
+  line-separator character, including U+061C and U+FEFF (SL-12); a memory file over 4 MB exits 1
+  unread (SL-13).
 - `oaw_status.py` shows a catalog headline, reports unknown verdict words as
   unknown instead of in progress, and strips control/bidi characters.
 - `catalog.py restore --apply` re-evaluates the effect versus the default, so no view keeps

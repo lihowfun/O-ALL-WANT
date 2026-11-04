@@ -13,6 +13,7 @@ import keyword
 import os
 import re
 import sys
+import unicodedata
 from collections import defaultdict
 from datetime import date, datetime
 from urllib.parse import quote, unquote, urlsplit, urlunsplit
@@ -1356,19 +1357,60 @@ TIER_IN_BLOCK = re.compile(r"\[T([1-5])\]")
 TIER_ORDER = {"T1": 1, "T2": 2, "T3": 3, "T4": 4, "T5": 5}
 
 
+_MEMORY_FENCE = re.compile(r"^\s{0,3}(`{3,}|~{3,})")  # the opener _fence_after recognizes
+
+
+def _memory_lines(content):
+    """Split on line breaks only (CRLF, CR, LF), as editors and grep number lines.
+
+    str.splitlines() would also split on form feeds, U+0085 or U+2028, so
+    reported line numbers would drift from what an editor shows.
+    """
+    lines = re.split(r"\r\n|\r|\n", content)
+    if lines and lines[-1] == "":
+        lines.pop()
+    return lines
+
+
+def _memory_fenced(lines):
+    """Per line, whether it is inside or delimits a fenced block.
+
+    A fence that closes later hides heading-shaped example lines inside it. A
+    fence that never closes ends at the next entry heading, so one unclosed
+    fence cannot swallow every later entry. Linear: closers are precomputed.
+    """
+    longest = {"`": [0] * (len(lines) + 1), "~": [0] * (len(lines) + 1)}
+    for index in range(len(lines) - 1, -1, -1):
+        marker = _MEMORY_FENCE.match(lines[index])
+        for char, suffix in longest.items():
+            length = len(marker.group(1)) if marker and marker.group(1)[0] == char else 0
+            suffix[index] = max(suffix[index + 1], length)
+    fenced, fence, closes = [], None, False
+    for index, line in enumerate(lines):
+        if fence is not None and not closes and MEMORY_ENTRY_HEADER.match(line):
+            fence = None
+        after = _fence_after(line, fence)
+        if fence is None and after is not None:
+            closes = longest[after[0]][index + 1] >= len(after)
+        fenced.append(fence is not None or after is not None)
+        fence = after
+    return fenced
+
+
 def _parse_memory_entries(content):
     """Parse .agents/memory.md into structured entries.
 
     Returns a list of dicts: `{date, tags, tiers, title, body, line}`. Tags are
     the raw labels between brackets in order of appearance; tiers is the subset
-    matching `[T1]`–`[T5]`; line is the 1-based heading line.
+    matching `[T1]`–`[T5]`; line is the 1-based heading line. A heading-shaped
+    line inside a fenced example is body text, not an entry.
     """
-    lines = content.splitlines()
+    lines = _memory_lines(content)
     entries = []
     current = None
     body_buf = []
-    for number, line in enumerate(lines, 1):
-        m = MEMORY_ENTRY_HEADER.match(line)
+    for number, (line, in_code) in enumerate(zip(lines, _memory_fenced(lines)), 1):
+        m = None if in_code else MEMORY_ENTRY_HEADER.match(line)
         if m:
             if current is not None:
                 current["body"] = "\n".join(body_buf).strip()
@@ -1556,6 +1598,7 @@ def cites(target, json_out=False):
 # memory-check: one manual, read-only, offline pass over .agents/memory.md.
 # Entry text is only string-matched; it is never executed, followed or rewritten.
 MEMORY_CHECK_WALK_LIMIT = 100_000
+MEMORY_CHECK_MAX_BYTES = 4 * 1024 * 1024  # A larger memory.md is refused unread (exit 1).
 MEMORY_CHECK_MAX_LIMIT = 500
 MEMORY_CHECK_MAX_TOKEN = 400  # Longer words are skipped before any parsing, keeping cost linear.
 MEMORY_CHECK_NOTICE = (
@@ -1582,6 +1625,7 @@ _MC_CJK_RUN = re.compile(rf"[{_MC_CJK_LETTERS}]+")
 _MC_PATH_GLUE = re.compile(r"[/\\]|\.\w")
 _MC_SUFFIX = re.compile(r"(?:::[A-Za-z_][\w.]*|:\d+(?:[-:]\d+)*|#[^#/]*)$")
 _MC_PLACEHOLDER = re.compile(r"[<>{}$*?|=@+%^&\x00-\x1f\x7f]")
+_MC_CALL = re.compile(r"\w\((?:\)|$)")  # res.json() or a call cut at "(" is code, not a file
 _MC_BARE = re.compile(r"[\w.\-]+\.([A-Za-z0-9]{1,8})")
 _MC_DRIVE = re.compile(r"^[A-Za-z]:")
 _MC_REMOVAL = re.compile(
@@ -1589,7 +1633,7 @@ _MC_REMOVAL = re.compile(
     r"|移除|刪除|删除|改名|淘汰|取代|廢棄|废弃",
     re.IGNORECASE,
 )
-_MC_UNSAFE = re.compile(r"[\x00-\x1f\x7f-\x9f​-‏‪-‮⁦-⁩]")
+_MC_ESCAPED = frozenset(("Cc", "Cf", "Zl", "Zp"))  # Unicode categories never printed raw
 _MC_JUNCTION_TAG = 0xA0000003
 
 
@@ -1605,8 +1649,8 @@ def _memory_check_limit(value):
 
 
 def _memory_check_printable(text):
-    """Escape control and bidi characters so entry text cannot drive a terminal."""
-    return _MC_UNSAFE.sub(lambda match: f"\\u{ord(match.group(0)):04x}", text)
+    """Escape control, format (bidi marks, U+061C, U+FEFF) and line-separator characters for a terminal."""
+    return "".join(f"\\u{ord(char):04x}" if unicodedata.category(char) in _MC_ESCAPED else char for char in text)
 
 
 def _memory_check_tokens(text):
@@ -1631,12 +1675,19 @@ def _memory_check_tokens(text):
 
 
 def _memory_check_normalize(token):
-    """Strip Markdown wrapping, punctuation and ::Symbol, :N, :N-M or #L12 suffixes."""
+    """Strip Markdown wrapping, punctuation and ::Symbol, :N, :N-M or #L12 suffixes.
+
+    A call such as res.json() is returned unstripped, so classify() skips it as code.
+    """
     if "](" in token:
         token = token.rsplit("](", 1)[1]
+    if _MC_CALL.search(token):
+        return token
     previous = None
     while token != previous:
         previous = token
+        if len(token) > 2 and token[0] == "<" and token[-1] == ">":
+            token = token[1:-1]  # a Markdown autolink <path>
         token = token.lstrip("\"'([").rstrip("\"'()[].,;:!?")
         while len(token) > 1 and token[0] == token[-1] and token[0] in "*_~":
             token = token[1:-1]
@@ -1645,9 +1696,14 @@ def _memory_check_normalize(token):
 
 
 def _memory_check_classify(token, anchors):
-    """Classify a normalized token. Only paths inside BASE_DIR are ever stat'ed."""
+    """Classify a normalized token. A cited path is stat'ed only inside BASE_DIR.
+
+    A top-level link is never followed (its citations are unanchored), and
+    confined_path rejects a path that a deeper link takes outside before it is
+    stat'ed. Bare names are judged by the walk, by name only.
+    """
     if (not token or len(token) > MEMORY_CHECK_MAX_TOKEN or "://" in token or token.startswith("-")
-            or _MC_PLACEHOLDER.search(token) or not re.search(r"[^\W\d_]", token)):
+            or _MC_PLACEHOLDER.search(token) or _MC_CALL.search(token) or not re.search(r"[^\W\d_]", token)):
         return "skipped"
     path = token.replace("\\", "/")
     parts = [part for part in path.split("/") if part not in ("", ".")]
@@ -1655,15 +1711,17 @@ def _memory_check_classify(token, anchors):
     # BASE_DIR, so it is classified before any join or stat, like a leading one.
     drive = any(_MC_DRIVE.match(part) for part in parts)
     if drive or path.startswith(("/", "~")) or ".." in parts:
-        # A lone "/compact" or "~name" is a command or user name, not a file path.
-        if len(parts) == 1 and not drive and not _MC_BARE.fullmatch(parts[0]):
+        # A lone "/compact", "~name" or "A:B" is a command, user name or prose; "C:x.md" and "C:\" are paths.
+        if (len(parts) == 1 and not _MC_BARE.fullmatch(parts[0][2:] if drive else parts[0])
+                and not (drive and path.endswith("/"))):
             return "skipped"
         return "outside_project"
     if "/" in path:
         if not parts:
             return "skipped"
         if parts[0] not in anchors:
-            anchors[parts[0]] = os.path.isdir(os.path.join(BASE_DIR, parts[0]))
+            anchor = os.path.join(BASE_DIR, parts[0])
+            anchors[parts[0]] = not _memory_check_is_link(anchor) and os.path.isdir(anchor)
         if not anchors[parts[0]]:
             return "unanchored"
         try:
@@ -1686,9 +1744,14 @@ def _memory_check_is_link(path):
     return (info.st_mode & 0o170000) == 0o120000 or getattr(info, "st_reparse_tag", 0) == _MC_JUNCTION_TAG
 
 
+def _memory_check_name(name):
+    """Bare names match exactly, case included, on every OS; NFC so macOS NFD names compare equal."""
+    return unicodedata.normalize("NFC", name)
+
+
 def _memory_check_walk(names):
     """Return (found basenames, incomplete) from a sorted walk of at most MEMORY_CHECK_WALK_LIMIT files."""
-    pending = {os.path.normcase(name) for name in names}
+    pending = {_memory_check_name(name) for name in names}
     found, seen, errors = set(), 0, []
     if not pending:
         return found, False
@@ -1699,7 +1762,7 @@ def _memory_check_walk(names):
             if seen >= MEMORY_CHECK_WALK_LIMIT:
                 return found, True
             seen += 1
-            key = os.path.normcase(name)
+            key = _memory_check_name(name)
             if key in pending:
                 pending.discard(key)
                 found.add(key)
@@ -1725,23 +1788,25 @@ def memory_check(limit=50, json_out=False):
     if exists:
         if not os.path.isfile(memory_file):
             raise ValueError(".agents/memory.md is not a regular file; nothing was checked.")
+        too_large = f".agents/memory.md is larger than {MEMORY_CHECK_MAX_BYTES // 1024 // 1024} MB; nothing was checked."
+        if os.path.getsize(memory_file) > MEMORY_CHECK_MAX_BYTES:
+            raise ValueError(too_large)
         try:
             with open(memory_file, "r", encoding="utf-8-sig") as handle:
-                content = handle.read()
+                content = handle.read(MEMORY_CHECK_MAX_BYTES + 1)  # characters never outnumber bytes
         except UnicodeDecodeError as exc:
             raise ValueError(f".agents/memory.md is not valid UTF-8 (byte {exc.start}); nothing was checked.") from exc
-        lines, entries = content.splitlines(), _parse_memory_entries(content)
+        if len(content) > MEMORY_CHECK_MAX_BYTES:
+            raise ValueError(too_large)
+        lines, entries = _memory_lines(content), _parse_memory_entries(content)
+    fenced = _memory_fenced(lines)
 
     counts = dict.fromkeys(MEMORY_CHECK_COUNT_KEYS, 0)
     findings, bare, anchors, tokens = [], [], {}, 0
     for index, entry in enumerate(entries):
         last = entries[index + 1]["line"] - 1 if index + 1 < len(entries) else len(lines)
-        prose, fence = [], None
-        for number in range(entry["line"], last + 1):
-            after = _fence_after(lines[number - 1], fence)
-            if fence is None and after is None:
-                prose.append((number, lines[number - 1]))
-            fence = after
+        # Fence state spans the file: a closed fence hides heading-shaped examples, an unclosed one ends at an entry.
+        prose = [(number, lines[number - 1]) for number in range(entry["line"], last + 1) if not fenced[number - 1]]
         removal = any(_MC_REMOVAL.search(text) for _number, text in prose)
         seen = set()
         for number, text in prose:
@@ -1756,8 +1821,8 @@ def memory_check(limit=50, json_out=False):
                 finding = {"kind": kind, "line": number, "entry_line": entry["line"], "date": entry["date"],
                            "tags": list(entry["tags"]), "title": entry["title"][:120], "path": token,
                            "removal_context": removal}
-                if kind == "bare" and os.path.isfile(os.path.join(BASE_DIR, token)):
-                    kind = "present"
+                # Bare names are judged by name in the walk (root files come first), never by a stat that
+                # would follow a link or match another case on a case-insensitive disk.
                 if kind == "bare":
                     bare.append(finding)
                     continue
@@ -1767,7 +1832,7 @@ def memory_check(limit=50, json_out=False):
 
     found, walk_truncated = _memory_check_walk(finding["path"] for finding in bare)
     for finding in bare:
-        if os.path.normcase(finding["path"]) in found:
+        if _memory_check_name(finding["path"]) in found:
             counts["present"] += 1
             continue
         finding["kind"] = "unverified" if walk_truncated else "missing_path"
