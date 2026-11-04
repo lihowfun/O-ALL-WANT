@@ -99,9 +99,23 @@ class NativeSearchTests(CodeMapFixture):
         self.assertNotIn("data/blob.bin", {row["path"] for row in rows})
 
     def test_callers_skip_definitions_and_rank_calls_before_mentions(self):
-        rows = native.callers(native.Corpus(self.corpus), "core.write_record", 10)
+        rows = native.callers(native.Corpus(self.corpus), "write_record", 10)
         self.assertEqual([row["path"] for row in rows], ["pkg/service.py", "tests/test_core.py", "docs/notes.md"])
         self.assertEqual([row["score"] for row in rows], [1.0, 1.0, 0.25])
+
+    def test_callers_rank_files_tied_to_a_qualified_module_first(self):
+        (self.corpus / "other").mkdir()
+        (self.corpus / "other" / "store.py").write_text(
+            "def write_record(path):\n    return path\n\n\ndef save():\n    return write_record('x')\n", encoding="utf-8")
+        corpus = native.Corpus(self.corpus)
+        bare = [row["path"] for row in native.callers(corpus, "write_record", 10)]
+        self.assertEqual(bare, ["other/store.py", "pkg/service.py", "tests/test_core.py", "docs/notes.md"])
+        for symbol in ("core.write_record", "pkg/core.py::write_record"):
+            rows = native.callers(corpus, symbol, 10)
+            self.assertEqual([row["path"] for row in rows],
+                             ["pkg/service.py", "tests/test_core.py", "other/store.py", "docs/notes.md"], symbol)
+            self.assertEqual([row["score"] for row in rows], [11.0, 11.0, 1.0, 0.25])
+        self.assertEqual(native.callers(corpus, "no-such.write_record", 10), [])
 
     def test_path_finds_two_hop_chain_direct_import_and_reports_no_chain(self):
         corpus = native.Corpus(self.corpus)
@@ -174,17 +188,48 @@ class ScorerTests(CodeMapFixture):
         late = scorer.score_question(callers, [f"x{i}.py" for i in range(10)] + ["pkg/service.py"], [1] * 11, {})
         self.assertEqual((late["hit5"], late["rr"]), (False, 0.0))  # beyond the first 10 distinct files
 
-    def test_gate_needs_delta_and_no_more_text_bytes(self):
-        def summary(top5, text_bytes):
-            return {"a": {"top5": top5, "text_bytes": text_bytes}}
-        result = scorer.gate({"R": summary(0.5, 1000), "S": summary(0.65, 1000)}, "R", False)
-        self.assertTrue(result["arms"]["S"]["pass"])
-        self.assertFalse(scorer.gate({"R": summary(0.5, 1000), "S": summary(0.9, 1001)}, "R", False)["arms"]["S"]["pass"])
-        self.assertFalse(scorer.gate({"R": summary(0.5, 1000), "S": summary(0.64, 10)}, "R", False)["arms"]["S"]["pass"])
-        self.assertFalse(scorer.gate({"R": summary(0.5, 1000), "S": summary(0.9, 10)}, "R", True)["evaluated"])
-        self.assertFalse(scorer.gate({"S": summary(0.9, 10)}, "R", False)["evaluated"])
+    def test_ranked_file_counts_only_when_the_text_output_shows_it(self):
+        callers = FIXTURE_QUESTIONS[1]
+        paths = ["pkg/service.py", "tests/test_core.py"]
+        hidden = scorer.score_question(callers, paths, [6, 5], {}, shown="ok\n")
+        self.assertEqual((hidden["hit1"], hidden["hit5"], hidden["recall"], hidden["gold_not_in_text"]), (False, False, 0.0, 2))
+        partly = scorer.score_question(callers, paths, [6, 5], {}, shown="C:\\copy\\tests\\test_core.py:5: call\n")
+        self.assertEqual((partly["hit1"], partly["hit5"], partly["rr"], partly["recall"]), (False, True, 0.5, 0.5))
+        twins = scorer.generated_twins(self.corpus)
+        copy = scorer.score_question(FIXTURE_QUESTIONS[0], ["example/demo/pkg/core.py"], [5], twins,
+                                     shown="example/demo/pkg/core.py:5: title\n")
+        self.assertTrue(copy["hit1"])
 
-    def test_run_scores_arms_as_subprocesses_on_their_own_corpus_copy(self):
+    @staticmethod
+    def gate_rows(arm, hits, text_bytes, failed=None):
+        failed = failed or [False] * len(hits)
+        return [{"arm": arm, "id": f"q{index}", "class": "d", "hit5": hit, "text_bytes": size, "json_bytes": 2 * size,
+                 "failed": fail} for index, (hit, size, fail) in enumerate(zip(hits, text_bytes, failed))]
+
+    def test_gate_needs_delta_two_gained_questions_and_no_more_text_bytes(self):
+        base = self.gate_rows("R", [1, 0, 0, 0, 0], [50] * 5)
+        verdict = scorer.gate(base + self.gate_rows("S", [1, 1, 1, 0, 0], [50] * 5), "R", False)["arms"]["S"]
+        self.assertTrue(verdict["pass"])
+        self.assertEqual(verdict["classes"]["d"]["top5_hits_gained"], 2)
+        one = scorer.gate(base + self.gate_rows("S", [1, 1, 0, 0, 0], [10] * 5), "R", False)["arms"]["S"]
+        self.assertEqual((one["classes"]["d"]["top5_delta"], one["pass"]), (0.2, False))  # 0.2 >= 0.15 but one question
+        more = scorer.gate(base + self.gate_rows("S", [1, 1, 1, 1, 1], [50, 50, 50, 50, 51]), "R", False)["arms"]["S"]
+        self.assertFalse(more["pass"])
+        self.assertFalse(scorer.gate(base + self.gate_rows("S", [1] * 5, [1] * 5), "R", True)["evaluated"])
+        self.assertFalse(scorer.gate(self.gate_rows("S", [1] * 5, [1] * 5), "R", False)["evaluated"])
+
+    def test_gate_byte_comparison_skips_questions_where_either_arm_failed(self):
+        base = self.gate_rows("R", [1, 0, 0, 0, 0], [5, 5, 5, 5, 100])
+        failing = self.gate_rows("S", [1, 1, 1, 0, 0], [10, 10, 10, 10, 0], [False, False, False, False, True])
+        verdict = scorer.gate(base + failing, "R", False)["arms"]["S"]["classes"]["d"]
+        self.assertEqual((verdict["text_bytes"], verdict["baseline_text_bytes"]), (40, 20))
+        self.assertEqual((verdict["bytes_compared_questions"], verdict["bytes_excluded_questions"]), (4, 1))
+        self.assertEqual((verdict["json_bytes"], verdict["baseline_json_bytes"]), (80, 40))
+        self.assertFalse(verdict["passes"])  # summed over all five, 40 < 120 would have passed
+
+    NATIVE_ARM = "R={python} {repo}/evals/code-map/native_search.py {sub} {args}"
+
+    def fake_arm(self):
         perfect = {"find": {"Where is a title frobnicated into a slug?": ["pkg/core.py"],
                             "store a record on disk": ["app/main.py"]},
                    "callers": {"write_record": ["pkg/service.py", "tests/test_core.py"]},
@@ -193,14 +238,18 @@ class ScorerTests(CodeMapFixture):
         fake.write_text("import json, sys\nfrom pathlib import Path\nANSWERS = " + json.dumps(perfect) + "\n"
                         "Path('fake-arm-was-here').write_text('x')\n"
                         "sub, first = sys.argv[1], sys.argv[2]\n"
+                        "paths = ANSWERS[sub][first]\n"
                         "if '--json' in sys.argv:\n"
-                        "    paths = ANSWERS[sub][first]\n"
                         "    print(json.dumps({'schema_version': 1, 'results': [{'path': p, 'score': 1, 'line': 5} for p in paths]}))\n"
-                        "else:\n    print('ok')\n", encoding="utf-8")
+                        "else:\n    print('\\n'.join(paths))\n", encoding="utf-8")
+        return fake
+
+    def test_run_scores_arms_as_subprocesses_on_their_own_corpus_copy(self):
+        fake = self.fake_arm()
         out = self.base / "out"
         process = self.score("run", "--questions", str(self.questions_file()), "--corpus", str(self.corpus),
-                             "--arm", "R={python} {repo}/evals/code-map/native_search.py {sub} {args}",
-                             "--arm", f"F={{python}} {fake.as_posix()} {{sub}} {{args}}", "--out", str(out))
+                             "--arm", self.NATIVE_ARM, "--arm", f"F={{python}} {fake.as_posix()} {{sub}} {{args}}",
+                             "--arm", 'E={python} -c "import sys; sys.exit(3)" {sub} {args}', "--out", str(out))
         self.assertEqual(process.returncode, 0, process.stderr)
         report = json.loads((out / "results.json").read_text(encoding="utf-8"))
         fake_summary, native_summary = report["summary"]["F"], report["summary"]["R"]
@@ -209,13 +258,39 @@ class ScorerTests(CodeMapFixture):
         self.assertEqual((native_summary["a"]["top1"], native_summary["a"]["line_top1"]), (1.0, 1.0))
         self.assertAlmostEqual(native_summary["b"]["precision"], 2 / 3, places=3)
         self.assertEqual((native_summary["c"]["top5"], native_summary["d"]["top1"]), (0.0, 1.0))
-        self.assertEqual(fake_summary["a"]["text_bytes"], 3)
-        self.assertEqual(report["gate"]["arms"]["F"]["passing_classes"], ["c"])
-        self.assertIn("Gate for F vs R: PASS", (out / "results.md").read_text(encoding="utf-8"))
+        self.assertEqual(fake_summary["a"]["text_bytes"], len("pkg/core.py\n"))
+        fake_gate = report["gate"]["arms"]["F"]
+        self.assertEqual((fake_gate["passing_classes"], fake_gate["classes"]["c"]["top5_hits_gained"]), ([], 1))
+        self.assertIn("Gate for F vs R: FAIL", (out / "results.md").read_text(encoding="utf-8"))
+        broken = [row for row in report["rows"] if row["arm"] == "E"]
+        self.assertTrue(all(row["failed"] and not row["hit5"] and row["error"].startswith("exit") for row in broken))
+        self.assertEqual(report["gate"]["arms"]["E"]["classes"]["a"]["bytes_excluded_questions"], 1)
         self.assertFalse((self.corpus / "fake-arm-was-here").exists())
         self.assertIn(fake.as_posix(), report["arms"]["F"]["files_sha256"])
-        self.assertEqual(report["prereg"], "not checked")
-        self.assertFalse(any(row["error"] for row in report["rows"]))
+        self.assertEqual((report["prereg"], report["deviations"]), ("not checked", []))
+        self.assertFalse(any(row["error"] for row in report["rows"] if row["arm"] != "E"))
+
+    def test_full_run_requires_frozen_arms_and_records_deviations(self):
+        questions = self.questions_file()
+        native_sha = hashlib.sha256((HERE / "native_search.py").read_bytes()).hexdigest()
+        prereg = self.base / "PREREG.md"
+        prereg.write_text(f"questions.json sha256: `{hashlib.sha256(questions.read_bytes()).hexdigest()}`\n"
+                          f"native_search.py sha256: `{native_sha}`\n", encoding="utf-8")
+        arms = ["--arm", self.NATIVE_ARM, "--arm", f"F={{python}} {self.fake_arm().as_posix()} {{sub}} {{args}}"]
+        common = ["run", "--questions", str(questions), "--corpus", str(self.corpus), *arms]
+        refused = self.score(*common, "--out", str(self.base / "refused"))
+        self.assertEqual(refused.returncode, 2)
+        self.assertIn("arm F", refused.stderr)
+        self.assertNotIn("arm R", refused.stderr)
+        for extra, name in ((["--allow-unfrozen-arm"], "allowed"), (["--ids", "qa"], "partial")):
+            process = self.score(*common, *extra, "--out", str(self.base / name))
+            self.assertEqual(process.returncode, 0, process.stderr)
+            report = json.loads((self.base / name / "results.json").read_text(encoding="utf-8"))
+            self.assertEqual(report["prereg"], "matches PREREG")
+            self.assertEqual(report["prereg_sha256"], hashlib.sha256(prereg.read_bytes()).hexdigest())
+            self.assertEqual(len(report["deviations"]), 2)  # score.py is not recorded, nor is arm F
+            self.assertTrue(report["deviations"][0].startswith("score.py sha256"))
+            self.assertTrue(report["deviations"][1].startswith("arm F:"))
 
     def test_run_refuses_changed_corpus_and_unregistered_questions(self):
         changed = self.score("run", "--questions", str(self.questions_file(file_list_sha256="0" * 64)), "--corpus",
@@ -232,9 +307,18 @@ class ScorerTests(CodeMapFixture):
     def test_check_reports_a_question_that_names_its_target(self):
         leaky = json.loads(json.dumps(FIXTURE_QUESTIONS))
         leaky[0]["text"] = leaky[0]["command"]["args"][0] = "Where is frobnicate_title defined?"
+        leaky[1]["text"] = "Which files in the core package call it?"  # 'core' is a word of tests/test_core.py
         problems = scorer.check_questions({"questions": leaky}, self.corpus)
         self.assertIn("qa: question text names its target (frobnicate_title)", problems)
-        self.assertFalse([problem for problem in problems if problem.startswith(("qb", "qc", "qd"))])
+        self.assertIn("qb: question text uses a word of a gold path (core); reword or allow it", problems)
+        self.assertFalse([problem for problem in problems if problem.startswith(("qc", "qd"))])
+        leaky[1]["allowed_path_words"] = ["core"]
+        leaky[1]["command"]["args"] = ["core.write_record"]
+        problems = scorer.check_questions({"questions": leaky}, self.corpus)
+        self.assertFalse([problem for problem in problems if problem.startswith("qb")])
+        leaky[1]["command"]["args"] = ["helpers.write_record"]
+        self.assertIn("qb: helpers.write_record is not defined in pkg/core.py",
+                      scorer.check_questions({"questions": leaky}, self.corpus))
 
 
 class FrozenHarnessTests(unittest.TestCase):

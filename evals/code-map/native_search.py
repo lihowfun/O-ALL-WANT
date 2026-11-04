@@ -11,7 +11,10 @@ current directory) again.
                           IDF-weighted hit counts, one best line per file.
   callers <symbol>        whole-word matches of the symbol's last name part,
                           definition lines dropped; lines that look like a call
-                          count 1, other mentions 0.25.
+                          count 1, other mentions 0.25. A qualified symbol
+                          (module.name or path::name) ranks first the files that
+                          import that module, are that module, or write
+                          module.name; the other matches follow.
   path <A> <B>            two greps: the imports of A, and the files whose import
                           lines name B; reports A -> X -> B chains (or A -> B).
   affected <path[::Sym]>  files whose import lines name the module, the callers of
@@ -37,6 +40,7 @@ MAX_FILE_BYTES = 4 * 1024 * 1024
 SNIPPET_CHARS = 120
 SKIP_DIRS = frozenset({".git", ".hg", ".svn", "__pycache__", "node_modules"})
 CALL_WEIGHT, MENTION_WEIGHT = 1.0, 0.25
+QUALIFIED_BONUS = 10.0
 
 # English function words plus the words a location question is phrased with; an
 # agent would not grep for them.
@@ -143,17 +147,26 @@ def find(corpus: Corpus, text: str, limit: int) -> tuple[list[dict], list[str]]:
     return ranked(rows, limit), terms
 
 
-def symbol_name(symbol: str) -> str:
-    return re.split(r"::|\.", symbol.strip())[-1]
+def symbol_parts(symbol: str) -> tuple[str, str | None]:
+    """(name, module stem) of `name`, `module.name`, `pkg.module.name` or `dir/module.py::name`."""
+    text = symbol.strip()
+    if "::" in text:
+        location, _, rest = text.partition("::")
+        return re.split(r"::|\.", rest)[-1], PurePosixPath(location.replace("\\", "/")).stem or None
+    parts = text.split(".")
+    return parts[-1], (parts[-2] if len(parts) > 1 and parts[-2] else None)
 
 
 def callers(corpus: Corpus, symbol: str, limit: int, *, exclude=()) -> list[dict]:
-    name = symbol_name(symbol)
-    if not re.fullmatch(r"[A-Za-z_]\w*", name):
+    name, module = symbol_parts(symbol)
+    if not re.fullmatch(r"[A-Za-z_]\w*", name) or (module is not None and not re.fullmatch(r"[A-Za-z_]\w*", module)):
         return []
     word = re.compile(rf"(?<!\w){re.escape(name)}(?!\w)")
     definition = re.compile(rf"^\s*(?:async\s+def|def|class|function)\s+{re.escape(name)}(?!\w)")
     call = re.compile(rf"(?<!\w){re.escape(name)}\s*\(")
+    if module is not None:
+        imports_module = re.compile(rf"^\s*(?:from\s+(?:[\w.]*\.)?{module}\s+import\b|import\s+.*(?<![\w.]){module}(?!\w))")
+        qualified_use = re.compile(rf"(?<!\w){module}\.{re.escape(name)}(?!\w)")
     rows = []
     for path, lines in corpus.files.items():
         if path in exclude:
@@ -170,7 +183,11 @@ def callers(corpus: Corpus, symbol: str, limit: int, *, exclude=()) -> list[dict
                 first_mention = number if first_mention is None else first_mention
         if calls or mentions:
             best = first_call if first_call is not None else first_mention
-            rows.append(row(path, calls * CALL_WEIGHT + mentions * MENTION_WEIGHT, best + 1, lines[best]))
+            score = calls * CALL_WEIGHT + mentions * MENTION_WEIGHT
+            if module is not None and (PurePosixPath(path).stem == module or any(
+                    imports_module.match(line) or qualified_use.search(line) for line in lines)):
+                score += QUALIFIED_BONUS  # a second look an agent would take: files tied to that module first
+            rows.append(row(path, score, best + 1, lines[best]))
     return ranked(rows, limit)
 
 
