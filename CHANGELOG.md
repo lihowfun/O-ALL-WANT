@@ -110,6 +110,21 @@ All notable changes to this project will be documented in this file.
   `uncertain_resource_regressions` with an inconclusive verdict over an incomplete baseline,
   whose total is an undercount (goldfish MS-01). Spec-declared, so schema-1 specs and stored
   proposals keep their verdicts; no schema bump. Evidence: static fixtures only.
+- `scripts/goldfish_review.py build|run|check`: the D21 zero-context Goldfish round on a code
+  diff as a reusable tool, from the hand-built 2026-11-03 records kit. `build` writes one packet
+  per spec group holding only that group's diff for its listed paths plus its design (shared
+  files are no longer added implicitly) and refuses a group whose diff is empty. `run` keeps the
+  kit's `claude -p` recipe (fresh empty temp folder, init-event checks, recorded canary, strict
+  `zero_context_verified` per D20, redaction of temp/home paths in Windows, Git Bash, WSL, macOS
+  `/private` and dash-encoded forms, emails and the account name) and fails closed on billing:
+  an API key in the environment is refused, each result records `billing_source`, and a packet
+  whose init event reports an `apiKeySource` other than `none` (or none at all) is written and
+  stops the run with exit 1 unless `--allow-api-key`. New init check: no `CLAUDE.md`,
+  `CLAUDE.local.md` or `AGENTS.md` above the temp folder. The review is read from the last
+  `json` fence that opens a line, and a timeout is recorded instead of aborting. `check`
+  summarises results and fails on a leak or a billing problem. Evidence: static fixtures with a
+  fake CLI (16 tests, run on Windows 11 with Python 3.13 and WSL Ubuntu with Python 3.10); no
+  model call, review quality not measured.
 
 ### Changed
 
