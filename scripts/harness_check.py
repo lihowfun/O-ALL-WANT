@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_TEST_MODULES = ("test_context_hub", "test_gate", "test_improvement", "test_install", "test_skills", "test_wiki_sync",
                          "test_egm_pilot", "test_egm_local", "test_status", "test_egm_integration",
                          "test_catalog_core", "test_catalog", "test_catalog_ui", "test_cli_resolve")
-MINIMUM_TESTS = 347  # POSIX count; Windows adds junction cases.
+MINIMUM_TESTS = 353  # POSIX count; Windows adds junction cases.
 SUMMARY_MARKER = "OAW-TEST-SUMMARY "
 
 

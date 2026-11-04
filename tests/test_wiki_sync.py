@@ -727,6 +727,7 @@ Use `origin/codex/oaw-2-native-upgrade` and build `2.0.0+build.N.<hash>`; run `p
 
 ## [2026-11-03] [NOTE] Symbols, config keys, versions, dates
 `oaw_common._exclusive_lock`, `log.showSignature`, `gpg.program`, `improvement.py compare()`, `v2.0.0`, 20261030, EX-LARCH-731, ADR-040, https://arxiv.org/abs/2606.03979 and `https://example.com/a/b.md`.
+Code calls and prose colons: `res.json()`, response.json(), (data.json()) and Q:A, A:B or x:y.
 
 ## [2026-11-03] [DECISION] Prose slashes
 Claude/Codex and/or S1/S2, 1/3 of runs, input/output; see docs/plans/v2.0.0-execution.md and scripts/improvement.py::compare and scripts/context_hub.py:818.
@@ -945,6 +946,8 @@ class MemoryCheckTests(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertEqual([(finding["kind"], finding["path"], finding["removal_context"]) for finding in report["findings"]],
                          [("missing_path", "ROADMAP.md", False), ("missing_path", "VERSION.json", False)])
+        # The demo cites no slash path, so nothing in it is left unjudged as unanchored.
+        self.assertEqual(report["counts"]["unanchored"], 0)
 
     def test_c10_limit_truncates_findings_but_not_counts(self):
         self.touch("scripts/a.py")
@@ -1109,6 +1112,123 @@ class MemoryCheckTests(unittest.TestCase):
             '    "title": "Cache keys include tenant",\n    "suggested_topic": "Cache_Keys_Include_Tenant"\n  }\n]\n'
         )
         self.assertEqual(output.getvalue(), golden)
+
+    def test_c16_links_are_never_followed(self):
+        outside = self.top / "outside"
+        (outside / "deep").mkdir(parents=True)
+        (outside / "agents").mkdir()
+        for relative in ("x.md", "deep/inner.py", "agents/memory.md"):
+            (outside / relative).write_text("outside sentinel\n", encoding="utf-8")
+        self.touch("src/real.py")
+        try:
+            os.symlink(outside, self.base / "linked", target_is_directory=True)
+            os.symlink(outside / "x.md", self.base / "linked.md")
+            os.symlink(outside / "deep", self.base / "src/vendor", target_is_directory=True)
+        except (OSError, NotImplementedError) as exc:
+            self.skipTest(f"Symlink creation unavailable: {exc}")
+        self.memory(self.entry("Links", "linked/x.md linked.md inner.py src/vendor/inner.py src/real.py"))
+        judged = []
+
+        def record(function):
+            def wrapper(path, *args, **kwargs):
+                judged.append(os.path.normcase(os.path.abspath(os.fspath(path))))
+                return function(path, *args, **kwargs)
+            return wrapper
+
+        with contextlib.ExitStack() as stack:
+            for module, name in ((os, "stat"), (os.path, "exists"), (os.path, "isfile"), (os.path, "isdir")):
+                stack.enter_context(patch.object(module, name, record(getattr(module, name))))
+            code, report = self.check()
+        self.assertEqual(code, 0)
+        # A top-level link is unanchored, a linked directory is not walked, a deeper link is outside.
+        self.assertEqual(self.paths(report, "missing_path"), ["inner.py"])
+        self.assertEqual(self.paths(report, "outside_project"), ["src/vendor/inner.py"])
+        self.assertEqual((report["counts"]["unanchored"], report["counts"]["present"]), (1, 2))
+        prefix = os.path.normcase(str(outside))
+        self.assertEqual([path for path in judged if path.startswith(prefix)], [])
+        self.assertIn(os.path.normcase(str(self.base / "src/real.py")), judged)
+        # A linked memory file or .agents directory is outside the project: exit 1, nothing read.
+        (self.base / ".agents/memory.md").unlink()
+        for link, target in ((self.base / ".agents/memory.md", outside / "agents/memory.md"),
+                             (self.base / ".agents", outside / "agents")):
+            if link.name == ".agents":
+                (self.base / ".agents/memory.md").unlink()
+                (self.base / ".agents").rmdir()
+            os.symlink(target, link, target_is_directory=target.is_dir())
+            completed = self.cli()
+            with self.subTest(link=link.name):
+                self.assertEqual(completed.returncode, 1, completed.stdout + completed.stderr)
+                self.assertIn("outside the project", completed.stdout)
+                self.assertNotIn("Traceback", completed.stdout + completed.stderr)
+
+    def test_c17_non_file_oversize_and_suffixed_missing_citations(self):
+        (self.base / ".agents/memory.md").mkdir(parents=True)
+        completed = self.cli()
+        self.assertEqual(completed.returncode, 1)
+        self.assertIn("not a regular file", completed.stdout)
+        self.assertNotIn("Traceback", completed.stdout + completed.stderr)
+        (self.base / ".agents/memory.md").rmdir()
+        self.touch("scripts/a.py")
+        self.memory(self.entry("Suffixes", "scripts/gone.py:12, scripts/gone_too.py::Store.get and scripts/gone_three.py#L4."))
+        code, report = self.check()
+        self.assertEqual(code, 0)
+        self.assertEqual(self.paths(report, "missing_path"),
+                         ["scripts/gone.py", "scripts/gone_three.py", "scripts/gone_too.py"])
+        with patch.object(wiki, "MEMORY_CHECK_MAX_BYTES", 64), self.assertRaisesRegex(ValueError, "larger than"):
+            self.check()
+        # A file that grows after the size check is still cut off at the bound.
+        with patch.object(wiki, "MEMORY_CHECK_MAX_BYTES", 64), patch.object(wiki.os.path, "getsize", return_value=0), \
+                self.assertRaisesRegex(ValueError, "larger than"):
+            self.check()
+
+    def test_c18_lines_follow_line_breaks_and_titles_escape_format_characters(self):
+        self.touch("scripts/a.py")
+        title = "Title\u2028with\u061cmarks\ufeff and \u202ebidi end"
+        self.memory(f"# Agent Memory\n\n## [2026-11-03] [DECISION] {title}\nPage\x0cbreak\x85and\x0bscripts/gone.py\n")
+        code, report = self.check()
+        self.assertEqual(code, 0)
+        [finding] = report["findings"]
+        # str.splitlines() would split on U+2028, U+0085, form feed and vertical tab and shift these lines.
+        self.assertEqual((finding["line"], finding["entry_line"], finding["path"], finding["title"]),
+                         (4, 3, "scripts/gone.py", title))
+        _code, output = self.text()
+        self.assertEqual(output.splitlines()[1], "line 4 [missing_path] scripts/gone.py — "
+                                                 "Title\\u2028with\\u061cmarks\\ufeff and \\u202ebidi end")
+        for raw in ("\u2028", "\u061c", "\ufeff", "\u202e"):
+            self.assertNotIn(raw, output)
+
+    def test_c19_heading_inside_a_closed_fence_is_example_text(self):
+        self.touch("scripts/a.py")
+        text = self.memory(self.entry("Format", "Entries look like:\n\n```md\n## [2026-01-01] [NOTE] Example entry\n"
+                                                "scripts/example_gone.py\n```\n\nAfter: scripts/after_gone.py")
+                           + self.entry("Unclosed", "```\nscripts/unclosed.py")
+                           + self.entry("Next", "Still checked: scripts/next_gone.py")).read_text(encoding="utf-8")
+        self.assertEqual([entry["title"] for entry in wiki._parse_memory_entries(text)], ["Format", "Unclosed", "Next"])
+        code, report = self.check()
+        self.assertEqual(code, 0)
+        self.assertEqual(report["checked"]["entries"], 3)
+        # The example stays fenced; the unclosed fence still ends at the next entry.
+        self.assertEqual(self.paths(report, "missing_path"), ["scripts/after_gone.py", "scripts/next_gone.py"])
+
+    def test_c20_calls_prose_colons_drives_and_autolinks(self):
+        self.touch("scripts/a.py", "docs/a.md")
+        self.memory(self.entry("Code and prose", "Call res.json() or (response.json()), then requests.get(url).json( "
+                                                 "and A:B, x:y, Q:what. See <scripts/gone.py>, <docs/a.md>, "
+                                                 "C:x.md, C:\\ and D:/."))
+        code, report = self.check()
+        self.assertEqual(code, 0)
+        self.assertEqual(self.paths(report, "missing_path"), ["scripts/gone.py"])
+        self.assertEqual(self.paths(report, "outside_project"), sorted(["C:x.md", "C:\\", "D:/"]))
+        self.assertEqual(report["counts"]["present"], 1)
+
+    def test_c21_bare_names_match_exact_case_and_nfc_on_every_os(self):
+        self.touch("README.md", "docs/Guide.md", "notes/cafe\u0301.md")  # an NFD name, as HFS+ stores it
+        self.memory(self.entry("Names", "README.md, readme.md, Guide.md, guide.md and caf\u00e9.md"))
+        code, report = self.check()
+        self.assertEqual(code, 0)
+        # A case-insensitive disk opens readme.md too; the verdict is the same on every OS.
+        self.assertEqual(self.paths(report, "missing_path"), ["guide.md", "readme.md"])
+        self.assertEqual(report["counts"]["present"], 3)
 
     def test_cjk_prose_separates_paths_without_false_positives(self):
         self.touch("scripts/a.py", "docs/設計.md")
