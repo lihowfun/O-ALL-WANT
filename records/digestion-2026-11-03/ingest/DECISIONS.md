@@ -208,3 +208,14 @@ Four branches: `main`, `codex/oaw-2-native-upgrade` (PR #4), `claude/oaw-2` (all
 Claude V2 work; merged into main when its PR concludes, then deleted) and `records`
 (every round, review kit, auth-gated kit and result, as folders). No new branch per
 feature, round or kit.
+
+## D23. Digestion view and packaging (2026-11-04, owner in chat: "照這個方向改" on the digestive-tract mockup; "請多加審核機制或是提問機制"; "要把他做成 skill or mod")
+- The local digestion page (`catalog.py ui`) and a desktop mod show foods as boluses on a digestive tract at
+  their real stop, with the selected food's travelled path, a per-food progress bar and the absorbed / held /
+  excreted split.
+- Every food shows a blocker explanation (where it is stuck, which decision causes it, what happens if the
+  owner does nothing). Decisions show options with consequences and a recommendation; optional decisions are
+  marked optional and never block. The owner can ask about a blocker; on the local page the question is
+  recorded and answered by Claude in the conversation.
+- The D21 procedure is packaged as the owner-level skill `oaw-digest`; the goldfish kit becomes
+  `scripts/goldfish_review.py`.

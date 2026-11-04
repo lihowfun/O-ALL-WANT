@@ -132,7 +132,7 @@
         "Codex: install a Codex CLI on this machine (class-1 runs) and in the class-2 image (food-executing runs) (PRE-03), or record every Codex half 'untested'",
         "confirm the default cap-attribution rule for merged cross-food A/Bs (system_decisions) or replace it"
       ],
-      "status": "blocked-on-owner",
+      "status": "done (D13, 2026-11-03)",
       "blocks": "every paid stage and every step that executes food code",
       "evidence": [
         "ingest/graphify/integration.json#gf.installer-roundtrip-check",
@@ -239,7 +239,7 @@
       "system_decisions": [
         "Until the owner confirms them, P1-P4 are not in force: the system follows them only where D1-D12 already require the same behaviour (ingest/DECISIONS.md, Proposed amendments). OAW-10 writes them into the catalog plan only after confirmation (revision 3, goldfish-2 B05)."
       ],
-      "status": "blocked-on-owner",
+      "status": "done (D15-D18, 2026-11-03)",
       "evidence_level": "not measured",
       "target_evidence_level": "doc",
       "synthesis_derived": true,

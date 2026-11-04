@@ -10,6 +10,7 @@
 - `ROUND_V1_PICKS.md`：改用 D21 精簡流程後，這一輪的快篩結果。
 - `goldfish-diff/`：D21 的零上下文金魚執行包，審這一輪的程式 diff（等 CLI 登入後在這台跑）。
 - `RELEASE_v1.md`：這一輪的版本頁（多了什麼、和預設比、怎麼還原）。
+- `REVIEW_2026-11-04.md`：owner 用 CLI 跑的消化系統只讀審視摘要（卡點 B1–B11、驗證設計、決定 Q1–Q5）。
 - `papers/2606.03979/`：論文〈Language Models Need Sleep〉的萃取、大象草稿與定稿、盲審、成分帳本和消化結論。原型在分支 `claude/oaw-2`。
 - `design/`：消化流程設計 r2 和 v0 流程說明。v0 原本叫 PLAY.md；依 D19（不是遊戲）改名為 INTAKE_FLOW_v0.md，內文還沒改。
 
