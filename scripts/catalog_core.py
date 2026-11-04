@@ -3,9 +3,14 @@
 No network, no subprocess and no file writes happen here. Every food byte is
 data: it is decoded and pattern-matched, never imported, executed or rendered.
 
-- `normalize_source()` / `dedupe_sources()`: one repository is one food.
+- `normalize_source()` / `dedupe_sources()`: one repository or one paper (every
+  arXiv version of it) is one food.
 - `static_scan()`: deterministic T0 checks over in-memory files. Static rules
   only raise flags; a "toxic" verdict always needs an owner decision.
+- `parse_arxiv_raw()` / `paper_scan()`: a paper's T0 record from its arXiv
+  metadata and the sealed PDF's hash; the PDF is never parsed. Components are
+  not extracted without a model: that needs the Elephant (planned) or an
+  imported digestion record.
 - `derive()`: food headline and per-component dispositions from evidence and
   owner decisions. Popularity (stars, author, downloads, requested_by) is not an
   input, and imported reports are historical-prior data that cannot raise it.
@@ -86,13 +91,25 @@ ERRORS_ZH = (
     (r"The weekly cap must be at least the per-food cap", "每週上限必須至少等於每樣食物的上限。"),
     (r"Token caps must be whole numbers", "token 上限必須是 0 到 10^10 之間的整數。"),
     (r"Sandbox conditions must be a nonempty subset", "試跑條件至少要勾一個，而且只能用列出的條件。"),
-    (r"Only github\.com repositories are supported", "只支援 github.com 上的 repo。"),
-    (r"Not a (?:GitHub )?repository(?: URL)?", "這不是 repo 網址。"),
+    (r"Only (?:github\.com repositories|GitHub repositories and arXiv papers) are supported", "只支援 GitHub 上的 repo 和 arXiv 論文。"),
+    (r"Not a (?:GitHub )?repository(?: or arXiv paper)?(?: URL)?", "這不是 GitHub repo 或 arXiv 論文的網址。"),
+    (r"Not an arXiv paper URL", "這不是 arXiv 論文的網址：請用 arxiv.org/abs/編號、arxiv.org/pdf/編號 或 arXiv:編號。"),
+    (r"Invalid arXiv identifier", "arXiv 編號的格式不對（例如 2606.03979、2606.03979v2 或 hep-th/9901001）。"),
     (r"URL lacks OWNER/REPO", "網址缺少「擁有者/repo」。"),
     (r"Invalid GitHub OWNER/REPO", "GitHub 的「擁有者/repo」格式不對。"),
-    (r"Only local file:// repository paths|Unsafe file:// repository path", "只接受本機的 file:// repo 路徑。"),
+    (r"Only local file:// repository (?:or PDF )?paths|Unsafe file:// (?:repository )?path", "只接受本機的 file:// repo 或 PDF 路徑。"),
     (r"git fetch failed", "抓不到這個 repo（git fetch 失敗）：網址打錯、repo 不存在，或連不上。"),
     (r"Tarball download failed", "下載備用壓縮檔失敗：連不上 GitHub。"),
+    (r"Paper download failed", "下載論文失敗：連不上 arXiv，或逾時。"),
+    (r"arXiv has no record", "arXiv 查不到這篇論文（編號打錯，或還沒公開）。"),
+    (r"arXiv lists no version", "arXiv 沒有這個版本：用 show 看有哪些版本，或不指定版本（固定最新版）。"),
+    (r"arXiv metadata is not readable|arXiv answered for a different paper", "讀不懂 arXiv 回傳的中繼資料：沒有封存任何東西。"),
+    (r"Refused: only https|Refused: a redirect", "拒收：只接受 https 和 arXiv 的網址（轉址也一樣）。"),
+    (r"is not a PDF", "拒收：抓到的不是 PDF（開頭不是 %PDF-）：沒有封存任何東西。"),
+    (r"Cannot read the local PDF", "讀不到這個本機 PDF。"),
+    (r"A paper's --ref", "論文的版本要寫成 v1、v2 這種格式。"),
+    (r"is a paper: a paper's ideas are absorbed by re-implementing",
+     "論文不走複製文字的吸收：論文的想法要重新實作成 OAW 程式和測試（D5、D21），不複製原文；匯入的歷史提案仍可記成待辦。"),
     (r"Cannot fetch", "抓不到這個 repo。"),
     (r"Refused: .*(?:limit|too many files)|exceeds the archive limits", "拒收：超過封存的大小或檔案數上限。"),
     (r"Integrity failure", "完整性檢查失敗：同一個版本抓到不同的內容，保留原本的封存。"),
@@ -161,6 +178,7 @@ FLAG_MEANINGS_ZH = {
     "F-ARC": "記錄了 submodule，沒有抓取", "F-PARTIAL": "超過大小上限的檔案沒有存，也沒有掃描",
     "S-EXCL": "屬於 V2 排除的類別（你解除之前只能放在本機）", "S-LIC": "沒有認得的授權：不能確定可以轉發",
     "S-BUD": "skill 本文超過大小上限",
+    "P-LIC": "只取想法：授權不允許轉用原文，要重新實作，不複製文字",
 }
 
 
@@ -216,23 +234,83 @@ def _normalized(text: str) -> str:
 
 # --------------------------------------------------------------------------- sources
 
+_ARXIV_ID = re.compile(r"(?i)(?:(?P<yymm>\d{4})\.(?P<seq>\d{4,5})|(?P<archive>[a-z]+(?:-[a-z]+)?)(?:\.[a-z]{2})?/(?P<num>\d{7}))"
+                       r"(?:v(?P<version>[1-9]\d{0,3}))?")
+
+
+def arxiv_identity(text: str) -> tuple:
+    """(canonical arXiv id, version or None) for `2606.03979v2` or old-style `hep-th/9901001v1`."""
+    match = _ARXIV_ID.fullmatch(str(text or ""))
+    if match and match.group("yymm"):
+        yymm, seq = match.group("yymm"), match.group("seq")
+        # Four-digit sequence numbers end with 1412; five-digit ones start with 1501.
+        valid = 1 <= int(yymm[2:]) <= 12 and (len(seq) == 5) == (yymm >= "1501")
+        arxiv_id = f"{yymm}.{seq}"
+    elif match:
+        valid = 1 <= int(match.group("num")[2:4]) <= 12
+        # The canonical old-style id drops the subject class: math.GT/0309136 is math/0309136.
+        arxiv_id = f"{match.group('archive').casefold()}/{match.group('num')}"
+    else:
+        valid = False
+    if not valid:
+        raise SourceError(f"Invalid arXiv identifier: {sanitize_text(text, 80)!r}")
+    return arxiv_id, ("v" + match.group("version") if match.group("version") else None)
+
+
+def _arxiv_source(raw: str):
+    """A paper source for `arXiv:ID`, `arxiv.org/abs/ID` or `arxiv.org/pdf/ID[.pdf]` (any version); None otherwise."""
+    match = re.fullmatch(r"(?i)arxiv:(.+)", raw)
+    if match:
+        ident = match.group(1)
+    elif re.match(r"(?i)^(?:https?://)?(?:www\.|export\.)?arxiv\.org(?:[/?#]|$)", raw):
+        parts = urlsplit(raw if "://" in raw else "https://" + raw)
+        segments = [unquote(s) for s in parts.path.split("/") if s]
+        if len(segments) < 2 or segments[0].casefold() not in ("abs", "pdf"):
+            raise SourceError(f"Not an arXiv paper URL (use arxiv.org/abs/ID or arxiv.org/pdf/ID): {sanitize_text(raw, 80)!r}")
+        ident = "/".join(segments[1:])
+        if segments[0].casefold() == "pdf" and ident.casefold().endswith(".pdf"):
+            ident = ident[:-4]
+    else:
+        return None
+    arxiv_id, version = arxiv_identity(ident)
+    # The key has no version, so v1 and v2 are one food; the requested version is kept as the ref.
+    return {"key": f"arxiv.org/{arxiv_id}", "kind": "paper", "owner": None, "repo": "arxiv-" + arxiv_id.replace("/", "-"),
+            "display": f"arXiv:{arxiv_id}", "url": f"https://arxiv.org/abs/{arxiv_id}",
+            "fetch_url": f"https://arxiv.org/pdf/{arxiv_id}{version or ''}", "ref": version, "subdir": None, "arxiv_id": arxiv_id}
+
+
+def is_local_source(source: dict) -> bool:
+    """A local repository or PDF: its path is private, so records name it by a private reference."""
+    return source.get("kind") == "file" or str(source.get("key") or "").startswith("file://")
+
+
 def normalize_source(text: str) -> dict:
-    """Canonical identity of a food source. The key ignores case, .git, slashes and refs."""
+    """Canonical identity of a food source. The key ignores case, .git, slashes and refs.
+
+    Accepted: GitHub repositories, arXiv papers (`arXiv:ID`, `arxiv.org/abs/ID`, `arxiv.org/pdf/ID`), and local
+    `file://` git repositories or PDFs.
+    """
     raw = str(text or "").strip()
     if not raw or len(raw) > 512 or any(ch.isspace() for ch in raw) or _UNSAFE_TEXT.search(raw):
-        raise SourceError(f"Not a repository URL: {sanitize_text(raw, 80)!r}")
+        raise SourceError(f"Not a GitHub repository or arXiv paper URL: {sanitize_text(raw, 80)!r}")
     if raw.casefold().startswith("file://"):
         parts = urlsplit(raw)
         if parts.netloc not in ("", "localhost") or parts.query or parts.fragment:
-            raise SourceError("Only local file:// repository paths are supported.")
+            raise SourceError("Only local file:// repository or PDF paths are supported.")
         path = unquote(parts.path).rstrip("/")
         if not path or ".." in path.split("/"):
-            raise SourceError("Unsafe file:// repository path.")
+            raise SourceError("Unsafe file:// path.")
         name = path.rsplit("/", 1)[-1]
-        name = name[:-4] if name.casefold().endswith(".git") and len(name) > 4 else name
         key = "file://" + path
+        if name.casefold().endswith(".pdf"):
+            return {"key": key, "kind": "paper", "owner": None, "repo": name[:-4] or "paper", "display": "local/" + name,
+                    "url": key, "fetch_url": key, "ref": None, "subdir": None, "arxiv_id": None}
+        name = name[:-4] if name.casefold().endswith(".git") and len(name) > 4 else name
         return {"key": key, "kind": "file", "owner": None, "repo": name, "display": "local/" + name,
                 "url": key, "fetch_url": "file://" + path, "ref": None, "subdir": None}
+    paper = _arxiv_source(raw)
+    if paper:
+        return paper
     ref = subdir = None
     match = re.fullmatch(r"(?i)git@github\.com:([^/]+)/([^/]+?)/?", raw)
     if match:
@@ -245,9 +323,9 @@ def normalize_source(text: str) -> dict:
         elif re.fullmatch(r"[A-Za-z0-9-]+/[A-Za-z0-9._-]+/?", raw):
             parts = urlsplit("https://github.com/" + raw)
         else:
-            raise SourceError(f"Not a GitHub repository: {sanitize_text(raw, 80)!r}")
+            raise SourceError(f"Not a GitHub repository or arXiv paper: {sanitize_text(raw, 80)!r}")
         if parts.scheme.casefold() not in ("https", "http", "ssh", "git") or (parts.hostname or "").casefold() not in ("github.com", "www.github.com"):
-            raise SourceError(f"Only github.com repositories are supported: {sanitize_text(raw, 80)!r}")
+            raise SourceError(f"Only GitHub repositories and arXiv papers are supported: {sanitize_text(raw, 80)!r}")
         segments = [unquote(s) for s in parts.path.split("/") if s]
         if len(segments) < 2:
             raise SourceError(f"URL lacks OWNER/REPO: {sanitize_text(raw, 80)!r}")
@@ -879,6 +957,159 @@ def _split_components(files, roles, modes, flags, hooks, mcp, plugins, auto_exec
     return components
 
 
+# --------------------------------------------------------------------------- papers
+#
+# A paper is sealed as two files: the PDF of the pinned version and the metadata.json built here. The PDF is
+# hashed and its first bytes compared with `%PDF-`; it is never parsed, rendered or executed. Without a model,
+# v0 cannot split a paper into components, so a paper's T0 record has none; they come from the Elephant
+# (planned) or an imported digestion record, and are never invented here.
+
+PAPER_LIMITS = {"pdf_bytes": LIMITS["max_total_bytes"], "metadata_bytes": 2 * 1024 * 1024, "timeout_seconds": 60}
+PAPER_FILES = ("metadata.json", "paper.pdf")
+PAPER_CHECKS = ("P-META", "P-PDF", "P-LIC")
+# Licenses whose text may be quoted with attribution; anything else (arXiv's non-exclusive distribution licence,
+# NC/ND variants, unknown) gives the info flag P-LIC: ideas only, re-implement, never copy text.
+REUSABLE_PAPER_LICENSES = ("CC-BY", "CC-BY-SA", "CC0")
+PAPER_COMPONENTS_NOTE = ("component extraction needs the Elephant (planned) or an imported digestion record;"
+                         " v0 extracts none from a paper and invents none")
+PAPER_COMPONENTS_NOTE_ZH = "論文的成分要由 Elephant 拆（規劃中），或匯入已有的消化紀錄；v0 不會自己拆，也不會編造成分"
+
+
+def _local(tag) -> str:
+    return str(tag).rsplit("}", 1)[-1]
+
+
+def parse_arxiv_raw(data: bytes) -> dict:
+    """Title, authors, abstract, license and versions from an OAI-PMH GetRecord response in arXivRaw format.
+
+    A document type declaration is refused before parsing, so no entity can expand. An OAI-PMH error
+    (for example idDoesNotExist) raises ValueError with "arXiv has no record".
+    """
+    import xml.etree.ElementTree as ElementTree
+    if len(data) > PAPER_LIMITS["metadata_bytes"]:
+        raise ValueError("response exceeds the metadata limit")
+    if re.search(rb"<!(?:DOCTYPE|ENTITY)", data, re.IGNORECASE):
+        raise ValueError("document type declarations are refused")
+    try:
+        root = ElementTree.fromstring(data)
+    except ElementTree.ParseError as exc:
+        raise ValueError(f"not XML: {exc}") from exc
+    error = next((e for e in root.iter() if _local(e.tag) == "error"), None)
+    if error is not None:
+        raise ValueError(f"arXiv has no record ({sanitize_text(error.get('code'), 40)}): {sanitize_text(error.text, 120)}")
+    raw = next((e for e in root.iter() if _local(e.tag) == "arXivRaw"), None)
+    if raw is None:
+        raise ValueError("no arXivRaw record in the response")
+
+    def field(name, limit=300):
+        node = next((e for e in raw if _local(e.tag) == name), None)
+        return sanitize_text("".join(node.itertext()), limit) if node is not None else ""
+    versions = []
+    for node in raw:
+        if _local(node.tag) != "version" or not re.fullmatch(r"v[1-9]\d{0,3}", str(node.get("version") or "")):
+            continue
+        date_node = next((e for e in node if _local(e.tag) == "date"), None)
+        versions.append({"version": node.get("version"), "date": _rfc2822_date(date_node.text if date_node is not None else ""),
+                         "size": sanitize_text(next((e.text for e in node if _local(e.tag) == "size"), ""), 20)})
+    versions.sort(key=lambda v: int(v["version"][1:]))
+    abstract_node = next((e for e in raw if _local(e.tag) == "abstract"), None)
+    abstract = re.sub(r"\s+", " ", "".join(abstract_node.itertext())).strip() if abstract_node is not None else ""
+    authors = [sanitize_text(a, 120) for a in re.split(r",\s*|\s+and\s+", field("authors", 20000)) if a.strip()]
+    try:
+        arxiv_id, _version = arxiv_identity(field("id", 40))
+    except SourceError as exc:
+        raise ValueError(str(exc)) from exc
+    return {"arxiv_id": arxiv_id, "title": field("title"), "authors": authors[:200], "abstract": abstract[:20000],
+            "license_url": field("license", 200) or None, "categories": field("categories", 200).split()[:20],
+            "versions": versions}
+
+
+def _rfc2822_date(text) -> str:
+    from email.utils import parsedate_to_datetime
+    try:
+        return parsedate_to_datetime(str(text).strip()).date().isoformat()
+    except (TypeError, ValueError, IndexError):
+        return sanitize_text(text, 40)
+
+
+def paper_license(url) -> dict:
+    """The license a paper was released under, from its license URL, and what OAW may reuse."""
+    text = str(url or "").strip().casefold().replace("https://", "http://")
+    match = re.search(r"creativecommons\.org/licenses/([a-z-]+)/(\d\.\d)", text)
+    if match:
+        spdx = f"CC-{match.group(1).upper()}-{match.group(2)}"
+    elif re.search(r"creativecommons\.org/publicdomain/zero/1\.0", text):
+        spdx = "CC0-1.0"
+    elif "arxiv.org/licenses/nonexclusive-distrib/" in text:
+        spdx = "LicenseRef-arXiv-nonexclusive-distrib-1.0"
+    else:
+        spdx = "unknown"
+    reusable = spdx != "unknown" and spdx.rsplit("-", 1)[0] in REUSABLE_PAPER_LICENSES
+    note = (("quoted text may be reused with attribution", "引用原文要附出處（作者、標題、arXiv 編號、版本、授權）") if reusable
+            else ("ideas only: re-implement, do not copy text", "只取想法：重新實作，不複製原文"))
+    return {"spdx": spdx, "url": sanitize_text(url, 200) or None, "reuse": "quote-with-attribution" if reusable else "ideas-only",
+            "reuse_note": note[0], "reuse_note_zh": note[1], "distribution": "redistributable" if reusable else "local-only",
+            "files": []}
+
+
+def paper_metadata(snapshot: dict) -> bytes:
+    """The metadata.json sealed beside the PDF: deterministic (no timestamps), with the sha256 of each input."""
+    meta = snapshot.get("metadata") or {}
+    pdf = snapshot["pdf"]
+    doc = {"schema_version": 1, "kind": "oaw-paper-metadata", "source": snapshot.get("source", "local"),
+           "arxiv_id": meta.get("arxiv_id"), "version": snapshot.get("version"), "versions": meta.get("versions", []),
+           "title": meta.get("title") or None, "authors": meta.get("authors", []), "abstract": meta.get("abstract", ""),
+           "license_url": meta.get("license_url"), "categories": meta.get("categories", []),
+           "file_name": sanitize_text(snapshot.get("file_name"), 120) or None,
+           "pdf": {"name": "paper.pdf", "sha256": sha256_bytes(pdf), "bytes": len(pdf)},
+           "metadata_response_sha256": snapshot.get("metadata_sha256")}
+    return (json.dumps(doc, indent=2, sort_keys=True, ensure_ascii=False) + "\n").encode("utf-8")
+
+
+def paper_scan(files: dict, *, food: str, integrity: str = "sha256-recorded") -> dict:
+    """A paper's deterministic T0 record from its sealed files: metadata, PDF hash and the license rule.
+
+    No hook, MCP or script check applies to a paper, and nothing here can mark it toxic. The license rule only
+    adds an info flag (P-LIC, never open for triage). Components stay empty: see PAPER_COMPONENTS_NOTE.
+    """
+    pdf, meta_bytes = files.get("paper.pdf", b""), files.get("metadata.json", b"")
+    meta = _json(meta_bytes) or {}
+    hashes = {p: sha256_bytes(files[p]) for p in sorted(files)}
+    license_info = paper_license(meta.get("license_url"))
+    version = meta.get("version") if re.fullmatch(r"v[1-9]\d{0,3}", str(meta.get("version") or "")) else None
+    pin = f"{version or 'local'}-{hashes.get('paper.pdf', '')[:12]}"
+    flags = []
+    if license_info["reuse"] == "ideas-only":
+        flags.append({"id": "P-LIC:metadata.json:0", "rule": "P-LIC", "severity": "info", "path": "metadata.json", "line": 0,
+                      "role": "docs", "allergen": None, "meaning": license_info["reuse_note"] + f" ({license_info['spdx']})",
+                      "match_sha256": sha256_bytes(str(license_info["url"] or "").encode("utf-8"))})
+    authors = [sanitize_text(a, 120) for a in meta.get("authors", []) if isinstance(a, str)] if isinstance(meta.get("authors"), list) else []
+    abstract = meta.get("abstract") if isinstance(meta.get("abstract"), str) else ""
+    versions = [{"version": v.get("version"), "date": sanitize_text(v.get("date"), 40)} for v in meta.get("versions", [])
+                if isinstance(v, dict) and re.fullmatch(r"v[1-9]\d{0,3}", str(v.get("version") or ""))][:50]
+    paper = {"source": "arxiv" if meta.get("source") == "arxiv" else "local", "arxiv_id": sanitize_text(meta.get("arxiv_id"), 40) or None,
+             "version": version, "version_date": next((v["date"] for v in versions if v["version"] == version), None),
+             "versions": versions, "title": sanitize_text(meta.get("title"), 300) or None,
+             "authors": authors[:20], "authors_total": len(authors), "abstract_chars": len(abstract),
+             "categories": [sanitize_text(c, 40) for c in meta.get("categories", []) if isinstance(c, str)][:20],
+             "license": license_info["spdx"], "license_url": license_info["url"], "reuse": license_info["reuse"],
+             "reuse_note": license_info["reuse_note"], "reuse_note_zh": license_info["reuse_note_zh"],
+             "pdf_sha256": hashes.get("paper.pdf"), "pdf_bytes": len(pdf), "metadata_sha256": hashes.get("metadata.json"),
+             "is_pdf": pdf.startswith(b"%PDF-"), "parsed": False, "executed": False}
+    inedible = [] if paper["is_pdf"] and meta else ["not-a-pdf" if not paper["is_pdf"] else "no-metadata"]
+    return {
+        "schema_version": SCHEMA_VERSION, "food": food, "food_kind": "paper", "commit": None, "version": version, "tier": "T0",
+        "mode": "deterministic", "provenance": "deterministic", "level": "static-measured", "scanner_version": SCANNER_VERSION,
+        "evidence_id": f"{food}@{pin}/T0/s{SCANNER_VERSION}", "integrity": integrity, "tree_sha256": tree_sha256(hashes),
+        "counts": {"files": len(files), "bytes": sum(len(v) for v in files.values()), "by_role": {"paper": 1, "metadata": 1},
+                   "skipped": 0, "symlinks": 0, "gitlinks": 0},
+        "checks_run": list(PAPER_CHECKS), "license": license_info, "exec_class": None, "allergens": [], "flags": flags,
+        "flags_truncated": 0, "info_matches": 0, "hooks": {"count": 0, "events": []}, "mcp_servers": [], "plugins": [],
+        "network_hosts": [], "dependencies": {"declared": [], "non_stdlib": []}, "exclusions": [], "skills": [],
+        "components": [], "components_note": PAPER_COMPONENTS_NOTE, "paper": paper, "inedible": inedible,
+    }
+
+
 # --------------------------------------------------------------------------- derive
 
 def evidence_class(record) -> str:
@@ -1056,15 +1287,16 @@ def derive(evidence, decisions=(), *, tier: str = "local") -> dict:
                    else _verdict("untested", ["no static record (taste not run)"]))
         verdict["reasons_zh"] = [reason_zh(r) for r in verdict["reasons"]]
         return {**base, **verdict, "level": "not-measured", "safety": "toxic" if toxic_refs else "unknown",
-                "exec_class": None, "allergens": [], "flags": {"total": 0, "open": 0, "open_high": 0, "triaged": 0},
-                "components": [], "inputs": []}
+                "exec_class": None, "allergens": [], "flags": {"total": 0, "open": 0, "open_high": 0, "triaged": 0, "info": 0},
+                "food_kind": None, "components": [], "inputs": []}
     s = max(static, key=lambda r: (int(r.get("scanner_version") or 0), str(r.get("recorded_at") or ""), str(r.get("evidence_id"))))
     chips = []
     stale = int(s.get("scanner_version") or 0) < SCANNER_VERSION
     if stale:
         chips.append("rules-updated-free-T0-pending")
     all_flags = [f for f in s.get("flags", []) if isinstance(f, dict) and isinstance(f.get("id"), str)]
-    open_flags = {f["id"]: f for f in all_flags if triage.get(f["id"]) not in ("benign", "allergen")}
+    # An info flag (a paper's P-LIC "ideas only") informs; it never waits for triage or holds anything.
+    open_flags = {f["id"]: f for f in all_flags if f.get("severity") != "info" and triage.get(f["id"]) not in ("benign", "allergen")}
     open_high = [f for f in open_flags.values() if f.get("severity") == "high"]
     inputs = [s.get("evidence_id")] + [r.get("evidence_id") for r in live]
     if toxic_refs:
@@ -1134,12 +1366,13 @@ def derive(evidence, decisions=(), *, tier: str = "local") -> dict:
                            "decision": decided, "retested_after_remove": retested,
                            "open_flags": [f for f in component.get("flag_ids", []) if f in open_flags]})
     verdict["reasons_zh"] = [reason_zh(r) for r in verdict["reasons"]]
+    info = sum(1 for f in all_flags if f.get("severity") == "info")
     return {**base, **verdict, "chips": chips + verdict.pop("chips", []), "stale": stale,
             "level": "measured" if live and verdict["headline"] not in ("toxic", "risky", "inedible") else "static-measured",
             "safety": safety, "exec_class": s.get("exec_class"), "allergens": list(s.get("allergens", [])),
             "flags": {"total": len(all_flags), "open": len(open_flags), "open_high": len(open_high),
-                      "triaged": len(all_flags) - len(open_flags)},
-            "components": components, "inputs": inputs}
+                      "triaged": len(all_flags) - len(open_flags) - info, "info": info},
+            "food_kind": "paper" if s.get("food_kind") == "paper" else "repo", "components": components, "inputs": inputs}
 
 
 def _measured_verdict(live) -> dict:
@@ -1342,6 +1575,8 @@ def decide_plan(food: str, derived: dict, historical=(), policy: dict | None = N
         status, basis = "blocked: high-severity flags must be triaged before any paid test", list(derived.get("reasons", []))
     elif not has_static:
         status, basis = "taste first: free static checks decide the paid plan", ["no static record"]
+    elif derived.get("food_kind") == "paper" and not components and not methods:
+        status, basis = "no components yet: " + PAPER_COMPONENTS_NOTE, ["a paper is split into components by a model, not by static rules"]
     elif not candidates and not methods:
         status, basis = "no paid test needed: nothing absorbable", ["every component is excreted or reference-only"]
     if status is None:
@@ -1427,6 +1662,10 @@ def relevance(item: dict) -> dict:
 
 # --------------------------------------------------------------------------- imported reports
 
+# Reviews of the drafts that are not Goldfish records; they are listed apart, never as zero-context reviews.
+REVIEW_RECORDS = ("skeptic.json",)
+
+
 def _count(values) -> dict:
     counts = {}
     for value in values:
@@ -1473,8 +1712,17 @@ def imported_record(food: str, docs: dict, source_files: list, recorded_at: str)
                                       ("inherited_context", "inherited_context"), ("init_event_check", "init_event_check"))}
         goldfish.append({"reviewer": sanitize_text(doc.get("reviewer") or name[:-5], 40), "file": name, "findings": len(findings),
                          "by_severity": _count(f.get("severity") for f in findings),
-                         "summary": sanitize_text(doc.get("verdict_summary"), 300), "launch": launch,
+                         "summary": sanitize_text(doc.get("verdict_summary") or doc.get("summary"), 300), "launch": launch,
                          "zero_context": "verified" if all(launch.values()) else "not verified"})
+    # Other reviews of the drafts (a skeptic pass) are listed apart: they are not Goldfish records.
+    reviews = []
+    for name in sorted(n for n in docs if n in REVIEW_RECORDS and isinstance(docs[n], dict)):
+        findings = lists(docs[name], "findings")
+        reviews.append({"file": name, "reviewer": name[:-5], "findings": len(findings), "by_severity": _count(f.get("severity") for f in findings),
+                        "summary": sanitize_text(docs[name].get("verdict_summary") or docs[name].get("summary"), 300)})
+    documents = [{"name": name, "bytes": len(docs[name].encode("utf-8")),
+                  "headings": [sanitize_text(h, 120) for h in re.findall(r"(?m)^#{1,3}\s+(.+)$", docs[name])[:40]]}
+                 for name in sorted(n for n in docs if n.endswith(".md") and n != "proposals.md" and isinstance(docs[n], str))]
     components = []
 
     def hist_id(raw, item):
@@ -1500,23 +1748,40 @@ def imported_record(food: str, docs: dict, source_files: list, recorded_at: str)
                 "revision": 2 if canonical is not revision1 else 1, "history": history, "split_of": split_of}
 
     # Ledger revision 2: an `after_integration` object is canonical; a split lists parts with their own dispositions.
+    # A paper ledger names its units by `what` (a description) rather than `name`.
     for item in lists(ledger or {}, "components")[:300]:
         raw = str(item.get("id") or "")
+        label = item.get("name") or (item.get("what") if isinstance(item.get("what"), str) else None)
         after = item.get("after_integration") if isinstance(item.get("after_integration"), dict) else None
         first = text(item.get("disposition"), 20)
         if after is None:
-            components.append(entry(hist_id(raw, item), item.get("name"), item, item))
+            components.append(entry(hist_id(raw, item), label, item, item))
             continue
         changed = f"revision 1: {first}" if first and first != after.get("disposition") else None
         parts = [p for p in after.get("parts", []) if isinstance(p, dict)] if isinstance(after.get("parts"), list) else []
         if after.get("disposition") == "split" and parts:
             for index, part in enumerate(parts[:20]):
                 part_raw = str(part.get("id") or f"{raw}/{index + 1}")
-                components.append(entry(hist_id(part_raw, part), f"{item.get('name') or raw} · {part_raw.rsplit('/', 1)[-1]}", part, None,
+                components.append(entry(hist_id(part_raw, part), f"{label or raw} · {part_raw.rsplit('/', 1)[-1]}", part, None,
                                         history=f"revision 1: {first}, split by integration" if first else "split by integration",
                                         split_of=hist_id(raw, item)))
             continue
-        components.append(entry(hist_id(raw, item), item.get("name"), after, item, history=changed))
+        components.append(entry(hist_id(raw, item), label, after, item, history=changed))
+    paper = None
+    if ledger and ledger.get("food_kind") == "paper":
+        # Display only: what the record says it digested (title, version, license); the sealed taste is separate.
+        try:
+            named = _arxiv_source(str(ledger.get("food") or "")) if ledger.get("food") else None
+        except SourceError:
+            named = None
+        pdf = (ledger.get("pinned_files") or {}).get("paper.pdf") if isinstance(ledger.get("pinned_files"), dict) else None
+        authors = ledger.get("authors") if isinstance(ledger.get("authors"), list) else []
+        version = text(ledger.get("version"), 10)
+        paper = {"arxiv_id": named["arxiv_id"] if named else None, "title": text(ledger.get("title"), 300) or None,
+                 "authors": [text(a, 120) for a in authors[:20]], "authors_total": len(authors),
+                 "version": version if re.fullmatch(r"v[1-9]\d{0,3}", version) else None,
+                 "version_date": text(ledger.get("version_date"), 20) or None, "license": text(ledger.get("license"), 60) or None,
+                 "pdf_sha256": pdf if isinstance(pdf, str) and _HEX64.fullmatch(pdf) else None}
     integration_summary = None
     if integration:
         integration_summary = {sanitize_text(k, 40): (sanitize_text(v, 160) if isinstance(v, (str, int, float, bool)) else f"{len(v)} item(s)")
@@ -1527,7 +1792,7 @@ def imported_record(food: str, docs: dict, source_files: list, recorded_at: str)
             "tier": "imported", "mode": "historical-prior", "provenance": "imported-report", "level": "historical-prior",
             "pinned_commit": commit, "source_files": source_files, "elephant": elephant, "verify": verified, "goldfish": goldfish,
             "components": components, "counts": {k: sum(1 for c in components if c["disposition"] == k) for k in DISPOSITIONS},
-            "integration": integration_summary,
+            "integration": integration_summary, "reviews": reviews, "documents": documents, "paper": paper,
             "proposals": {"bytes": len(proposals.encode("utf-8")),
                           "headings": [sanitize_text(h, 120) for h in re.findall(r"(?m)^#{1,3}\s+(.+)$", proposals)[:40]]} if proposals else None,
             "note": "imported report: historical-prior, shown separately, never counted in a verdict", "recorded_at": recorded_at}
@@ -1541,7 +1806,8 @@ def historical_summary(record: dict) -> dict:
             "evidence_id": record.get("evidence_id"), "source_files": record.get("source_files", []),
             "elephant": record.get("elephant"), "verify": record.get("verify"), "goldfish": record.get("goldfish", []),
             "components": record.get("components", []), "counts": record.get("counts", {}),
-            "integration": record.get("integration"), "proposals": record.get("proposals")}
+            "integration": record.get("integration"), "proposals": record.get("proposals"),
+            "reviews": record.get("reviews", []), "documents": record.get("documents", []), "paper": record.get("paper")}
 
 
 # --------------------------------------------------------------------------- intake pipeline (D19)
@@ -1572,22 +1838,26 @@ PIPELINE_INLETS = (
                {"label_zh": "相關性過濾：和 coding agent skill／harness 無關的不經審查就濾掉；星數只決定排序", "automation": "automated"},
                {"label_zh": "你勾選要試哪些", "automation": "owner"}]},
     {"id": "named", "label_zh": "你點名",
-     "steps": [{"label_zh": "你給 repo 網址，可以一次很多個", "automation": "owner"}]},
+     "steps": [{"label_zh": "你給 GitHub repo 或 arXiv 論文的網址，可以一次很多個", "automation": "owner"}]},
 )
 
 PIPELINE_STAGES = (
     _stage("intake", "入口", "intake", "mixed", ("D4",),
-           "你勾選或點名就是同意試吃（D4）：兩條入口匯成一份食物清單，同一個 repo 只收一次，接著立刻免費試吃。",
-           (("你勾選偵查候選或點名 repo：這就是確認", "owner"), ("批次去重：同一個 repo 只收一次", "automated"),
+           "你勾選或點名就是同意試吃（D4）：兩條入口匯成一份食物清單，同一個 repo 或同一篇論文只收一次，接著立刻免費試吃。",
+           (("你勾選偵查候選或點名 repo／論文：這就是確認", "owner"), ("批次去重：同一個 repo 只收一次，同一篇論文的各版本也只收一次", "automated"),
             ("確認後立刻送去免費試吃，不再逐樣問你", "automated")), ("taste", "forget")),
     _stage("quarantine", "封存", "quarantine", "automated", ("D7",),
-           "固定在 pinned SHA，唯讀封存在專案外的 LAB_HOME；不解壓、不 import、不執行。",
-           (("hardened git fetch，固定版本", "automated"), ("唯讀 tar，放在專案外", "automated")), ("taste", "forget")),
+           "repo 固定在 pinned SHA、論文固定在 arXiv 版本＋sha256，唯讀封存在專案外的 LAB_HOME；不解壓、不 import、不執行。",
+           (("repo：hardened git fetch，固定 commit", "automated"),
+            ("論文：只用 https 抓 arXiv 中繼資料和固定版本的 PDF（有大小和時間上限），記 sha256；PDF 只檢查開頭，不解析", "automated"),
+            ("唯讀 tar，放在專案外", "automated")), ("taste", "forget")),
     _stage("static", "靜態", "static checks", "mixed", ("D5", "D7"), "免費靜態檢查，把食物拆成成分；靜態規則只舉旗，不判有毒。",
-           (("檔案角色、授權、hooks／MCP／腳本、旗標", "automated"), ("拆成成分", "automated"), ("高嚴重度旗標由你分流（終端確認碼）", "owner")),
+           (("repo：檔案角色、授權、hooks／MCP／腳本、旗標；論文：標題、作者、版本、授權", "automated"),
+            ("把 repo 拆成成分（論文的成分要 Elephant 拆，見「計畫」）", "automated"), ("高嚴重度旗標由你分流（終端確認碼）", "owner")),
            ("taste", "triage", "forget")),
     _stage("plan", "計畫", "plan", "mixed", ("D10", "D11"), "系統依證據擬測試計畫，最便宜、又能分辨的測試排前面；Elephant 擬吸收提案。",
-           (("系統測試計畫：依證據自動產生", "automated"), ("Elephant 依紀錄的決定擬吸收提案（今天只能匯入，標成歷史證據，不計入判定）", "planned")), ()),
+           (("系統測試計畫：依證據自動產生", "automated"),
+            ("Elephant 依紀錄的決定擬吸收提案，也替論文拆成分（今天只能匯入，標成歷史證據，不計入判定）", "planned")), ()),
     _stage("review", "盲審", "blind review", "planned", ("D10", "D15"), "Goldfish 在驗證過的零脈絡下盲審我們的草稿，Elephant 解決發現。",
            (("Goldfish 零脈絡盲審（啟動 recipe、argv、init event 都要記錄）", "planned"), ("Elephant 解決發現", "planned")), ()),
     _stage("test", "實測", "tests", "planned", ("D11", "D13"),
@@ -1625,7 +1895,7 @@ PIPELINE_ACTIONS = {
     "remove-food": {"endpoint": "remove", "label_zh": "移除", "where": "both"},
     "restore": {"endpoint": "restore", "label_zh": "還原到這版", "where": "both"},
 }
-PIPELINE_EMPTY_ZH = "還沒有食物：在「你點名」貼上 GitHub 網址按「送去試吃」，或在「每週偵查」按「立即偵查」再勾選候選。"
+PIPELINE_EMPTY_ZH = "還沒有食物：在「你點名」貼上 GitHub 網址或 arXiv 論文網址按「送去試吃」，或在「每週偵查」按「立即偵查」再勾選候選。"
 # status.json stages a running taste reports -> the pipeline stage the page shows the food on meanwhile.
 LIVE_STAGES = {"ingest": "intake", "quarantine": "quarantine", "static": "static"}
 
@@ -1721,7 +1991,9 @@ def food_pipeline(card: dict) -> dict:
         wanted.append(("forget", None, None))
     elif open_parts or open_history:
         stage = reach("approve", "current")
-        note = f"等你核准：{len(open_parts)} 個成分可以吸收" + (f"，{len(open_history)} 個歷史提案可以記成待辦" if open_history else "")
+        note = (f"等你核准：{len(open_history)} 個歷史提案可以記成待辦（論文的想法要重新實作成 OAW 程式和測試，不複製原文；D5、D21）"
+                if card.get("kind") == "paper" else
+                f"等你核准：{len(open_parts)} 個成分可以吸收" + (f"，{len(open_history)} 個歷史提案可以記成待辦" if open_history else ""))
         wanted += [("absorb", None, None), ("forget", None, None)]
     elif restored_away:
         stage = reach("build", "current")
@@ -1738,6 +2010,11 @@ def food_pipeline(card: dict) -> dict:
         stage = reach("approve", "done")
         states["build"] = "skipped"
         note = f"已記成待辦 {len(backlog)} 項（未改程式，沒有新版本）"
+        wanted.append(("forget", None, None))
+    elif card.get("kind") == "paper" and not parts and not history:
+        # Splitting a paper into components needs a model: the food waits where the split belongs, nothing is invented.
+        stage = reach("static", "current")
+        note = "論文已封存（固定 arXiv 版本＋sha256）；" + PAPER_COMPONENTS_NOTE_ZH + "（計畫：匯入紀錄）"
         wanted.append(("forget", None, None))
     else:
         stage = reach("sort", "current")
@@ -1793,21 +2070,30 @@ def food_card(entry: dict, evidence: list, decisions: list, plan: dict | None = 
     s = max(static, key=lambda r: (int(r.get("scanner_version") or 0), str(r.get("recorded_at") or ""))) if static else None
     counts = {k: sum(1 for c in derived["components"] if c["disposition"] == k) for k in DISPOSITIONS}
     source = entry.get("source", {})
-    private = source.get("kind") == "file"
+    private = is_local_source(source)
+    kind = "paper" if source.get("kind") == "paper" else "repo"
     display = sanitize_text(entry.get("display") or entry.get("id"), 80)
+    facts = s.get("paper") if s and s.get("food_kind") == "paper" and isinstance(s.get("paper"), dict) else None
+    paper = None
+    if kind == "paper":
+        # The sealed taste speaks first; before a taste, an imported record's own description is shown as such.
+        imported = next((r["paper"] for r in historical if isinstance(r.get("paper"), dict)), None)
+        paper = ({**facts, "from": "static"} if facts else {**imported, "from": "imported"} if imported else None)
     safety_text = ("owner-confirmed toxic" if derived["safety"] == "toxic" else
+                   f"paper: PDF sealed ({facts['pdf_bytes']} bytes, sha256 {str(facts['pdf_sha256'])[:12]}), never parsed or executed"
+                   if facts and derived["safety"] != "flagged" else
                    f"no toxic signal observed ({s['counts']['files']} files, {len(s['checks_run'])} checks, {s['tree_sha256'][:12]})" if s and derived["safety"] != "flagged" else
                    f"{derived['flags']['open']} open flag(s), {derived['flags']['open_high']} high" if s else "not checked")
     food_decisions = [{"at": d.get("at"), "kind": d.get("kind"), "components": d.get("components") or [], "outcome": d.get("outcome"),
                        "reason": sanitize_text(d.get("reason", ""), 160), "build": d.get("build")} for d in decisions]
     triaged = {d["flag"]: d["outcome"] for d in decisions if _valid_decision(d) and d["kind"] == "triage"}
-    severity_rank = {"high": 0, "medium": 1, "low": 2}
+    severity_rank = {"high": 0, "medium": 1, "low": 2, "info": 3}
     flags = [{"id": sanitize_text(f.get("id"), 300), "rule": sanitize_text(f.get("rule"), 20), "path": sanitize_text(f.get("path"), 200),
               "line": f.get("line") if isinstance(f.get("line"), int) else None, "severity": f.get("severity") if f.get("severity") in severity_rank else "low",
               "meaning": sanitize_text(f.get("meaning"), 120), "meaning_zh": FLAG_MEANINGS_ZH.get(f.get("rule")),
               "allergen": sanitize_text(f.get("allergen"), 40) or None,
               "triage": triaged.get(f.get("id"))}
-             for f in sorted((s or {}).get("flags", []), key=lambda f: (severity_rank.get(f.get("severity"), 3), str(f.get("id"))))
+             for f in sorted((s or {}).get("flags", []), key=lambda f: (severity_rank.get(f.get("severity"), 4), str(f.get("id"))))
              if isinstance(f, dict)][:80]
     error = entry.get("last_error") if isinstance(entry.get("last_error"), dict) else None
     return {"id": entry["id"], "display": display, "repo": None if private else source.get("url"), "origin": entry.get("origin"),
@@ -1815,8 +2101,11 @@ def food_card(entry: dict, evidence: list, decisions: list, plan: dict | None = 
             "last_error": {"at": error.get("at"), "error": sanitize_text(error.get("error"), 300),
                            "error_zh": sanitize_text(error.get("error_zh"), 300)} if error else None,
             "pinned": {"commit": source.get("commit"), "commit7": (source.get("commit") or "")[:7] or None,
-                       "integrity": source.get("integrity"), "tree_sha12": (s or {}).get("tree_sha256", "")[:12] or None},
-            "tasted": bool(s),
+                       "integrity": source.get("integrity"), "tree_sha12": (s or {}).get("tree_sha256", "")[:12] or None,
+                       # A paper is pinned to an arXiv version plus the sha256 of its sealed PDF, not to a commit.
+                       "version": (facts or {}).get("version"), "pdf_sha12": str((facts or {}).get("pdf_sha256") or "")[:12] or None},
+            "tasted": bool(s), "kind": kind, "paper": paper,
+            "components_note_zh": PAPER_COMPONENTS_NOTE_ZH if kind == "paper" and not derived["components"] else None,
             "verdict": {k: derived[k] for k in ("headline", "symbol", "ascii", "label", "label_zh", "reasons", "reasons_zh", "chips", "badges",
                                                 "level", "stale")},
             "safety_text": safety_text, "exec_class": derived["exec_class"], "allergens": derived["allergens"],
