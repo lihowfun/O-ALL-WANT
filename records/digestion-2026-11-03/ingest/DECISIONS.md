@@ -219,3 +219,19 @@ feature, round or kit.
   recorded and answered by Claude in the conversation.
 - The D21 procedure is packaged as the owner-level skill `oaw-digest`; the goldfish kit becomes
   `scripts/goldfish_review.py`.
+
+## D24. Code map and screening rules after the CLI review (2026-11-04, owner in chat: "全部照建議" on Q1-Q5 of REVIEW_2026-11-04.md; refines D13, D17, D21 and the v2 graph-memory exclusion)
+1. A code index generated from source is not "graph memory" under docs/plans/v2.0.0-execution.md:78 when
+   agents do not write to it, it can be rebuilt at any time, querying it is never mandatory, and it has a
+   staleness check. A stdlib index may be a core candidate; any line telling agents to use it is still
+   model-facing and needs an A/B (D17).
+2. Quick screening follows D21 as written: pick by expected value, tier after picking; tier-C picks go to the
+   owner as at most 3 questions per round. The "tier A only" filter of round 1 is withdrawn.
+3. Level 2 sandbox: not required to start. Stage 0-alpha compares native search (R) with a stdlib index (S)
+   without running graphify; a local Docker recipe for graphify (G) is prepared and needs one owner sudo setup.
+4. No D13 exception: Stage 0-alpha (0 model tokens) and, only if it passes, a minimal Claude-only Stage 1 of
+   12 runs (6 questions x 2 arms x 1, at most 10M).
+5. Pre-registered "step change" threshold for the code map: on file-location questions the median number of
+   tool calls drops by at least 30% and the number of correct answers is not lower than the native arm.
+   Stage 0-alpha passes only if S (or G) beats R by at least 0.15 top-5 file hit rate in some question class
+   without producing more output bytes than R. Thresholds are fixed before any result is seen.
