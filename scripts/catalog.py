@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """OAW catalog (prototype v0): feed skills as foods, taste them sealed, keep restorable builds.
 
-Run from the framework checkout, like oaw.py. Food bytes live only in LAB_HOME,
-outside the project, as a sealed tar that is read in memory and never
-extracted, executed or imported. Verdicts come from catalog_core.derive();
+Run from the framework checkout, like oaw.py. A food is a GitHub repository or
+an arXiv paper (or a local file:// repository or PDF). Food bytes live only in
+LAB_HOME, outside the project, as a sealed tar that is read in memory and never
+extracted, executed or imported; a paper's PDF is only hashed and checked for
+its %PDF- header. Verdicts come from catalog_core.derive();
 stars only order the scout queue. Absorb, remove and restore preview by
 default and change the OAW-managed layer only with --apply, after a restore
 point. Paid tests are planned, never run, in v0. `ui` opens the local web page
@@ -54,6 +56,9 @@ SCOUT_QUERIES = ("claude code skills", "topic:claude-code-skills", "topic:agent-
                  "claude-code plugin", "coding agent harness")
 GITHUB_API = "https://api.github.com/search/repositories"
 CODELOAD = "https://codeload.github.com"
+ARXIV_OAI = "https://export.arxiv.org/oai2"
+ARXIV_PDF = "https://arxiv.org/pdf/"
+ARXIV_HOSTS = ("arxiv.org", "export.arxiv.org")
 
 
 class CatalogError(Exception):
@@ -203,7 +208,12 @@ def project_key(target: Path) -> str:
 
 
 def private_ref(source: dict) -> str:
-    return "private#" + hashlib.sha256(source["key"].encode()).hexdigest()[:8] if source.get("kind") == "file" else source["key"]
+    return "private#" + hashlib.sha256(source["key"].encode()).hexdigest()[:8] if core.is_local_source(source) else source["key"]
+
+
+def pin_label(source: dict) -> str:
+    """A repository's commit (7) or a paper's arXiv version; 'unpinned' before a taste."""
+    return (source.get("commit") or "")[:7] or source.get("version") or "unpinned"
 
 
 # --------------------------------------------------------------------------- registry, evidence, decisions
@@ -273,9 +283,8 @@ def latest_static(evidence: list):
 
 
 def write_status(target: Path, entry: dict, stage: str, done: int, *, headline=None, stop_reason=None) -> None:
-    commit = (entry["source"].get("commit") or "")[:7]
     save_json(target, ("status.json",), {
-        "schema_version": 1, "skill": entry["id"], "source": f"{entry['display']}@{commit or 'unpinned'}",
+        "schema_version": 1, "skill": entry["id"], "source": f"{entry['display']}@{pin_label(entry['source'])}",
         "stage": stage, "stages": ["ingest", "quarantine", "static", "verdict"], "progress": {"done": done, "total": 3},
         "arms": [], "host": None, "verdict_so_far": "pending", "updated_at": now_iso(),
         "food": entry["id"], "tier": "T0", "headline": headline, "stop_reason": stop_reason})
@@ -307,7 +316,8 @@ def add_foods(target: Path, inputs, *, origin="url", ref=None, scout=None) -> di
                 "schema_version": 1, "id": fid, "display": source["display"], "origin": origin, "lifecycle": "found",
                 "source": {"kind": source["kind"], "key": source["key"], "url": source["url"], "fetch_url": source["fetch_url"],
                            "owner": source["owner"], "repo": source["repo"], "requested_ref": ref or source["ref"],
-                           "subdir": source["subdir"], "commit": None, "integrity": None, "fetched_at": None},
+                           "subdir": source["subdir"], "commit": None, "integrity": None, "fetched_at": None,
+                           **({"arxiv_id": source.get("arxiv_id"), "version": None} if source["kind"] == "paper" else {})},
                 "requested": item["inputs"][:20], "added_at": stamp,
                 "intake": {"requested_by": origin, "requested_at": stamp},
                 "scout": {"stars": (scout or {}).get(source["key"]), "use": "queue-order-only"},
@@ -519,6 +529,95 @@ def fetch_codeload(source: dict, ref) -> dict:
             "modes": modes, "symlinks": symlinks, "gitlinks": [], "skipped": skipped}
 
 
+# Papers: the arXiv record and the PDF of one pinned version, over https only, capped and timed out. arXiv offers
+# no content hash to verify against, so the sha256 of what was received is recorded (integrity "sha256-recorded").
+
+def check_https(url: str, hosts=ARXIV_HOSTS) -> None:
+    parts = urllib.parse.urlsplit(str(url))
+    if parts.scheme != "https" or (parts.hostname or "").casefold() not in hosts or parts.username or parts.password:
+        raise CatalogError(f"Refused: only https URLs on {', '.join(hosts)} are fetched ({core.sanitize_text(url, 80)}).")
+
+
+class HttpsOnlyRedirects(urllib.request.HTTPRedirectHandler):
+    """Follow a redirect only to https on an allowed host; anything else stops the download."""
+
+    def __init__(self, hosts=ARXIV_HOSTS):
+        super().__init__()
+        self.hosts = hosts
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        try:
+            check_https(newurl, self.hosts)
+        except CatalogError as exc:
+            raise CatalogError(f"Refused: a redirect left https or arXiv ({core.sanitize_text(newurl, 80)}).") from exc
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+def https_get(url: str, *, limit: int, timeout: int = core.PAPER_LIMITS["timeout_seconds"], hosts=ARXIV_HOSTS) -> bytes:
+    """The paper path's only network call: https on an allowed host, a size cap and a timeout (tests replace it)."""
+    check_https(url, hosts)
+    opener = urllib.request.build_opener(HttpsOnlyRedirects(hosts))
+    request = urllib.request.Request(url, headers={"User-Agent": "oaw-catalog/0 (paper intake)"})
+    try:
+        with opener.open(request, timeout=timeout) as response:
+            check_https(response.geturl(), hosts)
+            data = response.read(limit + 1)
+    except CatalogError:
+        raise
+    except (urllib.error.URLError, OSError, ValueError) as exc:
+        raise CatalogError(f"Paper download failed: {core.sanitize_text(str(exc), 200)}") from exc
+    if len(data) > limit:
+        raise CatalogError(f"Refused: the download exceeds the {limit // (1024 * 1024)} MB limit; nothing was sealed.")
+    return data
+
+
+def fetch_arxiv(source: dict, version=None) -> dict:
+    """arXiv metadata (OAI-PMH arXivRaw) and the PDF of the requested version, or of the latest one when none is named."""
+    arxiv_id = source["arxiv_id"]
+    query = urllib.parse.urlencode({"verb": "GetRecord", "identifier": "oai:arXiv.org:" + arxiv_id, "metadataPrefix": "arXivRaw"})
+    raw = https_get(f"{ARXIV_OAI}?{query}", limit=core.PAPER_LIMITS["metadata_bytes"])
+    try:
+        meta = core.parse_arxiv_raw(raw)
+    except ValueError as exc:
+        text = str(exc)
+        raise CatalogError(text if text.startswith("arXiv has no record") else f"arXiv metadata is not readable: {text}") from exc
+    if meta["arxiv_id"] != arxiv_id:
+        raise CatalogError(f"arXiv answered for a different paper ({core.sanitize_text(meta['arxiv_id'], 40)}); nothing was sealed.")
+    listed = [v["version"] for v in meta["versions"]]
+    if not listed:
+        raise CatalogError("arXiv metadata is not readable: the record lists no version.")
+    pinned = version or listed[-1]
+    if pinned not in listed:
+        raise CatalogError(f"arXiv lists no version {core.sanitize_text(pinned, 10)} for {arxiv_id} (versions: {', '.join(listed)}).")
+    pdf = https_get(f"{ARXIV_PDF}{arxiv_id}{pinned}", limit=core.PAPER_LIMITS["pdf_bytes"])
+    if not pdf.startswith(b"%PDF-"):
+        raise CatalogError("Refused: the download is not a PDF (it does not start with %PDF-); nothing was sealed.")
+    return {"source": "arxiv", "metadata": meta, "metadata_sha256": core.sha256_bytes(raw), "version": pinned, "pdf": pdf,
+            "method": "arxiv-https", "integrity": "sha256-recorded"}
+
+
+def read_local_pdf(source: dict) -> dict:
+    """A local PDF named by file://: read once, capped, checked for %PDF-; its metadata comes from the file only."""
+    path = source["key"][len("file://"):]
+    if os.name == "nt" and re.match(r"^/[A-Za-z]:", path):
+        path = path[1:]
+    limit = core.PAPER_LIMITS["pdf_bytes"]
+    local = Path(path)
+    try:
+        if not local.is_file():
+            raise CatalogError("Cannot read the local PDF: not a file.")
+        with open(local, "rb") as handle:
+            pdf = handle.read(limit + 1)
+    except OSError as exc:
+        raise CatalogError(f"Cannot read the local PDF: {core.sanitize_text(str(exc), 160)}") from exc
+    if len(pdf) > limit:
+        raise CatalogError(f"Refused: the PDF exceeds the {limit // (1024 * 1024)} MB limit; nothing was sealed.")
+    if not pdf.startswith(b"%PDF-"):
+        raise CatalogError("Refused: the file is not a PDF (it does not start with %PDF-); nothing was sealed.")
+    return {"source": "local", "metadata": {}, "metadata_sha256": None, "version": None, "pdf": pdf,
+            "file_name": local.name, "method": "local-file", "integrity": "sha256-recorded"}
+
+
 def build_tar(files: dict) -> bytes:
     """Deterministic tar of regular files: mode 0644, no owners, no times."""
     buffer = io.BytesIO()
@@ -590,9 +689,67 @@ def cmd_taste(target: Path, ident: str, ref=None) -> dict:
         raise
 
 
+def seal_files(lab: Path, fid: str, source: dict, pin: str, files: dict, modes: dict, facts: dict) -> tuple:
+    """Write one pinned snapshot once as a read-only tar plus inventory in LAB_HOME, then read it back and verify it.
+
+    `facts` (commit or version, integrity, method, ...) go into the inventory. The same pin with different bytes is
+    an integrity failure that keeps the earlier snapshot.
+    """
+    hashes = {p: core.sha256_bytes(d) for p, d in files.items()}
+    tree = core.tree_sha256(hashes)
+    folder = f"foods/{core.slug(fid)}/{pin}"
+    tar_path, inventory_path = lab_path(lab, folder + "/source.tar"), lab_path(lab, folder + "/inventory.json")
+    if tar_path.exists():
+        previous = load_json(inventory_path, {})
+        if previous.get("tree_sha256") != tree:
+            raise CatalogError("Integrity failure: the same pin produced different bytes; the earlier snapshot is kept.")
+    else:
+        tar_bytes = build_tar(files)
+        lab_write(lab, folder + "/source.tar", tar_bytes, readonly=True)
+        inventory = {"schema_version": 1, "food": fid, "source_key": private_ref(source), **facts, "tree_sha256": tree,
+                     "tar_sha256": core.sha256_bytes(tar_bytes), "fetched_at": now_iso(),
+                     "files": [{"path": p, "sha256": hashes[p], "size": len(files[p]), "mode": modes[p]} for p in sorted(files)]}
+        lab_write(lab, folder + "/inventory.json", dump(inventory).encode("utf-8"), readonly=True)
+    inventory = load_json(inventory_path, {})
+    sealed = read_tar(tar_path)
+    if core.tree_sha256({p: core.sha256_bytes(d) for p, d in sealed.items()}) != inventory.get("tree_sha256"):
+        raise CatalogError("Integrity failure: the sealed archive does not match its inventory.")
+    return folder, inventory, sealed
+
+
+def record_taste(target: Path, entry: dict, tag: str, folder: str, inventory: dict, sealed: dict, record: dict, pinned: dict) -> dict:
+    """Save the I0 intake and T0 static evidence of one sealed snapshot, mark the food tasted, and derive it again."""
+    fid = entry["id"]
+    stamp = now_iso()
+    record["recorded_at"] = stamp
+    record["sealed"] = {"location": "LAB_HOME (outside the project)", "lab_ref": folder + "/source.tar",
+                        "tar_sha256": inventory["tar_sha256"], "extracted": False, "executed": False}
+    intake = {"schema_version": 1, "evidence_id": f"{fid}@{tag}/I0", "food": fid, **pinned,
+              "tier": "I0", "mode": "deterministic", "provenance": "deterministic", "level": "static-measured",
+              "integrity": inventory["integrity"], "method": inventory["method"], "tree_sha256": inventory["tree_sha256"],
+              "tar_sha256": inventory["tar_sha256"], "files": len(sealed), "bytes": sum(len(v) for v in sealed.values()),
+              "lab_ref": folder + "/source.tar", "fallback_reason": inventory.get("fallback_reason"), "recorded_at": stamp}
+    save_evidence(target, fid, f"I0-{tag}.json", intake)
+    save_evidence(target, fid, f"T0-{tag}-s{core.SCANNER_VERSION}.json", record)
+
+    def mutate(reg):
+        food = reg["foods"][fid]
+        food["source"].update(**pinned, integrity=inventory["integrity"], fetched_at=stamp)
+        food["lifecycle"] = "tasted"
+        food["sealed"] = {"lab_ref": folder + "/source.tar", "tree_sha256": inventory["tree_sha256"]}
+        food.pop("last_error", None)
+    update_json(target, ("registry.json",), mutate, {"schema_version": 1, "foods": {}})
+    derived = core.derive(load_evidence(target, fid), food_decisions(load_decisions(target), fid))
+    write_status(target, {**entry, "source": {**entry["source"], **pinned}}, "done", 3, headline=derived["headline"])
+    update_view(target)
+    return derived
+
+
 def _taste(target: Path, ident: str, ref=None) -> dict:
     registry = load_registry(target)
     entry = resolve_food(registry, ident)
+    if entry["source"].get("kind") == "paper":
+        return _taste_paper(target, entry, ref)
     fid, source = entry["id"], entry["source"]
     lab = lab_home(target)
     write_status(target, entry, "quarantine", 0)
@@ -612,56 +769,17 @@ def _taste(target: Path, ident: str, ref=None) -> dict:
         snapshot = fetch_codeload(source, wanted)
         snapshot["fallback_reason"] = errors[0] if errors else "git is not available"
     files, modes, skipped = seal(snapshot, source.get("subdir"))
-    hashes = {p: core.sha256_bytes(d) for p, d in files.items()}
-    tree = core.tree_sha256(hashes)
-    pin = snapshot["commit"] or "tree-" + tree[:12]
-    folder = f"foods/{core.slug(fid)}/{pin}"
-    tar_path, inventory_path = lab_path(lab, folder + "/source.tar"), lab_path(lab, folder + "/inventory.json")
-    if tar_path.exists():
-        previous = load_json(inventory_path, {})
-        if previous.get("tree_sha256") != tree:
-            raise CatalogError("Integrity failure: the same pin produced different bytes; the earlier snapshot is kept.")
-    else:
-        tar_bytes = build_tar(files)
-        lab_write(lab, folder + "/source.tar", tar_bytes, readonly=True)
-        inventory = {"schema_version": 1, "food": fid, "source_key": private_ref(source), "commit": snapshot["commit"],
-                     "integrity": snapshot["integrity"], "method": snapshot["method"], "tree_sha256": tree,
-                     "tar_sha256": core.sha256_bytes(tar_bytes), "fetched_at": now_iso(),
-                     "files": [{"path": p, "sha256": hashes[p], "size": len(files[p]), "mode": modes[p]} for p in sorted(files)],
-                     "symlinks": snapshot["symlinks"], "gitlinks": snapshot["gitlinks"], "skipped": skipped,
-                     "fallback_reason": snapshot.get("fallback_reason")}
-        lab_write(lab, folder + "/inventory.json", dump(inventory).encode("utf-8"), readonly=True)
-    inventory = load_json(inventory_path, {})
-    sealed = read_tar(tar_path)
-    if core.tree_sha256({p: core.sha256_bytes(d) for p, d in sealed.items()}) != inventory.get("tree_sha256"):
-        raise CatalogError("Integrity failure: the sealed archive does not match its inventory.")
+    pin = snapshot["commit"] or "tree-" + core.tree_sha256({p: core.sha256_bytes(d) for p, d in files.items()})[:12]
+    folder, inventory, sealed = seal_files(lab, fid, source, pin, files, modes, {
+        "commit": snapshot["commit"], "integrity": snapshot["integrity"], "method": snapshot["method"],
+        "symlinks": snapshot["symlinks"], "gitlinks": snapshot["gitlinks"], "skipped": skipped,
+        "fallback_reason": snapshot.get("fallback_reason")})
     write_status(target, {**entry, "source": {**source, "commit": snapshot["commit"]}}, "static", 1)
     sealed_modes = {item["path"]: item["mode"] for item in inventory.get("files", [])}
     record = core.static_scan(sealed, food=fid, commit=snapshot["commit"], integrity=inventory["integrity"], modes=sealed_modes,
                               skipped=inventory.get("skipped", []), symlinks=inventory.get("symlinks", {}),
                               gitlinks=inventory.get("gitlinks", []))
-    stamp = now_iso()
-    record["recorded_at"] = stamp
-    record["sealed"] = {"location": "LAB_HOME (outside the project)", "lab_ref": folder + "/source.tar",
-                        "tar_sha256": inventory["tar_sha256"], "extracted": False, "executed": False}
-    intake = {"schema_version": 1, "evidence_id": f"{fid}@{pin[:12]}/I0", "food": fid, "commit": snapshot["commit"],
-              "tier": "I0", "mode": "deterministic", "provenance": "deterministic", "level": "static-measured",
-              "integrity": inventory["integrity"], "method": inventory["method"], "tree_sha256": tree,
-              "tar_sha256": inventory["tar_sha256"], "files": len(sealed), "bytes": sum(len(v) for v in sealed.values()),
-              "lab_ref": folder + "/source.tar", "fallback_reason": inventory.get("fallback_reason"), "recorded_at": stamp}
-    save_evidence(target, fid, f"I0-{pin[:12]}.json", intake)
-    save_evidence(target, fid, f"T0-{pin[:12]}-s{core.SCANNER_VERSION}.json", record)
-
-    def mutate(reg):
-        food = reg["foods"][fid]
-        food["source"].update(commit=snapshot["commit"], integrity=inventory["integrity"], fetched_at=stamp)
-        food["lifecycle"] = "tasted"
-        food["sealed"] = {"lab_ref": folder + "/source.tar", "tree_sha256": tree}
-        food.pop("last_error", None)
-    update_json(target, ("registry.json",), mutate, {"schema_version": 1, "foods": {}})
-    derived = core.derive(load_evidence(target, fid), food_decisions(load_decisions(target), fid))
-    write_status(target, {**entry, "source": {**source, "commit": snapshot["commit"]}}, "done", 3, headline=derived["headline"])
-    update_view(target)
+    derived = record_taste(target, entry, pin[:12], folder, inventory, sealed, record, {"commit": snapshot["commit"]})
     counts = {k: sum(1 for c in derived["components"] if c["disposition"] == k) for k in core.DISPOSITIONS}
     lines = [f"{fid}: sealed {len(sealed)} files @ {(snapshot['commit'] or 'unverified')[:12]} ({inventory['integrity']}) in LAB_HOME, outside the project",
              f"  nothing extracted, executed or imported; T0 {len(record['checks_run'])} checks",
@@ -674,6 +792,45 @@ def _taste(target: Path, ident: str, ref=None) -> dict:
             "files": len(sealed), "verdict": derived["headline"], "components": counts, "lines": lines}
 
 
+def _taste_paper(target: Path, entry: dict, ref=None) -> dict:
+    """Seal a paper: the PDF of one pinned arXiv version (the latest when none is named) plus metadata.json.
+
+    The PDF is hashed and its header checked, never parsed or run. The T0 record holds title, authors, version,
+    date, abstract length and the license rule; components are left to the Elephant (planned) or an import.
+    """
+    fid, source = entry["id"], entry["source"]
+    wanted = ref or source.get("requested_ref")
+    if wanted and not re.fullmatch(r"v[1-9]\d{0,3}", str(wanted)):
+        raise CatalogError(f"A paper's --ref is an arXiv version such as v2, not {core.sanitize_text(wanted, 40)!r}.")
+    lab = lab_home(target)
+    write_status(target, entry, "quarantine", 0)
+    snapshot = fetch_arxiv(source, wanted) if source.get("arxiv_id") else read_local_pdf(source)
+    files = {"metadata.json": core.paper_metadata(snapshot), "paper.pdf": snapshot["pdf"]}
+    pdf_sha = core.sha256_bytes(snapshot["pdf"])
+    # arXiv versions are not content-addressed (a PDF can be rebuilt), so the pin is the version plus the content hash.
+    pin = f"{snapshot['version'] or 'local'}-{core.tree_sha256({p: core.sha256_bytes(d) for p, d in files.items()})[:12]}"
+    folder, inventory, sealed = seal_files(lab, fid, source, pin, files, {p: "100644" for p in files}, {
+        "commit": None, "version": snapshot["version"], "pdf_sha256": pdf_sha, "integrity": snapshot["integrity"],
+        "method": snapshot["method"], "symlinks": {}, "gitlinks": [], "skipped": [], "fallback_reason": None})
+    write_status(target, {**entry, "source": {**source, "version": snapshot["version"]}}, "static", 1)
+    record = core.paper_scan(sealed, food=fid, integrity=inventory["integrity"])
+    derived = record_taste(target, entry, pin, folder, inventory, sealed, record,
+                           {"commit": None, "version": snapshot["version"], "pdf_sha256": pdf_sha})
+    paper = record["paper"]
+    authors = ", ".join(paper["authors"][:3]) + (f" and {paper['authors_total'] - 3} more" if paper["authors_total"] > 3 else "")
+    lines = [f"{fid}: sealed paper.pdf + metadata.json @ {paper['version'] or 'local file'} (sha256 {pdf_sha[:12]},"
+             f" {inventory['integrity']}) in LAB_HOME, outside the project",
+             "  the PDF was hashed and its %PDF- header checked; it was not parsed, rendered or executed",
+             f"  {paper['title'] or '(no title: metadata from the file only)'}" + (f" · {authors}" if authors else "")
+             + (f" · {paper['version']} ({paper['version_date']})" if paper["version"] else ""),
+             f"  license {paper['license']}: {paper['reuse_note']} · abstract {paper['abstract_chars']} characters",
+             f"  components: none extracted: {core.PAPER_COMPONENTS_NOTE}",
+             f"  verdict: {derived['symbol']} {derived['label']} ({', '.join(derived['reasons'])})"]
+    return {"status": "tasted", "food": fid, "commit": None, "version": paper["version"], "pdf_sha256": pdf_sha,
+            "integrity": inventory["integrity"], "files": len(sealed), "verdict": derived["headline"],
+            "components": {k: 0 for k in core.DISPOSITIONS}, "lines": lines}
+
+
 # --------------------------------------------------------------------------- list / show
 
 def cmd_list(target: Path) -> dict:
@@ -683,9 +840,10 @@ def cmd_list(target: Path) -> dict:
     for fid, entry in sorted(registry.get("foods", {}).items()):
         derived = core.derive(load_evidence(target, fid), food_decisions(decisions, fid))
         rows.append({"id": fid, "display": core.sanitize_text(entry["display"], 80), "lifecycle": entry.get("lifecycle"),
-                     "commit": (entry["source"].get("commit") or "")[:7] or None, "verdict": derived["headline"],
-                     "symbol": derived["symbol"]})
-    lines = [f"{r['symbol']} {r['id']:28} {r['lifecycle'] or '':8} {r['commit'] or '-':8} {r['display']}" for r in rows] or ["no foods yet: catalog.py add URL"]
+                     "commit": (entry["source"].get("commit") or "")[:7] or None, "version": entry["source"].get("version"),
+                     "verdict": derived["headline"], "symbol": derived["symbol"]})
+    lines = [f"{r['symbol']} {r['id']:28} {r['lifecycle'] or '':8} {r['commit'] or r['version'] or '-':8} {r['display']}" for r in rows]
+    lines = lines or ["no foods yet: catalog.py add URL (a GitHub repository or an arXiv paper)"]
     return {"status": "list", "foods": rows, "lines": lines}
 
 
@@ -699,17 +857,27 @@ def cmd_show(target: Path, ident: str) -> dict:
     historical = [r for r in evidence if core.evidence_class(r) == "historical"]
     plan = core.decide_plan(fid, derived, historical, load_policy(target))
     card = core.place_card(core.food_card(entry, evidence, decisions, plan), load_receipts(target).get(fid))
-    v, stage = card["verdict"], card["pipeline"]
+    v, stage, pinned = card["verdict"], card["pipeline"], card["pinned"]
+    pin = ((f"arXiv version {pinned['version']}" if pinned["version"] else "local PDF") + f" + sha256 {pinned['pdf_sha12'] or '-'}"
+           if card["kind"] == "paper" else pinned["commit7"] or "-")
     lines = [f"{card['display']} [{fid}] · {v['symbol']} {v['label']} ({v['label_zh']}) · evidence: {v['level']}",
-             f"  pinned: {card['pinned']['commit7'] or '-'} ({card['pinned']['integrity'] or 'not tasted'}) · license {card['license'] or '-'} · exec {card['exec_class'] or '-'}",
+             f"  pinned: {pin} ({pinned['integrity'] or 'not tasted'}) · license {card['license'] or '-'} · exec {card['exec_class'] or '-'}",
              f"  safety: {card['safety_text']}",
              f"  allergens: {', '.join(card['allergens']) or 'none'}",
              f"  stage: {stage['stage']} ({stage['state']}) · " + " ".join(f"{sid}:{state}" for sid, state in stage["stages"].items()),
              f"  next: {stage['note_zh']}" + "".join(f" · [{a['label_zh']}]" for a in stage["actions"]),
              f"  reasons: {'; '.join(v['reasons'])}" + (f" · chips: {', '.join(v['chips'])}" if v["chips"] else "")]
+    paper = card.get("paper")
+    if paper:
+        source = "" if paper.get("from") == "static" else " (as the imported record states; not tasted)"
+        lines.append(f"  paper{source}: {paper.get('title') or '(no title)'} · {', '.join(paper.get('authors') or []) or 'authors not recorded'}"
+                     f" · {paper.get('version') or 'no version'}" + (f" ({paper['version_date']})" if paper.get("version_date") else "")
+                     + f" · license {paper.get('license') or 'unknown'}" + (f": {paper['reuse_note']}" if paper.get("reuse_note") else ""))
+    if card.get("components_note_zh"):
+        lines.append(f"  components: {core.PAPER_COMPONENTS_NOTE}")
     static = latest_static(evidence)
     if static:
-        for flag in [f for f in static["flags"] if f["severity"] == "high"][:12]:
+        for flag in [f for f in static["flags"] if f["severity"] in ("high", "info")][:12]:
             lines.append(f"  flag {flag['severity']:6} {flag['rule']:12} {flag['path']}:{flag['line']} {flag['meaning']}")
     for component in card["components"]:
         mark = {"absorb": "[+]", "excrete": "[x]", "hold": "[~]"}[component["disposition"]]
@@ -902,7 +1070,9 @@ def cmd_triage(target: Path, args, confirmer: ConfirmationChannel | None = None)
 
 # --------------------------------------------------------------------------- import-report
 
-REPORT_JSON = ("digest.json", "verify.json", "components.json", "integration.json", "scout.json")
+REPORT_JSON = ("digest.json", "verify.json", "components.json", "integration.json", "scout.json") + core.REVIEW_RECORDS
+# Text records are hashed and their headings listed; a paper digestion keeps its digest, Elephant drafts and extract here.
+REPORT_TEXT = ("proposals.md", "digest.md", "elephant-draft.md", "elephant-final.md", "extract.md")
 
 
 def cmd_import_report(target: Path, ident: str, directory: str) -> dict:
@@ -910,10 +1080,10 @@ def cmd_import_report(target: Path, ident: str, directory: str) -> dict:
     if not folder.is_dir():
         raise CatalogError("Report directory not found.")
     names = [n for n in REPORT_JSON if (folder / n).is_file()] + sorted(p.name for p in folder.glob("goldfish-*.json") if p.is_file())
-    if (folder / "proposals.md").is_file():
-        names.append("proposals.md")
+    names += [n for n in REPORT_TEXT if (folder / n).is_file()]
     if not names:
-        raise CatalogError("No digestion records (digest.json, verify.json, goldfish-*.json, components.json, integration.json, proposals.md).")
+        raise CatalogError("No digestion records (digest.json, verify.json, goldfish-*.json, components.json, integration.json, proposals.md,"
+                           " or a paper's components.json, digest.md and reviews).")
     docs, source_files = {}, []
     for name in names:
         data = (folder / name).read_bytes()
@@ -932,20 +1102,32 @@ def cmd_import_report(target: Path, ident: str, directory: str) -> dict:
     try:
         entry = resolve_food(registry, ident)
     except CatalogError:
-        repo = (docs.get("scout.json") or {}).get("repo") or (docs.get("components.json") or {}).get("food")
+        ledger = docs.get("components.json") or {}
+        repo = (docs.get("scout.json") or {}).get("repo") or ledger.get("food")
         if not isinstance(repo, str):
             raise
-        add_foods(target, [repo], origin="import")
+        # A paper record names its arXiv id (arXiv:2606.03979) and the version it digested: the food is pinned to it.
+        version = ledger.get("version") if ledger.get("food_kind") == "paper" else None
+        if isinstance(version, str) and re.fullmatch(r"v[1-9]\d{0,3}", version) and not re.search(r"v\d+$", repo):
+            repo += version
+        added = add_foods(target, [repo], origin="import")
+        if added["errors"]:
+            raise CatalogError(added["errors"][0]["error"])
         entry = resolve_food(load_registry(target), repo)
     record = core.imported_record(entry["id"], docs, source_files, now_iso())
     name = f"imported-{record['evidence_id'].rsplit('/', 1)[-1]}.json"
     save_evidence(target, entry["id"], name, record)
     update_view(target)
     counts = record["counts"]
-    return {"status": "imported", "food": entry["id"], "evidence_id": record["evidence_id"],
-            "lines": [f"{entry['id']}: imported {len(source_files)} file(s) as historical-prior evidence (never counted in a verdict)",
-                      f"  proposed parts: absorb {counts.get('absorb', 0)} · excrete {counts.get('excrete', 0)} · hold {counts.get('hold', 0)}",
-                      f"  goldfish reviews: {len(record['goldfish'])} · elephant digest: {'yes' if record['elephant'] else 'no'}"]}
+    lines = [f"{entry['id']}: imported {len(source_files)} file(s) as historical-prior evidence (never counted in a verdict)",
+             f"  proposed parts: absorb {counts.get('absorb', 0)} · excrete {counts.get('excrete', 0)} · hold {counts.get('hold', 0)}",
+             f"  goldfish reviews: {len(record['goldfish'])} · elephant digest: {'yes' if record['elephant'] else 'no'}"
+             + "".join(f" · {r['reviewer']} review: {r['findings']} findings" for r in record["reviews"])]
+    if record.get("paper"):
+        paper = record["paper"]
+        lines.append(f"  paper (as the record states): {paper['title'] or '(no title)'} · {paper['version'] or 'no version'}"
+                     f" · license {paper['license'] or 'unknown'}; a paper's ideas are absorbed by re-implementing them (D5, D21)")
+    return {"status": "imported", "food": entry["id"], "evidence_id": record["evidence_id"], "counts": counts, "lines": lines}
 
 
 # --------------------------------------------------------------------------- OAW-managed layer, builds, restore
@@ -1434,8 +1616,15 @@ def cmd_absorb(target: Path, ident: str, component_ids, reason: str, apply: bool
     manifest = install_manifest(target)
     hosts = manifest.get("hosts", ["codex"])
     selections, writes = [], {}
+    paper = entry["source"].get("kind") == "paper"
     for raw in component_ids:
         cid = raw.strip()
+        hid = cid if cid in historical else "hist:" + cid
+        if paper and hid not in historical:
+            # D5/D21: a paper is never copied into the project; only its imported proposals can become backlog notes.
+            raise CatalogError(f"Refused: {fid} is a paper: a paper's ideas are absorbed by re-implementing them in OAW code"
+                               " with tests (D5, D21), never by copying its text; only its imported historical proposals"
+                               " can be noted as backlog items.")
         if cid in current:
             component = current[cid]
             if component["decision"] == "absorbed":
@@ -1565,7 +1754,8 @@ def cmd_absorb(target: Path, ident: str, component_ids, reason: str, apply: bool
         record_decision(target, {"kind": "absorb", "food": fid, "components": [selection["id"]], "outcome": selection["outcome"],
                                  "reason": core.sanitize_text(reason or "owner choice", 300), "commit": entry["source"].get("commit"),
                                  "evidence_refs": refs, "build": build["name"] if build and selection["outcome"] == "installed" else None,
-                                 **({"oaw_target": core.sanitize_text(selection.get("oaw_target", ""), 200)} if selection["outcome"] != "installed" else {})})
+                                 **({"oaw_target": core.sanitize_text(selection.get("oaw_target", ""), 200)} if selection["outcome"] != "installed" else {}),
+                                 **({"note": "paper: re-implement in OAW code with tests (D5, D21); no text is copied"} if paper else {})})
     if installed:
         def lifecycle(reg):
             reg["foods"][fid]["lifecycle"] = "absorbed"
@@ -1994,16 +2184,16 @@ def parser() -> argparse.ArgumentParser:
     common.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help="print a machine-readable result")
     root = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     commands = root.add_subparsers(dest="command", required=True)
-    add = commands.add_parser("add", parents=[common], help="feed one or more GitHub repositories (duplicates merge)")
-    add.add_argument("urls", nargs="+")
-    add.add_argument("--ref", help="branch, tag or commit to pin (default: the default branch)")
+    add = commands.add_parser("add", parents=[common], help="feed one or more GitHub repositories or arXiv papers (duplicates merge)")
+    add.add_argument("urls", nargs="+", help="a GitHub repository, arXiv:ID[vN], arxiv.org/abs/ID or arxiv.org/pdf/ID, or a file:// repository or PDF")
+    add.add_argument("--ref", help="branch, tag or commit to pin, or a paper's arXiv version such as v2 (default: the default branch or the latest version)")
     add.add_argument("--no-taste", action="store_true", help="only register; by default every new food is tasted at once (free T0)")
     commands.add_parser("list", parents=[common], help="list foods and their verdicts")
     show = commands.add_parser("show", parents=[common], help="nutrition card for one food")
     show.add_argument("food")
     taste = commands.add_parser("taste", parents=[common], help="seal a pinned snapshot outside the project and run free T0 checks")
     taste.add_argument("food")
-    taste.add_argument("--ref")
+    taste.add_argument("--ref", help="a repository ref, or a paper's arXiv version such as v2")
     triage = commands.add_parser("triage", parents=[common], help="owner triage of one static flag")
     triage.add_argument("food")
     triage.add_argument("flag")
@@ -2012,7 +2202,8 @@ def parser() -> argparse.ArgumentParser:
     group.add_argument("--allergen", action="store_true")
     group.add_argument("--confirm-toxic", action="store_true")
     triage.add_argument("--reason", required=True)
-    imported = commands.add_parser("import-report", parents=[common], help="import a digestion record directory as historical-prior evidence")
+    imported = commands.add_parser("import-report", parents=[common],
+                                   help="import a digestion record directory (a repository's or a paper's) as historical-prior evidence")
     imported.add_argument("food")
     imported.add_argument("directory")
     plan = commands.add_parser("plan", parents=[common], help="the system's test plan for a food, cheapest first, with token estimates")

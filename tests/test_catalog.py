@@ -16,6 +16,7 @@ import sys
 import tarfile
 import tempfile
 import unittest
+import urllib.request
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -43,6 +44,36 @@ class FakeResponse(io.BytesIO):
 
     def __exit__(self, *_exc):
         self.close()
+
+
+class FakeOpener:
+    """Stands in for urllib's opener: answers each URL from `answer`, and reports `final` as where it ended."""
+
+    def __init__(self, answer, final=None):
+        self.answer, self.final, self.urls = answer, final, []
+
+    def open(self, request, timeout=None):
+        self.urls.append(request.full_url)
+        response = FakeResponse(self.answer(request.full_url))
+        response.geturl = lambda: self.final or request.full_url
+        return response
+
+
+PAPER_FIXTURE = ROOT / "tests" / "fixtures" / "paper-2606.03979"
+PDF = b"%PDF-1.7\n%fixture paper\n"
+
+
+def arxiv_raw(arxiv_id="2606.03979", license_url="http://creativecommons.org/licenses/by/4.0/"):
+    """An OAI-PMH GetRecord answer in arXivRaw format (two versions), written by hand from the documented shape."""
+    return (f'<?xml version="1.0" encoding="UTF-8"?><OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/"><GetRecord><record>'
+            f'<header><identifier>oai:arXiv.org:{arxiv_id}</identifier></header><metadata>'
+            f'<arXivRaw xmlns="http://arxiv.org/OAI/arXivRaw/"><id>{arxiv_id}</id>'
+            '<version version="v1"><date>Tue, 2 Jun 2026 17:59:59 GMT</date><size>2048kb</size></version>'
+            '<version version="v2"><date>Fri, 10 Jul 2026 09:00:00 GMT</date><size>2100kb</size></version>'
+            "<title>Language Models Need Sleep: Learning to Self-Modify and Consolidate Memories</title>"
+            "<authors>Ali Behrouz, Farnoosh Hashemi, Adel Javanmard, Vahab Mirrokni</authors>"
+            f"<license>{license_url}</license><abstract>A continual learner alternates wake and sleep.</abstract>"
+            "</arXivRaw></metadata></record></GetRecord></OAI-PMH>").encode("utf-8")
 
 
 @unittest.skipUnless(GIT, "git is required for local fixture repositories")
@@ -880,6 +911,175 @@ class CatalogCliTests(unittest.TestCase):
         """D14 CLI contract: 3 = a choice is needed (the owner's code), 4 = no match."""
         with patch.object(catalog, "dispatch", side_effect=catalog.NeedsConfirmation("policy-set: a confirmation code was shown")):
             self.cli("list", code=3)
+
+    # ------------------------------------------------------------------ papers (offline: the arXiv calls are replaced)
+
+    def arxiv(self, pdf=PDF, oai=None):
+        """Replace the paper path's only network call; each PDF version answers with its own bytes."""
+        calls = []
+
+        def fake(url, *, limit, **_kw):
+            calls.append(url)
+            if url.startswith(catalog.ARXIV_OAI):
+                return arxiv_raw() if oai is None else oai
+            return pdf + url.rsplit("/", 1)[-1].encode()
+        patcher = patch.object(catalog, "https_get", side_effect=fake)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        return calls
+
+    def test_a_paper_is_sealed_outside_the_project_and_never_parsed(self):
+        calls = self.arxiv()
+        before = self.project_snapshot(exclude_layer=False)
+        with patch.object(subprocess, "run", side_effect=AssertionError("subprocess")), \
+                patch.object(subprocess, "Popen", side_effect=AssertionError("subprocess")):
+            fed = self.cli("add", "https://arxiv.org/abs/2606.03979")
+        fid = "arxiv-2606-03979"
+        self.assertEqual(fed["tasted"], [{"food": fid, "verdict": "untested", "files": 2, "integrity": "sha256-recorded", "commit": None,
+                                          "components": {"absorb": 0, "excrete": 0, "hold": 0}}])
+        # No version named: the latest one (v2) is pinned.
+        self.assertEqual(calls, ["https://export.arxiv.org/oai2?verb=GetRecord&identifier=oai%3AarXiv.org%3A2606.03979&metadataPrefix=arXivRaw",
+                                 "https://arxiv.org/pdf/2606.03979v2"])
+        self.assertEqual(self.project_snapshot(exclude_layer=False), before)
+        pins = list((self.lab / "foods" / fid).iterdir())
+        self.assertEqual(len(pins), 1)
+        self.assertTrue(pins[0].name.startswith("v2-"))
+        sealed = pins[0] / "source.tar"
+        self.assertFalse(stat.S_IMODE(sealed.stat().st_mode) & stat.S_IWRITE)
+        with tarfile.open(sealed) as archive:
+            members = {m.name: archive.extractfile(m).read() for m in archive.getmembers()}
+        pdf = PDF + b"2606.03979v2"
+        self.assertEqual(sorted(members), ["metadata.json", "paper.pdf"])
+        self.assertEqual(members["paper.pdf"], pdf)
+        metadata = json.loads(members["metadata.json"])
+        self.assertEqual((metadata["pdf"]["sha256"], metadata["version"], metadata["arxiv_id"]), (sha(pdf), "v2", "2606.03979"))
+        self.assertNotIn("fetched_at", metadata)  # deterministic: the same version and bytes seal the same tar
+        inventory = json.loads((pins[0] / "inventory.json").read_text(encoding="utf-8"))
+        self.assertEqual({f["path"]: f["sha256"] for f in inventory["files"]}, {"metadata.json": sha(members["metadata.json"]), "paper.pdf": sha(pdf)})
+        self.assertEqual((inventory["version"], inventory["commit"], inventory["pdf_sha256"]), ("v2", None, sha(pdf)))
+        record = next(r for r in catalog.load_evidence(self.project, fid) if r.get("tier") == "T0")
+        self.assertEqual((record["food_kind"], record["components"], record["paper"]["title"], record["paper"]["version"]),
+                         ("paper", [], "Language Models Need Sleep: Learning to Self-Modify and Consolidate Memories", "v2"))
+        self.assertNotIn("continual learner", json.dumps(record))  # the abstract stays sealed in LAB_HOME; only its length is recorded
+        source = json.loads((self.project / ".oaw/catalog/registry.json").read_text(encoding="utf-8"))["foods"][fid]["source"]
+        self.assertEqual((source["kind"], source["version"], source["pdf_sha256"], source["commit"]), ("paper", "v2", sha(pdf), None))
+        shown = self.cli("show", fid)
+        self.assertEqual((shown["card"]["kind"], shown["card"]["pinned"]["version"]), ("paper", "v2"))
+        out = io.StringIO()
+        with redirect_stdout(out):
+            catalog.main(["show", fid, "--target", str(self.project)])
+        self.assertIn(f"pinned: arXiv version v2 + sha256 {sha(pdf)[:12]} (sha256-recorded)", out.getvalue())
+        self.assertNotIn("SHA", out.getvalue())
+        self.assertEqual({k: self.cli("list")["foods"][0][k] for k in ("commit", "version")}, {"commit": None, "version": "v2"})
+        status = json.loads((self.project / ".oaw/catalog/status.json").read_text(encoding="utf-8"))
+        self.assertEqual(status["source"], "arXiv:2606.03979@v2")
+        # A named version is its own sealed pin.
+        self.assertEqual(self.cli("taste", fid, "--ref", "v1")["version"], "v1")
+        self.assertEqual(calls[-1], "https://arxiv.org/pdf/2606.03979v1")
+        self.assertEqual(sorted(p.name[:3] for p in (self.lab / "foods" / fid).iterdir()), ["v1-", "v2-"])
+
+    def test_paper_downloads_are_https_only_capped_and_must_be_pdfs(self):
+        with patch.object(catalog.urllib.request, "build_opener", side_effect=AssertionError("network")):
+            for url in ("http://arxiv.org/pdf/2606.03979v2", "https://evil.example/pdf/2606.03979", "ftp://arxiv.org/x",
+                        "https://user@arxiv.org/pdf/x", "file:///etc/passwd"):
+                with self.assertRaisesRegex(catalog.CatalogError, "only https", msg=url):
+                    catalog.https_get(url, limit=10)
+        request = urllib.request.Request("https://arxiv.org/pdf/2606.03979v2")
+        with self.assertRaisesRegex(catalog.CatalogError, "a redirect left https"):
+            catalog.HttpsOnlyRedirects().redirect_request(request, None, 302, "Found", {}, "http://arxiv.org/pdf/2606.03979v2")
+        self.assertIsNotNone(catalog.HttpsOnlyRedirects().redirect_request(request, None, 302, "Found", {}, "https://export.arxiv.org/x"))
+        with patch.object(catalog.urllib.request, "build_opener", return_value=FakeOpener(lambda url: b"%PDF-" + b"x" * 5)):
+            self.assertEqual(len(catalog.https_get("https://arxiv.org/pdf/a", limit=10)), 10)
+            with self.assertRaisesRegex(catalog.CatalogError, "exceeds the"):
+                catalog.https_get("https://arxiv.org/pdf/a", limit=9)
+        with patch.object(catalog.urllib.request, "build_opener", return_value=FakeOpener(lambda url: b"%PDF-", final="http://arxiv.org/a")):
+            with self.assertRaisesRegex(catalog.CatalogError, "only https"):
+                catalog.https_get("https://arxiv.org/pdf/a", limit=10)
+        # Through taste: every refusal leaves nothing sealed and keeps its reason on the card, in both languages.
+        self.cli("add", "arXiv:2606.03979", "--no-taste")
+        fid = "arxiv-2606-03979"
+        big = FakeOpener(lambda url: arxiv_raw() if url.startswith(catalog.ARXIV_OAI) else b"%PDF-" + b"x" * 100)
+        with patch.dict(core.PAPER_LIMITS, {"pdf_bytes": 64}), patch.object(catalog.urllib.request, "build_opener", return_value=big):
+            self.assertIn("exceeds the", self.cli("taste", fid, code=2)["error"])
+        self.assertEqual(big.urls[-1], "https://arxiv.org/pdf/2606.03979v2")
+        self.assertIn("超過", self.cli("show", fid)["card"]["last_error"]["error_zh"])
+        self.arxiv(pdf=b"<!doctype html><title>Just a moment</title>")
+        self.assertIn("is not a PDF", self.cli("taste", fid, code=2)["error"])
+        self.assertIn("不是 PDF", self.cli("show", fid)["card"]["last_error"]["error_zh"])
+        self.assertIn("arXiv lists no version v7", self.cli("taste", fid, "--ref", "v7", code=2)["error"])
+        self.assertIn("A paper's --ref", self.cli("taste", fid, "--ref", "main", code=2)["error"])
+        self.arxiv(oai=b'<?xml version="1.0"?><OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/"><error code="idDoesNotExist">unknown</error></OAI-PMH>')
+        self.assertIn("arXiv has no record", self.cli("taste", fid, code=2)["error"])
+        self.assertFalse(self.lab.joinpath("foods").exists())
+        self.assertEqual(self.cli("show", fid)["card"]["pipeline"]["stage"], "quarantine")
+
+    def test_a_local_pdf_is_sealed_with_metadata_from_the_file_only(self):
+        folder = self.base / "papers"
+        folder.mkdir()
+        (folder / "sleep-notes.pdf").write_bytes(PDF)
+        (folder / "notes.pdf").write_text("not a pdf", encoding="utf-8")
+        with patch.object(catalog, "https_get", side_effect=AssertionError("network")):
+            self.cli("add", (folder / "sleep-notes.pdf").as_uri())
+            card = self.cli("show", "sleep-notes")["card"]
+            self.assertIn("is not a PDF", self.cli("add", (folder / "notes.pdf").as_uri(), code=2)["failed"][0]["error"])
+            self.assertIn("Cannot read the local PDF", self.cli("add", (folder / "gone.pdf").as_uri(), code=2)["failed"][0]["error"])
+        self.assertEqual((card["kind"], card["repo"], card["pinned"]["version"], card["pinned"]["pdf_sha12"]), ("paper", None, None, sha(PDF)[:12]))
+        self.assertEqual((card["paper"]["title"], card["paper"]["license"], card["paper"]["reuse"]), (None, "unknown", "ideas-only"))
+        self.assertEqual([(f["rule"], f["severity"]) for f in card["flag_list"]], [("P-LIC", "info")])
+        self.assertEqual((card["flags"]["open"], card["verdict"]["headline"], card["pipeline"]["stage"]), (0, "untested", "static"))
+        pin = next((self.lab / "foods" / "sleep-notes").iterdir())
+        self.assertTrue(pin.name.startswith("local-"))
+        inventory = json.loads((pin / "inventory.json").read_text(encoding="utf-8"))
+        self.assertTrue(inventory["source_key"].startswith("private#"))
+        self.assertNotIn(folder.as_posix(), json.dumps(catalog.load_evidence(self.project, "sleep-notes")))
+
+    def test_absorb_never_copies_a_paper_and_its_proposals_become_backlog_notes(self):
+        self.arxiv()
+        self.cli("add", "arXiv:2606.03979v2")
+        fid = "arxiv-2606-03979"
+        # Even a forged static record with a skill part cannot reach the copy path for a paper (D5, D21).
+        forged = core.static_scan({"skills/x/SKILL.md": skill_md("x"), "LICENSE": MIT}, food=fid, commit="a" * 40, integrity="git-object-verified")
+        catalog.save_evidence(self.project, fid, "T0-forged.json", dict(forged, recorded_at="9999-01-01T00:00:00Z"))
+        self.pass_ab(fid, "skill:x")
+        error = self.cli("absorb", fid, "--components", "skill:x", "--apply", code=2)["error"]
+        self.assertIn("re-implementing them in OAW code", error)
+        self.assertTrue(core.zh_error(error).startswith("論文不走複製文字的吸收"))
+        self.assertFalse((self.project / ".agents/skills/x").exists())
+        managed = json.loads((self.project / ".oaw/install.json").read_text(encoding="utf-8"))["managed_files"]
+        self.cli("import-report", fid, str(PAPER_FIXTURE))
+        self.assertIn("proposed as excrete", self.cli("absorb", fid, "--components", "sl.dreaming-loop", code=2)["error"])
+        result = self.cli("absorb", fid, "--components", "sl.wake-sleep-cycle-manual-pass", "--reason", "re-implement as memory-check", "--apply")
+        self.assertEqual((result["status"], result["writes"], result["build"], result["backlog"]),
+                         ("noted", [], None, ["hist:sl.wake-sleep-cycle-manual-pass"]))
+        decision = catalog.load_decisions(self.project)[-1]
+        self.assertEqual((decision["kind"], decision["outcome"]), ("absorb", "backlog"))
+        self.assertIn("(D5, D21)", decision["note"])
+        self.assertEqual(json.loads((self.project / ".oaw/install.json").read_text(encoding="utf-8"))["managed_files"], managed)
+        self.assertEqual(self.cli("builds")["builds"], [])
+
+    def test_import_adds_a_paper_from_its_digestion_record_without_the_network(self):
+        """The real 2606.03979 record: the food comes from its arXiv id, pinned to the version it digested."""
+        with patch.object(catalog, "https_get", side_effect=AssertionError("network")):
+            imported = self.cli("import-report", "", str(PAPER_FIXTURE))
+        fid = "arxiv-2606-03979"
+        self.assertEqual((imported["food"], imported["counts"]), (fid, {"absorb": 2, "excrete": 11, "hold": 3}))
+        entry = json.loads((self.project / ".oaw/catalog/registry.json").read_text(encoding="utf-8"))["foods"][fid]
+        self.assertEqual((entry["origin"], entry["lifecycle"], entry["source"]["kind"], entry["source"]["requested_ref"], entry["source"]["arxiv_id"]),
+                         ("import", "found", "paper", "v2", "2606.03979"))
+        card = self.cli("show", fid)["card"]
+        history = card["historical"][0]
+        self.assertEqual((card["verdict"]["headline"], history["level"], len(history["components"])), ("untested", "historical-prior", 16))
+        self.assertEqual(sorted(f["name"] for f in history["source_files"]),
+                         ["components.json", "digest.md", "goldfish-1.json", "goldfish-2.json", "skeptic.json"])
+        self.assertEqual((card["paper"]["from"], card["paper"]["version"], card["paper"]["license"]), ("imported", "v2", "CC BY 4.0"))
+        self.assertEqual((card["pipeline"]["stage"], card["pipeline"]["state"]), ("intake", "current"))
+        self.assertIn("1 份歷史證據", card["pipeline"]["note_zh"])
+        self.assertEqual(self.cli("plan", fid)["plan"]["status"], "taste first: free static checks decide the paid plan")
+        # The same record again, named by its arXiv id, is the same food and the same evidence.
+        self.assertEqual(self.cli("import-report", "arXiv:2606.03979", str(PAPER_FIXTURE))["food"], fid)
+        registry = json.loads((self.project / ".oaw/catalog/registry.json").read_text(encoding="utf-8"))
+        self.assertEqual(list(registry["foods"]), [fid])
+        self.assertEqual(len(self.cli("show", fid)["card"]["historical"]), 1)
 
 
 if __name__ == "__main__":
