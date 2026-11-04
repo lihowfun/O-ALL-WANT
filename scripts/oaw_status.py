@@ -42,7 +42,9 @@ METRICS = {"skills": "skill 數", "files": "檔案數", "bytes": "大小（bytes
 BUILD_KINDS = {"baseline": "基準版", "restore-point": "還原點", "absorb": "吸收", "remove": "移除", "restore": "還原", "readd": "加回"}
 HOST_NAMES = {"codex": "Codex", "claude": "Claude"}
 CHIPS = {"free-checks-passed": "免費檢查通過", "rules-updated-free-T0-pending": "規則已更新，待重跑免費檢查"}
-INTEGRITY = {"git-object-verified": "git 物件驗證", "unverified-against-commit": "未對 commit 驗證"}
+INTEGRITY = {"git-object-verified": "git 物件驗證", "unverified-against-commit": "未對 commit 驗證",
+             "sha256-recorded": "已記 sha256（arXiv 沒有可驗證的 hash）"}
+REUSE = {"quote-with-attribution": "可引用原文（要附出處）", "ideas-only": "只取想法：重新實作，不複製原文"}
 PLAN_STATUS = (("waiting for standing policy", "等你設定常設預算"),
                ("within policy", "第 0/1 階段在常設預算內；第 2 階段和第二個 host 要先問你（v0 尚未開放付費實測）"),
                ("exceeds standing policy", "第 0/1 階段超過常設預算：需要你同意（v0 尚未開放付費實測）"),
@@ -50,7 +52,8 @@ PLAN_STATUS = (("waiting for standing policy", "等你設定常設預算"),
                ("no paid test: owner confirmed toxic", "不需實測：已確認有毒"),
                ("no paid test: oaw cannot digest", "不需實測：OAW 無法消化"),
                ("blocked", "被擋住：高嚴重度旗標要先分流"),
-               ("no paid test needed", "不需付費實測：沒有可吸收的成分"))
+               ("no paid test needed", "不需付費實測：沒有可吸收的成分"),
+               ("no components yet", "還沒有成分：論文要由 Elephant 拆成分（規劃中），或匯入已有的消化紀錄"))
 _UNSAFE = re.compile("[\x00-\x1f\x7f-\x9f\u061c\u200b-\u200f\u202a-\u202e\u2060-\u2064\u2066-\u2069\ufeff]")
 
 
@@ -295,6 +298,9 @@ def safety_label(food):
         return "尚未檢查"
     if flags.get("open"):
         return f"{flags['open']} 個旗標未分流（高 {flags.get('open_high', 0)}）"
+    if food.get("kind") == "paper":
+        pdf = clean((food.get("pinned") or {}).get("pdf_sha12"), 12)
+        return "論文：只封存 PDF，不解析、不執行" + (f"（sha256 {pdf}）" if pdf else "")
     tree = clean((food.get("pinned") or {}).get("tree_sha12"), 12)
     return f"沒有觀察到有毒訊號（tree {tree}）" if tree else "沒有觀察到有毒訊號"
 
@@ -426,6 +432,33 @@ def part_missing(part):
     return clean(part.get("missing_zh") or part.get("missing_test"), 120)
 
 
+def pin_text(food):
+    """A repository's commit, or a paper's arXiv version plus the sha256 of its sealed PDF."""
+    pinned = food.get("pinned") or {}
+    if food.get("kind") != "paper":
+        return clean(pinned.get("commit7"), 12) or "未固定"
+    if not pinned.get("pdf_sha12"):
+        return "論文 · 未固定"
+    version = f"arXiv {clean(pinned.get('version'), 8)}" if pinned.get("version") else "本機 PDF"
+    return f"論文 {version} · sha256 {clean(pinned.get('pdf_sha12'), 12)}"
+
+
+def paper_lines(paper):
+    """Title, authors, version and license of a paper card (from the taste, or as an imported record states them)."""
+    if not isinstance(paper, dict):
+        return []
+    authors = [clean(a, 80) for a in paper.get("authors") or [] if isinstance(a, str)]
+    total = paper.get("authors_total") if isinstance(paper.get("authors_total"), int) else len(authors)
+    version = clean(paper.get("version"), 8) or "沒有版本（本機 PDF）"
+    if paper.get("version_date"):
+        version += f"（{clean(paper.get('version_date'), 20)}）"
+    reuse = REUSE.get(paper.get("reuse"))
+    imported = "（匯入的紀錄寫的，歷史證據）" if paper.get("from") == "imported" else ""
+    return [f"  論文：{clean(paper.get('title'), 160) or '（沒有標題）'}{imported}",
+            f"    作者：{'、'.join(authors) or '未記錄'}" + (f"（共 {total} 位）" if total > len(authors) else "")
+            + f" · 版本 {version} · 授權 {clean(paper.get('license'), 60) or '不明'}" + (f"：{reuse}" if reuse else "")]
+
+
 def food_lines(food, detail=False):
     verdict = food.get("verdict") or {}
     pinned = food.get("pinned") or {}
@@ -434,7 +467,7 @@ def food_lines(food, detail=False):
     pipeline = food.get("pipeline") if isinstance(food.get("pipeline"), dict) else {}
     parity = clean((pipeline.get("parity") or {}).get("label_zh"), 60)
     lines = [f"{headline_label(verdict)} · {clean(food.get('display'), 80)} [{clean(food.get('id'), 64)}]"
-             f" · {clean(pinned.get('commit7'), 12) or '未固定'} · {INTEGRITY.get(pinned.get('integrity')) or '未試吃'}"
+             f" · {pin_text(food)} · {INTEGRITY.get(pinned.get('integrity')) or '未試吃'}"
              f" · 證據：{level_label(verdict.get('level'))}",
              f"  這一站：{clean(pipeline.get('stage_label_zh'), 8) or '?'}（{clean(pipeline.get('state_zh'), 8) or '?'}）"
              f" · {clean(pipeline.get('note_zh'), 160) or '—'}",
@@ -444,6 +477,9 @@ def food_lines(food, detail=False):
              f"  實測：{plan_status_label((food.get('plan') or {}).get('status'))}" + (f" · {parity}" if parity else "")]
     if not detail:
         return lines
+    lines += paper_lines(food.get("paper"))
+    if food.get("components_note_zh"):
+        lines.append(f"  成分：{clean(food.get('components_note_zh'), 200)}")
     reasons = verdict.get("reasons_zh") or verdict.get("reasons") or []
     if reasons:
         lines.append("  判定依據：" + "；".join(clean(r, 160) for r in reasons))
@@ -483,6 +519,13 @@ def food_lines(food, detail=False):
         for fish in report.get("goldfish") or []:
             severity = "、".join(f"{clean(k, 20)} {v}" for k, v in (fish.get("by_severity") or {}).items())
             lines.append(f"    🐟 Goldfish {clean(fish.get('reviewer'), 40)}：{fish.get('findings')} 項發現" + (f"（{severity}）" if severity else ""))
+        for review in report.get("reviews") or []:
+            if isinstance(review, dict):
+                lines.append(f"    其他審查 {clean(review.get('reviewer'), 40)}：{review.get('findings')} 項發現")
+        paper = report.get("paper") if isinstance(report.get("paper"), dict) else None
+        if paper:
+            lines.append(f"    論文（紀錄裡寫的）：{clean(paper.get('title'), 120) or '—'} · {clean(paper.get('version'), 8) or '沒有版本'}"
+                         f" · 授權 {clean(paper.get('license'), 40) or '不明'}")
         for part in report.get("components") or []:
             if isinstance(part, dict):
                 lines.append(f"    {DISPOSITIONS.get(part.get('disposition'), '🟡 暫留')} {clean(part.get('id'), 80)} · {clean(part.get('name'), 80)}"

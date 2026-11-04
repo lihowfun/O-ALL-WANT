@@ -1,6 +1,7 @@
 """Pure catalog core: sources, T0 rules, derive(), builds, effect, plans and the view model."""
 import copy
 import inspect
+import json
 from pathlib import Path
 import random
 import sys
@@ -837,6 +838,181 @@ class PipelineTests(unittest.TestCase):
         first, second = record["goldfish"]
         self.assertEqual(first["launch"], {"method": None, "host_version": None, "inherited_context": None, "init_event_check": None})
         self.assertEqual((first["zero_context"], second["zero_context"]), ("not verified", "verified"))
+
+
+PAPER_FIXTURE = Path(__file__).resolve().parent / "fixtures" / "paper-2606.03979"
+
+
+def arxiv_raw(arxiv_id="2606.03979", versions=(("v1", "Tue, 2 Jun 2026 17:59:59 GMT"), ("v2", "Fri, 10 Jul 2026 09:00:00 GMT")),
+              license_url="http://creativecommons.org/licenses/by/4.0/"):
+    """An OAI-PMH GetRecord response in arXivRaw format, written by hand from the documented shape."""
+    parts = "".join(f'<version version="{v}"><date>{d}</date><size>2048kb</size><source_type>D</source_type></version>' for v, d in versions)
+    licence = f"<license>{license_url}</license>" if license_url else ""
+    return (f'<?xml version="1.0" encoding="UTF-8"?>\n<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/">'
+            f"<responseDate>2026-11-04T00:00:00Z</responseDate><GetRecord><record><header><identifier>oai:arXiv.org:{arxiv_id}</identifier>"
+            f'</header><metadata><arXivRaw xmlns="http://arxiv.org/OAI/arXivRaw/"><id>{arxiv_id}</id><submitter>A. Author</submitter>{parts}'
+            "<title>Language Models Need Sleep: Learning to Self-Modify and\n  Consolidate Memories</title>"
+            "<authors>Ali Behrouz, Farnoosh Hashemi, Adel Javanmard and Vahab Mirrokni</authors><categories>cs.LG cs.AI</categories>"
+            f"{licence}<abstract>  A continual learner alternates wake and\n sleep.\n</abstract></arXivRaw></metadata></record></GetRecord>"
+            "</OAI-PMH>").encode("utf-8")
+
+
+def paper_record(license_url="http://creativecommons.org/licenses/by/4.0/", pdf=b"%PDF-1.7\n%fixture\n", version="v2"):
+    meta = core.parse_arxiv_raw(arxiv_raw(license_url=license_url))
+    files = {"metadata.json": core.paper_metadata({"source": "arxiv", "metadata": meta, "version": version, "pdf": pdf}), "paper.pdf": pdf}
+    return core.paper_scan(files, food="arxiv-2606-03979")
+
+
+def paper_docs():
+    return {path.name: (json.loads(path.read_text(encoding="utf-8")) if path.suffix == ".json" else path.read_text(encoding="utf-8"))
+            for path in sorted(PAPER_FIXTURE.iterdir())}
+
+
+class PaperTests(unittest.TestCase):
+    """Papers are a second kind of food: arXiv (or local PDF) sources, a hash-only taste, the license rule, imports."""
+
+    def test_arxiv_forms_share_one_identity_and_keep_the_requested_version(self):
+        forms = ["arXiv:2606.03979", "ARXIV:2606.03979v2", "https://arxiv.org/abs/2606.03979", "http://arxiv.org/abs/2606.03979v1",
+                 "https://arxiv.org/pdf/2606.03979v2", "https://arxiv.org/pdf/2606.03979v2.pdf", "arxiv.org/abs/2606.03979/",
+                 "www.arxiv.org/pdf/2606.03979.pdf", "https://export.arxiv.org/abs/2606.03979v2#S3"]
+        sources = [core.normalize_source(form) for form in forms]
+        self.assertEqual({s["key"] for s in sources}, {"arxiv.org/2606.03979"})
+        self.assertEqual({s["kind"] for s in sources}, {"paper"})
+        self.assertEqual([s["ref"] for s in sources], [None, "v2", None, "v1", "v2", "v2", None, None, "v2"])
+        source = core.normalize_source("arXiv:2606.03979v2")
+        self.assertEqual((source["display"], source["url"], source["fetch_url"], source["arxiv_id"]),
+                         ("arXiv:2606.03979", "https://arxiv.org/abs/2606.03979", "https://arxiv.org/pdf/2606.03979v2", "2606.03979"))
+        self.assertEqual(core.food_id(source, {}), "arxiv-2606-03979")
+        self.assertFalse(core.is_local_source(source))
+        old = core.normalize_source("arXiv:hep-th/9901001v3")
+        self.assertEqual((old["key"], old["ref"], old["arxiv_id"]), ("arxiv.org/hep-th/9901001", "v3", "hep-th/9901001"))
+        # The subject class is not part of an old-style id.
+        self.assertEqual(core.normalize_source("https://arxiv.org/abs/math.GT/0309136")["key"], "arxiv.org/math/0309136")
+        self.assertEqual(core.arxiv_identity("1412.1234"), ("1412.1234", None))  # four-digit numbers until 2014
+
+    def test_unsupported_paper_sources_are_refused_and_errors_name_both_kinds(self):
+        for bad in ("arXiv:2606.0397", "arXiv:2613.03979", "arXiv:1412.12345", "arXiv:1501.1234", "arXiv:2606.03979v0",
+                    "https://arxiv.org/list/cs.LG/recent", "arxiv.org", "https://arxiv.org/abs/", "arXiv:hep-th/99010",
+                    "arXiv:2606.03979 v2", "https://arxiv.org/abs/2606.03979" + RLO, "arXiv:../2606.03979"):
+            with self.assertRaises(core.SourceError, msg=bad):
+                core.normalize_source(bad)
+        with self.assertRaises(core.SourceError) as caught:
+            core.normalize_source("https://gitlab.com/a/b")
+        self.assertIn("GitHub repositories and arXiv papers", str(caught.exception))
+        self.assertEqual(core.zh_error(caught.exception), "只支援 GitHub 上的 repo 和 arXiv 論文。")
+        for bad, needle in (("not a url", "arXiv"), ("arXiv:2613.03979", "arXiv 編號"), ("https://arxiv.org/list/x", "arxiv.org/abs"),
+                            ("file://host/share/x.pdf", "PDF")):
+            with self.assertRaises(core.SourceError) as caught:
+                core.normalize_source(bad)
+            self.assertIn(needle, core.zh_error(caught.exception) or "", bad)
+
+    def test_versions_of_one_paper_dedupe_and_local_pdfs_are_papers(self):
+        batch = core.dedupe_sources(["arXiv:2606.03979v1", "https://arxiv.org/abs/2606.03979v2", "arxiv.org/pdf/2606.03979.pdf",
+                                     "file:///C:/papers/Sleep.PDF", "file:///C:/fixtures/sweet-notes.git"])
+        self.assertEqual([f["source"]["key"] for f in batch["foods"]],
+                         ["arxiv.org/2606.03979", "file:///C:/papers/Sleep.PDF", "file:///C:/fixtures/sweet-notes.git"])
+        self.assertEqual(batch["merges"], [{"key": "arxiv.org/2606.03979", "ignored": [{"field": "ref", "value": "v2"}],
+                                            "inputs": ["arXiv:2606.03979v1", "https://arxiv.org/abs/2606.03979v2", "arxiv.org/pdf/2606.03979.pdf"]}])
+        self.assertEqual(batch["foods"][0]["source"]["ref"], "v1")  # the first spelling's version is the one kept
+        pdf, repo = batch["foods"][1]["source"], batch["foods"][2]["source"]
+        self.assertEqual((pdf["kind"], pdf["arxiv_id"], pdf["display"], pdf["repo"]), ("paper", None, "local/Sleep.PDF", "Sleep"))
+        self.assertTrue(core.is_local_source(pdf))
+        self.assertEqual((repo["kind"], repo["repo"], repo["display"]), ("file", "sweet-notes", "local/sweet-notes"))
+
+    def test_arxiv_raw_metadata_is_read_and_document_types_are_refused(self):
+        meta = core.parse_arxiv_raw(arxiv_raw(versions=(("v2", "Fri, 10 Jul 2026 09:00:00 GMT"), ("v1", "Tue, 2 Jun 2026 17:59:59 GMT"))))
+        self.assertEqual(meta["title"], "Language Models Need Sleep: Learning to Self-Modify and Consolidate Memories")
+        self.assertEqual(meta["authors"], ["Ali Behrouz", "Farnoosh Hashemi", "Adel Javanmard", "Vahab Mirrokni"])
+        self.assertEqual([(v["version"], v["date"]) for v in meta["versions"]], [("v1", "2026-06-02"), ("v2", "2026-07-10")])
+        self.assertEqual((meta["arxiv_id"], meta["license_url"], meta["abstract"]),
+                         ("2606.03979", "http://creativecommons.org/licenses/by/4.0/", "A continual learner alternates wake and sleep."))
+        error = (b'<?xml version="1.0"?><OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/">'
+                 b'<error code="idDoesNotExist">Value of the identifier argument is unknown</error></OAI-PMH>')
+        with self.assertRaisesRegex(ValueError, "arXiv has no record"):
+            core.parse_arxiv_raw(error)
+        bomb = b'<?xml version="1.0"?><!DOCTYPE x [<!ENTITY a "aaaa">]><OAI-PMH>&a;</OAI-PMH>'
+        for refused in (bomb, b"not xml", b"<OAI-PMH/>", b" " * (core.PAPER_LIMITS["metadata_bytes"] + 1)):
+            with self.assertRaises(ValueError):
+                core.parse_arxiv_raw(refused)
+
+    def test_the_license_rule_is_an_info_flag_and_no_component_is_invented(self):
+        rules = (("http://creativecommons.org/licenses/by/4.0/", "CC-BY-4.0", "quote-with-attribution"),
+                 ("https://creativecommons.org/licenses/by-sa/4.0/", "CC-BY-SA-4.0", "quote-with-attribution"),
+                 ("http://creativecommons.org/publicdomain/zero/1.0/", "CC0-1.0", "quote-with-attribution"),
+                 ("http://arxiv.org/licenses/nonexclusive-distrib/1.0/", "LicenseRef-arXiv-nonexclusive-distrib-1.0", "ideas-only"),
+                 ("http://creativecommons.org/licenses/by-nc-sa/4.0/", "CC-BY-NC-SA-4.0", "ideas-only"),
+                 (None, "unknown", "ideas-only"))
+        for url, spdx, reuse in rules:
+            record = paper_record(license_url=url)
+            self.assertEqual((record["license"]["spdx"], record["paper"]["reuse"]), (spdx, reuse), url)
+            self.assertEqual([(f["rule"], f["severity"]) for f in record["flags"]], [] if reuse != "ideas-only" else [("P-LIC", "info")])
+            derived = core.derive([record])
+            # An info flag never waits for triage, never holds anything and never makes the food risky.
+            self.assertEqual((derived["headline"], derived["flags"]["open"], derived["chips"], derived["components"]),
+                             ("untested", 0, ["free-checks-passed"], []), url)
+        self.assertEqual(record["flags"][0]["meaning"], "ideas only: re-implement, do not copy text (unknown)")
+        card = core.food_card({"id": "p", "source": {"kind": "paper"}}, [record], [])
+        self.assertEqual((card["flag_list"][0]["severity"], card["flag_list"][0]["meaning_zh"]), ("info", core.FLAG_MEANINGS_ZH["P-LIC"]))
+        paper = paper_record()["paper"]
+        self.assertEqual((paper["title"], paper["version"], paper["version_date"], paper["authors_total"], paper["abstract_chars"]),
+                         ("Language Models Need Sleep: Learning to Self-Modify and Consolidate Memories", "v2", "2026-07-10", 4, 46))
+        self.assertEqual((paper["parsed"], paper["executed"], paper["is_pdf"]), (False, False, True))
+        record = paper_record()
+        self.assertEqual((record["checks_run"], record["components"], record["exec_class"], record["hooks"]["count"], record["food_kind"]),
+                         (list(core.PAPER_CHECKS), [], None, 0, "paper"))
+        self.assertTrue(record["evidence_id"].startswith("arxiv-2606-03979@v2-"))
+        plan = core.decide_plan("p", core.derive([record]))
+        self.assertTrue(plan["status"].startswith("no components yet: component extraction needs the Elephant (planned)"))
+        self.assertEqual(core.derive([paper_record(pdf=b"<html>not a pdf</html>")])["headline"], "inedible")
+
+    def test_an_imported_paper_digestion_counts_its_units_as_historical_prior(self):
+        """The real 2606.03979 record: 16 units (absorb 2, hold 3, excrete 11), shown and never counted in a verdict."""
+        record = core.imported_record("arxiv-2606-03979", paper_docs(), [], "t")
+        self.assertEqual((record["counts"], len(record["components"])), ({"absorb": 2, "excrete": 11, "hold": 3}, 16))
+        self.assertEqual(core.evidence_class(record), "historical")
+        self.assertEqual({c["level"] for c in record["components"]}, {"historical-prior"})
+        absorb = [c["id"] for c in record["components"] if c["disposition"] == "absorb"]
+        self.assertEqual(absorb, ["hist:sl.wake-sleep-cycle-manual-pass", "hist:sl.online-consolidation-gap"])
+        self.assertTrue(record["components"][0]["name"].startswith("Paper section 2.3"))  # units are named by `what`
+        self.assertEqual({k: record["paper"][k] for k in ("arxiv_id", "version", "version_date", "license", "authors_total")},
+                         {"arxiv_id": "2606.03979", "version": "v2", "version_date": "2026-07-10", "license": "CC BY 4.0", "authors_total": 4})
+        self.assertEqual([(g["file"], g["findings"], g["zero_context"]) for g in record["goldfish"]],
+                         [("goldfish-1.json", 22, "not verified"), ("goldfish-2.json", 22, "not verified")])
+        self.assertTrue(all(g["summary"] for g in record["goldfish"]))
+        self.assertEqual([(r["reviewer"], r["findings"]) for r in record["reviews"]], [("skeptic", 13)])
+        self.assertEqual([d["name"] for d in record["documents"]], ["digest.md"])
+        static = paper_record()
+        self.assertEqual(core.derive([record])["headline"], "untested")
+        self.assertEqual(core.derive([static, record]), core.derive([static]))
+
+    def test_a_paper_waits_for_components_at_static_and_imported_proposals_reach_approval(self):
+        entry = {"id": "arxiv-2606-03979", "display": "arXiv:2606.03979", "origin": "url", "lifecycle": "tasted",
+                 "source": {"kind": "paper", "key": "arxiv.org/2606.03979", "url": "https://arxiv.org/abs/2606.03979", "commit": None,
+                            "version": "v2", "integrity": "sha256-recorded"}}
+
+        def place(evidence, **changes):
+            derived = core.derive(evidence)
+            plan = core.decide_plan(entry["id"], derived, [r for r in evidence if core.evidence_class(r) == "historical"])
+            return core.place_card(core.food_card({**entry, **changes}, evidence, [], plan), None)
+        static = paper_record()
+        card = place([static])
+        pipeline = card["pipeline"]
+        self.assertEqual((pipeline["stage"], pipeline["state"], [a["id"] for a in pipeline["actions"]]), ("static", "current", ["forget"]))
+        self.assertIn("Elephant", pipeline["note_zh"])
+        self.assertIn("arXiv 版本＋sha256", pipeline["note_zh"])
+        self.assertEqual((card["kind"], card["paper"]["from"], card["pinned"]["version"], card["pinned"]["commit7"]), ("paper", "static", "v2", None))
+        self.assertEqual(card["pinned"]["pdf_sha12"], static["paper"]["pdf_sha256"][:12])
+        self.assertEqual(card["components_note_zh"], core.PAPER_COMPONENTS_NOTE_ZH)
+        self.assertIn("never parsed or executed", card["safety_text"])
+        imported = core.imported_record(entry["id"], paper_docs(), [], "t")
+        pipeline = place([static, imported])["pipeline"]
+        self.assertEqual((pipeline["stage"], [a["id"] for a in pipeline["actions"]]), ("approve", ["absorb", "forget"]))
+        self.assertIn("2 個歷史提案可以記成待辦", pipeline["note_zh"])
+        self.assertIn("重新實作", pipeline["note_zh"])
+        card = place([imported], lifecycle="found", origin="import")
+        self.assertEqual((card["pipeline"]["stage"], card["paper"]["from"], card["paper"]["title"][:21]), ("intake", "imported", "Language Models Need "))
+        repo = core.food_card({"id": "r", "source": {"kind": "github"}}, [], [])
+        self.assertEqual((repo["kind"], repo["paper"], repo["pinned"]["version"]), ("repo", None, None))
 
 
 if __name__ == "__main__":

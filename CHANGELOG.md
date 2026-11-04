@@ -26,6 +26,21 @@ All notable changes to this project will be documented in this file.
 - `docs/SKILL_INTAKE.md`: the official process for adding skills from now on (owner decisions
   D1-D19), with what is automated today, planned, or needs the owner, and how to operate it from
   the web page, the terminal menu and the CLI; linked from both READMEs.
+- Research papers as a second kind of food in the skill catalog: `catalog.py add` accepts
+  `arXiv:ID[vN]`, `arxiv.org/abs/ID[vN]` and `arxiv.org/pdf/ID[vN][.pdf]` (new- and old-style
+  ids; every version of a paper is one food, the requested version is kept) and local
+  `file:///…/x.pdf`. Tasting fetches the arXiv OAI-PMH `arXivRaw` record and the PDF of the
+  pinned version (the latest when none is named) over https only, with a timeout and size caps;
+  the PDF is only checked for `%PDF-` and hashed, then sealed with a `metadata.json` in
+  `LAB_HOME` like a repository snapshot. The T0 record keeps title, authors, version, date,
+  abstract length and the license rule (CC BY, CC BY-SA, CC0: quote with attribution; anything
+  else: info flag `P-LIC`, ideas only). Components are not invented: the card says they need
+  the Elephant (planned) or an imported digestion record. `import-report` reads paper records
+  (it can add the food from the record's arXiv id), counting their units as historical-prior
+  evidence, and `absorb` refuses to copy a paper (its ideas are re-implemented, D5/D21). The
+  page, `menu` and `oaw_status.py` show a paper's pinned arXiv version + sha256, title, authors
+  and license. Tests are offline: the arXiv calls are replaced and the 2606.03979 record is a
+  fixture.
 - OAW-15 (food: claude-mem, index-then-fetch recall): `context_hub.py memory recall --index` returns
   one row per hit (`source:line` of the match, date, tag or page title, entry size, and a `match`
   window of at most max(120, query length + 40) characters that holds the complete match) under the

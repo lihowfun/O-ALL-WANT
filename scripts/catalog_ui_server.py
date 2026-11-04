@@ -163,7 +163,7 @@ def act_scout_pick(target, params, progress):
 
 
 def act_import_report(target, params, progress):
-    """An empty food lets the engine register the food named in the folder's scout.json."""
+    """An empty food lets the engine register the food named in the folder's scout.json (or a paper record's arXiv id)."""
     return catalog.cmd_import_report(target, _text(params, "food", limit=200, required=False),
                                      _text(params, "directory", limit=1024))
 
@@ -538,7 +538,7 @@ class Menu:
         self.write = write or (lambda text: print(text, flush=True))
         # Codes live in this menu's memory and are shown on its terminal, like the page's.
         self.confirmer = catalog.ConfirmationChannel()
-        self.items = (("1", "我的 OAW（版本、skill、和預設比）", self.my_oaw), ("2", "入口：你點名（貼 GitHub 網址，送去試吃）", self.feed),
+        self.items = (("1", "我的 OAW（版本、skill、和預設比）", self.my_oaw), ("2", "入口：你點名（貼 GitHub repo 或 arXiv 論文網址，送去試吃）", self.feed),
                       ("3", "入口：每週偵查 → 相關性過濾 → 你確認", self.scout), ("4", "食物卡（送去試吃、忘掉）", self.cards),
                       ("5", "核准：吸收選中的成分", self.absorb), ("6", "版本：移除 skill／EGM", self.remove),
                       ("7", "計畫：系統的測試計畫", self.plan), ("8", "計畫：匯入 🐘 Elephant／🐟 Goldfish 紀錄", self.import_report),
@@ -694,7 +694,7 @@ class Menu:
             self.write(line)
 
     def feed(self):
-        urls = split_urls(self.ask("貼上一個或多個 GitHub 網址（空白或逗號分隔；重複的會自動合併）："))
+        urls = split_urls(self.ask("貼上一個或多個 GitHub repo 或 arXiv 論文網址（例如 arXiv:2606.03979；空白或逗號分隔；重複的會自動合併）："))
         if not urls:
             return
         envelope = self.do("feed", {"urls": urls})
@@ -821,13 +821,13 @@ class Menu:
             self.write("  實測還是規劃中：原型 v0 只顯示系統規劃的測試和預估花費，不執行付費實測。")
 
     def import_report(self):
-        directory = self.ask("報告資料夾路徑（digest.json、goldfish-*.json、components.json…）：")
+        directory = self.ask("報告資料夾路徑（digest.json、goldfish-*.json、components.json…；論文的紀錄也可以）：")
         if not directory:
             return
         foods = [f for f in self.view().get("foods", []) if isinstance(f, dict)]
         for index, food in enumerate(foods, 1):
             self.write(f"  {index}. {oaw_status.clean(food.get('display'), 60)} [{food.get('id')}]")
-        answer = self.ask("屬於哪樣食物？輸入編號；Enter = 依資料夾裡的 scout.json 判斷：")
+        answer = self.ask("屬於哪樣食物？輸入編號；Enter = 依資料夾裡的 scout.json 或論文紀錄 components.json 寫的 arXiv 編號判斷：")
         ident = ""
         if answer:
             picks = self.numbers(answer, len(foods))
@@ -886,7 +886,7 @@ class Menu:
         flags = [f for f in pending if f.get("severity") in ("high", "medium")]
         low = len(pending) - len(flags)
         if low:
-            self.write(f"  另有 {low} 個低嚴重度旗標不需分流（只記錄，不擋吸收）。")
+            self.write(f"  另有 {low} 個低嚴重度或資訊旗標不需分流（只記錄，不擋吸收）。")
         if not flags:
             self.write("  沒有待分流的旗標。")
             return

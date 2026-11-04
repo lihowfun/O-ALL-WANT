@@ -46,11 +46,11 @@
       </div>
       <div class="inlet" id="inlet-named">
         <h3><span class="inlet-tag" aria-hidden="true">B</span> 你點名</h3>
-        <label for="feed-urls" class="label">貼上一個或多個 GitHub 網址（一行一個；同一個 repo 寫兩次只收一次）</label>
-        <textarea id="feed-urls" rows="2" spellcheck="false" autocomplete="off" placeholder="https://github.com/owner/repo"></textarea>
+        <label for="feed-urls" class="label">貼上一個或多個 GitHub repo 或 arXiv 論文網址（一行一個；同一個 repo 寫兩次只收一次，同一篇論文的不同版本也只收一次）</label>
+        <textarea id="feed-urls" rows="2" spellcheck="false" autocomplete="off" placeholder="https://github.com/owner/repo&#10;arxiv.org/abs/2606.03979 或 arXiv:2606.03979"></textarea>
         <div class="row">
           <button type="button" id="feed-go" class="btn primary act">送去試吃</button>
-          <span class="hint">免費：固定版本、封存在專案外、只讀不執行</span>
+          <span class="hint">免費：固定版本（repo 的 commit、論文的 arXiv 版本＋sha256）、封存在專案外、只讀不執行</span>
         </div>
         <div id="feed-result" class="feed-result" aria-live="polite"></div>
       </div>
@@ -75,11 +75,11 @@
       <div id="detail-body"></div>
       <details class="import-any" id="import-any">
         <summary><span aria-hidden="true">🐘🐟</span> 計畫：匯入已有的 Elephant／Goldfish 消化紀錄（歷史證據）</summary>
-        <p class="hint">匯入的紀錄只顯示成「歷史證據」，不計入任何判定。資料夾裡放 digest.json、verify.json、goldfish-*.json、components.json、integration.json、proposals.md。</p>
+        <p class="hint">匯入的紀錄只顯示成「歷史證據」，不計入任何判定。資料夾裡放 digest.json、verify.json、goldfish-*.json、components.json、integration.json、proposals.md；論文的紀錄放 components.json、goldfish-*.json、skeptic.json、digest.md 等。</p>
         <label for="import-dir" class="label">報告資料夾路徑</label>
         <input id="import-dir" type="text" spellcheck="false" autocomplete="off">
-        <label for="import-food" class="label">屬於哪樣食物（可空白：依資料夾裡的 scout.json 判斷）</label>
-        <input id="import-food" type="text" spellcheck="false" autocomplete="off" placeholder="食物 id 或 owner/repo">
+        <label for="import-food" class="label">屬於哪樣食物（可空白：依資料夾裡的 scout.json，或論文紀錄 components.json 寫的 arXiv 編號判斷）</label>
+        <input id="import-food" type="text" spellcheck="false" autocomplete="off" placeholder="食物 id、owner/repo 或 arXiv:編號">
         <div class="row"><button type="button" id="import-go" class="btn act">匯入</button></div>
       </details>
     </section>

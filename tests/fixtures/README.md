@@ -15,3 +15,14 @@ Tests restore this source to exercise the original contracts **without changing
 their hashes**. They separately verify that attempting those historical runs
 against the current V2 source fails closed. These tests do not measure the new
 V2 product; its installer and complete EGM integration have their own tests.
+
+# Paper digestion record fixture
+
+`paper-2606.03979/` holds five files, copied unchanged, of OAW's own digestion record
+of arXiv 2606.03979v2 ("Language Models Need Sleep", 2026-11-03): `components.json`
+(16 units: absorb 2, hold 3, excrete 11), `digest.md`, `goldfish-1.json`,
+`goldfish-2.json` and `skeptic.json`. The record's Elephant drafts and paper extract
+are not needed by the import and are left out. No paper text beyond the record's own
+quotes, no PDF, no credentials and no private paths are in it. Tests import it with
+`catalog.py import-report` as `historical-prior` evidence; it is not a verdict and not a
+measurement.
