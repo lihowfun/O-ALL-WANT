@@ -18,6 +18,15 @@ GROUPS = {
                  "paths": ["scripts/context_hub.py", "tests/test_context_hub.py"]},
     "citations": {"units": ["OAW-02", "OAW-21", "OAW-22"], "prefix": "CT",
                   "paths": ["scripts/wiki_sync.py", "tests/test_wiki_sync.py"]},
+    # The arXiv 2606.03979 prototype was built before D21 and only its drafts were reviewed.
+    "sleep": {"units": [], "prefix": "SL", "base": "fc5fda1", "head": "b14c875", "shared": False,
+              "design": "### sleep.manual-pass: wiki_sync.py memory-check (from arXiv 2606.03979, motivation only)\n"
+                        "- target: `wiki_sync.py memory-check [--json] [--limit N]`: a manual, read-only, offline check "
+                        "that the file paths cited in `.agents/memory.md` still exist. Exit 0 when the check completes "
+                        "(also when memory.md is missing), 1 on a handled error including non-UTF-8, 2 on usage errors. "
+                        "It never writes, never calls a model and never runs anything from the project.\n",
+              "paths": ["scripts/wiki_sync.py", "tests/test_wiki_sync.py", "docs/Wiki_Sync_Guide.md",
+                        "docs/CLI_Reference.md", "CHANGELOG.md"]},
 }
 SHARED = ["scripts/oaw_common.py", "scripts/harness_check.py", "CHANGELOG.md", "docs/CLI_Reference.md",
           "docs/Wiki_Sync_Guide.md", "docs/UPGRADING.md"]
@@ -66,17 +75,23 @@ def main():
     ap.add_argument("--repo", required=True)
     ap.add_argument("--base", required=True)
     ap.add_argument("--head", required=True)
+    ap.add_argument("--only", action="append", help="group name (repeatable)")
     args = ap.parse_args()
     items = {i["id"]: i for i in json.load(open(BACKLOG, encoding="utf-8"))["items"]}
     for name, group in GROUPS.items():
+        if args.only and name not in args.only:
+            continue
+        base, head = group.get("base", args.base), group.get("head", args.head)
         out = [HEADER.format(group=name, prefix=group["prefix"])]
+        if group.get("design"):
+            out.append(group["design"])
         for unit in group["units"]:
             item = items[unit]
             out.append("### %s: %s\n- target: %s\n- system decisions: %s\n" % (
                 unit, item["title"], item.get("target"), "; ".join(item.get("system_decisions") or []) or "none"))
-        out.append("\n---\n## Diff (%s..%s, 25 lines of context)\n" % (args.base, args.head))
-        for path in group["paths"] + SHARED:
-            diff = subprocess.run(["git", "-C", args.repo, "diff", "-U25", "%s..%s" % (args.base, args.head), "--", path],
+        out.append("\n---\n## Diff (%s..%s, 25 lines of context)\n" % (base, head))
+        for path in group["paths"] + (SHARED if group.get("shared", True) else []):
+            diff = subprocess.run(["git", "-C", args.repo, "diff", "-U25", "%s..%s" % (base, head), "--", path],
                                   capture_output=True, text=True, encoding="utf-8", check=True).stdout
             if diff.strip():
                 out.append("\n### %s\n```diff\n%s```\n" % (path, diff))

@@ -1,0 +1,287 @@
+{
+ "packet": "sleep.md",
+ "started_at": "2026-11-04T01:47:02.090578+00:00",
+ "launch": {
+  "argv": [
+   "claude",
+   "-p",
+   "--tools",
+   "",
+   "--strict-mcp-config",
+   "--disable-slash-commands",
+   "--setting-sources",
+   "project",
+   "--output-format",
+   "stream-json",
+   "--verbose"
+  ],
+  "stdin": "packet",
+  "cwd": "fresh empty temp folder"
+ },
+ "exit_code": 0,
+ "stderr_tail": "",
+ "init_event": {
+  "cwd": "<tmp>/oaw-goldfish-a53hexir",
+  "model": "claude-opus-5-5",
+  "claude_code_version": "2.1.318",
+  "permissionMode": "default",
+  "apiKeySource": "none",
+  "memory_paths": {
+   "auto": "~/.claude/projects/<tmp>-oaw-goldfish-a53hexir/memory/"
+  },
+  "output_style": "default",
+  "tools": [],
+  "mcp_servers": [],
+  "slash_commands": [],
+  "skills": [],
+  "plugins": [
+   {
+    "name": "cc-plugin-sec-default",
+    "path": "builtin",
+    "source": "cc-plugin-sec-default@builtin"
+   },
+   {
+    "name": "cc-plugin-agents-md",
+    "path": "builtin",
+    "source": "cc-plugin-agents-md@builtin"
+   },
+   {
+    "name": "cc-plugin-telemetry",
+    "path": "builtin",
+    "source": "cc-plugin-telemetry@builtin"
+   },
+   {
+    "name": "cc-plugin-privacy",
+    "path": "builtin",
+    "source": "cc-plugin-privacy@builtin"
+   },
+   {
+    "name": "cc-plugin-plugin-authoring",
+    "path": "builtin",
+    "source": "cc-plugin-plugin-authoring@builtin"
+   }
+  ],
+  "agents": [
+   "claude",
+   "Explore",
+   "general-purpose",
+   "Plan",
+   "statusline-setup",
+   "web-fetch"
+  ]
+ },
+ "init_checks": {
+  "tools": true,
+  "mcp_servers": true,
+  "slash_commands": true,
+  "skills": true,
+  "plugins_builtin_only": true,
+  "agents_unusable_without_tools": true,
+  "cwd_is_fresh_temp": true,
+  "auto_memory_empty": true
+ },
+ "canary": "Not 'none'. Before this packet I received a system prompt with: agent and harness rules (permission modes, hooks, handling of pasted content, confirming before irreversible actions, honest reporting); a security-assistance policy; instructions for a persistent file-based memory at ~/.claude/projects/<tmp>-oaw-goldfish-a53hexir/memory/ with a MEMORY.md index (no memory contents or index entries were shown to me); a system-reminder giving the user's account email address, to be used only for identification; environment facts (cwd <tmp>/oaw-goldfish-a53hexir, not a git repo, Linux on WSL2, date 2026-11-04, model Opus 5.5, Claude model IDs); and guidance on pronouns, building games, context management and acting decisively. Tool use is described in general terms, but no tools were used and none were needed. I received no CLAUDE.md, no project files and no OAW project facts.",
+ "zero_context_verified": false,
+ "usage": {
+  "input_tokens": 2,
+  "cache_creation_input_tokens": 30263,
+  "cache_read_input_tokens": 649,
+  "output_tokens": 19568,
+  "output_tokens_details": {
+   "thinking_tokens": 14710
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 30263,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "global",
+  "iterations": [
+   {
+    "input_tokens": 2,
+    "output_tokens": 19568,
+    "cache_read_input_tokens": 649,
+    "cache_creation_input_tokens": 30263,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 30263
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "total_cost_usd": 0.6336018,
+ "review": {
+  "canary": "Not 'none'. Before this packet I received a system prompt with: agent and harness rules (permission modes, hooks, handling of pasted content, confirming before irreversible actions, honest reporting); a security-assistance policy; instructions for a persistent file-based memory at ~/.claude/projects/<tmp>-oaw-goldfish-a53hexir/memory/ with a MEMORY.md index (no memory contents or index entries were shown to me); a system-reminder giving the user's account email address, to be used only for identification; environment facts (cwd <tmp>/oaw-goldfish-a53hexir, not a git repo, Linux on WSL2, date 2026-11-04, model Opus 5.5, Claude model IDs); and guidance on pronouns, building games, context management and acting decisively. Tool use is described in general terms, but no tools were used and none were needed. I received no CLAUDE.md, no project files and no OAW project facts.",
+  "findings": [
+   {
+    "id": "SL-01",
+    "unit": "sleep.manual-pass",
+    "file": "scripts/wiki_sync.py",
+    "line": "hunk @@ +1234 memory_check / _parse_memory_entries",
+    "finding": "Line numbers come from str.splitlines(), which also splits on \\x0b, \\x0c, \\x1c-\\x1e, \\x85, U+2028 and U+2029. A memory.md containing any of these gives `line`/`entry_line` values that differ from what editors and grep show, and such a character inside a heading splits the heading.",
+    "severity": "minor",
+    "kind": "bug",
+    "evidence": "lines, entries = content.splitlines(), _parse_memory_entries(content)\n...\nfor number, line in enumerate(lines, 1):",
+    "suggested_fix": "Split on '\\n' only (after normalizing '\\r\\n'), or use content.split('\\n'), for both entry parsing and line numbering."
+   },
+   {
+    "id": "SL-02",
+    "unit": "sleep.manual-pass",
+    "file": "scripts/wiki_sync.py",
+    "line": "hunk @@ +1234 _memory_check_normalize/_memory_check_classify",
+    "finding": "Method calls on objects whose attribute matches a listed extension, such as `res.json()` or `response.json()`, lose the trailing '()' during normalization. They are then classified as bare files and reported as missing_path, which is a false positive the reviewer corpus does not cover.",
+    "severity": "minor",
+    "kind": "bug",
+    "evidence": "token = token.lstrip(\"\\\"'([\").rstrip(\"\\\"'()[].,;:!?\")\n...\n_MC_BARE = re.compile(r\"[\\w.\\-]+\\.([A-Za-z0-9]{1,8})\")\n_MC_EXTENSIONS = frozenset(\"py md json ...",
+    "suggested_fix": "Classify a raw token that ends in '(' or '()' as skipped (a symbol) before stripping punctuation, and add `response.json()` to the false-positive corpus."
+   },
+   {
+    "id": "SL-03",
+    "unit": "sleep.manual-pass",
+    "file": "scripts/wiki_sync.py",
+    "line": "hunk @@ +1234 _memory_check_classify and bare isfile",
+    "finding": "The comment says only paths inside BASE_DIR are ever stat'ed, but two calls run before or without confinement. The anchor test calls os.path.isdir on BASE_DIR/<first segment>, and the bare-name check calls os.path.isfile(os.path.join(BASE_DIR, token)); both follow a symlink or junction and stat its target outside the project. test_c3 has no symlink fixture, so it cannot catch this.",
+    "severity": "minor",
+    "kind": "design_mismatch",
+    "evidence": "anchors[parts[0]] = os.path.isdir(os.path.join(BASE_DIR, parts[0]))\n...\nif kind == \"bare\" and os.path.isfile(os.path.join(BASE_DIR, token)):",
+    "suggested_fix": "Call _memory_check_is_link (or confined_path) on the anchor and the bare root path before isdir/isfile, and add a symlinked top-level directory to test_c3."
+   },
+   {
+    "id": "SL-04",
+    "unit": "sleep.manual-pass",
+    "file": "scripts/wiki_sync.py",
+    "line": "hunk @@ +1234 _memory_check_walk",
+    "finding": "Bare-name matching in the walk uses os.path.normcase, which is a no-op on macOS, and does no Unicode normalization (macOS may return NFD names). On a case-insensitive macOS volume, `readme.md` is present at the root via isfile but missing_path when the file is deeper, and slash paths differ between Linux and Windows/macOS. The same memory.md therefore gives different reports on different platforms.",
+    "severity": "minor",
+    "kind": "portability",
+    "evidence": "pending = {os.path.normcase(name) for name in names}\n...\nkey = os.path.normcase(name)",
+    "suggested_fix": "Compare unicodedata.normalize('NFC', name).casefold() on case-insensitive platforms (or always, documented), and test with a case-differing bare name."
+   },
+   {
+    "id": "SL-05",
+    "unit": "sleep.manual-pass",
+    "file": "scripts/wiki_sync.py",
+    "line": "hunk @@ +1234 _memory_check_classify",
+    "finding": "Any segment that begins with a single letter followed by a colon counts as a drive, including single-segment prose such as `A:B` or `x:y`. Such words are reported as outside_project findings rather than skipped.",
+    "severity": "minor",
+    "kind": "bug",
+    "evidence": "_MC_DRIVE = re.compile(r\"^[A-Za-z]:\")\n...\nif len(parts) == 1 and not drive and not _MC_BARE.fullmatch(parts[0]):\n    return \"skipped\"\nreturn \"outside_project\"",
+    "suggested_fix": "Treat a single-segment drive token as outside_project only when it is followed by a separator or looks like a file name (e.g. `C:\\x`, `C:x.md`); skip it otherwise."
+   },
+   {
+    "id": "SL-06",
+    "unit": "shared",
+    "file": "scripts/wiki_sync.py",
+    "line": "hunk @@ -1,44 +1,44 import",
+    "finding": "The diff imports the private helper `_fence_after` from oaw_common, but oaw_common is not part of the diff. I cannot verify that it exists, which matters because every wiki_sync subcommand fails at import if it does not. I also cannot verify its fence semantics: tilde fences, fence length, blockquote or list-indented fences, and the info string.",
+    "severity": "minor",
+    "kind": "unclear",
+    "evidence": "_fence_after, atomic_write, close_fence, confined_path, ...\nafter = _fence_after(lines[number - 1], fence)",
+    "suggested_fix": "Include the oaw_common change, or confirm `_fence_after` already exists with a test of its contract."
+   },
+   {
+    "id": "SL-07",
+    "unit": "shared",
+    "file": "scripts/wiki_sync.py",
+    "line": "hunk @@ -1087 +1087 _parse_memory_entries",
+    "finding": "Every entry dict now carries an extra `line` key. The promote-candidates golden test shows that caller is unaffected, but other callers of _parse_memory_entries (for example context_hub recall, if it imports it) are not shown and could start serializing the new key.",
+    "severity": "minor",
+    "kind": "unclear",
+    "evidence": "+                \"line\": number,",
+    "suggested_fix": "List or grep the other callers and add a golden test for any that serialize entries."
+   },
+   {
+    "id": "SL-08",
+    "unit": "sleep.manual-pass",
+    "file": "scripts/wiki_sync.py",
+    "line": "hunk @@ +1234 memory_check fence loop",
+    "finding": "Fence state is reset at every entry, and entries are split on any line matching the heading regex, even inside a fence. A fenced example that contains a `## [YYYY-MM-DD] [TAG]` line therefore ends the fence early, and the rest of the fenced block is checked as prose.",
+    "severity": "minor",
+    "kind": "bug",
+    "evidence": "prose, fence = [], None\nfor number in range(entry[\"line\"], last + 1):",
+    "suggested_fix": "Track fence state across the whole file when splitting entries, or ignore heading matches while a fence is open."
+   },
+   {
+    "id": "SL-09",
+    "unit": "sleep.manual-pass",
+    "file": "tests/test_wiki_sync.py",
+    "line": "MemoryCheckTests",
+    "finding": "Several handled branches have no test: the symlink/junction pruning in the walk, `.agents/memory.md` being a directory or FIFO (which should exit 1), a symlinked memory.md or `.agents` (handled by confined_path, which is not shown), and a suffixed missing path such as `scripts/gone.py:12` still being reported.",
+    "severity": "minor",
+    "kind": "missing_test",
+    "evidence": "if not os.path.isfile(memory_file):\n    raise ValueError(\".agents/memory.md is not a regular file; nothing was checked.\")\n...\ndef _memory_check_is_link(path):",
+    "suggested_fix": "Add fixtures for a symlinked directory under BASE_DIR, a directory at .agents/memory.md, and a suffixed missing citation."
+   },
+   {
+    "id": "SL-10",
+    "unit": "sleep.manual-pass",
+    "file": "tests/test_wiki_sync.py",
+    "line": "test_c9_shipped_demo_memory_gives_exactly_two_findings",
+    "finding": "The fixture base has no top-level directories, so every slash citation in the shipped demo memory is unanchored and never checked. The test therefore exercises only bare names. It also depends on example/public-hybrid-demo/.agents/memory.md, which is not shown.",
+    "severity": "minor",
+    "kind": "weak_test",
+    "evidence": "self.memory(demo.read_text(encoding=\"utf-8\"))\ncode, report = self.check()",
+    "suggested_fix": "Run the check against a copy of the demo project tree, or touch its real top-level directories, so slash citations are judged too."
+   },
+   {
+    "id": "SL-11",
+    "unit": "sleep.manual-pass",
+    "file": "scripts/wiki_sync.py",
+    "line": "hunk @@ +1234 _MC_PLACEHOLDER",
+    "finding": "Markdown autolinks (`<scripts/x.py>`) and real paths containing `+`, `@`, `%`, `=` or `&` (for example `node_modules/@types/...` or URL-encoded names) are silently skipped as placeholders. The guide lists only URLs, flags, placeholders and globs as skipped, so this recall gap is undocumented.",
+    "severity": "minor",
+    "kind": "design_mismatch",
+    "evidence": "_MC_PLACEHOLDER = re.compile(r\"[<>{}$*?|=@+%^&\\x00-\\x1f\\x7f]\")",
+    "suggested_fix": "Strip a surrounding `<...>` before the placeholder test and document which characters cause a skip."
+   },
+   {
+    "id": "SL-12",
+    "unit": "sleep.manual-pass",
+    "file": "scripts/wiki_sync.py",
+    "line": "hunk @@ +1234 _MC_UNSAFE",
+    "finding": "The terminal-escape filter covers C0, C1 and most bidi controls but misses U+061C (Arabic letter mark) and U+FEFF. Titles containing them pass to the console unescaped.",
+    "severity": "minor",
+    "kind": "security",
+    "evidence": "_MC_UNSAFE = re.compile(r\"[\\x00-\\x1f\\x7f-\\x9f​-‏‪-‮⁦-⁩]\")",
+    "suggested_fix": "Add \\u061c and \\ufeff (or escape every unicodedata category Cc/Cf) to the filter."
+   },
+   {
+    "id": "SL-13",
+    "unit": "sleep.manual-pass",
+    "file": "scripts/wiki_sync.py",
+    "line": "hunk @@ +1234 memory_check read",
+    "finding": "memory.md is read whole with no size bound. Per-word cost is capped, but a very large file (or a large non-regular target that passes isfile) is loaded fully into memory, along with an unbounded findings list.",
+    "severity": "minor",
+    "kind": "bug",
+    "evidence": "with open(memory_file, \"r\", encoding=\"utf-8-sig\") as handle:\n    content = handle.read()",
+    "suggested_fix": "Check os.path.getsize against a documented cap and exit 1 with a handled message when it is exceeded."
+   }
+  ],
+  "coverage": {
+   "reviewed": [
+    "scripts/wiki_sync.py memory-check functions, constants, argparse wiring and exit handling",
+    "scripts/wiki_sync.py _parse_memory_entries change",
+    "tests/test_wiki_sync.py MemoryCheckTests",
+    "docs/Wiki_Sync_Guide.md memory citation check section",
+    "docs/CLI_Reference.md memory-check entry"
+   ],
+   "not_reviewed": [
+    "scripts/oaw_common.py (_fence_after, confined_path implementations not shown)",
+    "example/public-hybrid-demo/.agents/memory.md",
+    "other callers of _parse_memory_entries",
+    "AGENTS.md, CLAUDE.md, templates and .github contents checked by the wiring test"
+   ]
+  },
+  "summary": "The memory-check unit largely matches its stated design: it stays read-only, offline and standard-library only, exit codes match the design, and the tests are unusually strong on read-only and no-process guarantees. The remaining issues are minor: Unicode line-splitting shifts line numbers, a few false positives (method calls like `response.json()`, `A:B` treated as a drive), symlink stats that contradict the 'only inside BASE_DIR' claim, and case/Unicode differences across platforms. `_fence_after` and `confined_path` come from oaw_common, which is not shown, so their behaviour is unclear."
+ },
+ "raw_result_if_unparsed": null,
+ "host_version": "2.1.318 (Claude Code)",
+ "local_paths_redacted": true
+}

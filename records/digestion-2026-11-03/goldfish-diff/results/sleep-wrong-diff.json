@@ -1,0 +1,301 @@
+{
+ "packet": "sleep.md",
+ "started_at": "2026-11-04T01:44:41.236992+00:00",
+ "launch": {
+  "argv": [
+   "claude",
+   "-p",
+   "--tools",
+   "",
+   "--strict-mcp-config",
+   "--disable-slash-commands",
+   "--setting-sources",
+   "project",
+   "--output-format",
+   "stream-json",
+   "--verbose"
+  ],
+  "stdin": "packet",
+  "cwd": "fresh empty temp folder"
+ },
+ "exit_code": 0,
+ "stderr_tail": "",
+ "init_event": {
+  "cwd": "<tmp>/oaw-goldfish-__v3rknu",
+  "model": "claude-opus-5-5",
+  "claude_code_version": "2.1.318",
+  "permissionMode": "default",
+  "apiKeySource": "none",
+  "memory_paths": {
+   "auto": "~/.claude/projects/<tmp>-oaw-goldfish---v3rknu/memory/"
+  },
+  "output_style": "default",
+  "tools": [],
+  "mcp_servers": [],
+  "slash_commands": [],
+  "skills": [],
+  "plugins": [
+   {
+    "name": "cc-plugin-sec-default",
+    "path": "builtin",
+    "source": "cc-plugin-sec-default@builtin"
+   },
+   {
+    "name": "cc-plugin-agents-md",
+    "path": "builtin",
+    "source": "cc-plugin-agents-md@builtin"
+   },
+   {
+    "name": "cc-plugin-telemetry",
+    "path": "builtin",
+    "source": "cc-plugin-telemetry@builtin"
+   },
+   {
+    "name": "cc-plugin-privacy",
+    "path": "builtin",
+    "source": "cc-plugin-privacy@builtin"
+   },
+   {
+    "name": "cc-plugin-plugin-authoring",
+    "path": "builtin",
+    "source": "cc-plugin-plugin-authoring@builtin"
+   }
+  ],
+  "agents": [
+   "claude",
+   "Explore",
+   "general-purpose",
+   "Plan",
+   "statusline-setup",
+   "web-fetch"
+  ]
+ },
+ "init_checks": {
+  "tools": true,
+  "mcp_servers": true,
+  "slash_commands": true,
+  "skills": true,
+  "plugins_builtin_only": true,
+  "agents_unusable_without_tools": true,
+  "cwd_is_fresh_temp": true,
+  "auto_memory_empty": true
+ },
+ "canary": "Not 'none'. Before this packet I received: (1) a system prompt describing me as an agent on the Claude Agent SDK, with harness rules (permission modes, hooks, pasted-content handling, pronoun guidance, confirming hard-to-reverse actions, honest reporting), an authorized-security-testing policy and a rule about not recreating existing games; (2) memory-system instructions naming a persistent memory directory (~/.claude/projects/<tmp>-oaw-goldfish---v3rknu/memory/) and a MEMORY.md index format, with no memory contents or index entries shown to me; (3) an automatically attached user-context note with the user's email address; (4) environment facts: working directory <tmp>/oaw-goldfish-__v3rknu (not a git repo), Linux on WSL2, bash, model Opus 5.5, date 2026-11-04, Claude model family IDs, and a note on handling downloaded files as untrusted. The harness text mentions tools, but I used none. No CLAUDE.md or project facts about OAW were provided.",
+ "zero_context_verified": false,
+ "usage": {
+  "input_tokens": 2,
+  "cache_creation_input_tokens": 54514,
+  "cache_read_input_tokens": 649,
+  "output_tokens": 10651,
+  "output_tokens_details": {
+   "thinking_tokens": 5648
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 54514,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "global",
+  "iterations": [
+   {
+    "input_tokens": 2,
+    "output_tokens": 10651,
+    "cache_read_input_tokens": 649,
+    "cache_creation_input_tokens": 54514,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 54514
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "total_cost_usd": 0.6492698,
+ "review": {
+  "canary": "Not 'none'. Before this packet I received: (1) a system prompt describing me as an agent on the Claude Agent SDK, with harness rules (permission modes, hooks, pasted-content handling, pronoun guidance, confirming hard-to-reverse actions, honest reporting), an authorized-security-testing policy and a rule about not recreating existing games; (2) memory-system instructions naming a persistent memory directory (~/.claude/projects/<tmp>-oaw-goldfish---v3rknu/memory/) and a MEMORY.md index format, with no memory contents or index entries shown to me; (3) an automatically attached user-context note with the user's email address; (4) environment facts: working directory <tmp>/oaw-goldfish-__v3rknu (not a git repo), Linux on WSL2, bash, model Opus 5.5, date 2026-11-04, Claude model family IDs, and a note on handling downloaded files as untrusted. The harness text mentions tools, but I used none. No CLAUDE.md or project facts about OAW were provided.",
+  "findings": [
+   {
+    "id": "SL-01",
+    "unit": "sleep.manual-pass",
+    "file": "scripts/wiki_sync.py",
+    "line": "hunk @@ -1234 (memory-check constants) and main()",
+    "finding": "The stated unit is `memory-check`, but the diff does not change any memory-check logic. It adds lint code citations (OAW-21), `cites` (OAW-22), cited-path helpers (OAW-02), secret patterns (OAW-12) and resolve_cli (OAW-01). The packet does not show the memory-check implementation (token parsing, walk, exit codes), so the design cannot be verified against the code.",
+    "severity": "major",
+    "kind": "unclear",
+    "evidence": "elif args.command == \"memory-check\": ... raise SystemExit(memory_check(limit=args.limit, json_out=args.json_out))  (unchanged context); new code is _check_code_citations, cites, normalize_cited_path, SECRET_PATTERNS, resolve_cli",
+    "suggested_fix": "Re-issue the packet with the memory_check implementation and its tests, or restate the units this diff actually implements."
+   },
+   {
+    "id": "SL-02",
+    "unit": "sleep.manual-pass",
+    "file": "tests/test_wiki_sync.py",
+    "line": "whole hunk @@ -254",
+    "finding": "No added test exercises the stated memory-check contract. Nothing checks exit 0 when memory.md is missing, exit 1 on non-UTF-8, exit 2 on a bad --limit, or that the command never writes. Only an unchanged corpus constant is visible.",
+    "severity": "major",
+    "kind": "missing_test",
+    "evidence": "REVIEWER_FALSE_POSITIVE_CORPUS = \"\"\"# Agent Memory — synthetic negatives ... (context only); all new tests are test_code_citation_* / test_cites_*",
+    "suggested_fix": "Show or add subprocess tests that pin memory-check exit codes 0/1/2 and a read-only snapshot comparison."
+   },
+   {
+    "id": "SL-03",
+    "unit": "shared",
+    "file": "scripts/wiki_sync.py",
+    "line": "_python_names_by_regex",
+    "finding": "The regex fallback disagrees with the ast path on bare annotations such as dataclass fields (`x: int`). ast records them (AnnAssign with no value), but `_PY_ASSIGNMENT` requires `=`. A citation like `Cls::field` therefore resolves when the file parses and warns when it falls back.",
+    "severity": "minor",
+    "kind": "bug",
+    "evidence": "_PY_ASSIGNMENT = re.compile(r\"^\\s*([A-Za-z_]\\w*)\\s*(?::[^=\\n]*)?=(?!=)\") vs elif isinstance(node, (ast.Assign, ast.AnnAssign))",
+    "suggested_fix": "Make the `=` part optional when a `:` annotation is present, and add a bare-annotation case to the fallback parity test."
+   },
+   {
+    "id": "SL-04",
+    "unit": "shared",
+    "file": "scripts/wiki_sync.py",
+    "line": "_python_names_by_regex scope popping",
+    "finding": "In the fallback scan, any line at or below a header's indent closes that header's scope. The closing `):` line of a multi-line def signature, and dedented lines inside triple-quoted strings, pop the function scope early. Locals that follow are then recorded as module-level names, so citations like `helper::x` or `x` resolve falsely.",
+    "severity": "minor",
+    "kind": "bug",
+    "evidence": "while indent <= scopes[-1][0]:\n            scopes.pop()",
+    "suggested_fix": "Track open brackets and string literals before treating a line as a dedent, or accept and document the limitation with a fixture."
+   },
+   {
+    "id": "SL-05",
+    "unit": "shared",
+    "file": "scripts/wiki_sync.py",
+    "line": "_python_names_by_regex _PY_ASSIGNMENT",
+    "finding": "The fallback registers keyword arguments on continuation lines of multi-line calls in a class or module body as names. For example, `field(\\n    default=1)` in a class adds `default`, which ast never does.",
+    "severity": "minor",
+    "kind": "bug",
+    "evidence": "assignment = _PY_ASSIGNMENT.match(line)\n        if assignment and members is not None:",
+    "suggested_fix": "Skip lines inside an open parenthesis or bracket in the fallback scan."
+   },
+   {
+    "id": "SL-06",
+    "unit": "shared",
+    "file": "scripts/wiki_sync.py",
+    "line": "_collect_python_names / _PY_BLOCKS",
+    "finding": "`ast.Match` case bodies (valid in Python 3.10+) and 3.12 `type X = ...` aliases are not walked, while the regex fallback would find names defined there. The two paths can disagree, and valid module-level names are reported as `symbol not found`.",
+    "severity": "minor",
+    "kind": "bug",
+    "evidence": "_PY_BLOCKS = (ast.If, ast.Try, ast.With, ast.AsyncWith, ast.For, ast.AsyncFor, ast.While) + ((ast.TryStar,) ...)",
+    "suggested_fix": "Walk `match_case.body` when ast.Match exists, and decide explicitly whether TypeAlias counts."
+   },
+   {
+    "id": "SL-07",
+    "unit": "shared",
+    "file": "scripts/wiki_sync.py",
+    "line": "_CODE_CITATION",
+    "finding": "Any dotted token followed by `::` counts as a path with an extension, so spans like `System.IO::File` or `Foo.Bar::baz` become citations and produce `path not found` warnings. Under `--strict` these false positives now fail lint for existing users.",
+    "severity": "minor",
+    "kind": "regression",
+    "evidence": "(?P<path>(?:[A-Za-z]:)?[A-Za-z0-9_./\\\\-]+\\.[A-Za-z0-9]+)::  ;  help=\"Treat every soft warning, such as ... unresolved `path::Symbol` code citations, as an error\"",
+    "suggested_fix": "Require a `/` in the path or a known source extension, and add a negative test for namespace-shaped spans."
+   },
+   {
+    "id": "SL-08",
+    "unit": "shared",
+    "file": "scripts/wiki_sync.py",
+    "line": "_iter_code_citations / oaw_common._markdown_lines",
+    "finding": "Line numbers come from `str.splitlines`, which also splits on \\x0b, \\x0c, \\x1c-\\x1e, \\x85 and \\u2028/\\u2029. In notes containing those characters, reported line numbers drift from editor line numbers, and fence state can shift.",
+    "severity": "minor",
+    "kind": "bug",
+    "evidence": "for line in content.splitlines(keepends=True):  ...  for number, (_offset, line, in_code) in enumerate(markdown_lines(text), start=1):",
+    "suggested_fix": "Split on '\\n' (keeping ends) for line numbering, and add a fixture containing \\u2028."
+   },
+   {
+    "id": "SL-09",
+    "unit": "shared",
+    "file": "scripts/wiki_sync.py",
+    "line": "lint: `if page[\"build_origin\"] not in (\"wiki_sync\", \"template\")` and cites()",
+    "finding": "Compiled pages are skipped entirely, but they keep an `AI Annotations` section that does not come from raw notes. Citations written in annotations are therefore never linted, and `cites` never lists them. A manual page can also opt out by declaring `build_origin: wiki_sync`.",
+    "severity": "minor",
+    "kind": "design_mismatch",
+    "evidence": "# Compiled pages repeat their raw notes, which are checked above; templates are placeholders.\n        if page[\"build_origin\"] not in (\"wiki_sync\", \"template\"):",
+    "suggested_fix": "Check the extracted annotation block of compiled pages (extract_annotations), and test a citation placed in an annotation."
+   },
+   {
+    "id": "SL-10",
+    "unit": "shared",
+    "file": "scripts/wiki_sync.py",
+    "line": "cites()",
+    "finding": "`cites` calls `_discover_raw_sources()`, which raises ValueError on any malformed raw note (bad topic_id, non-scalar last_updated). One unrelated bad note makes the read-only lookup exit 1 with no results.",
+    "severity": "minor",
+    "kind": "bug",
+    "evidence": "notes = [(source[\"relative_path\"], source[\"content\"], source[\"topic_id\"]) for source in _discover_raw_sources()]",
+    "suggested_fix": "Document this behaviour or skip invalid notes with a warning, and add a test for it."
+   },
+   {
+    "id": "SL-11",
+    "unit": "shared",
+    "file": "scripts/wiki_sync.py",
+    "line": "_python_names",
+    "finding": "`ast.parse` on a cited file can print SyntaxWarning or DeprecationWarning (for example invalid escape sequences) to stderr during lint, which is noise unrelated to the notes. Very deep nesting on some 3.10/3.11 builds can overflow the C stack rather than raise RecursionError; this is unverified here.",
+    "severity": "minor",
+    "kind": "unclear",
+    "evidence": "_collect_python_names(ast.parse(text).body, names)\n        return names, True\n    except (SyntaxError, ValueError, RecursionError, MemoryError):",
+    "suggested_fix": "Wrap the parse in warnings.catch_warnings() with warnings suppressed, and add a deep-nesting fixture."
+   },
+   {
+    "id": "SL-12",
+    "unit": "shared",
+    "file": "scripts/oaw_common.py",
+    "line": "_npm_shim",
+    "finding": "Shim target confinement uses `normpath` and a string `startswith` check, not `realpath`. A symlink or junction inside `node_modules` can point the started `.js`/`.exe` outside the shim folder. Tests for resolve_cli (test_cli_resolve) are counted in harness_check but are not in the packet.",
+    "severity": "minor",
+    "kind": "security",
+    "evidence": "target = os.path.normpath(os.path.join(folder, relative.replace(\"\\\\\", os.sep)))\n        if (os.path.normcase(target).startswith(modules) ...",
+    "suggested_fix": "Compare `os.path.realpath(target)` against `realpath(folder/node_modules)`, and include the resolver tests in the review."
+   },
+   {
+    "id": "SL-13",
+    "unit": "shared",
+    "file": "scripts/oaw_common.py",
+    "line": "SECRET_PATTERNS / evidence_write_refusal",
+    "finding": "The credential guard is added, but the context_hub.py wiring (memory add, lesson, annotate) and the per-pattern tests that the CHANGELOG cites are not in the packet. The claimed default-behaviour change cannot be verified.",
+    "severity": "minor",
+    "kind": "unclear",
+    "evidence": "def evidence_write_refusal(text):  ... \"The one guard for the Context Hub CLI write path (memory add, lesson, annotate).\"",
+    "suggested_fix": "Include the context_hub.py call sites and test_context_hub changes in the packet."
+   },
+   {
+    "id": "SL-14",
+    "unit": "shared",
+    "file": "scripts/harness_check.py",
+    "line": "MINIMUM_TESTS / REQUIRED_TEST_MODULES",
+    "finding": "The minimum test count rises by 44 and a required module `test_cli_resolve` is added, but that module is not in the diff. The packet also documents `memory recall --index` without showing context_hub.py changes.",
+    "severity": "minor",
+    "kind": "unclear",
+    "evidence": "\"test_catalog_ui\", \"test_cli_resolve\")\nMINIMUM_TESTS = 337",
+    "suggested_fix": "Include tests/test_cli_resolve.py and the context_hub.py diff, or split them into their own review units."
+   }
+  ],
+  "coverage": {
+   "reviewed": [
+    "scripts/wiki_sync.py (code citations, cites, CLI wiring)",
+    "scripts/oaw_common.py (normalize_cited_path, exact_case_path, SECRET_PATTERNS, resolve_cli)",
+    "tests/test_wiki_sync.py (new citation and cites tests)",
+    "scripts/harness_check.py",
+    "docs/Wiki_Sync_Guide.md",
+    "docs/CLI_Reference.md",
+    "CHANGELOG.md"
+   ],
+   "not_reviewed": [
+    "memory_check implementation and its tests (not in packet)",
+    "context_hub.py (credential refusal wiring, recall --index)",
+    "tests/test_cli_resolve.py",
+    "improvement.py (OAW-03/OAW-04)",
+    "_safe_read and lint return/strict logic (not shown)"
+   ]
+  },
+  "summary": "The diff does not implement or change the stated unit (memory-check); it adds code-citation lint, a `cites` lookup, path helpers, a secret guard and a CLI resolver, so the stated design cannot be verified and its exit-code contract is untested here. In the code that is shown, the main problems are disagreements between the ast path and the regex fallback (bare annotations, multi-line signatures, match statements), namespace-shaped false positives that now fail `--strict`, and annotations in compiled pages that are never checked. Several claimed behaviours (context_hub wiring, resolver tests) are referenced but not included."
+ },
+ "raw_result_if_unparsed": null,
+ "host_version": "2.1.318 (Claude Code)",
+ "local_paths_redacted": true
+}
