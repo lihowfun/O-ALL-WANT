@@ -1,0 +1,312 @@
+{
+ "questions": [
+  {
+   "id": "q1",
+   "type": "flow",
+   "question": "On the local catalog page started by `python scripts/catalog.py ui`, the owner types a question about a food's blocker and the page POSTs it to /api/question. Trace this request in order, from the HTTP handler to the file written on disk and the response sent back. Include every check that can refuse the request and say which file is modified and how the write is made safe.",
+   "facts": [
+    {
+     "id": "q1f1",
+     "fact": "The POST handler sends /api/question (QUESTION_PATH) down its own branch, separate from /api/action/NAME. The question runs synchronously in the request thread through UiApp.ask; it is not submitted as a background Job through UiApp.submit/run_action.",
+     "where": "scripts/catalog_ui_server.py::UiHandler.do_POST",
+     "essential": true
+    },
+    {
+     "id": "q1f2",
+     "fact": "Before the body is read, the API guard runs. It returns 403 unless three things hold: the Host header is the bound 127.0.0.1/localhost:port, the X-OAW-Token header matches the session token (hmac.compare_digest), and Sec-Fetch-Site/Origin are same-origin.",
+     "where": "scripts/catalog_ui_server.py::UiHandler._guard",
+     "essential": true
+    },
+    {
+     "id": "q1f3",
+     "fact": "The body reader requires Content-Type application/json and a Content-Length. For this path the limit is MAX_QUESTION_BODY (8 KiB), and a larger body gets 413. The body must parse as a JSON object, otherwise 400.",
+     "where": "scripts/catalog_ui_server.py::UiHandler._body",
+     "essential": false
+    },
+    {
+     "id": "q1f4",
+     "fact": "UiApp.ask requires food, stage and question to be strings, with food at most 200 and stage at most 40 characters (otherwise 400). It then calls catalog.record_question(target, food, stage, text).",
+     "where": "scripts/catalog_ui_server.py::UiApp.ask",
+     "essential": false
+    },
+    {
+     "id": "q1f5",
+     "fact": "record_question rejects text over QUESTION_CHARS (500) and cleans it with catalog_core.sanitize_text, refusing an empty result. The stage must be in catalog_core.PIPELINE_ORDER, and the food must be an id in .oaw/catalog/registry.json (load_registry). It then builds a record with a secrets.token_hex(4) id, a time and status 'open'.",
+     "where": "scripts/catalog.py::record_question",
+     "essential": true
+    },
+    {
+     "id": "q1f6",
+     "fact": "The side effect is a locked read-modify-write of .oaw/catalog/questions.jsonl. The path is built by catalog_path, which calls oaw_common.confined_path, and ensure_gitignore first creates .oaw/catalog/.gitignore if it is missing. The write goes through oaw_common.locked_update. The append step keeps at most QUESTIONS_KEEP (200) records by dropping the oldest answered one, and raises 'Too many open questions' if every kept record is still open.",
+     "where": "scripts/catalog.py::record_question",
+     "essential": true
+    },
+    {
+     "id": "q1f7",
+     "fact": "locked_update takes an exclusive lock on a sidecar file (.questions.jsonl.oaw.lock) through _exclusive_lock, using fcntl or msvcrt. It reads the current text and applies the change. _replace then writes a temp file, fsyncs it, re-checks confinement and commits it with os.replace (_commit).",
+     "where": "scripts/oaw_common.py::locked_update",
+     "essential": false
+    },
+    {
+     "id": "q1f8",
+     "fact": "After the write, ask loads view.json with oaw_status.load_view to find the food's card. catalog_core.question_brief builds a paste-ready brief. The response is 200 with the record, the brief and the path .oaw/catalog/questions.jsonl. Engine errors return 400 with a catalog_core.zh_error translation.",
+     "where": "scripts/catalog_ui_server.py::UiApp.ask",
+     "essential": false
+    }
+   ]
+  },
+  {
+   "id": "q2",
+   "type": "flow",
+   "question": "In an installed project, trace `python scripts/catalog.py remove oaw-wiki --reason \"not needed\" --apply` (removing a bundled skill) from the CLI to its side effects, in order. Cover what is checked first, what is snapshotted and where, which component deletes the skill's files and what it writes while doing so, and what is recorded afterwards.",
+   "facts": [
+    {
+     "id": "q2f1",
+     "fact": "catalog.main calls dispatch. dispatch first resolves the target through project_target, which calls oaw.target_path, then calls cmd_remove(food=False). With --apply, cmd_remove requires a non-empty reason, and it reads the install through install_manifest, which calls oaw.read_manifest. A project with no install gets a CatalogError.",
+     "where": "scripts/catalog.py::cmd_remove",
+     "essential": true
+    },
+    {
+     "id": "q2f2",
+     "fact": "Because the name is egm or in oaw.BUNDLED_SKILLS, bundled_change builds the new recipe: the manifest's skills (or oaw.default_skills) minus the removed names. It previews oaw.plan_install(..., migrate=True, hosts=manifest hosts, skills=selection) and refuses if that plan contains any 'add' action ('A removal never adds').",
+     "where": "scripts/catalog.py::bundled_change",
+     "essential": true
+    },
+    {
+     "id": "q2f3",
+     "fact": "cmd_remove refuses if the skill is not in the installed recipe. With --apply it also refuses when the plan has conflict or retire-conflict actions, meaning edited files: 'Edited files block this removal'.",
+     "where": "scripts/catalog.py::cmd_remove",
+     "essential": false
+    },
+    {
+     "id": "q2f4",
+     "fact": "Before anything changes, a restore point is taken. lab_home must lie outside both the project and the framework. layer_files collects the layer, and record_build saves it with kind 'baseline' on the first catalog change, otherwise 'restore-point'. It writes a read-only tar to LAB_HOME builds/<project_key>/<sha16>.tar plus index.json, then records the build in .oaw/catalog/builds.json through the locked update_json.",
+     "where": "scripts/catalog.py::record_build",
+     "essential": true
+    },
+    {
+     "id": "q2f5",
+     "fact": "The deletion is done by oaw.apply_plan(plan(), migrate=True) on a freshly recomputed plan. Holding the .oaw/install.lock O_EXCL lock, it checks each file's hash against the preview, backs up retired files and the old install.json under .oaw/backups/<operation_id>/, and unlinks the retired files. It then writes migration.json and the new .oaw/install.json.",
+     "where": "scripts/oaw.py::apply_plan",
+     "essential": true
+    },
+    {
+     "id": "q2f6",
+     "fact": "plan_install marks owned, unedited files of the deselected skill's .agents/.claude skill packages as 'retire' (and the native EGM agents too, when no EGM skill remains). Edited files become preserve-retired-edit and custom, and an edited SKILL.md becomes retire-conflict.",
+     "where": "scripts/oaw.py::plan_install",
+     "essential": false
+    },
+    {
+     "id": "q2f7",
+     "fact": "After the change, cmd_remove runs doctor_summary (oaw.doctor) and safe_effect. safe_effect runs compute_effect, which installs the default recipe into a LAB_HOME scratch dir via oaw.plan_install/apply_plan, compares with catalog_core.effect_vs_default and saves effect.json. Then layer_files runs again and record_build(kind='remove') stores the doctor status and effect.",
+     "where": "scripts/catalog.py::cmd_remove",
+     "essential": true
+    },
+    {
+     "id": "q2f8",
+     "fact": "Finally, record_decision appends a 'remove' decision to .oaw/catalog/decisions.jsonl (append_jsonl, which calls oaw_common.locked_update), and update_view rewrites view.json. The result lines report the new build, the restore point, the doctor status and the backup path.",
+     "where": "scripts/catalog.py::record_decision",
+     "essential": false
+    }
+   ]
+  },
+  {
+   "id": "q3",
+   "type": "impact",
+   "question": "Suppose `lint_skill_file` in scripts/validate_skills.py is changed so that it also returns an issue whenever a SKILL.md body is longer than 4,000 characters. Outside validate_skills.py, which commands and callers start reporting or acting on the new issue, through which call paths, and with what effect? Which code that imports validate_skills would not see the new check, and why?",
+   "facts": [
+    {
+     "id": "q3f1",
+     "fact": "oaw.skill_issues loads the framework checkout's scripts/validate_skills.py by file path with importlib.util.spec_from_file_location and returns module.lint_skill_file(path). It uses its own inline name/description check only when that file is missing.",
+     "where": "scripts/oaw.py::skill_issues",
+     "essential": true
+    },
+    {
+     "id": "q3f2",
+     "fact": "oaw.doctor calls skill_issues for every .agents|.claude/skills/*/SKILL.md among the managed, custom and required paths, and each issue becomes a FAIL check. The status becomes 'unhealthy', so `oaw.py doctor` exits 1.",
+     "where": "scripts/oaw.py::doctor",
+     "essential": true
+    },
+    {
+     "id": "q3f3",
+     "fact": "catalog.stage_lint writes the candidate skill into a LAB_HOME scratch dir and calls oaw.skill_issues on it. cmd_absorb raises 'fails OAW's portable skill lint' before its preview return, so `catalog.py absorb` (both preview and --apply, and the UI absorb action) refuses such a food skill and installs nothing.",
+     "where": "scripts/catalog.py::stage_lint",
+     "essential": true
+    },
+    {
+     "id": "q3f4",
+     "fact": "catalog.doctor_summary wraps oaw.doctor. After absorb, remove, readd and restore, the doctor status and FAIL lines would therefore show 'unhealthy' and be recorded in the new build, but the change is not rolled back.",
+     "where": "scripts/catalog.py::doctor_summary",
+     "essential": false
+    },
+    {
+     "id": "q3f5",
+     "fact": "wiki_sync.lint gets its SKILL.md paths from _discover_skill_files, which calls validate_skills.find_skill_files(BASE_DIR, managed_only=True). For each path, _lint_skill_file calls validate_skills.lint_skill_file(confined_path(...)). The new issues count as hard issues, so `wiki_sync.py lint` exits 1.",
+     "where": "scripts/wiki_sync.py::lint",
+     "essential": true
+    },
+    {
+     "id": "q3f6",
+     "fact": "wiki_sync imports validate_skills from its own scripts/ directory, which in an installed project is the project's copy. doctor and stage_lint load the framework's copy instead. So in an installed project, wiki_sync lint sees the change only after init/migrate updates the project's scripts/validate_skills.py.",
+     "where": "scripts/wiki_sync.py::_lint_skill_file",
+     "essential": false
+    },
+    {
+     "id": "q3f7",
+     "fact": "The validate_skills CLI (main) is run by harness_check's native-skills gate over templates/.agents/skills, and the repo-wiki and installed-lifecycle gates run wiki_sync lint and doctor. All of these pick up the check, so any bundled template with a long body would fail the gate.",
+     "where": "scripts/harness_check.py::main",
+     "essential": false
+    },
+    {
+     "id": "q3f8",
+     "fact": "Not affected: catalog_core.portable_issues (used by _skill_facts in the taste's static_scan and by propose_component) and sync_egm.bridges (used by --repo builds and --check-bundled). Both call validate_skills._frontmatter directly, not lint_skill_file, so the body-length check never reaches them.",
+     "where": "scripts/catalog_core.py::portable_issues",
+     "essential": true
+    }
+   ]
+  },
+  {
+   "id": "q4",
+   "type": "impact",
+   "question": "Suppose `source_files` in scripts/oaw.py is changed so that every install also ships `scripts/oaw_status.py`, as one more entry in the base mapping that already holds scripts/context_hub.py and scripts/oaw_common.py. Which commands and callers across scripts/ are affected, and how does the change reach each one?",
+   "facts": [
+    {
+     "id": "q4f1",
+     "fact": "oaw.plan_install uses source_files as its package, so `oaw.py init` and `migrate` gain an action for scripts/oaw_status.py. On a project without the file the action is 'add', its hash is recorded in managed_files, and apply_plan writes it. If a different file already exists, the action is 'conflict'.",
+     "where": "scripts/oaw.py::plan_install",
+     "essential": true
+    },
+    {
+     "id": "q4f2",
+     "fact": "oaw.doctor builds its 'required' list from hard-coded paths, not from source_files, so it never requires the new file. It is only hash-checked once it appears in managed_files: FAIL if missing, WARN if edited.",
+     "where": "scripts/oaw.py::doctor",
+     "essential": false
+    },
+    {
+     "id": "q4f3",
+     "fact": "sync_examples.expected_files calls oaw.source_files for both examples. In check mode, `sync_examples.py` reports the new file and the changed example install.json managed_files as differing from the installer payload until `--write` is run, so harness_check's example-content gate fails until then.",
+     "where": "scripts/sync_examples.py::expected_files",
+     "essential": true
+    },
+    {
+     "id": "q4f4",
+     "fact": "catalog.producible_paths calls oaw.source_files('knowledge', True, all HOSTS, all BUNDLED_SKILLS) and caches the non-docs paths. layer_path_allowed uses that set, so the new managed file joins the OAW-managed layer: it is included by layer_files, changes layer_hash and build names, and can be written or deleted by restore.",
+     "where": "scripts/catalog.py::producible_paths",
+     "essential": true
+    },
+    {
+     "id": "q4f5",
+     "fact": "catalog.compute_effect installs the default recipe in a LAB_HOME scratch dir through oaw.plan_install/apply_plan. Both the default and current inventories passed to catalog_core.effect_vs_default therefore change, affecting `catalog.py effect` and the effect recorded after absorb, remove, readd and restore.",
+     "where": "scripts/catalog.py::compute_effect",
+     "essential": false
+    },
+    {
+     "id": "q4f6",
+     "fact": "catalog.bundled_change previews oaw.plan_install(migrate=True). For an existing install that lacks the file, that plan contains an 'add' action, so `catalog.py remove <bundled skill|egm>` refuses with 'A removal never adds' until the project is migrated. `catalog.py readd` (adding=True) would install the file along with the skill.",
+     "where": "scripts/catalog.py::bundled_change",
+     "essential": false
+    }
+   ]
+  },
+  {
+   "id": "q5",
+   "type": "mechanism",
+   "question": "When the skill catalog (scripts/catalog.py) snapshots a project's 'OAW-managed layer' into a build or restore point, or restores one, how does it decide whether a given project path belongs to that layer? Describe the decision rules in order and say where each set of allowed paths comes from.",
+   "facts": [
+    {
+     "id": "q5f1",
+     "fact": "layer_files reads the manifest through install_manifest, which calls oaw.read_manifest. It always includes .oaw/install.json. It then considers every path in managed_files plus every file under .oaw/integrations/ and .oaw/catalog/absorbed/ (LAYER_PREFIXES), keeping only the paths the layer check allows.",
+     "where": "scripts/catalog.py::layer_files",
+     "essential": true
+    },
+    {
+     "id": "q5f2",
+     "fact": "The check first requires oaw.relative_path to accept the path: no backslash, colon, absolute path or ''/'.'/'..' segment. It then denies the .git/, .codex/, .vscode/, .idea/, .github/, .oaw/backups/ and .oaw/proposals/ prefixes, the files .mcp.json, .claude.json, .gitmodules and .gitattributes, any nested /.git/ and .claude/settings*.json.",
+     "where": "scripts/catalog.py::layer_path_allowed",
+     "essential": true
+    },
+    {
+     "id": "q5f3",
+     "fact": "oaw.MANIFEST_PATH (.oaw/install.json) and anything under oaw.EGM_RUNTIME (.oaw/integrations/egm/) are always in. Under .oaw/catalog/absorbed/, only <slug>.json receipt files are in.",
+     "where": "scripts/catalog.py::layer_path_allowed",
+     "essential": true
+    },
+    {
+     "id": "q5f4",
+     "fact": "These are always excluded: any other .oaw/ or docs/ path, oaw.ALWAYS_PRESERVE (AI_CONTEXT.md, VERSION.json, ROADMAP.md, .agents/memory.md), and any path not in the manifest's managed_files, which means declared custom_files are excluded.",
+     "where": "scripts/catalog.py::layer_path_allowed",
+     "essential": true
+    },
+    {
+     "id": "q5f5",
+     "fact": "A remaining managed path is in only if it is in producible_paths() or absorbed_skill_path() accepts it. producible_paths() is the cached set of non-docs paths from oaw.source_files('knowledge', True, all HOSTS, all BUNDLED_SKILLS).",
+     "where": "scripts/catalog.py::producible_paths",
+     "essential": true
+    },
+    {
+     "id": "q5f6",
+     "fact": "absorbed_skill_path accepts .agents|.claude/skills/<name>/<file> only when all of these hold: the name is not in oaw.BUNDLED_SKILLS; no .claude, .codex, .agents, .git or hooks directory lies inside; the file name is not in catalog_core.ROUTER_NAMES; and the file is .md/.txt (catalog_core.INSTALL_ALLOWED_SUFFIXES), agents/openai.yaml, or a license/licence/notice/copying file.",
+     "where": "scripts/catalog.py::absorbed_skill_path",
+     "essential": false
+    },
+    {
+     "id": "q5f7",
+     "fact": "The same check guards restores: load_restore_point refuses a snapshot whose files or manifest managed_files include a disallowed path, and cmd_restore only deletes allowed paths. layer_hash hashes the layer without install.json through catalog_core.build_hash.",
+     "where": "scripts/catalog.py::load_restore_point",
+     "essential": false
+    }
+   ]
+  },
+  {
+   "id": "q6",
+   "type": "mechanism",
+   "question": "The local catalog page started by `catalog.py ui` is told whether `.oaw/catalog/view.json` may be out of date. How is that staleness decided, what writes view.json, which file changes do and do not make it stale, and how does the terminal menu (`catalog.py menu`) handle the same condition differently?",
+   "facts": [
+    {
+     "id": "q6f1",
+     "fact": "The page polls GET /api/view, which passes the token guard and reaches UiApp.view_payload. view_payload loads view.json with oaw_status.load_view and computes 'stale' with oaw_status.view_stale only when a valid view was loaded; otherwise stale is False.",
+     "where": "scripts/catalog_ui_server.py::UiApp.view_payload",
+     "essential": true
+    },
+    {
+     "id": "q6f2",
+     "fact": "load_view accepts view.json only if it is a JSON object whose schema is 'oaw-catalog-view/2' and whose foods is a list. That schema is the VIEW_SCHEMA that catalog_core.build_view writes. Otherwise the view is None with the note 'missing' or 'invalid'.",
+     "where": "scripts/oaw_status.py::load_view",
+     "essential": false
+    },
+    {
+     "id": "q6f3",
+     "fact": "Staleness is a pure mtime comparison. The view is stale if any of these is newer than view.json: .oaw/catalog/registry.json, decisions.jsonl, builds.json, policy.json, scout.json, effect.json (VIEW_SOURCES), .oaw/install.json, evidence/*/*.json or absorbed/*.json. If view.json cannot be stat'ed, the result is False.",
+     "where": "scripts/oaw_status.py::view_stale",
+     "essential": true
+    },
+    {
+     "id": "q6f4",
+     "fact": "questions.jsonl and status.json are not view sources, so recording a page question or a taste's progress updates never marks the view stale.",
+     "where": "scripts/oaw_status.py::view_stale",
+     "essential": true
+    },
+    {
+     "id": "q6f5",
+     "fact": "view.json is written by catalog.refresh_view. view_state gathers the registry, evidence, decisions, policy, plans, builds, effect, scout and receipts; catalog_core.build_view builds the model; generated_at is added. save_json then writes the file through oaw_common.atomic_write (locked_update and os.replace).",
+     "where": "scripts/catalog.py::refresh_view",
+     "essential": true
+    },
+    {
+     "id": "q6f6",
+     "fact": "Engine commands call update_view after changing a source. A refresh failure only prints a warning, which leaves the view stale. start_server refreshes once at UI startup. Staleness therefore signals a change made outside the catalog engine, such as oaw.py migrate rewriting install.json, or a failed refresh.",
+     "where": "scripts/catalog.py::update_view",
+     "essential": false
+    },
+    {
+     "id": "q6f7",
+     "fact": "The web payload only reports the flag and never refreshes. The terminal Menu.view refreshes view.json itself, through catalog.refresh_view, when the view is missing or view_stale is true. The oaw_status.py CLI shows the same check as '視圖可能過期'.",
+     "where": "scripts/catalog_ui_server.py::Menu.view",
+     "essential": true
+    }
+   ]
+  }
+ ],
+ "schema": "oaw-taste-questions/1",
+ "designed_by": "fresh claude -p session (claude-opus-5-5, read-only tools) in a native copy of 51b00db, 2026-11-04"
+}

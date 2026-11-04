@@ -1,0 +1,7 @@
+{
+  "N": {"dir": "~/taste/N", "tools": "Read,Grep,Glob", "allowed": "Read Grep Glob", "path_prepend": []},
+  "G": {"dir": "~/taste/G", "tools": "Read,Grep,Glob,Bash", "allowed": "Read Grep Glob Bash(graphify:*)",
+        "path_prepend": ["~/oaw-graphify-run/env/bin"]},
+  "S": {"dir": "~/taste/S", "tools": "Read,Grep,Glob,Bash", "allowed": "Read Grep Glob Bash(python3 scripts/code_index.py:*)",
+        "path_prepend": []}
+}
