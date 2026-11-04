@@ -161,6 +161,17 @@ def exact_case_path(root, relative):
     return resolved
 
 
+# The one hash basis for new evidence hashes, recorded as hash_basis beside each digest.
+# It is the basis of evals/egm-pilot/pilot_common.py file_digest; improvement.py keeps raw-byte digests.
+HASH_BASIS = "sha256, CRLF folded to LF"
+
+
+def lf_sha256(data):
+    """SHA-256 hex of text (UTF-8) or bytes with CRLF folded to LF, so autocrlf checkouts hash alike."""
+    data = data.encode("utf-8") if isinstance(data, str) else data
+    return hashlib.sha256(data.replace(b"\r\n", b"\n")).hexdigest()
+
+
 def _checked(path, root):
     return confined_path(root, path) if root is not None else str(Path(path).resolve())
 
@@ -396,6 +407,10 @@ def _npm_shim(path, directories):
     folder = os.path.dirname(path)
     if len(data) <= _SHIM_LIMIT and len(targets) == 1 and programs <= {"%dp0%\\node.exe", "node"}:
         (node, relative), = targets
+        # Lexical on purpose: it confines the shim's text ('..', absolute or drive targets), not the disk.
+        # A link inside node_modules (npm link, a junction) is trusted like the package code it holds:
+        # whoever can write there can already rewrite the shim or the script. A realpath check would
+        # refuse every `npm link` package, whose real files live in the developer's checkout.
         modules = os.path.normcase(os.path.join(folder, "node_modules")) + os.sep
         target = os.path.normpath(os.path.join(folder, relative.replace("\\", os.sep)))
         if (os.path.normcase(target).startswith(modules) and os.path.isfile(target)
@@ -416,7 +431,9 @@ def resolve_cli(name_or_path, *, platform=os.name, search_path=None):
     Only absolute PATH entries are searched, never the current directory. On Windows an npm
     .cmd/.ps1 shim is read and its node script or native .exe is started instead, so cmd.exe
     never parses the arguments again; any other script is refused. Elsewhere the result is
-    the plain absolute path.
+    the plain absolute path. platform selects the Windows PATHEXT and shim policy (tests set
+    it); paths always use the host's os.path and os.pathsep, because the files are read on
+    this host. Drive-letter PATH parsing is covered by the windows-latest CI job.
     """
     if not isinstance(name_or_path, str) or not name_or_path.strip():
         raise ValueError("A CLI name or path is required")
@@ -442,7 +459,11 @@ def resolve_cli(name_or_path, *, platform=os.name, search_path=None):
 
 
 def resolver_sha256():
-    """SHA-256 of the CLI resolver block above (LF line endings); record it beside cli_argv."""
-    lines = Path(__file__).read_text(encoding="utf-8").splitlines()
+    """lf_sha256 of the CLI resolver block above; record it beside cli_argv with hash_basis HASH_BASIS.
+
+    Only the marked block is hashed. Imports, PATHEXT and the Python runtime are
+    not, so a manifest also records the Python version.
+    """
+    lines = Path(__file__).read_bytes().decode("utf-8").replace("\r\n", "\n").split("\n")
     start, end = lines.index("# >>> cli resolver"), lines.index("# <<< cli resolver")
-    return hashlib.sha256("\n".join(lines[start:end + 1]).encode("utf-8")).hexdigest()
+    return lf_sha256("\n".join(lines[start:end + 1]))

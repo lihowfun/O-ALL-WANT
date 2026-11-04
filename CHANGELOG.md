@@ -39,8 +39,11 @@ All notable changes to this project will be documented in this file.
   merge-derived from the graphify integration checks): cited paths are made project-relative
   POSIX paths (backslashes folded, drives, absolute paths and `..` rejected on every OS) and
   resolved segment by segment against directory listings, so a citation whose case differs
-  from the file is unresolved on Windows and macOS as on Linux. The hash-basis and byte-count
-  parts of OAW-02 are not built.
+  from the file is unresolved on Windows and macOS as on Linux. `oaw_common.lf_sha256` with
+  `HASH_BASIS` (CRLF folded to LF, the `evals/egm-pilot` file-digest basis) is the one hash
+  for new evidence; `resolver_sha256` uses it. Not built: the LF byte count, and making an
+  absolute path under the workspace root relative, so such a citation is reported as outside
+  the project (goldfish CT-09).
 - `wiki_sync.py lint` checks backticked `path::Symbol` code citations (OAW-21; food:
   graphify@8e6a6d2, method re-implemented with the standard library, no code copied). Only
   whole single-backtick spans with a project-root-relative path and a file extension count,
@@ -67,8 +70,14 @@ All notable changes to this project will be documented in this file.
   current directory. On Windows it reads an npm `.cmd`/`.ps1` shim (at most 8 KB) and starts its
   `node.exe` + script or native `.exe` inside the shim's `node_modules`, and refuses any other
   batch file, so cmd.exe never parses the arguments again. `resolver_sha256()` hashes the
-  resolver source for run manifests. No runner uses it yet; frozen eval contracts are unchanged.
-  Evidence: static fixtures only.
+  resolver block (`lf_sha256`; record `hash_basis` and the Python version beside it, since
+  imports and the runtime are not hashed). Confinement to `node_modules` is lexical: it checks
+  the shim's text, and a link inside `node_modules` (`npm link`, a junction) is trusted like the
+  package code it holds, since a realpath check would refuse every linked package. No runner
+  uses it yet; frozen eval contracts are unchanged. Wiring it into the new registrations of
+  `evals/three-way/bench.py`, `evals/skill-value/experiment.py` and the next egm-pilot contract,
+  with `cli_argv`, `resolver_sha256` and `hash_basis` in their manifests, is deferred to those
+  registrations. Evidence: static fixtures only.
 - OAW-03 (from thedotmack/claude-mem, Apache-2.0): an evaluation spec may declare an optional
   `trigger` block (`cases`, `minimum_rate`, default 2/3) outside `assertions`. Candidate case
   records then carry a boolean `triggered`; if the rate falls short on any designated case, a
