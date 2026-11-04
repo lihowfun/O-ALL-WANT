@@ -356,17 +356,20 @@ def compare(base, args, *, persist=True, proposal=None):
     max_regression = limits.get("maximum_resource_regression", 0.10)
     deltas = {}
     efficiency_gain = False
-    resource_regressions = []
-    # An efficiency claim needs complete usage in both arms. Resource regressions still use the
-    # observed totals: with incomplete coverage they are lower bounds, so an excess is certain.
+    resource_regressions, uncertain_regressions = [], []
+    # An efficiency claim needs complete usage in both arms; incomplete usage may hide work whose
+    # tokens, cost and time are all missing, so the block covers every metric. Observed totals are
+    # lower bounds: an excess over a complete baseline is certain even when the candidate is
+    # incomplete, but over an incomplete baseline (an undercount) it is not, so it is inconclusive.
     covered = "usage_coverage" not in limits or before["usage"]["coverage"] == after["usage"]["coverage"] == "complete"
+    baseline_complete = "usage_coverage" not in limits or before["usage"]["coverage"] == "complete"
     for name in METRICS:
         old, new = before["metrics"][name], after["metrics"][name]
         relative = (new - old) / old if old else (0 if new == 0 else None)
         deltas[name] = {"baseline": old, "candidate": new, "relative_change": relative}
         efficiency_gain |= covered and old > 0 and new < old and (old - new) / old >= improvement
         if (old == 0 and new > 0) or (relative is not None and relative > max_regression):
-            resource_regressions.append(name)
+            (resource_regressions if baseline_complete else uncertain_regressions).append(name)
     trigger, vacuous = limits.get("trigger"), {}
     if trigger:
         # Per designated case, so control cases cannot dilute or mask a dormant mechanism.
@@ -375,7 +378,7 @@ def compare(base, args, *, persist=True, proposal=None):
         vacuous = {name: rate for name, rate in rates.items() if rate < minimum}
     if regressions or failed_checks or resource_regressions:
         verdict = "rejected"
-    elif vacuous:
+    elif vacuous or uncertain_regressions:
         verdict = "inconclusive"
     elif after["passed"] > before["passed"] or efficiency_gain:
         verdict = "eligible"
@@ -403,6 +406,8 @@ def compare(base, args, *, persist=True, proposal=None):
                                "baseline": before["usage"], "candidate": after["usage"]}
         if not covered:
             comparison["efficiency_blocked"] = "usage coverage incomplete"
+        if uncertain_regressions:
+            comparison["uncertain_resource_regressions"] = uncertain_regressions
 
     def save(current):
         if current["status"] in ("accepted", "rejected"):

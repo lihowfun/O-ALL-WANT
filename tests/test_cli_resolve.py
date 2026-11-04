@@ -1,5 +1,6 @@
 """Fixture shims exercise CLI resolution; no real host CLI or cmd.exe is started."""
 
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -123,6 +124,42 @@ class ResolveCliTests(unittest.TestCase):
             copy.write_bytes(text.encode("utf-8"))
             with self.subTest(same=same), patch.object(oaw_common, "__file__", str(copy)):
                 self.assertEqual(resolver_sha256() == digest, same)
+
+    def test_lf_sha256_is_the_shared_evidence_hash_basis(self):
+        # One basis for new evidence hashes (OAW-02): the pilot's CRLF-folded file digest.
+        spec = importlib.util.spec_from_file_location(
+            "oaw_pilot_common_probe", Path(__file__).resolve().parents[1] / "evals" / "egm-pilot" / "pilot_common.py")
+        pilot = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(pilot)
+        sample = Path(self.root) / "sample.txt"
+        for data in (b"a\r\nb\r\n", b"a\nb\n", "é\r\n\r\n".encode("utf-8"), b"lone\rcarriage"):
+            sample.write_bytes(data)
+            with self.subTest(data=data):
+                self.assertEqual(oaw_common.lf_sha256(data), pilot.file_digest(sample))
+        self.assertEqual(oaw_common.lf_sha256("a\r\nb"), oaw_common.lf_sha256(b"a\nb"))
+        self.assertNotEqual(oaw_common.lf_sha256(b"a\rb"), oaw_common.lf_sha256(b"a\nb"))  # a lone CR is content
+        self.assertEqual(oaw_common.HASH_BASIS, "sha256, CRLF folded to LF")
+        source = Path(oaw_common.__file__).read_bytes().decode("utf-8").replace("\r\n", "\n")
+        block = source[source.index("# >>> cli resolver"):source.index("# <<< cli resolver") + len("# <<< cli resolver")]
+        self.assertEqual(resolver_sha256(), oaw_common.lf_sha256(block))
+
+    def test_link_inside_node_modules_is_trusted(self):
+        # Confinement is lexical: the shim's text may not leave node_modules, but a link there
+        # (npm link, a junction) is trusted like the package code it holds (goldfish MS-07).
+        checkout = self.write("checkout", "cli.js", text="// linked package\n")
+        os.makedirs(os.path.join(self.npm, "node_modules"))
+        link = os.path.join(self.npm, "node_modules", "fake-cli")
+        try:
+            os.symlink(os.path.dirname(checkout), link, target_is_directory=True)
+        except (OSError, NotImplementedError) as exc:
+            self.skipTest(f"Symlink creation unavailable: {exc}")
+        self.write("npm", "claude.cmd", text=NODE_CMD)
+        node = self.write("npm", "node.exe")
+        self.assertEqual(resolve_cli("claude", platform="nt", search_path=self.npm),
+                         [node, os.path.join(link, "cli.js")])
+        escape = self.write("npm", "escape.cmd", text=NODE_CMD.replace("node_modules\\fake-cli", "..\\checkout"))
+        with self.assertRaisesRegex(ValueError, "refusing non-npm"):
+            resolve_cli(escape, platform="nt")
 
     if os.name == "nt":
         # A junction needs no privilege; it lets a real interpreter stand in for the shim's .exe.

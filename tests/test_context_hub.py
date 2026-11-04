@@ -212,24 +212,34 @@ class ContextHubTests(unittest.TestCase):
         """
         hexa, word = "0123456789abcdef" * 4, "Ab3" * 30
         return {
+            # Only a password that is wholly a placeholder is exempt; user:pass is refused by design.
             "url_credentials": (["clone https://deploy:" + "Hunter2x" + "@git.example.com/repo.git",
-                                 "redis://:" + "pw9" + "@cache:6379/0"],
+                                 "redis://:" + "pw9" + "@cache:6379/0", "postgres://app:$" + "ecretPw1@db/prod",
+                                 "mysql://root:{abc}" + "def@db", "see https://user:" + "pass@host"],
                                 ["postgres://app:${DB_PASS}@db/prod", "https://user:<PASSWORD>@host",
-                                 "https://user@host", "https://host:8080/a@b", "git@github.com:org/repo"]),
-            "aws_access_key": (["key AKIA" + "ABCDEFGHIJKLMNOP"], ["the AKIA prefix and AKIA1234 in prose"]),
+                                 "https://user@host", "https://host:8080/a@b", "git@github.com:org/repo",
+                                 "POSTGRES://app:$DB_PASS@db", "mysql://root:{db_password}@localhost",
+                                 "mysql://root:{{db_password}}@localhost", "postgres://u:%s@db",
+                                 "postgres://u:%(password)s@db", "postgres://u:****@db"]),
+            "aws_access_key": (["key AKIA" + "ABCDEFGHIJKLMNOP", "AWS_ACCESS_KEY_ID=AS" + "IAABCDEFGHIJKLMNOP done"],
+                               ["the AKIA prefix and AKIA1234 in prose", "blob x9AKIA" + "ABCDEFGHIJKLMNOP" + "q7/+==",
+                                "AKIA" + "ABCDEFGHIJKLMNOPQ is 17 long"]),
             "aws_secret_key": (["aws_secret_access_key = " + word[:40], '"SecretAccessKey": "' + "A/b+" * 10 + '"'],
                                ["AWS_SECRET_ACCESS_KEY=" + word[:39], "AWS_SECRET_ACCESS_KEY=<AWS_SECRET>"]),
             "aws_session_token": (["AWS_SESSION_TOKEN=" + word * 2], ["aws_session_token = " + word[:40]]),
             "github_pat": (["token gh" + "p_" + "A" * 36, "權杖gh" + "o_" + "A" * 36, "github" + "_pat_" + "B" * 82],
                            ["gh" + "p_" + "A" * 10]),
-            "openai_key": (["sk" + "-proj-" + word[:30]], ["use sk-learn or sk-123 here"]),
+            "openai_key": (["sk" + "-proj-" + word[:30], "sk" + "-svcacct-" + word[:30], "key sk" + "-" + word[:48]],
+                           ["use sk-learn or sk-123 here", "the sk-learn-compatible-estimator-api wrapper",
+                            "read sk-internationalization-guide and sk-internationalization"]),
             "anthropic_key": (["sk" + "-ant-api03-" + word[:30]], ["the sk-ant- prefix alone"]),
             "slack_token": (["xo" + "xb-" + "1234567890-abcdef"], ["xoxb-123"]),
             "slack_webhook": (["https://hooks.slack.com/services/T0000/B0000/" + word[:24]],
                               ["https://example.com/hooks.slack.com/services/T0000/B0000/" + word[:24]]),
             "discord_webhook": (["https://discord.com/api/webhooks/" + "1" * 18 + "/" + word[:68]],
                                 ["https://discord.com/api/webhooks/" + "1" * 18 + "/short"]),
-            "jwt": (["ey" + "JhbGciOiJIUzI1NiJ9.ey" + "JzdWIiOiIxIn0.sig_value"], ["eyJhbGciOi has one part"]),
+            "jwt": (["ey" + "JhbGciOiJIUzI1NiJ9.ey" + "JzdWIiOiIxIn0.sig_value"],
+                    ["eyJhbGciOi has one part", "blob-ey" + "JhbGciOiJIUzI1NiJ9.ey" + "JzdWIiOiIxIn0.sig inside a run"]),
             "private_key_pem": (["-----BEGIN " + "OPENSSH PRIVATE" + " KEY-----"], ["-----BEGIN " + "PUBLIC" + " KEY-----"]),
             "stripe_key": (["sk" + "_live_" + word[:24], "wh" + "sec_" + word[:32]], ["sk_live_short"]),
             "google_api_key": (["AI" + "za" + "S" * 35], ["AIza" + "S" * 10]),
@@ -264,9 +274,24 @@ class ContextHubTests(unittest.TestCase):
             for text in negatives:
                 with self.subTest(name=name, case="negative"):
                     self.assertNotIn(name, common.find_secret_names(text))
+                    # The whole guard accepts it too, so no other pattern refuses a negative.
+                    self.assertIsNone(common.evidence_write_refusal("note " + text), text)
         for text in ("postgres://app:${DB_PASS}@db", "https://user@host", "https://host:8080/a@b",
-                     "git@github.com:org/repo", "set password=hunter2 and API_TOKEN=abcdef123456 in prose"):
+                     "git@github.com:org/repo", "set password=hunter2 and API_TOKEN=abcdef123456 in prose",
+                     "pip install scikit-learn; sk-learn-compatible-estimator-api docs"):
             self.assertIsNone(common.evidence_write_refusal(text), text)
+
+    def test_secret_scan_is_linear_on_long_notes(self):
+        # A note is bounded only by the argv limit. These shapes made url_credentials and jwt
+        # scan quadratically (minutes at this length); bounded starts finish in well under a second.
+        length = 120_000
+        shapes = ("a." * (length // 2), "eyJ-" * (length // 4), "sk-" * (length // 3),
+                  "a://u:" + "x:" * (length // 2), "a://" + "b" * length, "xoxb-" + "a" * length + "_")
+        started = time.perf_counter()
+        for text in shapes:
+            self.assertIsNone(common.evidence_write_refusal(text))
+        self.assertLess(time.perf_counter() - started, 5.0)
+        self.assertIsNotNone(common.evidence_write_refusal("a." * (length // 2) + " https://u:" + "pw9@h"))
 
     def test_secret_refusal_leaves_file_unchanged_and_never_prints_value(self):
         token = "gh" + "p_" + "Z" * 36
@@ -346,6 +371,9 @@ class ContextHubTests(unittest.TestCase):
     def test_recall_default_output_is_byte_identical(self):
         # Byte-golden of the default mode, recorded before --index existed. A deliberate
         # change to default recall output must update these strings on purpose.
+        # Provenance: this test passes unchanged against scripts/context_hub.py and
+        # scripts/oaw_common.py from 790177e (the parent of OAW-15); to re-check, copy
+        # those two files into a scratch scripts/ beside this test file and run this test.
         self.memory.parent.mkdir()
         self.memory.write_text("# Memory\n---\n\n## [2026-10-28] [DECISION] Keep recall bounded\nContext line one.\n"
                                "The needle sits on the third line of this entry.\n\n"
@@ -471,6 +499,22 @@ class ContextHubTests(unittest.TestCase):
         self.memory.write_text("# Memory\n---\n## [2026-10-28] [NOTE] longest\n" + "z" * 480 + "\n", encoding="utf-8")
         with self.assertRaisesRegex(ValueError, "too small"):
             self.quiet(hub.memory_recall, "z" * 480, max_chars=512, index=True)
+
+    def test_recall_index_rejects_multiline_query_and_caps_header_fields(self):
+        self.memory.parent.mkdir()
+        self.memory.write_text("# Memory\n---\n## [" + "d" * 3000 + "] [" + "T" * 3000 + "] " + "t" * 3000
+                               + "\nfirst needle line\nsecond line\n", encoding="utf-8")
+        for query in ("needle line\nsecond", "needle\r"):
+            with self.subTest(query=query), self.assertRaisesRegex(ValueError, "single-line query"):
+                self.quiet(hub.memory_recall, query, index=True)
+        # The default mode keeps accepting it: its excerpts already span lines.
+        self.assertIn("second line", self.quiet(hub.memory_recall, "needle line\nsecond")[1])
+        _, output = self.quiet(hub.memory_recall, "needle", json_out=True, index=True)
+        row = json.loads(output)["results"][0]
+        self.assertEqual((row["date"], row["tag"], row["title"]), ("d" * 40, "T" * 40, "t" * 120))
+        _, text = self.quiet(hub.memory_recall, "needle", index=True, max_chars=512)
+        self.assertEqual(len(text.splitlines()), 2)
+        self.assertLess(len(text.splitlines()[0]), 260)
 
     def test_recall_index_fixture_byte_counts(self):
         # Static-measured output sizes on a fixed fixture, not a model benchmark: 30

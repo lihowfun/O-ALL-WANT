@@ -33,18 +33,28 @@ _RESERVED = {"con", "prn", "aux", "nul"} | {
 # are committed project files. Only vendor-prefixed or key-anchored shapes:
 # generic password=/TOKEN= heuristics stay out (too many false positives).
 # re.ASCII keeps \w and \b ASCII-only, so a token right after CJK text still matches.
-# Adapted from claude-mem src/utils/redaction.ts:108-177 (Apache-2.0); modified: variable-width lookbehinds rewritten as consuming matches, PEM header only, refusal instead of redaction, generic and claude_mem_key patterns dropped.
+# Every start is bounded (a 32-character scheme, a JWT only outside a base64url run), so a
+# long note scans in linear time.
+# Adapted from claude-mem src/utils/redaction.ts:108-177 (Apache-2.0); modified: variable-width lookbehinds rewritten as consuming matches, PEM header only, refusal instead of redaction, generic and claude_mem_key patterns dropped, url_credentials/openai_key/aws_access_key/jwt bounded or anchored.
 SECRET_PATTERNS = tuple((name, re.compile(pattern, re.ASCII | flags)) for name, pattern, flags in (
-    ("url_credentials", r"\b[a-z][a-z0-9+.-]*://[^\s:/@'\"<>]*:(?![${<])[^\s/@'\"<>]+@", re.IGNORECASE),
-    ("aws_access_key", r"(?:AKIA|ASIA)[0-9A-Z]{16}", 0),
+    # A password that is wholly a placeholder (${DB_PASS}, $DB_PASS, {db_pass}, {{db_pass}}, %s,
+    # %(pw)s, ***) is exempt; <PASSWORD> never matches because '<' ends the value. A literal
+    # user:pass or user:password is refused: documentation examples use a placeholder.
+    ("url_credentials", r"\b[a-z][a-z0-9+.-]{0,31}://[^\s:/@'\"<>]*:"
+                        r"(?!(?:\$\{[^}\s/@'\"<>]*\}|(?-i:\$[A-Z_][A-Z0-9_]*)|\{\{?[^{}\s/@'\"<>]*\}\}?"
+                        r"|%(?:\(\w+\))?s|\*+)@)[^\s/@'\"<>]+@", re.IGNORECASE),
+    ("aws_access_key", r"(?<![A-Za-z0-9])(?:AKIA|ASIA)[0-9A-Z]{16}(?![A-Za-z0-9])", 0),
     ("aws_secret_key", r"(?i:aws_secret_access_key|\bSecretAccessKey)[\"']?\s*[:=]\s*[\"']?"
                        r"[A-Za-z0-9/+=]{40}(?![A-Za-z0-9/+=])", 0),
     ("aws_session_token", r"(?i:\baws_session_token|\bSessionToken)[\"']?\s*[:=]\s*[\"']?[A-Za-z0-9/+=]{100,}", 0),
     ("github_pat", r"\bgh[oprsu]_[A-Za-z0-9]{36}\b|\bgithub_pat_[A-Za-z0-9_]{82}\b", 0),
-    ("openai_key", r"\bsk-(?!ant-)[A-Za-z0-9_-]{20,}(?!\w)", 0),
+    # Project, service-account and admin keys name their kind; a legacy key is one alphanumeric
+    # run with a digit, so kebab-case prose such as sk-learn-compatible-api is not a key.
+    ("openai_key", r"\bsk-(?:(?:proj|svcacct|admin|None)-[A-Za-z0-9_-]{20,}(?!\w)"
+                   r"|(?=[A-Za-z]*[0-9])[A-Za-z0-9]{20,}(?![\w-]))", 0),
     ("anthropic_key", r"\bsk-ant-[A-Za-z0-9_-]{20,}(?!\w)", 0),
     ("slack_token", r"\b(?:xox[abeprs]|xapp)-[A-Za-z0-9-]{10,}(?!\w)", 0),
-    ("jwt", r"\beyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+(?!\w)", 0),
+    ("jwt", r"(?<![A-Za-z0-9_-])eyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+(?!\w)", 0),
     ("private_key_pem", r"-----BEGIN (?:RSA |DSA |EC |OPENSSH |PGP |ENCRYPTED )?PRIVATE KEY(?: BLOCK)?-----", 0),
     ("stripe_key", r"\b(?:(?:sk|pk|rk)_(?:live|test)_[A-Za-z0-9]{24,}|whsec_[A-Za-z0-9]{32,})\b", 0),
     ("google_api_key", r"\bAIza[0-9A-Za-z_-]{35}(?!\w)", 0),
@@ -149,6 +159,17 @@ def exact_case_path(root, relative):
             return None
         current = os.path.join(current, part)
     return resolved
+
+
+# The one hash basis for new evidence hashes, recorded as hash_basis beside each digest.
+# It is the basis of evals/egm-pilot/pilot_common.py file_digest; improvement.py keeps raw-byte digests.
+HASH_BASIS = "sha256, CRLF folded to LF"
+
+
+def lf_sha256(data):
+    """SHA-256 hex of text (UTF-8) or bytes with CRLF folded to LF, so autocrlf checkouts hash alike."""
+    data = data.encode("utf-8") if isinstance(data, str) else data
+    return hashlib.sha256(data.replace(b"\r\n", b"\n")).hexdigest()
 
 
 def _checked(path, root):
@@ -386,6 +407,10 @@ def _npm_shim(path, directories):
     folder = os.path.dirname(path)
     if len(data) <= _SHIM_LIMIT and len(targets) == 1 and programs <= {"%dp0%\\node.exe", "node"}:
         (node, relative), = targets
+        # Lexical on purpose: it confines the shim's text ('..', absolute or drive targets), not the disk.
+        # A link inside node_modules (npm link, a junction) is trusted like the package code it holds:
+        # whoever can write there can already rewrite the shim or the script. A realpath check would
+        # refuse every `npm link` package, whose real files live in the developer's checkout.
         modules = os.path.normcase(os.path.join(folder, "node_modules")) + os.sep
         target = os.path.normpath(os.path.join(folder, relative.replace("\\", os.sep)))
         if (os.path.normcase(target).startswith(modules) and os.path.isfile(target)
@@ -406,7 +431,9 @@ def resolve_cli(name_or_path, *, platform=os.name, search_path=None):
     Only absolute PATH entries are searched, never the current directory. On Windows an npm
     .cmd/.ps1 shim is read and its node script or native .exe is started instead, so cmd.exe
     never parses the arguments again; any other script is refused. Elsewhere the result is
-    the plain absolute path.
+    the plain absolute path. platform selects the Windows PATHEXT and shim policy (tests set
+    it); paths always use the host's os.path and os.pathsep, because the files are read on
+    this host. Drive-letter PATH parsing is covered by the windows-latest CI job.
     """
     if not isinstance(name_or_path, str) or not name_or_path.strip():
         raise ValueError("A CLI name or path is required")
@@ -432,7 +459,11 @@ def resolve_cli(name_or_path, *, platform=os.name, search_path=None):
 
 
 def resolver_sha256():
-    """SHA-256 of the CLI resolver block above (LF line endings); record it beside cli_argv."""
-    lines = Path(__file__).read_text(encoding="utf-8").splitlines()
+    """lf_sha256 of the CLI resolver block above; record it beside cli_argv with hash_basis HASH_BASIS.
+
+    Only the marked block is hashed. Imports, PATHEXT and the Python runtime are
+    not, so a manifest also records the Python version.
+    """
+    lines = Path(__file__).read_bytes().decode("utf-8").replace("\r\n", "\n").split("\n")
     start, end = lines.index("# >>> cli resolver"), lines.index("# <<< cli resolver")
-    return hashlib.sha256("\n".join(lines[start:end + 1]).encode("utf-8")).hexdigest()
+    return lf_sha256("\n".join(lines[start:end + 1]))

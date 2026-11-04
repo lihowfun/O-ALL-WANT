@@ -32,14 +32,18 @@ All notable changes to this project will be documented in this file.
   same `--limit`, `--max-chars` and cursor rules; the mode is bound into the cursor hash, so a cursor
   from one mode is refused by the other. CLI only: documented in `--help` and
   `docs/CLI_Reference.md`; no skill text changed. Default recall output is unchanged and pinned by a
-  byte-golden test. Evidence: static fixture output sizes (30 entries of about 1.5 KB: 3,350 vs
+  byte-golden test (verified against the 790177e recall code). `--index` refuses a query with a line
+  break, and a row's date and tag are cut to 40 characters like the 120-character title (EV-06). Evidence: static fixture output sizes (30 entries of about 1.5 KB: 3,350 vs
   31,079 bytes of text), not a model benchmark; no improvement is claimed.
 - `oaw_common.normalize_cited_path` and `exact_case_path` (OAW-02, only the part OAW-21 needs;
   merge-derived from the graphify integration checks): cited paths are made project-relative
   POSIX paths (backslashes folded, drives, absolute paths and `..` rejected on every OS) and
   resolved segment by segment against directory listings, so a citation whose case differs
-  from the file is unresolved on Windows and macOS as on Linux. The hash-basis and byte-count
-  parts of OAW-02 are not built.
+  from the file is unresolved on Windows and macOS as on Linux. `oaw_common.lf_sha256` with
+  `HASH_BASIS` (CRLF folded to LF, the `evals/egm-pilot` file-digest basis) is the one hash
+  for new evidence; `resolver_sha256` uses it. Not built: the LF byte count, and making an
+  absolute path under the workspace root relative, so such a citation is reported as outside
+  the project (goldfish CT-09).
 - `wiki_sync.py lint` checks backticked `path::Symbol` code citations (OAW-21; food:
   graphify@8e6a6d2, method re-implemented with the standard library, no code copied). Only
   whole single-backtick spans with a project-root-relative path and a file extension count,
@@ -47,6 +51,13 @@ All notable changes to this project will be documented in this file.
   read with `ast` (functions, classes, `Class::method` or `Class.method`, module-level names)
   with an indentation-scoped regex fallback, other files get a whole-word text check; a bad or
   unreadable cited file gives a warning, never a traceback. Warnings are grouped per note.
+  After the goldfish diff review: a symlink loop is one citation's `unreadable` verdict on
+  Python 3.10-3.12 too (CT-01); `ast` and the fallback both read annotation-only names,
+  unpacking and chained targets, `match` case bodies and `type X = ...` aliases (CT-02, CT-03);
+  the fallback skips lines inside brackets, strings and backslash continuations (CT-05); a
+  UTF-8 BOM is dropped before parsing (CT-06); a dotted token counts only with a directory
+  part or a known file extension, so `os.path::join` and `node.js::fs` are not citations
+  (CT-04). Only fenced code is skipped (CT-12).
   Static evidence only: fixture tests; agent effect not measured.
 - `wiki_sync.py cites PATH[::Symbol] [--json]` (OAW-22; food: graphify@8e6a6d2 `affected`
   reverse lookup, re-implemented as a stdlib index over the OAW-21 citation parser, no graph):
@@ -59,8 +70,14 @@ All notable changes to this project will be documented in this file.
   current directory. On Windows it reads an npm `.cmd`/`.ps1` shim (at most 8 KB) and starts its
   `node.exe` + script or native `.exe` inside the shim's `node_modules`, and refuses any other
   batch file, so cmd.exe never parses the arguments again. `resolver_sha256()` hashes the
-  resolver source for run manifests. No runner uses it yet; frozen eval contracts are unchanged.
-  Evidence: static fixtures only.
+  resolver block (`lf_sha256`; record `hash_basis` and the Python version beside it, since
+  imports and the runtime are not hashed). Confinement to `node_modules` is lexical: it checks
+  the shim's text, and a link inside `node_modules` (`npm link`, a junction) is trusted like the
+  package code it holds, since a realpath check would refuse every linked package. No runner
+  uses it yet; frozen eval contracts are unchanged. Wiring it into the new registrations of
+  `evals/three-way/bench.py`, `evals/skill-value/experiment.py` and the next egm-pilot contract,
+  with `cli_argv`, `resolver_sha256` and `hash_basis` in their manifests, is deferred to those
+  registrations. Evidence: static fixtures only.
 - OAW-03 (from thedotmack/claude-mem, Apache-2.0): an evaluation spec may declare an optional
   `trigger` block (`cases`, `minimum_rate`, default 2/3) outside `assertions`. Candidate case
   records then carry a boolean `triggered`; if the rate falls short on any designated case, a
@@ -74,7 +91,9 @@ All notable changes to this project will be documented in this file.
   `grading_tokens`, reported but never counted as cost. The comparison reports each arm's
   tokens, overhead, `overhead_frac`, grading tokens and coverage; an efficiency gain counts only
   when coverage is complete in both arms (`efficiency_blocked` otherwise), while resource
-  regressions still use the observed lower bounds. Spec-declared, so schema-1 specs and stored
+  regressions use the observed lower bounds: certain (rejected) over a complete baseline, and
+  `uncertain_resource_regressions` with an inconclusive verdict over an incomplete baseline,
+  whose total is an undercount (goldfish MS-01). Spec-declared, so schema-1 specs and stored
   proposals keep their verdicts; no schema bump. Evidence: static fixtures only.
 
 ### Changed
@@ -85,11 +104,16 @@ All notable changes to this project will be documented in this file.
   secret access key or session token (`oaw_common.SECRET_PATTERNS`, `evidence_write_refusal`). A
   refused write exits 1, names the pattern ids without printing the value and writes nothing. No
   override flag; use a placeholder. Generic `password=`/`TOKEN=` assignments are not checked, and
-  only the CLI write path is guarded. Evidence: one positive and one negative fixture per pattern
-  (static).
+  only the CLI write path is guarded. After the goldfish diff review: a URL password is exempt only
+  when it is wholly a placeholder (`${DB_PASS}`, `$DB_PASS`, `{db_pass}`, `%s`, `***`), so `$ecret`
+  is refused (EV-02); `openai_key` needs a `sk-proj-`/`sk-svcacct-`/`sk-admin-`/`sk-None-` kind or a
+  legacy alphanumeric run with a digit, so `sk-learn-compatible-api` prose passes (EV-01);
+  `aws_access_key` must stand alone, not inside a longer base64 run (EV-04); the URL scheme and
+  the JWT start are bounded, so a 120,000-character note scans in linear time (EV-03). Evidence:
+  positive and negative fixtures per pattern, negatives also pass the whole guard (static).
 - Strict-mode change (OAW-21): an unresolved `path::Symbol` code citation is a new soft lint
   warning, so `wiki_sync.py lint --strict` now fails on it, like on every other soft warning.
-  Default `lint` still exits 0 for it.
+  Default `lint` still exits 0 for it. Also noted in `docs/UPGRADING.md`.
 - The unreleased catalog prototype is named for what it is (D19): the web command is
   `catalog.py ui` (server `catalog_ui_server.py`), the guide is `docs/SKILL_INTAKE.md`, and the
   four-step food track gives way to the nine-stage intake pipeline.
