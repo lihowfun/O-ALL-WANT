@@ -13,7 +13,7 @@
 - `REVIEW_2026-11-04.md`：owner 用 CLI 跑的消化系統只讀審視摘要（卡點 B1–B11、驗證設計、決定 Q1–Q5）。
 - `codemap-stage0/`：D24 的 Stage 0-α（原生搜尋 對 標準函式庫程式碼索引）：題目的金魚審查、有效結果 `run2/` 和 `RESULT.md`（判定：通過）。
 - `papers/2606.03979/`：論文〈Language Models Need Sleep〉的萃取、大象草稿與定稿、盲審、成分帳本和消化結論。原型在分支 `claude/oaw-2`。
-- `taste-graphify/`：D25 第一次試吃：graphify 0.9.101 在 OAW 2 worktree 裡跑，和 OAW 程式碼索引比圖、比 39 題（判定：不吸收原版、不當外掛）。
+- `taste-graphify/`：D25 第一次試吃：graphify 0.9.101 在 OAW 2 worktree 裡跑，和 OAW 程式碼索引比圖、比 39 題（工具層落後；判定等 agent 實測）。
 - `design/`：消化流程設計 r2 和 v0 流程說明。v0 原本叫 PLAY.md；依 D19（不是遊戲）改名為 INTAKE_FLOW_v0.md，內文還沒改。
 
 所有效果都是 not measured；沒有任何吸收已被核准。
