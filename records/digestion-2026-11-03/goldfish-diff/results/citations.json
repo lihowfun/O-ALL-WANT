@@ -1,0 +1,288 @@
+{
+ "packet": "citations.md",
+ "started_at": "2026-11-04T01:28:33.646842+00:00",
+ "launch": {
+  "argv": [
+   "claude",
+   "-p",
+   "--tools",
+   "",
+   "--strict-mcp-config",
+   "--disable-slash-commands",
+   "--setting-sources",
+   "project",
+   "--output-format",
+   "stream-json",
+   "--verbose"
+  ],
+  "stdin": "packet",
+  "cwd": "fresh empty temp folder"
+ },
+ "exit_code": 0,
+ "stderr_tail": "",
+ "init_event": {
+  "cwd": "<tmp>/oaw-goldfish-7edgze08",
+  "model": "claude-opus-5-5",
+  "claude_code_version": "2.1.318",
+  "permissionMode": "default",
+  "apiKeySource": "none",
+  "memory_paths": {
+   "auto": "~/.claude/projects/<tmp>-oaw-goldfish-7edgze08/memory/"
+  },
+  "output_style": "default",
+  "tools": [],
+  "mcp_servers": [],
+  "slash_commands": [],
+  "skills": [],
+  "plugins": [
+   {
+    "name": "cc-plugin-sec-default",
+    "path": "builtin",
+    "source": "cc-plugin-sec-default@builtin"
+   },
+   {
+    "name": "cc-plugin-agents-md",
+    "path": "builtin",
+    "source": "cc-plugin-agents-md@builtin"
+   },
+   {
+    "name": "cc-plugin-telemetry",
+    "path": "builtin",
+    "source": "cc-plugin-telemetry@builtin"
+   },
+   {
+    "name": "cc-plugin-privacy",
+    "path": "builtin",
+    "source": "cc-plugin-privacy@builtin"
+   },
+   {
+    "name": "cc-plugin-plugin-authoring",
+    "path": "builtin",
+    "source": "cc-plugin-plugin-authoring@builtin"
+   }
+  ],
+  "agents": [
+   "claude",
+   "Explore",
+   "general-purpose",
+   "Plan",
+   "statusline-setup"
+  ]
+ },
+ "init_checks": {
+  "tools": true,
+  "mcp_servers": true,
+  "slash_commands": true,
+  "skills": true,
+  "plugins_builtin_only": true,
+  "agents_unusable_without_tools": true,
+  "cwd_is_fresh_temp": true,
+  "auto_memory_empty": true
+ },
+ "canary": "Not none. Before this packet I received a system prompt with: an agent identity (Claude agent on the Agent SDK, model Opus 5.5) and a security-assistance policy; harness rules (markdown output, permission modes, hooks, prefer dedicated tools, file:line references); a they/them pronoun rule; confirm-before-irreversible-actions and faithful-reporting rules; a description of a persistent file-based memory system at ~/.claude/projects/<tmp>-oaw-goldfish-7edgze08/memory/ with a MEMORY.md index convention (no memory index or memory contents were actually shown); environment facts (cwd <tmp>/oaw-goldfish-7edgze08, not a git repo, Linux WSL2, bash, date 2026-11-04, Claude 5 model IDs, Claude Code/fast mode notes); context-management guidance; a rule on not recreating existing games; and a system-reminder carrying the user's account email for attribution only. No CLAUDE.md, settings, project facts, or tool definitions were provided, and none were used in this review.",
+ "zero_context_verified": false,
+ "usage": {
+  "input_tokens": 2,
+  "cache_creation_input_tokens": 45394,
+  "cache_read_input_tokens": 0,
+  "output_tokens": 13224,
+  "output_tokens_details": {
+   "thinking_tokens": 8151
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 45394,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "global",
+  "iterations": [
+   {
+    "input_tokens": 2,
+    "output_tokens": 13224,
+    "cache_read_input_tokens": 0,
+    "cache_creation_input_tokens": 45394,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 45394
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "total_cost_usd": 0.62764,
+ "review": {
+  "canary": "Not none. Before this packet I received a system prompt with: an agent identity (Claude agent on the Agent SDK, model Opus 5.5) and a security-assistance policy; harness rules (markdown output, permission modes, hooks, prefer dedicated tools, file:line references); a they/them pronoun rule; confirm-before-irreversible-actions and faithful-reporting rules; a description of a persistent file-based memory system at ~/.claude/projects/<tmp>-oaw-goldfish-7edgze08/memory/ with a MEMORY.md index convention (no memory index or memory contents were actually shown); environment facts (cwd <tmp>/oaw-goldfish-7edgze08, not a git repo, Linux WSL2, bash, date 2026-11-04, Claude 5 model IDs, Claude Code/fast mode notes); context-management guidance; a rule on not recreating existing games; and a system-reminder carrying the user's account email for attribution only. No CLAUDE.md, settings, project facts, or tool definitions were provided, and none were used in this review.",
+  "findings": [
+   {
+    "id": "CT-01",
+    "unit": "OAW-21",
+    "file": "scripts/wiki_sync.py",
+    "line": "_cited_file (new ~640-662); scripts/oaw_common.py confined_path",
+    "finding": "Per-file containment misses symlink loops. On Python 3.10-3.12, Path.resolve() raises RuntimeError on a loop, not OSError. _cited_file catches only UnicodeError, ValueError and OSError. One cited path through a looping symlink therefore escapes to main(), which prints ❌ and exits 1 for the whole lint run instead of yielding a per-citation verdict.",
+    "severity": "major",
+    "kind": "bug",
+    "evidence": "candidate = boundary.joinpath(*parts).resolve()  /  except OSError as exc:\n            cache[relative] = (\"problem\", f\"unreadable: ...\")  /  except (ValueError, OSError, RuntimeError) as exc:\n        print(f\"❌ {exc}\")",
+    "suggested_fix": "Also catch RuntimeError in _cited_file and map it to a 'problem' verdict, and add a symlink-loop fixture test."
+   },
+   {
+    "id": "CT-02",
+    "unit": "OAW-21",
+    "file": "scripts/wiki_sync.py",
+    "line": "_PY_ASSIGNMENT / _python_names_by_regex",
+    "finding": "The ast path and the regex fallback disagree on annotation-only names such as dataclass fields (`x: int`). ast records an AnnAssign target even without a value, but the fallback regex requires '='. The same citation resolves when the file parses and fails when it does not. The 'fallback matches ast verdicts' test misses this because the fixture has no such line.",
+    "severity": "minor",
+    "kind": "bug",
+    "evidence": "elif isinstance(node, (ast.Assign, ast.AnnAssign)):  vs  _PY_ASSIGNMENT = re.compile(r\"^\\s*([A-Za-z_]\\w*)\\s*(?::[^=\\n]*)?=(?!=)\")",
+    "suggested_fix": "Make '= value' optional after an annotation in the fallback regex, or skip AnnAssign without a value in ast, and add `x: int` to CITED_PY."
+   },
+   {
+    "id": "CT-03",
+    "unit": "OAW-21",
+    "file": "scripts/wiki_sync.py",
+    "line": "_PY_BLOCKS / _collect_python_names",
+    "finding": "Some module-level names are never collected, so valid citations warn and fail --strict. Names defined inside `match` statements (ast.Match, Python 3.10+) are missed. So are `type X = ...` aliases (ast.TypeAlias, 3.12+) and tuple-unpacking assignments.",
+    "severity": "minor",
+    "kind": "bug",
+    "evidence": "_PY_BLOCKS = (ast.If, ast.Try, ast.With, ast.AsyncWith, ast.For, ast.AsyncFor, ast.While) + (...TryStar...)  /  if isinstance(target, ast.Name):",
+    "suggested_fix": "Traverse ast.Match case bodies, add TypeAlias, and either recurse into Tuple/List targets or document the exclusion."
+   },
+   {
+    "id": "CT-04",
+    "unit": "OAW-21",
+    "file": "scripts/wiki_sync.py",
+    "line": "_CODE_CITATION",
+    "finding": "Any dotted token before '::' counts as a file path, so non-path spans become citations. Examples: `os.path::join`, `System.IO::File`, `v2.0::x`, `node.js::fs`. Each gives a 'path not found' warning, and that warning is an error under --strict. The docs promise that only path-qualified citations count.",
+    "severity": "minor",
+    "kind": "design_mismatch",
+    "evidence": "(?P<path>(?:[A-Za-z]:)?[A-Za-z0-9_./\\\\-]+\\.[A-Za-z0-9]+)  /  # The path needs an extension, so `std::vector`, `crate::mod` and bare names never count.",
+    "suggested_fix": "Require a '/' or '\\' in the path, or a known source/doc extension list (like _MC_EXTENSIONS), and add negative tests for dotted non-paths."
+   },
+   {
+    "id": "CT-05",
+    "unit": "OAW-21",
+    "file": "scripts/wiki_sync.py",
+    "line": "_python_names_by_regex",
+    "finding": "The regex fallback treats some lines as definitions when they are not. Keyword-argument continuation lines of a multi-line module-level call (`    name=\"x\",`) are recorded as module names. So are `def`/`x =` lines inside triple-quoted strings. The result is false 'resolved' verdicts exactly when the file does not parse.",
+    "severity": "minor",
+    "kind": "bug",
+    "evidence": "assignment = _PY_ASSIGNMENT.match(line)\n        if assignment and members is not None:\n            members.setdefault(assignment.group(1), {})",
+    "suggested_fix": "Track open brackets and triple-quoted strings in the fallback scan, or record only assignments at the scope's own indentation."
+   },
+   {
+    "id": "CT-06",
+    "unit": "OAW-21",
+    "file": "scripts/wiki_sync.py",
+    "line": "_cited_file -> _safe_read / ast.parse",
+    "finding": "Handling of UTF-8 BOM files, which some Windows editors write, is unclear. If _safe_read does not strip the BOM, ast.parse fails on U+FEFF and the file falls back to the regex scan. The fallback's `^\\s*def` does not match the first line, so a first-line definition is reported as not found. _safe_read is not shown.",
+    "severity": "minor",
+    "kind": "unclear",
+    "evidence": "text = _safe_read(path)\n                if relative.endswith(\".py\"):\n                    names, parsed = _python_names(text)",
+    "suggested_fix": "Strip a leading '\\ufeff' (or read with utf-8-sig) before parsing, and add a BOM fixture."
+   },
+   {
+    "id": "CT-07",
+    "unit": "OAW-02",
+    "file": "tests/test_wiki_sync.py",
+    "line": "test_cited_paths_normalize_windows_forms_and_resolve_exact_case; test_code_citation_case_mismatch_unresolved_on_every_os",
+    "finding": "On a case-sensitive Linux runner, the wrong-case assertions pass even if exact_case_path were a plain os.path.exists check. The listdir comparison that is the point of OAW-02 is exercised only on Windows or macOS runners. Whether CI has those runners is not shown.",
+    "severity": "minor",
+    "kind": "weak_test",
+    "evidence": "# A case-insensitive file system accepts these; the directory listing comparison does not.\n        for wrong_case in (\"Scripts/a.py\", \"scripts/A.py\", ...):\n                self.assertIsNone(common.exact_case_path(str(self.base), wrong_case))",
+    "suggested_fix": "Also patch os.path/os.stat lookups to behave case-insensitively, or mock os.listdir, so the per-segment comparison is proven on every OS."
+   },
+   {
+    "id": "CT-08",
+    "unit": "OAW-21",
+    "file": "UPGRADING (not in diff)",
+    "line": "n/a",
+    "finding": "The design requires the strict-mode change to be noted in both CHANGELOG and UPGRADING. Only the CHANGELOG is changed in this diff.",
+    "severity": "minor",
+    "kind": "design_mismatch",
+    "evidence": "noted in CHANGELOG and UPGRADING as a strict-mode change  /  CHANGELOG: - Strict-mode change (OAW-21): ...",
+    "suggested_fix": "Add the strict-mode note to UPGRADING, or show that it already exists."
+   },
+   {
+    "id": "CT-09",
+    "unit": "OAW-02",
+    "file": "scripts/oaw_common.py",
+    "line": "normalize_cited_path; resolver_sha256",
+    "finding": "Several parts of OAW-02 are not built: the LF-folded sha256 helper with hash_basis, the byte count, and workspace-root normalization. Absolute paths under the workspace root are rejected rather than made relative. Meanwhile, the new resolver_sha256 evidence hash uses an ad-hoc LF join without the shared helper and without recording hash_basis, which conflicts with 'one hash basis for all new evidence hashes'.",
+    "severity": "minor",
+    "kind": "design_mismatch",
+    "evidence": "The hash-basis and byte-count parts of OAW-02 are not built.  /  return hashlib.sha256(\"\\n\".join(lines[start:end + 1]).encode(\"utf-8\")).hexdigest()  /  if path.startswith(\"/\") or ... raise ValueError",
+    "suggested_fix": "Either build the shared LF-folded hash helper and route resolver_sha256 through it with hash_basis recorded, or record the descoping in the unit design."
+   },
+   {
+    "id": "CT-10",
+    "unit": "shared",
+    "file": "scripts/harness_check.py",
+    "line": "REQUIRED_TEST_MODULES / MINIMUM_TESTS",
+    "finding": "The diff makes test_cli_resolve a required module and raises the test floor to 337. Neither the test_cli_resolve module nor the other units' tests are shown. The diff also carries unrelated units (OAW-01, OAW-03/04, OAW-12, OAW-15) that are outside this review group.",
+    "severity": "minor",
+    "kind": "unclear",
+    "evidence": "\"test_catalog_core\", \"test_catalog\", \"test_catalog_ui\", \"test_cli_resolve\")\nMINIMUM_TESTS = 337",
+    "suggested_fix": "Confirm tests/test_cli_resolve.py is in the commit, and review the non-citation units in their own groups."
+   },
+   {
+    "id": "CT-11",
+    "unit": "OAW-21",
+    "file": "scripts/wiki_sync.py",
+    "line": "_load_knowledge_pages (not shown); lint/cites use page[\"content\"]",
+    "finding": "lint and cites read page[\"content\"] for manual pages. The diff adds a 'content' key only to raw sources, and the knowledge page dict construction is not visible.",
+    "severity": "minor",
+    "kind": "unclear",
+    "evidence": "_check_code_citations(page[\"content\"], page[\"filename\"], warnings, cited_files)  /  \"content\": content, (raw sources only)",
+    "suggested_fix": "Confirm that _load_knowledge_pages already stores 'content' (the manual-page tests suggest it does)."
+   },
+   {
+    "id": "CT-12",
+    "unit": "OAW-21",
+    "file": "scripts/wiki_sync.py",
+    "line": "_iter_code_citations",
+    "finding": "Only fenced code is skipped. A citation inside an indented (4-space) code block or an HTML comment is still checked and reported. This contradicts 'fenced code are not citations' in spirit for code examples.",
+    "severity": "minor",
+    "kind": "bug",
+    "evidence": "for number, (_offset, line, in_code) in enumerate(markdown_lines(text), start=1):\n        if in_code:\n            continue",
+    "suggested_fix": "Skip indented code blocks (and optionally HTML comments), or document that only fenced code is excluded."
+   },
+   {
+    "id": "CT-13",
+    "unit": "OAW-22",
+    "file": "scripts/wiki_sync.py",
+    "line": "cites",
+    "finding": "The advisory cites command fails with exit 1 if any raw note is malformed, because _discover_raw_sources raises ValueError on a bad topic_id or a non-scalar last_updated. No test covers this.",
+    "severity": "minor",
+    "kind": "missing_test",
+    "evidence": "notes = [(...) for source in _discover_raw_sources()]  /  raise ValueError(f\"Raw source {filename!r} requires a scalar last_updated.\")",
+    "suggested_fix": "Decide and test the behavior: either skip the bad note with a warning or document that cites requires lint-clean metadata."
+   }
+  ],
+  "coverage": {
+   "reviewed": [
+    "scripts/wiki_sync.py (citation parser, lint wiring, cites, CLI)",
+    "scripts/oaw_common.py normalize_cited_path, exact_case_path, markdown_lines alias, resolver_sha256 (hash-basis aspect only)",
+    "tests/test_wiki_sync.py new citation/cites tests",
+    "scripts/harness_check.py changes",
+    "CHANGELOG.md, docs/CLI_Reference.md, docs/Wiki_Sync_Guide.md citation sections"
+   ],
+   "not_reviewed": [
+    "SECRET_PATTERNS / evidence_write_refusal (OAW-12)",
+    "resolve_cli / _npm_shim (OAW-01)",
+    "OAW-03/04/15 changelog and docs entries",
+    "_safe_read, _load_knowledge_pages, _map_markdown_links bodies (not shown)",
+    "tests/test_cli_resolve.py (not shown)",
+    "UPGRADING (not shown)"
+   ]
+  },
+  "summary": "The citation lint and cites lookup broadly match their design and are well tested. Two gaps undercut per-file containment and fallback parity: a symlink loop raises RuntimeError on Python 3.10-3.12 and aborts the whole lint run, and the regex fallback diverges from ast on annotation-only names. Remaining items are false-positive path detection, OAW-02 descoping (hash basis), the missing UPGRADING note, and case-sensitivity tests that prove little on Linux."
+ },
+ "raw_result_if_unparsed": null,
+ "host_version": "2.1.318 (Claude Code)",
+ "local_paths_redacted": true
+}

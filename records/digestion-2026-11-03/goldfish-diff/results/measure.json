@@ -1,0 +1,265 @@
+{
+ "packet": "measure.md",
+ "started_at": "2026-11-04T01:32:47.190614+00:00",
+ "launch": {
+  "argv": [
+   "claude",
+   "-p",
+   "--tools",
+   "",
+   "--strict-mcp-config",
+   "--disable-slash-commands",
+   "--setting-sources",
+   "project",
+   "--output-format",
+   "stream-json",
+   "--verbose"
+  ],
+  "stdin": "packet",
+  "cwd": "fresh empty temp folder"
+ },
+ "exit_code": 0,
+ "stderr_tail": "",
+ "init_event": {
+  "cwd": "<tmp>/oaw-goldfish-0bmenbfq",
+  "model": "claude-opus-5-5",
+  "claude_code_version": "2.1.318",
+  "permissionMode": "default",
+  "apiKeySource": "none",
+  "memory_paths": {
+   "auto": "~/.claude/projects/<tmp>-oaw-goldfish-0bmenbfq/memory/"
+  },
+  "output_style": "default",
+  "tools": [],
+  "mcp_servers": [],
+  "slash_commands": [],
+  "skills": [],
+  "plugins": [
+   {
+    "name": "cc-plugin-sec-default",
+    "path": "builtin",
+    "source": "cc-plugin-sec-default@builtin"
+   },
+   {
+    "name": "cc-plugin-agents-md",
+    "path": "builtin",
+    "source": "cc-plugin-agents-md@builtin"
+   },
+   {
+    "name": "cc-plugin-telemetry",
+    "path": "builtin",
+    "source": "cc-plugin-telemetry@builtin"
+   },
+   {
+    "name": "cc-plugin-privacy",
+    "path": "builtin",
+    "source": "cc-plugin-privacy@builtin"
+   },
+   {
+    "name": "cc-plugin-plugin-authoring",
+    "path": "builtin",
+    "source": "cc-plugin-plugin-authoring@builtin"
+   }
+  ],
+  "agents": [
+   "claude",
+   "Explore",
+   "general-purpose",
+   "Plan",
+   "statusline-setup",
+   "web-fetch"
+  ]
+ },
+ "init_checks": {
+  "tools": true,
+  "mcp_servers": true,
+  "slash_commands": true,
+  "skills": true,
+  "plugins_builtin_only": true,
+  "agents_unusable_without_tools": true,
+  "cwd_is_fresh_temp": true,
+  "auto_memory_empty": true
+ },
+ "canary": "Not none. Before this packet I received a Claude Agent SDK system prompt containing: (1) general harness and behavior rules (permission modes, pasted-content handling, confirming before outward-facing actions, a security-assistance policy, a game-recreation policy, pronoun guidance, model-family IDs and Opus 5.5 identity); (2) a description of a persistent file-memory system at ~/.claude/projects/<tmp>-oaw-goldfish-0bmenbfq/memory/ with a MEMORY.md index convention (no MEMORY.md contents or memory entries were actually loaded); (3) an auto-attached userEmail context identifying the user's account; (4) environment facts: working dir <tmp>/oaw-goldfish-0bmenbfq, not a git repo, Linux/WSL2, bash, date 2026-11-04, plus a rule about treating downloaded files as untrusted. No CLAUDE.md, no project facts about OAW, no settings files and no tool definitions were provided; I used no tools.",
+ "zero_context_verified": false,
+ "usage": {
+  "input_tokens": 2,
+  "cache_creation_input_tokens": 36484,
+  "cache_read_input_tokens": 649,
+  "output_tokens": 8913,
+  "output_tokens_details": {
+   "thinking_tokens": 4969
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 36484,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "global",
+  "iterations": [
+   {
+    "input_tokens": 2,
+    "output_tokens": 8913,
+    "cache_read_input_tokens": 649,
+    "cache_creation_input_tokens": 36484,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 36484
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "total_cost_usd": 0.47026980000000007,
+ "review": {
+  "canary": "Not none. Before this packet I received a Claude Agent SDK system prompt containing: (1) general harness and behavior rules (permission modes, pasted-content handling, confirming before outward-facing actions, a security-assistance policy, a game-recreation policy, pronoun guidance, model-family IDs and Opus 5.5 identity); (2) a description of a persistent file-memory system at ~/.claude/projects/<tmp>-oaw-goldfish-0bmenbfq/memory/ with a MEMORY.md index convention (no MEMORY.md contents or memory entries were actually loaded); (3) an auto-attached userEmail context identifying the user's account; (4) environment facts: working dir <tmp>/oaw-goldfish-0bmenbfq, not a git repo, Linux/WSL2, bash, date 2026-11-04, plus a rule about treating downloaded files as untrusted. No CLAUDE.md, no project facts about OAW, no settings files and no tool definitions were provided; I used no tools.",
+  "findings": [
+   {
+    "id": "MS-01",
+    "unit": "OAW-04",
+    "file": "scripts/improvement.py",
+    "line": "@@ -231,132 +254,177 @@ compare(): covered / resource_regressions",
+    "finding": "The rationale that incomplete-coverage totals are lower bounds so 'an excess is certain' only holds when the baseline is complete. If the baseline arm is incomplete, its total is an undercount, so a candidate with complete or larger coverage can be falsely rejected as a token resource regression (including the old == 0 and new > 0 path).",
+    "severity": "major",
+    "kind": "bug",
+    "evidence": "# Resource regressions still use the\n    # observed totals: with incomplete coverage they are lower bounds, so an excess is certain.\n...\n        if (old == 0 and new > 0) or (relative is not None and relative > max_regression):\n            resource_regressions.append(name)",
+    "suggested_fix": "Count a token resource regression as certain only when the baseline coverage is complete; otherwise mark it unclear or inconclusive, and add a test with an incomplete baseline."
+   },
+   {
+    "id": "MS-02",
+    "unit": "OAW-04",
+    "file": "tests/test_improvement.py",
+    "line": "test_incomplete_coverage_still_detects_resource_regression",
+    "finding": "The resource-regression test only covers an incomplete candidate with a complete baseline. The baseline-incomplete case, where the lower-bound argument fails, has no test.",
+    "severity": "minor",
+    "kind": "missing_test",
+    "evidence": "self.usage(self.baseline)\n        self.usage(self.candidate, coverage=\"incomplete\", overhead=40)",
+    "suggested_fix": "Add a case with an incomplete baseline and a complete candidate and assert the intended verdict."
+   },
+   {
+    "id": "MS-03",
+    "unit": "OAW-04",
+    "file": "scripts/improvement.py",
+    "line": "validate_run usage block",
+    "finding": "Overhead is added to `tokens` but not to `cost_usd` or `latency_ms`. A candidate whose judge or sidecar overhead is hidden can still be eligible through a cost or latency efficiency gain while coverage is 'complete'. Conversely, `covered` also blocks cost and latency gains that do not depend on token coverage. The packet does not say whether case cost_usd already includes the overhead.",
+    "severity": "minor",
+    "kind": "unclear",
+    "evidence": "totals[\"tokens\"] += overhead  # charged to the arm it serves; grading tokens never are\n...\n        efficiency_gain |= covered and old > 0 and new < old and (old - new) / old >= improvement",
+    "suggested_fix": "State in the spec or docs whether cost_usd and latency include overhead, and apply the coverage block only to the metrics that coverage describes, or apply it to all of them deliberately."
+   },
+   {
+    "id": "MS-04",
+    "unit": "OAW-03",
+    "file": "scripts/improvement.py",
+    "line": "TRIGGER_RATE (new line ~23) / compare vacuous check",
+    "finding": "The stated design says minimum_rate 0.667, but the code default is 2/3 and uses a strict `<` comparison. A spec that writes the documented 0.667 explicitly makes 2-of-3 (0.6666…) vacuous, while the default accepts it.",
+    "severity": "minor",
+    "kind": "design_mismatch",
+    "evidence": "TRIGGER_RATE = 2 / 3  # default trigger minimum_rate: 2 of 3, 4 of 5 repeats\n...\n        vacuous = {name: rate for name, rate in rates.items() if rate < minimum}",
+    "suggested_fix": "Compare fired counts against ceil(minimum_rate * repeats - epsilon), or document that 0.667 is stricter than 2/3."
+   },
+   {
+    "id": "MS-05",
+    "unit": "OAW-03",
+    "file": "tests/test_improvement.py",
+    "line": "test_decide_revalidation_fails_closed_on_vacuous_comparison",
+    "finding": "The test depends on decide() revalidating stored comparisons ('Revalidated comparison is no longer eligible'), but decide's revalidation code is not in the diff. I cannot confirm that the trigger, or usage coverage, is re-applied there rather than the test passing for another reason.",
+    "severity": "minor",
+    "kind": "unclear",
+    "evidence": "with self.assertRaisesRegex(ValueError, \"Revalidated comparison is no longer eligible\"):\n            self.decide()",
+    "suggested_fix": "Include decide()'s revalidation path in review, or assert which check produced the refusal."
+   },
+   {
+    "id": "MS-06",
+    "unit": "OAW-03",
+    "file": "docs/CLI_Reference.md",
+    "line": "trigger paragraph",
+    "finding": "A proposal that carries a trigger or usage_coverage block, when compared or decided by an older improvement.py, silently yields the old verdict. A vacuous candidate could therefore become eligible or accepted. This is documented, but nothing in the stored record forces newer tooling.",
+    "severity": "minor",
+    "kind": "design_mismatch",
+    "evidence": "Only the `improvement.py` from the unreleased OAW-03 change (after the 2.0.0 proposal) enforces it; older copies ignore the block silently.",
+    "suggested_fix": "Record a minimum tool version or feature list in the proposal so older copies can refuse it, without bumping SCHEMA."
+   },
+   {
+    "id": "MS-07",
+    "unit": "OAW-01",
+    "file": "scripts/oaw_common.py",
+    "line": "_npm_shim (resolver block)",
+    "finding": "node_modules confinement is lexical only (normpath plus startswith). A junction or symlink inside node_modules can point the started .js or .exe outside the shim's folder.",
+    "severity": "minor",
+    "kind": "security",
+    "evidence": "target = os.path.normpath(os.path.join(folder, relative.replace(\"\\\\\", os.sep)))\n        if (os.path.normcase(target).startswith(modules) and os.path.isfile(target)",
+    "suggested_fix": "Compare os.path.realpath of the target against the realpath of node_modules, or document that links are trusted."
+   },
+   {
+    "id": "MS-08",
+    "unit": "OAW-01",
+    "file": "scripts/oaw_common.py",
+    "line": "resolve_cli",
+    "finding": "When platform='nt' is injected on POSIX (presumably for tests), path handling still uses the host os.path, os.pathsep and os.access. Absolute Windows PATH entries ('C:\\...') are dropped by os.path.isabs on Linux, so cross-platform tests may not exercise real Windows parsing. test_cli_resolve is not shown.",
+    "severity": "minor",
+    "kind": "unclear",
+    "evidence": "def resolve_cli(name_or_path, *, platform=os.name, search_path=None):\n...\n    directories = [entry for entry in (item.strip('\"') for item in entries.split(os.pathsep)) if os.path.isabs(entry)]",
+    "suggested_fix": "Use ntpath when platform == 'nt', or confirm that test_cli_resolve runs the Windows cases on a Windows CI host."
+   },
+   {
+    "id": "MS-09",
+    "unit": "OAW-01",
+    "file": "scripts/oaw_common.py / evals",
+    "line": "n/a",
+    "finding": "The stated target says resolve_cli is used by new registrations of evals/three-way/bench.py and evals/skill-value/experiment.py, with manifests recording cli_argv and resolver_sha256. No runner or manifest change is in the diff, and the CHANGELOG says no runner uses it yet.",
+    "severity": "minor",
+    "kind": "design_mismatch",
+    "evidence": "No runner uses it yet; frozen eval contracts are unchanged.",
+    "suggested_fix": "Either wire the runners and manifests, or mark that part of OAW-01 as deferred in the design."
+   },
+   {
+    "id": "MS-10",
+    "unit": "OAW-01",
+    "file": "scripts/harness_check.py",
+    "line": "REQUIRED_TEST_MODULES / MINIMUM_TESTS",
+    "finding": "test_cli_resolve is now required and MINIMUM_TESTS rises by 44, but test_cli_resolve.py is not in the packet. Neither the resolver's test coverage nor the count can be checked; this group's test_improvement adds only 13 tests.",
+    "severity": "minor",
+    "kind": "unclear",
+    "evidence": "\"test_catalog_core\", \"test_catalog\", \"test_catalog_ui\", \"test_cli_resolve\")\nMINIMUM_TESTS = 337",
+    "suggested_fix": "Include tests/test_cli_resolve.py in the review packet."
+   },
+   {
+    "id": "MS-11",
+    "unit": "OAW-01",
+    "file": "scripts/oaw_common.py",
+    "line": "resolver_sha256",
+    "finding": "The hash covers only the marked block. Behavior that the block depends on but that lives outside it (imports, and os.environ PATHEXT semantics) is not hashed. A change to the code above the marker would also not change the recorded hash.",
+    "severity": "minor",
+    "kind": "unclear",
+    "evidence": "start, end = lines.index(\"# >>> cli resolver\"), lines.index(\"# <<< cli resolver\")",
+    "suggested_fix": "Accept this as documented, or also hash the module's import header."
+   }
+  ],
+  "coverage": {
+   "reviewed": [
+    "scripts/improvement.py (OAW-03, OAW-04)",
+    "tests/test_improvement.py",
+    "scripts/oaw_common.py resolver block (OAW-01)",
+    "scripts/harness_check.py",
+    "CHANGELOG/CLI_Reference entries for OAW-01/03/04"
+   ],
+   "not_reviewed": [
+    "tests/test_cli_resolve.py (not in packet)",
+    "improvement.py decide() revalidation (not in packet)",
+    "evals runners (not in packet)",
+    "OAW-12 SECRET_PATTERNS, OAW-02/21/22 path and citation code and docs (outside this group)"
+   ]
+  },
+  "summary": "The trigger and usage-coverage gates match their designs in the common cases. The main defect is that resource regressions are treated as certain even when the baseline's own usage is incomplete, and no test covers that case. Several items cannot be checked from the packet: the resolver tests, decide() revalidation and runner wiring."
+ },
+ "raw_result_if_unparsed": null,
+ "host_version": "2.1.318 (Claude Code)",
+ "local_paths_redacted": true
+}

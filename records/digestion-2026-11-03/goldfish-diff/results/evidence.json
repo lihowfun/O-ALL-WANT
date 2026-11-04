@@ -1,0 +1,256 @@
+{
+ "packet": "evidence.md",
+ "started_at": "2026-11-04T01:30:41.910527+00:00",
+ "launch": {
+  "argv": [
+   "claude",
+   "-p",
+   "--tools",
+   "",
+   "--strict-mcp-config",
+   "--disable-slash-commands",
+   "--setting-sources",
+   "project",
+   "--output-format",
+   "stream-json",
+   "--verbose"
+  ],
+  "stdin": "packet",
+  "cwd": "fresh empty temp folder"
+ },
+ "exit_code": 0,
+ "stderr_tail": "",
+ "init_event": {
+  "cwd": "<tmp>/oaw-goldfish-vras_qek",
+  "model": "claude-opus-5-5",
+  "claude_code_version": "2.1.318",
+  "permissionMode": "default",
+  "apiKeySource": "none",
+  "memory_paths": {
+   "auto": "~/.claude/projects/<tmp>-oaw-goldfish-vras-qek/memory/"
+  },
+  "output_style": "default",
+  "tools": [],
+  "mcp_servers": [],
+  "slash_commands": [],
+  "skills": [],
+  "plugins": [
+   {
+    "name": "cc-plugin-sec-default",
+    "path": "builtin",
+    "source": "cc-plugin-sec-default@builtin"
+   },
+   {
+    "name": "cc-plugin-agents-md",
+    "path": "builtin",
+    "source": "cc-plugin-agents-md@builtin"
+   },
+   {
+    "name": "cc-plugin-telemetry",
+    "path": "builtin",
+    "source": "cc-plugin-telemetry@builtin"
+   },
+   {
+    "name": "cc-plugin-privacy",
+    "path": "builtin",
+    "source": "cc-plugin-privacy@builtin"
+   },
+   {
+    "name": "cc-plugin-plugin-authoring",
+    "path": "builtin",
+    "source": "cc-plugin-plugin-authoring@builtin"
+   }
+  ],
+  "agents": [
+   "claude",
+   "Explore",
+   "general-purpose",
+   "Plan",
+   "statusline-setup",
+   "web-fetch"
+  ]
+ },
+ "init_checks": {
+  "tools": true,
+  "mcp_servers": true,
+  "slash_commands": true,
+  "skills": true,
+  "plugins_builtin_only": true,
+  "agents_unusable_without_tools": true,
+  "cwd_is_fresh_temp": true,
+  "auto_memory_empty": true
+ },
+ "canary": "Not 'none'. Before this packet I received a system prompt that set me up as a Claude Agent SDK agent. It contained: harness rules (markdown output, permission modes, pasted-content handling, prefer dedicated tools, cite file:line, use they/them pronouns, confirm irreversible or outward-facing actions, report outcomes faithfully); a security-assistance policy; a description of a persistent file-based memory system at ~/.claude/projects/<tmp>-oaw-goldfish-vras-qek/memory/ with a MEMORY.md index convention (no memory contents or index entries were shown to me); environment facts (working dir <tmp>/oaw-goldfish-vras_qek, not a git repo, Linux on WSL2, bash, model Opus 5.5, date 2026-11-04, Claude 5 model IDs, Claude Code surfaces, fast mode); rules on untrusted downloads, context summarization, acting decisively and not recreating existing games; and an automatically attached user-account context giving the user's email address with a rule not to send it to unrelated services. No CLAUDE.md, settings file, project facts or tool definitions were provided, and I used no tools.",
+ "zero_context_verified": false,
+ "usage": {
+  "input_tokens": 2,
+  "cache_creation_input_tokens": 40262,
+  "cache_read_input_tokens": 649,
+  "output_tokens": 12529,
+  "output_tokens_details": {
+   "thinking_tokens": 8568
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 40262,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "global",
+  "iterations": [
+   {
+    "input_tokens": 2,
+    "output_tokens": 12529,
+    "cache_read_input_tokens": 649,
+    "cache_creation_input_tokens": 40262,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 40262
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "total_cost_usd": 0.5728138,
+ "review": {
+  "canary": "Not 'none'. Before this packet I received a system prompt that set me up as a Claude Agent SDK agent. It contained: harness rules (markdown output, permission modes, pasted-content handling, prefer dedicated tools, cite file:line, use they/them pronouns, confirm irreversible or outward-facing actions, report outcomes faithfully); a security-assistance policy; a description of a persistent file-based memory system at ~/.claude/projects/<tmp>-oaw-goldfish-vras-qek/memory/ with a MEMORY.md index convention (no memory contents or index entries were shown to me); environment facts (working dir <tmp>/oaw-goldfish-vras_qek, not a git repo, Linux on WSL2, bash, model Opus 5.5, date 2026-11-04, Claude 5 model IDs, Claude Code surfaces, fast mode); rules on untrusted downloads, context summarization, acting decisively and not recreating existing games; and an automatically attached user-account context giving the user's email address with a rule not to send it to unrelated services. No CLAUDE.md, settings file, project facts or tool definitions were provided, and I used no tools.",
+  "findings": [
+   {
+    "id": "EV-01",
+    "unit": "OAW-12",
+    "file": "scripts/oaw_common.py",
+    "line": "SECRET_PATTERNS openai_key (new ~line 44)",
+    "finding": "The openai_key pattern accepts any 20+ characters of [A-Za-z0-9_-] after 'sk-', so ordinary kebab-case text such as 'sk-learn-compatible-estimator-api' is refused. There is no override flag, so such a memory or annotation note cannot be written at all.",
+    "severity": "minor",
+    "kind": "bug",
+    "evidence": "(\"openai_key\", r\"\\bsk-(?!ant-)[A-Za-z0-9_-]{20,}(?!\\w)\", 0),",
+    "suggested_fix": "Require a digit/mixed-case density, or the known prefixes (sk-proj-, sk-svcacct-, legacy sk- + 48 alnum without hyphens), and add a kebab-case negative fixture."
+   },
+   {
+    "id": "EV-02",
+    "unit": "OAW-12",
+    "file": "scripts/oaw_common.py",
+    "line": "SECRET_PATTERNS url_credentials",
+    "finding": "Placeholder detection only inspects the first password character. Common documentation placeholders like 'postgres://user:password@localhost' are refused with no override. A real password that starts with '$', '{' or '<' is silently allowed.",
+    "severity": "minor",
+    "kind": "design_mismatch",
+    "evidence": "(\"url_credentials\", r\"\\b[a-z][a-z0-9+.-]*://[^\\s:/@'\\\"<>]*:(?![${<])[^\\s/@'\\\"<>]+@\", re.IGNORECASE),",
+    "suggested_fix": "Match whole placeholder forms (${...}, <...>, %s, literal 'password'/'pass') as exemptions instead of a first-character lookahead, and add fixtures for both directions."
+   },
+   {
+    "id": "EV-03",
+    "unit": "OAW-12",
+    "file": "scripts/oaw_common.py",
+    "line": "SECRET_PATTERNS url_credentials / evidence_write_refusal",
+    "finding": "The note length is unbounded, and url_credentials can be tried from every word boundary with an unbounded scheme run. Input such as 'a.a.a.a…' with no '://' therefore scans quadratically. A long pasted note (up to the OS argv limit) can stall the CLI.",
+    "severity": "minor",
+    "kind": "bug",
+    "evidence": "r\"\\b[a-z][a-z0-9+.-]*://...\"  /  names = find_secret_names(text)",
+    "suggested_fix": "Bound the scheme length (e.g. {0,31}) and/or cap the note length before scanning, and add a long-input timing test."
+   },
+   {
+    "id": "EV-04",
+    "unit": "OAW-12",
+    "file": "scripts/oaw_common.py",
+    "line": "SECRET_PATTERNS aws_access_key",
+    "finding": "aws_access_key has no leading or trailing boundary. Any base64 or hash blob that contains 'AKIA' or 'ASIA' followed by 16 uppercase/digit characters is refused. Every other prefixed pattern is anchored with \\b.",
+    "severity": "minor",
+    "kind": "bug",
+    "evidence": "(\"aws_access_key\", r\"(?:AKIA|ASIA)[0-9A-Z]{16}\", 0),",
+    "suggested_fix": "Wrap it as (?<![A-Za-z0-9])(?:AKIA|ASIA)[0-9A-Z]{16}(?![A-Za-z0-9]) and add an embedded-in-blob negative fixture."
+   },
+   {
+    "id": "EV-05",
+    "unit": "OAW-12",
+    "file": "scripts/context_hub.py",
+    "line": "memory_add / annotate (+_refuse_unsafe_note)",
+    "finding": "memory_add and annotate now raise ValueError on a match. Any non-CLI Python caller of these functions now gets an exception it did not get before (for example another script importing context_hub). Those callers are not shown and are not tested.",
+    "severity": "minor",
+    "kind": "unclear",
+    "evidence": "def memory_add(note):\n+    _refuse_unsafe_note(note)",
+    "suggested_fix": "List or grep the in-repo importers of memory_add/annotate and add a test for any that pass through user or tool text."
+   },
+   {
+    "id": "EV-06",
+    "unit": "OAW-15",
+    "file": "scripts/context_hub.py",
+    "line": "_index_row / _render_recall index branch",
+    "finding": "Only emptiness and length are validated on the query, so a query containing a newline (possible via the Python API, or a quoted CLI argument) produces a match window that spans lines. That breaks the documented two-lines-per-hit text format. The memory header date field is also uncapped (only the title is cut to 120), so a long bracketed header inflates a row.",
+    "severity": "minor",
+    "kind": "bug",
+    "evidence": "window = entry[left:match.start()].lstrip() + match.group() + entry[match.end():right].rstrip()\n...\nlines.append(f\"  > {item['match']}\")",
+    "suggested_fix": "Reject queries containing line breaks (or escape newlines in text rows), cap the date like the title, and add a test for each."
+   },
+   {
+    "id": "EV-07",
+    "unit": "OAW-15",
+    "file": "tests/test_context_hub.py",
+    "line": "test_recall_default_output_is_byte_identical",
+    "finding": "The golden strings are only a regression guard if they were really captured from 790177e. The comment says so, but the packet cannot show it. If they were generated with the new code, the test would pass even if the default output had changed.",
+    "severity": "minor",
+    "kind": "weak_test",
+    "evidence": "# Byte-golden of the default mode, recorded before --index existed.",
+    "suggested_fix": "Record in the commit or test how the golden was produced (e.g. run against the parent revision in CI once) so reviewers can confirm it."
+   },
+   {
+    "id": "EV-08",
+    "unit": "OAW-15",
+    "file": "scripts/context_hub.py",
+    "line": "scan(): _page_title(...)",
+    "finding": "Index mode depends on _page_title, which is not shown in the diff. Its frontmatter, first-heading and filename fallback (underscore to space) cannot be verified here; the knowledge-page test only implies it.",
+    "severity": "minor",
+    "kind": "unclear",
+    "evidence": "title = _page_title(os.path.basename(path), body, metadata)",
+    "suggested_fix": "Include _page_title in the review packet or point to its existing tests."
+   },
+   {
+    "id": "EV-09",
+    "unit": "shared",
+    "file": "scripts/harness_check.py",
+    "line": "REQUIRED_TEST_MODULES / MINIMUM_TESTS / cli_check",
+    "finding": "This diff also carries out-of-group units: resolve_cli, normalize_cited_path, exact_case_path, the markdown_lines alias, the wiki_sync 'cites' contract, and the OAW-01/03/04/21/22 changelog and docs. harness_check now requires test_cli_resolve and a 'cites' subcommand, and raises MINIMUM_TESTS from 293 to 337. None of those files are in the packet. This group adds only about 8 tests, so the gate's correctness cannot be checked here.",
+    "severity": "major",
+    "kind": "unclear",
+    "evidence": "\"test_catalog_core\", \"test_catalog\", \"test_catalog_ui\", \"test_cli_resolve\")\nMINIMUM_TESTS = 337\n\"wiki_sync.py\": (\"refresh\", \"lint\", \"cites\")",
+    "suggested_fix": "Review those units in their own packets, or split the commit so the evidence group's diff contains only OAW-12 and OAW-15."
+   },
+   {
+    "id": "EV-10",
+    "unit": "OAW-12",
+    "file": "tests/test_context_hub.py",
+    "line": "test_each_secret_pattern_has_positive_and_negative_fixture",
+    "finding": "Each negative fixture only asserts that its own pattern does not fire, not that the whole guard accepts it. A negative that another pattern refuses would go unnoticed, and the false-positive risk (EV-01, EV-02) has no regression test.",
+    "severity": "minor",
+    "kind": "weak_test",
+    "evidence": "for text in negatives:\n    with self.subTest(name=name, case=\"negative\"):\n        self.assertNotIn(name, common.find_secret_names(text))",
+    "suggested_fix": "Also assert evidence_write_refusal(text) is None for negatives that should be writable, and add prose false-positive fixtures (sk-learn-…, user:password@localhost)."
+   }
+  ],
+  "coverage": {
+   "reviewed": [
+    "scripts/context_hub.py (OAW-12 guard calls, OAW-15 --index, cursor binding, default-mode rename)",
+    "scripts/oaw_common.py SECRET_PATTERNS, find_secret_names, evidence_write_refusal",
+    "tests/test_context_hub.py new tests",
+    "docs/CLI_Reference.md and CHANGELOG.md entries for OAW-12/OAW-15",
+    "scripts/harness_check.py changes (gate only)"
+   ],
+   "not_reviewed": [
+    "oaw_common resolve_cli/_npm_shim/_which/resolver_sha256 (OAW-01, out of group)",
+    "normalize_cited_path/exact_case_path (OAW-02, out of group)",
+    "wiki_sync.py cites/lint changes and docs/Wiki_Sync_Guide.md (OAW-21/22, code not shown)",
+    "improvement.py OAW-03/04 (not shown)",
+    "_page_title, locked_update, confined_path internals (not shown)",
+    "tests/test_cli_resolve (not shown)"
+   ]
+  },
+  "summary": "OAW-12 and OAW-15 broadly match their stated designs: the guard runs before any file is opened, never echoes the value, and the index cursor is mode-bound while the default hash stays unchanged. The main risks are false-positive refusals with no override (openai_key, url_credentials, unanchored AKIA), a quadratic regex on long input, and weak negative-fixture tests. The commit also bundles unrelated units and harness gates whose code is not in this packet, so those could not be checked."
+ },
+ "raw_result_if_unparsed": null,
+ "host_version": "2.1.318 (Claude Code)",
+ "local_paths_redacted": true
+}
