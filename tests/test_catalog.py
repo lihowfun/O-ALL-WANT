@@ -1081,6 +1081,53 @@ class CatalogCliTests(unittest.TestCase):
         self.assertEqual(list(registry["foods"]), [fid])
         self.assertEqual(len(self.cli("show", fid)["card"]["historical"]), 1)
 
+    # ------------------------------------------------------------------ questions asked on the page (D23)
+
+    def test_questions_from_the_page_are_listed_and_marked_answered(self):
+        name = self.clean_food()
+        first = catalog.record_question(self.project, name, "intake", "這個卡點是什麼意思？")
+        second = catalog.record_question(self.project, name, "intake", "  不處理\u0007會怎樣？‮ ")
+        self.assertEqual((second["question"], second["status"]), ("不處理 會怎樣？", "open"))
+        for bad in ((name, "warp-speed", "q"), ("nobody", "intake", "q"), (name, "intake", " ​ "),
+                    (name, "intake", "x" * (catalog.QUESTION_CHARS + 1))):
+            with self.assertRaises(catalog.CatalogError):
+                catalog.record_question(self.project, *bad)
+        listed = self.cli("questions")
+        self.assertEqual((listed["open"], [q["id"] for q in listed["questions"]]), (2, [first["id"], second["id"]]))
+        out = io.StringIO()
+        with redirect_stdout(out):
+            self.assertEqual(catalog.main(["questions", "--target", str(self.project)]), 0)
+        text = out.getvalue()
+        self.assertIn("問題：2 個還沒回答（共 2 個，", text)
+        self.assertIn(f"  [{first['id']}] 待回答 · {first['time']} · sweet-notes · 入口", text)
+        self.assertIn("      這個卡點是什麼意思？", text)
+        self.assertIn("回答之後：catalog.py questions --answered 編號", text)
+        self.assertEqual(self.cli("questions", "--answered", first["id"])["answered"], [first["id"]])
+        self.assertEqual([q["id"] for q in self.cli("questions")["questions"]], [second["id"]])
+        everything = self.cli("questions", "--all")["questions"]
+        self.assertEqual([q["status"] for q in everything], ["answered", "open"])
+        self.assertIn("answered_at", everything[0])
+        self.assertIn("Unknown question", self.cli("questions", "--answered", "nope1234", code=2)["error"])
+        self.assertEqual(self.cli("questions", "--all")["questions"], everything)  # a refused mark changes nothing
+
+    def test_the_question_file_drops_answered_questions_first_and_refuses_when_full(self):
+        name = self.clean_food()
+        with patch.object(catalog, "QUESTIONS_KEEP", 3):
+            ids = [catalog.record_question(self.project, name, "intake", f"q{i}")["id"] for i in range(3)]
+            catalog.cmd_questions(self.project, [ids[1]])
+            fourth = catalog.record_question(self.project, name, "intake", "q3")
+            self.assertEqual([q["id"] for q in catalog.load_questions(self.project)], [ids[0], ids[2], fourth["id"]])
+            with self.assertRaises(catalog.CatalogError) as caught:
+                catalog.record_question(self.project, name, "intake", "q4")
+            self.assertTrue(core.zh_error(caught.exception).startswith("問題已經記滿了"))
+            self.assertEqual(len(catalog.load_questions(self.project)), 3)
+        # A damaged line is skipped, never guessed; the file stays inside the project's catalog folder.
+        path = catalog.catalog_path(self.project, catalog.QUESTIONS_FILE)
+        self.assertEqual(path, self.project / ".oaw" / "catalog" / "questions.jsonl")
+        path.write_text(path.read_text(encoding="utf-8") + "{not json\n[1, 2]\n", encoding="utf-8")
+        self.assertEqual(len(catalog.load_questions(self.project)), 3)
+        self.assertFalse(list(self.lab.rglob("questions*")))
+
 
 if __name__ == "__main__":
     unittest.main()

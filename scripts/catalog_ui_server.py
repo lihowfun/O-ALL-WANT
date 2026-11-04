@@ -16,6 +16,12 @@ textContent only. Owner confirmation codes live only in this process's memory
 and are printed on the interactive terminal that runs `ui` or `menu`; they
 never appear in an API response or on disk, and a session stops accepting codes
 after three wrong ones. Without an interactive terminal no code is issued.
+
+The page has no model. Asking about a blocker is the one write outside the
+action layer: POST /api/question (same guards, a small body cap) appends the
+sanitized question to .oaw/catalog/questions.jsonl in the project and returns
+the question with the food's facts for the owner to paste into a Claude
+conversation; `catalog.py questions` lists them.
 """
 from __future__ import annotations
 
@@ -46,6 +52,9 @@ STATIC = {"/": ("index.html", "text/html; charset=utf-8"), "/index.html": ("inde
           "/app.js": ("app.js", "text/javascript; charset=utf-8"), "/style.css": ("style.css", "text/css; charset=utf-8")}
 TOKEN_HEADER = "X-OAW-Token"
 MAX_BODY = 256 * 1024
+QUESTION_PATH = "/api/question"
+MAX_QUESTION_BODY = 8 * 1024
+OPEN_QUESTIONS_SHOWN = 50
 CSP = ("default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self'; "
        "base-uri 'none'; form-action 'none'; frame-ancestors 'none'")
 SECURITY_HEADERS = {"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", "Referrer-Policy": "no-referrer",
@@ -340,13 +349,40 @@ class UiApp:
 
     def view_payload(self) -> dict:
         view, note = oaw_status.load_view(self.target)
-        return {"view": view, "note": note, "stale": oaw_status.view_stale(self.target) if view else False, "busy": self.busy()}
+        return {"view": view, "note": note, "stale": oaw_status.view_stale(self.target) if view else False, "busy": self.busy(),
+                "questions": self.open_questions()}
+
+    def open_questions(self) -> list:
+        """The newest open questions, so the page shows what is still waiting for an answer."""
+        try:
+            records = catalog.load_questions(self.target)
+        except catalog.CatalogError:
+            return []
+        keep = ("id", "time", "food", "stage", "question")
+        return [{k: r.get(k) for k in keep} for r in records if r.get("status") != "answered"][-OPEN_QUESTIONS_SHOWN:]
+
+    def ask(self, params: dict) -> tuple:
+        """Record one question about a food's blocker; (HTTP status, body). The engine sanitizes and caps it."""
+        food, stage, text = params.get("food"), params.get("stage"), params.get("question")
+        if not all(isinstance(value, str) for value in (food, stage, text)) or len(food) > 200 or len(stage) > 40:
+            message = "food, stage and question must be text."
+            return 400, {"ok": False, "error": message, "error_zh": core.zh_error(message)}
+        try:
+            record = catalog.record_question(self.target, food, stage, text)
+        except (catalog.CatalogError, OSError, ValueError) as exc:
+            message = core.sanitize_text(str(exc), 300)
+            return 400, {"ok": False, "error": message, "error_zh": core.zh_error(message)}
+        view, _note = oaw_status.load_view(self.target)
+        card = next((f for f in (view or {}).get("foods") or [] if isinstance(f, dict) and f.get("id") == food), {"id": food})
+        return 200, {"ok": True, "question": record, "brief": core.question_brief(card, record),
+                     "path": f"{'/'.join(catalog.CATALOG_DIR)}/{catalog.QUESTIONS_FILE}"}
 
     def meta(self) -> dict:
         return {"release": core.RELEASE, "project": str(self.target), "project_name": self.target.name,
                 "installed": (self.target / oaw.MANIFEST_PATH).is_file(), "sandbox_conditions": list(core.SANDBOX_CONDITIONS),
                 "token_label": core.TOKEN_LABEL, "token_label_zh": core.TOKEN_LABEL_ZH, "egm_skills": list(oaw.EGM_SKILLS), "bundled_skills": list(oaw.BUNDLED_SKILLS),
-                "actions": sorted(ACTIONS), "paid_runs_enabled": False, "menu_command": menu_command(self.target)}
+                "actions": sorted(ACTIONS), "paid_runs_enabled": False, "menu_command": menu_command(self.target),
+                "question_chars": catalog.QUESTION_CHARS}
 
 
 def menu_command(target: Path) -> str:
@@ -366,6 +402,16 @@ class UiHandler(http.server.BaseHTTPRequestHandler):
         return
 
     def _send(self, status: int, body: bytes, content_type: str, extra=None):
+        if self.command == "POST" and status in (403, 405, 415) and not getattr(self, "_body_read", False):
+            # A refused POST's body is read and dropped (never parsed), so closing the socket with unread
+            # bytes cannot reset the connection before the client reads the refusal (seen on Windows).
+            self._body_read = True
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+            except ValueError:
+                length = 0
+            if 0 < length <= MAX_BODY:
+                self.rfile.read(length)
         self.send_response(status)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(body)))
@@ -404,7 +450,7 @@ class UiHandler(http.server.BaseHTTPRequestHandler):
         if path.startswith("/api/"):
             if not self._guard(api=True):
                 return
-            if path.startswith("/api/action/"):
+            if path.startswith("/api/action/") or path == QUESTION_PATH:
                 return self._json(405, {"ok": False, "error": "Actions are POST-only."}, {"Allow": "POST"})
             if path == "/api/view":
                 return self._json(200, app.view_payload())
@@ -425,28 +471,44 @@ class UiHandler(http.server.BaseHTTPRequestHandler):
             return self._send(404, "Not found".encode(), "text/plain; charset=utf-8")
         self._send(200, (UI_DIR / entry[0]).read_bytes(), entry[1])
 
-    def do_POST(self):  # noqa: N802
-        path, app = self._path(), self.server.app
-        if not path.startswith("/api/action/"):
-            if self._guard(api=False):
-                self._json(405, {"ok": False, "error": "Only /api/action/NAME accepts POST."}, {"Allow": "GET"})
-            return
-        if not self._guard(api=True):
-            return
+    def _body(self, limit: int):
+        """The JSON object of a POST, or None after an error response has been sent."""
         if self.headers.get("Content-Type", "").split(";", 1)[0].strip().casefold() != "application/json":
-            return self._json(415, {"ok": False, "error": "Send application/json."})
+            self._json(415, {"ok": False, "error": "Send application/json."})
+            return None
         try:
             length = int(self.headers.get("Content-Length", ""))
         except ValueError:
-            return self._json(411, {"ok": False, "error": "Content-Length is required."})
-        if length < 0 or length > MAX_BODY:
-            return self._json(413, {"ok": False, "error": "Request body is too large."})
+            self._json(411, {"ok": False, "error": "Content-Length is required."})
+            return None
+        if length < 0 or length > limit:
+            self._json(413, {"ok": False, "error": "Request body is too large.", "error_zh": "送出的內容太大。"})
+            return None
+        self._body_read = True
         try:
             params = json.loads(self.rfile.read(length).decode("utf-8")) if length else {}
         except (ValueError, UnicodeError):
-            return self._json(400, {"ok": False, "error": "Body is not JSON."})
+            self._json(400, {"ok": False, "error": "Body is not JSON."})
+            return None
         if not isinstance(params, dict):
-            return self._json(400, {"ok": False, "error": "Body must be a JSON object."})
+            self._json(400, {"ok": False, "error": "Body must be a JSON object."})
+            return None
+        return params
+
+    def do_POST(self):  # noqa: N802
+        path, app = self._path(), self.server.app
+        if path != QUESTION_PATH and not path.startswith("/api/action/"):
+            if self._guard(api=False):
+                self._json(405, {"ok": False, "error": "Only /api/action/NAME and /api/question accept POST."}, {"Allow": "GET"})
+            return
+        if not self._guard(api=True):
+            return
+        params = self._body(MAX_QUESTION_BODY if path == QUESTION_PATH else MAX_BODY)
+        if params is None:
+            return
+        if path == QUESTION_PATH:
+            status, body = app.ask(params)
+            return self._json(status, body)
         name = path[len("/api/action/"):]
         if name not in ACTIONS:
             return self._json(404, {"ok": False, "error": "Unknown action."})
@@ -495,7 +557,7 @@ def start_server(target: Path, *, port: int = 0, token: str | None = None, auto_
 
 def cmd_ui(target: Path, *, open_browser: bool = True, port: int = 0) -> dict:
     server = start_server(target, port=port)
-    print(f"OAW 消化系統：{server.url}", flush=True)
+    print(f"OAW 消化道：{server.url}", flush=True)
     print("只接受本機 127.0.0.1；網址裡是這次的通行碼，不要分享。確認碼會印在這個終端機。按 Ctrl+C 結束。", flush=True)
     if open_browser:
         try:
@@ -511,7 +573,7 @@ def cmd_ui(target: Path, *, open_browser: bool = True, port: int = 0) -> dict:
     finally:
         server.shutdown()
         server.server_close()
-    return {"status": "stopped", "lines": ["OAW 消化系統網頁已結束（ui stopped）"]}
+    return {"status": "stopped", "lines": ["OAW 消化道網頁已結束（ui stopped）"]}
 
 
 # --------------------------------------------------------------------------- terminal menu

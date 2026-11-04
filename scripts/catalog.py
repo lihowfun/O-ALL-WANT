@@ -9,7 +9,8 @@ its %PDF- header. Verdicts come from catalog_core.derive();
 stars only order the scout queue. Absorb, remove and restore preview by
 default and change the OAW-managed layer only with --apply, after a restore
 point. Paid tests are planned, never run, in v0. `ui` opens the local web page
-and `menu` the same actions as a numbered terminal menu (catalog_ui_server.py).
+and `menu` the same actions as a numbered terminal menu (catalog_ui_server.py);
+`questions` lists what the owner asked about a blocker on the page.
 The official intake process both show is docs/SKILL_INTAKE.md.
 """
 from __future__ import annotations
@@ -2175,6 +2176,106 @@ def cmd_view(target: Path) -> dict:
     return {"status": "view", "path": str(catalog_path(target, "view.json")), "lines": lines}
 
 
+# --------------------------------------------------------------------------- questions (asked on the page)
+
+# The page has no model: a question about a blocker is recorded here and answered by Claude in the conversation.
+QUESTIONS_FILE = "questions.jsonl"
+QUESTION_CHARS = 500
+QUESTIONS_KEEP = 200
+
+
+def _question_records(text: str) -> list:
+    """The valid records of questions.jsonl; a damaged line is skipped, never guessed."""
+    records = []
+    for line in text.splitlines():
+        try:
+            record = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(record, dict) and isinstance(record.get("id"), str) and isinstance(record.get("question"), str):
+            records.append(record)
+    return records
+
+
+def _question_text(records: list) -> str:
+    return "".join(json.dumps(r, ensure_ascii=False, sort_keys=True) + "\n" for r in records)
+
+
+def load_questions(target: Path) -> list:
+    try:
+        return _question_records(catalog_path(target, QUESTIONS_FILE).read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return []
+    except (OSError, UnicodeError) as exc:
+        raise CatalogError(f"Cannot read {QUESTIONS_FILE}: {exc}") from exc
+
+
+def record_question(target: Path, food: str, stage: str, question: str) -> dict:
+    """Append one owner question about a food's blocker to .oaw/catalog/questions.jsonl.
+
+    The text is capped and sanitized like every other input; the file keeps at most QUESTIONS_KEEP
+    records, dropping the oldest answered ones first and refusing once every kept question is open.
+    """
+    if not isinstance(question, str) or len(question) > QUESTION_CHARS:
+        raise CatalogError(f"A question is at most {QUESTION_CHARS} characters.")
+    text = core.sanitize_text(question, QUESTION_CHARS)
+    if not text:
+        raise CatalogError("A question is empty.")
+    if stage not in core.PIPELINE_ORDER:
+        raise CatalogError(f"Unknown pipeline stage: {core.sanitize_text(stage, 40)}")
+    if not isinstance(food, str) or food not in load_registry(target).get("foods", {}):
+        raise CatalogError(f"Unknown food: {core.sanitize_text(food, 80)}")
+    record = {"id": secrets.token_hex(4), "time": now_iso(), "food": food, "stage": stage, "question": text, "status": "open"}
+
+    def append(current: str) -> str:
+        records = _question_records(current)
+        while len(records) >= QUESTIONS_KEEP:
+            answered = next((r for r in records if r.get("status") == "answered"), None)
+            if answered is None:
+                raise CatalogError(f"Too many open questions ({QUESTIONS_KEEP}); answer some first.")
+            records.remove(answered)
+        return _question_text(records + [record])
+    ensure_gitignore(target)
+    oaw_common.locked_update(str(catalog_path(target, QUESTIONS_FILE)), append, root=str(target))
+    return record
+
+
+def cmd_questions(target: Path, answered=None, show_all: bool = False) -> dict:
+    """List the open questions (all with show_all), or mark the given ids answered."""
+    if answered:
+        wanted, missing = set(answered), set()
+
+        def mark(current: str) -> str:
+            records = _question_records(current)
+            known = {r["id"] for r in records}
+            missing.update(wanted - known)
+            if missing:
+                raise CatalogError("Unknown question: " + ", ".join(sorted(core.sanitize_text(m, 20) for m in missing)))
+            for r in records:
+                if r["id"] in wanted and r.get("status") != "answered":
+                    r.update(status="answered", answered_at=now_iso())
+            return _question_text(records)
+        ensure_gitignore(target)
+        oaw_common.locked_update(str(catalog_path(target, QUESTIONS_FILE)), mark, root=str(target))
+        return {"status": "answered", "answered": sorted(wanted),
+                "lines": [f"marked answered: {', '.join(sorted(wanted))}"]}
+    records = load_questions(target)
+    open_count = sum(1 for r in records if r.get("status") != "answered")
+    shown = records if show_all else [r for r in records if r.get("status") != "answered"]
+    labels = {s["id"]: s["label_zh"] for s in core.PIPELINE_STAGES}
+    lines = [f"問題：{open_count} 個還沒回答（共 {len(records)} 個，{catalog_path(target, QUESTIONS_FILE)}）"]
+    for r in shown:
+        mark = "已回答" if r.get("status") == "answered" else "待回答"
+        lines.append(f"  [{core.sanitize_text(r.get('id'), 20)}] {mark} · {core.sanitize_text(r.get('time'), 30)} · "
+                     f"{core.sanitize_text(r.get('food'), 64)} · {labels.get(r.get('stage')) or core.sanitize_text(r.get('stage'), 20)}")
+        lines.append("      " + core.sanitize_text(r.get("question"), QUESTION_CHARS))
+    if not shown:
+        lines.append("  沒有待回答的問題。" if not show_all else "  還沒有問題。")
+    else:
+        lines.append("  回答之後：catalog.py questions --answered 編號")
+    return {"status": "questions", "open": open_count, "questions": shown, "lines": lines}
+
+
 # --------------------------------------------------------------------------- CLI
 
 def parser() -> argparse.ArgumentParser:
@@ -2249,6 +2350,10 @@ def parser() -> argparse.ArgumentParser:
     ui.add_argument("--no-browser", action="store_true", help="print the URL without opening a browser")
     ui.add_argument("--port", type=int, default=0, help="port on 127.0.0.1 (default: a free port)")
     commands.add_parser("menu", parents=[common], help="the same actions as a numbered terminal menu (Codex, no browser)")
+    questions = commands.add_parser("questions", parents=[common],
+                                    help="questions the owner recorded on the page about a blocker (Claude answers them in the conversation)")
+    questions.add_argument("--all", action="store_true", help="include answered questions")
+    questions.add_argument("--answered", nargs="+", metavar="ID", help="mark these question ids answered")
     return root
 
 
@@ -2296,6 +2401,8 @@ def dispatch(args) -> dict:
         if args.scout_command == "list":
             return cmd_scout_list(target)
         return cmd_scout(target)
+    if command == "questions":
+        return cmd_questions(target, args.answered, args.all)
     if command in ("ui", "menu"):
         import catalog_ui_server
         if command == "menu":

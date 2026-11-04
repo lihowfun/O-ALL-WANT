@@ -85,6 +85,25 @@ class StatusTests(unittest.TestCase):
         self.write(".oaw/catalog/status.json", status)
         self.assertIn("未知（mystery，請更新 OAW）", self.run_cli())
 
+    def test_open_questions_from_the_page_are_counted_and_blockers_explained(self):
+        self.assertEqual(oaw_status.open_questions(self.root), 0)
+        self.assertNotIn("你在網頁上問的問題", self.run_cli())
+        records = [json.dumps({"id": "a1", "question": "q1", "status": "open"}), json.dumps({"id": "a2", "question": "q2", "status": "answered"}),
+                   "{damaged", json.dumps({"id": "a3", "question": "q3"}), json.dumps(["not", "a", "record"])]
+        self.write(".oaw/catalog/questions.jsonl", "\n".join(records) + "\n")
+        self.assertEqual(oaw_status.open_questions(self.root), 2)
+        self.assertIn("你在網頁上問的問題：2 個還沒回答（catalog.py questions 列出；Claude 在對話裡回答）", self.run_cli())
+        self.assertEqual(json.loads(self.run_cli("--json"))["open_questions"], 2)
+        # The page's blocker explanation is on the terminal food card too (catalog.py menu → 4 食物卡).
+        pipeline = {"waiting_zh": "等你", "blocker": {"where_zh": "靜態：1 個高嚴重度旗標待你分流", "basis_zh": ["D5、D7：只舉旗", "F-PIPE x.sh:2：管線"],
+                                                    "if_ignored_zh": "停在靜態", "unknown_zh": ["紀錄沒寫"]}}
+        self.assertEqual(oaw_status.blocker_lines(pipeline), ["  卡在哪：靜態：1 個高嚴重度旗標待你分流 · 等你", "  依據：D5、D7：只舉旗；F-PIPE x.sh:2：管線",
+                                                              "  你不處理會怎樣：停在靜態", "  紀錄沒寫的：紀錄沒寫"])
+        self.assertEqual(oaw_status.blocker_lines({}), [])
+        food = {"id": "x", "display": "a/x", "verdict": {"headline": "risky"}, "pipeline": pipeline}
+        self.assertIn("  卡在哪：靜態：1 個高嚴重度旗標待你分流 · 等你", oaw_status.food_lines(food, detail=True))
+        self.assertNotIn("  卡在哪：靜態：1 個高嚴重度旗標待你分流 · 等你", oaw_status.food_lines(food))
+
 
 if __name__ == "__main__":
     unittest.main()

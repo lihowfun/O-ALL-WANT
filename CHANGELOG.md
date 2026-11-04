@@ -45,6 +45,24 @@ All notable changes to this project will be documented in this file.
   page, `menu` and `oaw_status.py` show a paper's pinned arXiv version + sha256, title, authors
   and license. Tests are offline: the arXiv calls are replaced and the 2606.03979 record is a
   fixture.
+- `catalog.py ui` is now one digestive tract (D23): an SVG tube (serpentine on wide screens,
+  one wavy column on phones) with a stop per stage captioned with its organ (`organ_zh` in the
+  stage table), the two inlets running into the mouth, and side exits counting excreted, held
+  and built components. Each food is a coloured bolus at its real stage with a blue `!` when it
+  waits on the owner, a grey `?` when only optional decisions are left, a still ring when it
+  waits for a planned step and a spinning ring only while a taste runs on it; selecting one
+  highlights the tube it has travelled and shows its source, a progress bar, 現在, the blocker
+  explanation (卡在哪 / 依據 / 你不處理會怎樣, and what the records cannot say), the current
+  stage's actions, the absorb/hold/excrete split and the food card. Every earlier capability
+  (both inlets, food cards, imports, builds, restore, remove, effect, policy) is kept;
+  `prefers-reduced-motion` stops every animation. `food_pipeline` adds `waiting_on` and
+  `blocker` to each food in `view.json`; `catalog.py menu`'s food card prints the same blocker.
+- Asking about a blocker on the page: the page has no model, so a preset or typed question is
+  recorded through a token-guarded `POST /api/question` (8 KB body cap, 500 characters,
+  sanitized) into `.oaw/catalog/questions.jsonl` (local, at most 200 records, oldest answered
+  dropped first) and offered with the food's facts to copy into a Claude conversation.
+  `catalog.py questions [--all] [--answered ID ...]` lists and closes them; `oaw_status.py`
+  counts the open ones.
 - OAW-15 (food: claude-mem, index-then-fetch recall): `context_hub.py memory recall --index` returns
   one row per hit (`source:line` of the match, date, tag or page title, entry size, and a `match`
   window of at most max(120, query length + 40) characters that holds the complete match) under the
