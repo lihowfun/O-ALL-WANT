@@ -235,3 +235,18 @@ feature, round or kit.
    tool calls drops by at least 30% and the number of correct answers is not lower than the native arm.
    Stage 0-alpha passes only if S (or G) beats R by at least 0.15 top-5 file hit rate in some question class
    without producing more output bytes than R. Thresholds are fixed before any result is seen.
+
+## D25. Taste before judging (2026-11-04, owner in chat: "你從來就沒有graphify 執行過 那你怎麼判斷該不該吸收的….. 我們流程有問題"; "試吃就是在安全環境吃看看啊"; "為啥要斷網 就OAW 2 拉一個worktree or brance"; refines D17)
+- No food is judged on reading alone. Every food is first run as it is in a tasting area: a local worktree of
+  OAW 2 (detached, no new branch, never pushed), the food installed in its own environment (for example a
+  separate WSL conda env), no API keys in its environment, and its installer, hooks or always-on rules run only
+  when tasting them is the point. Network cut-off is not required.
+- D17 changes from "food code is never executed without level 2" to "food code is executed only in the
+  tasting area". Level 2 (Docker) stays optional.
+- Tasting compares three arms on the same questions: native, the food as it is, and the OAW version. Zero-token
+  checks run first; only a gap worth measuring goes to a paid agent run (D13 caps unchanged).
+- Each food ends in one of three verdicts: absorb (rebuilt in the standard library), plug in (the original is
+  better; the user installs it and OAW connects to it), or decline.
+- First tasting: graphify 0.9.101 (records/digestion-2026-11-03/taste-graphify/).
+- Proposed in the same review but not decided by the owner: no gate without a tool to pass it; calibrate cost
+  estimates from measured runs; a unit with no real caller is not absorbed; batch process changes.
