@@ -1,0 +1,141 @@
+{
+  "schema": "oaw-goldfish-resolution/1",
+  "base": "b14c875",
+  "head": "656c539",
+  "findings": [
+    {
+      "id": "SL-01",
+      "severity": "minor",
+      "verdict": "fixed",
+      "reason": "_memory_lines splits on CRLF/CR/LF only, for entry parsing and line numbers alike; U+2028, U+0085, form feed and vertical tab no longer shift lines or cut a heading.",
+      "commit": "656c539",
+      "tests": [
+        "tests/test_wiki_sync.py::MemoryCheckTests::test_c18_lines_follow_line_breaks_and_titles_escape_format_characters",
+        "tests/test_wiki_sync.py::MemoryCheckTests::test_c13_crlf_newest_first_line_numbers"
+      ]
+    },
+    {
+      "id": "SL-02",
+      "severity": "minor",
+      "verdict": "fixed",
+      "reason": "_MC_CALL keeps a call token (res.json(), (data.json()), x.json( ) unstripped and classify skips it; calls added to the reviewer false-positive corpus.",
+      "commit": "656c539",
+      "tests": [
+        "tests/test_wiki_sync.py::MemoryCheckTests::test_c20_calls_prose_colons_drives_and_autolinks",
+        "tests/test_wiki_sync.py::MemoryCheckTests::test_c4_reviewer_false_positive_corpus_has_no_missing_path"
+      ]
+    },
+    {
+      "id": "SL-03",
+      "severity": "minor",
+      "verdict": "fixed",
+      "reason": "The anchor is checked with _memory_check_is_link (lstat) before isdir, so a top-level link is unanchored; the bare-name root isfile is removed (the walk judges by name). Comment made precise; a spy test with symlinks shows no outside path is judged by stat.",
+      "commit": "656c539",
+      "tests": [
+        "tests/test_wiki_sync.py::MemoryCheckTests::test_c16_links_are_never_followed"
+      ]
+    },
+    {
+      "id": "SL-04",
+      "severity": "minor",
+      "verdict": "fixed",
+      "reason": "Bare names compare as exact NFC strings on every OS (no normcase, no case-insensitive root stat), so the same memory.md gives the same report everywhere; documented.",
+      "commit": "656c539",
+      "tests": [
+        "tests/test_wiki_sync.py::MemoryCheckTests::test_c21_bare_names_match_exact_case_and_nfc_on_every_os"
+      ]
+    },
+    {
+      "id": "SL-05",
+      "severity": "minor",
+      "verdict": "fixed",
+      "reason": "A single-segment drive token is outside_project only with a file name (C:x.md) or a drive root (C:\\, D:/); A:B, x:y and Q:what are skipped as prose.",
+      "commit": "656c539",
+      "tests": [
+        "tests/test_wiki_sync.py::MemoryCheckTests::test_c20_calls_prose_colons_drives_and_autolinks",
+        "tests/test_wiki_sync.py::MemoryCheckTests::test_c4_reviewer_false_positive_corpus_has_no_missing_path"
+      ]
+    },
+    {
+      "id": "SL-06",
+      "severity": "minor",
+      "verdict": "rejected",
+      "reason": "_fence_after is pre-existing in scripts/oaw_common.py (used by markdown_lines before this diff); its contract (same character, at least as long, up to 3 spaces of indent, info string allowed) is pinned by test_c7_fenced_code_is_not_checked and test_unclosed_raw_fences_cannot_swallow_annotations.",
+      "commit": null,
+      "tests": []
+    },
+    {
+      "id": "SL-07",
+      "severity": "minor",
+      "verdict": "rejected",
+      "reason": "Only two callers exist, both in scripts/wiki_sync.py: promote_candidates (its JSON output is byte-golden in test_c15) and memory_check; context_hub has its own parser and does not import it.",
+      "commit": null,
+      "tests": [
+        "tests/test_wiki_sync.py::MemoryCheckTests::test_c15_promote_candidates_json_golden_is_unchanged"
+      ]
+    },
+    {
+      "id": "SL-08",
+      "severity": "minor",
+      "verdict": "fixed",
+      "reason": "_memory_fenced tracks fences across the file with precomputed closers: a fence that closes later hides heading-shaped examples (for promote-candidates too); an unclosed fence still ends at the next entry, as test_c7 pins. Linear time.",
+      "commit": "656c539",
+      "tests": [
+        "tests/test_wiki_sync.py::MemoryCheckTests::test_c19_heading_inside_a_closed_fence_is_example_text",
+        "tests/test_wiki_sync.py::MemoryCheckTests::test_c7_fenced_code_is_not_checked"
+      ]
+    },
+    {
+      "id": "SL-09",
+      "severity": "minor",
+      "verdict": "fixed",
+      "reason": "Added fixtures: linked memory.md and linked .agents (exit 1, outside the project), a directory at memory.md (exit 1), a linked directory pruned from the walk, and suffixed missing citations (:12, ::Symbol, #L4) still reported. A FIFO is not added: POSIX-only and the same isfile branch as the directory case.",
+      "commit": "656c539",
+      "tests": [
+        "tests/test_wiki_sync.py::MemoryCheckTests::test_c16_links_are_never_followed",
+        "tests/test_wiki_sync.py::MemoryCheckTests::test_c17_non_file_oversize_and_suffixed_missing_citations"
+      ]
+    },
+    {
+      "id": "SL-10",
+      "severity": "minor",
+      "verdict": "rejected",
+      "reason": "Premise is wrong: example/public-hybrid-demo/.agents/memory.md cites no slash path (only ROADMAP.md and VERSION.json), so nothing is left unanchored; the test now asserts counts.unanchored == 0 to pin that.",
+      "commit": null,
+      "tests": [
+        "tests/test_wiki_sync.py::MemoryCheckTests::test_c9_shipped_demo_memory_gives_exactly_two_findings"
+      ]
+    },
+    {
+      "id": "SL-11",
+      "severity": "minor",
+      "verdict": "fixed",
+      "reason": "A Markdown autolink <path> is unwrapped before the placeholder test; the skip characters (< > { } $ * ? | = @ + % ^ &, controls) and the node_modules/@types example are documented in the guide.",
+      "commit": "656c539",
+      "tests": [
+        "tests/test_wiki_sync.py::MemoryCheckTests::test_c20_calls_prose_colons_drives_and_autolinks"
+      ]
+    },
+    {
+      "id": "SL-12",
+      "severity": "minor",
+      "verdict": "fixed",
+      "reason": "_memory_check_printable escapes every Unicode Cc, Cf, Zl and Zp character, which covers U+061C, U+FEFF, U+2028 and all bidi controls.",
+      "commit": "656c539",
+      "tests": [
+        "tests/test_wiki_sync.py::MemoryCheckTests::test_c18_lines_follow_line_breaks_and_titles_escape_format_characters",
+        "tests/test_wiki_sync.py::MemoryCheckTests::test_c12_hostile_text_is_data_and_no_process_is_created"
+      ]
+    },
+    {
+      "id": "SL-13",
+      "severity": "minor",
+      "verdict": "fixed",
+      "reason": "MEMORY_CHECK_MAX_BYTES (4 MB) is checked with getsize and enforced again on a bounded read; a larger memory.md exits 1 unread. Findings stay bounded by the tokens of a capped file.",
+      "commit": "656c539",
+      "tests": [
+        "tests/test_wiki_sync.py::MemoryCheckTests::test_c17_non_file_oversize_and_suffixed_missing_citations"
+      ]
+    }
+  ]
+}
