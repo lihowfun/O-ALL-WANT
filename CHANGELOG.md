@@ -129,6 +129,17 @@ All notable changes to this project will be documented in this file.
   summarises results and fails on a leak or a billing problem. Evidence: static fixtures with a
   fake CLI (16 tests, run on Windows 11 with Python 3.13 and WSL Ubuntu with Python 3.10); no
   model call, review quality not measured.
+- `scripts/code_index.py` (D24 core candidate): a regenerable, read-only code index with `find`
+  (IDF-weighted word overlap over split identifiers, paths, docstrings and comments, with the
+  best symbol and line per file), `callers` (resolved through imports, aliases, `self` and local
+  base classes), `path` (shortest import chain), `affected` (importers and callers, one or two
+  hops) and `stats`, each with `--json` (`schema_version: 1`). Standard library only: Python via
+  `ast` with a regex fallback, light name passes for Markdown, shell, JSON/TOML/YAML and
+  JavaScript. Built on the fly, or cached under a directory the user names with size, mtime and
+  sha256 per file so stale files are re-indexed (`--frozen` reports them). Example copies that
+  `sync_examples.py` marks as generated are skipped. Evidence: static fixture tests only. No
+  effect on agents has been measured, and no skill text points to it yet (a skill line is
+  model-facing and waits for an A/B).
 
 ### Changed
 

@@ -17,8 +17,8 @@ ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_TEST_MODULES = ("test_context_hub", "test_gate", "test_improvement", "test_install", "test_skills", "test_wiki_sync",
                          "test_egm_pilot", "test_egm_local", "test_status", "test_egm_integration",
                          "test_catalog_core", "test_catalog", "test_catalog_ui", "test_cli_resolve",
-                         "test_goldfish_review", "test_codemap_eval")
-MINIMUM_TESTS = 397  # POSIX count; Windows adds junction cases.
+                         "test_goldfish_review", "test_codemap_eval", "test_code_index")
+MINIMUM_TESTS = 411  # POSIX count; Windows adds junction cases.
 SUMMARY_MARKER = "OAW-TEST-SUMMARY "
 
 
@@ -105,6 +105,7 @@ def cli_check():
                 "context_hub.py": ("memory", "search"), "wiki_sync.py": ("refresh", "lint", "cites"),
                 "improvement.py": ("propose", "compare", "decide"),
                 "goldfish_review.py": ("build", "run", "check"),
+                "code_index.py": ("find", "callers", "path", "affected", "stats"),
                 "catalog.py": ("add", "taste", "import-report", "plan", "policy", "absorb", "remove", "restore", "effect", "view", "scout",
                                "readd", "forget", "ui", "menu")}
     for script, commands in required.items():

@@ -143,6 +143,32 @@ python3 scripts/goldfish_review.py check --results RESULTS
 
 `check` prints one summary per result (exit code, model, `apiKeySource`, every init check, `zero_context_verified`, findings by severity and kind) and scans each file, raw and decoded, for this machine's temp and home path forms, emails, and the account name inside paths. Leaks are named by kind, never printed. It exits 1 on a leak, a file that is not a JSON object, or a billing source other than `none` that the run did not allow with `--allow-api-key`. Exit codes for all three commands: 0 done, 1 a failed run or a check problem, 2 refused input. The tests use a fake CLI only; nothing here measures review quality.
 
+## Code index (prototype)
+
+A regenerable, read-only index for locating code (owner decision D24). Run it from the source checkout; it parses the tree it is pointed at and never imports or runs indexed files. No skill text points agents to it yet: a skill line would be model-facing and waits for a behavior A/B. No effect on agents has been measured.
+
+```bash
+python3 scripts/code_index.py find "free text" [--limit 5] [--json]
+python3 scripts/code_index.py callers SYMBOL [--limit N] [--json]
+python3 scripts/code_index.py path A B [--json]
+python3 scripts/code_index.py affected PATH[::Symbol] [--hops 1|2] [--limit N] [--json]
+python3 scripts/code_index.py stats [--json]
+```
+
+Every command also takes `--root DIR` (default: the current directory), `--cache DIR`, `--frozen` and `--include-generated`, before or after the command name.
+
+What is indexed: Python files with `ast` (modules, classes, functions, methods as `Class.method`, module- and class-level names, imports resolved to local files, call sites, docstrings, comments and string literals); a file this Python cannot parse falls back to an indentation-scoped regex pass and is listed by `stats`. Markdown headings, shell functions, JSON/TOML/YAML keys and JavaScript functions get a light name pass; other text files are indexed as words. `.git`, virtualenvs (any directory with `pyvenv.cfg`), `__pycache__`, `node_modules`, tool caches, symlinks, junctions, binaries and files over 1 MB are skipped. Example copies are skipped only where `sync_examples.py` marked them: a directory whose `.oaw/install.json` has an `installation_id` starting `generated-example-` loses the files its `managed_files` lists (`--include-generated` keeps them). Files with identical content are grouped in `find` results.
+
+- `find` ranks files for a description with IDF-weighted overlap of words from identifiers (snake_case and camelCase split, lightly stemmed), paths, docstrings, comments and strings, scored per definition or section, then names the best symbol and line in each file. A small built-in synonym list counts at reduced weight. Tests and prose rank lower unless the query mentions tests or documentation. No model is called.
+- `callers` lists call sites with `path:line` and the calling function. SYMBOL may be `path::Name`, `path::Class::method`, `module.func`, `Class.method` or a bare name. Calls are resolved through imports (aliases, relative imports, namespace packages, `importlib.import_module("name")`, `sys.path` additions whose directory name is a string literal), `self`/`cls`/`super()`, local base classes and simple `x = Class()` or `self.x = Class()` assignments. Calls on a receiver whose type is unknown but that use the same name follow the resolved ones, those whose receiver is named like the target's class first (`index.resolve()` for `Index.resolve`); they are marked `~` in text and `"resolved": false` in JSON. Check them in the source.
+- `path` prints the shortest import chain from A to B (file paths or dotted module names); when there is none it tries B to A and says so.
+- `affected` lists local files that import the module, or that call, import or reference `module.Name` of the symbol, one row per file; `--hops 2` adds the files that depend on those (importers, or callers of the calling function).
+- `stats` prints files by kind, symbols, imports, calls, what was skipped, regex fallbacks, build time and cache state.
+
+Without `--cache` (or `OAW_CODE_INDEX_CACHE`) the index is built in memory on every run and nothing is written. With it, one JSON file per indexed root lives in that directory; a directory inside the indexed tree is used only when you name it and is then excluded from the index. The cache records each file's size, mtime and sha256: a file whose size or mtime changed is hashed again and re-indexed when its content changed, new files are added and deleted ones dropped. `--frozen` uses the cache as it is and reports stale, new and deleted files on stderr (and in `stats`) instead. Agents read the index; only this command writes it, and it is never required before reading code.
+
+`--json` prints `schema_version: 1`. `find`: `results` of `path`, `score`, `symbol`, `line` (and `duplicates` when identical files were grouped). `callers`/`affected`: `results` of `path`, `line`, `symbol` (the calling scope, `<module>` at top level), plus `resolved` or `hop`. `path`: `path` as a list of files from first to last, and `direction`. Paths are repository-relative POSIX paths whatever the platform; inputs may use either slash, be absolute inside the root or name a module. Exit 0 with empty results when nothing matches, 1 on a handled error (unknown file or module, a path outside the root, an unusable root or cache directory) with one `code_index:` line and no traceback, 2 on a usage error.
+
 ## Repository validation
 
 ```bash
