@@ -278,3 +278,25 @@ feature, round or kit.
   CA trusted inside WSL (the corporate network inspects TLS for some sites, so official installers that fetch
   from them fail there), build packages, a one-year `claude setup-token` token in a mode-600 file (each tasting
   arm then runs with its own config folder instead of the user-level one), and the GitHub CLI login on Windows.
+
+## D28. The digestion system runs itself (2026-11-05, owner in chat: "你是一個自動自發的消化系統 不是每樣都要等我 盡可能找到SOP自動消化與吸收 盡量降低人類審查 不然這超級沒效率", and on court-skill: "court-skill 這次沒有真的跑 以後不准再測skills 連安裝起來跑都沒跑 就給我下結論"; applies D21, D25, D26)
+1. The default actor at every stop is the agent. The owner is waited on only for: entry (a link, or scout
+   ticks), release (merging the PR), a tier-C question (D21), and an owner-only prerequisite (a login, a
+   token, sudo). Everything else moves without asking; the digestion view says "自動（Claude 接手）" for it,
+   never "等你".
+2. Static flags inform; they do not park a food. Scanning, flags, per-component holds and owner triage stay as
+   safety checks, and copying a flagged component still needs triage. Because D21 rebuilds picked units as
+   OAW code with tests and D25 runs food code only in the tasting area, the next step after static is the
+   agent's tasting, not an owner triage.
+3. No verdict without the food arm installed and run. A tasting whose food arm did not run ends in "no
+   verdict" with what blocks it; a "ceiling" argument does not replace the run. This binds relaying another
+   session's result too. The catalog engine refuses a recorded verdict whose food arm has no graded run.
+4. Tastings are recorded in the ledger (`catalog.py record-tasting`), so the view shows real progress.
+5. The loop, per food, in order of expected value: free static screen -> claim and tasting plan from the food's
+   own docs -> questions by a fresh agent, frozen in records -> official install in the tasting area (project
+   scope when offered) -> all arms run (native, food, OAW version when one exists) -> blind grading ->
+   pre-registered rules -> record-tasting -> absorb (tier A/B rebuild on `claude/oaw-2` with tests and one
+   goldfish round), plug in, or decline -> release page. D13 caps hold; over a cap the loop stops and asks.
+6. Running food code inside the tasting area is the standing permission of D25. If the host's safety layer
+   blocks it, the agent records "blocked" and asks the owner once for a standing rule scoped to the tasting
+   area, never per food.
