@@ -24,7 +24,7 @@ PROGRESS_FILE = Path(".oaw/progress.json")
 STATUS_FILE = Path(".oaw/catalog/status.json")
 VIEW_FILE = Path(".oaw/catalog/view.json")
 QUESTIONS_FILE = Path(".oaw/catalog/questions.jsonl")
-VIEW_SCHEMA = "oaw-catalog-view/2"
+VIEW_SCHEMA = "oaw-catalog-view/3"
 # Files build_view() reads; a newer one means view.json may be out of date.
 VIEW_SOURCES = ("registry.json", "decisions.jsonl", "builds.json", "policy.json", "scout.json", "effect.json")
 STALE_SECONDS = 600
@@ -52,9 +52,12 @@ PLAN_STATUS = (("waiting for standing policy", "等你設定常設預算"),
                ("taste first", "先試吃：免費靜態檢查決定付費計畫"),
                ("no paid test: owner confirmed toxic", "不需實測：已確認有毒"),
                ("no paid test: oaw cannot digest", "不需實測：OAW 無法消化"),
-               ("blocked", "被擋住：高嚴重度旗標要先分流"),
+               ("blocked", "被擋住：你擋下了這樣食物"),
                ("no paid test needed", "不需付費實測：沒有可吸收的成分"),
                ("no components yet", "還沒有成分：論文要由 Elephant 拆成分（規劃中），或匯入已有的消化紀錄"))
+# Stage id -> label, for the stage notes on a food card (the full table travels in view.json's pipeline).
+STAGE_LABELS = {"intake": "入口", "quarantine": "封存", "static": "靜態", "plan": "計畫", "review": "盲審", "test": "實測",
+                "sort": "分流", "approve": "核准", "build": "版本"}
 _UNSAFE = re.compile("[\x00-\x1f\x7f-\x9f\u061c\u200b-\u200f\u202a-\u202e\u2060-\u2064\u2066-\u2069\ufeff]")
 
 
@@ -276,7 +279,21 @@ def pipeline_lines(view):
     lines += [pipeline_line(food, table, width) for food in foods]
     if not foods:
         lines.append("  " + (clean(table.get("empty_zh"), 200) or "還沒有食物"))
+    else:
+        lines.append(waiting_line(foods, table))
     return lines
+
+
+def waiting_line(foods, table):
+    """'  等你 1 · 自動（Claude 接手） 3 · 等發布（合併 PR 時一次決定） 1': who the foods wait on (D28), from view.json."""
+    names = table.get("waiting_zh") or {}
+    order = [k for k in table.get("waiting_order") or [] if isinstance(k, str)]
+    counts = {}
+    for food in foods:
+        waiting = ((food.get("pipeline") or {}).get("waiting_on")) or "unknown"
+        counts[waiting] = counts.get(waiting, 0) + 1
+    keys = [k for k in order if counts.get(k)] + sorted(k for k in counts if k not in order)
+    return "  " + " · ".join(f"{clean(names.get(k), 30) or '未知（' + clean(k, 20) + '）'} {counts[k]}" for k in keys)
 
 
 def stage_actions(view):
@@ -476,6 +493,11 @@ def food_lines(food, detail=False):
              + (f" · 歷史證據 {len(historical)} 份（不計入判定）" if historical else ""),
              f"  安全：{safety_label(food)}",
              f"  實測：{plan_status_label((food.get('plan') or {}).get('status'))}" + (f" · {parity}" if parity else "")]
+    # What a recorded tasting or D21 absorption says at its stop (D28), in stage order.
+    notes = pipeline.get("stage_notes_zh") if isinstance(pipeline.get("stage_notes_zh"), dict) else {}
+    for sid in [k for k in STAGE_LABELS if k in notes] + sorted(k for k in notes if k not in STAGE_LABELS):
+        if isinstance(notes[sid], str) and notes[sid]:
+            lines.append(f"  {STAGE_LABELS.get(sid) or clean(sid, 20)}站：{clean(notes[sid], 200)}")
     if not detail:
         return lines
     lines += paper_lines(food.get("paper"))

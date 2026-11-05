@@ -22,12 +22,14 @@ import {
   parentPath,
   parseView,
   pythonArgv,
+  releaseText,
   stageChain,
   stageIndex,
   terminalCommand,
   verdictText,
   viewArgv,
   waitingCount,
+  waitingLabel,
   type Runner,
 } from './model'
 import { tractAlt, tractLines, tractSvg } from './tract'
@@ -39,7 +41,7 @@ const POLL_MS = 2000
 const LONG_MS = 600_000
 
 // Change a tag when that value's fields change: an earlier version's value is declined.
-const modelAtom = atom({ plugin: 'oaw-digest-monitor', key: 'model' } as const, null, { shape: 'model-1' })
+const modelAtom = atom({ plugin: 'oaw-digest-monitor', key: 'model' } as const, null, { shape: 'model-2' })
 const problemAtom = atom({ plugin: 'oaw-digest-monitor', key: 'problem' } as const, null)
 const selectedAtom = atom({ plugin: 'oaw-digest-monitor', key: 'selected' } as const, null)
 const picksAtom = atom({ plugin: 'oaw-digest-monitor', key: 'picks' } as const, [])
@@ -198,7 +200,9 @@ function statusLine(model: DigestModel): string | undefined {
   const live = liveText(model)
   if (model.live?.isRunning && live) return `🍽 ${live}`
   const waiting = waitingCount(model)
-  return waiting > 0 ? `🍽 OAW 消化道 · ${waiting} 樣等你` : undefined
+  const release = model.release.foods.length
+  const parts = [waiting > 0 ? `${waiting} 樣等你` : '', release > 0 ? `${release} 樣等發布` : ''].filter(Boolean)
+  return parts.length > 0 ? `🍽 OAW 消化道 · ${parts.join(' · ')}` : undefined
 }
 
 async function load($: EngineInterface, why: 'start' | 'poll' | 'manual'): Promise<void> {
@@ -430,9 +434,10 @@ export const register: Register = (on, opts) => {
         search: trace,
         live: model?.live ?? null,
         foods: (model?.foods ?? []).map(f => ({
-          id: f.id, stop: f.stageLabel, state: f.stateZh, verdict: verdictText(f), waiting: f.waitingZh,
-          components: f.counts, actions: f.actions.map(a => a.label),
+          id: f.id, stop: f.stageLabel, state: f.stateZh, verdict: verdictText(f), waiting: f.waitingZh, waitingOn: f.waiting,
+          tasting: f.tasting, stageNotes: f.stageNotes, components: f.counts, actions: f.actions.map(a => a.label),
         })),
+        release: model ? { text: releaseText(model), ...model.release } : null,
       }, null, 1),
     }
   })
@@ -518,9 +523,11 @@ export const register: Register = (on, opts) => {
           </Text>
           {model && (
             <Text dimColor>
-              送進 {model.funnel.submitted} · 試吃過 {model.funnel.tasted} · 實測 {model.funnel.measured} · 已吸收成分 {model.funnel.absorbedParts}
+              送進 {model.funnel.submitted} · 試吃過 {model.funnel.tasted} · Claude 試吃 {model.funnel.agentTasted} · 實測 {model.funnel.measured} ·
+              已吸收成分 {model.funnel.absorbedParts}
             </Text>
           )}
+          {model && releaseText(model) && <Text color="success">{releaseText(model)}</Text>}
           {model && liveText(model) && <Text color={model.live?.isRunning ? 'claude' : 'warning'}>{liveText(model)}</Text>}
           {model?.isViewStale && <Text color="warning">紀錄比畫面新：畫面可能過期，按「重算」。</Text>}
           {problem && <Text color={problem.kind === 'bad-view' ? 'error' : 'warning'}>{problem.text}</Text>}
@@ -530,7 +537,7 @@ export const register: Register = (on, opts) => {
         {tract}
         {model && (
           <Text dimColor wrap="wrap">
-            {model.legend.map(key => `${model.symbols[key] ?? ''} ${model.statesZh[key] ?? key}`).join('  ')}　! 等你　? 可選
+            {model.legend.map(key => `${model.symbols[key] ?? ''} ${model.statesZh[key] ?? key}`).join('  ')}　! 等你　» Claude 接手　↑ 等發布（合併 PR 時一次決定）　? 可選
           </Text>
         )}
 
@@ -551,7 +558,7 @@ export const register: Register = (on, opts) => {
                 {f.verdict.symbol || '•'} {f.display}
                 <Text dimColor>
                   {' '}
-                  · {f.stageLabel} {model.symbols[f.state] ?? ''} {f.waiting === 'owner' ? '· 等你' : f.waiting === 'optional' ? '· 可選' : ''}
+                  · {f.stageLabel} {model.symbols[f.state] ?? ''} {waitingLabel(f) ? `· ${waitingLabel(f)}` : ''}
                   {model.live?.isRunning && model.live.food === f.id ? ' · 試吃中' : ''}
                 </Text>
               </Button>
@@ -575,6 +582,13 @@ export const register: Register = (on, opts) => {
                 <Text color="error">排掉 {food.counts.excrete}</Text>
               </Text>
               {food.note && <Text wrap="wrap">{food.note}</Text>}
+              {model.stages
+                .filter(stage => food.stageNotes[stage.id])
+                .map(stage => (
+                  <Text key={`note:${stage.id}`} dimColor wrap="wrap">
+                    {stage.label}：{food.stageNotes[stage.id]}
+                  </Text>
+                ))}
             </Box>
 
             <Box flexDirection="column">

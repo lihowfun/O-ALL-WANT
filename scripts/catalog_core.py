@@ -34,7 +34,9 @@ RELEASE = "2.0.0"
 SCANNER_VERSION = 2
 VERDICT_RULES_VERSION = 1
 # 2: the intake pipeline (stage table plus each food's stage) replaces the four-step track.
-VIEW_SCHEMA = "oaw-catalog-view/2"
+# 3: D28: who a food waits on gains `agent` (Claude takes it) and `release` (one decision for the whole branch);
+#    agent tastings and D21 absorptions are part of the view.
+VIEW_SCHEMA = "oaw-catalog-view/3"
 
 # code: (symbol, ascii, English, Traditional Chinese)
 VERDICTS = {
@@ -145,6 +147,14 @@ ERRORS_ZH = (
     (r"food, stage and question must be text", "要寫明哪樣食物、哪一站和問題的文字。"),
     (r"Unknown pipeline stage", "沒有這一站。"),
     (r"Unknown question", "找不到這個問題編號。"),
+    (r"no verdict without the food arm", "拒收：食物組沒有任何評分過的執行，就不能有判定（D28）；請記成 no-verdict，寫明卡在哪裡。"),
+    (r"A no-verdict tasting must say", "沒有判定的試吃要寫明卡在哪裡（blocked_on_owner 或 notes）。"),
+    (r"A tier-B unit", "B 級單位（模型會讀的文字）要有這樣食物判定「吸收」的試吃紀錄才能記成吸收（D17、D21）。"),
+    (r"A tier-C unit", "C 級單位要先由你決定（D21）：記成暫留並寫 blocked_on_owner，或在 owner_approval 寫明你在哪裡同意的。"),
+    (r"Not a tasting record|Not an absorption record", "這不是 OAW 的試吃或吸收紀錄（schema 不對）。"),
+    (r"names another food", "紀錄裡寫的食物和 --food 不同：沒有記錄。"),
+    (r"(?:tasting|absorption) record file", "讀不到紀錄檔，或它不是 1 MB 以內的 JSON。"),
+    (r"^(?:Tasting|Absorption) record: ", "紀錄的欄位不對：沒有記錄（原文見英文訊息）。"),
 )
 
 
@@ -1120,7 +1130,15 @@ def paper_scan(files: dict, *, food: str, integrity: str = "sha256-recorded") ->
 # --------------------------------------------------------------------------- derive
 
 def evidence_class(record) -> str:
-    """static, live, historical or ignored. Imported reports are always historical."""
+    """static, live, historical, tasting, absorption or ignored. Imported reports are always historical.
+
+    An agent tasting and a D21 absorption (D28) are their own classes: derive() never counts them, so they
+    cannot raise a headline or lift a copy-absorb hold; food_records() checks them again for the view.
+    """
+    if isinstance(record, dict) and record.get("schema") == TASTING_SCHEMA and record.get("provenance") == "agent-tasting":
+        return "tasting"
+    if isinstance(record, dict) and record.get("schema") == ABSORPTION_SCHEMA and record.get("provenance") == "agent-absorption":
+        return "absorption"
     if not isinstance(record, dict) or record.get("schema_version") != SCHEMA_VERSION:
         return "ignored"
     if record.get("provenance") == "imported-report" or record.get("mode") == "historical-prior" or record.get("level") == "historical-prior":
@@ -1536,7 +1554,7 @@ def _tokens(runs):
 PLAN_STEPS_ZH = {
     "T0": ("免費靜態檢查", ["檔案清單、授權、宣告的 hooks／MCP／腳本、旗標"], ["行為、品質、執行時的安全"]),
     "T1": ("離線整合（名稱衝突、doctor／migrate 往返）", ["安裝相容性"], ["品質"]),
-    "T2a": ("人工分流高嚴重度旗標", ["每個旗標是良性、過敏原，還是有毒"], ["品質"]),
+    "T2a": ("人工分流高嚴重度旗標（可選：只有要照原樣複製帶旗標的成分或確認有毒時才需要，D28）", ["每個旗標是良性、過敏原，還是有毒"], ["品質"]),
     "G": ("Goldfish 盲審我們的吸收草稿（2 位審查者）", ["草稿裡沒有根據的說法或和規則衝突的地方"], ["行為上的增益"]),
     "TX": ("在可拋棄環境試跑可執行的成分", ["tripwire：宣告範圍外的寫入、連線、行程"], ["品質"]),
     "T3a-smoke": ("行為 A/B 冒煙測試：有食物（C）對沒有（D），4 案例 × 2 次", ["決定性的退步；早期的沒增益訊號"], ["統計上的增益", "其他 host 或模型"]),
@@ -1576,15 +1594,19 @@ def decide_plan(food: str, derived: dict, historical=(), policy: dict | None = N
         status, basis = "no paid test: owner confirmed toxic", ["toxic is final until new evidence and owner review"]
     elif headline == "inedible":
         status, basis = "no paid test: OAW cannot digest this food as shipped", list(derived.get("reasons", []))
+    elif headline == "risky" and not (derived.get("flags") or {}).get("open_high"):
+        status, basis = "blocked: the owner blocked this food", list(derived.get("reasons", []))
     elif headline == "risky":
-        steps.append({"id": "T2a", "name": "owner triage of high-severity flags", "cost": "free (owner time)", "state": "next",
+        # D28: flags inform, they do not park the food. Triage stays available (and is still needed to copy a
+        # flagged part or to confirm toxic), but the plan goes on to the tasting like any other food's.
+        steps.append({"id": "T2a", "name": "owner triage of high-severity flags (optional: only to copy a flagged part or confirm toxic)",
+                      "cost": "free (owner time)", "state": "optional",
                       "can_prove": ["whether each flag is benign, an allergen or toxic"], "cannot_prove": ["quality"], "tokens": None})
-        status, basis = "blocked: high-severity flags must be triaged before any paid test", list(derived.get("reasons", []))
-    elif not has_static:
+    if status is None and not has_static:
         status, basis = "taste first: free static checks decide the paid plan", ["no static record"]
-    elif derived.get("food_kind") == "paper" and not components and not methods:
+    elif status is None and derived.get("food_kind") == "paper" and not components and not methods:
         status, basis = "no components yet: " + PAPER_COMPONENTS_NOTE, ["a paper is split into components by a model, not by static rules"]
-    elif not candidates and not methods:
+    elif status is None and not candidates and not methods:
         status, basis = "no paid test needed: nothing absorbable", ["every component is excreted or reference-only"]
     if status is None:
         if methods or candidates:
@@ -1805,6 +1827,364 @@ def imported_record(food: str, docs: dict, source_files: list, recorded_at: str)
             "note": "imported report: historical-prior, shown separately, never counted in a verdict", "recorded_at": recorded_at}
 
 
+# --------------------------------------------------------------------------- agent tastings and D21 absorptions (D25, D28)
+#
+# Claude tastes a food in the tasting area (D25) and, under D21, rebuilds the picked units as OAW code with tests on
+# the working branch. Both happen outside this engine; `catalog.py record-tasting` and `record-absorption` put
+# their results in the ledger as evidence files, so view.json shows real progress (D28.4). The engine checks
+# every record twice, when it is recorded and whenever a view is built, so a hand-edited file cannot carry a
+# verdict the rules refuse. Neither record changes derive(): the static headline and the copy-absorb holds stay.
+
+TASTING_SCHEMA = "oaw-tasting/1"
+ABSORPTION_SCHEMA = "oaw-absorption/1"
+# verdict -> Traditional Chinese label. The latest tasting decides; every tasting stays on the card.
+TASTING_VERDICTS = {"absorb": "吸收", "plug-in": "插上（接上官方版，不吸收）", "decline": "不收",
+                    "not-shown-better": "沒證明比原生好（不收）", "no-verdict": "沒有判定"}
+# D21 tiers: what makes a unit automatic and what asks the owner.
+TIERS = {"A": "A 級：只改機制、不碰模型會讀的文字、不執行食物程式、可還原（D17 允許靜態證據）",
+         "B": "B 級：模型會讀的文字，要試吃判定吸收（齊平以上）",
+         "C": "C 級：會執行食物程式、新增執行期相依、常設決定沒涵蓋的授權或 CLI 選擇、移除 skill、超出預算：問你"}
+RELEASE_STATES = ("pending", "released")
+RECORD_FILE_BYTES = 1024 * 1024
+_RECORD_LIMITS = {"arms": 12, "models": 8, "units": 300, "commits": 20, "tests": 40}
+_DATE = re.compile(r"(20\d{2})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])")
+_COMMIT = re.compile(r"[0-9a-f]{7,40}")
+_ARM_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,39}")
+_UNIT_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._:/+-]{0,159}")
+_REF_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._/-]{0,99}")
+_TASTING_ID = re.compile(r"t-[0-9a-f]{12}")
+_TASTING_KEYS = {"schema", "food", "date", "records", "protocol", "arms", "food_arm_ran", "verdict", "verdict_zh",
+                 "blocked_on_owner", "notes"}
+_ABSORPTION_KEYS = {"schema", "food", "date", "branch", "absorbed", "declined", "held", "release", "blocked_on_owner",
+                    "records", "notes"}
+# Keys the CLI adds when it stores a record; a stored record is checked against its own id.
+_STORED_KEYS = {"tasting_id", "absorption_id", "recorded_at", "provenance", "source_sha256", "food_arm"}
+_RESULT_KEYS = ("coverage", "essential_correct", "essential_total", "wrong_claims", "token_median", "tokens_total")
+
+
+class RecordError(ValueError):
+    """A tasting or absorption record the engine refuses; nothing is recorded."""
+
+
+def _where(prefix: str, key: str) -> str:
+    return f"{prefix}.{key}" if prefix else key
+
+
+def _keys(doc, allowed: set, prefix: str, kind: str) -> dict:
+    if not isinstance(doc, dict):
+        raise RecordError(f"{kind}: {prefix or 'the record'} must be a JSON object.")
+    unknown = sorted(str(k) for k in doc if k not in allowed)
+    if unknown:
+        raise RecordError(f"{kind}: unknown field(s) {', '.join(_where(prefix, k) for k in unknown[:5])}; "
+                          f"allowed: {', '.join(sorted(allowed))}.")
+    return doc
+
+
+def _rtext(doc: dict, key: str, prefix: str, kind: str, limit: int = 300, required: bool = True):
+    value = doc.get(key)
+    if value is None and not required:
+        return None
+    if not isinstance(value, str) or not value.strip():
+        if required:
+            raise RecordError(f"{kind}: {_where(prefix, key)} must be nonempty text.")
+        return None
+    if len(value) > limit:
+        raise RecordError(f"{kind}: {_where(prefix, key)} is longer than {limit} characters.")
+    return sanitize_text(value, limit)
+
+
+def _rnumber(doc: dict, key: str, prefix: str, kind: str, *, integer: bool = False, maximum=None, required: bool = True):
+    value = doc.get(key)
+    if value is None:
+        if required:
+            raise RecordError(f"{kind}: {_where(prefix, key)} is required.")
+        return None
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or (integer and not isinstance(value, int)):
+        raise RecordError(f"{kind}: {_where(prefix, key)} must be a {'whole number' if integer else 'number'}.")
+    if value != value or value < 0 or value > (maximum if maximum is not None else 10**12):
+        raise RecordError(f"{kind}: {_where(prefix, key)} is out of range (0 to {maximum if maximum is not None else 10**12}).")
+    return value
+
+
+def _rdate(doc: dict, kind: str) -> str:
+    value = doc.get("date")
+    if not isinstance(value, str) or not _DATE.fullmatch(value):
+        raise RecordError(f"{kind}: date must be YYYY-MM-DD.")
+    return value
+
+
+def _rlist(doc: dict, key: str, prefix: str, kind: str, limit: int, *, required: bool = True) -> list:
+    value = doc.get(key)
+    if value is None and not required:
+        return []
+    if not isinstance(value, list) or (required and not value):
+        raise RecordError(f"{kind}: {_where(prefix, key)} must be a nonempty list.")
+    if len(value) > limit:
+        raise RecordError(f"{kind}: {_where(prefix, key)} lists more than {limit} items.")
+    return value
+
+
+def _rrecords(doc, prefix: str, kind: str, *, required: bool) -> dict | None:
+    """Where the evidence lives: a relative path on the records branch and the commit that holds it."""
+    if doc is None and not required:
+        return None
+    ref = _keys(doc, {"path", "commit", "branch"}, prefix, kind)
+    path = _rtext(ref, "path", prefix, kind, 240)
+    if path.startswith(("/", "~")) or "\\" in path or ":" in path or ".." in path.split("/"):
+        raise RecordError(f"{kind}: {prefix}.path must be a relative path inside the repository.")
+    commit = ref.get("commit")
+    if not isinstance(commit, str) or not _COMMIT.fullmatch(commit):
+        raise RecordError(f"{kind}: {prefix}.commit must be 7-40 lowercase hex characters.")
+    branch = ref.get("branch", "records")
+    if not isinstance(branch, str) or not _REF_NAME.fullmatch(branch):
+        raise RecordError(f"{kind}: {prefix}.branch is not a branch name.")
+    return {"path": path, "commit": commit, "branch": branch}
+
+
+def _check_food(doc: dict, food: str, kind: str) -> None:
+    named = doc.get("food")
+    if named is not None and named != food:
+        raise RecordError(f"{kind}: the record names another food ({sanitize_text(named, 64)!r}, not {food!r}).")
+
+
+def _check_stored(doc: dict, id_key: str, record: dict, prefix: str) -> None:
+    """A stored record must still hash to the id it was recorded under: an edited file is refused, never trusted."""
+    if id_key in doc:
+        expected = prefix + record_sha256(record)[:12]
+        if doc[id_key] != expected:
+            raise RecordError(f"{id_key} does not match the record's content: the file was edited after it was recorded.")
+
+
+def validate_tasting(doc, food: str, *, stored: bool = False) -> dict:
+    """One agent tasting (schema oaw-tasting/1), normalized; raises RecordError on any refusal.
+
+    D28.3: a verdict other than `no-verdict` needs at least one graded run of the food arm, and the record's
+    `food_arm_ran.graded_runs` must agree with the food arm's own count. `no-verdict` must say what blocks it.
+    """
+    kind = "Tasting record"
+    if not isinstance(doc, dict) or doc.get("schema") != TASTING_SCHEMA:
+        raise RecordError(f"Not a tasting record: schema must be {TASTING_SCHEMA}.")
+    _keys(doc, _TASTING_KEYS | (_STORED_KEYS if stored else set()), "", kind)
+    _check_food(doc, food, kind)
+    protocol_doc = _keys(doc.get("protocol"), {"models", "corpus", "questions", "repeats", "grading", "host"}, "protocol", kind)
+    models = []
+    for index, model in enumerate(_rlist(protocol_doc, "models", "protocol", kind, _RECORD_LIMITS["models"])):
+        if not isinstance(model, str) or not model.strip() or len(model) > 80:
+            raise RecordError(f"{kind}: protocol.models[{index}] must be a model name.")
+        models.append(sanitize_text(model, 80))
+    questions = _keys(protocol_doc.get("questions"), {"count", "sha256", "file"}, "protocol.questions", kind)
+    if not isinstance(questions.get("sha256"), str) or not _HEX64.fullmatch(questions["sha256"]):
+        raise RecordError(f"{kind}: protocol.questions.sha256 must be 64 lowercase hex characters (the frozen questions).")
+    protocol = {"models": models, "corpus": _rtext(protocol_doc, "corpus", "protocol", kind, 300),
+                "questions": {"count": _rnumber(questions, "count", "protocol.questions", kind, integer=True, maximum=10000),
+                              "sha256": questions["sha256"],
+                              "file": _rtext(questions, "file", "protocol.questions", kind, 200, required=False)},
+                "repeats": _rnumber(protocol_doc, "repeats", "protocol", kind, integer=True, maximum=1000),
+                "grading": _rtext(protocol_doc, "grading", "protocol", kind, 200, required=False),
+                "host": _rtext(protocol_doc, "host", "protocol", kind, 200, required=False)}
+    if protocol["questions"]["count"] < 1 or protocol["repeats"] < 1:
+        raise RecordError(f"{kind}: protocol.questions.count and protocol.repeats must be at least 1.")
+    arms, seen = [], set()
+    for index, raw in enumerate(_rlist(doc, "arms", "", kind, _RECORD_LIMITS["arms"])):
+        where = f"arms[{index}]"
+        arm = _keys(raw, {"id", "label", "food_arm", "runs", "graded_runs", "results"}, where, kind)
+        arm_id = arm.get("id")
+        if not isinstance(arm_id, str) or not _ARM_ID.fullmatch(arm_id) or arm_id in seen:
+            raise RecordError(f"{kind}: {where}.id must be a unique short id (letters, digits, . _ -).")
+        seen.add(arm_id)
+        if not isinstance(arm.get("food_arm", False), bool):
+            raise RecordError(f"{kind}: {where}.food_arm must be true or false.")
+        runs = _rnumber(arm, "runs", where, kind, integer=True, maximum=100000)
+        graded = _rnumber(arm, "graded_runs", where, kind, integer=True, maximum=100000)
+        if graded > runs:
+            raise RecordError(f"{kind}: {where}.graded_runs ({graded}) is more than its runs ({runs}).")
+        results_doc = _keys(arm.get("results", {}), set(_RESULT_KEYS), f"{where}.results", kind)
+        results = {key: _rnumber(results_doc, key, f"{where}.results", kind, required=False,
+                                 maximum=1 if key == "coverage" else None, integer=key == "wrong_claims")
+                   for key in _RESULT_KEYS}
+        arms.append({"id": arm_id, "label": _rtext(arm, "label", where, kind, 120, required=False),
+                     "food_arm": bool(arm.get("food_arm", False)), "runs": runs, "graded_runs": graded, "results": results})
+    food_arms = [a for a in arms if a["food_arm"]]
+    if len(food_arms) != 1:
+        raise RecordError(f"{kind}: exactly one arm must be the food arm (food_arm: true); found {len(food_arms)}.")
+    ran_doc = _keys(doc.get("food_arm_ran"), {"graded_runs", "evidence"}, "food_arm_ran", kind)
+    ran = {"graded_runs": _rnumber(ran_doc, "graded_runs", "food_arm_ran", kind, integer=True, maximum=100000),
+           "evidence": _rtext(ran_doc, "evidence", "food_arm_ran", kind, 240, required=False)}
+    if ran["graded_runs"] != food_arms[0]["graded_runs"]:
+        raise RecordError(f"{kind}: food_arm_ran.graded_runs ({ran['graded_runs']}) does not match the food arm "
+                          f"{food_arms[0]['id']!r} ({food_arms[0]['graded_runs']} graded runs).")
+    verdict = doc.get("verdict")
+    if verdict not in TASTING_VERDICTS:
+        raise RecordError(f"{kind}: verdict must be one of {', '.join(TASTING_VERDICTS)}.")
+    owner = _rtext(doc, "blocked_on_owner", "", kind, 300, required=False)
+    notes = _rtext(doc, "notes", "", kind, 2000, required=False)
+    if verdict != "no-verdict" and ran["graded_runs"] < 1:
+        raise RecordError("Refused: no verdict without the food arm installed and run (D28): the food arm "
+                          f"{food_arms[0]['id']!r} has no graded run. Record it as no-verdict and say what blocks it.")
+    if verdict == "no-verdict" and not (owner or notes):
+        raise RecordError("A no-verdict tasting must say what blocks it: blocked_on_owner (the owner's part) or notes.")
+    if owner and verdict in ("decline", "not-shown-better"):
+        raise RecordError(f"{kind}: blocked_on_owner is only for absorb, plug-in or no-verdict; a {verdict} leaves nothing to wait for.")
+    record = {"schema": TASTING_SCHEMA, "food": food, "date": _rdate(doc, kind),
+              "records": _rrecords(doc.get("records"), "records", kind, required=True), "protocol": protocol,
+              "arms": arms, "food_arm": food_arms[0]["id"], "food_arm_ran": ran, "verdict": verdict,
+              "verdict_zh": _rtext(doc, "verdict_zh", "", kind, 300), "blocked_on_owner": owner, "notes": notes}
+    if stored:
+        _check_stored(doc, "tasting_id", record, "t-")
+    return record
+
+
+def tasting_id(record: dict) -> str:
+    return "t-" + record_sha256(record)[:12]
+
+
+def _unit(raw, where: str, kind: str, *, absorbed: bool) -> dict:
+    allowed = {"id", "name", "tier", "commits", "tests", "evidence", "owner_approval"} if absorbed else {"id", "name", "reason"}
+    unit = _keys(raw, allowed, where, kind)
+    unit_id = unit.get("id")
+    if not isinstance(unit_id, str) or not _UNIT_ID.fullmatch(unit_id):
+        raise RecordError(f"{kind}: {where}.id must be a unit id (letters, digits and . _ : / + -, at most 160).")
+    name = _rtext(unit, "name", where, kind, 200, required=False)
+    if not absorbed:
+        return {"id": unit_id, "name": name, "reason": _rtext(unit, "reason", where, kind, 300)}
+    tier = unit.get("tier")
+    if tier not in TIERS:
+        raise RecordError(f"{kind}: {where}.tier must be A, B or C (D21).")
+    commits = _rlist(unit, "commits", where, kind, _RECORD_LIMITS["commits"])
+    if not all(isinstance(c, str) and _COMMIT.fullmatch(c) for c in commits):
+        raise RecordError(f"{kind}: {where}.commits must be commit ids (7-40 lowercase hex characters).")
+    tests = []
+    for index, test in enumerate(_rlist(unit, "tests", where, kind, _RECORD_LIMITS["tests"])):
+        if not isinstance(test, str) or not test.strip() or len(test) > 200:
+            raise RecordError(f"{kind}: {where}.tests[{index}] must name a test (D21: code and tests are the record).")
+        tests.append(sanitize_text(test, 200))
+    evidence = _keys(unit.get("evidence"), {"basis", "tasting"}, f"{where}.evidence", kind)
+    tasting = evidence.get("tasting")
+    if tasting is not None and (not isinstance(tasting, str) or not _TASTING_ID.fullmatch(tasting)):
+        raise RecordError(f"{kind}: {where}.evidence.tasting must be a recorded tasting id (t- and 12 hex characters).")
+    return {"id": unit_id, "name": name, "tier": tier, "commits": list(dict.fromkeys(commits)), "tests": tests,
+            "evidence": {"basis": _rtext(evidence, "basis", f"{where}.evidence", kind, 300), "tasting": tasting},
+            "owner_approval": _rtext(unit, "owner_approval", where, kind, 300, required=False)}
+
+
+def validate_absorption(doc, food: str, tastings=(), *, stored: bool = False) -> dict:
+    """One D21 absorption record (schema oaw-absorption/1), normalized; raises RecordError on any refusal.
+
+    `tastings` are the food's valid tasting records. A paper has no installable food arm, so nothing here needs
+    one: tier A rests on static evidence (D17, D21); a tier-B unit names a recorded tasting of this food whose
+    verdict is absorb; a tier-C unit is absorbed only with the owner's approval written down (D21).
+    """
+    kind = "Absorption record"
+    if not isinstance(doc, dict) or doc.get("schema") != ABSORPTION_SCHEMA:
+        raise RecordError(f"Not an absorption record: schema must be {ABSORPTION_SCHEMA}.")
+    _keys(doc, _ABSORPTION_KEYS | (_STORED_KEYS if stored else set()), "", kind)
+    _check_food(doc, food, kind)
+    branch = doc.get("branch")
+    if not isinstance(branch, str) or not _REF_NAME.fullmatch(branch):
+        raise RecordError(f"{kind}: branch must name the branch that holds the commits.")
+    units, seen = {}, set()
+    for section in ("absorbed", "declined", "held"):
+        units[section] = []
+        for index, raw in enumerate(_rlist(doc, section, "", kind, _RECORD_LIMITS["units"], required=False)):
+            unit = _unit(raw, f"{section}[{index}]", kind, absorbed=section == "absorbed")
+            if unit["id"] in seen:
+                raise RecordError(f"{kind}: unit {unit['id']!r} is listed twice.")
+            seen.add(unit["id"])
+            units[section].append(unit)
+    if not seen:
+        raise RecordError(f"{kind}: list at least one unit under absorbed, declined or held.")
+    verdicts = {t["tasting_id"]: t["verdict"] for t in tastings or () if isinstance(t, dict) and t.get("tasting_id")}
+    for unit in units["absorbed"]:
+        if unit["tier"] == "B" and verdicts.get(unit["evidence"]["tasting"]) != "absorb":
+            raise RecordError(f"A tier-B unit ({unit['id']!r}, model-facing text) is absorbed only with a recorded tasting of this "
+                              "food whose verdict is absorb (D17, D21): name its tasting id in evidence.tasting.")
+        if unit["tier"] == "C" and not unit["owner_approval"]:
+            raise RecordError(f"A tier-C unit ({unit['id']!r}) needs the owner's decision first (D21): record it under held with "
+                              "blocked_on_owner, or write where the owner approved it in owner_approval.")
+    release_doc = _keys(doc.get("release", {"state": "pending"}), {"state", "pr", "ref"}, "release", kind)
+    if release_doc.get("state", "pending") not in RELEASE_STATES:
+        raise RecordError(f"{kind}: release.state must be pending or released.")
+    record = {"schema": ABSORPTION_SCHEMA, "food": food, "date": _rdate(doc, kind), "branch": branch, **units,
+              "release": {"state": release_doc.get("state", "pending"), "pr": _rtext(release_doc, "pr", "release", kind, 200, required=False),
+                          "ref": _rtext(release_doc, "ref", "release", kind, 200, required=False)},
+              "blocked_on_owner": _rtext(doc, "blocked_on_owner", "", kind, 300, required=False),
+              "records": _rrecords(doc.get("records"), "records", kind, required=False),
+              "notes": _rtext(doc, "notes", "", kind, 2000, required=False)}
+    if stored:
+        _check_stored(doc, "absorption_id", record, "a-")
+    return record
+
+
+def absorption_id(record: dict) -> str:
+    return "a-" + record_sha256(record)[:12]
+
+
+def unit_aliases(unit_id: str) -> set:
+    """A unit id as a record writes it and as an imported report stores it (hist:<id with / and other marks as ->)."""
+    return {unit_id, "hist:" + re.sub(r"[^A-Za-z0-9._-]+", "-", unit_id)[:80]}
+
+
+def _record_order(record: dict) -> tuple:
+    return (str(record.get("date") or ""), str(record.get("recorded_at") or ""), str(record.get("tasting_id") or record.get("absorption_id") or ""))
+
+
+def food_records(evidence, food: str) -> dict:
+    """The food's valid tastings and absorptions (oldest first) and the stored records the engine refuses, with why."""
+    tastings, absorptions, refused = [], [], []
+    for record in evidence or ():
+        kind = evidence_class(record)
+        if kind == "tasting":
+            try:
+                tastings.append({**validate_tasting(record, food, stored=True), "tasting_id": record.get("tasting_id"),
+                                 "recorded_at": record.get("recorded_at")})
+            except RecordError as exc:
+                refused.append({"kind": "tasting", "id": sanitize_text(record.get("tasting_id"), 20) or None, "reason": sanitize_text(str(exc), 300)})
+    tastings.sort(key=_record_order)
+    for record in evidence or ():
+        if evidence_class(record) == "absorption":
+            try:
+                absorptions.append({**validate_absorption(record, food, tastings, stored=True),
+                                    "absorption_id": record.get("absorption_id"), "recorded_at": record.get("recorded_at")})
+            except RecordError as exc:
+                refused.append({"kind": "absorption", "id": sanitize_text(record.get("absorption_id"), 20) or None,
+                                "reason": sanitize_text(str(exc), 300)})
+    absorptions.sort(key=_record_order)
+    return {"tastings": tastings, "absorptions": absorptions, "refused": refused}
+
+
+def tasting_summary(record: dict) -> dict:
+    """A tasting as the card shows it; numbers stay as recorded, with the protocol they were measured under."""
+    return {"id": record.get("tasting_id"), "date": record["date"], "recorded_at": record.get("recorded_at"),
+            "verdict": record["verdict"], "verdict_label_zh": TASTING_VERDICTS[record["verdict"]], "verdict_zh": record["verdict_zh"],
+            "records": record["records"], "protocol": record["protocol"], "arms": record["arms"], "food_arm": record["food_arm"],
+            "food_arm_graded_runs": record["food_arm_ran"]["graded_runs"], "food_arm_evidence": record["food_arm_ran"]["evidence"],
+            "blocked_on_owner": record["blocked_on_owner"], "notes": record["notes"]}
+
+
+def absorption_summary(records: list) -> dict | None:
+    """Every D21 absorption of one food merged by unit (a later record wins for the same unit), plus the records."""
+    if not records:
+        return None
+    units = {}
+    for record in records:
+        release = record["release"]
+        for section, outcome in (("absorbed", "absorbed"), ("declined", "declined"), ("held", "held")):
+            for unit in record[section]:
+                units[unit["id"]] = {**unit, "outcome": outcome, "branch": record["branch"], "date": record["date"],
+                                     "release": release["state"] if outcome == "absorbed" else None,
+                                     "record": record.get("absorption_id")}
+    ordered = sorted(units.values(), key=lambda u: ({"absorbed": 0, "held": 1, "declined": 2}[u["outcome"]], u["id"]))
+    absorbed = [u for u in ordered if u["outcome"] == "absorbed"]
+    latest = records[-1]
+    return {"units": ordered, "absorbed": len(absorbed), "declined": sum(1 for u in ordered if u["outcome"] == "declined"),
+            "held": sum(1 for u in ordered if u["outcome"] == "held"),
+            "release_pending": sum(1 for u in absorbed if u["release"] != "released"),
+            "branches": sorted({u["branch"] for u in absorbed}), "blocked_on_owner": latest["blocked_on_owner"],
+            "records": [{"id": r.get("absorption_id"), "date": r["date"], "branch": r["branch"], "release": r["release"],
+                         "records": r["records"], "notes": r["notes"],
+                         "counts": {k: len(r[k]) for k in ("absorbed", "declined", "held")}} for r in records]}
+
+
 # --------------------------------------------------------------------------- view model
 
 def historical_summary(record: dict) -> dict:
@@ -1821,10 +2201,12 @@ def historical_summary(record: dict) -> dict:
 #
 # The one stage table of the official skill-intake process (docs/SKILL_INTAKE.md). build_view() maps every
 # food onto it and writes both into view.json; the web page, `catalog.py menu` and oaw_status.py draw only that.
-# automation: automated (runs by itself today), owner (waits for the owner), mixed (part automated, part owner
-# or planned), planned (part of the process, not automated yet: drawn, never the current stage, no action).
+# automation: automated (the engine runs it by itself today), agent (Claude does it, D28: the default actor at
+# every stop), owner (waits for the owner), mixed (more than one kind), planned (part of the process, not done by
+# anyone yet: drawn, never the current stage, no action).
 
-PIPELINE_AUTOMATION = {"automated": "自動", "owner": "需要你", "mixed": "部分自動", "planned": "規劃中"}
+PIPELINE_AUTOMATION = {"automated": "自動", "agent": "自動（Claude 接手）", "owner": "需要你", "mixed": "部分自動",
+                       "planned": "規劃中"}
 # Per-food stage state -> (symbol, Traditional Chinese); every renderer uses these. `partial`: a passed stage
 # whose planned steps never ran (so ● would overclaim); `removed`: the food's parts were removed from the build.
 PIPELINE_STATES = {"done": ("●", "完成"), "partial": ("◐", "部分完成"), "current": ("◉", "目前"), "blocked": ("⊗", "卡住"),
@@ -1832,11 +2214,20 @@ PIPELINE_STATES = {"done": ("●", "完成"), "partial": ("◐", "部分完成")
 # The organ each stage is drawn as on the page's digestive tract (D23); a caption, never a claim about the stage.
 PIPELINE_ORGANS_ZH = {"intake": "口", "quarantine": "食道", "static": "胃", "plan": "十二指腸", "review": "肝", "test": "小腸",
                       "sort": "大腸", "approve": "門靜脈", "build": "全身"}
-# Who a food waits on (the page draws it as the food's badge): owner = only the owner can move it (blue "!"),
-# optional = only optional owner decisions are left (grey "?"), planned = it waits for a step that is not
-# automated yet, so nothing moves it today, none = at rest. A taste running right now is live page state
-# (status.json), never view data.
-PIPELINE_WAITING_ZH = {"owner": "等你", "optional": "只有可選的決定", "planned": "等規劃中的步驟（還沒自動化）", "none": "沒有待辦"}
+# Who a food waits on (the page draws it as the food's badge). D28: the agent is the default actor, so
+#   agent    = Claude takes the next step (taste, retaste, rebuild, record); not the owner's job;
+#   owner    = only the owner can move it (blue "!"): an entry choice, a tier-C question (D21), an owner-only
+#              prerequisite (a login, a token, a standing rule), or removing a skill;
+#   release  = built on the working branch; the owner's release (merging the PR) decides the whole branch at once,
+#              never food by food;
+#   optional = only optional owner decisions are left (grey "?");
+#   planned  = it waits for a step nobody can run today (kept for the renderers; D28 left no such stop);
+#   none     = at rest.
+# A taste running right now is live page state (status.json), never view data.
+PIPELINE_WAITING_ZH = {"owner": "等你", "agent": "自動（Claude 接手）", "release": "等發布（合併 PR 時一次決定）",
+                       "optional": "只有可選的決定", "planned": "等規劃中的步驟（還沒自動化）", "none": "沒有待辦"}
+# The one line every agent-waiting blocker adds to what the records cannot say.
+AGENT_WHEN_ZH = "Claude 什麼時候接手：沒有排程，在下一次 Claude 工作階段處理（D28）"
 
 
 def _stage(sid, label_zh, label, automation, decisions, summary_zh, steps, actions):
@@ -1866,30 +2257,41 @@ PIPELINE_STAGES = (
            (("repo：hardened git fetch，固定 commit", "automated"),
             ("論文：只用 https 抓 arXiv 中繼資料和固定版本的 PDF（有大小和時間上限），記 sha256；PDF 只檢查開頭，不解析", "automated"),
             ("唯讀 tar，放在專案外", "automated")), ("taste", "forget")),
-    _stage("static", "靜態", "static checks", "mixed", ("D5", "D7"), "免費靜態檢查，把食物拆成成分；靜態規則只舉旗，不判有毒。",
+    _stage("static", "靜態", "static checks", "mixed", ("D5", "D7"),
+           "免費靜態檢查，把食物拆成成分；靜態規則只舉旗，不判有毒。旗標只供參考，不擋食物（D28）：下一步是 Claude 試吃。",
            (("repo：檔案角色、授權、hooks／MCP／腳本、旗標；論文：標題、作者、版本、授權", "automated"),
-            ("把 repo 拆成成分（論文的成分要 Elephant 拆，見「計畫」）", "automated"), ("高嚴重度旗標由你分流（終端確認碼）", "owner")),
+            ("把 repo 拆成成分（論文的單位由 Claude 當 Elephant 拆，或匯入紀錄）", "automated"),
+            ("旗標交給重建和 Goldfish 盲審；食物接著送去試吃區（D21、D25、D28）", "agent"),
+            ("可選：你分流高嚴重度旗標（終端確認碼）；只有要照原樣複製帶旗標的成分或確認有毒時才需要", "owner")),
            ("taste", "triage", "forget")),
     _stage("plan", "計畫", "plan", "mixed", ("D10", "D11"), "系統依證據擬測試計畫，最便宜、又能分辨的測試排前面；Elephant 擬吸收提案。",
            (("系統測試計畫：依證據自動產生", "automated"),
             ("Elephant 依紀錄的決定擬吸收提案，也替論文拆成分（今天只能匯入，標成歷史證據，不計入判定）", "planned")), ()),
     _stage("review", "盲審", "blind review", "planned", ("D10", "D15"), "Goldfish 在驗證過的零脈絡下盲審我們的草稿，Elephant 解決發現。",
            (("Goldfish 零脈絡盲審（啟動 recipe、argv、init event 都要記錄）", "planned"), ("Elephant 解決發現", "planned")), ()),
-    _stage("test", "實測", "tests", "planned", ("D11", "D13"),
-           "在常設政策內由便宜到貴自動跑：每個暫留先跑免費 Stage 0；會執行食物程式碼的只在可拋棄沙箱（level 2）。",
-           (("離線整合 T1：名稱碰撞、doctor／migrate 往返", "planned"), ("可拋棄沙箱試跑 TX（level 2）", "planned"),
+    _stage("test", "實測", "tests", "mixed", ("D11", "D13", "D25"),
+           "Claude 在試吃區試吃（D25、D28）：官方安裝、每一組都跑、盲評、照事先寫死的規則判定，結果用 record-tasting 記錄；"
+           "食物組沒跑就沒有判定。引擎自己的測試在常設政策內由便宜到貴跑，還是規劃中。",
+           (("Claude 在試吃區試吃：題目先凍結、每一組（原生、食物、OAW 版本）都跑、盲評，記成試吃紀錄", "agent"),
+            ("離線整合 T1：名稱碰撞、doctor／migrate 往返", "planned"), ("可拋棄沙箱試跑 TX（level 2）", "planned"),
             ("行為 A/B：模型面向的文字要過", "planned"), ("整合檢查 T4：退步、觸發衝突、context 預算、指示衝突", "planned"),
-            ("齊平底線 P：OAW 吃完 對 單吃食物（C ≥ B）", "planned")), ()),
+            ("齊平底線 P：OAW 吃完 對 單吃食物（C ≥ B）", "planned")), ("forget",)),
     _stage("sort", "分流", "verdicts", "mixed", ("D2", "D5", "D16", "D17", "D18"),
            "每個成分判定吸收／排掉／暫留，附原因和證據等級；整合檢查和齊平底線的關口在這裡套用。",
            (("成分判定（今天只有靜態量測）", "automated"), ("模型面向的文字和機制拆開：文字過 A/B 才能吸收", "automated"),
+            ("試吃判定：吸收、插上、不收、沒證明比較好，或沒有判定（照試吃紀錄）", "agent"),
             ("套用整合檢查（T4）和齊平底線（P）的關口", "planned"),
             ("沒建的項目寫「未量測（規劃：<等級>）」，規劃的等級另放一欄", "planned")), ("forget",)),
-    _stage("approve", "核准", "owner approval", "owner", ("D7", "D11"), "你決定吸收哪些成分；系統不會自動安裝或套用。",
-           (("你勾選成分，先預覽再確認", "owner"),), ("absorb", "forget")),
+    _stage("approve", "核准", "approval", "mixed", ("D7", "D11", "D21"),
+           "D21：Claude 把挑中的單位重建成 OAW 程式和測試（A 級靜態證據就夠、B 級要試吃判定吸收），用 record-absorption 記錄；"
+           "只有 C 級問你。系統不會自動安裝或套用；照原樣複製吸收是可選的舊流程。",
+           (("Claude 依 D21 把挑中的單位重建成 OAW 程式和測試，記成吸收紀錄", "agent"),
+            ("C 級（執行食物程式、新增執行期相依、常設決定沒涵蓋的授權或 CLI 選擇、移除 skill、超出預算）問你", "owner"),
+            ("可選：照原樣複製吸收（你勾選成分，先預覽再確認）", "owner")), ("absorb", "forget")),
     _stage("build", "版本", "build", "mixed", ("D3", "D6", "D12", "D14"),
            "每次吸收或移除都產生 2.0.0+build.N.<hash7> 和還原點，列出和預設比的效果與證據等級；可一鍵線性還原，任何 skill（含 EGM）都能移除。",
-           (("還原點 → 安裝 → 版本 → 和預設比", "automated"),
+           (("發布：你合併 PR，整個分支一次決定，不是逐樣核准（D21、D28）", "owner"),
+            ("還原點 → 安裝 → 版本 → 和預設比", "automated"),
             ("吸收時照原樣複製 skill 文字，附上食物的授權檔和出處說明（重新實作成 OAW 部件還沒做）", "automated"),
             ("還原到任何一版（線性：只有移除版本，沒有逐項開關）", "owner"), ("移除（含 EGM）、加回：再加回要重新測試", "owner"),
             ("每版引用清單：用在哪裡／沒採用的原因", "planned"),
@@ -1921,11 +2323,17 @@ BLOCKER_BASIS_ZH = {
     "D5": "D5：判定以成分為單位，每個成分都要有證據",
     "D6": "D6：任何吸收的 skill 都能移除；移除後再加回要重新測試",
     "D7": "D7：不自動安裝或套用；食物只封存在專案外，絕不執行",
-    "D7-static": "D5、D7：靜態規則只舉旗、不判有毒；有高嚴重度旗標的成分在你分流之前一律暫留",
-    "D11": "D7、D11：你決定吸收哪些成分；系統不會自動安裝或套用",
+    "D28-static": ("D21、D25、D28：旗標只供參考，不擋食物：挑中的單位會重建成 OAW 程式和測試（不複製食物的程式碼），"
+                   "食物只在試吃區執行，旗標交給重建和 Goldfish 盲審。分流是可選的：只有要照原樣複製帶旗標的成分、或確認有毒時才需要"),
+    "D11": "D7、D11：系統不會自動安裝或套用；照原樣複製吸收要你勾選、預覽、確認（可選的舊流程）",
     "D14": "D14：還原是線性的：只有移除版本，沒有逐項開關",
-    "D17": "D17：模型面向的 skill 文字要過行為 A/B 才能吸收；A/B runner 還是規劃中",
-    "paper": "D5、D21：論文的想法要重新實作成 OAW 程式和測試，不複製原文；替論文拆成分要 Elephant（規劃中）",
+    "D17": "D17：模型面向的 skill 文字要過行為 A/B 才能吸收；Claude 的試吃（D25）就是這個 A/B",
+    "D21": "D21：A 級（只改機制）靜態證據就能吸收、B 級（模型會讀的文字）要試吃判定吸收、C 級問你；吸收是 Claude 重建成 OAW 程式和測試",
+    "D25": "D25、D28：沒有試吃就沒有判定；Claude 在試吃區官方安裝、每一組都跑、盲評，再用 record-tasting 記錄",
+    "D28-verdict": "D28：食物組沒有裝起來跑過、沒有評分過的執行，就沒有判定；「天花板」推論不能取代實際跑",
+    "D28-owner": "D28：只有入口、發布、C 級問題和只有你能做的前置（登入、token、常設規則）才等你",
+    "release": "D21、D28：發布是整個分支一次決定：你合併 PR，這些單位一起進正式版本；不是逐樣核准",
+    "paper": "D5、D21：論文的想法要重新實作成 OAW 程式和測試，不複製原文；替論文拆單位由 Claude 當 Elephant 做（D28），引擎不會自己拆",
     "rescan": "第 3 站：掃描規則更新後，舊的試吃紀錄要用新規則再試吃（免費）才能吸收",
     "backlog": "第 8 站：匯入的歷史提案只記成待辦，不改任何檔案，也不產生新版本",
     "toxic": "只有你能判「有毒」；你確認後整樣排掉",
@@ -1968,16 +2376,37 @@ def _missing_lines(holds: list, limit: int = 4) -> list:
     return lines
 
 
+def _arms_line(tasting: dict) -> str:
+    """'N 4 次（評分 4）、G 4 次（評分 4，食物組）' for a tasting's arms."""
+    return "、".join(f"{sanitize_text(a['id'], 40)} {a['runs']} 次（評分 {a['graded_runs']}" + ("，食物組）" if a["food_arm"] else "）")
+                    for a in tasting.get("arms") or [])
+
+
+def _tasting_note(tasting: dict) -> str:
+    records = tasting.get("records") or {}
+    return (f"試吃 {sanitize_text(tasting.get('date'), 10)}：{_arms_line(tasting)}；紀錄 "
+            f"{sanitize_text(records.get('branch'), 40)}:{sanitize_text(records.get('path'), 160)}@{sanitize_text(records.get('commit'), 40)[:7]}")
+
+
+def _unit_line(unit: dict) -> str:
+    commits = "、".join(sanitize_text(c, 40)[:7] for c in unit.get("commits") or [])
+    tests = "、".join(sanitize_text(t, 80) for t in (unit.get("tests") or [])[:3])
+    return (f"{sanitize_text(unit.get('id'), 160)}（{unit.get('tier')} 級）：{sanitize_text(unit.get('branch'), 60)} {commits}"
+            f"；測試 {tests}；依據 {sanitize_text((unit.get('evidence') or {}).get('basis'), 160)}")
+
+
 def food_pipeline(card: dict) -> dict:
     """Where one food card sits on PIPELINE_STAGES, every stage's state, and its current stage's actions.
 
     The card's components must already carry `in_current_build`. Planned stages are never the current stage
     and never carry an action: until they are automated a food is shown passing them (┄). A passed stage with
-    planned steps is `partial` (◐), never `done`.
+    planned steps is `partial` (◐), never `done`. The test stage is drawn ┄ until a tasting (or consented live
+    evidence) is recorded.
 
-    `waiting_on` says who the food waits on (PIPELINE_WAITING_ZH) and `blocker` explains it from the card's
-    own data: where it stops (`where_zh`), the rule or decision behind it (`basis_zh`), what happens if the
-    owner does nothing (`if_ignored_zh`) and what the records cannot say (`unknown_zh`).
+    `waiting_on` says who the food waits on (PIPELINE_WAITING_ZH; D28: the agent unless only the owner can move
+    it) and `blocker` explains it from the card's own data: where it stops (`where_zh`), the rule or decision
+    behind it (`basis_zh`), what happens if nobody acts (`if_ignored_zh`) and what the records cannot say
+    (`unknown_zh`). `stage_notes_zh` carries what a recorded tasting or absorption says at its stage.
     """
     fid = card["id"]
     verdict = card.get("verdict") or {}
@@ -1987,16 +2416,27 @@ def food_pipeline(card: dict) -> dict:
     history = [c for r in card.get("historical") or [] for c in r.get("components") or [] if isinstance(c, dict)]
     in_build = [c for c in parts if c.get("in_current_build")]
     open_parts = [c for c in parts if can_absorb(c)]
-    open_history = [c for c in history if c.get("disposition") == "absorb" and not c.get("decision")]
+    # A proposal a D21 absorption record already settled (absorbed, declined or held) is not open any more.
+    open_history = [c for c in history if c.get("disposition") == "absorb" and not c.get("decision") and not c.get("d21")]
     restored_away = [c for c in parts if c.get("decision") == "absorbed" and not c.get("in_current_build")]
     removed = [c for c in parts if c.get("decision") == "removed" and not c.get("in_current_build") and not can_absorb(c)]
     readded = [c for c in in_build if c.get("decision") == "removed"]
     backlog = [c for c in history if c.get("decision")]
     holds = [c for c in parts if c.get("disposition") == "hold" and not c.get("decision")]
     ab_holds = [c for c in holds if c.get("missing_code") == "ab"]
+    tasting = card.get("tasting") if isinstance(card.get("tasting"), dict) else None
+    absorption = card.get("absorption") if isinstance(card.get("absorption"), dict) else None
+    rebuilt = [u for u in (absorption or {}).get("units") or [] if u.get("outcome") == "absorbed"]
     states = {s["id"]: "planned" if s["automation"] == "planned" else "todo" for s in PIPELINE_STAGES}
+    states["test"] = "planned"  # ┄ until a tasting or consented live evidence says it ran
     if verdict.get("level") == "measured":
         states["test"] = "done"  # a consented live record is test evidence; nothing in v0 produces one yet
+    notes = {}
+    if tasting:
+        states["test"] = "blocked" if tasting["verdict"] == "no-verdict" else "done"
+        notes["test"] = _tasting_note(tasting)
+        if tasting["verdict"] != "no-verdict":
+            notes["sort"] = f"試吃判定：{TASTING_VERDICTS[tasting['verdict']]}（{sanitize_text(tasting.get('verdict_zh'), 200)}）"
 
     def reach(stage, state, *, skip_planned=False):
         for sid in PIPELINE_ORDER[:PIPELINE_ORDER.index(stage)]:
@@ -2016,7 +2456,7 @@ def food_pipeline(card: dict) -> dict:
         stage = reach("build", "blocked" if bad else "current")
         note = f"在目前版本中（{len(in_build)} 個成分）" + (f"，但判定是「{verdict_zh}」：建議移除" if bad else "")
         if readded:
-            note += f"；{len(readded)} 個是移除後又被還原回來的：要重新測試（D6）"
+            note += f"；{len(readded)} 個是移除後又被還原回來的：要重新測試（D6），Claude 會重新試吃（免費）"
         wanted.append(("remove-food", None, {"name": fid, "food": True}))
         if headline == "risky":
             wanted.append(("triage", None, None))
@@ -2025,12 +2465,14 @@ def food_pipeline(card: dict) -> dict:
         if (open_parts or open_history) and not bad:
             wanted.append(("absorb", "吸收其他成分…", None))
         if bad:
-            waiting, where = "owner", f"版本：在目前版本中，但判定是「{verdict_zh}」"
-            basis = reasons + _flag_lines(card) + [BLOCKER_BASIS_ZH["D6"]]
+            # Removing a skill is a tier-C question (D21): only the owner removes it.
+            waiting, where = "owner", f"版本：在目前版本中，但判定是「{verdict_zh}」：移除要你決定"
+            basis = reasons + _flag_lines(card) + [BLOCKER_BASIS_ZH["D6"], BLOCKER_BASIS_ZH["D28-owner"]]
             ignored = "這些成分會留在目前版本裡：系統不會自己移除（D7）"
         elif readded:
-            waiting, where = "owner", f"版本：{len(readded)} 個成分是移除後又被還原回來的"
+            waiting, where = "agent", f"版本：{len(readded)} 個成分是移除後又被還原回來的：Claude 會重新試吃（免費）"
             basis, ignored = [BLOCKER_BASIS_ZH["D6"]], "它們留在目前版本，但在重新試吃之前一律當成未測"
+            unknown.append(AGENT_WHEN_ZH)
         else:
             waiting = "optional" if open_parts or open_history else "none"
             where = f"沒有卡點：在目前版本中（{len(in_build)} 個成分）" + ("；還有成分可以吸收（可選）" if waiting == "optional" else "")
@@ -2041,10 +2483,19 @@ def food_pipeline(card: dict) -> dict:
         if error:
             stage = reach("quarantine", "blocked")
             failure = sanitize_text(error.get("error_zh") or error.get("error"), 160)
-            note = "試吃失敗：" + failure
+            note = "試吃失敗：" + failure + "；Claude 會查原因再試，或記下不收的理由"
             wanted += [("taste", "再送去試吃", None), ("forget", None, None)]
-            waiting, where = "owner", "封存：試吃失敗（" + failure + "）"
-            basis, ignored = [BLOCKER_BASIS_ZH["D7"]], "這樣食物停在封存：不會被檢查，也不會被吸收"
+            waiting, where = "agent", "封存：試吃失敗（" + failure + "）"
+            basis = [BLOCKER_BASIS_ZH["D7"], BLOCKER_BASIS_ZH["D28-owner"]]
+            ignored = "Claude 接手（D28）；在那之前這樣食物停在封存：不會被檢查，也不會被吸收"
+            unknown.append(AGENT_WHEN_ZH)
+        elif card.get("tastings") or absorption:
+            stage = reach("intake", "current")
+            note = "已有 Claude 的試吃紀錄，但還沒跑免費靜態檢查：Claude 會送去試吃（免費）"
+            wanted += [("taste", None, None), ("forget", None, None)]
+            waiting, where = "agent", "入口：已有試吃紀錄，免費靜態檢查還沒跑"
+            basis, ignored = [BLOCKER_BASIS_ZH["D4"], BLOCKER_BASIS_ZH["D25"]], "Claude 接手（D28）；在那之前它停在入口"
+            unknown.append(AGENT_WHEN_ZH)
         else:
             stage = reach("intake", "current")
             reports = len(card.get("historical") or [])
@@ -2055,31 +2506,123 @@ def food_pipeline(card: dict) -> dict:
             ignored = "它一直停在入口：不封存、不檢查，也不會被吸收"
             if card.get("origin") != "import":
                 unknown.append("紀錄沒有寫當初為什麼沒有試吃（例如用 --no-taste 只登記）")
+    elif absorption:
+        # D21: the units were rebuilt as OAW code with tests on the working branch; the release decides them all at once.
+        settled = f"排掉 {absorption.get('declined', 0)} 個、暫留 {absorption.get('held', 0)} 個"
+        owner = sanitize_text(absorption.get("blocked_on_owner"), 300) if absorption.get("blocked_on_owner") else ""
+        branches = "、".join(sanitize_text(b, 60) for b in absorption.get("branches") or [])
+        if rebuilt:
+            stage = reach("build", "current")
+            pending = [u for u in rebuilt if u.get("release") != "released"]
+            note = f"已吸收 {len(rebuilt)} 個單位（D21：在 {branches} 重建成 OAW 程式和測試）；{settled}"
+            notes["approve"] = f"D21 吸收：{len(rebuilt)} 個單位（" + "、".join(f"{sanitize_text(u['id'], 80)} {u['tier']} 級" for u in rebuilt[:4]) + "）"
+            notes["build"] = (f"{len(pending)} 個單位等發布（{branches}）" if pending else f"已發布 {len(rebuilt)} 個單位")
+            basis = [BLOCKER_BASIS_ZH["D21"]] + [_unit_line(u) for u in rebuilt[:4]]
+            if len(rebuilt) > 4:
+                basis.append(f"另有 {len(rebuilt) - 4} 個吸收的單位（看食物卡）")
+            if owner:
+                waiting, where = "owner", "版本：等你決定：" + owner
+                basis.append(BLOCKER_BASIS_ZH["D28-owner"])
+                ignored = "這個決定之前，相關的單位停在原地；已重建的單位照常等發布"
+            elif pending:
+                waiting, where = "release", f"版本：{len(pending)} 個單位已在 {branches} 重建，等發布（合併 PR 時一次決定）"
+                basis.append(BLOCKER_BASIS_ZH["release"])
+                ignored = f"這些單位留在 {branches}，不會進正式版本；其他食物不受影響"
+            else:
+                waiting, where = "none", f"沒有卡點：已發布 {len(rebuilt)} 個單位"
+                basis.append(BLOCKER_BASIS_ZH["release"])
+                ignored = "什麼都不會變：它們已經在正式版本裡"
+        else:
+            stage = reach("sort", "done")
+            states["approve"] = states["build"] = "skipped"
+            wanted.append(("forget", None, None))
+            note = f"沒有吸收任何單位（D21）：{settled}"
+            basis = [BLOCKER_BASIS_ZH["D21"]]
+            if owner:
+                waiting, where = "owner", "分流：等你決定：" + owner
+                basis.append(BLOCKER_BASIS_ZH["D28-owner"])
+                ignored = "暫留的單位停在原地，直到你決定"
+            else:
+                waiting, where = "none", f"沒有卡點：沒有吸收任何單位（{settled}）"
+                ignored = "什麼都不會變；暫留的單位等它們的前置條件"
     elif headline == "toxic":
         stage = reach("sort", "blocked", skip_planned=True)
         note = "你確認有毒：整樣排掉，不會進專案"
         wanted.append(("forget", None, None))
         waiting, where = "none", "沒有卡點：你確認有毒，整樣排掉"
         basis, ignored = reasons + [BLOCKER_BASIS_ZH["toxic"]], "不會進專案；「忘掉這樣食物」可以把它從食物卡拿掉（可選）"
-    elif headline == "risky":
-        stage = reach("static", "blocked")
-        open_high = (card.get("flags") or {}).get("open_high") or 0
-        note = (f"{open_high} 個高嚴重度旗標待你分流" if open_high
-                else "你擋下了這樣食物：" + sanitize_text("；".join(str(r) for r in verdict.get("reasons") or []), 120))
-        wanted += [("triage", None, None), ("forget", None, None)]
-        if open_high:
-            waiting, where = "owner", f"靜態：{open_high} 個高嚴重度旗標待你分流"
-            basis = [BLOCKER_BASIS_ZH["D7-static"]] + _flag_lines(card)
-            ignored = "這樣食物停在靜態：帶旗標的成分一直暫留，整樣食物不會往下走，也不會被吸收"
+    elif tasting and not (restored_away or removed):
+        # An owner's removal or restore of copied parts (D6, D14) stands over an older tasting.
+        label = TASTING_VERDICTS[tasting["verdict"]]
+        said = sanitize_text(tasting.get("verdict_zh"), 200)
+        owner = sanitize_text(tasting.get("blocked_on_owner"), 300) if tasting.get("blocked_on_owner") else ""
+        basis = [BLOCKER_BASIS_ZH["D25"], _tasting_note(tasting)]
+        if tasting["verdict"] == "no-verdict":
+            stage = reach("test", "blocked")
+            why = owner or sanitize_text(tasting.get("notes"), 300)
+            note = f"試吃沒有判定：{why}" + ("" if owner else "；Claude 會重跑")
+            basis = [BLOCKER_BASIS_ZH["D28-verdict"], f"食物組 {sanitize_text(tasting.get('food_arm'), 40)}：評分過的執行 "
+                     f"{tasting.get('food_arm_graded_runs', 0)} 次"] + basis[1:]
+            if owner:
+                waiting, where = "owner", "實測：試吃沒有判定，等你：" + owner
+                basis.append(BLOCKER_BASIS_ZH["D28-owner"])
+                ignored = "這樣食物停在實測：食物組沒跑完就沒有判定（D28）；其他食物不受影響"
+            else:
+                waiting, where = "agent", "實測：試吃沒有判定（" + why + "）；Claude 會重跑"
+                ignored = "Claude 接手重跑（D28）；在那之前沒有判定，也不會被吸收"
+                unknown.append(AGENT_WHEN_ZH)
+            wanted.append(("forget", None, None))
+        elif tasting["verdict"] in ("absorb", "plug-in"):
+            stage = reach("approve", "current")
+            if tasting["verdict"] == "absorb":
+                note = f"試吃判定：{label}（{said}）；下一步：Claude 依 D21 把挑中的單位重建成 OAW 程式和測試，記成吸收紀錄；你在發布時合併"
+                where = "核准：試吃判定吸收；Claude 依 D21 重建成 OAW 程式和測試"
+                basis.insert(1, BLOCKER_BASIS_ZH["D21"])
+            else:
+                note = f"試吃判定：{label}（{said}）；下一步：Claude 接上官方版（連接器），不吸收食物的程式"
+                where = "核准：試吃判定插上；Claude 接上官方版"
+            if open_parts:
+                wanted.append(("absorb", "照原樣複製吸收（可選）…", None))
+            wanted.append(("forget", None, None))
+            if owner:
+                waiting, where = "owner", where + "；等你：" + owner
+                basis.append(BLOCKER_BASIS_ZH["D28-owner"])
+                ignored = "這個決定之前，這樣食物停在核准"
+            else:
+                waiting = "agent"
+                ignored = "Claude 接手（D28）；完成後停在版本，等發布"
+                unknown.append(AGENT_WHEN_ZH)
         else:
+            stage = reach("sort", "done")
+            states["approve"] = states["build"] = "skipped"
+            note = f"試吃判定：{label}（{said}）"
+            wanted.append(("forget", None, None))
+            waiting, where = "none", f"沒有卡點：試吃判定{label}"
+            ignored = "不會被吸收；「忘掉這樣食物」可以把它從食物卡拿掉（可選）"
+    elif headline == "risky":
+        open_high = (card.get("flags") or {}).get("open_high") or 0
+        if open_high:
+            # D28: the flags inform the rebuild and the goldfish review; they do not park the food on the owner.
+            stage = reach("static", "current")
+            note = f"{open_high} 個高嚴重度旗標：只供參考，不擋這樣食物；下一步：Claude 在試吃區試吃（D25、D28）"
+            wanted += [("triage", "分流旗標（可選，終端確認碼）", None), ("forget", None, None)]
+            waiting, where = "agent", f"靜態：{open_high} 個高嚴重度旗標（只供參考）；下一步：Claude 在試吃區試吃"
+            basis = [BLOCKER_BASIS_ZH["D28-static"]] + _flag_lines(card)
+            ignored = "Claude 接手試吃（D28）；帶旗標的成分在你分流之前不能照原樣複製，重建成 OAW 程式不受影響"
+            unknown.append(AGENT_WHEN_ZH)
+        else:
+            stage = reach("static", "blocked")
+            note = "你擋下了這樣食物：" + sanitize_text("；".join(str(r) for r in verdict.get("reasons") or []), 120)
+            wanted += [("triage", None, None), ("forget", None, None)]
             waiting, where = "none", "沒有卡點：你擋下了這樣食物"
             basis, ignored = reasons, "它停在靜態，不會被吸收"
     elif verdict.get("stale"):
         stage = reach("static", "current")
-        note = "掃描規則更新了：用新規則再試吃（免費）才能吸收"
+        note = "掃描規則更新了：Claude 會用新規則再試吃（免費），之後才能吸收"
         wanted += [("taste", "用新規則再試吃（免費）", None), ("forget", None, None)]
-        waiting, where = "owner", "靜態：掃描規則更新了，要用新規則再試吃"
+        waiting, where = "agent", "靜態：掃描規則更新了，Claude 會用新規則再試吃"
         basis, ignored = [BLOCKER_BASIS_ZH["rescan"]], "判定停在舊規則的結果：成分一律暫留，不能吸收"
+        unknown.append(AGENT_WHEN_ZH)
     elif headline in ("inedible", "regressed", "diarrhea"):
         stage = reach("sort", "blocked", skip_planned=headline == "inedible")
         note = {"inedible": "OAW 照原樣沒辦法消化（不是說它有害）", "regressed": "實測變差：不吸收",
@@ -2087,18 +2630,27 @@ def food_pipeline(card: dict) -> dict:
         wanted.append(("forget", None, None))
         waiting, where = "none", "沒有卡點：" + note
         basis, ignored = reasons, "不會被吸收；「忘掉這樣食物」可以把它從食物卡拿掉（可選）"
-    elif open_parts or open_history:
+    elif open_parts:
+        stage = reach("approve", "current")
+        note = (f"可以吸收：{len(open_parts)} 個成分；Claude 依 D21 重建成 OAW 程式和測試，你在發布時合併（照原樣複製吸收是可選的）"
+                + (f"；{len(open_history)} 個歷史提案可以記成待辦（可選）" if open_history else ""))
+        wanted += [("absorb", "照原樣複製吸收（可選）…", None), ("forget", None, None)]
+        waiting = "agent"
+        where = f"核准：{len(open_parts)} 個成分可以吸收；Claude 依 D21 重建成 OAW 程式和測試"
+        basis = [BLOCKER_BASIS_ZH["D21"], BLOCKER_BASIS_ZH["D11"]] + ([BLOCKER_BASIS_ZH["backlog"]] if open_history else [])
+        ignored = "Claude 接手重建（D28）；照原樣複製吸收（「照原樣複製吸收（可選）…」）是可選的舊流程"
+        unknown.append(AGENT_WHEN_ZH)
+    elif open_history:
+        # Imported proposals are backlog the owner may note; nothing waits on that choice (D28).
         stage = reach("approve", "current")
         paper = card.get("kind") == "paper"
-        note = (f"等你核准：{len(open_history)} 個歷史提案可以記成待辦（論文的想法要重新實作成 OAW 程式和測試，不複製原文；D5、D21）"
-                if paper else
-                f"等你核准：{len(open_parts)} 個成分可以吸收" + (f"，{len(open_history)} 個歷史提案可以記成待辦" if open_history else ""))
-        wanted += [("absorb", None, None), ("forget", None, None)]
-        waiting = "owner"
-        where = "核准：" + (f"{len(open_history)} 個歷史提案等你決定要不要記成待辦" if paper else
-                           f"{len(open_parts)} 個成分等你決定要不要吸收" + (f"，{len(open_history)} 個歷史提案等你決定" if open_history else ""))
-        basis = ([BLOCKER_BASIS_ZH["paper"]] if paper else [BLOCKER_BASIS_ZH["D11"]]) + ([BLOCKER_BASIS_ZH["backlog"]] if open_history else [])
-        ignored = "成分一直停在核准，不會被安裝；其他食物不受影響"
+        note = (f"可選：{len(open_history)} 個歷史提案可以記成待辦" +
+                ("（論文的想法要重新實作成 OAW 程式和測試，不複製原文；D5、D21）" if paper else ""))
+        wanted += [("absorb", "記成待辦（可選）…", None), ("forget", None, None)]
+        waiting = "optional"
+        where = f"沒有卡點：{len(open_history)} 個歷史提案可以記成待辦（可選）"
+        basis = ([BLOCKER_BASIS_ZH["paper"]] if paper else []) + [BLOCKER_BASIS_ZH["backlog"], BLOCKER_BASIS_ZH["D21"]]
+        ignored = "什麼都不會變：提案留在食物卡；要吸收，Claude 依 D21 重建成 OAW 程式和測試，記成吸收紀錄"
     elif restored_away:
         stage = reach("build", "current")
         builds = [d.get("build") for d in card.get("decisions") or [] if d.get("kind") == "absorb" and d.get("build")]
@@ -2123,28 +2675,26 @@ def food_pipeline(card: dict) -> dict:
         basis = [BLOCKER_BASIS_ZH["backlog"]] + ([BLOCKER_BASIS_ZH["paper"]] if card.get("kind") == "paper" else [])
         ignored = "待辦留在決定紀錄裡；要實作成 OAW 程式和測試，才會進版本"
     elif card.get("kind") == "paper" and not parts and not history:
-        # Splitting a paper into components needs a model: the food waits where the split belongs, nothing is invented.
+        # Splitting a paper into units needs a model: Claude does it as the Elephant (D28); the engine invents nothing.
         stage = reach("static", "current")
-        note = "論文已封存（固定 arXiv 版本＋sha256）；" + PAPER_COMPONENTS_NOTE_ZH + "（計畫：匯入紀錄）"
+        note = "論文已封存（固定 arXiv 版本＋sha256）；下一步：Claude 當 Elephant 拆單位，匯入紀錄（計畫：匯入紀錄），或直接記錄試吃／吸收"
         wanted.append(("forget", None, None))
-        waiting, where = "planned", "靜態：論文的成分還沒拆"
+        waiting, where = "agent", "靜態：論文的單位還沒拆；Claude 接手"
         basis = [BLOCKER_BASIS_ZH["paper"]]
-        ignored = "論文停在靜態，不會往下走；匯入已有的消化紀錄（計畫：匯入紀錄）就能往下"
-        unknown.append("Elephant 替論文拆成分什麼時候做好：沒有排程，紀錄裡也沒寫")
+        ignored = "Claude 接手拆單位（D28）；在那之前論文停在靜態"
+        unknown.append(AGENT_WHEN_ZH)
     else:
         stage = reach("sort", "current")
         if holds:
-            note = f"暫留 {len(holds)} 個成分" + (f"（{len(ab_holds)} 個 skill 文字缺行為 A/B，D17）" if ab_holds else "") + \
-                   "：缺的測試還在規劃中（看食物卡）"
-            owner_holds = [c for c in holds if c.get("missing_code") in OWNER_MISSING]
-            waiting = "owner" if owner_holds else "planned"
-            where = f"分流：暫留 {len(holds)} 個成分" + (f"（{len(owner_holds)} 個等你分流旗標）" if owner_holds else "")
-            basis = ([BLOCKER_BASIS_ZH["D17"]] if ab_holds else []) + _missing_lines(holds) + [parity_zh + "（D16）"]
-            ignored = ("這些成分一直暫留，不會被吸收" +
-                       ("；旗標在終端分流：catalog.py menu → 12 分流旗標" if owner_holds else
-                        "：缺的測試（行為 A/B、沙箱試跑）還是規劃中，v0 沒辦法讓它們往下走"))
-            if not owner_holds:
-                unknown.append("缺的測試什麼時候會自動跑：v0 沒有排程，也沒有時間表")
+            note = (f"暫留 {len(holds)} 個成分" + (f"（{len(ab_holds)} 個 skill 文字缺行為 A/B，D17）" if ab_holds else "")
+                    + "：下一步 Claude 在試吃區試吃（D25、D28）")
+            flagged = [c for c in holds if c.get("missing_code") in OWNER_MISSING]
+            waiting = "agent"
+            where = f"分流：暫留 {len(holds)} 個成分；下一步：Claude 在試吃區試吃"
+            basis = ([BLOCKER_BASIS_ZH["D17"]] if ab_holds else []) + _missing_lines(holds) + [BLOCKER_BASIS_ZH["D25"], parity_zh + "（D16）"]
+            ignored = ("Claude 接手試吃（D28）：試吃之後才有判定；在那之前成分暫留，不會被吸收" +
+                       (f"；{len(flagged)} 個成分帶未分流的旗標，可以在終端分流（可選）：catalog.py menu → 12" if flagged else ""))
+            unknown.append(AGENT_WHEN_ZH)
         else:
             note = "沒有可以吸收的成分"
             waiting, where = "none", "沒有卡點：沒有可以吸收的成分"
@@ -2163,6 +2713,7 @@ def food_pipeline(card: dict) -> dict:
     return {"stage": stage, "stage_label_zh": label_zh, "state": states[stage], "state_zh": PIPELINE_STATES[states[stage]][1],
             "stages": states, "note_zh": note, "actions": actions, "ab_holds": len(ab_holds), "readded_untested": len(readded),
             "details": [{"stage": "plan", "id": "plan", "label_zh": "看計畫"}] if card.get("tasted") and card.get("plan") and plan_reached else [],
+            "stage_notes_zh": {sid: notes[sid] for sid in PIPELINE_ORDER if sid in notes},
             "parity": {"state": "measured" if parity else "not-tested",
                        "label": "parity vs food alone: " + ("measured" if parity else "not tested"),
                        "label_zh": "和單吃食物比（齊平底線）：" + ("實測" if parity else "未測")},
@@ -2178,7 +2729,9 @@ def pipeline_table() -> dict:
             # view.json is written with sorted keys, so the display order travels as lists.
             "legend": list(PIPELINE_STATES), "automation_order": list(PIPELINE_AUTOMATION),
             "states_zh": {k: v[1] for k, v in PIPELINE_STATES.items()}, "actions": copy_json(PIPELINE_ACTIONS),
-            "live_stages": dict(LIVE_STAGES), "empty_zh": PIPELINE_EMPTY_ZH}
+            "live_stages": dict(LIVE_STAGES), "empty_zh": PIPELINE_EMPTY_ZH,
+            "waiting_zh": dict(PIPELINE_WAITING_ZH), "waiting_order": list(PIPELINE_WAITING_ZH),
+            "tasting_verdicts_zh": dict(TASTING_VERDICTS), "tiers_zh": dict(TIERS)}
 
 
 def copy_json(value):
@@ -2188,11 +2741,17 @@ def copy_json(value):
 def food_card(entry: dict, evidence: list, decisions: list, plan: dict | None = None) -> dict:
     derived = derive(evidence, decisions)
     backlog = {cid for d in decisions if d.get("kind") == "absorb" and d.get("outcome") == "backlog" for cid in d.get("components") or []}
+    records = food_records(evidence, entry["id"])
+    absorption = absorption_summary(records["absorptions"])
+    # A unit a D21 absorption record settled, by every id it may carry (a component id or an imported hist: id).
+    settled = {alias: {"outcome": u["outcome"], "branch": u["branch"], "tier": u.get("tier")}
+               for u in (absorption or {}).get("units", []) for alias in unit_aliases(u["id"])}
     historical = []
     for record in evidence:
         if evidence_class(record) == "historical":
             summary = historical_summary(record)
-            summary["components"] = [{**c, "decision": "absorbed as backlog item" if c.get("id") in backlog else None}
+            summary["components"] = [{**c, "decision": "absorbed as backlog item" if c.get("id") in backlog else None,
+                                      "d21": settled.get(c.get("id"))}
                                      for c in summary["components"]]
             historical.append(summary)
     static = [r for r in evidence if evidence_class(r) == "static"]
@@ -2239,9 +2798,15 @@ def food_card(entry: dict, evidence: list, decisions: list, plan: dict | None = 
                                                 "level", "stale")},
             "safety_text": safety_text, "exec_class": derived["exec_class"], "allergens": derived["allergens"],
             "flags": derived["flags"], "license": (s or {}).get("license", {}).get("spdx") if s else None,
-            "components": derived["components"], "counts": counts, "historical": historical,
+            "components": [{**c, "d21": settled.get(c["id"])} for c in derived["components"]], "counts": counts,
+            "historical": historical,
             "plan": {"status": plan["status"], "plan_id": plan["plan_id"], "estimate": plan["estimate"]} if plan else None,
-            "decisions": food_decisions}
+            "decisions": food_decisions,
+            # D25/D28: Claude's tastings (oldest first; the latest decides) and D21 absorptions; records the engine
+            # refuses are listed with why, never counted.
+            "tastings": [tasting_summary(t) for t in records["tastings"]],
+            "tasting": tasting_summary(records["tastings"][-1]) if records["tastings"] else None,
+            "absorption": absorption, "records_refused": records["refused"]}
 
 
 def food_source_zh(card: dict) -> str:
@@ -2330,12 +2895,23 @@ def build_view(state: dict) -> dict:
                 for b in builds.get("builds", [])]
     backlog = {(f["id"], cid) for f in foods for d in f["decisions"] if d["kind"] == "absorb" and d["outcome"] == "backlog"
                for cid in d["components"]}
+    installed = sum(1 for f in foods for c in f["components"] if c.get("in_current_build"))
+    rebuilt = sum((f.get("absorption") or {}).get("absorbed", 0) for f in foods)
+    releasing = [f for f in foods if f["pipeline"]["waiting_on"] == "release"]
     funnel = {"submitted": len(foods), "tasted": sum(1 for f in foods if f["tasted"]),
               "measured": sum(1 for f in foods if f["verdict"]["level"] == "measured"),
-              # Installed parts present in the current layer; backlog notes are counted apart and change no code.
-              "absorbed_parts": sum(1 for f in foods for c in f["components"] if c.get("in_current_build")),
+              "agent_tasted": sum(1 for f in foods if f.get("tastings")),
+              # Installed parts present in the current layer plus units rebuilt under D21 (on the working branch until
+              # the release); backlog notes are counted apart and change no code.
+              "absorbed_parts": installed + rebuilt, "installed_parts": installed, "rebuilt_units": rebuilt,
               "backlog_items": len(backlog),
-              "by_stage": {sid: sum(1 for f in foods if f["pipeline"]["stage"] == sid) for sid in PIPELINE_ORDER}}
+              "by_stage": {sid: sum(1 for f in foods if f["pipeline"]["stage"] == sid) for sid in PIPELINE_ORDER},
+              "by_waiting": {w: sum(1 for f in foods if f["pipeline"]["waiting_on"] == w) for w in PIPELINE_WAITING_ZH}}
+    # D21/D28: the release is one owner decision for the whole branch, never one per food.
+    release = {"foods": [f["id"] for f in releasing],
+               "units": sum((f.get("absorption") or {}).get("release_pending", 0) for f in releasing),
+               "branches": sorted({b for f in releasing for b in (f.get("absorption") or {}).get("branches") or []}),
+               "waiting_zh": PIPELINE_WAITING_ZH["release"], "note_zh": BLOCKER_BASIS_ZH["release"]}
     view = {
         "schema": VIEW_SCHEMA, "release": RELEASE,
         "generated_from": {name: record_sha256(state.get(name)) for name in ("registry", "evidence", "decisions", "builds", "policy", "scout", "plans", "effect", "receipts")},
@@ -2353,13 +2929,14 @@ def build_view(state: dict) -> dict:
                                               "description": sanitize_text(c.get("description"), 160), "stars": c.get("stars"),
                                               "relevance": c.get("relevance"), "status": c.get("status", "candidate"),
                                               "weeks_seen": c.get("weeks_seen", [])} for i, c in enumerate(candidates)]}},
-        "pipeline": pipeline_table(), "foods": foods, "funnel": funnel,
+        "pipeline": pipeline_table(), "foods": foods, "funnel": funnel, "release_pending": release,
         "policy": {"set": bool(policy), **({k: policy[k] for k in ("per_food_token_cap", "weekly_token_cap", "sandbox", "set_at") if k in policy} if policy else {}),
                    "paid_runs_enabled": False, "note": "v0 shows plans and estimates only; paid runs are not implemented"},
         "honesty": ["No evidence, no verdict; stars only order the scout queue.",
                     "Food bytes stay sealed outside the project and are never executed.",
                     "Static rules raise flags only; toxic needs owner confirmation.",
                     "Imported reports are historical-prior and never counted in a verdict.",
+                    "An agent tasting gives a verdict only when its food arm ran and was graded; numbers keep their protocol.",
                     "Quality is 'not measured' unless consented live evidence exists; never 'enhanced' without it.",
                     "While running, only progress and spend are shown, never interim scores."],
     }

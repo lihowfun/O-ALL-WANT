@@ -131,15 +131,20 @@ test('finds the project and the OAW checkout, and draws every food on the tract'
   const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
   const svg = await ui.find({ type: 'Svg' })
   const source = String(svg?.props.source ?? '')
-  for (const name of ['safishamsi/graphify', 'microsoft/TokenEconomizer', 'thedotmack/claude-mem', 'arXiv:2606.03979', 'sweet-notes']) expect(source).toContain(name)
+  for (const name of ['Graphify-Labs/graphify', 'microsoft/TokenEconomizer', 'thedotmack/claude-mem', 'arXiv:2606.03979', 'alexyc9381/court-skill', 'sweet-notes']) expect(source).toContain(name)
   expect(source).toContain('入口')
-  expect(String(svg?.props.alt ?? '')).toContain('靜態：safishamsi/graphify、microsoft/TokenEconomizer')
-  expect(await ui.find({ type: 'Text', text: /送進 4/ })).toBeDefined()
-  expect(w.statuses.at(-1)).toBe('🍽 OAW 消化道 · 4 樣等你')
+  expect(String(svg?.props.alt ?? '')).toContain('靜態：microsoft/TokenEconomizer')
+  expect(String(svg?.props.alt ?? '')).toContain('分流：alexyc9381/court-skill、Graphify-Labs/graphify')
+  expect(await ui.find({ type: 'Text', text: /送進 5/ })).toBeDefined()
+  // D28: nothing in this ledger waits on the owner; the paper waits for the one release of the branch.
+  expect(w.statuses.at(-1)).toBe('🍽 OAW 消化道 · 1 樣等發布')
+  expect(await ui.find({ type: 'Text', text: /^等發布：1 個單位在 claude\/oaw-2（1 樣食物），合併 PR 時一次決定$/ })).toBeDefined()
   await ui.unmount()
 
   const term = await $.ui.mount({ ...PANE, surface: 'terminal' })
-  expect(await term.find({ type: 'Text', text: /胃.*靜態.*▲graphify!.*▲tokeneconomizer!/ })).toBeDefined()
+  expect(await term.find({ type: 'Text', text: /胃.*靜態.*▲tokeneconomizer»/ })).toBeDefined()
+  expect(await term.find({ type: 'Text', text: /全身.*版本.*○arxiv-2606-03979↑/ })).toBeDefined()
+  expect(await term.find({ type: 'Text', text: /大腸.*分流.*court-skill.*graphify/ })).toBeDefined()
   await term.unmount()
 })
 
@@ -148,15 +153,16 @@ for (const surface of ['terminal', 'desktop'] as const) {
     const w = world(on)
     await start($, surface)
     const ui = await $.ui.mount({ ...PANE, surface })
-    await ui.press({ key: 'food:graphify' })
-    expect(await ui.find({ type: 'Text', text: /^卡在哪：/ })).toBeDefined()
+    await ui.press({ key: 'food:tokeneconomizer' })
+    expect(await ui.find({ type: 'Text', text: /^卡在哪：靜態：23 個高嚴重度旗標（只供參考）；下一步：Claude 在試吃區試吃/ })).toBeDefined()
     expect(await ui.find({ type: 'Text', text: /^依據：/ })).toBeDefined()
     expect(await ui.find({ type: 'Text', text: /^你不處理會怎樣：/ })).toBeDefined()
     await ui.press({ key: 'act:triage' })
     expect(w.copies.at(-1)).toContain(`${OAW}/scripts/catalog.py menu --target ${PROJECT}`)
     expect(w.runs.length).toBe(0)
     await ui.press({ key: 'ask' })
-    expect(w.fills.at(-1)).toContain('食物：safishamsi/graphify（graphify，repo）')
+    expect(w.fills.at(-1)).toContain('食物：microsoft/TokenEconomizer（tokeneconomizer，repo）')
+    expect(w.fills.at(-1)).toContain('自動（Claude 接手）')
     expect(w.fills.at(-1)).toMatch(/問題：$/)
     await ui.unmount()
   })
@@ -205,11 +211,11 @@ test('a running taste moves on the tract, and its end raises a toast', async ($,
   const source = String((await ui.find({ type: 'Svg' }))?.props.source ?? '')
   expect(source).toContain('class="wave"')
   expect(source).toContain('class="live"')
-  expect(w.statuses.at(-1)).toBe('🍽 試吃中：safishamsi/graphify · 靜態')
+  expect(w.statuses.at(-1)).toBe('🍽 試吃中：Graphify-Labs/graphify · 靜態')
 
   w.files.set(`${CATALOG}/status.json`, { text: status({ stage: 'done', headline: 'risky' }), mtime: NOW + 1500 })
   await w.clock.advance(2000)
-  expect(w.toasts.at(-1)).toMatch(/^試吃完成：safishamsi\/graphify · ▲ 有疑慮/)
+  expect(w.toasts.at(-1)).toMatch(/^試吃完成：Graphify-Labs\/graphify · ▲ 有疑慮/)
   const after = String((await ui.find({ type: 'Svg' }))?.props.source ?? '')
   expect(after).not.toContain('class="live"')
   await ui.unmount()
@@ -236,8 +242,8 @@ test('a session that moved into a nested folder still finds a sibling project', 
   const w = world(on, { cwd: '/work/records/digestion/ingest/graphify', root: '/work/records/digestion/ingest/graphify' })
   await start($)
   const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
-  expect(await ui.find({ type: 'Text', text: /送進 4/ })).toBeDefined()
-  expect(w.toasts.at(-1)).toMatch(/^OAW 消化道：demo 有 5 樣食物，4 樣等你/)
+  expect(await ui.find({ type: 'Text', text: /送進 5/ })).toBeDefined()
+  expect(w.toasts.at(-1)).toMatch(/^OAW 消化道：demo 有 6 樣食物，0 樣等你/)
   await ui.unmount()
 })
 
@@ -294,4 +300,41 @@ test('pasting a link sends it to be tasted', async ($, on) => {
   await ui.input({ key: 'add', text: 'https://github.com/example/a  arXiv:2606.03979' })
   expect(w.runs[0]).toEqual(['python3', `${OAW}/scripts/catalog.py`, 'add', 'https://github.com/example/a', 'arXiv:2606.03979', '--target', PROJECT])
   await ui.unmount()
+})
+
+test('agent and release are drawn apart from the owner, and a tasting or absorption shows at its stop', async ($, on) => {
+  const view = JSON.parse(JSON.stringify(VIEW)) as { foods: { id: string; pipeline: { waiting_on: string; waiting_zh: string } }[] }
+  // One food that only the owner can move, to see the three badges side by side.
+  const mem = view.foods.find(f => f.id === 'claude-mem')
+  if (mem) {
+    mem.pipeline.waiting_on = 'owner'
+    mem.pipeline.waiting_zh = '等你'
+  }
+  const w = world(on, { view: JSON.stringify(view) })
+  await start($)
+  const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+  const source = String((await ui.find({ type: 'Svg' }))?.props.source ?? '')
+  expect(source).toContain('class="w-owner"')
+  expect(source).toContain('fill="#3b7ddd"/><text class="badge" x="')
+  expect(source).toMatch(/class="w-agent"[^>]*fill="#c96a3a"\/><text class="badge"[^>]*>»</)
+  expect(source).toMatch(/class="w-release"[^>]*fill="#1f9488"\/><text class="badge"[^>]*>↑</)
+  expect(w.statuses.at(-1)).toBe('🍽 OAW 消化道 · 1 樣等你 · 1 樣等發布')
+  expect(await ui.find({ type: 'Text', text: /! 等你　» Claude 接手　↑ 等發布（合併 PR 時一次決定）　\? 可選/ })).toBeDefined()
+
+  await ui.press({ key: 'food:arxiv-2606-03979' })
+  expect(await ui.find({ type: 'Text', text: /^卡在哪：版本：1 個單位已在 claude\/oaw-2 重建，等發布（合併 PR 時一次決定）/ })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: /^核准：D21 吸收：1 個單位（sl\.wake-sleep-cycle\/manual-pass A 級）/ })).toBeDefined()
+  await ui.press({ key: 'food:graphify' })
+  expect(await ui.find({ type: 'Text', text: /^分流：試吃判定：沒證明比原生好（不收）/ })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: /^實測：試吃 2026-11-05：N 4 次（評分 4）、G 4 次（評分 4，食物組）/ })).toBeDefined()
+  await ui.unmount()
+
+  const answer = await $.tool.call({ tool: 'mcp__oaw-digest-monitor__status' })
+  const status = JSON.parse(String((answer as { result?: unknown }).result)) as {
+    foods: { id: string; waitingOn: string; tasting: string | null }[]
+    release: { text: string; units: number }
+  }
+  expect(status.foods.find(f => f.id === 'arxiv-2606-03979')?.waitingOn).toBe('release')
+  expect(status.foods.find(f => f.id === 'graphify')?.tasting).toBe('沒證明比原生好（不收）（2026-11-05）')
+  expect(status.release.units).toBe(1)
 })

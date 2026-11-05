@@ -94,7 +94,7 @@ class DigestModContractTests(unittest.TestCase):
         pipeline = food["pipeline"]
         model = read(MODEL)
         for key in ("stage", "stage_label_zh", "state", "state_zh", "stages", "waiting_on", "waiting_zh", "note_zh",
-                    "actions", "blocker"):
+                    "actions", "blocker", "stage_notes_zh"):
             self.assertIn(key, pipeline)
             self.assertIn(f"p.{key}", model)
         for key in ("where_zh", "basis_zh", "if_ignored_zh", "unknown_zh"):
@@ -105,8 +105,13 @@ class DigestModContractTests(unittest.TestCase):
         for key in ("stages", "symbols", "states_zh", "legend", "live_stages", "automation_zh"):
             self.assertIn(key, view["pipeline"])
             self.assertIn(f"pipeline.{key}", model)
-        for key in ("submitted", "tasted", "measured", "absorbed_parts"):
+        for key in ("submitted", "tasted", "measured", "absorbed_parts", "agent_tasted", "rebuilt_units"):
             self.assertIn(key, view["funnel"])
+        for key in ("foods", "units", "branches"):
+            self.assertIn(key, view["release_pending"])
+            self.assertIn(f"release.{key}", model)
+        self.assertIn("obj(view.release_pending)", model)
+        self.assertIn("obj(f.tasting)", model)
         for action in pipeline["actions"]:
             self.assertTrue({"id", "endpoint", "where", "label_zh", "params"} <= set(action))
 
@@ -119,6 +124,35 @@ class DigestModContractTests(unittest.TestCase):
             with self.subTest(food=food["id"]):
                 self.assertLessEqual({"stage", "state", "stages", "waiting_on", "actions", "blocker"}, set(food["pipeline"]))
                 self.assertLessEqual(set(food["pipeline"]), engine_keys)
+
+    def test_every_waiting_value_has_a_mark_and_only_the_owner_gets_the_blue_bang(self):
+        """D28: agent and release are drawn apart from the owner's blue "!" (release is one decision for the branch)."""
+        model = read(MODEL)
+        block = model[model.index("export const WAITING_MARKS"):]
+        block = block[:block.index("\n}\n")]
+        marks = {key: (badge, colour) for key, badge, colour in re.findall(r"(\w+): \{ badge: '([^']+)', color: '(#[0-9a-f]{6})'", block)}
+        for waiting in catalog_core.PIPELINE_WAITING_ZH:
+            with self.subTest(waiting=waiting):
+                if waiting in ("planned", "none"):
+                    self.assertNotIn(waiting, marks)  # drawn without a badge (planned keeps its still ring on the page)
+                else:
+                    self.assertIn(waiting, marks)
+        self.assertEqual(marks["owner"], ("!", "#3b7ddd"))
+        for waiting in ("agent", "release"):
+            self.assertNotEqual(marks[waiting][0], "!")
+            self.assertNotEqual(marks[waiting][1], marks["owner"][1])
+        self.assertEqual(len({badge for badge, _colour in marks.values()}), len(marks))
+        tract = read(MOD / "hooks" / "tract.ts")
+        self.assertIn("const mark = WAITING_MARKS[food.waiting]", tract)
+        self.assertIn("WAITING_MARKS[food.waiting]?.badge", tract)
+        register = read(MOD / "hooks" / "register.tsx")
+        self.assertIn("! 等你　» Claude 接手　↑ 等發布（合併 PR 時一次決定）　? 可選", register)
+        # The fixture carries real foods in each new state, so the mod's own tests exercise them.
+        fixture = fixture_view()
+        seen = {food["pipeline"]["waiting_on"] for food in fixture["foods"]}
+        self.assertLessEqual(seen, set(catalog_core.PIPELINE_WAITING_ZH))
+        self.assertLessEqual({"agent", "release"}, seen)
+        self.assertEqual(fixture["release_pending"]["foods"], [f["id"] for f in fixture["foods"] if f["pipeline"]["waiting_on"] == "release"])
 
     def test_live_stages_written_by_a_taste_are_drawn_on_the_tract(self):
         self.assertTrue(set(catalog_core.LIVE_STAGES.values()) <= set(catalog_core.PIPELINE_ORDER))

@@ -16,12 +16,21 @@ import type {
   DigestStage,
 } from '../types'
 
-export const VIEW_SCHEMA = 'oaw-catalog-view/2'
+export const VIEW_SCHEMA = 'oaw-catalog-view/3'
 // A status.json not touched for this long while "running" is shown as possibly
 // interrupted (oaw_status.py uses the same 10 minutes).
 export const STALE_MS = 600_000
 // Files build_view() reads; a newer one means view.json may be out of date.
 export const VIEW_SOURCES = ['registry.json', 'decisions.jsonl', 'builds.json', 'policy.json', 'scout.json', 'effect.json']
+
+// Who a food waits on (catalog_core.PIPELINE_WAITING_ZH) -> the bolus badge. D28: the agent is the default
+// actor, so only `owner` is the blue "!"; `release` is one decision for the whole branch, never per food.
+export const WAITING_MARKS: Record<string, { badge: string; color: string; label: string }> = {
+  owner: { badge: '!', color: '#3b7ddd', label: '等你' },
+  agent: { badge: '»', color: '#c96a3a', label: 'Claude 接手' },
+  release: { badge: '↑', color: '#1f9488', label: '等發布' },
+  optional: { badge: '?', color: '#8d939b', label: '可選' },
+}
 
 export const LEVELS_ZH: Record<string, string> = {
   measured: '實測',
@@ -114,6 +123,13 @@ export function parseFood(value: unknown): DigestFood | null {
   const c = obj(f.counts)
   const stages: Record<string, string> = {}
   for (const [key, state] of Object.entries(obj(p.stages))) stages[text(key, 20)] = text(state, 12)
+  const stageNotes: Record<string, string> = {}
+  for (const [key, note] of Object.entries(obj(p.stage_notes_zh))) {
+    const clean = text(note, 400)
+    if (clean) stageNotes[text(key, 20)] = clean
+  }
+  const t = obj(f.tasting)
+  const tastingLabel = text(t.verdict_label_zh, 40)
   const components: DigestComponent[] = list(f.components)
     .map(raw => {
       const part = obj(raw)
@@ -139,6 +155,8 @@ export function parseFood(value: unknown): DigestFood | null {
     waiting: text(p.waiting_on, 12) || 'none',
     waitingZh: text(p.waiting_zh, 40),
     note: text(p.note_zh, 600),
+    stageNotes,
+    tasting: tastingLabel ? `${tastingLabel}（${text(t.date, 10) || '日期沒寫'}）` : null,
     verdict: {
       headline: text(v.headline, 20),
       symbol: text(v.symbol, 4),
@@ -235,6 +253,7 @@ export function parseView(
   const statesZh: Record<string, string> = {}
   for (const [key, value] of Object.entries(obj(pipeline.states_zh))) statesZh[key] = text(value, 12)
   const foods = list(view.foods).map(parseFood).filter((food): food is DigestFood => food !== null)
+  const release = obj(view.release_pending)
   return {
     model: {
       project: where.project,
@@ -249,7 +268,14 @@ export function parseView(
         submitted: num(funnel.submitted),
         tasted: num(funnel.tasted),
         measured: num(funnel.measured),
+        agentTasted: num(funnel.agent_tasted),
         absorbedParts: num(funnel.absorbed_parts),
+        rebuiltUnits: num(funnel.rebuilt_units),
+      },
+      release: {
+        foods: list(release.foods).map(item => text(item, 64)).filter(Boolean),
+        units: num(release.units),
+        branches: list(release.branches).map(item => text(item, 80)).filter(Boolean),
       },
       isViewStale,
       live: parseLive(statusText, liveStages, nowMs),
@@ -364,8 +390,19 @@ export function liveText(model: DigestModel): string | null {
   return null
 }
 
-export function waitingCount(model: DigestModel): number {
-  return model.foods.filter(food => food.waiting === 'owner').length
+export function waitingCount(model: DigestModel, waiting = 'owner'): number {
+  return model.foods.filter(food => food.waiting === waiting).length
+}
+
+// The one release the owner decides for the whole branch (D21, D28), or null when nothing waits for it.
+export function releaseText(model: DigestModel): string | null {
+  if (model.release.foods.length === 0) return null
+  const branches = model.release.branches.join('、') || '工作分支'
+  return `等發布：${model.release.units} 個單位在 ${branches}（${model.release.foods.length} 樣食物），合併 PR 時一次決定`
+}
+
+export function waitingLabel(food: DigestFood): string {
+  return WAITING_MARKS[food.waiting]?.label ?? ''
 }
 
 export function askBrief(model: DigestModel, food: DigestFood): string {
@@ -377,6 +414,10 @@ export function askBrief(model: DigestModel, food: DigestFood): string {
     `判定：${verdictText(food)} · 成分 吸收 ${food.counts.absorb}、暫留 ${food.counts.hold}、排掉 ${food.counts.excrete}`,
   ]
   if (food.note) lines.push(`說明：${food.note}`)
+  for (const stage of model.stages) {
+    const note = food.stageNotes[stage.id]
+    if (note) lines.push(`${stage.label}：${note}`)
+  }
   lines.push(`卡在哪：${food.blocker.where || '紀錄裡沒有寫'}`)
   lines.push(`依據：${food.blocker.basis.join('；') || '紀錄裡沒有寫'}`)
   lines.push(`你不處理會怎樣：${food.blocker.ifIgnored || '紀錄裡沒有寫'}`)

@@ -15,6 +15,8 @@
   --you: #2a5bd7;
   --on-you: #ffffff;
   --plan: #6f7c78;
+  --claude: #b4532a;
+  --release: #127f74;
   --accent: #2a5bd7;
   --accent-ink: #ffffff;
   --good: #1d7a51;
@@ -48,7 +50,7 @@
   :root:not([data-theme="light"]) {
     --bg: #121a19; --surface: #1b2523; --surface-2: #222e2b; --ink: #e5eeeb; --muted: #9db0ab; --line: #2e3b38;
     --wall: #7c3b4a; --wall-in: #3a2329; --flow: #f08aa2; --you: #7aa2ff; --on-you: #0d1220; --plan: #8d9a96;
-    --accent: #7aa2ff; --accent-ink: #0d1220;
+    --accent: #7aa2ff; --accent-ink: #0d1220; --claude: #f0955a; --release: #4cc7b8;
     --good: #4cc28d; --good-bg: #16321f; --warn: #f08b4e; --warn-bg: #3a2315; --amber: #e8b04a; --amber-bg: #372d12;
     --bad: #ff6f6f; --bad-bg: #3c1b1b; --on-bad: #1a0d0d; --gray: #a6adb8; --gray-bg: #2a2e36; --dark: #c8cbd1; --dark-bg: #33363d;
     --hist: #b9a0ff; --hist-bg: #2a2342; --info-bg: #1d2540;
@@ -61,7 +63,7 @@
 :root[data-theme="dark"] {
   --bg: #121a19; --surface: #1b2523; --surface-2: #222e2b; --ink: #e5eeeb; --muted: #9db0ab; --line: #2e3b38;
   --wall: #7c3b4a; --wall-in: #3a2329; --flow: #f08aa2; --you: #7aa2ff; --on-you: #0d1220; --plan: #8d9a96;
-  --accent: #7aa2ff; --accent-ink: #0d1220;
+  --accent: #7aa2ff; --accent-ink: #0d1220; --claude: #f0955a; --release: #4cc7b8;
   --good: #4cc28d; --good-bg: #16321f; --warn: #f08b4e; --warn-bg: #3a2315; --amber: #e8b04a; --amber-bg: #372d12;
   --bad: #ff6f6f; --bad-bg: #3c1b1b; --on-bad: #1a0d0d; --gray: #a6adb8; --gray-bg: #2a2e36; --dark: #c8cbd1; --dark-bg: #33363d;
   --hist: #b9a0ff; --hist-bg: #2a2342; --info-bg: #1d2540;
@@ -117,6 +119,8 @@ ul, ol { margin: 6px 0; padding-left: 20px; }
 .tally b { font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--ink); font-size: 1rem; }
 .tally .t-owner b { color: var(--you); }
 .tally .t-live b { color: var(--flow); }
+.tally .t-agent b { color: var(--claude); }
+.tally .t-release b { color: var(--release); }
 
 .busy {
   position: sticky;
@@ -240,6 +244,7 @@ input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--you); fl
 .chip.lv-historical-prior { background: var(--hist-bg); color: var(--hist); }
 .chip.lv-unknown { background: var(--warn-bg); color: var(--warn); }
 .chip.auto-automated { background: var(--info-bg); color: var(--accent); }
+.chip.auto-agent { background: var(--info-bg); color: var(--claude); font-weight: 650; }
 .chip.auto-owner { background: var(--amber-bg); color: var(--amber); font-weight: 650; }
 .chip.auto-mixed { background: var(--surface-2); color: var(--ink); border-color: var(--line); }
 .chip.auto-planned { background: transparent; color: var(--muted); border: 1px dashed var(--muted); }
@@ -310,6 +315,8 @@ input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--you); fl
 .bolus .badge circle { stroke: var(--surface); stroke-width: 2; }
 .bolus .badge.owner circle { fill: var(--you); }
 .bolus .badge.optional circle { fill: var(--plan); }
+.bolus .badge.agent circle { fill: var(--claude); }
+.bolus .badge.release circle { fill: var(--release); }
 .bolus .badge text { fill: var(--surface); font-family: var(--font); font-weight: 800; font-size: 11px; pointer-events: none; }
 .bolus.sel .body { stroke: var(--ink); }
 .bolus:focus { outline: none; }
@@ -329,6 +336,8 @@ input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--you); fl
 .legend .l-rest { border: 2px dotted var(--plan); }
 .legend .l-owner { background: var(--you); color: var(--on-you); }
 .legend .l-optional { background: var(--plan); color: var(--surface); }
+.legend .l-agent { background: var(--claude); color: var(--surface); }
+.legend .l-release { background: var(--release); color: var(--surface); }
 .legend .l-absorb { background: var(--absorb); width: 10px; height: 10px; }
 .legend .l-hold { background: var(--hold); width: 10px; height: 10px; }
 .legend .l-excrete { background: var(--excrete); width: 10px; height: 10px; }
@@ -357,6 +366,8 @@ input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--you); fl
 .pick .flag { font-weight: 800; }
 .pick .flag.owner { color: var(--you); }
 .pick .flag.optional { color: var(--plan); }
+.pick .flag.agent { color: var(--claude); }
+.pick .flag.release { color: var(--release); }
 .dotm {
   display: inline-grid;
   place-items: center;
@@ -392,6 +403,8 @@ input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--you); fl
 .stepnames .here { color: var(--ink); font-weight: 700; }
 .now { border-left: 4px solid var(--flow); padding: 6px 12px; background: var(--surface-2); border-radius: 0 10px 10px 0; }
 .now.w-owner { border-left-color: var(--you); }
+.now.w-agent { border-left-color: var(--claude); }
+.now.w-release { border-left-color: var(--release); }
 .now.w-optional, .now.w-planned, .now.w-none { border-left-color: var(--plan); }
 .now .who { font-size: .78rem; letter-spacing: .04em; color: var(--muted); }
 .now p { margin: 2px 0 0; overflow-wrap: anywhere; }

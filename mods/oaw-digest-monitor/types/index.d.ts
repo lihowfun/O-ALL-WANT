@@ -39,6 +39,8 @@ export type DigestFood = {
   waiting: string
   waitingZh: string
   note: string
+  stageNotes: Record<string, string>
+  tasting: string | null
   verdict: { headline: string; symbol: string; label: string; level: string }
   counts: { absorb: number; hold: number; excrete: number }
   blocker: { where: string; basis: string[]; ifIgnored: string; unknown: string[] }
@@ -66,7 +68,8 @@ export type DigestModel = {
   statesZh: Record<string, string>
   legend: string[]
   foods: DigestFood[]
-  funnel: { submitted: number; tasted: number; measured: number; absorbedParts: number }
+  funnel: { submitted: number; tasted: number; measured: number; agentTasted: number; absorbedParts: number; rebuiltUnits: number }
+  release: { foods: string[]; units: number; branches: string[] }
   isViewStale: boolean
   live: DigestLive | null
   loadedAt: string

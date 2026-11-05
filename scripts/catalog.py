@@ -11,6 +11,8 @@ default and change the OAW-managed layer only with --apply, after a restore
 point. Paid tests are planned, never run, in v0. `ui` opens the local web page
 and `menu` the same actions as a numbered terminal menu (catalog_ui_server.py);
 `questions` lists what the owner asked about a blocker on the page.
+`record-tasting` and `record-absorption` put Claude's tastings (D25) and D21
+absorptions into the ledger (D28); a verdict needs a graded food-arm run.
 The official intake process both show is docs/SKILL_INTAKE.md.
 """
 from __future__ import annotations
@@ -894,6 +896,23 @@ def cmd_show(target: Path, ident: str) -> dict:
             lines.append(f"    goldfish {fish['reviewer']}: {fish['findings']} findings {fish['by_severity']}")
         counts = report.get("counts", {})
         lines.append(f"    proposed parts: absorb {counts.get('absorb', 0)} · excrete {counts.get('excrete', 0)} · hold {counts.get('hold', 0)}")
+    for tasting in card["tastings"]:
+        latest = " (latest, decides)" if tasting is card["tastings"][-1] else ""
+        lines.append(f"  tasting {tasting['id']} {tasting['date']}{latest}: {tasting['verdict']} · {tasting['verdict_zh']}"
+                     f" · food arm {tasting['food_arm']} {tasting['food_arm_graded_runs']} graded run(s)"
+                     f" · {tasting['records']['branch']}:{tasting['records']['path']} @ {tasting['records']['commit'][:7]}")
+        if tasting["blocked_on_owner"]:
+            lines.append(f"    blocked on the owner: {tasting['blocked_on_owner']}")
+    absorption = card.get("absorption")
+    if absorption:
+        lines.append(f"  D21 absorption: absorbed {absorption['absorbed']} · declined {absorption['declined']} · held {absorption['held']}"
+                     f" · waiting for release {absorption['release_pending']}")
+        for unit in absorption["units"]:
+            detail = (f"tier {unit['tier']} · {unit['branch']} {', '.join(c[:7] for c in unit['commits'])} · tests {', '.join(unit['tests'])}"
+                      if unit["outcome"] == "absorbed" else unit.get("reason") or "")
+            lines.append(f"    {unit['outcome']:8} {unit['id']} · {detail}")
+    for refused in card.get("records_refused") or []:
+        lines.append(f"  refused {refused['kind']} record {refused['id'] or '(no id)'}: {refused['reason']}")
     lines.append(f"  plan: {plan['status']} · paid estimate {estimate_text(plan['estimate'])}")
     return {"status": "show", "card": card, "lines": lines}
 
@@ -1130,6 +1149,105 @@ def cmd_import_report(target: Path, ident: str, directory: str) -> dict:
         lines.append(f"  paper (as the record states): {paper['title'] or '(no title)'} · {paper['version'] or 'no version'}"
                      f" · license {paper['license'] or 'unknown'}; a paper's ideas are absorbed by re-implementing them (D5, D21)")
     return {"status": "imported", "food": entry["id"], "evidence_id": record["evidence_id"], "counts": counts, "lines": lines}
+
+
+# --------------------------------------------------------------------------- agent tastings and D21 absorptions (D25, D28)
+#
+# Claude tastes foods in the tasting area and rebuilds picked units on the working branch; these two commands put
+# the results in the ledger (evidence files), so the view shows them. Like every other change they preview
+# unless --apply is given. The engine refuses a tasting verdict whose food arm has no graded run (D28.3).
+
+def read_record_file(path_text: str, kind: str) -> tuple:
+    """A record file's JSON value and the sha256 of its bytes; at most core.RECORD_FILE_BYTES."""
+    path = Path(path_text)
+    try:
+        data = path.read_bytes() if path.is_file() else None
+    except OSError:
+        data = None
+    if data is None or len(data) > core.RECORD_FILE_BYTES:
+        raise CatalogError(f"Cannot read the {kind} record file: it must be a JSON file of at most 1 MB ({core.sanitize_text(path_text, 120)}).")
+    try:
+        value = json.loads(data.decode("utf-8-sig"))
+    except (ValueError, UnicodeError) as exc:
+        raise CatalogError(f"The {kind} record file is not valid JSON: {exc}") from exc
+    return value, core.sha256_bytes(data)
+
+
+def pipeline_with(target: Path, entry: dict, extra: dict) -> dict:
+    """The food's pipeline as the view would show it once `extra` is recorded (for the preview)."""
+    fid = entry["id"]
+    evidence = load_evidence(target, fid) + [extra]
+    decisions = food_decisions(load_decisions(target), fid)
+    derived = core.derive(evidence, decisions)
+    plan = core.decide_plan(fid, derived, [r for r in evidence if core.evidence_class(r) == "historical"], load_policy(target))
+    return core.place_card(core.food_card(entry, evidence, decisions, plan), load_receipts(target).get(fid))["pipeline"]
+
+
+def _store_record(target: Path, entry: dict, record: dict, id_key: str, ident: str, sha: str, apply: bool, lines: list) -> dict:
+    fid = entry["id"]
+    kind = "tasting" if id_key == "tasting_id" else "absorption"
+    stored = {**record, id_key: ident, "recorded_at": now_iso(), "provenance": "agent-" + kind, "source_sha256": sha}
+    name = f"{kind}-{ident[2:]}.json"
+    if any(r.get(id_key) == ident for r in load_evidence(target, fid)):
+        lines.append(f"already recorded as evidence/{core.slug(fid)}/{name}; nothing changed")
+        return {"status": "already-recorded", "food": fid, id_key: ident, "lines": lines}
+    after = pipeline_with(target, entry, stored)
+    lines.append(f"  view after recording: {after['stage_label_zh']} · {after['state_zh']} · {after['waiting_zh']} · {after['note_zh']}")
+    if not apply:
+        lines.append("preview only: re-run with --apply")
+        return {"status": "preview", "food": fid, id_key: ident, "waiting_on": after["waiting_on"], "stage": after["stage"], "lines": lines}
+    path = save_evidence(target, fid, name, stored)
+    update_view(target)
+    lines.append(f"recorded {path}")
+    return {"status": "recorded", "food": fid, id_key: ident, "path": path, "waiting_on": after["waiting_on"], "stage": after["stage"],
+            "lines": lines}
+
+
+def cmd_record_tasting(target: Path, ident: str, file: str, apply: bool) -> dict:
+    """Record one agent tasting (schema oaw-tasting/1) for a food; preview unless apply."""
+    entry = resolve_food(load_registry(target), ident)
+    doc, sha = read_record_file(file, "tasting")
+    try:
+        record = core.validate_tasting(doc, entry["id"])
+    except core.RecordError as exc:
+        raise CatalogError(str(exc)) from exc
+    tid = core.tasting_id(record)
+    food_arm = next(a for a in record["arms"] if a["food_arm"])
+    lines = [f"{entry['id']}: tasting {tid} of {record['date']} · verdict {record['verdict']} ({core.TASTING_VERDICTS[record['verdict']]})"
+             f" · {record['verdict_zh']}",
+             f"  protocol: {', '.join(record['protocol']['models'])} · {record['protocol']['questions']['count']} question(s)"
+             f" sha256 {record['protocol']['questions']['sha256'][:12]} · {record['protocol']['repeats']} repeat(s) · corpus {record['protocol']['corpus']}",
+             "  arms: " + "; ".join(f"{a['id']}{' (food arm)' if a['food_arm'] else ''} {a['graded_runs']}/{a['runs']} graded" for a in record["arms"]),
+             f"  food arm {food_arm['id']}: {record['food_arm_ran']['graded_runs']} graded run(s)"
+             + (f" · evidence {record['food_arm_ran']['evidence']}" if record["food_arm_ran"]["evidence"] else ""),
+             f"  records: {record['records']['branch']}:{record['records']['path']} @ {record['records']['commit']}"]
+    if record["blocked_on_owner"]:
+        lines.append(f"  blocked on the owner: {record['blocked_on_owner']}")
+    return _store_record(target, entry, record, "tasting_id", tid, sha, apply, lines)
+
+
+def cmd_record_absorption(target: Path, ident: str, file: str, apply: bool) -> dict:
+    """Record one D21 absorption (schema oaw-absorption/1) for a food; preview unless apply."""
+    entry = resolve_food(load_registry(target), ident)
+    doc, sha = read_record_file(file, "absorption")
+    tastings = core.food_records(load_evidence(target, entry["id"]), entry["id"])["tastings"]
+    try:
+        record = core.validate_absorption(doc, entry["id"], tastings)
+    except core.RecordError as exc:
+        raise CatalogError(str(exc)) from exc
+    aid = core.absorption_id(record)
+    lines = [f"{entry['id']}: absorption {aid} of {record['date']} on {record['branch']} · absorbed {len(record['absorbed'])}"
+             f" · declined {len(record['declined'])} · held {len(record['held'])} · release {record['release']['state']}"]
+    for unit in record["absorbed"]:
+        lines.append(f"  [+] {unit['id']} (tier {unit['tier']}) · commits {', '.join(c[:7] for c in unit['commits'])}"
+                     f" · tests {', '.join(unit['tests'])} · basis: {unit['evidence']['basis']}"
+                     + (f" · tasting {unit['evidence']['tasting']}" if unit["evidence"]["tasting"] else ""))
+    for section, mark in (("held", "[~]"), ("declined", "[x]")):
+        for unit in record[section]:
+            lines.append(f"  {mark} {unit['id']}: {unit['reason']}")
+    if record["blocked_on_owner"]:
+        lines.append(f"  blocked on the owner: {record['blocked_on_owner']}")
+    return _store_record(target, entry, record, "absorption_id", aid, sha, apply, lines)
 
 
 # --------------------------------------------------------------------------- OAW-managed layer, builds, restore
@@ -1970,8 +2088,11 @@ def cmd_forget(target: Path, ident: str, reason: str, apply: bool) -> dict:
     folder = evidence_dir(target, fid)
     paths = sorted(p.relative_to(target).as_posix() for p in folder.glob("*.json")) if folder.is_dir() else []
     plan = catalog_path(target, "plans", core.slug(fid) + ".json")
+    records = sum(1 for p in paths if PurePosixPath(p).name.startswith(("tasting-", "absorption-")))
     lines = [f"forget {fid}: registry entry, {len(paths)} evidence file(s)" + (", plan" if plan.exists() else "")
              + "; decisions stay in decisions.jsonl; the sealed copy in LAB_HOME is kept"]
+    if records:
+        lines.append(f"  {records} of them are tasting or absorption records; the results stay on the records branch they point to")
     if not apply:
         lines.append("preview only: re-run with --apply")
         return {"status": "preview", "food": fid, "evidence": paths, "lines": lines}
@@ -2308,6 +2429,16 @@ def parser() -> argparse.ArgumentParser:
                                    help="import a digestion record directory (a repository's or a paper's) as historical-prior evidence")
     imported.add_argument("food")
     imported.add_argument("directory")
+    tasting = commands.add_parser("record-tasting", parents=[common],
+                                  help="record an agent tasting (schema oaw-tasting/1); a verdict needs a graded food-arm run (D28)")
+    tasting.add_argument("--food", required=True, help="the food id (or its URL)")
+    tasting.add_argument("--file", required=True, help="the tasting record, a JSON file (see docs/CLI_Reference.md)")
+    tasting.add_argument("--apply", action="store_true", help="record it; otherwise only preview")
+    absorption = commands.add_parser("record-absorption", parents=[common],
+                                     help="record a D21 absorption: units rebuilt as OAW code with tests on a branch (schema oaw-absorption/1)")
+    absorption.add_argument("--food", required=True, help="the food id (or its URL)")
+    absorption.add_argument("--file", required=True, help="the absorption record, a JSON file (see docs/CLI_Reference.md)")
+    absorption.add_argument("--apply", action="store_true", help="record it; otherwise only preview")
     plan = commands.add_parser("plan", parents=[common], help="the system's test plan for a food, cheapest first, with token estimates")
     plan.add_argument("food")
     policy = commands.add_parser("policy", parents=[common], help="standing policy for paid tests (owner confirmation code)")
@@ -2375,6 +2506,10 @@ def dispatch(args) -> dict:
         return cmd_triage(target, args)
     if command == "import-report":
         return cmd_import_report(target, args.food, args.directory)
+    if command == "record-tasting":
+        return cmd_record_tasting(target, args.food, args.file, args.apply)
+    if command == "record-absorption":
+        return cmd_record_absorption(target, args.food, args.file, args.apply)
     if command == "plan":
         return cmd_plan(target, args.food)
     if command == "policy":

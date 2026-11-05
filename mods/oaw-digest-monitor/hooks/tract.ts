@@ -3,7 +3,7 @@
 // organs are captions only, never a claim about what a stop does (D23).
 
 import type { DigestFood, DigestModel } from '../types'
-import { stageIndex, verdictText } from './model'
+import { WAITING_MARKS, stageIndex, verdictText } from './model'
 
 // Three rows of three stops, the tube turning at the ends (an S that reads
 // left to right, then back, then on), so it fits a pane docked beside the chat.
@@ -39,6 +39,7 @@ const ORGAN_SIZE: Record<number, number> = { 0: 11, 1: 11, 2: 10, 3: 8, 4: 6.5 }
 
 const AUTOMATION_COLORS: Record<string, string> = {
   automated: '#2e9e5b',
+  agent: '#c96a3a',
   owner: '#3b7ddd',
   mixed: '#2a9d9d',
   planned: '#9aa0a6',
@@ -132,11 +133,11 @@ export function tractSvg(model: DigestModel, selected: string | null, motion: bo
         `<g><title>${esc(tip)}</title>`,
         `<circle${isLive && motion ? ' class="live"' : ''} cx="${bx}" cy="${by}" r="${isChosen ? 7.5 : 6}" fill="${fill}"${isChosen ? ' stroke="var(--text)" stroke-width="1.6"' : ' stroke="var(--stop)" stroke-width="1"'}/>`,
       )
-      if (food.waiting === 'owner' || food.waiting === 'optional') {
-        const color = food.waiting === 'owner' ? '#3b7ddd' : '#8d939b'
+      const mark = WAITING_MARKS[food.waiting]
+      if (mark) {
         parts.push(
-          `<circle cx="${bx + 6}" cy="${by - 6}" r="4.6" fill="${color}"/>`,
-          `<text class="badge" x="${bx + 6}" y="${by - 6}">${food.waiting === 'owner' ? '!' : '?'}</text>`,
+          `<circle class="w-${esc(food.waiting)}" cx="${bx + 6}" cy="${by - 6}" r="4.6" fill="${mark.color}"/>`,
+          `<text class="badge" x="${bx + 6}" y="${by - 6}">${esc(mark.badge)}</text>`,
         )
       }
       parts.push('</g>')
@@ -174,7 +175,7 @@ export function tractLines(model: DigestModel, selected: string | null, frame: n
     const foods = here
       .map(food => {
         const live = running?.food === food.id ? (frame % 2 === 0 ? '◉' : '○') : food.verdict.symbol || '•'
-        const badge = food.waiting === 'owner' ? '!' : food.waiting === 'optional' ? '?' : ''
+        const badge = WAITING_MARKS[food.waiting]?.badge ?? ''
         return `${live}${short(food.id, 24)}${badge}`
       })
       .join('  ')

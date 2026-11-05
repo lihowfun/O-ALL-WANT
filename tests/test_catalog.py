@@ -1138,5 +1138,98 @@ class CatalogCliTests(unittest.TestCase):
         self.assertFalse(list(self.lab.rglob("questions*")))
 
 
+    # ------------------------------------------------------------------ D28: Claude's tastings and D21 absorptions in the ledger
+
+    def tasting_file(self, name="tasting.json", **overrides):
+        doc = {"schema": "oaw-tasting/1", "date": "2026-11-05",
+               "records": {"branch": "records", "path": "records/taste-sweet-notes", "commit": "abc1234"},
+               "protocol": {"models": ["claude-opus-5-5"], "corpus": "a fixture repository", "repeats": 1,
+                            "questions": {"count": 4, "sha256": "c" * 64}},
+               "arms": [{"id": "N", "food_arm": False, "runs": 4, "graded_runs": 4,
+                         "results": {"coverage": 0.9, "essential_correct": 4, "wrong_claims": 0, "token_median": 1000}},
+                        {"id": "F", "food_arm": True, "runs": 4, "graded_runs": 4,
+                         "results": {"coverage": 0.9, "essential_correct": 4, "wrong_claims": 1, "token_median": 2000}}],
+               "food_arm_ran": {"graded_runs": 4, "evidence": "out/grades.jsonl"},
+               "verdict": "not-shown-better", "verdict_zh": "沒證明比原生好"}
+        doc.update(overrides)
+        path = self.base / name
+        path.write_text(json.dumps(doc, ensure_ascii=False), encoding="utf-8")
+        return path
+
+    def test_record_tasting_previews_then_applies_and_refuses_a_verdict_without_the_food_arm(self):
+        name = self.clean_food()
+        self.cli("taste", name)
+        before = self.project_snapshot(exclude_layer=False)
+        preview = self.cli("record-tasting", "--food", name, "--file", str(self.tasting_file()))
+        self.assertEqual((preview["status"], preview["stage"], preview["waiting_on"]), ("preview", "sort", "none"))
+        self.assertFalse(list((self.project / ".oaw/catalog/evidence" / name).glob("tasting-*.json")))
+        applied = self.cli("record-tasting", "--food", name, "--file", str(self.tasting_file()), "--apply")
+        self.assertEqual((applied["status"], applied["tasting_id"]), ("recorded", preview["tasting_id"]))
+        stored = json.loads((self.project / ".oaw/catalog" / applied["path"]).read_text(encoding="utf-8"))
+        self.assertEqual((stored["provenance"], stored["food"], stored["tasting_id"]), ("agent-tasting", name, applied["tasting_id"]))
+        view = json.loads((self.project / ".oaw/catalog/view.json").read_text(encoding="utf-8"))
+        food = next(f for f in view["foods"] if f["id"] == name)
+        self.assertEqual((food["pipeline"]["stage"], food["pipeline"]["waiting_on"], food["tasting"]["verdict"]),
+                         ("sort", "none", "not-shown-better"))
+        self.assertEqual(view["funnel"]["agent_tasted"], 1)
+        self.assertEqual(self.cli("record-tasting", "--food", name, "--file", str(self.tasting_file()), "--apply")["status"], "already-recorded")
+        # D28: no verdict without a graded run of the food arm; nothing is written.
+        arms = [{"id": "N", "food_arm": False, "runs": 4, "graded_runs": 4}, {"id": "F", "food_arm": True, "runs": 0, "graded_runs": 0}]
+        refused = self.tasting_file("refused.json", arms=arms, food_arm_ran={"graded_runs": 0}, verdict="decline")
+        error = self.cli("record-tasting", "--food", name, "--file", str(refused), "--apply", code=2)["error"]
+        self.assertIn("no verdict without the food arm", error)
+        self.assertTrue(core.zh_error(error).startswith("拒收：食物組沒有任何評分過的執行"))
+        self.assertEqual(len(list((self.project / ".oaw/catalog/evidence" / name).glob("tasting-*.json"))), 1)
+        # The same run recorded as no-verdict, blocked on the owner, is accepted and waits on the owner.
+        blocked = self.tasting_file("blocked.json", arms=arms, food_arm_ran={"graded_runs": 0}, verdict="no-verdict",
+                                    verdict_zh="沒有判定", date="2026-11-06", blocked_on_owner="a standing rule for the tasting area")
+        result = self.cli("record-tasting", "--food", name, "--file", str(blocked), "--apply")
+        self.assertEqual((result["stage"], result["waiting_on"]), ("test", "owner"))
+        shown = self.cli("show", name)["card"]
+        self.assertEqual([t["verdict"] for t in shown["tastings"]], ["not-shown-better", "no-verdict"])
+        self.assertEqual(self.project_snapshot(exclude_layer=False), before)  # only catalog records changed
+        for bad, message in ((self.base / "missing.json", "Cannot read the tasting record file"),
+                             (self.tasting_file("other.json", food="someone-else"), "names another food")):
+            self.assertIn(message, self.cli("record-tasting", "--food", name, "--file", str(bad), code=2)["error"])
+
+    def test_record_absorption_puts_a_paper_on_the_build_waiting_for_the_release(self):
+        self.cli("import-report", "arXiv:2606.03979", str(PAPER_FIXTURE))
+        fid = "arxiv-2606-03979"
+        catalog.save_evidence(self.project, fid, "T0-paper.json",
+                              dict(core.paper_scan({"metadata.json": core.paper_metadata({"source": "arxiv", "metadata": core.parse_arxiv_raw(arxiv_raw()),
+                                                                                          "version": "v2", "pdf": PDF}), "paper.pdf": PDF}, food=fid),
+                                   recorded_at="2026-11-05T00:00:00Z"))
+        units = json.loads((PAPER_FIXTURE / "components.json").read_text(encoding="utf-8"))["components"]
+        doc = {"schema": "oaw-absorption/1", "date": "2026-11-05", "branch": "claude/oaw-2",
+               "absorbed": [{"id": "sl.wake-sleep-cycle/manual-pass", "name": "wiki_sync.py memory-check", "tier": "A",
+                             "commits": ["b14c875", "656c539"], "tests": ["tests/test_wiki_sync.py::MemoryCheckTests"],
+                             "evidence": {"basis": "tier A: mechanism only, static evidence allowed by D17/D21"}}],
+               "declined": [{"id": u["id"], "reason": "excreted in the digest"} for u in units if u["disposition"] == "excrete"],
+               "held": [{"id": u["id"], "reason": "held in the digest"} for u in units if u["disposition"] == "hold"]}
+        path = self.base / "absorption.json"
+        path.write_text(json.dumps(doc), encoding="utf-8")
+        before = self.cli("view")
+        view = json.loads((self.project / ".oaw/catalog/view.json").read_text(encoding="utf-8"))
+        self.assertEqual(next(f for f in view["foods"] if f["id"] == fid)["pipeline"]["waiting_on"], "optional")
+        preview = self.cli("record-absorption", "--food", fid, "--file", str(path))
+        self.assertEqual((preview["status"], preview["stage"], preview["waiting_on"]), ("preview", "build", "release"))
+        self.assertEqual(before["status"], "view")
+        applied = self.cli("record-absorption", "--food", fid, "--file", str(path), "--apply")
+        self.assertEqual(applied["status"], "recorded")
+        view = json.loads((self.project / ".oaw/catalog/view.json").read_text(encoding="utf-8"))
+        self.assertEqual((view["funnel"]["absorbed_parts"], view["funnel"]["rebuilt_units"]), (1, 1))
+        self.assertEqual(view["release_pending"]["foods"], [fid])
+        self.assertEqual(self.cli("builds")["builds"], [])  # D21: nothing was installed into the project
+        tier_c = dict(doc, absorbed=[dict(doc["absorbed"][0], tier="C")])
+        path.write_text(json.dumps(tier_c), encoding="utf-8")
+        self.assertIn("A tier-C unit", self.cli("record-absorption", "--food", fid, "--file", str(path), code=2)["error"])
+
+    def test_record_commands_refuse_the_oaw_checkout_itself(self):
+        out, err = io.StringIO(), io.StringIO()
+        with redirect_stdout(out), redirect_stderr(err):
+            code = catalog.main(["record-tasting", "--food", "x", "--file", str(self.tasting_file()), "--target", str(ROOT), "--json"])
+        self.assertEqual(code, 2)
+        self.assertIn("OAW framework repository itself", json.loads(out.getvalue())["error"])
+
 if __name__ == "__main__":
     unittest.main()
