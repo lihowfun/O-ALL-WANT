@@ -688,7 +688,8 @@
  "food_overhead_effective_tokens": 117671.7,
  "food_overhead_share_of_T": 0.1503,
  "food_overhead_records_in_ledger": 0,
- "raw_tokens_total_all_arms": 5329470,
+ "raw_tokens_total_this_run": 5329470,
+ "food_arm": "T",
  "verdict": "decline",
  "why": "late cost ratio 1.2527 >= 1.15",
  "rules": "PREREG.md, 'judgement rules' 1-7"

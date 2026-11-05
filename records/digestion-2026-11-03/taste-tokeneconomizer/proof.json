@@ -1,4 +1,33 @@
 {
+ "after_T2_install": {
+  ".claude/plugins/installed_plugins.json:mentions_te": true,
+  ".claude/plugins/known_marketplaces.json:mentions_te": true,
+  "claude_json_mentions_te": true,
+  "claude_json_plugin_keys": {
+   "officialMarketplaceAutoInstallAttempted": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+   "officialMarketplaceAutoInstalled": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+   "pluginPanes": "a2d2697864a5f64590e7f54df94e8b488a7f0b76e1db636b390fb6670143c760",
+   "pluginUsage": "3f49394e367fd55da2a6a375c8bf66d2fc0e81fa8cd0dcbec8cf091202393af7"
+  },
+  "files": {
+   ".claude.json": "711924d2fb7d0711ae8aefa0c80088e6543bd43b00bad30df31b5d78f6b02e5d",
+   ".claude/plugins/installed_plugins.json": "4979c8ef56836967cc86bafdce27c4d671901ac74d3ed2dfdc55f39d25535c39",
+   ".claude/plugins/known_marketplaces.json": "afbd2383838dae7d373ae5e3c7d8aae8f7332c51cae9da658e74bef8a2a74ddd",
+   ".claude/settings.json": "4a55bb675280033bceffdb30229252a42547a6b3d0c976bba85a9695baa646d8",
+   ".claude/settings.local.json": "ab133839b9ed126ed99c338d818acc9befd8de569f76457d051e9aceddff0770"
+  },
+  "plugin_list_from_home": [
+   "other-user-plugin-1|user|True",
+   "other-user-plugin-2|user|True",
+   "tokeneconomizer@tokeneconomizer|project|False",
+   "tokeneconomizer@tokeneconomizer|project|False"
+  ],
+  "user_settings_enabledPlugins": [
+   "other-user-plugin-1",
+   "other-user-plugin-2"
+  ],
+  "user_settings_mentions_te": false
+ },
  "after_install": {
   ".claude/plugins/installed_plugins.json:mentions_te": true,
   ".claude/plugins/known_marketplaces.json:mentions_te": true,
@@ -11,6 +40,61 @@
   },
   "files": {
    ".claude.json": "c069033a1b98ddd90f0d4246d816aa06d3157336d8f756329bf40eb2e9e72573",
+   ".claude/plugins/installed_plugins.json": "029f094e18e9273c7a7a312c7d1985a87d64b5739f38a6db91366ac2f0cd64d3",
+   ".claude/plugins/known_marketplaces.json": "afbd2383838dae7d373ae5e3c7d8aae8f7332c51cae9da658e74bef8a2a74ddd",
+   ".claude/settings.json": "4a55bb675280033bceffdb30229252a42547a6b3d0c976bba85a9695baa646d8",
+   ".claude/settings.local.json": "ab133839b9ed126ed99c338d818acc9befd8de569f76457d051e9aceddff0770"
+  },
+  "plugin_list_from_home": [
+   "other-user-plugin-1|user|True",
+   "other-user-plugin-2|user|True",
+   "tokeneconomizer@tokeneconomizer|project|False"
+  ],
+  "user_settings_enabledPlugins": [
+   "other-user-plugin-1",
+   "other-user-plugin-2"
+  ],
+  "user_settings_mentions_te": false
+ },
+ "after_uninstall_and_cache_removed": {
+  ".claude/plugins/installed_plugins.json:mentions_te": false,
+  ".claude/plugins/known_marketplaces.json:mentions_te": false,
+  "claude_json_mentions_te": false,
+  "claude_json_plugin_keys": {
+   "officialMarketplaceAutoInstallAttempted": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+   "officialMarketplaceAutoInstalled": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+   "pluginPanes": "a2d2697864a5f64590e7f54df94e8b488a7f0b76e1db636b390fb6670143c760",
+   "pluginUsage": "b17a453ca9b91fddf877fec2925d5196f3dc9eaa04592c0e58fd7237a057d621"
+  },
+  "files": {
+   ".claude.json": "05feb4b3126b864b70b7dcabe240355d708501f5e1635cfbedb7f134732aeb35",
+   ".claude/plugins/installed_plugins.json": "059973775eb2c78a17af86c49a8aa9224754774dcdaf43be0ebc96c65b94e78a",
+   ".claude/plugins/known_marketplaces.json": "826736dbb618665e1e955706e95424fee86d781afd946a35ade25695b7b7d336",
+   ".claude/settings.json": "4a55bb675280033bceffdb30229252a42547a6b3d0c976bba85a9695baa646d8",
+   ".claude/settings.local.json": "ab133839b9ed126ed99c338d818acc9befd8de569f76457d051e9aceddff0770"
+  },
+  "plugin_list_from_home": [
+   "other-user-plugin-1|user|True",
+   "other-user-plugin-2|user|True"
+  ],
+  "user_settings_enabledPlugins": [
+   "other-user-plugin-1",
+   "other-user-plugin-2"
+  ],
+  "user_settings_mentions_te": false
+ },
+ "before_T2_install": {
+  ".claude/plugins/installed_plugins.json:mentions_te": true,
+  ".claude/plugins/known_marketplaces.json:mentions_te": true,
+  "claude_json_mentions_te": true,
+  "claude_json_plugin_keys": {
+   "officialMarketplaceAutoInstallAttempted": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+   "officialMarketplaceAutoInstalled": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+   "pluginPanes": "a2d2697864a5f64590e7f54df94e8b488a7f0b76e1db636b390fb6670143c760",
+   "pluginUsage": "3f49394e367fd55da2a6a375c8bf66d2fc0e81fa8cd0dcbec8cf091202393af7"
+  },
+  "files": {
+   ".claude.json": "711924d2fb7d0711ae8aefa0c80088e6543bd43b00bad30df31b5d78f6b02e5d",
    ".claude/plugins/installed_plugins.json": "029f094e18e9273c7a7a312c7d1985a87d64b5739f38a6db91366ac2f0cd64d3",
    ".claude/plugins/known_marketplaces.json": "afbd2383838dae7d373ae5e3c7d8aae8f7332c51cae9da658e74bef8a2a74ddd",
    ".claude/settings.json": "4a55bb675280033bceffdb30229252a42547a6b3d0c976bba85a9695baa646d8",
@@ -54,5 +138,5 @@
   ],
   "user_settings_mentions_te": false
  },
- "note": "sha256 of user-level Claude Code files and the plugin list seen from HOME; values are never stored; names of the owner's other plugins are replaced by placeholders"
+ "note": "sha256 of user-level Claude Code files and the plugin list seen from HOME; values are never stored; names of the owner's other plugins are replaced by placeholders; after_uninstall_and_cache_removed is after both project-scope uninstalls and deleting the plugin cache folder the install created"
 }

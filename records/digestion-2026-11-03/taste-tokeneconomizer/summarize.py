@@ -1,6 +1,9 @@
 """Summary and pre-registered verdict for the TokenEconomizer session-stream tasting (PREREG.md).
 
-    python3 summarize.py <out dir> <food ledger.jsonl> <records dir> <tasting dir prefix to mask>
+    python3 summarize.py <out dir> <food ledger.jsonl> <records dir> <tasting dir prefix to mask> [<food arm> <N rows.jsonl>]
+
+The optional pair compares a follow-up food arm run alone (for example T2) with the N rows of an earlier run;
+then only the food arm's rows are written to the records dir.
 
 Reads the runner's rows.jsonl and the food's own ledger (joined by session id), writes to the records dir:
 rows.jsonl (local paths masked), grades.jsonl (the mechanical grades), summary.json (per-arm, per-pair,
@@ -37,16 +40,20 @@ def mask(value, prefix):
 
 def main():
     out_dir, ledger_path, records, prefix = sys.argv[1:5]
+    food = sys.argv[5] if len(sys.argv) > 5 else "T"
     rows = [json.loads(line) for line in open(os.path.join(out_dir, "rows.jsonl"), encoding="utf-8")]
+    own = list(rows)
+    if len(sys.argv) > 6:
+        rows += [json.loads(line) for line in open(sys.argv[6], encoding="utf-8") if json.loads(line)["arm"] == "N"]
     ledger = [json.loads(line) for line in open(ledger_path, encoding="utf-8")] if os.path.exists(ledger_path) else []
     sessions = {r["session_id"]: r for r in ledger if r.get("kind") == "session"}
     overhead_records = [r for r in ledger if r.get("kind") == "overhead"]
 
     with open(os.path.join(records, "rows.jsonl"), "w", encoding="utf-8") as handle:
-        for row in rows:
+        for row in own:
             handle.write(json.dumps(mask(row, prefix), ensure_ascii=False) + "\n")
     with open(os.path.join(records, "grades.jsonl"), "w", encoding="utf-8") as handle:
-        for row in rows:
+        for row in own:
             handle.write(json.dumps({"arm": row["arm"], "id": row["id"], "position": row["position"],
                                      "hidden_pass": row["grade"]["hidden_pass"],
                                      "suite_failed_other": row["grade"]["suite_failed_other"],
@@ -57,7 +64,7 @@ def main():
     ids = sorted({r["id"] for r in rows}, key=lambda i: min(r["position"] for r in rows if r["id"] == i))
     pairs = []
     for task_id in ids:
-        n, t = by.get(("N", task_id)), by.get(("T", task_id))
+        n, t = by.get(("N", task_id)), by.get((food, task_id))
         if not (n and t):
             continue
         led = sessions.get(t["session_id"]) or {}
@@ -104,9 +111,9 @@ def main():
     q_n = sum(1 for p in pairs if p["N"]["correct"])
     q_t = sum(1 for p in pairs if p["T"]["correct"])
     acted = {m: sum(1 for p in late_pairs if p["T"]["food"][m + "_acted"]) for m in ("microskills", "toolprune", "loopguard")}
-    raw_total = sum(r["tokens_total"] + r.get("sidecall_tokens_total", 0) for r in rows)
-    side_eff = sum(float(r.get("sidecall_effective_tokens") or 0) for r in rows if r["arm"] == "T")
-    t_eff = sum(cost(r) for r in rows if r["arm"] == "T")
+    raw_total = sum(r["tokens_total"] + r.get("sidecall_tokens_total", 0) for r in own)
+    side_eff = sum(float(r.get("sidecall_effective_tokens") or 0) for r in rows if r["arm"] == food)
+    t_eff = sum(cost(r) for r in rows if r["arm"] == food)
 
     # Pre-registered rules, in order.
     if late["pairs"] < 3:
@@ -132,11 +139,11 @@ def main():
                "late_mechanism_sessions": acted, "food_overhead_effective_tokens": round(side_eff, 1),
                "food_overhead_share_of_T": round(side_eff / t_eff, 4) if t_eff else None,
                "food_overhead_records_in_ledger": len(overhead_records),
-               "raw_tokens_total_all_arms": raw_total, "verdict": verdict, "why": why,
+               "raw_tokens_total_this_run": raw_total, "food_arm": food, "verdict": verdict, "why": why,
                "rules": "PREREG.md, 'judgement rules' 1-7"}
     json.dump(summary, open(os.path.join(records, "summary.json"), "w", encoding="utf-8"), indent=1, ensure_ascii=False)
     print(json.dumps({k: summary[k] for k in ("early", "late", "quality", "late_mechanism_sessions",
-                                                "food_overhead_share_of_T", "raw_tokens_total_all_arms", "verdict", "why")},
+                                                "food_overhead_share_of_T", "raw_tokens_total_this_run", "verdict", "why")},
                      indent=1, ensure_ascii=False))
 
 

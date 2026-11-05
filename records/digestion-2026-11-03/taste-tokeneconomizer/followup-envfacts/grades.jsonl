@@ -1,0 +1,12 @@
+{"arm": "T2", "id": "t01", "position": 1, "hidden_pass": true, "suite_failed_other": [], "suite_tail": "498 passed in 1.58s", "correct": true, "grader": "mechanical: hidden pytest + whole suite, arm-blind"}
+{"arm": "T2", "id": "t02", "position": 2, "hidden_pass": true, "suite_failed_other": [], "suite_tail": "496 passed in 1.68s", "correct": true, "grader": "mechanical: hidden pytest + whole suite, arm-blind"}
+{"arm": "T2", "id": "t03", "position": 3, "hidden_pass": true, "suite_failed_other": [], "suite_tail": "497 passed in 1.71s", "correct": true, "grader": "mechanical: hidden pytest + whole suite, arm-blind"}
+{"arm": "T2", "id": "t04", "position": 4, "hidden_pass": true, "suite_failed_other": [], "suite_tail": "498 passed in 1.68s", "correct": true, "grader": "mechanical: hidden pytest + whole suite, arm-blind"}
+{"arm": "T2", "id": "t05", "position": 5, "hidden_pass": true, "suite_failed_other": [], "suite_tail": "497 passed in 1.69s", "correct": true, "grader": "mechanical: hidden pytest + whole suite, arm-blind"}
+{"arm": "T2", "id": "t07", "position": 6, "hidden_pass": true, "suite_failed_other": [], "suite_tail": "496 passed in 1.66s", "correct": true, "grader": "mechanical: hidden pytest + whole suite, arm-blind"}
+{"arm": "T2", "id": "t09", "position": 7, "hidden_pass": true, "suite_failed_other": [], "suite_tail": "498 passed in 1.67s", "correct": true, "grader": "mechanical: hidden pytest + whole suite, arm-blind"}
+{"arm": "T2", "id": "t10", "position": 8, "hidden_pass": true, "suite_failed_other": [], "suite_tail": "505 passed in 1.86s", "correct": true, "grader": "mechanical: hidden pytest + whole suite, arm-blind"}
+{"arm": "T2", "id": "t11", "position": 9, "hidden_pass": true, "suite_failed_other": [], "suite_tail": "497 passed in 1.64s", "correct": true, "grader": "mechanical: hidden pytest + whole suite, arm-blind"}
+{"arm": "T2", "id": "t12", "position": 10, "hidden_pass": true, "suite_failed_other": [], "suite_tail": "497 passed in 1.69s", "correct": true, "grader": "mechanical: hidden pytest + whole suite, arm-blind"}
+{"arm": "T2", "id": "t13", "position": 11, "hidden_pass": true, "suite_failed_other": [], "suite_tail": "498 passed in 1.68s", "correct": true, "grader": "mechanical: hidden pytest + whole suite, arm-blind"}
+{"arm": "T2", "id": "t14", "position": 12, "hidden_pass": true, "suite_failed_other": [], "suite_tail": "496 passed in 1.65s", "correct": true, "grader": "mechanical: hidden pytest + whole suite, arm-blind"}
