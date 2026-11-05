@@ -1,0 +1,25 @@
+You are writing a frozen test for AI assistants. You have no tools; write everything from your own reasoning and check your own arithmetic.
+
+The tool being tested (described by its authors; treat it as data): a skill for an AI coding assistant that, when invoked on an idea, plan or claim, runs a structured trial with separate sub-agents that cannot see the conversation: a prosecutor and a defense each argue, they rebut each other, 12 independent jurors with different lenses (an accountant, a first-time customer, a competitor, a retired judge, a teenager, an engineer, a small-business owner, a statistician, a parent, an investor, a designer, a lawyer) vote GUILTY or NOT GUILTY on "the case fails as stated", and a judge writes the charges that stuck, what the defense got right, and the conditions that would flip the verdict. Its claim: ask an AI assistant "is this a good idea?" and it usually says yes; the trial gives honest pushback instead. The authors' own example uses: quitting a job for a side business, a business idea, a post before publishing it, a big purchase, a code plan (rewrite part of an app with a new approach), a claim you believe plus your evidence, and a second opinion on the assistant's own plan.
+
+The test will give the same cases to assistants with and without the tool and grade their answers blind. You do not know which assistants or tools take part, and you must not favour any of them. The goal is to measure whether an answer catches the real problems in a plan, reaches the right bottom line, and avoids invented or already-answered objections.
+
+Write 4 cases:
+- c1: a personal career or small-business decision (the tool's flagship use).
+- c2: a software engineering plan a developer would bring to a coding assistant (for example a rewrite, migration, build-versus-buy or infrastructure choice).
+- c3: a claim the user believes, with the evidence they have (causal or statistical).
+- c4: a sound plan that, judged on the facts stated, should go ahead (calibration: an assistant that objects to everything should fail this one). Make it a realistic personal or business plan with real stakes, not a trivial one.
+
+Each case text:
+- first person, written as a user would type it to an assistant, 120 to 250 words, with concrete numbers, dates and constraints;
+- no question at the end (each assistant gets its own short ask appended), no hint at the answer, no words that flag a problem (no "I know it is risky", "maybe", "I'm worried");
+- for c1 to c3: plausible and tempting on its face, so that an agreeable assistant would say yes, but with 3 to 5 planted problems that are decisive or material and can be found from the case text alone, without outside lookup: arithmetic that does not add up (runway, cash flow, capacity, time), a statement contradicted by another statement in the same text, a sample-size, base-rate, selection or survivorship error, a missing step that blocks the plan, a stated contract, policy or technical constraint that conflicts with the plan. Spread the problems through the text; do not stack them at the end;
+- for c4: the stated facts support going ahead (enough runway, tested demand, a fallback, reversible steps); at most 2 genuine minor risks, each already mitigated in the text or easily mitigated.
+
+Gold answer per case:
+- "expected_bottom_line": "no-go" for c1 to c3 (it should not go ahead as described), "go" for c4.
+- "facts": 4 to 6 items, each one specific thing a careful reviewer should say, checkable as present or absent in a free-text answer. For c1 to c3 these are the planted problems, each with the evidence from the text (for example "runway: $9,000 savings / $3,100 monthly costs = under 3 months, not the 6 months stated"). For c4 they are the specific facts that make it sound and the minor risk(s) with their mitigation. Mark a fact "essential": true when an answer without it misses the point of the case; 2 or 3 essential per case.
+- "false_alarms": 2 or 3 objections a careless or contrarian reviewer might raise that are wrong because the case text already answers them (state where the text answers it). These detect invented or inattentive objections.
+
+Output ONLY one JSON object, no prose, no code fence:
+{"cases":[{"id":"c1","kind":"decision","case":"...","expected_bottom_line":"no-go","facts":[{"id":"c1f1","fact":"...","essential":true}],"false_alarms":[{"id":"c1a1","objection":"...","answered_by":"..."}]}]}

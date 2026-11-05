@@ -1,0 +1,204 @@
+{
+ "cases": [
+  {
+   "id": "c1",
+   "kind": "decision",
+   "case": "I'm a logistics coordinator at a regional food distributor, taking home $5,200 a month. I'm handing in my notice on December 1 and running my hot sauce brand, Ember & Salt, full-time from January 2027. In September and October I sold 310 bottles at $12 each, mostly pre-orders from coworkers, family and my 900 Instagram followers. Each bottle costs $4 in ingredients and packaging, so I clear $8 a bottle. Fixed business costs (shared commercial kitchen rental, liability insurance, market fees) come to $1,500 a month. To replace my salary I need 650 bottles a month, since 650 x $8 = $5,200. I rent the kitchen for one 4-hour shift a week and can cook and bottle about 30 bottles an hour. Two grocery stores on my delivery route at work, FreshWay and Green Basket, have agreed to stock it from February. My employment contract has a 12-month non-solicitation clause covering any customer account I have serviced. I have $21,000 in savings and my personal expenses are $3,300 a month, so even with the business costs on top I have a comfortable 8-month runway before counting any sales.",
+   "expected_bottom_line": "no-go",
+   "facts": [
+    {
+     "id": "c1f1",
+     "fact": "Runway is wrong: $21,000 / ($3,300 personal + $1,500 business = $4,800 a month) = about 4.4 months, not the 8 months stated.",
+     "essential": true
+    },
+    {
+     "id": "c1f2",
+     "fact": "Production capacity cannot reach the target: one 4-hour shift a week x 30 bottles an hour = 120 bottles a week, about 520 a month, which is below the 650 bottles the user says they need.",
+     "essential": true
+    },
+    {
+     "id": "c1f3",
+     "fact": "The two grocery stores (FreshWay and Green Basket) are on the user's delivery route at work, so they are customer accounts the user has serviced, and the 12-month non-solicitation clause conflicts with selling to them from February.",
+     "essential": true
+    },
+    {
+     "id": "c1f4",
+     "fact": "The break-even figure leaves out the $1,500 a month in fixed business costs: replacing $5,200 take-home and covering fixed costs needs ($5,200 + $1,500) / $8 = about 838 bottles a month, not 650.",
+     "essential": false
+    },
+    {
+     "id": "c1f5",
+     "fact": "The demand evidence is weak and partly disappears on quitting: the 310 bottles over two months (about 155 a month) came mostly from coworkers, family and followers, a warm network that includes the coworkers the user is leaving. The plan needs at least four times that volume (650 to 838 bottles a month).",
+     "essential": false
+    }
+   ],
+   "false_alarms": [
+    {
+     "id": "c1a1",
+     "objection": "The user has not tested whether anyone will buy the product.",
+     "answered_by": "The text states 310 bottles were sold in September and October. The real issue is where those sales came from and how much they would need to grow, not that there was no test."
+    },
+    {
+     "id": "c1a2",
+     "objection": "The user has not accounted for per-bottle production costs or the need for a licensed kitchen and insurance.",
+     "answered_by": "The text gives $4 per bottle for ingredients and packaging, a rented shared commercial kitchen and liability insurance inside the $1,500 fixed costs."
+    },
+    {
+     "id": "c1a3",
+     "objection": "The user has no retail distribution lined up.",
+     "answered_by": "The text says two grocery stores have agreed to stock the product from February. The problem is the non-solicitation clause, not a lack of retailers."
+    }
+   ]
+  },
+  {
+   "id": "c2",
+   "kind": "engineering",
+   "case": "I lead a team of 4 backend engineers on a Rails monolith. Checkout is our slowest flow at 1.8 s p95 latency during peak. My plan is to rewrite checkout as a standalone Go service with its own Postgres database, starting Monday, December 7 and cutting over on Monday, February 1, 2027. I've scoped 22 endpoints at about 4 engineer-days each, tests included. Two engineers will build it; the other two stay on monolith support through cutover, and the whole team is off December 24 to January 1. A Go prototype of the cart endpoint hit 120 ms p95 in a load test on my laptop against a seeded database of 5,000 orders; production holds 31 million orders. The new service will receive card data directly from the payment page. Our compliance policy requires a PCI scope assessment for any new system that receives card data, and our assessor schedules 12 weeks out, so I'll book it once the service is feature-complete at the end of January. The new database starts empty at cutover, and from then we dual-write every order to both databases for 60 days. If the error rate goes above 1%, we flip traffic back to the Rails checkout. The old checkout code and its tables get deleted on February 15 to keep the codebase clean.",
+   "expected_bottom_line": "no-go",
+   "facts": [
+    {
+     "id": "c2f1",
+     "fact": "Capacity does not fit the timeline: 22 endpoints x 4 engineer-days = 88 engineer-days. Two engineers have about 33 working days between December 7 and January 29 once December 24 to January 1 is excluded (13 in December plus 20 in January), which gives 66 engineer-days. Even with no holiday break, 8 weeks x 2 engineers is only 80.",
+     "essential": true
+    },
+    {
+     "id": "c2f2",
+     "fact": "The PCI assessment comes too late for the cutover: policy requires it for any new system receiving card data, but it will only be booked at the end of January, with a 12-week lead time, so it would happen around late April. A February 1 cutover would run the new service on card data without the required assessment.",
+     "essential": true
+    },
+    {
+     "id": "c2f3",
+     "fact": "Deleting the old checkout code and tables on February 15 contradicts the 60-day dual-write period (which would run to early April) and breaks the rollback plan: after February 15 there is no Rails checkout left to flip traffic back to.",
+     "essential": true
+    },
+    {
+     "id": "c2f4",
+     "fact": "The performance evidence is not representative: one prototyped endpoint out of 22, load-tested on a laptop against 5,000 seeded orders, against a production database of 31 million orders. It does not show the rewrite would fix the 1.8 s p95.",
+     "essential": false
+    },
+    {
+     "id": "c2f5",
+     "fact": "There is no step for migrating historical data: the new database starts empty at cutover and only new orders are dual-written, so deleting the old tables on February 15 would lose the 31 million existing orders unless they are migrated first.",
+     "essential": false
+    }
+   ],
+   "false_alarms": [
+    {
+     "id": "c2a1",
+     "objection": "There is no rollback plan.",
+     "answered_by": "The text defines one: flip traffic back to the Rails checkout if the error rate exceeds 1%. The real problem is that the February 15 deletion invalidates it, not that it is missing."
+    },
+    {
+     "id": "c2a2",
+     "objection": "The current performance problem has not been measured, so there is no baseline.",
+     "answered_by": "The text states checkout runs at 1.8 s p95 latency during peak."
+    },
+    {
+     "id": "c2a3",
+     "objection": "No one is covering the existing monolith while the rewrite is underway.",
+     "answered_by": "The text says two of the four engineers stay on monolith support through cutover."
+    }
+   ]
+  },
+  {
+   "id": "c3",
+   "kind": "claim",
+   "case": "I lead growth at a meal-kit company. On August 3 we launched a loyalty program, and on November 18 I'm presenting to the board that it cut churn in half, with a request for $400,000 to expand it in 2027. The headline: members churn at 4% a month, non-members at 8%. Customers join by opting in from their account page, and only customers with at least 3 past orders are eligible. Our pre-launch dashboard shows customers with 3 or more orders were already churning at 4.5% a month, against 7.5% across all customers. On August 1 we also made delivery free (previously $9.99) for customers with 3 or more past orders. Overall monthly churn across all customers was 7.2% in September and October. The member churn figure is calculated from the member list; members who cancel are removed from that list automatically when their account closes. Since launch, 380 members have been removed and 1,150 remain. Our customer success team also phoned 40 current members last month, and 36 said the program makes them more likely to stay.",
+   "expected_bottom_line": "no-go",
+   "facts": [
+    {
+     "id": "c3f1",
+     "fact": "Selection bias: only opted-in customers with 3 or more past orders can be members, and before launch that group already churned at 4.5% a month. Comparing members (4%) with all non-members (8%) compares engaged customers with everyone else. Against the comparable baseline, the gap is about 0.5 points, not a halving.",
+     "essential": true
+    },
+    {
+     "id": "c3f2",
+     "fact": "Survivorship bias: members who cancel are removed from the list the churn figure is calculated from. 380 of the 1,530 people who joined (about 25%) cancelled between August 3 and October 31. That is roughly 9% a month even if everyone joined on launch day, so the 4% figure is not credible and real member churn may be no better than non-members'.",
+     "essential": true
+    },
+    {
+     "id": "c3f3",
+     "fact": "Confounder: on August 1, two days before launch, delivery was made free for exactly the eligible group (customers with 3 or more orders). Any improvement in that group's churn cannot be attributed to the loyalty program.",
+     "essential": false
+    },
+    {
+     "id": "c3f4",
+     "fact": "The business-level numbers contradict 'cut churn in half': overall monthly churn only moved from 7.5% to 7.2% (0.3 points), and the free-delivery change could account for even that.",
+     "essential": false
+    },
+    {
+     "id": "c3f5",
+     "fact": "The survey is weak evidence: 40 current members (survivors only, with none of the 380 who cancelled asked) gave a stated intention, which is a small, biased sample and not measured behaviour.",
+     "essential": false
+    }
+   ],
+   "false_alarms": [
+    {
+     "id": "c3a1",
+     "objection": "There is no pre-launch baseline to compare against.",
+     "answered_by": "The text gives pre-launch monthly churn of 7.5% for all customers and 4.5% for customers with 3 or more orders."
+    },
+    {
+     "id": "c3a2",
+     "objection": "The member group is too small for any conclusion.",
+     "answered_by": "The text gives 1,530 people who joined (1,150 remaining plus 380 removed), which is enough to estimate churn. The flaw is how the group was selected and filtered, not its size. Only the 40-person phone survey is small."
+    }
+   ]
+  },
+  {
+   "id": "c4",
+   "kind": "calibration",
+   "case": "I run a solo bookkeeping practice with 38 clients on monthly retainers, bringing in $27,400 a month. I'm at capacity and have turned away 14 prospective clients since June. Eleven of them have signed engagement letters to start in January or February 2027 at $600 a month each, and 8 of those have paid a first-month deposit. I plan to hire Dana, who has worked for me as a contractor 10 hours a week since March, as a full-time employee from January 11 at $58,000 a year. My accountant puts the total cost, including payroll taxes, a health stipend and a software seat, at $5,900 a month. I currently pay Dana $45 an hour for those 10 hours, about $1,950 a month, which the salary replaces. Dana already works in my accounting software and on three of my largest clients' books. The offer letter includes a 90-day probationary period. The business holds $42,000 in cash after setting aside next quarter's taxes, which would cover the full cost of the role for 7 months even with no new clients. Dana has also said that going back to contract hours would work if the client pipeline falls through.",
+   "expected_bottom_line": "go",
+   "facts": [
+    {
+     "id": "c4f1",
+     "fact": "Demand is tested and committed: 11 signed engagement letters x $600 = $6,600 a month, which exceeds the $5,900 monthly cost of the role, and 8 clients have already paid deposits.",
+     "essential": true
+    },
+    {
+     "id": "c4f2",
+     "fact": "The incremental cost is lower than it looks: $5,900 minus the $1,950 a month already paid to Dana as a contractor = $3,950 a month. The 8 deposit-paying clients alone ($4,800 a month) cover it.",
+     "essential": true
+    },
+    {
+     "id": "c4f3",
+     "fact": "The downside is covered and the decision is reversible: the $42,000 reserve (after taxes are set aside) covers about 7 months of the full $5,900 cost, there is a 90-day probation, and Dana is willing to return to contract hours.",
+     "essential": true
+    },
+    {
+     "id": "c4f4",
+     "fact": "The hire's fit is already tested: Dana has worked for the practice since March, roughly 10 months by January, and already knows the software and three of the largest clients' books.",
+     "essential": false
+    },
+    {
+     "id": "c4f5",
+     "fact": "Minor risk: timing gap. Dana starts January 11 but some new clients only start in February, so the first month or so may cost more than the new revenue. The reserve easily absorbs this.",
+     "essential": false
+    },
+    {
+     "id": "c4f6",
+     "fact": "Minor risk: the 3 signed clients without deposits might not start. This is mitigated because the 8 deposit-paying clients still cover the $3,950 net incremental cost.",
+     "essential": false
+    }
+   ],
+   "false_alarms": [
+    {
+     "id": "c4a1",
+     "objection": "Demand for the extra capacity is unproven.",
+     "answered_by": "The text says 11 prospects signed engagement letters at $600 a month and 8 paid deposits, out of 14 turned away since June."
+    },
+    {
+     "id": "c4a2",
+     "objection": "The practice cannot afford the hire if the new clients don't materialise.",
+     "answered_by": "The text says the $42,000 reserve covers the full cost for 7 months with no new clients, and Dana can go back to contract hours."
+    },
+    {
+     "id": "c4a3",
+     "objection": "Hiring an unknown person as the first employee is a gamble on fit.",
+     "answered_by": "The text says Dana has contracted for the practice since March, already uses the software and works on three major clients' books, and the offer has a 90-day probationary period."
+    }
+   ]
+  }
+ ]
+}
