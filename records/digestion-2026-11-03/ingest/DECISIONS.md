@@ -266,3 +266,15 @@ feature, round or kit.
   are backed up and restored; project-scope installs are preferred. D13 caps per food stay.
 - Proposed by Claude, not objected to: the owner acts at entry (link) and release (merge) only; the steps
   become a reusable tasting kit (install recipe plus questions per food).
+
+## D27. claude-mem is tasted in local subscription mode (2026-11-05, owner in chat: "本機訂閱模式"; applies D26)
+- claude-mem's default install asks for an email sign-in to its hosted service (a trial in which memory
+  compression runs on the vendor's servers). For tasting, it is installed with an explicit `--provider` that
+  compresses on the owner's own Claude plan: no new account, observations stay on the machine, and the
+  compression calls count toward the food's D13 cap.
+- This departs from D26's "recommended configuration" only in which model compresses memory; hooks, worker and
+  retrieval are the food's own. The tasting report states the departure.
+- One local setup by the owner, so later runs over Remote Control need no password or login: the corporate root
+  CA trusted inside WSL (the corporate network inspects TLS for some sites, so official installers that fetch
+  from them fail there), build packages, a one-year `claude setup-token` token in a mode-600 file (each tasting
+  arm then runs with its own config folder instead of the user-level one), and the GitHub CLI login on Windows.
