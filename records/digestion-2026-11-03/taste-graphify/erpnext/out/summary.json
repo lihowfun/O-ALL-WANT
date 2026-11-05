@@ -1,0 +1,135 @@
+{
+ "summary": {
+  "N": {
+   "questions": 4,
+   "runs": 4,
+   "coverage_mean": 0.933,
+   "essential_ok_questions": 4.0,
+   "wrong_claims": 2,
+   "contradicted": 0,
+   "tokens_median": 69438,
+   "tokens_total": 404548,
+   "tool_calls_median": 9.5,
+   "seconds_median": 28.450000000000003,
+   "cost_usd_equiv": 0.9,
+   "per_question": {
+    "q1": {
+     "coverage": 0.875,
+     "essential_ok": [
+      true
+     ],
+     "tokens": [
+      220470
+     ],
+     "tools": [
+      33
+     ]
+    },
+    "q2": {
+     "coverage": 1.0,
+     "essential_ok": [
+      true
+     ],
+     "tokens": [
+      71524
+     ],
+     "tools": [
+      9
+     ]
+    },
+    "q3": {
+     "coverage": 1.0,
+     "essential_ok": [
+      true
+     ],
+     "tokens": [
+      45202
+     ],
+     "tools": [
+      5
+     ]
+    },
+    "q4": {
+     "coverage": 0.857,
+     "essential_ok": [
+      true
+     ],
+     "tokens": [
+      67352
+     ],
+     "tools": [
+      10
+     ]
+    }
+   },
+   "tool_commands_used": 0
+  },
+  "G": {
+   "questions": 4,
+   "runs": 4,
+   "coverage_mean": 0.933,
+   "essential_ok_questions": 4.0,
+   "wrong_claims": 1,
+   "contradicted": 0,
+   "tokens_median": 95592,
+   "tokens_total": 578111,
+   "tool_calls_median": 7.0,
+   "seconds_median": 36.05,
+   "cost_usd_equiv": 1.01,
+   "per_question": {
+    "q1": {
+     "coverage": 0.875,
+     "essential_ok": [
+      true
+     ],
+     "tokens": [
+      330764
+     ],
+     "tools": [
+      24
+     ]
+    },
+    "q2": {
+     "coverage": 1.0,
+     "essential_ok": [
+      true
+     ],
+     "tokens": [
+      103091
+     ],
+     "tools": [
+      6
+     ]
+    },
+    "q3": {
+     "coverage": 1.0,
+     "essential_ok": [
+      true
+     ],
+     "tokens": [
+      56162
+     ],
+     "tools": [
+      5
+     ]
+    },
+    "q4": {
+     "coverage": 0.857,
+     "essential_ok": [
+      true
+     ],
+     "tokens": [
+      88094
+     ],
+     "tools": [
+      8
+     ]
+    }
+   },
+   "tool_commands_used": 11
+  }
+ },
+ "verdicts_vs_N": {
+  "G": "not shown better than native"
+ }
+}

@@ -82,7 +82,7 @@
 ## 5. 預算（D13）
 
 - 每份食物 10M token（輸入＋輸出＋cache），每輪消化開銷 10M（出題、評分、金魚）。超過就停、問 owner。
-- graphify：agent 層用了 3,790,470 → 剩約 6.2M。工具層不花模型 token。
+- graphify：agent 層用了 3,790,470 → 剩約 6.2M。工具層不花模型 token。2026-11-05 ERPNext 重測（`taste-graphify/erpnext/`）再用 982,659 → 共 4,773,129，剩約 5.2M；那輪開銷：出題 1,518,689、盲評 44,711。
 - 本輪已記錄的開銷：graphify 出題約 3.5M、盲評 105,365。
 - claude-mem、TokenEconomizer：各 10M，還沒用。
 - 只用訂閱：清掉 `ANTHROPIC_API_KEY`、`ANTHROPIC_AUTH_TOKEN`、`ANTHROPIC_BASE_URL`；每次執行的 init 事件要是 `apiKeySource: none`（改用長效 token 時要確認它仍是訂閱，記在 PREREG）。
