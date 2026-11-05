@@ -48,7 +48,7 @@ function status(fields: Record<string, unknown>): string {
 
 // The engine beneath the plugin: a small file tree, a process runner that records
 // what it was asked to run, and the display calls the pane makes.
-function world(on: On, options: { view?: string | null; status?: string | null; project?: boolean } = {}): World {
+function world(on: On, options: { view?: string | null; status?: string | null; project?: boolean; cwd?: string; root?: string } = {}): World {
   const clock = mock.clock(on, { now: NOW })
   const w: World = {
     files: new Map(),
@@ -73,7 +73,9 @@ function world(on: On, options: { view?: string | null; status?: string | null; 
   const missing = (path: string) => ({ deny: `ENOENT: ${path}` })
 
   on('session.start', (_, e) => ({ cwd: e.cwd }))
-  on('session.cwd', () => ({ value: CWD }))
+  on('session.cwd', () => ({ value: options.cwd ?? CWD }))
+  on('session.root', () => ({ value: options.root ?? options.cwd ?? CWD }))
+  for (let dir = options.cwd ?? CWD; dir.length > 1; dir = dir.slice(0, dir.lastIndexOf('/')) || '/') w.dirs.add(dir)
   on('command.register', () => ({ value: { command: 'oaw-digest' } }))
   on('ui.open', () => ({ value: { isPlaced: true } }))
   on('ui.toast', (_, e) => {
@@ -225,6 +227,15 @@ test('a status not touched for ten minutes is shown as possibly interrupted', as
   const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
   expect(await ui.find({ type: 'Text', text: /可能中斷了/ })).toBeDefined()
   expect(String((await ui.find({ type: 'Svg' }))?.props.source ?? '')).not.toContain('class="wave"')
+  await ui.unmount()
+})
+
+test('a session that moved into a nested folder still finds a sibling project', async ($, on) => {
+  const w = world(on, { cwd: '/work/records/digestion/ingest/graphify', root: '/work/records/digestion/ingest/graphify' })
+  await start($)
+  const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+  expect(await ui.find({ type: 'Text', text: /送進 4/ })).toBeDefined()
+  expect(w.toasts.at(-1)).toMatch(/^OAW 消化道：demo 有 5 樣食物，4 樣等你/)
   await ui.unmount()
 })
 

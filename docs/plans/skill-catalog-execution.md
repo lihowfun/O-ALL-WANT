@@ -383,7 +383,7 @@ OAW 是 Claude Code 和 Codex 共用的 harness。**任何只有一個 host 能�
 - **畫面**：pane 用 `$.ui.open` 開在對話旁。桌面、VS Code、手機畫 SVG 消化道（九站 S 形、食糰、選中食物走過的路）；終端沒有 SVG，改成一站一行。試吃中的蠕動和脈動是 CSS 動畫，跟著系統的「減少動態效果」，也能用 mod 設定關掉。
 - **權限**：D19、D23 之後消化道是操作介面，所以 mod 可以按這一站的動作，但只經由 `catalog.py`：會改專案的動作先跑預覽，按「確認套用」才加 `--apply`；分流旗標和常設預算要確認碼，mod 只複製終端指令。mod 不直接寫任何專案檔。
 - **散布**：`mods/oaw-digest-monitor/`，repo 根目錄的 `.claude-plugin/marketplace.json` 列出它；使用者用 `/plugin install oaw-digest-monitor --marketplace lihowfun/O-ALL-WANT` 安裝（marketplace 讀預設分支，所以 merge 進 `main` 後才裝得到）。這個 mod 是選裝的，不會因為安裝 OAW 就自動裝上。
-- **測試**：`claude plugin test`（13 個情境：桌面和終端都畫出每樣食物、卡點說明、終端限定動作只複製指令、預覽後才套用、移除要原因、試吃中動畫和結束通知、停止原因、10 分鐘沒更新、沒有專案、沒有 view、格式不符、關掉動畫、貼網址）、`claude plugin validate` 和型別檢查。gate 裡的 `tests/test_digest_mod.py` 檢查 mod 和引擎的約定（view 格式版本、來源檔清單、每種動作都有處理、讀的欄位 build_view 都有寫、打包、沒有本機路徑）。
+- **測試**：`claude plugin test`（14 個情境：工作資料夾移進子資料夾仍找得到專案、桌面和終端都畫出每樣食物、卡點說明、終端限定動作只複製指令、預覽後才套用、移除要原因、試吃中動畫和結束通知、停止原因、10 分鐘沒更新、沒有專案、沒有 view、格式不符、關掉動畫、貼網址）、`claude plugin validate` 和型別檢查。gate 裡的 `tests/test_digest_mod.py` 檢查 mod 和引擎的約定（view 格式版本、來源檔清單、每種動作都有處理、讀的欄位 build_view 都有寫、打包、沒有本機路徑）。
 
 ### README 改版（參考 EGM 的版面）
 

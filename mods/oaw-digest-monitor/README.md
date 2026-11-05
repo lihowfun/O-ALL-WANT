@@ -32,7 +32,7 @@ claude plugin install oaw-digest-monitor --marketplace lihowfun/O-ALL-WANT
 
 開發中想直接從這個資料夾載入：`claude --plugin-dir mods/oaw-digest-monitor`。
 
-這個 mod 是選裝的，安裝 OAW 不會自動裝上它。在 OAW 專案、它的上層或下一層資料夾開 Claude Code，mod 會自己找到專案（有 `.oaw/catalog` 的資料夾）和 OAW checkout（有 `scripts/catalog.py` 的資料夾），找到專案時會自動打開畫面。之後隨時可以用 `/oaw-digest` 打開。
+這個 mod 是選裝的，安裝 OAW 不會自動裝上它。在 OAW 專案、它的上層資料夾，或這些上層資料夾的其他子資料夾裡開 Claude Code，mod 會自己找到專案（有 `.oaw/catalog` 的資料夾）和 OAW checkout（有 `scripts/catalog.py` 的資料夾），找到專案時會自動打開畫面。之後隨時可以用 `/oaw-digest` 打開。
 
 ## 設定
 
@@ -68,7 +68,7 @@ claude plugin test mods/oaw-digest-monitor
 
 `tests/digest.test.tsx` 用一次真實 `catalog.py add` 產生的 view.json（四樣食物，另加一樣停在核准的合成食物）涵蓋這些情境：
 
-- 找到專案和 OAW checkout，在桌面版和終端版都畫出每樣食物
+- 找到專案和 OAW checkout（工作資料夾移進子資料夾也找得到），在桌面版和終端版都畫出每樣食物
 - 選食物後顯示卡點說明
 - 終端限定的動作只複製指令
 - 預覽之後才套用；移除要寫原因

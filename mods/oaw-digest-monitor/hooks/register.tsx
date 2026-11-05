@@ -75,24 +75,46 @@ async function readText($: EngineInterface, path: string): Promise<string | null
 }
 
 // Find the OAW project (a folder with .oaw/catalog) and the OAW checkout that holds
-// scripts/catalog.py: the configured ones, else the session folder, its parents and
-// its direct children, newest catalog first.
+// scripts/catalog.py: the configured ones, else around the session's root and its
+// current folder (a session that moved into a subfolder still finds a sibling
+// project): each of those folders, its parents, and the direct children of the
+// nearest parents; newest catalog first.
+const PARENTS = 8
+const PARENTS_WITH_CHILDREN = 6
+const CHILDREN = 80
+
 async function discover($: EngineInterface): Promise<Where> {
-  const cwd = await $.session.cwd()
-  const near: string[] = []
-  let dir: string | null = cwd
-  for (let i = 0; dir && i < 6; i += 1) {
-    near.push(dir)
-    dir = parentPath(dir)
+  const bases: string[] = []
+  for (const read of [() => $.session.root(), () => $.session.cwd()]) {
+    try {
+      const base = await read()
+      if (base && !bases.includes(base)) bases.push(base)
+    } catch {
+      // A host that does not answer one of them still has the other.
+    }
   }
-  let children: string[] = []
-  try {
-    children = (await $.fs.list(cwd))
-      .filter(entry => entry.kind === 'dir' && !entry.name.startsWith('.'))
-      .map(entry => joinPath(cwd, entry.name))
-      .slice(0, 80)
-  } catch {
-    children = []
+  const near: string[] = []
+  const scan: string[] = []
+  for (const base of bases) {
+    let dir: string | null = base
+    for (let i = 0; dir && i < PARENTS; i += 1) {
+      if (!near.includes(dir)) near.push(dir)
+      if (i < PARENTS_WITH_CHILDREN && !scan.includes(dir)) scan.push(dir)
+      dir = parentPath(dir)
+    }
+  }
+  const children: string[] = []
+  for (const dir of scan) {
+    try {
+      for (const entry of (await $.fs.list(dir)).slice(0, 400)) {
+        if (entry.kind !== 'dir' || entry.name.startsWith('.')) continue
+        const child = joinPath(dir, entry.name)
+        if (!near.includes(child) && !children.includes(child)) children.push(child)
+        if (children.length >= CHILDREN * scan.length) break
+      }
+    } catch {
+      // An unreadable folder is skipped.
+    }
   }
   const candidates = [...near, ...children]
 
@@ -345,7 +367,10 @@ export const register: Register = (on, opts) => {
     await $.command.register({ name: 'oaw-digest', description: '打開 OAW 消化道：每樣 skill 食物在哪一站、卡在哪、能做什麼' })
     await load($, 'start')
     const model = await read($, modelAtom)
-    if (model) void $.ui.open({ id: PANE, title: TITLE })
+    if (model) {
+      void $.ui.open({ id: PANE, title: TITLE })
+      $.ui.toast(`${TITLE}：${model.projectName} 有 ${model.foods.length} 樣食物，${waitingCount(model)} 樣等你（/oaw-digest 打開）`)
+    }
     $.clock.every(POLL_MS, () => {
       void load($, 'poll')
     })
