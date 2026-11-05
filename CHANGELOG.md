@@ -4,7 +4,33 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+
+- The digestion system runs itself (owner decision D28): the catalog's "who a food waits on" gains `agent`
+  (「自動（Claude 接手）」) and `release` (「等發布（合併 PR 時一次決定）」, one decision for the whole branch).
+  `owner` is kept for entry choices, tier-C questions (D21), owner-only prerequisites and removing a skill.
+  A food with high-severity static flags now waits on the agent's tasting at 靜態 instead of an owner triage:
+  the scanner, the flags, the per-component holds and the terminal triage stay, and copy-absorbing a flagged
+  part still needs triage, but triage is optional. A failed or outdated taste, held parts at 分流, an
+  absorbable part at 核准 (D21 rebuild; copy-absorb is an optional owner action) and an unsplit paper wait on
+  the agent; imported historical proposals are optional backlog. The plan of a flagged food no longer says it
+  is blocked; its triage step is optional. 實測 becomes a mixed stage (Claude's tastings) and 核准 a mixed one.
+  `view.json` is schema `oaw-catalog-view/3` (the web page, `oaw_status.py`, the menu and the mod read it).
+
 ### Added
+
+- `catalog.py record-tasting --food ID --file FILE [--apply]` and `record-absorption` (D25, D28): Claude's
+  agent-level tastings (schema `oaw-tasting/1`: records branch path and commit, protocol with frozen-question
+  sha256, arms with run counts and the food arm, per-arm results, verdict) and D21 absorptions (schema
+  `oaw-absorption/1`: units with tier, commits, tests and evidence basis; declined and held units with a reason;
+  release state) are stored as evidence and drawn on the view. The engine refuses any tasting verdict whose food
+  arm has no graded run, a tier-B unit without a recorded `absorb` tasting and a tier-C unit without the
+  owner's approval, at record time and again whenever it builds a view (an edited record is refused). A
+  tasting marks 實測 done (blocked for `no-verdict`) and its verdict shows at 分流; an absorption puts the food
+  at 版本 waiting for the release; absorbed units count in the funnel's absorbed parts.
+- The digestion views draw the new waiting values: an orange `»` (agent) and a teal `↑` (release) next to the
+  owner's blue `!` on the web page and in the `oaw-digest-monitor` mod (0.2.0), a waiting tally line in
+  `oaw_status.py` and the menu, and each food's tasting and absorption notes at their stops.
 
 - Claude Code mod `oaw-digest-monitor` (`mods/oaw-digest-monitor/`, listed in `.claude-plugin/marketplace.json`;
   optional, D19/D23): the intake pipeline as a pane beside the chat. Desktop, VS Code and mobile draw an SVG
