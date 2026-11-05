@@ -6,6 +6,15 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Claude Code mod `oaw-digest-monitor` (`mods/oaw-digest-monitor/`, listed in `.claude-plugin/marketplace.json`;
+  optional, D19/D23): the intake pipeline as a pane beside the chat. Desktop, VS Code and mobile draw an SVG
+  digestive tract (nine stops, one bolus per food coloured by verdict, owner badges, the selected food's travelled
+  path, a peristalsis wave and a pulsing bolus while a taste runs, honouring reduced motion); the terminal draws
+  one line per stop. The selected food shows its blocker explanation and its stop's actions, which run
+  `catalog.py` preview-first (`--apply` only after 確認套用; removal needs a reason; triage only copies the
+  terminal command because the confirmation code stays with the owner). A status line and toasts report a
+  running, finished or stopped taste. Thirteen `claude plugin test` scenarios; `tests/test_digest_mod.py`
+  keeps the mod's view schema, view sources, action handlers and read keys in step with the engine.
 - Code-map Stage 0-alpha evaluation harness (`evals/code-map/`, owner decision D24): a pre-registered,
   zero-model-token question set (39 questions in four classes) on a pinned corpus of this repository,
   a simulated native-search baseline (`native_search.py`) and a scorer (`score.py`) that runs each arm

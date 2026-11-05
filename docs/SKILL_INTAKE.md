@@ -161,6 +161,8 @@ python3 scripts/catalog.py menu --target /path/to/project   # 終端選單：同
 python3 scripts/oaw_status.py --project /path/to/project    # 只看，不做任何動作
 ```
 
+在 Claude Code 裡還可以裝選用的 mod `oaw-digest-monitor`（`mods/oaw-digest-monitor/`）：對話旁的消化道畫面，九站、食糰、卡點說明和這一站的動作都和網頁一樣，動作也一樣交給 `catalog.py`（先預覽，按「確認套用」才加 `--apply`；分流旗標只複製終端指令，確認碼仍要你自己在終端輸入）。Codex 沒有可以掛畫面的擴充介面，用上面三個指令。
+
 ### 網頁（`catalog.py ui`）
 
 - 只綁 `127.0.0.1`，印出並開啟 `http://127.0.0.1:<port>/#t=<通行碼>`，Ctrl+C 結束。要用印出來的完整網址開，少了 `#t=…` 頁面會拒絕連線。`--no-browser` 只印網址，`--port N` 指定埠號。
@@ -257,7 +259,6 @@ python3 scripts/oaw_status.py --project /path/to/project    # 只看，不做任
 
 ### 已知問題（還沒修）
 
-- **Claude mod 原型**（`oaw-digest-monitor`，不在這個 repo）還沒讀 `status.json` 的可選欄位 `headline`、`stop_reason`：免費試吃完成時它會顯示「完成 · 進行中」，試吃失敗時會一直顯示進行中。`oaw_status.py`、`menu` 和網頁顯示的是正確的「最近一次試吃 … 未測」或「已停止：原因」。
 - **吸收的 skill 只裝到吸收當時的 host**：之後才加上第二個 host 時，畫面會標「只在 Codex／只在 Claude」，但還沒有「補裝到另一個 host」的動作，doctor 也還沒有對應的警告。要補裝，先移除再吸收一次。
 - **還原寫入的 `install.json` 和那一版不完全相同時**（例如保留了你的自訂檔），結果會記成一個新的版本，而不是沿用原本的名字。
 
