@@ -50,6 +50,7 @@ function status(fields: Record<string, unknown>): string {
 // what it was asked to run, and the display calls the pane makes.
 function world(on: On, options: { view?: string | null; status?: string | null; project?: boolean; cwd?: string; root?: string } = {}): World {
   const clock = mock.clock(on, { now: NOW })
+  mock.store(on)
   const w: World = {
     files: new Map(),
     dirs: new Set([CWD, '/', OAW, `${OAW}/scripts`]),
@@ -77,6 +78,7 @@ function world(on: On, options: { view?: string | null; status?: string | null; 
   on('session.root', () => ({ value: options.root ?? options.cwd ?? CWD }))
   for (let dir = options.cwd ?? CWD; dir.length > 1; dir = dir.slice(0, dir.lastIndexOf('/')) || '/') w.dirs.add(dir)
   on('command.register', () => ({ value: { command: 'oaw-digest' } }))
+  on('tool.register', () => ({ value: { tool: 'mcp__oaw-digest-monitor__status' } }))
   on('ui.open', () => ({ value: { isPlaced: true } }))
   on('ui.toast', (_, e) => {
     w.toasts.push(e.text)
@@ -243,8 +245,18 @@ test('no OAW project is explained', async ($, on) => {
   world(on, { project: false })
   await start($)
   const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
-  expect(await ui.find({ type: 'Text', text: /找不到 OAW 專案/ })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: /找不到 OAW 專案.*找過：\/work，往上 8 層/ })).toBeDefined()
   await ui.unmount()
+})
+
+test('the status tool tells the model what the pane found', async ($, on) => {
+  world(on)
+  await start($)
+  const answer = await $.tool.call({ tool: 'mcp__oaw-digest-monitor__status' })
+  const text = JSON.stringify(answer)
+  expect(text).toContain('"project":"/work/demo"')
+  expect(text).toContain('"oawCheckout":"/work/oaw"')
+  expect(text).toContain('"id":"graphify"')
 })
 
 test('a project with no view yet is explained', async ($, on) => {

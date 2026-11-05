@@ -56,11 +56,21 @@ let where: Where | null = null
 let lastStamp = ''
 let lastLive: { food: string; isRunning: boolean } | null = null
 let loading = false
+// What the last search looked at, for the pane's explanation and the status tool.
+let trace: { bases: string[]; scanned: number; checked: number; errors: string[]; remembered: string | null } = {
+  bases: [], scanned: 0, checked: 0, errors: [], remembered: null,
+}
+
+function note(error: unknown, what: string): void {
+  if (trace.errors.length < 4) trace.errors.push(`${what}: ${error instanceof Error ? error.message : String(error)}`.slice(0, 200))
+}
 
 async function stat(path: string, $: EngineInterface): Promise<number | null> {
   try {
     return (await $.fs.stat(path)).mtimeMs
-  } catch {
+  } catch (error) {
+    // A missing file is the normal answer; anything else is worth saying.
+    if (!/ENOENT|no such|not found|missing/i.test(String(error))) note(error, `stat ${path}`)
     return null
   }
 }
@@ -84,16 +94,26 @@ const PARENTS_WITH_CHILDREN = 6
 const CHILDREN = 80
 
 async function discover($: EngineInterface): Promise<Where> {
+  trace = { bases: [], scanned: 0, checked: 0, errors: [], remembered: null }
   const bases: string[] = []
-  for (const read of [() => $.session.root(), () => $.session.cwd()]) {
+  for (const [name, read] of [['root', () => $.session.root()], ['cwd', () => $.session.cwd()]] as const) {
     try {
       const base = await read()
       if (base && !bases.includes(base)) bases.push(base)
-    } catch {
-      // A host that does not answer one of them still has the other.
+    } catch (error) {
+      note(error, name)
     }
   }
-  const near: string[] = []
+  trace.bases = [...bases]
+  let remembered: string | null = null
+  try {
+    const value = await $.store.get('lastProject')
+    remembered = typeof value === 'string' && value ? value : null
+  } catch (error) {
+    note(error, 'store')
+  }
+  trace.remembered = remembered
+  const near: string[] = remembered ? [remembered] : []
   const scan: string[] = []
   for (const base of bases) {
     let dir: string | null = base
@@ -106,17 +126,19 @@ async function discover($: EngineInterface): Promise<Where> {
   const children: string[] = []
   for (const dir of scan) {
     try {
+      trace.scanned += 1
       for (const entry of (await $.fs.list(dir)).slice(0, 400)) {
         if (entry.kind !== 'dir' || entry.name.startsWith('.')) continue
         const child = joinPath(dir, entry.name)
         if (!near.includes(child) && !children.includes(child)) children.push(child)
         if (children.length >= CHILDREN * scan.length) break
       }
-    } catch {
-      // An unreadable folder is skipped.
+    } catch (error) {
+      note(error, `list ${dir}`)
     }
   }
   const candidates = [...near, ...children]
+  trace.checked = candidates.length
 
   let project: string | null = options.project.trim() || null
   if (!project) {
@@ -151,7 +173,19 @@ async function discover($: EngineInterface): Promise<Where> {
       }
     }
   }
+  if (project) {
+    try {
+      await $.store.set('lastProject', project)
+    } catch (error) {
+      note(error, 'store')
+    }
+  }
   return { project, oaw }
+}
+
+function searchedText(): string {
+  const errors = trace.errors.length > 0 ? ` 讀取錯誤：${trace.errors.join('；')}` : ''
+  return `（找過：${trace.bases.join('、') || '沒有拿到 session 資料夾'}，往上 ${PARENTS} 層，掃了 ${trace.scanned} 個資料夾的子資料夾，共 ${trace.checked} 個位置。${errors}）`
 }
 
 function runner(model: DigestModel | null): Runner | null {
@@ -175,7 +209,7 @@ async function load($: EngineInterface, why: 'start' | 'poll' | 'manual'): Promi
     if (!where.project) {
       const problem: DigestProblem = {
         kind: 'no-project',
-        text: '這裡找不到 OAW 專案（.oaw/）。在 OAW 專案或它的上層資料夾開 Claude Code，或在 mod 設定填 project。',
+        text: `這裡找不到 OAW 專案（.oaw/）。在 OAW 專案或它的上層資料夾開 Claude Code，或在 mod 設定填 project。${searchedText()}`,
         project: null,
         oaw: where.oaw,
       }
@@ -365,6 +399,12 @@ export const register: Register = (on, opts) => {
   on('session.start', async ($, e, next) => {
     const started = await next(e)
     await $.command.register({ name: 'oaw-digest', description: '打開 OAW 消化道：每樣 skill 食物在哪一站、卡在哪、能做什麼' })
+    await $.tool.register({
+      name: 'status',
+      description:
+        'OAW digestive tract (oaw-digest-monitor): which OAW project and checkout the pane found, how it searched, and each food\'s stop, state, verdict and who it waits on. Read-only.',
+      inputSchema: { type: 'object', properties: {}, additionalProperties: false },
+    })
     await load($, 'start')
     const model = await read($, modelAtom)
     if (model) {
@@ -375,6 +415,25 @@ export const register: Register = (on, opts) => {
       void load($, 'poll')
     })
     return started
+  })
+
+  on('tool.call', { tool: 'mcp__oaw-digest-monitor__status' }, async $ => {
+    await load($, 'manual')
+    const model = await read($, modelAtom)
+    const problem = await read($, problemAtom)
+    return {
+      result: {
+        project: model?.project ?? problem?.project ?? null,
+        oawCheckout: model?.oaw ?? problem?.oaw ?? null,
+        problem: problem?.text ?? null,
+        search: trace,
+        live: model?.live ?? null,
+        foods: (model?.foods ?? []).map(f => ({
+          id: f.id, stop: f.stageLabel, state: f.stateZh, verdict: verdictText(f), waiting: f.waitingZh,
+          components: f.counts, actions: f.actions.map(a => a.label),
+        })),
+      },
+    }
   })
 
   on('command.run', { command: 'oaw-digest' }, async $ => {
