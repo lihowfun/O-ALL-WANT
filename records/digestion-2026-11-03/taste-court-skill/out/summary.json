@@ -1,0 +1,152 @@
+{
+ "arms": {
+  "N": {
+   "n": 4,
+   "coverage": 0.958,
+   "essential_ok": 4,
+   "bottom_line_ok": 4,
+   "false_alarms": 0,
+   "wrong_claims": 0,
+   "unearned_praise": 0,
+   "tokens_median": 11560.5,
+   "tokens_total": 46431,
+   "seconds_median": 30.55,
+   "words_median": 676.0,
+   "agent_calls_median": 0.0,
+   "cases": {
+    "c1": {
+     "coverage": 1.0,
+     "essential_ok": true,
+     "bottom_line": "no-go",
+     "bottom_line_ok": true,
+     "false_alarms_raised": 0,
+     "wrong_claims": 0,
+     "unearned_praise": 0,
+     "contradicted": 0,
+     "tokens": 11226,
+     "words": 640,
+     "agent_calls": 0,
+     "court_tally": null
+    },
+    "c2": {
+     "coverage": 1.0,
+     "essential_ok": true,
+     "bottom_line": "no-go",
+     "bottom_line_ok": true,
+     "false_alarms_raised": 0,
+     "wrong_claims": 0,
+     "unearned_praise": 0,
+     "contradicted": 0,
+     "tokens": 11806,
+     "words": 712,
+     "agent_calls": 0,
+     "court_tally": null
+    },
+    "c3": {
+     "coverage": 1.0,
+     "essential_ok": true,
+     "bottom_line": "no-go",
+     "bottom_line_ok": true,
+     "false_alarms_raised": 0,
+     "wrong_claims": 0,
+     "unearned_praise": 0,
+     "contradicted": 0,
+     "tokens": 12084,
+     "words": 789,
+     "agent_calls": 0,
+     "court_tally": null
+    },
+    "c4": {
+     "coverage": 0.833,
+     "essential_ok": true,
+     "bottom_line": "go",
+     "bottom_line_ok": true,
+     "false_alarms_raised": 0,
+     "wrong_claims": 0,
+     "unearned_praise": 0,
+     "contradicted": 0,
+     "tokens": 11315,
+     "words": 593,
+     "agent_calls": 0,
+     "court_tally": null
+    }
+   }
+  },
+  "P": {
+   "n": 4,
+   "coverage": 0.958,
+   "essential_ok": 4,
+   "bottom_line_ok": 4,
+   "false_alarms": 0,
+   "wrong_claims": 2,
+   "unearned_praise": 1,
+   "tokens_median": 13604.0,
+   "tokens_total": 54432,
+   "seconds_median": 53.599999999999994,
+   "words_median": 1019.5,
+   "agent_calls_median": 0.0,
+   "cases": {
+    "c1": {
+     "coverage": 1.0,
+     "essential_ok": true,
+     "bottom_line": "no-go",
+     "bottom_line_ok": true,
+     "false_alarms_raised": 0,
+     "wrong_claims": 1,
+     "unearned_praise": 0,
+     "contradicted": 0,
+     "tokens": 13220,
+     "words": 847,
+     "agent_calls": 0,
+     "court_tally": null
+    },
+    "c2": {
+     "coverage": 1.0,
+     "essential_ok": true,
+     "bottom_line": "no-go",
+     "bottom_line_ok": true,
+     "false_alarms_raised": 0,
+     "wrong_claims": 0,
+     "unearned_praise": 1,
+     "contradicted": 0,
+     "tokens": 14027,
+     "words": 1046,
+     "agent_calls": 0,
+     "court_tally": null
+    },
+    "c3": {
+     "coverage": 1.0,
+     "essential_ok": true,
+     "bottom_line": "no-go",
+     "bottom_line_ok": true,
+     "false_alarms_raised": 0,
+     "wrong_claims": 0,
+     "unearned_praise": 0,
+     "contradicted": 0,
+     "tokens": 13197,
+     "words": 995,
+     "agent_calls": 0,
+     "court_tally": null
+    },
+    "c4": {
+     "coverage": 0.833,
+     "essential_ok": true,
+     "bottom_line": "go",
+     "bottom_line_ok": true,
+     "false_alarms_raised": 0,
+     "wrong_claims": 1,
+     "unearned_praise": 0,
+     "contradicted": 0,
+     "tokens": 13988,
+     "words": 1044,
+     "agent_calls": 0,
+     "court_tally": null
+    }
+   }
+  }
+ },
+ "rules": {
+  "R0_premise_plain_ask_agrees": false,
+  "R0_N_go_on_flawed": 0
+ }
+}
