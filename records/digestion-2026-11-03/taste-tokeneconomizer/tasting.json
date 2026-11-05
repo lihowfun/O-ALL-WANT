@@ -1,0 +1,62 @@
+{
+ "schema": "oaw-tasting/1",
+ "food": "microsoft/TokenEconomizer",
+ "date": "2026-11-05",
+ "records": {
+  "path": "records/digestion-2026-11-03/taste-tokeneconomizer",
+  "commit": "ed96c6012f07921a1ee222a779fa05f5c1399aec",
+  "branch": "records"
+ },
+ "protocol": {
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "corpus": "pallets/flask@49943b5a: 12 small code changes, one fresh session each, in order, in the same copy per arm (code reset to base before each); Claude Code 2.1.310",
+  "questions": {
+   "count": 12,
+   "sha256": "0ecc8d51ba450cc6c622251739390b1985c7fac2b4de0b9fb8f09f588b4b37c6",
+   "file": "records/digestion-2026-11-03/taste-tokeneconomizer/tasks.json"
+  },
+  "repeats": 1,
+  "grading": "mechanical, arm-blind: hidden pytest per task plus the whole existing suite; cost in the food's effective tokens incl. its own calls",
+  "host": "Claude Code 2.1.310 on Linux, subscription (apiKeySource none), --setting-sources project,local"
+ },
+ "arms": [
+  {
+   "id": "N",
+   "label": "native Claude Code",
+   "food_arm": false,
+   "runs": 12,
+   "graded_runs": 12,
+   "results": {
+    "coverage": 1.0,
+    "essential_correct": 12,
+    "essential_total": 12,
+    "token_median": 207731,
+    "tokens_total": 2700325
+   }
+  },
+  {
+   "id": "T2",
+   "label": "TokenEconomizer 519c65f, project scope, microskills=envfacts (no model calls), toolprune_quiet_minutes=0",
+   "food_arm": true,
+   "runs": 12,
+   "graded_runs": 12,
+   "results": {
+    "coverage": 1.0,
+    "essential_correct": 12,
+    "essential_total": 12,
+    "token_median": 209315,
+    "tokens_total": 2708350
+   }
+  }
+ ],
+ "food_arm_ran": {
+  "graded_runs": 12,
+  "evidence": "followup-envfacts/rows.jsonl and grades.jsonl: 12 graded T2 sessions, tokeneconomizer in every init event; compared with run 1's N rows"
+ },
+ "verdict": "not-shown-better",
+ "verdict_zh": "沒證明比原生好（不收）：作者的免費設定（envfacts＋tool pruning）品質相同（12/12），後段只省 2.3%，沒達到預先登記的 15%",
+ "blocked_on_owner": null,
+ "notes": "Final for this food by followup-envfacts/PREREG.md (the better of the two runs). T2 late T2/N 0.977, cheaper in 4 of 6 late pairs; sessions 9-12 13.9% cheaper, but T2 was 13% dearer in sessions 1-6 before any mechanism acted, so the late gap is within the noise of one stream. T2 ran alone after run 1 and is compared with run 1's N rows. Run 1 (microskills=on) declined: late 1.25x native, driven by the paid fact proposer. Mechanisms that acted: the free envfacts fact and tool pruning (15 of 26 tools denied); loop guard never acted on these small tasks. Food budget used 8,037,820 of 10M; design overhead 6,539,760."
+}

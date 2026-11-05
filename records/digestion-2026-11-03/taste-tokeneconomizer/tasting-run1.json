@@ -1,0 +1,63 @@
+{
+ "schema": "oaw-tasting/1",
+ "food": "microsoft/TokenEconomizer",
+ "date": "2026-11-05",
+ "records": {
+  "path": "records/digestion-2026-11-03/taste-tokeneconomizer",
+  "commit": "ed96c6012f07921a1ee222a779fa05f5c1399aec",
+  "branch": "records"
+ },
+ "protocol": {
+  "models": [
+   "claude-opus-5-5",
+   "claude-haiku-5-5"
+  ],
+  "corpus": "pallets/flask@49943b5a: 12 small code changes, one fresh session each, in order, in the same copy per arm (code reset to base before each); Claude Code 2.1.310",
+  "questions": {
+   "count": 12,
+   "sha256": "0ecc8d51ba450cc6c622251739390b1985c7fac2b4de0b9fb8f09f588b4b37c6",
+   "file": "records/digestion-2026-11-03/taste-tokeneconomizer/tasks.json"
+  },
+  "repeats": 1,
+  "grading": "mechanical, arm-blind: hidden pytest per task plus the whole existing suite; cost in the food's effective tokens incl. its own calls",
+  "host": "Claude Code 2.1.310 on Linux, subscription (apiKeySource none), --setting-sources project,local"
+ },
+ "arms": [
+  {
+   "id": "N",
+   "label": "native Claude Code",
+   "food_arm": false,
+   "runs": 12,
+   "graded_runs": 12,
+   "results": {
+    "coverage": 1.0,
+    "essential_correct": 12,
+    "essential_total": 12,
+    "token_median": 207731,
+    "tokens_total": 2700325
+   }
+  },
+  {
+   "id": "T",
+   "label": "TokenEconomizer 519c65f, project scope, microskills=on, toolprune_quiet_minutes=0",
+   "food_arm": true,
+   "runs": 12,
+   "graded_runs": 12,
+   "results": {
+    "coverage": 1.0,
+    "essential_correct": 12,
+    "essential_total": 12,
+    "token_median": 206868,
+    "tokens_total": 2629145
+   }
+  }
+ ],
+ "food_arm_ran": {
+  "graded_runs": 12,
+  "evidence": "rows.jsonl and grades.jsonl: 12 graded T sessions, tokeneconomizer in every T init event, its ledger joined by session id"
+ },
+ "verdict": "decline",
+ "verdict_zh": "不收（第 1 輪，microskills=on）：品質相同（12/12），後段 effective token 是原生的 1.25 倍，主要是它自己的 fact proposer",
+ "blocked_on_owner": null,
+ "notes": "Pre-registered rule 6 (late ratio >= 1.15): late T/N 1.253 with the food's own calls, 1.040 without. 4 Haiku proposer calls cost 117.7K effective tokens (15% of T). The free envfacts fact was injected from session 5; 15 of 26 tools were denied from session 8 (should have been 6: an NFS clock skew of about 28 minutes held the deny list as pending until it was applied with the documented `te toolprune apply`). Loop guard never acted. One stream, no repeats. Superseded by the follow-up T2 tasting recorded after this one."
+}
