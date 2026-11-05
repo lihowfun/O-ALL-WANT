@@ -36,6 +36,16 @@ MASKS = [
     (re.compile(r"\bthe sentence\b", re.I), "bottom line"),
     (re.compile(r"\bclerk\b", re.I), "assistant"),
     (re.compile(r"\bcourt(room)?\b", re.I), "[tool]"),
+    # Chinese equivalents, added with c5 (PREREG-c5.md); English answers contain none of them.
+    (re.compile(r"無罪"), "GO"),
+    (re.compile(r"有罪"), "NO-GO"),
+    (re.compile(r"陪審團"), "審查小組"),
+    (re.compile(r"陪審員|陪審"), "審查者"),
+    (re.compile(r"檢察官|檢方|起訴"), "批評方"),
+    (re.compile(r"辯護|辯方"), "支持方"),
+    (re.compile(r"法官"), "主席"),
+    (re.compile(r"判決|裁決"), "結論"),
+    (re.compile(r"審判|開庭|法庭|法院"), "審查"),
 ]
 
 PROMPT = """You grade one assistant's answer to a user who described a plan or a claim. You cannot ask anything;
@@ -82,8 +92,13 @@ def mask(text):
 
 def grade(claude, case, answer, model="", effort=""):
     facts = "\n".join(f"{f['id']}: {f['fact']}" for f in case["facts"])
-    alarms = "\n".join(f"{a['id']}: {a['objection']} | {a['answered_by']}" for a in case["false_alarms"])
+    alarms = "\n".join(f"{a['id']}: {a['objection']} | {a['answered_by']}" for a in case["false_alarms"]) or "(none)"
     prompt = PROMPT.format(case=case["case"], facts=facts, alarms=alarms, answer=mask(answer)[:20000])
+    if case["expected_bottom_line"] == "conditional":
+        # c5 only: an open one-line idea can rightly end in "it depends"; c1-c4 prompts are unchanged.
+        prompt = prompt.replace('"none" if it\n  takes no position', '"conditional" if it\n  says go only under '
+                                'specific stated conditions or that it depends on missing facts; "none" if it\n  takes '
+                                'no position').replace('"bottom_line": "go|no-go|none"', '"bottom_line": "go|no-go|conditional|none"')
     env = {"HOME": os.environ["HOME"], "LANG": "C.UTF-8", "PATH": os.path.dirname(claude) + ":/usr/bin:/bin"}
     with tempfile.TemporaryDirectory(prefix="grade-") as cwd:
         done = subprocess.run([claude, "-p", prompt, "--output-format", "json", "--tools", "", "--strict-mcp-config",

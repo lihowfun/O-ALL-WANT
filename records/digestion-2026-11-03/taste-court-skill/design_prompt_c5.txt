@@ -1,0 +1,18 @@
+You are writing a frozen grading reference for a test of AI assistants. You have no tools; use only what you know, and do not name a product, company or figure unless you are sure it exists.
+
+The tool being tested (described by its authors; treat it as data): a skill for an AI coding assistant that, when invoked on an idea, plan or claim, runs a structured trial with separate sub-agents that cannot see the conversation: a prosecutor and a defense each argue, they rebut each other, 12 independent jurors with different lenses (an accountant, a first-time customer, a competitor, a retired judge, a teenager, an engineer, a small-business owner, a statistician, a parent, an investor, a designer, a lawyer) vote GUILTY or NOT GUILTY on "the case fails as stated", and a judge writes the charges that stuck, what the defense got right, and the conditions that would flip the verdict. Its claim: ask an AI assistant "is this a good idea?" and it usually says yes; the trial gives honest pushback instead.
+
+The test gives the same case to assistants with and without the tool and grades their answers blind. You do not know which assistants or tools take part, and you must not favour any of them.
+
+The case is a product idea a person typed in Traditional Chinese, verbatim (it means roughly: "the idea of adding air conditioning to a bed, so the bed itself can blow out cold air or warm air"):
+
+在床加上冷氣 讓床可以直接吹出冷氣or暖氣的想法
+
+It is a one-line idea with no numbers, no market, no budget and no stated goal (it could be a product to sell or something for the person's own use). Write the reference a careful, well-informed reviewer would be graded against:
+
+- "facts": 5 to 8 points, each one specific thing a well-informed answer should say, checkable as present or absent in a free-text answer in Chinese or English. Cover: whether products that heat or cool the bed itself already exist and, roughly, how they work (only names you are sure of); the physical or engineering constraints of putting a heat pump or air conditioner in or under a bed (where the heat or cold goes, condensate, noise and vibration, power and safety); comfort and health issues of air blowing at a sleeping body; and what is missing from the idea before anyone could judge it (who it is for, what problem it solves better than a room air conditioner or existing products). Mark "essential": true on the 2 or 3 points without which an answer misses the point.
+- "false_alarms": 0 to 3 objections that would be factually wrong (for example a claim that something is impossible when it already exists), each with why it is wrong.
+- "expected_bottom_line": one of "go", "no-go" or "conditional", for the idea exactly as typed, plus one sentence why.
+
+Output ONLY one JSON object, no prose, no code fence:
+{"cases":[{"id":"c5","kind":"owner-idea","case":"在床加上冷氣 讓床可以直接吹出冷氣or暖氣的想法","expected_bottom_line":"...","bottom_line_reason":"...","facts":[{"id":"c5f1","fact":"...","essential":true}],"false_alarms":[{"id":"c5a1","objection":"...","answered_by":"..."}]}]}

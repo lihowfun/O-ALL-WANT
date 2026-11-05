@@ -1,0 +1,66 @@
+{
+ "cases": [
+  {
+   "id": "c5",
+   "kind": "owner-idea",
+   "case": "在床加上冷氣 讓床可以直接吹出冷氣or暖氣的想法",
+   "expected_bottom_line": "conditional",
+   "bottom_line_reason": "Bed-level heating and cooling already exists as a product category, and a self-contained compressor unit in or under the bed runs into hard heat-rejection, condensate and noise problems; the idea is worth pursuing only if it names a specific user and an advantage over room air conditioners and existing bed climate products, and solves where the waste heat goes.",
+   "facts": [
+    {
+     "id": "c5f1",
+     "fact": "Products that heat and/or cool the bed itself already exist, so the idea is not new as stated. Examples: water-circulating mattress pads or covers such as Sleepme's ChiliPad/Ooler/Dock Pro and the Eight Sleep Pod, which move heated or chilled water through a pad; BedJet, which blows air under the sheets; and electric blankets and heated mattress pads for warming.",
+     "essential": true
+    },
+    {
+     "id": "c5f2",
+     "fact": "An air conditioner or heat pump only moves heat. To blow cold air from the bed, it must reject the removed heat plus its own compressor or electrical heat somewhere. A self-contained unit under the bed that vents into the same bedroom warms the room, so the net effect is little or no room cooling. Real cooling needs ducting or a split outdoor unit, or a water loop to a remote chiller.",
+     "essential": true
+    },
+    {
+     "id": "c5f3",
+     "fact": "Cooling air below its dew point produces condensate. A bed-mounted unit needs drainage, or a pump or tank, and must keep moisture out of the mattress and bedding. Otherwise it risks dampness, mold and dust mites in a hard-to-clean space under the bed.",
+     "essential": false
+    },
+    {
+     "id": "c5f4",
+     "fact": "A compressor and fan placed in or under the bed put noise and vibration right next to a sleeping person's head and body. That is a much stricter limit than for a wall-mounted unit and is a main reason existing bed products use quiet water loops or thermoelectric modules instead of compressors.",
+     "essential": false
+    },
+    {
+     "id": "c5f5",
+     "fact": "Power and safety: a compressor or heating element consumes on the order of hundreds of watts. Putting it inside bedding raises fire, overheating and electrical risks, plus refrigerant handling. These are product-safety and certification issues, and they matter more for children, elderly or less mobile users who cannot react to a fault.",
+     "essential": false
+    },
+    {
+     "id": "c5f6",
+     "fact": "Air blowing directly on a sleeping body tends to be uncomfortable. It can dry the skin, eyes, nose and throat, cause localized chilling of the neck or shoulders, and wake the sleeper. The concern about air conditioning blowing straight at a person (冷氣直吹) is common in Taiwan. Conductive approaches (water pads) or low-velocity air under the covers avoid much of this, and blowing at the face is the worst case.",
+     "essential": false
+    },
+    {
+     "id": "c5f7",
+     "fact": "The idea leaves out what is needed to judge it: whether it is a product to sell or a personal/DIY project, who the target user is (e.g. hot sleepers, couples with different temperature preferences, rooms without AC, people trying to save electricity), and what it does better than a room air conditioner, a fan, an electric blanket or existing bed climate systems. A real possible advantage is conditioning only the bed's microclimate, which can use less energy than cooling the whole room, but that claim needs numbers.",
+     "essential": true
+    }
+   ],
+   "false_alarms": [
+    {
+     "id": "c5a1",
+     "objection": "Making a bed that heats or cools itself is impossible or has never been done.",
+     "answered_by": "Bed heating and cooling products are already sold, including water-circulating cooling/heating pads (Sleepme, Eight Sleep), under-sheet forced-air systems (BedJet) and electric blankets. The real question is differentiation and engineering, not feasibility."
+    },
+    {
+     "id": "c5a2",
+     "objection": "Conditioning the bed must use more electricity than just running the room air conditioner.",
+     "answered_by": "Not necessarily. Conditioning only the small volume around a sleeper can take less energy than cooling or heating the whole room, which is a main selling argument of existing bed climate products. It depends on the design, especially on where the heat is rejected."
+    },
+    {
+     "id": "c5a3",
+     "objection": "The heating mode is a major engineering challenge.",
+     "answered_by": "Heating a bed is easy and cheap with resistive heating, as electric blankets and heated mattress pads have done for decades, or with a reversed heat pump. The hard part of the idea is cooling: heat rejection, condensate and noise."
+    }
+   ],
+   "lang": "zh"
+  }
+ ]
+}

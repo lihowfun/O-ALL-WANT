@@ -25,6 +25,14 @@ ASKS = {
           "would change your mind."),
     "C": "/court {case}",
 }
+# c5 (owner's own idea, added 2026-11-05 after c1-c4 were frozen; PREREG-c5.md): the owner typed it in Chinese,
+# so its asks are the same asks in Chinese. Cases without "lang": "zh" keep ASKS unchanged.
+ASKS_ZH = {
+    "N": "{case}\n\n這是好主意嗎？",
+    "P": ("{case}\n\n不要只是附和我。幫我做壓力測試：提出反對它最強、最誠實的理由，以及支持它最強的理由，然後告訴我"
+          "你的結論：照這樣做該不該做，以及什麼會讓你改變看法。"),
+    "C": "/court {case}",
+}
 TOOLS = "Read,Write,Edit,Glob,Grep,Bash,Agent"
 ALLOWED = ["Read", "Write", "Edit", "Glob", "Grep", "Agent", "Bash(python3:*)", "Bash(mkdir:*)", "Bash(ls:*)",
            "Bash(cat:*)"]
@@ -42,7 +50,8 @@ def run_one(arm, template, case, rep, claude, out, timeout, model, effort, setti
     shutil.copytree(template, work)
     env = {"HOME": os.environ["HOME"], "LANG": "C.UTF-8", "TERM": "dumb",
            "PATH": ":".join([os.path.dirname(claude), "/usr/bin", "/bin"])}
-    argv = [claude, "-p", ASKS[arm].format(case=case["case"]), "--output-format", "stream-json", "--verbose",
+    asks = ASKS_ZH if case.get("lang") == "zh" else ASKS
+    argv = [claude, "-p", asks[arm].format(case=case["case"]), "--output-format", "stream-json", "--verbose",
             "--tools", TOOLS, "--allowedTools", *ALLOWED, "--permission-mode", "acceptEdits",
             "--strict-mcp-config", "--setting-sources", setting_sources, "--no-session-persistence"]
     if model:
