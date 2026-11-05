@@ -40,6 +40,7 @@
 
 - **D21 第一輪吸收 8 個 A 級單位**（在 `claude/oaw-2`，還沒 merge）：OAW-01、04（TokenEconomizer）；OAW-03、12、15（claude-mem）；OAW-02 部分、21、22（graphify）。全部是靜態證據，標「齊平，未宣稱改善」。版本頁：`records/digestion-2026-11-03/RELEASE_v1.md`。
 - **Gate**：`51b00db` 在 Windows 11、Python 3.13 上 9/9 通過，448 個測試。Linux 用 `python3 scripts/harness_check.py`；測試數下限是 `MINIMUM_TESTS = 426`（POSIX 計數），Linux 的實際數字以第一次跑的結果為準，記進 records。
+  - **Linux 實測（2026-11-05）**：`51b00db` 在 Ubuntu 22.04、Python 3.10.12 上 9/9 通過，445 個測試、0 skipped（≥ 426 下限），約 97 秒。
 - **零上下文金魚審查**：8 個單位的 diff（34 個發現）、memory-check（13 個）、Stage 0-α 題目（10 個），處理紀錄在 records。
 - **Stage 0-α**（工具層）：`scripts/code_index.py` 概念題前 5 名命中 1.000，原生搜尋 0.750，判定通過（`codemap-stage0/RESULT.md`）。
 - **論文 arXiv 2606.03979** → `wiki_sync.py memory-check` 原型（唯讀、離線）。
