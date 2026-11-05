@@ -421,8 +421,9 @@ export const register: Register = (on, opts) => {
     await load($, 'manual')
     const model = await read($, modelAtom)
     const problem = await read($, problemAtom)
+    // A tool's result reaches the model as text.
     return {
-      result: {
+      result: JSON.stringify({
         project: model?.project ?? problem?.project ?? null,
         oawCheckout: model?.oaw ?? problem?.oaw ?? null,
         problem: problem?.text ?? null,
@@ -432,7 +433,7 @@ export const register: Register = (on, opts) => {
           id: f.id, stop: f.stageLabel, state: f.stateZh, verdict: verdictText(f), waiting: f.waitingZh,
           components: f.counts, actions: f.actions.map(a => a.label),
         })),
-      },
+      }, null, 1),
     }
   })
 

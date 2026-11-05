@@ -253,10 +253,12 @@ test('the status tool tells the model what the pane found', async ($, on) => {
   world(on)
   await start($)
   const answer = await $.tool.call({ tool: 'mcp__oaw-digest-monitor__status' })
-  const text = JSON.stringify(answer)
-  expect(text).toContain('"project":"/work/demo"')
-  expect(text).toContain('"oawCheckout":"/work/oaw"')
-  expect(text).toContain('"id":"graphify"')
+  const result = (answer as { result?: unknown }).result
+  expect(typeof result).toBe('string')
+  const status = JSON.parse(String(result)) as { project: string; oawCheckout: string; foods: { id: string }[] }
+  expect(status.project).toBe('/work/demo')
+  expect(status.oawCheckout).toBe('/work/oaw')
+  expect(status.foods.map(f => f.id)).toContain('graphify')
 })
 
 test('a project with no view yet is explained', async ($, on) => {
