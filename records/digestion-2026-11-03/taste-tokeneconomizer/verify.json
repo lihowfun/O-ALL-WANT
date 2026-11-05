@@ -1,0 +1,133 @@
+{
+ "base": "49943b5a94413a530761350f04e896f76e8d620e",
+ "base_suite_exit": 0,
+ "base_suite_tail": "494 passed in 1.85s",
+ "tasks": [
+  {
+   "id": "t01",
+   "fails_at_base": true,
+   "patch_applies": true,
+   "passes_with_reference": true,
+   "suite_ok_with_reference": true,
+   "suite_tail": "498 passed in 1.69s",
+   "valid": true
+  },
+  {
+   "id": "t02",
+   "fails_at_base": true,
+   "patch_applies": true,
+   "passes_with_reference": true,
+   "suite_ok_with_reference": true,
+   "suite_tail": "496 passed in 1.74s",
+   "valid": true
+  },
+  {
+   "id": "t03",
+   "fails_at_base": true,
+   "patch_applies": true,
+   "passes_with_reference": true,
+   "suite_ok_with_reference": true,
+   "suite_tail": "497 passed in 1.71s",
+   "valid": true
+  },
+  {
+   "id": "t04",
+   "fails_at_base": true,
+   "patch_applies": true,
+   "passes_with_reference": true,
+   "suite_ok_with_reference": true,
+   "suite_tail": "498 passed in 1.65s",
+   "valid": true
+  },
+  {
+   "id": "t05",
+   "fails_at_base": true,
+   "patch_applies": true,
+   "passes_with_reference": true,
+   "suite_ok_with_reference": true,
+   "suite_tail": "497 passed in 1.46s",
+   "valid": true
+  },
+  {
+   "id": "t06",
+   "fails_at_base": true,
+   "patch_applies": false,
+   "passes_with_reference": false,
+   "suite_ok_with_reference": false,
+   "suite_tail": "",
+   "valid": false
+  },
+  {
+   "id": "t07",
+   "fails_at_base": true,
+   "patch_applies": true,
+   "passes_with_reference": true,
+   "suite_ok_with_reference": true,
+   "suite_tail": "496 passed in 1.53s",
+   "valid": true
+  },
+  {
+   "id": "t08",
+   "fails_at_base": true,
+   "patch_applies": false,
+   "passes_with_reference": false,
+   "suite_ok_with_reference": false,
+   "suite_tail": "",
+   "valid": false
+  },
+  {
+   "id": "t09",
+   "fails_at_base": true,
+   "patch_applies": true,
+   "passes_with_reference": true,
+   "suite_ok_with_reference": true,
+   "suite_tail": "498 passed in 1.50s",
+   "valid": true
+  },
+  {
+   "id": "t10",
+   "fails_at_base": true,
+   "patch_applies": true,
+   "passes_with_reference": true,
+   "suite_ok_with_reference": true,
+   "suite_tail": "505 passed in 1.51s",
+   "valid": true
+  },
+  {
+   "id": "t11",
+   "fails_at_base": true,
+   "patch_applies": true,
+   "passes_with_reference": true,
+   "suite_ok_with_reference": true,
+   "suite_tail": "497 passed in 1.58s",
+   "valid": true
+  },
+  {
+   "id": "t12",
+   "fails_at_base": true,
+   "patch_applies": true,
+   "passes_with_reference": true,
+   "suite_ok_with_reference": true,
+   "suite_tail": "497 passed in 1.53s",
+   "valid": true
+  },
+  {
+   "id": "t13",
+   "fails_at_base": true,
+   "patch_applies": true,
+   "passes_with_reference": true,
+   "suite_ok_with_reference": true,
+   "suite_tail": "498 passed in 1.67s",
+   "valid": true
+  },
+  {
+   "id": "t14",
+   "fails_at_base": true,
+   "patch_applies": true,
+   "passes_with_reference": true,
+   "suite_ok_with_reference": true,
+   "suite_tail": "496 passed in 1.55s",
+   "valid": true
+  }
+ ]
+}
