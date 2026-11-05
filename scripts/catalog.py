@@ -57,9 +57,10 @@ SCOUT_QUERIES = ("claude code skills", "topic:claude-code-skills", "topic:agent-
                  "claude-code plugin", "coding agent harness")
 GITHUB_API = "https://api.github.com/search/repositories"
 CODELOAD = "https://codeload.github.com"
-ARXIV_OAI = "https://export.arxiv.org/oai2"
+# arXiv's OAI-PMH service moved to its own host; the old export.arxiv.org/oai2 answers 301 there (seen 2026-11-05).
+ARXIV_OAI = "https://oaipmh.arxiv.org/oai"
 ARXIV_PDF = "https://arxiv.org/pdf/"
-ARXIV_HOSTS = ("arxiv.org", "export.arxiv.org")
+ARXIV_HOSTS = ("arxiv.org", "export.arxiv.org", "oaipmh.arxiv.org")
 
 
 class CatalogError(Exception):

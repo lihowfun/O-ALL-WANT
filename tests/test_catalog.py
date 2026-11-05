@@ -938,7 +938,7 @@ class CatalogCliTests(unittest.TestCase):
         self.assertEqual(fed["tasted"], [{"food": fid, "verdict": "untested", "files": 2, "integrity": "sha256-recorded", "commit": None,
                                           "components": {"absorb": 0, "excrete": 0, "hold": 0}}])
         # No version named: the latest one (v2) is pinned.
-        self.assertEqual(calls, ["https://export.arxiv.org/oai2?verb=GetRecord&identifier=oai%3AarXiv.org%3A2606.03979&metadataPrefix=arXivRaw",
+        self.assertEqual(calls, ["https://oaipmh.arxiv.org/oai?verb=GetRecord&identifier=oai%3AarXiv.org%3A2606.03979&metadataPrefix=arXivRaw",
                                  "https://arxiv.org/pdf/2606.03979v2"])
         self.assertEqual(self.project_snapshot(exclude_layer=False), before)
         pins = list((self.lab / "foods" / fid).iterdir())
@@ -988,6 +988,15 @@ class CatalogCliTests(unittest.TestCase):
         with self.assertRaisesRegex(catalog.CatalogError, "a redirect left https"):
             catalog.HttpsOnlyRedirects().redirect_request(request, None, 302, "Found", {}, "http://arxiv.org/pdf/2606.03979v2")
         self.assertIsNotNone(catalog.HttpsOnlyRedirects().redirect_request(request, None, 302, "Found", {}, "https://export.arxiv.org/x"))
+        # arXiv moved OAI-PMH to oaipmh.arxiv.org: the metadata URL is fetched there directly, and the old
+        # endpoint's 301 to it is followed; a look-alike host is still refused.
+        catalog.check_https(catalog.ARXIV_OAI)
+        self.assertEqual(urllib.parse.urlsplit(catalog.ARXIV_OAI).hostname, "oaipmh.arxiv.org")
+        moved = "https://oaipmh.arxiv.org/oai?verb=GetRecord&identifier=oai%3AarXiv.org%3A2606.03979&metadataPrefix=arXivRaw"
+        self.assertIsNotNone(catalog.HttpsOnlyRedirects().redirect_request(request, None, 301, "Moved", {}, moved))
+        for lookalike in ("https://oaipmh.arxiv.org.evil.example/oai", "https://evil-oaipmh.arxiv.org.example/oai"):
+            with self.assertRaisesRegex(catalog.CatalogError, "a redirect left https", msg=lookalike):
+                catalog.HttpsOnlyRedirects().redirect_request(request, None, 301, "Moved", {}, lookalike)
         with patch.object(catalog.urllib.request, "build_opener", return_value=FakeOpener(lambda url: b"%PDF-" + b"x" * 5)):
             self.assertEqual(len(catalog.https_get("https://arxiv.org/pdf/a", limit=10)), 10)
             with self.assertRaisesRegex(catalog.CatalogError, "exceeds the"):
