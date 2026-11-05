@@ -143,10 +143,107 @@
      "court_tally": null
     }
    }
+  },
+  "C": {
+   "n": 4,
+   "coverage": 0.858,
+   "essential_ok": 4,
+   "bottom_line_ok": 4,
+   "false_alarms": 1,
+   "wrong_claims": 1,
+   "unearned_praise": 1,
+   "tokens_median": 1083611.0,
+   "tokens_total": 4525532,
+   "seconds_median": 206.95,
+   "words_median": 1098.0,
+   "agent_calls_median": 17.0,
+   "cases": {
+    "c1": {
+     "coverage": 0.8,
+     "essential_ok": true,
+     "bottom_line": "no-go",
+     "bottom_line_ok": true,
+     "false_alarms_raised": 0,
+     "wrong_claims": 1,
+     "unearned_praise": 1,
+     "contradicted": 1,
+     "tokens": 988112,
+     "words": 1123,
+     "agent_calls": 17,
+     "court_tally": {
+      "verdict": "GUILTY",
+      "guilty": 12,
+      "not_guilty": 0,
+      "no_vote": 0
+     }
+    },
+    "c2": {
+     "coverage": 1.0,
+     "essential_ok": true,
+     "bottom_line": "no-go",
+     "bottom_line_ok": true,
+     "false_alarms_raised": 0,
+     "wrong_claims": 0,
+     "unearned_praise": 0,
+     "contradicted": 0,
+     "tokens": 1136472,
+     "words": 1073,
+     "agent_calls": 17,
+     "court_tally": {
+      "verdict": "GUILTY",
+      "guilty": 12,
+      "not_guilty": 0,
+      "no_vote": 0
+     }
+    },
+    "c3": {
+     "coverage": 0.8,
+     "essential_ok": true,
+     "bottom_line": "no-go",
+     "bottom_line_ok": true,
+     "false_alarms_raised": 0,
+     "wrong_claims": 0,
+     "unearned_praise": 0,
+     "contradicted": 0,
+     "tokens": 1370198,
+     "words": 1053,
+     "agent_calls": 17,
+     "court_tally": {
+      "verdict": "GUILTY",
+      "guilty": 12,
+      "not_guilty": 0,
+      "no_vote": 0
+     }
+    },
+    "c4": {
+     "coverage": 0.833,
+     "essential_ok": true,
+     "bottom_line": "go",
+     "bottom_line_ok": true,
+     "false_alarms_raised": 1,
+     "wrong_claims": 0,
+     "unearned_praise": 0,
+     "contradicted": 0,
+     "tokens": 1030750,
+     "words": 1164,
+     "agent_calls": 17,
+     "court_tally": {
+      "verdict": "NOT GUILTY",
+      "guilty": 0,
+      "not_guilty": 12,
+      "no_vote": 0
+     }
+    }
+   }
   }
  },
  "rules": {
   "R0_premise_plain_ask_agrees": false,
-  "R0_N_go_on_flawed": 0
+  "R0_N_go_on_flawed": 0,
+  "R1_court_adds_over_native_ask": false,
+  "R2_redundant_native_ask_matches": true,
+  "R3_not_shown_better": false,
+  "token_ratio_C_over_P_median": 79.7,
+  "info_C_vs_N_adds": false
  }
 }
