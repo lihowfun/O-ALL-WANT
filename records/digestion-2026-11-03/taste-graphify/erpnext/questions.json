@@ -1,0 +1,206 @@
+{
+ "questions": [
+  {
+   "id": "q1",
+   "type": "impact",
+   "question": "Suppose update_bin_qty in erpnext/stock/stock_balance.py were changed to raise an error unless its qty_dict argument contains all four keys reserved_qty, indented_qty, ordered_qty and planned_qty. Leaving out patches and tests, which callers would start failing, and from which user-facing actions (submitting or cancelling documents, editing items on submitted orders, and so on)? Which caller would keep working, and why?",
+   "facts": [
+    {
+     "id": "q1f1",
+     "fact": "Purchase Order's ordered-qty update breaks. It passes only {'ordered_qty': get_ordered_qty(...)} for each item/warehouse, and it runs when a Purchase Order is submitted or cancelled (and from PO status changes and Purchase Receipt/Invoice updates through the buying controller).",
+     "where": "erpnext/buying/doctype/purchase_order/purchase_order.py::PurchaseOrder.update_ordered_qty",
+     "essential": true
+    },
+    {
+     "id": "q1f2",
+     "fact": "Subcontracting Order's ordered-qty update breaks. It passes only {'ordered_qty': ...}.",
+     "where": "erpnext/subcontracting/doctype/subcontracting_order/subcontracting_order.py::SubcontractingOrder.update_ordered_qty_for_subcontracting",
+     "essential": true
+    },
+    {
+     "id": "q1f3",
+     "fact": "Sales Order reserved-qty update breaks. It passes only {'reserved_qty': get_reserved_qty(...)}, including for packed items of product bundles, and it runs on Sales Order submit/cancel and from the selling controller (Delivery Note / Sales Invoice).",
+     "where": "erpnext/selling/doctype/sales_order/services/reservation.py::SalesOrderStockReservation.update_reserved_qty",
+     "essential": true
+    },
+    {
+     "id": "q1f4",
+     "fact": "Material Request's requested-qty update breaks. It passes only {'indented_qty': get_indented_qty(...)}.",
+     "where": "erpnext/stock/doctype/material_request/material_request.py::MaterialRequest.update_requested_qty",
+     "essential": true
+    },
+    {
+     "id": "q1f5",
+     "fact": "Work Order's planned-qty update breaks. It passes only {'planned_qty': get_planned_qty(...)} for the production item in fg_warehouse, and it is skipped when track_semi_finished_goods is set.",
+     "where": "erpnext/manufacturing/doctype/work_order/services/status.py::StatusService.update_planned_qty",
+     "essential": true
+    },
+    {
+     "id": "q1f6",
+     "fact": "Deleting rows through 'Update Items' on a submitted order breaks. update_bin_on_delete builds a partial dict: reserved_qty for a Sales Order, otherwise ordered_qty plus indented_qty only when the row has a material_request_item.",
+     "where": "erpnext/accounts/services/child_item_update.py::update_bin_on_delete",
+     "essential": true
+    },
+    {
+     "id": "q1f7",
+     "fact": "repost_stock keeps working because it always passes all four keys (reserved, indented, ordered, planned), adding actual_qty when only_bin is set. Its callers, stock_balance.repost and Item merge's recalculate_bin_qty, are therefore unaffected.",
+     "where": "erpnext/stock/stock_balance.py::repost_stock",
+     "essential": true
+    },
+    {
+     "id": "q1f8",
+     "fact": "update_bin_qty itself gets the Bin with get_bin and writes only the changed fields through bin.update_bin_columns, which also recomputes projected_qty in the same UPDATE.",
+     "where": "erpnext/stock/doctype/bin/bin.py::update_bin_columns",
+     "essential": false
+    }
+   ]
+  },
+  {
+   "id": "q2",
+   "type": "impact",
+   "question": "In erpnext/stock/stock_ledger.py, get_valuation_rate has a parameter raise_error_if_no_rate that defaults to True. Suppose that default changed to False. In production code (not tests), which direct call sites would change behaviour, so that they get a None/falsy rate instead of a 'Valuation Rate Missing' error? Which direct call sites would stay the same because they pass the argument explicitly?",
+   "facts": [
+    {
+     "id": "q2f1",
+     "fact": "The stock ledger reposting engine's fallback-rate helper is affected. It calls get_valuation_rate with allow_zero_rate as a positional argument but does not pass raise_error_if_no_rate. It is used while processing SLEs (for example for negative stock and outgoing rates) when no exact incoming rate is available.",
+     "where": "erpnext/stock/stock_ledger.py::update_entries_after.get_fallback_rate",
+     "essential": true
+    },
+    {
+     "id": "q2f2",
+     "fact": "In Subcontracting Receipt, the valuation rate for 'Valuation Rate' secondary (scrap) rows is affected. It is recomputed in calculate_items_qty_and_amount, does not pass raise_error_if_no_rate, and falls back to item.rate when no rate is found.",
+     "where": "erpnext/subcontracting/doctype/subcontracting_receipt/subcontracting_receipt.py::SubcontractingReceipt.get_secondary_item_valuation_rate",
+     "essential": true
+    },
+    {
+     "id": "q2f3",
+     "fact": "Subcontracting Receipt's secondary-item rate for BOM secondary items with valuation_type 'Valuation Rate' is affected. It is reached from the whitelisted get_secondary_items, then add_secondary_items_of_fg_row, then append_secondary_item. It does not pass the argument and falls back to base_cost/stock_qty.",
+     "where": "erpnext/subcontracting/doctype/subcontracting_receipt/subcontracting_receipt.py::SubcontractingReceipt.get_secondary_item_rate",
+     "essential": true
+    },
+    {
+     "id": "q2f4",
+     "fact": "_get_incoming_rate is unaffected. It forwards its own raise_error_if_no_rate explicitly, so the whitelisted get_incoming_rate and the many controllers that use _get_incoming_rate do not change.",
+     "where": "erpnext/stock/utils.py::_get_incoming_rate",
+     "essential": true
+    },
+    {
+     "id": "q2f5",
+     "fact": "Stock Entry's row valuation rate is unaffected because it passes raise_error_if_no_rate explicitly. It is used when a row's basic_rate is still unset in the rate calculation.",
+     "where": "erpnext/stock/doctype/stock_entry/stock_entry.py::StockEntry.get_row_valuation_rate",
+     "essential": true
+    },
+    {
+     "id": "q2f6",
+     "fact": "The error is thrown only when no rate is found from batch-wise SLEs, the bundle, the last SLE or the fallbacks (Item valuation_rate, standard_rate, buying Item Price), and also allow_zero_rate is false, raise_error_if_no_rate is true and perpetual inventory is enabled for the company.",
+     "where": "erpnext/stock/stock_ledger.py::get_valuation_rate",
+     "essential": false
+    }
+   ]
+  },
+  {
+   "id": "q3",
+   "type": "flow",
+   "question": "ERPNext has a scheduled job that books deferred revenue and deferred expense each month. Trace it from the scheduler to the accounting records it writes, in order: which documents it creates, how it picks invoices and accounts, and what it writes (GL entries or Journal Entries) depending on Accounts Settings.",
+   "facts": [
+    {
+     "id": "q3f1",
+     "fact": "hooks.py registers erpnext.accounts.deferred_revenue.process_deferred_accounting under scheduler_events 'monthly_long'. The job returns early unless the Accounts Settings field automatically_process_deferred_accounting_entry is set.",
+     "where": "erpnext/accounts/deferred_revenue.py::process_deferred_accounting",
+     "essential": true
+    },
+    {
+     "id": "q3f2",
+     "fact": "For every Company and for each type 'Income' and 'Expense', it creates a Process Deferred Accounting document with frappe.get_doc (start_date = today minus 1 month, end_date = yesterday), then inserts and submits it.",
+     "where": "erpnext/accounts/deferred_revenue.py::process_deferred_accounting",
+     "essential": true
+    },
+    {
+     "id": "q3f3",
+     "fact": "On submit, Process Deferred Accounting calls build_conditions and then convert_deferred_revenue_to_income (Income) or convert_deferred_expense_to_expense (Expense). These select submitted Sales/Purchase Invoices whose items have enable_deferred_revenue/expense and a service period overlapping the dates, then call book_deferred_income_or_expense for each invoice.",
+     "where": "erpnext/accounts/doctype/process_deferred_accounting/process_deferred_accounting.py::ProcessDeferredAccounting.on_submit",
+     "essential": true
+    },
+    {
+     "id": "q3f4",
+     "fact": "For each deferred item, book_deferred_income_or_expense gets booking dates and computes the amount with calculate_monthly_amount (when book_deferred_entries_based_on = 'Months') or calculate_amount. For a Sales Invoice it credits income_account and debits deferred_revenue_account. For a Purchase Invoice it credits deferred_expense_account and debits expense_account. If the books are frozen, the posting date moves after accounts_frozen_till_date.",
+     "where": "erpnext/accounts/deferred_revenue.py::book_deferred_income_or_expense",
+     "essential": true
+    },
+    {
+     "id": "q3f5",
+     "fact": "If Accounts Settings book_deferred_entries_via_journal_entry is set, book_revenue_via_journal_entry creates a Journal Entry (voucher_type 'Deferred Revenue' or 'Deferred Expense', linked through process_deferred_accounting, with reference to the invoice row), saves it, and submits it only when submit_journal_entries is set.",
+     "where": "erpnext/accounts/deferred_revenue.py::book_revenue_via_journal_entry",
+     "essential": true
+    },
+    {
+     "id": "q3f6",
+     "fact": "Otherwise, deferred_revenue.make_gl_entries builds a credit and a debit GL dict through the invoice's get_gl_dict (AccountsController.get_gl_dict delegating to base_gl_composer.get_gl_dict), with against_voucher_type 'Process Deferred Accounting' and against_voucher set to the process name. It then calls erpnext.accounts.general_ledger.make_gl_entries with merge_entries=True.",
+     "where": "erpnext/accounts/deferred_revenue.py::make_gl_entries",
+     "essential": true
+    },
+    {
+     "id": "q3f7",
+     "fact": "On a booking failure (outside tests) it rolls back, logs the error, and sets frappe.flags.deferred_accounting_error. The convert_* functions then email system managers through send_mail.",
+     "where": "erpnext/accounts/deferred_revenue.py::send_mail",
+     "essential": false
+    },
+    {
+     "id": "q3f8",
+     "fact": "Cancelling the Process Deferred Accounting fetches GL Entries whose against_voucher is the process and passes them to general_ledger.make_gl_entries with cancel=1.",
+     "where": "erpnext/accounts/doctype/process_deferred_accounting/process_deferred_accounting.py::ProcessDeferredAccounting.on_cancel",
+     "essential": false
+    }
+   ]
+  },
+  {
+   "id": "q4",
+   "type": "mechanism",
+   "question": "When a user picks an item on a Sales Invoice row, the form calls the whitelisted method erpnext.stock.get_item_details.get_item_details. How does ERPNext choose the cost_center returned for that row? Cover the order of precedence, where the Item, Item Group and Brand defaults come from, and what happens when some of those defaults are missing or the cost center belongs to another company.",
+   "facts": [
+    {
+     "id": "q4f1",
+     "fact": "get_item_details calls _get_item_details, which calls get_basic_details. That function loads item_defaults, item_group_defaults and brand_defaults for ctx.company and calls get_default_cost_center(ctx, item_defaults, item_group_defaults, brand_defaults).",
+     "where": "erpnext/stock/get_item_details.py::get_basic_details",
+     "essential": true
+    },
+    {
+     "id": "q4f2",
+     "fact": "The first source is the Project's cost_center when ctx.project is set.",
+     "where": "erpnext/stock/get_item_details.py::get_default_cost_center",
+     "essential": true
+    },
+    {
+     "id": "q4f3",
+     "fact": "If all three defaults dicts are non-empty: when ctx.customer is set it takes selling_cost_center from Item, then Item Group, then Brand defaults; otherwise it takes buying_cost_center in the same order.",
+     "where": "erpnext/stock/get_item_details.py::get_default_cost_center",
+     "essential": true
+    },
+    {
+     "id": "q4f4",
+     "fact": "get_item_defaults returns the Item as a dict merged with its Item Default row for the company, so it is never empty. get_item_group_defaults returns only the matching row of the item's own Item Group (no walk up parent groups), or an empty dict. get_brand_defaults returns the matching Brand Default row, or an empty dict when there is no brand or row.",
+     "where": "erpnext/setup/doctype/item_group/item_group.py::get_item_group_defaults",
+     "essential": true
+    },
+    {
+     "id": "q4f5",
+     "fact": "When the Item Group or Brand defaults are empty, the first branch is skipped. The code then loops over get_item_defaults, get_item_group_defaults and get_brand_defaults through frappe.get_attr string paths, and returns right away from the first source that has any selling or buying cost center. It prefers selling for a customer and buying for a supplier, but otherwise returns whichever exists, so a sales row can get a buying cost center. This early return skips the company check.",
+     "where": "erpnext/stock/get_item_details.py::get_default_cost_center",
+     "essential": true
+    },
+    {
+     "id": "q4f6",
+     "fact": "If still unset, it uses ctx.cost_center. If the chosen cost center belongs to a different company it returns None. Only when no cost center was found at all does it fall back to the Company's default cost_center.",
+     "where": "erpnext/stock/get_item_details.py::get_default_cost_center",
+     "essential": true
+    },
+    {
+     "id": "q4f7",
+     "fact": "The client side starts in the transaction form controller, which calls the method 'erpnext.stock.get_item_details.get_item_details' via frappe.call.",
+     "where": "erpnext/public/js/controllers/transaction.js::item_code",
+     "essential": false
+    }
+   ]
+  }
+ ]
+}
