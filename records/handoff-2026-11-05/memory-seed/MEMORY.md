@@ -1,0 +1,12 @@
+- [Chinese, concise](feedback-chinese-concise.md) — reply in concise Traditional Chinese incl. summaries; code/commits English
+- [GitHub co-development handoff](feedback-github-codev-handoff.md) — owner does auth steps and pushes; I fetch and continue; GitHub is the record
+- [GitHub tidy branches](feedback-github-tidy-branches.md) — only main, Codex PR branch, claude/oaw-2, records; no per-round branches
+- [Budget and consent](feedback-budget-and-consent.md) — D13 caps, subscription only, ask beyond; credentials are the owner's
+- [EGM full combo](feedback-egm-full-combo.md) — Elephant drafts from recorded decisions, goldfish blind-review, Elephant resolves, owner decides
+- [OAW intake flow v1 (D21)](oaw-intake-flow-v1.md) — owner only at entry and release; ≤3 units/food, code+tests, one goldfish round, A/B/C tiers
+- [Taste before judging (D25)](feedback-taste-before-judging.md) — run a food in a tasting area before any verdict
+- [Fair tasting (D26)](feedback-fair-tasting-d26.md) — stars are a prior; official install; frozen questions; blind grading; default plug in
+- [Digestion is not a game](feedback-digestion-not-a-game.md) — official skill-intake process + operable animated view; never game/play
+- [OAW catalog intake rules](oaw-catalog-intake-rules.md) — scout + relevance filter + owner confirms; per-component verdicts; D13 policy
+- [OAW V2 definition](oaw-v2-definition.md) — V2 = v1 upgrade + bundled EGM; never write V2+EGM
+- [OAW handoff pointers](reference-oaw-handoff.md) — where state, decisions and the tasting kit live on GitHub

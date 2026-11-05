@@ -1,6 +1,6 @@
 # Claude V2：skill 吸收流程、論文原型、D21 第一輪吸收與程式碼索引
 
-`claude/oaw-2` → `codex/oaw-2-native-upgrade`（PR #4 merge 之前用這個 base；PR #4 merge 之後改成 `main`）。依 D22，這是 Claude 這邊唯一的 V2 分支。決定紀錄 D1–D24 在 `records` 分支的 `records/digestion-2026-11-03/ingest/DECISIONS.md`。
+`claude/oaw-2` → `codex/oaw-2-native-upgrade`（PR #4 merge 之前用這個 base；PR #4 merge 之後改成 `main`）。依 D22，這是 Claude 這邊唯一的 V2 分支。決定紀錄 D1–D27 在 `records` 分支的 `records/digestion-2026-11-03/ingest/DECISIONS.md`。
 
 ## 內容
 1. **新增 skill 的正式流程和消化系統**（D4–D19、D21、D23）

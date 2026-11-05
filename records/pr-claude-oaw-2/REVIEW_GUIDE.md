@@ -4,7 +4,7 @@ PR 很大（約 57 個 commit、56 個檔案，其中一半是新的 catalog 原
 
 ## 先讀
 1. `docs/SKILL_INTAKE.md`：正式流程（D4–D24）、站別表、原型 v0 還沒做的事。
-2. records 分支 `records/digestion-2026-11-03/ingest/DECISIONS.md`：D1–D24，尤其 D7、D13、D14、D17、D21–D24。
+2. records 分支 `records/digestion-2026-11-03/ingest/DECISIONS.md`：D1–D27，尤其 D7、D13、D14、D17、D21–D27。
 3. records 分支 `records/digestion-2026-11-03/RELEASE_v1.md` 和 `REVIEW_2026-11-04.md`：第一輪做了什麼，以及 owner 自己做的流程審視。
 
 ## 風險最高、最值得看的地方
