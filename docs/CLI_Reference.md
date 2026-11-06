@@ -144,10 +144,13 @@ A tasting file (schema `oaw-tasting/1`; unknown fields are refused):
 | `protocol` | `{models: [...], corpus, questions: {count, sha256 (64 hex, the frozen questions), file?}, repeats, grading?, host?}` |
 | `arms` | `[{id, label?, food_arm: true/false, runs, graded_runs, results?: {coverage (0-1), essential_correct, essential_total, wrong_claims, token_median, tokens_total}}]`; exactly one arm is the food arm (for a paper: the arm that carries its rebuilt idea) |
 | `food_arm_ran` | `{graded_runs, evidence?}`; must equal the food arm's `graded_runs` |
-| `verdict` | `absorb`, `plug-in`, `decline`, `not-shown-better` or `no-verdict` |
+| `verdict` | `absorb`, `plug-in`, `optional`, `decline` or `no-verdict`; `not-shown-better` is kept for records made before D29 |
 | `verdict_zh` | the verdict in a sentence |
-| `blocked_on_owner` | optional: what only the owner can do (allowed with `absorb`, `plug-in`, `no-verdict`) |
+| `blocked_on_owner` | optional: what only the owner can do (allowed with `absorb`, `plug-in`, `optional`, `no-verdict`) |
+| `judgment` | D29: `{quality: better/same/worse, cost_ratio (food tokens over native), cheaper (the PREREG's cheaper rule), grading: double-graded/mechanical/single-graded, conditions?, basis?}`; required for `optional`, and when given the verdict must match it |
 | `notes` | optional |
+
+D29 rule (2026-11-06), enforced when recording: the judgment fixes the outcome. Quality better and cost at most 1.5x native, or quality same and cheaper by the PREREG rule -> default (`absorb` or `plug-in`); quality same and cost at most 1.5x, or better but over 1.5x -> `optional` (available, not default, called explicitly); worse, or same and over 1.5x -> `decline`. With several model conditions the lowest decides. An AI-graded difference counts only if it held in two gradings, so a `single-graded` judgment can only say `same`. `optional` rests at 分流 with nothing pending, or waits on the owner at 核准 when `blocked_on_owner` names a tier-C decision.
 
 D28 rule, enforced when recording and when building the view: any verdict other than `no-verdict` is refused unless the food arm has at least one graded run ("no verdict without the food arm installed and run"); a `no-verdict` must say what blocks it (`blocked_on_owner` or `notes`). Several tastings of one food accumulate: all are listed on the card (`tastings`), and the latest (by `date`, then the time it was recorded) decides (`tasting`). Example (the ERPNext graphify tasting):
 

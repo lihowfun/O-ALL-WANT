@@ -1840,8 +1840,15 @@ def imported_record(food: str, docs: dict, source_files: list, recorded_at: str)
 TASTING_SCHEMA = "oaw-tasting/1"
 ABSORPTION_SCHEMA = "oaw-absorption/1"
 # verdict -> Traditional Chinese label. The latest tasting decides; every tasting stays on the card.
-TASTING_VERDICTS = {"absorb": "吸收", "plug-in": "插上（接上官方版，不吸收）", "decline": "不收",
-                    "not-shown-better": "沒證明比原生好（不收）", "no-verdict": "沒有判定"}
+TASTING_VERDICTS = {"absorb": "吸收", "plug-in": "插上（接上官方版，不吸收）", "optional": "可選用（不設預設，要用時才叫）",
+                    "decline": "不收", "not-shown-better": "沒證明比原生好（不收）", "no-verdict": "沒有判定"}
+# D29 (2026-11-06): a tasting's `judgment` (quality against native, cost ratio, cheaper by its PREREG rule, how
+# the quality was graded) fixes its outcome; the recorded verdict must match. Outcome -> allowed verdicts.
+D29_COST_CAP = 1.5
+D29_QUALITY = ("better", "same", "worse")
+D29_GRADING = ("double-graded", "mechanical", "single-graded")
+D29_OUTCOMES = {"default": ("absorb", "plug-in"), "optional": ("optional",), "excrete": ("decline",)}
+D29_OUTCOMES_ZH = {"default": "進預設", "optional": "可選用", "excrete": "排掉"}
 # D21 tiers: what makes a unit automatic and what asks the owner.
 TIERS = {"A": "A 級：只改機制、不碰模型會讀的文字、不執行食物程式、可還原（D17 允許靜態證據）",
          "B": "B 級：模型會讀的文字，要試吃判定吸收（齊平以上）",
@@ -1856,7 +1863,7 @@ _UNIT_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._:/+-]{0,159}")
 _REF_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._/-]{0,99}")
 _TASTING_ID = re.compile(r"t-[0-9a-f]{12}")
 _TASTING_KEYS = {"schema", "food", "date", "records", "protocol", "arms", "food_arm_ran", "verdict", "verdict_zh",
-                 "blocked_on_owner", "notes"}
+                 "blocked_on_owner", "notes", "judgment"}
 _ABSORPTION_KEYS = {"schema", "food", "date", "branch", "absorbed", "declined", "held", "release", "blocked_on_owner",
                     "records", "notes"}
 # Keys the CLI adds when it stores a record; a stored record is checked against its own id.
@@ -2026,14 +2033,70 @@ def validate_tasting(doc, food: str, *, stored: bool = False) -> dict:
     if verdict == "no-verdict" and not (owner or notes):
         raise RecordError("A no-verdict tasting must say what blocks it: blocked_on_owner (the owner's part) or notes.")
     if owner and verdict in ("decline", "not-shown-better"):
-        raise RecordError(f"{kind}: blocked_on_owner is only for absorb, plug-in or no-verdict; a {verdict} leaves nothing to wait for.")
+        raise RecordError(f"{kind}: blocked_on_owner is only for absorb, plug-in, optional or no-verdict; a {verdict} leaves nothing to wait for.")
+    judgment = _judgment(doc.get("judgment"), verdict, kind, stored=stored)
     record = {"schema": TASTING_SCHEMA, "food": food, "date": _rdate(doc, kind),
               "records": _rrecords(doc.get("records"), "records", kind, required=True), "protocol": protocol,
               "arms": arms, "food_arm": food_arms[0]["id"], "food_arm_ran": ran, "verdict": verdict,
               "verdict_zh": _rtext(doc, "verdict_zh", "", kind, 300), "blocked_on_owner": owner, "notes": notes}
+    if judgment is not None:
+        record["judgment"] = judgment
     if stored:
         _check_stored(doc, "tasting_id", record, "t-")
     return record
+
+
+def d29_outcome(quality: str, cost_ratio: float, cheaper: bool) -> str:
+    """D29: default, optional or excrete from quality against native and the cost ratio (food / native)."""
+    if quality == "worse":
+        return "excrete"
+    if quality == "better":
+        return "default" if cost_ratio <= D29_COST_CAP else "optional"
+    if cheaper:
+        return "default"
+    return "optional" if cost_ratio <= D29_COST_CAP else "excrete"
+
+
+def _judgment(raw, verdict: str, kind: str, *, stored: bool = False):
+    """The D29 judgment of a tasting, checked against its verdict; None for a record made before D29.
+
+    `optional` exists only under D29, so it needs a judgment; a judgment never goes with `not-shown-better` or
+    `no-verdict`. An AI-graded difference (better or worse) counts only when it held in two gradings (D29.1).
+    """
+    if raw is None:
+        if verdict == "optional":
+            raise RecordError(f"{kind}: an optional verdict needs its D29 judgment (quality, cost_ratio, cheaper, grading).")
+        return None
+    where = "judgment"
+    doc = _keys(raw, {"quality", "cost_ratio", "cheaper", "grading", "conditions", "basis"}
+                | ({"outcome", "outcome_zh"} if stored else set()), where, kind)
+    quality, grading = doc.get("quality"), doc.get("grading")
+    if quality not in D29_QUALITY:
+        raise RecordError(f"{kind}: judgment.quality must be one of {', '.join(D29_QUALITY)}.")
+    if grading not in D29_GRADING:
+        raise RecordError(f"{kind}: judgment.grading must be one of {', '.join(D29_GRADING)}.")
+    cost = _rnumber(doc, "cost_ratio", where, kind, maximum=100000)
+    if cost <= 0:
+        raise RecordError(f"{kind}: judgment.cost_ratio must be the food's tokens over native's (above 0).")
+    cheaper = doc.get("cheaper", False)
+    if not isinstance(cheaper, bool):
+        raise RecordError(f"{kind}: judgment.cheaper must be true or false (the PREREG's cheaper rule).")
+    if cheaper and (quality != "same" or cost >= 1):
+        raise RecordError(f"{kind}: judgment.cheaper needs quality same and a cost ratio below 1.")
+    if quality != "same" and grading == "single-graded":
+        raise RecordError(f"Refused: an AI-graded difference counts only if it holds in two gradings (D29); "
+                          f"a single grading can only say quality same, not {quality}.")
+    conditions = _rnumber(doc, "conditions", where, kind, integer=True, maximum=100, required=False)
+    if verdict in ("not-shown-better", "no-verdict"):
+        raise RecordError(f"{kind}: a D29 judgment ends in absorb, plug-in, optional or decline, not {verdict}.")
+    outcome = d29_outcome(quality, cost, cheaper)
+    if verdict not in D29_OUTCOMES[outcome]:
+        raise RecordError(f"Refused: the verdict does not match D29: quality {quality}, cost {cost:g}x native"
+                          + (", cheaper" if cheaper else "") + f" -> {outcome} ({D29_OUTCOMES_ZH[outcome]}), "
+                          f"which is recorded as {' or '.join(D29_OUTCOMES[outcome])}, not {verdict}.")
+    return {"quality": quality, "cost_ratio": cost, "cheaper": cheaper, "grading": grading,
+            "conditions": conditions, "outcome": outcome, "outcome_zh": D29_OUTCOMES_ZH[outcome],
+            "basis": _rtext(doc, "basis", where, kind, 400, required=False)}
 
 
 def tasting_id(record: dict) -> str:
@@ -2160,7 +2223,7 @@ def tasting_summary(record: dict) -> dict:
             "verdict": record["verdict"], "verdict_label_zh": TASTING_VERDICTS[record["verdict"]], "verdict_zh": record["verdict_zh"],
             "records": record["records"], "protocol": record["protocol"], "arms": record["arms"], "food_arm": record["food_arm"],
             "food_arm_graded_runs": record["food_arm_ran"]["graded_runs"], "food_arm_evidence": record["food_arm_ran"]["evidence"],
-            "blocked_on_owner": record["blocked_on_owner"], "notes": record["notes"]}
+            "blocked_on_owner": record["blocked_on_owner"], "notes": record["notes"], "judgment": record.get("judgment")}
 
 
 def absorption_summary(records: list) -> dict | None:
@@ -2333,6 +2396,7 @@ BLOCKER_BASIS_ZH = {
     "D21": "D21：A 級（只改機制）靜態證據就能吸收、B 級（模型會讀的文字）要試吃判定吸收、C 級問你；吸收是 Claude 重建成 OAW 程式和測試",
     "D25": "D25、D28：沒有試吃就沒有判定；Claude 在試吃區官方安裝、每一組都跑、盲評，再用 record-tasting 記錄",
     "D28-verdict": "D28：食物組沒有裝起來跑過、沒有評分過的執行，就沒有判定；「天花板」推論不能取代實際跑",
+    "D29": "D29：品質和原生比（AI 評分的差距要兩次評分都成立）、成本和原生比；更好且不超過 1.5 倍 → 進預設，齊平或更好但很貴 → 可選用，變差或齊平但超過 1.5 倍 → 排掉",
     "D28-owner": "D28：只有入口、發布、C 級問題和只有你能做的前置（登入、token、常設規則）才等你",
     "release": "D21、D28：發布是整個分支一次決定：你合併 PR，這些單位一起進正式版本；不是逐樣核准",
     "paper": "D5、D21：論文的想法要重新實作成 OAW 程式和測試，不複製原文；替論文拆單位由 Claude 當 Elephant 做（D28），引擎不會自己拆",
@@ -2594,13 +2658,29 @@ def food_pipeline(card: dict) -> dict:
                 waiting = "agent"
                 ignored = "Claude 接手（D28）；完成後停在版本，等發布"
                 unknown.append(AGENT_WHEN_ZH)
+        elif tasting["verdict"] == "optional" and owner:
+            # D29 + D21: optional, but making it available needs a tier-C decision (food code, a runtime dependency).
+            stage = reach("approve", "current")
+            note = f"試吃判定：{label}（{said}）；要裝成可選用之前，等你：{owner}"
+            wanted.append(("forget", None, None))
+            waiting, where = "owner", "核准：試吃判定可選用；等你：" + owner
+            basis.insert(1, BLOCKER_BASIS_ZH["D29"])
+            basis.append(BLOCKER_BASIS_ZH["D28-owner"])
+            ignored = "不會設為預設；在你決定之前，它不會被裝進來"
         else:
             stage = reach("sort", "done")
             states["approve"] = states["build"] = "skipped"
-            note = f"試吃判定：{label}（{said}）"
+            if tasting["verdict"] == "optional":
+                note = f"試吃判定：{label}（{said}）；不設為預設，要用時才叫"
+                where = f"沒有卡點：試吃判定{label}"
+                basis.insert(1, BLOCKER_BASIS_ZH["D29"])
+                ignored = "不設為預設；要用時才叫（D29）"
+            else:
+                note = f"試吃判定：{label}（{said}）"
+                where = f"沒有卡點：試吃判定{label}"
+                ignored = "不會被吸收；「忘掉這樣食物」可以把它從食物卡拿掉（可選）"
             wanted.append(("forget", None, None))
-            waiting, where = "none", f"沒有卡點：試吃判定{label}"
-            ignored = "不會被吸收；「忘掉這樣食物」可以把它從食物卡拿掉（可選）"
+            waiting = "none"
     elif headline == "risky":
         open_high = (card.get("flags") or {}).get("open_high") or 0
         if open_high:

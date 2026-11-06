@@ -986,6 +986,12 @@ def cmd_why(target: Path, ident=None) -> dict:
                    "  食物本身有沒有真的裝起來跑：沒有，所以沒有判定")]
         if latest.get("food_arm_evidence"):
             lines.append(f"    依據：{core.sanitize_text(latest['food_arm_evidence'], 300)}")
+        judgment = latest.get("judgment")
+        if judgment:
+            lines.append(f"  D29：品質{({'better': '比原生好', 'same': '和原生一樣', 'worse': '比原生差'})[judgment['quality']]}"
+                         f"（{({'double-graded': '兩次評分都成立', 'mechanical': '程式評分', 'single-graded': '只評一次'})[judgment['grading']]}）、"
+                         f"token 是原生的 {judgment['cost_ratio']:g} 倍" + ("、依規則算比較省" if judgment["cheaper"] else "")
+                         + f" → {judgment['outcome_zh']}" + (f"（{judgment['conditions']} 個條件取最低）" if (judgment.get("conditions") or 0) > 1 else ""))
         protocol = latest["protocol"]
         lines.append(f"  怎麼測：{protocol['questions']['count']} 題（凍結，sha256 {protocol['questions']['sha256'][:12]}…）× 每格 "
                      f"{protocol['repeats']} 次；模型 {'、'.join(protocol['models'])}；語料 {core.sanitize_text(protocol['corpus'], 120)}"

@@ -1212,6 +1212,38 @@ class CatalogCliTests(unittest.TestCase):
                              (self.tasting_file("other.json", food="someone-else"), "names another food")):
             self.assertIn(message, self.cli("record-tasting", "--food", name, "--file", str(bad), code=2)["error"])
 
+    def test_d29_judgment_fixes_the_verdict_and_optional_rests_unless_the_owner_is_needed(self):
+        name = self.clean_food()
+        self.cli("taste", name)
+        def judged(fname, verdict, **judgment):
+            return self.tasting_file(fname, verdict=verdict, verdict_zh="D29", judgment=judgment)
+        # same quality, 1.2x native -> optional; the engine refuses the old wording and a mismatched verdict.
+        same = dict(quality="same", cost_ratio=1.2, cheaper=False, grading="double-graded", conditions=4)
+        for wrong in ("not-shown-better", "decline", "absorb"):
+            error = self.cli("record-tasting", "--food", name, "--file", str(judged(f"{wrong}.json", wrong, **same)), code=2)["error"]
+            self.assertTrue("does not match D29" in error or "not not-shown-better" in error, error)
+        self.assertIn("needs its D29 judgment", self.cli("record-tasting", "--food", name, "--file",
+                      str(self.tasting_file("bare.json", verdict="optional")), code=2)["error"])
+        # A single AI grading cannot claim a difference.
+        error = self.cli("record-tasting", "--food", name, "--file", str(judged("single.json", "absorb", quality="better",
+                         cost_ratio=1.0, cheaper=False, grading="single-graded")), code=2)["error"]
+        self.assertIn("holds in two gradings", error)
+        result = self.cli("record-tasting", "--food", name, "--file", str(judged("ok.json", "optional", **same)), "--apply")
+        self.assertEqual((result["stage"], result["waiting_on"]), ("sort", "none"))
+        text = self.cli("why", name)["answer_zh"]
+        self.assertIn("判定：可選用（不設預設，要用時才叫）", text)
+        self.assertIn("D29：品質和原生一樣（兩次評分都成立）、token 是原生的 1.2 倍 → 可選用（4 個條件取最低）", text)
+        # The outcome table: better and cheap enough -> default; better but costly -> optional; same and costly -> excrete.
+        self.assertEqual([core.d29_outcome(q, c, k) for q, c, k in
+                          (("better", 1.5, False), ("better", 1.6, False), ("same", 0.6, True), ("same", 1.5, False),
+                           ("same", 1.51, False), ("worse", 0.5, False))],
+                         ["default", "optional", "default", "optional", "excrete", "excrete"])
+        # Optional that needs a tier-C decision waits on the owner at 核准.
+        owner = self.tasting_file("owner.json", verdict="optional", verdict_zh="D29", date="2026-11-07",
+                                  blocked_on_owner="installing it runs the food's own code (D21 tier C)", judgment=same)
+        result = self.cli("record-tasting", "--food", name, "--file", str(owner), "--apply")
+        self.assertEqual((result["stage"], result["waiting_on"]), ("approve", "owner"))
+
     def test_why_answers_plainly_whether_the_food_ran_why_and_where_the_evidence_is(self):
         name = self.clean_food()
         self.cli("taste", name)

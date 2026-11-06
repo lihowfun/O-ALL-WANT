@@ -6,6 +6,14 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Tasting verdicts follow owner decision D29 (2026-11-06): a tasting's `judgment` (quality against native,
+  cost ratio, cheaper by its PREREG rule, how quality was graded) fixes its outcome, and `record-tasting`
+  refuses a verdict that does not match. Better and at most 1.5x native tokens, or same and cheaper ->
+  default (`absorb` or `plug-in`); same within 1.5x, or better but costlier -> the new verdict `optional`
+  (可選用: available, not default, called explicitly); worse, or same but over 1.5x -> `decline`. An
+  AI-graded difference counts only if it held in two gradings. `optional` rests at 分流, or waits on the
+  owner at 核准 for a tier-C decision. `not-shown-better` stays readable for earlier records; `why` shows
+  the D29 line.
 - Size never stops a food (owner, 2026-11-06: "snapshot exceeds 50 MB 限制沒有任何意義"). The archive caps
   (5 MB per file, now 200 MB and 20,000 files in all) only bound what is stored and scanned: past them the
   largest files are skipped first and each one is flagged `F-PARTIAL`, and the food goes on to be tasted.
