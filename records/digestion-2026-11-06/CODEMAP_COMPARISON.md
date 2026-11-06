@@ -75,3 +75,9 @@
 - Opus 5.5 原生幾乎滿分，「更懂」沒有空間。
 - 錯誤陳述是 AI 評分，同一批答案評兩次會差 0 到 2 個，所以 OAW 和 graphify 在 Opus 4.8 的判定曾經因為評分批次而翻轉。本頁全部用同一條件、同一批評分的數字。
 - 細節：`taste-codegraph/RESULT.md`；graphify 和 OAW 的原始作答在 `../digestion-2026-11-03/codemap-erpnext-confirm/`、`codemap-erpnext-weaker/`。
+
+## 更新（同日稍晚）
+- graphify 在 Haiku 補完 3 次、兩次評分（`../digestion-2026-11-03/codemap-erpnext-weaker/`，d73c4f8 登記、9c5886a 結果）。
+  - 錯誤陳述比原生多 5 個，兩次評分都成立，帳本改記「排掉（比原生差）」。
+  - Haiku 的 token 改成 1.42 倍，上表的 163% 是只跑 1 次的數字。
+- codegraph 的「因成本不採用」由 Opus 4.8 決定（3 次，token 1.72 倍），不是 Haiku（1 次，1.48 倍）。
