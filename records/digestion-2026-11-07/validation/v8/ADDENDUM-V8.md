@@ -20,3 +20,11 @@
   - 共用的四類規則（`../v1_resolution.py`）。
   - D29：品質要 Opus 和 Codex 兩位評分者一致才算方向；成本用 token 中位數比，和帳本相同。
   - 同時列出工具呼叫和秒數。codegraph 宣稱的是效率，所以這兩項也報。
+
+## 開跑前的調整（同日，任何作答之前）
+- **MCP 設定**：VS Code repo 自己就帶一個 `.mcp.json`（component-explorer），codegraph 的安裝是把 codegraph 加進這個檔。
+  - C 組改用一份只含 codegraph 的 MCP 設定，從安裝後的檔案抽出來。
+  - N 組照舊用 `--strict-mcp-config`、不給 `--mcp-config`，所以沒有任何 MCP server。
+  - 這樣兩組只差 codegraph 本身。
+- **codegraph 安裝結果**：寫了 `.claude/settings.json`（允許 `mcp__codegraph__*`，加一個 `UserPromptSubmit` hook 跑 `codegraph prompt-hook`）、`.claude/CLAUDE.md`，以及 `.mcp.json` 裡的 codegraph。
+- **索引**：本機 SSD，8 分 54 秒，2.2 GB，峰值記憶體 12.7 GB。ERPNext 那次是 15 秒、189 MB。
