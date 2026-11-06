@@ -52,6 +52,7 @@ owner 說：「你是一個自動自發的消化系統，不是每樣都要等�
 | Claude | 判定吸收：A／B 級在 `claude/oaw-2` 重建成程式和測試，一輪 Goldfish；記錄 | `record-absorption --food ID --file 吸收紀錄.json --apply` |
 | Claude | 判定插上：接上官方版；判定不收：寫一行理由 | — |
 | 你 | 發布：合併 PR | — |
+| 你（想問的時候） | 直白查：為什麼收或不收、食物本身有沒有真的跑、數字、證據在哪個 commit、現在等誰 | `catalog.py why [食物]` |
 
 試吃判定的意思：`absorb` 吸收（重建）、`plug-in` 插上（接上官方版，不吸收）、`decline` 不收、`not-shown-better` 沒證明比原生好（不收）、`no-verdict` 沒有判定。同一樣食物可以有很多次試吃，全部列在食物卡上，最新的那次決定位置。兩種紀錄的欄位見 [CLI Reference](CLI_Reference.md#agent-tastings-and-d21-absorptions-d28)。
 

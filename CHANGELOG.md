@@ -24,6 +24,10 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- `catalog.py why [FOOD]`: plain answers for the owner (2026-11-06: "但我如果有問 要能夠直白找出來"). Without a food,
+  one line per food: what was decided, who it waits on, why. With a food: the latest verdict and reason, whether
+  the food's own arm was installed and run, the frozen questions and per-arm numbers, the records path and
+  commit, earlier tastings and absorbed units. Read-only; `--json` carries the text as `answer_zh`.
 - `catalog.py record-tasting --food ID --file FILE [--apply]` and `record-absorption` (D25, D28): Claude's
   agent-level tastings (schema `oaw-tasting/1`: records branch path and commit, protocol with frozen-question
   sha256, arms with run counts and the food arm, per-arm results, verdict) and D21 absorptions (schema

@@ -1212,6 +1212,25 @@ class CatalogCliTests(unittest.TestCase):
                              (self.tasting_file("other.json", food="someone-else"), "names another food")):
             self.assertIn(message, self.cli("record-tasting", "--food", name, "--file", str(bad), code=2)["error"])
 
+    def test_why_answers_plainly_whether_the_food_ran_why_and_where_the_evidence_is(self):
+        name = self.clean_food()
+        self.cli("taste", name)
+        untasted = self.cli("why", name)["answer_zh"]
+        self.assertIn("判定：還沒試吃，所以沒有判定", untasted)
+        self.cli("record-tasting", "--food", name, "--file", str(self.tasting_file()), "--apply")
+        answer = self.cli("why", name)
+        text = answer["answer_zh"]
+        for expected in ("判定：沒證明比原生好（不收）（2026-11-05", "為什麼：沒證明比原生好",
+                         "食物本身有沒有真的裝起來跑：有，食物組 F 有 4 次評分過的執行", "依據：out/grades.jsonl",
+                         "F［食物組］：4 次、評分 4 次；覆蓋率 0.9、必要點全對 4、錯誤陳述 1、token 中位數 2,000",
+                         "證據：records 分支 records/taste-sweet-notes（commit abc1234）", "所有細節：catalog.py show"):
+            self.assertIn(expected, text)
+        self.assertNotIn("下一步", text)  # nothing pending
+        self.assertEqual(answer["pipeline"]["waiting_on"], "none")
+        overview = self.cli("why")
+        self.assertEqual([(f["id"], f["tastings"]) for f in overview["foods"]], [(name, 1)])
+        self.assertIn(f"（{name}）：沒證明比原生好（不收）（2026-11-05） · 沒有待辦", overview["answer_zh"])
+
     def test_record_absorption_puts_a_paper_on_the_build_waiting_for_the_release(self):
         self.cli("import-report", "arXiv:2606.03979", str(PAPER_FIXTURE))
         fid = "arxiv-2606-03979"

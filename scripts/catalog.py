@@ -917,6 +917,109 @@ def cmd_show(target: Path, ident: str) -> dict:
     return {"status": "show", "card": card, "lines": lines}
 
 
+def _food_card(target: Path, entry: dict) -> tuple:
+    fid = entry["id"]
+    evidence = load_evidence(target, fid)
+    decisions = food_decisions(load_decisions(target), fid)
+    derived = core.derive(evidence, decisions)
+    historical = [r for r in evidence if core.evidence_class(r) == "historical"]
+    plan = core.decide_plan(fid, derived, historical, load_policy(target))
+    return core.place_card(core.food_card(entry, evidence, decisions, plan), load_receipts(target).get(fid)), plan
+
+
+def _result_text(results: dict) -> str:
+    parts = []
+    if results.get("coverage") is not None:
+        parts.append(f"覆蓋率 {results['coverage']}")
+    if results.get("essential_correct") is not None:
+        total = results.get("essential_total")
+        parts.append(f"必要點全對 {results['essential_correct']}" + (f"/{total}" if total is not None else ""))
+    if results.get("wrong_claims") is not None:
+        parts.append(f"錯誤陳述 {results['wrong_claims']}")
+    if results.get("token_median") is not None:
+        parts.append(f"token 中位數 {int(results['token_median']):,}")
+    if results.get("tokens_total") is not None:
+        parts.append(f"合計 {int(results['tokens_total']):,}")
+    return "、".join(parts)
+
+
+def cmd_why(target: Path, ident=None) -> dict:
+    """Plain answers for the owner: what was decided about a food, why, whether its own arm really ran, the
+    numbers, where the evidence is and who it waits on. Without a food: one line per food. Read-only."""
+    registry = load_registry(target)
+    if not ident:
+        rows, lines = [], []
+        for fid, entry in sorted(registry.get("foods", {}).items()):
+            card, _plan = _food_card(target, entry)
+            pipe = card["pipeline"]
+            tasting = card["tastings"][-1] if card["tastings"] else None
+            absorption = card.get("absorption")
+            if tasting:
+                decided = f"{tasting['verdict_label_zh']}（{tasting['date']}）"
+                reason = core.sanitize_text(tasting["verdict_zh"], 90)
+            elif absorption:
+                decided = f"吸收 {absorption['absorbed']} 個單位、不收 {absorption['declined']}、暫留 {absorption['held']}"
+                reason = ""
+            else:
+                decided, reason = "還沒試吃", core.sanitize_text(pipe["note_zh"], 90)
+            if absorption and tasting:
+                decided += f"；吸收 {absorption['absorbed']} 個單位"
+            rows.append({"id": fid, "display": card["display"], "decided_zh": decided, "reason_zh": reason,
+                         "waiting_zh": pipe["waiting_zh"], "tastings": len(card["tastings"])})
+            lines.append(f"{card['display']}（{fid}）：{decided} · {pipe['waiting_zh']}" + (f"\n    {reason}" if reason else ""))
+        lines = lines or ["帳本裡還沒有食物：catalog.py add <網址>"]
+        lines.append("每一樣的細節：catalog.py why <食物>")
+        return {"status": "why", "foods": rows, "answer_zh": "\n".join(lines), "lines": lines}
+    entry = resolve_food(registry, ident)
+    card, plan = _food_card(target, entry)
+    fid, pipe = entry["id"], card["pipeline"]
+    lines = [f"{card['display']}（{fid}）", f"  現在：{pipe['stage_label_zh']}・{pipe['state_zh']}・{pipe['waiting_zh']}"]
+    if pipe["waiting_on"] != "none":
+        lines.append(f"  下一步：{core.sanitize_text(pipe['note_zh'], 300)}")
+    if card["tastings"]:
+        latest = card["tastings"][-1]
+        ran = latest["food_arm_graded_runs"]
+        lines += [f"  判定：{latest['verdict_label_zh']}（{latest['date']}，最新的一次試吃決定）",
+                  f"  為什麼：{core.sanitize_text(latest['verdict_zh'], 400)}",
+                  ("  食物本身有沒有真的裝起來跑：有，食物組 " + core.sanitize_text(latest["food_arm"], 40)
+                   + f" 有 {ran} 次評分過的執行" if ran else
+                   "  食物本身有沒有真的裝起來跑：沒有，所以沒有判定")]
+        if latest.get("food_arm_evidence"):
+            lines.append(f"    依據：{core.sanitize_text(latest['food_arm_evidence'], 300)}")
+        protocol = latest["protocol"]
+        lines.append(f"  怎麼測：{protocol['questions']['count']} 題（凍結，sha256 {protocol['questions']['sha256'][:12]}…）× 每格 "
+                     f"{protocol['repeats']} 次；模型 {'、'.join(protocol['models'])}；語料 {core.sanitize_text(protocol['corpus'], 120)}"
+                     + (f"；評分 {core.sanitize_text(protocol['grading'], 120)}" if protocol.get("grading") else ""))
+        for arm in latest["arms"]:
+            label = core.sanitize_text(arm.get("label") or "", 60)
+            results = _result_text(arm.get("results") or {})
+            lines.append(f"    {core.sanitize_text(arm['id'], 40)}{('（' + label + '）') if label else ''}"
+                         f"{'［食物組］' if arm['food_arm'] else ''}：{arm['runs']} 次、評分 {arm['graded_runs']} 次"
+                         + (f"；{results}" if results else ""))
+        records = latest["records"]
+        lines.append(f"  證據：{records['branch']} 分支 {records['path']}（commit {records['commit'][:7]}）")
+        if latest["blocked_on_owner"]:
+            lines.append(f"  卡在你：{core.sanitize_text(latest['blocked_on_owner'], 300)}")
+        if latest.get("notes"):
+            lines.append(f"  備註：{core.sanitize_text(latest['notes'], 400)}")
+        for older in card["tastings"][:-1]:
+            lines.append(f"  之前的試吃 {older['date']}：{older['verdict_label_zh']} · {core.sanitize_text(older['verdict_zh'], 160)}"
+                         f"（{older['records']['path']} @ {older['records']['commit'][:7]}）")
+    else:
+        lines.append("  判定：還沒試吃，所以沒有判定（D25、D28：食物本身沒裝起來跑過就不下結論）")
+    absorption = card.get("absorption")
+    if absorption:
+        lines.append(f"  吸收：{absorption['absorbed']} 個單位（等發布 {absorption['release_pending']}）、不收 {absorption['declined']}、暫留 {absorption['held']}")
+        for unit in absorption["units"]:
+            detail = (f"{unit['tier']} 級，{unit['branch']} {'、'.join(c[:7] for c in unit['commits'])}，測試 {'、'.join(unit['tests'])}"
+                      if unit["outcome"] == "absorbed" else core.sanitize_text(unit.get("reason") or "", 160))
+            lines.append(f"    {({'absorbed': '吸收', 'declined': '不收', 'held': '暫留'})[unit['outcome']]} {unit['id']}：{detail}")
+    lines.append(f"  靜態檢查：{card['safety_text']}（只供參考，不擋食物，D28）")
+    lines.append(f"  所有細節：catalog.py show {fid}")
+    return {"status": "why", "food": fid, "pipeline": {k: pipe[k] for k in ("stage", "state", "waiting_on", "waiting_zh", "note_zh")},
+            "tastings": card["tastings"], "absorption": absorption, "answer_zh": "\n".join(lines), "lines": lines}
+
+
 # --------------------------------------------------------------------------- owner confirmation codes
 #
 # A code is a speed bump against an agent running catalog commands on the owner's
@@ -2414,6 +2517,9 @@ def parser() -> argparse.ArgumentParser:
     commands.add_parser("list", parents=[common], help="list foods and their verdicts")
     show = commands.add_parser("show", parents=[common], help="nutrition card for one food")
     show.add_argument("food")
+    why = commands.add_parser("why", parents=[common],
+                               help="plain answers: what was decided about a food, why, whether its own arm ran, where the evidence is")
+    why.add_argument("food", nargs="?", help="a food id or URL; without it, one line per food")
     taste = commands.add_parser("taste", parents=[common], help="seal a pinned snapshot outside the project and run free T0 checks")
     taste.add_argument("food")
     taste.add_argument("--ref", help="a repository ref, or a paper's arXiv version such as v2")
@@ -2500,6 +2606,8 @@ def dispatch(args) -> dict:
         return cmd_list(target)
     if command == "show":
         return cmd_show(target, args.food)
+    if command == "why":
+        return cmd_why(target, args.food)
     if command == "taste":
         return cmd_taste(target, args.food, args.ref)
     if command == "triage":
