@@ -1,0 +1,303 @@
+{
+ "summary": {
+  "N": {
+   "questions": 4,
+   "runs": 12,
+   "coverage_mean": 0.923,
+   "essential_ok_runs": 12,
+   "wrong_claims": 2,
+   "contradicted": 0,
+   "cutoffs": 0,
+   "tokens_median": 71139,
+   "tokens_total": 1207870,
+   "tool_calls_median": 9.67,
+   "turns_median": 11.0,
+   "seconds_median": 31.200000000000003,
+   "repeat_spread": 0.031,
+   "per_question": {
+    "q1": {
+     "coverage": 0.875,
+     "coverage_min": 0.875,
+     "coverage_max": 0.875,
+     "tokens": 220263.333,
+     "tools": 31.333,
+     "runs": 3
+    },
+    "q2": {
+     "coverage": 1.0,
+     "coverage_min": 1.0,
+     "coverage_max": 1.0,
+     "tokens": 70023,
+     "tools": 9,
+     "runs": 3
+    },
+    "q3": {
+     "coverage": 0.958,
+     "coverage_min": 0.875,
+     "coverage_max": 1.0,
+     "tokens": 40080.333,
+     "tools": 4.667,
+     "runs": 3
+    },
+    "q4": {
+     "coverage": 0.857,
+     "coverage_min": 0.857,
+     "coverage_max": 0.857,
+     "tokens": 72256.667,
+     "tools": 10.333,
+     "runs": 3
+    }
+   }
+  },
+  "G": {
+   "questions": 4,
+   "runs": 12,
+   "coverage_mean": 0.912,
+   "essential_ok_runs": 11,
+   "wrong_claims": 2,
+   "contradicted": 0,
+   "cutoffs": 0,
+   "tokens_median": 90838,
+   "tokens_total": 1594626,
+   "tool_calls_median": 8.5,
+   "turns_median": 9.5,
+   "seconds_median": 35.349999999999994,
+   "repeat_spread": 0.062,
+   "per_question": {
+    "q1": {
+     "coverage": 0.792,
+     "coverage_min": 0.625,
+     "coverage_max": 0.875,
+     "tokens": 290144.667,
+     "tools": 19.333,
+     "runs": 3
+    },
+    "q2": {
+     "coverage": 1.0,
+     "coverage_min": 1.0,
+     "coverage_max": 1.0,
+     "tokens": 97788.667,
+     "tools": 8.667,
+     "runs": 3
+    },
+    "q3": {
+     "coverage": 1.0,
+     "coverage_min": 1.0,
+     "coverage_max": 1.0,
+     "tokens": 59719.667,
+     "tools": 4.667,
+     "runs": 3
+    },
+    "q4": {
+     "coverage": 0.857,
+     "coverage_min": 0.857,
+     "coverage_max": 0.857,
+     "tokens": 83889,
+     "tools": 8.333,
+     "runs": 3
+    }
+   }
+  },
+  "S": {
+   "questions": 4,
+   "runs": 12,
+   "coverage_mean": 0.933,
+   "essential_ok_runs": 12,
+   "wrong_claims": 1,
+   "contradicted": 0,
+   "cutoffs": 0,
+   "tokens_median": 83120,
+   "tokens_total": 961011,
+   "tool_calls_median": 6.33,
+   "turns_median": 7.5,
+   "seconds_median": 36.25,
+   "repeat_spread": 0.0,
+   "per_question": {
+    "q1": {
+     "coverage": 0.875,
+     "coverage_min": 0.875,
+     "coverage_max": 0.875,
+     "tokens": 105015,
+     "tools": 7,
+     "runs": 3
+    },
+    "q2": {
+     "coverage": 1.0,
+     "coverage_min": 1.0,
+     "coverage_max": 1.0,
+     "tokens": 61470.333,
+     "tools": 5.667,
+     "runs": 3
+    },
+    "q3": {
+     "coverage": 1.0,
+     "coverage_min": 1.0,
+     "coverage_max": 1.0,
+     "tokens": 49080.667,
+     "tools": 4,
+     "runs": 3
+    },
+    "q4": {
+     "coverage": 0.857,
+     "coverage_min": 0.857,
+     "coverage_max": 0.857,
+     "tokens": 104771,
+     "tools": 7.667,
+     "runs": 3
+    }
+   }
+  },
+  "C": {
+   "questions": 4,
+   "runs": 12,
+   "coverage_mean": 0.934,
+   "essential_ok_runs": 12,
+   "wrong_claims": 1,
+   "contradicted": 0,
+   "cutoffs": 0,
+   "tokens_median": 85387,
+   "tokens_total": 1268259,
+   "tool_calls_median": 4.83,
+   "turns_median": 5.0,
+   "seconds_median": 29.05,
+   "repeat_spread": 0.067,
+   "per_question": {
+    "q1": {
+     "coverage": 0.875,
+     "coverage_min": 0.875,
+     "coverage_max": 0.875,
+     "tokens": 182201.667,
+     "tools": 8,
+     "runs": 3
+    },
+    "q2": {
+     "coverage": 1.0,
+     "coverage_min": 1.0,
+     "coverage_max": 1.0,
+     "tokens": 76448.333,
+     "tools": 3.667,
+     "runs": 3
+    },
+    "q3": {
+     "coverage": 0.958,
+     "coverage_min": 0.875,
+     "coverage_max": 1.0,
+     "tokens": 69776,
+     "tools": 3,
+     "runs": 3
+    },
+    "q4": {
+     "coverage": 0.905,
+     "coverage_min": 0.857,
+     "coverage_max": 1.0,
+     "tokens": 94327,
+     "tools": 6,
+     "runs": 3
+    }
+   }
+  },
+  "NB": {
+   "questions": 4,
+   "runs": 8,
+   "coverage_mean": 0.912,
+   "essential_ok_runs": 8,
+   "wrong_claims": 1,
+   "contradicted": 0,
+   "cutoffs": 0,
+   "tokens_median": 93877,
+   "tokens_total": 1032229,
+   "tool_calls_median": 9.25,
+   "turns_median": 11.5,
+   "seconds_median": 30.8,
+   "repeat_spread": 0.042,
+   "per_question": {
+    "q1": {
+     "coverage": 0.875,
+     "coverage_min": 0.875,
+     "coverage_max": 0.875,
+     "tokens": 279316,
+     "tools": 29,
+     "runs": 2
+    },
+    "q2": {
+     "coverage": 0.916,
+     "coverage_min": 0.833,
+     "coverage_max": 1.0,
+     "tokens": 99304,
+     "tools": 8,
+     "runs": 2
+    },
+    "q3": {
+     "coverage": 1.0,
+     "coverage_min": 1.0,
+     "coverage_max": 1.0,
+     "tokens": 49044,
+     "tools": 5.5,
+     "runs": 2
+    },
+    "q4": {
+     "coverage": 0.857,
+     "coverage_min": 0.857,
+     "coverage_max": 0.857,
+     "tokens": 88450.5,
+     "tools": 10.5,
+     "runs": 2
+    }
+   }
+  }
+ },
+ "verdicts_vs_N": {
+  "C": {
+   "verdict": "same understanding, cheaper (tools)",
+   "coverage_delta": 0.011,
+   "questions_not_lower": 4,
+   "tokens_ratio": 1.2,
+   "tools_ratio": 0.499
+  },
+  "S": {
+   "verdict": "same understanding, cheaper (tools)",
+   "coverage_delta": 0.01,
+   "questions_not_lower": 4,
+   "tokens_ratio": 1.168,
+   "tools_ratio": 0.655
+  },
+  "G": {
+   "verdict": "not shown better than native",
+   "coverage_delta": -0.011,
+   "questions_not_lower": 3,
+   "tokens_ratio": 1.277,
+   "tools_ratio": 0.879
+  },
+  "NB": {
+   "verdict": "not shown better than native",
+   "coverage_delta": -0.011,
+   "questions_not_lower": 3,
+   "tokens_ratio": 1.32,
+   "tools_ratio": 0.957
+  }
+ },
+ "verdicts_vs_NB": {
+  "C": {
+   "verdict": "understands better",
+   "coverage_delta": 0.022,
+   "questions_not_lower": 3,
+   "tokens_ratio": 0.91,
+   "tools_ratio": 0.522
+  },
+  "S": {
+   "verdict": "understands better",
+   "coverage_delta": 0.021,
+   "questions_not_lower": 4,
+   "tokens_ratio": 0.885,
+   "tools_ratio": 0.684
+  },
+  "G": {
+   "verdict": "understands better",
+   "coverage_delta": 0.0,
+   "questions_not_lower": 3,
+   "tokens_ratio": 0.968,
+   "tools_ratio": 0.919
+  }
+ },
+ "C_opus_verdict": "same understanding, cheaper (tools)"
+}

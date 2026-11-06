@@ -1,0 +1,7 @@
+{"key": "C|q1|1", "arm": "C", "id": "q1", "rep": 1, "verdict": {"facts": {}, "wrong_claims": null, "note": "unparsed", "_grader_tokens": 0}, "coverage": 0.0, "essential_ok": false, "contradicted": 0}
+{"key": "G|q4|1", "arm": "G", "id": "q4", "rep": 1, "verdict": {"facts": {}, "wrong_claims": null, "note": "unparsed", "_grader_tokens": 0}, "coverage": 0.0, "essential_ok": false, "contradicted": 0}
+{"key": "G|q1|1", "arm": "G", "id": "q1", "rep": 1, "verdict": {"facts": {}, "wrong_claims": null, "note": "unparsed", "_grader_tokens": 0}, "coverage": 0.0, "essential_ok": false, "contradicted": 0}
+{"key": "S|q2|1", "arm": "S", "id": "q2", "rep": 1, "verdict": {"facts": {}, "wrong_claims": null, "note": "unparsed", "_grader_tokens": 0}, "coverage": 0.0, "essential_ok": false, "contradicted": 0}
+{"key": "S|q4|1", "arm": "S", "id": "q4", "rep": 1, "verdict": {"facts": {}, "wrong_claims": null, "note": "unparsed", "_grader_tokens": 0}, "coverage": 0.0, "essential_ok": false, "contradicted": 0}
+{"key": "N|q3|1", "arm": "N", "id": "q3", "rep": 1, "verdict": {"facts": {}, "wrong_claims": null, "note": "unparsed", "_grader_tokens": 0}, "coverage": 0.0, "essential_ok": false, "contradicted": 0}
+{"key": "S|q3|1", "arm": "S", "id": "q3", "rep": 1, "verdict": {"facts": {}, "wrong_claims": null, "note": "unparsed", "_grader_tokens": 0}, "coverage": 0.0, "essential_ok": false, "contradicted": 0}
