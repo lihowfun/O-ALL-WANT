@@ -1266,8 +1266,10 @@ class CatalogCliTests(unittest.TestCase):
         result = self.cli("record-tasting", "--food", name, "--file", str(judged("ok.json", "optional", **same)), "--apply")
         self.assertEqual((result["stage"], result["waiting_on"]), ("sort", "none"))
         text = self.cli("why", name)["answer_zh"]
-        self.assertIn("判定：可選用（不設預設，要用時才叫）", text)
-        self.assertIn("D29：品質和原生一樣（兩次評分都成立）、token 是原生的 1.2 倍 → 可選用（4 個條件取最低）", text)
+        self.assertIn("判定：可選用（能力未定）", text)
+        self.assertIn("D29：品質沒測出差異（未定）（兩次評分都成立）、token 是原生的 1.2 倍 → 可選用（能力未定）（4 個條件取最低）", text)
+        self.assertEqual(core.d29_label({"outcome": "excrete", "quality": "same"}), "因成本不採用（能力未定）")
+        self.assertIsNone(core.d29_label(None))
         # The outcome table: better and cheap enough -> default; better but costly -> optional; same and costly -> excrete.
         self.assertEqual([core.d29_outcome(q, c, k) for q, c, k in
                           (("better", 1.5, False), ("better", 1.6, False), ("same", 0.6, True), ("same", 1.5, False),

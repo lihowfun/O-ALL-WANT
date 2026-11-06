@@ -6,6 +6,10 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- What the owner reads for a D29 tasting is honest about resolution (2026-11-06 research on agent A/B power):
+  with 4-12 tasks "same" means no difference was detected, so `why` shows 沒測出差異（未定）, and the
+  verdicts read 可選用（能力未定）, 因成本不採用（能力未定）, 進預設（更好）, and so on. Display only: stored
+  records and their ids are unchanged.
 - Tasting verdicts follow owner decision D29 (2026-11-06): a tasting's `judgment` (quality against native,
   cost ratio, cheaper by its PREREG rule, how quality was graded) fixes its outcome, and `record-tasting`
   refuses a verdict that does not match. Better and at most 1.5x native tokens, or same and cheaper ->

@@ -955,7 +955,7 @@ def cmd_why(target: Path, ident=None) -> dict:
             tasting = card["tastings"][-1] if card["tastings"] else None
             absorption = card.get("absorption")
             if tasting:
-                decided = f"{tasting['verdict_label_zh']}（{tasting['date']}）"
+                decided = f"{core.d29_label(tasting.get('judgment')) or tasting['verdict_label_zh']}（{tasting['date']}）"
                 reason = core.sanitize_text(tasting["verdict_zh"], 90)
             elif absorption:
                 decided = f"吸收 {absorption['absorbed']} 個單位、不收 {absorption['declined']}、暫留 {absorption['held']}"
@@ -979,7 +979,7 @@ def cmd_why(target: Path, ident=None) -> dict:
     if card["tastings"]:
         latest = card["tastings"][-1]
         ran = latest["food_arm_graded_runs"]
-        lines += [f"  判定：{latest['verdict_label_zh']}（{latest['date']}，最新的一次試吃決定）",
+        lines += [f"  判定：{core.d29_label(latest.get('judgment')) or latest['verdict_label_zh']}（{latest['date']}，最新的一次試吃決定）",
                   f"  為什麼：{core.sanitize_text(latest['verdict_zh'], 400)}",
                   ("  食物本身有沒有真的裝起來跑：有，食物組 " + core.sanitize_text(latest["food_arm"], 40)
                    + f" 有 {ran} 次評分過的執行" if ran else
@@ -988,10 +988,10 @@ def cmd_why(target: Path, ident=None) -> dict:
             lines.append(f"    依據：{core.sanitize_text(latest['food_arm_evidence'], 300)}")
         judgment = latest.get("judgment")
         if judgment:
-            lines.append(f"  D29：品質{({'better': '比原生好', 'same': '和原生一樣', 'worse': '比原生差'})[judgment['quality']]}"
+            lines.append(f"  D29：品質{core.D29_QUALITY_ZH[judgment['quality']]}"
                          f"（{({'double-graded': '兩次評分都成立', 'mechanical': '程式評分', 'single-graded': '只評一次'})[judgment['grading']]}）、"
                          f"token 是原生的 {judgment['cost_ratio']:g} 倍" + ("、依規則算比較省" if judgment["cheaper"] else "")
-                         + f" → {judgment['outcome_zh']}" + (f"（{judgment['conditions']} 個條件取最低）" if (judgment.get("conditions") or 0) > 1 else ""))
+                         + f" → {core.d29_label(judgment)}" + (f"（{judgment['conditions']} 個條件取最低）" if (judgment.get("conditions") or 0) > 1 else ""))
         protocol = latest["protocol"]
         lines.append(f"  怎麼測：{protocol['questions']['count']} 題（凍結，sha256 {protocol['questions']['sha256'][:12]}…）× 每格 "
                      f"{protocol['repeats']} 次；模型 {'、'.join(protocol['models'])}；語料 {core.sanitize_text(protocol['corpus'], 120)}"

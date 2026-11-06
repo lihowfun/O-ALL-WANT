@@ -1849,6 +1849,19 @@ D29_QUALITY = ("better", "same", "worse")
 D29_GRADING = ("double-graded", "mechanical", "single-graded")
 D29_OUTCOMES = {"default": ("absorb", "plug-in"), "optional": ("optional",), "excrete": ("decline",)}
 D29_OUTCOMES_ZH = {"default": "進預設", "optional": "可選用", "excrete": "排掉"}
+# What the owner reads (display only; stored records keep D29_OUTCOMES_ZH). With 4-12 tasks a "same" quality
+# means no difference was detected, not that one was ruled out (2026-11-06 research), so it reads 未定.
+D29_QUALITY_ZH = {"better": "比原生好", "same": "沒測出差異（未定）", "worse": "比原生差"}
+D29_LABELS_ZH = {("default", "better"): "進預設（更好）", ("default", "same"): "進預設（品質未定但比較省）",
+                 ("optional", "same"): "可選用（能力未定）", ("optional", "better"): "可選用（更好但很貴）",
+                 ("excrete", "same"): "因成本不採用（能力未定）", ("excrete", "worse"): "排掉（比原生差）"}
+
+
+def d29_label(judgment) -> str | None:
+    """The plain verdict label of a D29 judgment, or None for a record made before D29."""
+    if not judgment:
+        return None
+    return D29_LABELS_ZH.get((judgment.get("outcome"), judgment.get("quality")))
 # D21 tiers: what makes a unit automatic and what asks the owner.
 TIERS = {"A": "A 級：只改機制、不碰模型會讀的文字、不執行食物程式、可還原（D17 允許靜態證據）",
          "B": "B 級：模型會讀的文字，要試吃判定吸收（齊平以上）",
