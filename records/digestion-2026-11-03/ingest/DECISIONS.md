@@ -329,3 +329,16 @@ gains (cost ignored once "better"), and that verdict edges sat inside AI-grader 
 2. `catalog.py why [food]` answers the owner plainly: verdict, reason, whether the food's own arm ran, numbers,
    evidence commit, who it waits on (claude/oaw-2 13dcbb1).
 3. A grader or runner call that spends zero tokens or is cut by a usage limit is "not run", never a score.
+
+## D31. Light, standard and deep modes; heavy review only on triggers (2026-11-06, owner in chat: "需要深入思考的session時候就用某版 需要light時候就用XXX 怎樣能夠讓這之間切換更絲滑順暢 而不是都要EGM審半天", then "該補補 幫我往下 減少我操作")
+1. Three modes, default light:
+   - light: a plain session with OAW's minimal policy and no review.
+   - standard: effort high plus one fresh-context reviewer of the diff and tests. The D21 goldfish round is this level.
+   - deep: plan mode first, the highest effort, then the EGM review when EGM is installed.
+2. The agent picks the mode with a deterministic check of the change; the owner does not. Deep triggers:
+   - harness or infrastructure code that runs every session (the Merge Gate category);
+   - irreversible-looking changes;
+   - a new design document.
+   A large code change is standard. Everything else is light. The triggers live in code with tests and are themselves to be checked against outcomes later (D29 methods).
+3. EGM never runs by default. Its skills are already explicit-invocation only; the full EGM review is reserved for deep.
+4. When fairness or consistency between foods conflicts with saving tokens, keep one yardstick for every food. The owner chose to finish codegraph's Haiku repeats although the verdict could not change.
