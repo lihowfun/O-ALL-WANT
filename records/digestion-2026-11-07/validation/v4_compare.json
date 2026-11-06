@@ -1,0 +1,698 @@
+{
+ "codemap": {
+  "opus-5-5": {
+   "agreement": {
+    "opus_vs_codex": {
+     "answers": 48,
+     "labels": 348,
+     "raw_agreement": 0.891,
+     "kappa": 0.542,
+     "wrong_spearman": 0.501,
+     "wrong_total": [
+      6,
+      37
+     ]
+    },
+    "codex_original_vs_reversed": {
+     "answers": 48,
+     "labels": 348,
+     "raw_agreement": 0.937,
+     "kappa": 0.789,
+     "wrong_spearman": 0.793,
+     "wrong_total": [
+      37,
+      39
+     ]
+    }
+   },
+   "four_class": {
+    "opus": {
+     "C": {
+      "quality": "equivalent",
+      "coverage_point": 0.0119,
+      "coverage_class": "equivalent",
+      "wrong_point": -0.0833,
+      "wrong_class": "equivalent"
+     },
+     "G": {
+      "quality": "equivalent",
+      "coverage_point": -0.0104,
+      "coverage_class": "equivalent",
+      "wrong_point": 0.0,
+      "wrong_class": "equivalent"
+     },
+     "S": {
+      "quality": "equivalent",
+      "coverage_point": 0.0104,
+      "coverage_class": "equivalent",
+      "wrong_point": -0.0833,
+      "wrong_class": "equivalent"
+     }
+    },
+    "codex": {
+     "C": {
+      "quality": "better",
+      "coverage_point": 0.0793,
+      "coverage_class": "better",
+      "wrong_point": -0.25,
+      "wrong_class": "undetermined"
+     },
+     "G": {
+      "quality": "undetermined",
+      "coverage_point": 0.0247,
+      "coverage_class": "equivalent",
+      "wrong_point": -0.1667,
+      "wrong_class": "undetermined"
+     },
+     "S": {
+      "quality": "undetermined",
+      "coverage_point": 0.0675,
+      "coverage_class": "undetermined",
+      "wrong_point": -0.1667,
+      "wrong_class": "undetermined"
+     }
+    },
+    "consensus": {
+     "C": {
+      "quality": "better",
+      "coverage_point": 0.0793,
+      "coverage_class": "better",
+      "wrong_point": -0.1667,
+      "wrong_class": "equivalent"
+     },
+     "G": {
+      "quality": "equivalent",
+      "coverage_point": 0.0247,
+      "coverage_class": "equivalent",
+      "wrong_point": -0.0833,
+      "wrong_class": "equivalent"
+     },
+     "S": {
+      "quality": "undetermined",
+      "coverage_point": 0.0675,
+      "coverage_class": "undetermined",
+      "wrong_point": -0.125,
+      "wrong_class": "equivalent"
+     }
+    }
+   },
+   "ledger_d29_quality": {
+    "C": {
+     "opus": {
+      "quality": "same",
+      "dcov": 0.011,
+      "wrong": [
+       1,
+       2
+      ]
+     },
+     "codex": {
+      "quality": "same",
+      "dcov": 0.079,
+      "wrong": [
+       8,
+       11
+      ]
+     },
+     "double_graded": "same"
+    },
+    "G": {
+     "opus": {
+      "quality": "same",
+      "dcov": -0.011,
+      "wrong": [
+       2,
+       2
+      ]
+     },
+     "codex": {
+      "quality": "same",
+      "dcov": 0.024,
+      "wrong": [
+       9,
+       11
+      ]
+     },
+     "double_graded": "same"
+    },
+    "S": {
+     "opus": {
+      "quality": "same",
+      "dcov": 0.01,
+      "wrong": [
+       1,
+       2
+      ]
+     },
+     "codex": {
+      "quality": "same",
+      "dcov": 0.067,
+      "wrong": [
+       9,
+       11
+      ]
+     },
+     "double_graded": "same"
+    }
+   }
+  },
+  "sonnet-5-5": {
+   "agreement": {
+    "opus_vs_codex": {
+     "answers": 48,
+     "labels": 348,
+     "raw_agreement": 0.894,
+     "kappa": 0.615,
+     "wrong_spearman": 0.68,
+     "wrong_total": [
+      21,
+      49
+     ]
+    },
+    "codex_original_vs_reversed": {
+     "answers": 48,
+     "labels": 348,
+     "raw_agreement": 0.94,
+     "kappa": 0.823,
+     "wrong_spearman": 0.895,
+     "wrong_total": [
+      49,
+      55
+     ]
+    }
+   },
+   "four_class": {
+    "opus": {
+     "C": {
+      "quality": "undetermined",
+      "coverage_point": -0.0208,
+      "coverage_class": "equivalent",
+      "wrong_point": 0.1667,
+      "wrong_class": "undetermined"
+     },
+     "G": {
+      "quality": "equivalent",
+      "coverage_point": 0.0124,
+      "coverage_class": "equivalent",
+      "wrong_point": 0.0833,
+      "wrong_class": "equivalent"
+     },
+     "S": {
+      "quality": "undetermined",
+      "coverage_point": -0.002,
+      "coverage_class": "equivalent",
+      "wrong_point": 0.1667,
+      "wrong_class": "undetermined"
+     }
+    },
+    "codex": {
+     "C": {
+      "quality": "undetermined",
+      "coverage_point": 0.0036,
+      "coverage_class": "equivalent",
+      "wrong_point": 0.1667,
+      "wrong_class": "undetermined"
+     },
+     "G": {
+      "quality": "equivalent",
+      "coverage_point": 0.0418,
+      "coverage_class": "equivalent",
+      "wrong_point": -0.0833,
+      "wrong_class": "equivalent"
+     },
+     "S": {
+      "quality": "equivalent",
+      "coverage_point": 0.0433,
+      "coverage_class": "equivalent",
+      "wrong_point": 0.0,
+      "wrong_class": "equivalent"
+     }
+    },
+    "consensus": {
+     "C": {
+      "quality": "undetermined",
+      "coverage_point": 0.0036,
+      "coverage_class": "equivalent",
+      "wrong_point": 0.1667,
+      "wrong_class": "undetermined"
+     },
+     "G": {
+      "quality": "equivalent",
+      "coverage_point": 0.0418,
+      "coverage_class": "equivalent",
+      "wrong_point": 0.0,
+      "wrong_class": "equivalent"
+     },
+     "S": {
+      "quality": "equivalent",
+      "coverage_point": 0.0433,
+      "coverage_class": "equivalent",
+      "wrong_point": 0.0833,
+      "wrong_class": "equivalent"
+     }
+    }
+   },
+   "ledger_d29_quality": {
+    "C": {
+     "opus": {
+      "quality": "same",
+      "dcov": -0.021,
+      "wrong": [
+       6,
+       4
+      ]
+     },
+     "codex": {
+      "quality": "better",
+      "dcov": 0.003,
+      "wrong": [
+       14,
+       12
+      ]
+     },
+     "double_graded": "same"
+    },
+    "G": {
+     "opus": {
+      "quality": "same",
+      "dcov": 0.012,
+      "wrong": [
+       5,
+       4
+      ]
+     },
+     "codex": {
+      "quality": "same",
+      "dcov": 0.041,
+      "wrong": [
+       11,
+       12
+      ]
+     },
+     "double_graded": "same"
+    },
+    "S": {
+     "opus": {
+      "quality": "same",
+      "dcov": -0.002,
+      "wrong": [
+       6,
+       4
+      ]
+     },
+     "codex": {
+      "quality": "better",
+      "dcov": 0.043,
+      "wrong": [
+       12,
+       12
+      ]
+     },
+     "double_graded": "same"
+    }
+   }
+  },
+  "opus-4-8": {
+   "agreement": {
+    "opus_vs_codex": {
+     "answers": 48,
+     "labels": 348,
+     "raw_agreement": 0.73,
+     "kappa": 0.461,
+     "wrong_spearman": 0.834,
+     "wrong_total": [
+      40,
+      64
+     ]
+    },
+    "codex_original_vs_reversed": {
+     "answers": 48,
+     "labels": 348,
+     "raw_agreement": 0.922,
+     "kappa": 0.861,
+     "wrong_spearman": 0.918,
+     "wrong_total": [
+      64,
+      66
+     ]
+    }
+   },
+   "four_class": {
+    "opus": {
+     "C": {
+      "quality": "undetermined",
+      "coverage_point": 0.0104,
+      "coverage_class": "equivalent",
+      "wrong_point": 0.1667,
+      "wrong_class": "undetermined"
+     },
+     "G": {
+      "quality": "worse",
+      "coverage_point": -0.1036,
+      "coverage_class": "worse",
+      "wrong_point": 0.0,
+      "wrong_class": "equivalent"
+     },
+     "S": {
+      "quality": "equivalent",
+      "coverage_point": -0.0342,
+      "coverage_class": "equivalent",
+      "wrong_point": 0.1667,
+      "wrong_class": "equivalent"
+     }
+    },
+    "codex": {
+     "C": {
+      "quality": "undetermined",
+      "coverage_point": 0.0208,
+      "coverage_class": "equivalent",
+      "wrong_point": 0.4167,
+      "wrong_class": "undetermined"
+     },
+     "G": {
+      "quality": "undetermined",
+      "coverage_point": 0.06,
+      "coverage_class": "undetermined",
+      "wrong_point": -0.4167,
+      "wrong_class": "better"
+     },
+     "S": {
+      "quality": "undetermined",
+      "coverage_point": 0.0283,
+      "coverage_class": "equivalent",
+      "wrong_point": 0.3333,
+      "wrong_class": "undetermined"
+     }
+    },
+    "consensus": {
+     "C": {
+      "quality": "undetermined",
+      "coverage_point": 0.0208,
+      "coverage_class": "equivalent",
+      "wrong_point": 0.2917,
+      "wrong_class": "undetermined"
+     },
+     "G": {
+      "quality": "undetermined",
+      "coverage_point": 0.06,
+      "coverage_class": "undetermined",
+      "wrong_point": -0.2083,
+      "wrong_class": "equivalent"
+     },
+     "S": {
+      "quality": "undetermined",
+      "coverage_point": 0.0283,
+      "coverage_class": "equivalent",
+      "wrong_point": 0.25,
+      "wrong_class": "undetermined"
+     }
+    }
+   },
+   "ledger_d29_quality": {
+    "C": {
+     "opus": {
+      "quality": "same",
+      "dcov": 0.011,
+      "wrong": [
+       11,
+       9
+      ]
+     },
+     "codex": {
+      "quality": "worse",
+      "dcov": 0.021,
+      "wrong": [
+       20,
+       15
+      ]
+     },
+     "double_graded": "same"
+    },
+    "G": {
+     "opus": {
+      "quality": "worse",
+      "dcov": -0.103,
+      "wrong": [
+       9,
+       9
+      ]
+     },
+     "codex": {
+      "quality": "same",
+      "dcov": 0.06,
+      "wrong": [
+       10,
+       15
+      ]
+     },
+     "double_graded": "same"
+    },
+    "S": {
+     "opus": {
+      "quality": "same",
+      "dcov": -0.034,
+      "wrong": [
+       11,
+       9
+      ]
+     },
+     "codex": {
+      "quality": "worse",
+      "dcov": 0.028,
+      "wrong": [
+       19,
+       15
+      ]
+     },
+     "double_graded": "same"
+    }
+   }
+  },
+  "haiku-5-5": {
+   "agreement": {
+    "opus_vs_codex": {
+     "answers": 48,
+     "labels": 348,
+     "raw_agreement": 0.845,
+     "kappa": 0.582,
+     "wrong_spearman": 0.354,
+     "wrong_total": [
+      19,
+      65
+     ]
+    },
+    "codex_original_vs_reversed": {
+     "answers": 48,
+     "labels": 348,
+     "raw_agreement": 0.925,
+     "kappa": 0.828,
+     "wrong_spearman": 0.817,
+     "wrong_total": [
+      65,
+      59
+     ]
+    },
+    "opus_A_vs_opus_B": {
+     "answers": 48,
+     "labels": 348,
+     "raw_agreement": 0.991,
+     "kappa": 0.966,
+     "wrong_spearman": 0.895,
+     "wrong_total": [
+      19,
+      17
+     ]
+    }
+   },
+   "four_class": {
+    "opus": {
+     "C": {
+      "quality": "equivalent",
+      "coverage_point": -0.0119,
+      "coverage_class": "equivalent",
+      "wrong_point": 0.0833,
+      "wrong_class": "equivalent"
+     },
+     "G": {
+      "quality": "worse",
+      "coverage_point": -0.058,
+      "coverage_class": "worse",
+      "wrong_point": 0.5833,
+      "wrong_class": "worse"
+     },
+     "S": {
+      "quality": "undetermined",
+      "coverage_point": -0.0104,
+      "coverage_class": "equivalent",
+      "wrong_point": 0.25,
+      "wrong_class": "undetermined"
+     }
+    },
+    "codex": {
+     "C": {
+      "quality": "undetermined",
+      "coverage_point": 0.0328,
+      "coverage_class": "undetermined",
+      "wrong_point": 0.25,
+      "wrong_class": "undetermined"
+     },
+     "G": {
+      "quality": "undetermined",
+      "coverage_point": -0.0222,
+      "coverage_class": "equivalent",
+      "wrong_point": 0.5,
+      "wrong_class": "undetermined"
+     },
+     "S": {
+      "quality": "worse",
+      "coverage_point": 0.0641,
+      "coverage_class": "undetermined",
+      "wrong_point": 0.6667,
+      "wrong_class": "worse"
+     }
+    },
+    "consensus": {
+     "C": {
+      "quality": "undetermined",
+      "coverage_point": 0.0328,
+      "coverage_class": "undetermined",
+      "wrong_point": 0.1667,
+      "wrong_class": "undetermined"
+     },
+     "G": {
+      "quality": "worse",
+      "coverage_point": -0.0222,
+      "coverage_class": "equivalent",
+      "wrong_point": 0.5417,
+      "wrong_class": "worse"
+     },
+     "S": {
+      "quality": "worse",
+      "coverage_point": 0.0641,
+      "coverage_class": "undetermined",
+      "wrong_point": 0.4583,
+      "wrong_class": "worse"
+     }
+    }
+   },
+   "ledger_d29_quality": {
+    "C": {
+     "opus": {
+      "quality": "same",
+      "dcov": -0.012,
+      "wrong": [
+       3,
+       2
+      ]
+     },
+     "codex": {
+      "quality": "worse",
+      "dcov": 0.033,
+      "wrong": [
+       15,
+       12
+      ]
+     },
+     "double_graded": "same"
+    },
+    "G": {
+     "opus": {
+      "quality": "worse",
+      "dcov": -0.058,
+      "wrong": [
+       9,
+       2
+      ]
+     },
+     "codex": {
+      "quality": "worse",
+      "dcov": -0.022,
+      "wrong": [
+       18,
+       12
+      ]
+     },
+     "double_graded": "worse"
+    },
+    "S": {
+     "opus": {
+      "quality": "worse",
+      "dcov": -0.011,
+      "wrong": [
+       5,
+       2
+      ]
+     },
+     "codex": {
+      "quality": "worse",
+      "dcov": 0.064,
+      "wrong": [
+       20,
+       12
+      ]
+     },
+     "double_graded": "worse"
+    }
+   }
+  }
+ },
+ "egm": {
+  "opus_vs_codex": {
+   "reports": 18,
+   "labels": 48,
+   "raw_agreement": 1.0,
+   "kappa": 1.0,
+   "unsupported_total": [
+    1,
+    7
+   ]
+  },
+  "codex_original_vs_reversed": {
+   "reports": 18,
+   "labels": 48,
+   "raw_agreement": 1.0,
+   "kappa": 1.0,
+   "unsupported_total": [
+    7,
+    7
+   ]
+  }
+ },
+ "court": {
+  "opus_vs_codex": {
+   "answers": 15,
+   "labels": 84,
+   "raw_agreement": 0.952,
+   "kappa": 0.778,
+   "wrong_spearman": 0.213,
+   "wrong_total": [
+    4,
+    76
+   ]
+  },
+  "codex_original_vs_reversed": {
+   "answers": 15,
+   "labels": 84,
+   "raw_agreement": 1.0,
+   "kappa": 1.0,
+   "wrong_spearman": 0.86,
+   "wrong_total": [
+    76,
+    72
+   ]
+  },
+  "bottom_line_agreement": "15/15",
+  "coverage_by_arm": {
+   "opus": {
+    "N": 0.938,
+    "P": 0.938,
+    "C": 0.829
+   },
+   "codex": {
+    "N": 0.938,
+    "P": 0.905,
+    "C": 0.796
+   }
+  }
+ }
+}
