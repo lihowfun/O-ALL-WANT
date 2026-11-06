@@ -38,8 +38,8 @@ def run(*args):
 
 
 class TriggerTests(unittest.TestCase):
-    def assertMode(self, expected, entries, commands=None, rule=None):
-        result = mode.classify(entries, commands)
+    def assertMode(self, expected, entries, hooked=None, rule=None):
+        result = mode.classify(entries, hooked)
         self.assertEqual(result["mode"], expected, result)
         if rule:
             self.assertIn(rule, [trigger["rule"] for trigger in result["triggers"]])
@@ -50,6 +50,7 @@ class TriggerTests(unittest.TestCase):
                      ".github/workflows/ci.yml", ".claude/settings.json", ".claude/settings.local.json",
                      ".claude/hooks/guard.sh", ".codex/config.toml", ".githooks/pre-commit", ".husky/pre-push",
                      ".pre-commit-config.yaml", "install.sh", "install.ps1", "tools/setup_env.sh", "bootstrap.py",
+                     "tools/setupEnv.sh", "installDeps.py", "Bootstrap-Dev.ps1", "installer.cmd",
                      "scripts/oaw.py", "scripts/harness_check.py", "scripts/context_hub.py", "scripts/oaw_mode.py"):
             with self.subTest(path=path):
                 result = self.assertMode("deep", [entry(path, lines=1)], rule="harness")
@@ -57,23 +58,38 @@ class TriggerTests(unittest.TestCase):
 
     def test_ordinary_paths_are_not_harness(self):
         for path in ("src/app.py", "scripts/train.py", "tools/scripts/oaw.py", "docs/AGENTS_notes.md", "README.md",
-                     ".github/ISSUE_TEMPLATE/bug.md", ".claude/agents/reviewer.md", "tests/test_setup.py"):
+                     ".github/ISSUE_TEMPLATE/bug.md", ".claude/agents/reviewer.md", "tests/test_setup.py",
+                     "tools/setupEnv.txt", "reinstall.sh", "src/my_setup.py"):
             with self.subTest(path=path):
                 self.assertMode("light", [entry(path, lines=10)])
 
     def test_scripts_named_in_claude_hook_commands_are_harness(self):
-        commands = ['python3 "$CLAUDE_PROJECT_DIR"/tools/guard.py --strict']
-        self.assertMode("deep", [entry("tools/guard.py", lines=2)], commands, rule="harness")
-        self.assertMode("light", [entry("tools/guard.pyc", lines=2), entry("other/tools/guard.py.bak", lines=2)], commands)
+        hooked = {"tools/guard.py"}
+        self.assertMode("deep", [entry("tools/guard.py", lines=2)], hooked, rule="harness")
+        self.assertMode("light", [entry("tools/guard.pyc", lines=2), entry("other/tools/guard.py", lines=2),
+                                  entry("guard.py", lines=2)], hooked)
 
-    def test_hook_commands_are_read_from_project_settings(self):
+    def hook_files(self, *commands):
         with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
+            root = Path(temporary).resolve()
             (root / ".claude").mkdir()
-            settings = {"hooks": {"PreToolUse": [{"matcher": "Bash", "hooks": [{"type": "command", "command": "bash tools/check.sh"}]}]}}
+            hooks = [{"type": "command", "command": command.replace("ROOT", root.as_posix())} for command in commands]
+            settings = {"hooks": {"PreToolUse": [{"matcher": "Bash", "hooks": hooks}]}}
             (root / ".claude/settings.json").write_text(json.dumps(settings), encoding="utf-8")
             (root / ".claude/settings.local.json").write_text("not json", encoding="utf-8")
-            self.assertEqual(mode.hook_commands(root), ["bash tools/check.sh"])
+            return mode.hook_commands(root), mode.hook_files(root)
+
+    def test_hook_commands_name_whole_project_relative_paths(self):
+        commands, files = self.hook_files("bash tools/check.sh")
+        self.assertEqual(commands, ["bash tools/check.sh"])
+        self.assertIn("tools/check.sh", files)
+        # Same file name in another directory is not the hooked file (codex review of 08dbe3c, item 4).
+        self.assertMode("light", [entry("check.sh", lines=1), entry("other/tools/check.sh", lines=1)], files)
+        self.assertMode("deep", [entry("tools/check.sh", lines=1)], files, rule="harness")
+        _, files = self.hook_files('python3 "$CLAUDE_PROJECT_DIR"/hooks/a.py --x=./cfg/b.json && ${CLAUDE_PROJECT_DIR}/c.sh',
+                                   "ROOT/scripts/d.py; node ./e.js|tee /tmp/log ../outside.sh")
+        self.assertTrue({"hooks/a.py", "cfg/b.json", "c.sh", "scripts/d.py", "e.js"} <= files, files)
+        self.assertFalse({"/tmp/log", "../outside.sh", "tmp/log", "outside.sh"} & files, files)
 
     def test_renamed_harness_file_counts_by_its_old_path(self):
         self.assertMode("deep", [entry("archive/AGENTS.old", status="R", old_path="templates/AGENTS.md")], rule="harness")
@@ -104,7 +120,7 @@ class TriggerTests(unittest.TestCase):
         self.assertMode("standard", [entry(f"src/f{i}.py", lines=1) for i in range(10)], rule="size")
         result = self.assertMode("light", [entry("docs/guide.md", lines=5000), entry("README.md", lines=900)])
         self.assertEqual(result["reasons"], ["documentation only (2 files)"])
-        self.assertEqual(mode.classify([])["reasons"], ["no changes found"])
+        self.assertEqual(mode.classify([])["reasons"], ["no changes found; for committed work or a pull request, pass --range BASE..HEAD"])
 
     def test_deep_wins_and_keeps_every_reason(self):
         result = self.assertMode("deep", [entry("src/a.py", lines=500), entry(".github/workflows/ci.yml", lines=3)])
@@ -143,7 +159,7 @@ class GitDiffTests(unittest.TestCase):
         self.write("README.md", "# Demo\n")
         self.write("src/app.py", "VALUE = 1\n")
         self.commit("base")
-        self.assertEqual(self.suggest()["reasons"], ["no changes found"])
+        self.assertEqual(self.suggest()["reasons"], ["no changes found; for committed work or a pull request, pass --range BASE..HEAD"])
         self.write("README.md", "# Demo\n\nMore words.\n")
         self.assertEqual(self.suggest()["mode"], "light")
         self.write("src/big.py", "".join(f"X{i} = {i}\n" for i in range(400)))  # untracked
@@ -186,6 +202,44 @@ class GitDiffTests(unittest.TestCase):
         outside.mkdir()
         code, _, errors = run("suggest", "--root", str(outside))
         self.assertEqual(code, 2)
+
+    def test_committed_work_needs_its_range(self):
+        self.write("a.py", "A = 1\n")
+        self.commit("base")
+        self.write(".github/workflows/ci.yml", "on: push\n")
+        self.commit("ci")
+        # A clean tree says light and points at --range (codex review of 08dbe3c, item 1).
+        result = self.suggest()
+        self.assertEqual(result["mode"], "light")
+        self.assertIn("--range BASE..HEAD", result["reasons"][0])
+        self.assertEqual(self.suggest("--range", "HEAD~1..HEAD")["mode"], "deep")
+
+    def test_sub_project_root_sees_only_its_own_files_with_relative_paths(self):
+        # codex review of 08dbe3c, item 2: --root inside a larger repository.
+        self.write("sub/src/app.py", "A = 1\n")
+        self.write("sub/README.md", "# Sub\n")
+        self.write("outside/big.py", "B = 1\n")
+        self.commit("base")
+        self.write("sub/src/app.py", "A = 2\n")
+        self.write("sub/new.py", "N = 1\n")  # untracked inside
+        self.write(".github/workflows/ci.yml", "on: push\n")  # untracked outside
+        self.write("outside/big.py", "".join(f"B{i} = {i}\n" for i in range(400)))
+        self.write("outside/AGENTS.md", "# Other\n")
+        sub = self.repo / "sub"
+        code, output, errors = run("suggest", "--root", str(sub), "--json")
+        self.assertEqual(code, 0, errors)
+        result = json.loads(output)
+        self.assertEqual((result["mode"], result["files"], result["code_lines"]), ("light", 2, 3), result)
+        self.commit("change")
+        self.write("sub/AGENTS.md", "# Sub policy\n")
+        self.git("mv", "sub/README.md", "sub/docs.md")
+        self.commit("policy")
+        code, output, errors = run("suggest", "--root", str(sub), "--json", "--range", "HEAD~2..HEAD")
+        result = json.loads(output)
+        self.assertEqual(result["mode"], "deep", result)
+        self.assertEqual(result["triggers"][0]["paths"], ["AGENTS.md"])
+        self.assertEqual(result["files"], 4, result)  # src/app.py, new.py, AGENTS.md, README.md renamed to docs.md
+        self.assertFalse(any(path.startswith(("sub/", "outside/", ".github/")) for t in result["triggers"] for path in t["paths"]))
 
     def test_path_list_counts_missing_paths_as_new(self):
         self.write("docs/designs/old.md", "# Old\n")
@@ -233,14 +287,15 @@ class ShowTests(unittest.TestCase):
         self.entry(".claude")
         self.assertEqual(self.show("standard").splitlines(), standard, "EGM never changes standard")
 
-    def test_deep_without_egm_is_standard_plus_plan_mode(self):
+    def test_deep_without_egm_keeps_the_highest_effort_and_falls_back_on_the_review(self):
         output = self.show("deep")
-        self.assertIn("EGM is not installed: standard plus plan mode", output)
-        self.assertIn("  claude --permission-mode plan --effort high\n", output)
+        self.assertIn("deep: plan first at the highest effort, then one fresh-context review (EGM is not installed)", output)
+        self.assertIn("  claude --permission-mode plan --effort max\n", output)
+        self.assertIn("  " + mode.CLAUDE_REVIEW + "\n", output)
         self.assertIn("  codex --sandbox read-only", output)
         self.assertIn("  review: codex review --uncommitted", output)
         self.assertNotIn("egm-review", output)
-        self.assertNotIn("--effort max", output)
+        self.assertNotIn("--effort high", output)
 
     def test_deep_with_egm_for_both_hosts(self):
         self.entry(".claude")
@@ -261,10 +316,19 @@ class ShowTests(unittest.TestCase):
         code, output, _ = run("show", "deep", "--root", str(self.root), "--json")
         result = json.loads(output)
         self.assertEqual(result["egm"], {"claude": False, "codex": True})
-        self.assertTrue(result["summary"].endswith("(Claude Code has no EGM entrypoint here: standard plus plan mode)"))
-        self.assertEqual(result["hosts"]["claude"][0], "claude --permission-mode plan --effort high")
-        self.assertIn("oaw.py init --host claude", result["hosts"]["claude"][-1])
+        self.assertTrue(result["summary"].endswith("(Claude Code has no EGM entrypoint here: one fresh-context review instead)"))
+        self.assertEqual(result["hosts"]["claude"][:2], ["claude --permission-mode plan --effort max", mode.CLAUDE_REVIEW])
+        self.assertIn(f"python3 scripts/oaw.py init --target {self.root.as_posix()} --host claude",
+                      result["hosts"]["claude"][-1])
         self.assertEqual(result["hosts"]["codex"][-1], "review: select the egm-review skill in the skill picker")
+        self.entry(".claude")
+        (self.root / ".agents/skills/egm-review/SKILL.md").unlink()
+        codex = json.loads(run("show", "deep", "--root", str(self.root), "--json")[1])["hosts"]["codex"]
+        self.assertIn(f"--target {self.root.as_posix()} --host codex", codex[-1])
+
+    def test_entrypoint_hint_quotes_a_path_with_spaces(self):
+        self.assertEqual(mode.add_entrypoint(Path("/work/my project"), "claude"),
+                         'python3 scripts/oaw.py init --target "/work/my project" --host claude')
 
     def test_effort_levels_match_the_checked_claude_cli(self):
         # Claude Code 2.1.287 --help: --effort <level> (low, medium, high, xhigh, max); max is the highest.
@@ -281,8 +345,10 @@ class InstalledPolicyTests(unittest.TestCase):
                 self.assertEqual(package["scripts/oaw_mode.py"], (ROOT / "scripts/oaw_mode.py").read_bytes())
                 policy = package["AGENTS.md"].decode("utf-8")
                 self.assertEqual(package["AGENTS.md"], oaw.render_policy(template, egm))
-                self.assertIn("Work light by default: a plain session with no extra review.", policy)
+                self.assertIn("Work light by default: no extra review.", policy)
                 self.assertIn("`python3 scripts/oaw_mode.py suggest`", policy)
+                # Committed work needs its range; a clean tree alone says light (codex review of 08dbe3c, item 1).
+                self.assertIn("(add `--range BASE..HEAD` for committed work or a pull request)", policy)
                 self.assertEqual("EGM" in policy, egm)
                 self.assertEqual("Run the full EGM review only when `suggest` says deep" in policy, egm)
                 self.assertLessEqual(len(policy.splitlines()), 25)
@@ -300,6 +366,27 @@ class InstalledPolicyTests(unittest.TestCase):
                 self.assertEqual(process.returncode, 0, process.stderr)
                 self.assertIn(expected, process.stdout)
 
+    def test_entrypoint_hint_adds_the_missing_host_to_this_project(self):
+        # codex review of 08dbe3c, item 3: the printed command must target the project, not the checkout.
+        with tempfile.TemporaryDirectory(prefix="oaw-mode-hint-") as temporary:
+            target = Path(temporary) / "project"
+            with contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(oaw.main(["init", "--target", str(target)]), 0)  # default: Codex entrypoints only
+            # Default root is the project that holds the installed script, whatever the working directory.
+            process = subprocess.run([sys.executable, str(target / "scripts/oaw_mode.py"), "show", "deep", "--json"],
+                                     capture_output=True, text=True, check=False, cwd=temporary)
+            self.assertEqual(process.returncode, 0, process.stderr)
+            note = json.loads(process.stdout)["hosts"]["claude"][-1]
+            command = note.split("from the OAW checkout, ", 1)[1].removesuffix(" adds it")
+            argv = command.split()
+            self.assertEqual(argv[:3], ["python3", "scripts/oaw.py", "init"])
+            with contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(oaw.main(argv[2:]), 0)
+            self.assertTrue((target / ".claude/skills/egm-review/SKILL.md").is_file())
+            self.assertFalse((ROOT / ".claude/skills/egm-review").exists(), "never installs into the checkout")
+            lines = mode.instructions("deep", target)["hosts"]["claude"]
+            self.assertEqual(lines[1], "review: type /egm-review  (explicit invocation only; the agent cannot start it)")
+
     def test_install_from_before_working_modes_is_warned_then_migrated(self):
         with tempfile.TemporaryDirectory(prefix="oaw-mode-upgrade-") as temporary:
             target = Path(temporary) / "project"
@@ -312,7 +399,8 @@ class InstalledPolicyTests(unittest.TestCase):
             del manifest["managed_files"]["scripts/oaw_mode.py"]
             policy = target / "AGENTS.md"
             old = "".join(line for line in policy.read_text(encoding="utf-8").splitlines(keepends=True)
-                          if "oaw_mode.py" not in line and not line.startswith("Work light")).encode("utf-8")
+                          if "oaw_mode.py" not in line and not line.startswith(("Work light", "(add `--range"))
+                          ).encode("utf-8")
             policy.write_bytes(old)
             manifest["managed_files"]["AGENTS.md"] = oaw.digest(old)
             manifest_path.write_text(json.dumps(manifest), encoding="utf-8")

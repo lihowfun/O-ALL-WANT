@@ -20,7 +20,9 @@ import fnmatch
 import json
 import os
 from pathlib import Path, PurePosixPath
+import posixpath
 import re
+import shlex
 import subprocess
 import sys
 
@@ -36,7 +38,8 @@ POLICY_NAMES = {"AGENTS.md", "CLAUDE.md"}
 HARNESS_SCRIPTS = {"oaw.py", "harness_check.py", "sync_examples.py", "sync_egm.py", "validate_skills.py",
                    "context_hub.py", "oaw_common.py", "oaw_mode.py", "wiki_sync.py", "improvement.py"}
 HOOK_PREFIXES = (".claude/hooks/", ".codex/", ".githooks/", ".husky/")
-INSTALLER = re.compile(r"(?i)^(?:install|setup|bootstrap)(?:[._-][^/]*)?\.(?:sh|ps1|bat|cmd|py)$")
+# install*, setup* or bootstrap* with a script extension: install.sh, setup_env.sh, installDeps.py.
+INSTALLER = re.compile(r"(?i)^(?:install|setup|bootstrap)[^/]*\.(?:sh|ps1|bat|cmd|py)$")
 UNTRACKED_LINE_LIMIT = 1_000_000  # bytes; larger untracked files count as files without line counts
 SUGGEST_EXAMPLES = "Examples: --range main..HEAD, --paths docs/a.md scripts/b.py"
 
@@ -58,18 +61,11 @@ def git(root: Path, *args: str) -> bytes:
 
 
 def project_root(value: str | None) -> Path:
-    if value:
-        root = Path(value).resolve()
-        if not root.is_dir():
-            raise ModeError(f"root is not a directory: {value}")
-        return root
-    try:
-        process = subprocess.run(["git", "rev-parse", "--show-toplevel"], stdin=subprocess.DEVNULL,
-                                 capture_output=True, check=False)
-    except OSError:
-        return Path.cwd().resolve()
-    top = process.stdout.decode("utf-8", "replace").strip()
-    return Path(top).resolve() if process.returncode == 0 and top else Path.cwd().resolve()
+    """The project to inspect: --root, else the folder that holds this script's scripts/ folder."""
+    root = Path(value).resolve() if value else Path(__file__).resolve().parents[1]
+    if not root.is_dir():
+        raise ModeError(f"root is not a directory: {value}")
+    return root
 
 
 def split_z(data: bytes) -> list[str]:
@@ -128,7 +124,9 @@ def diff_entries(root: Path, revision_range: str | None) -> tuple[list[dict], st
         except ModeError:  # no commit yet: compare with the empty tree
             spec = [git(root, "hash-object", "-t", "tree", "--stdin").decode().strip()]
         source = "working tree against HEAD"
-    options = ["--no-ext-diff", "--no-textconv", "--find-renames", "-z"]
+    # --relative keeps a sub-project root to its own files, with root-relative paths;
+    # ls-files run from the root lists only untracked files below it, relative to it.
+    options = ["--relative", "--no-ext-diff", "--no-textconv", "--find-renames", "-z"]
     entries = parse_name_status(git(root, "diff", "--name-status", *options, *spec, "--"))
     for path, lines in parse_numstat(git(root, "diff", "--numstat", *options, *spec, "--")).items():
         if path in entries:
@@ -183,18 +181,39 @@ def hook_commands(root: Path) -> list[str]:
     return commands
 
 
+def hook_files(root: Path) -> set[str]:
+    """Project-relative paths named in hook commands; hooks run from the project directory."""
+    prefixes = ("$CLAUDE_PROJECT_DIR/", "${CLAUDE_PROJECT_DIR}/", root.as_posix().rstrip("/") + "/")
+    files = set()
+    for command in hook_commands(root):
+        try:
+            lexer = shlex.shlex(command, posix=True, punctuation_chars=True)
+            lexer.whitespace_split = True
+            tokens = list(lexer)
+        except ValueError:
+            tokens = command.split()
+        for token in tokens:
+            value = token.rsplit("=", 1)[-1].replace("\\", "/")
+            value = next((value[len(p):] for p in prefixes if value.startswith(p)), value)
+            if not value or value.startswith(("/", "$", "~", "-")) or re.match(r"[A-Za-z]:", value):
+                continue
+            value = posixpath.normpath(value)
+            if value != "." and not value.startswith("../") and value != "..":
+                files.add(value)
+    return files
+
+
 def is_doc(path: str) -> bool:
     return path.split("/", 1)[0] == "docs" or PurePosixPath(path).suffix.lower() in DOC_SUFFIXES
 
 
-def harness_rule(path: str, commands: list[str]) -> bool:
+def harness_rule(path: str, hooked: set[str]) -> bool:
     name = PurePosixPath(path).name
     if (name in POLICY_NAMES or path.startswith(("templates/", ".github/workflows/", *HOOK_PREFIXES))
             or re.fullmatch(r"\.claude/settings[^/]*\.json", path) or path == ".pre-commit-config.yaml"
             or INSTALLER.fullmatch(name) or (path.startswith("scripts/") and path.count("/") == 1 and name in HARNESS_SCRIPTS)):
         return True
-    pattern = re.compile(r"(?<![\w.-])" + re.escape(path) + r"(?![\w.-])")
-    return any(pattern.search(command) for command in commands)
+    return path in hooked
 
 
 def schema_rule(path: str) -> bool:
@@ -218,11 +237,11 @@ def listed(paths: list[str], limit: int = 5) -> str:
     return shown + (f" and {len(paths) - limit} more" if len(paths) > limit else "")
 
 
-def classify(entries: list[dict], commands: list[str] | None = None) -> dict:
-    commands = commands or []
+def classify(entries: list[dict], hooked: set[str] | None = None) -> dict:
+    hooked = hooked or set()
     paths = lambda rule: [e["path"] for e in entries  # noqa: E731
                           if rule(e["path"]) or (e["old_path"] and rule(e["old_path"]))]
-    harness = paths(lambda p: harness_rule(p, commands))
+    harness = paths(lambda p: harness_rule(p, hooked))
     schema = paths(schema_rule)
     deleted = [e["path"] for e in entries if e["status"] == "D"]
     design = [e["path"] for e in entries if design_rule(e)]
@@ -249,7 +268,7 @@ def classify(entries: list[dict], commands: list[str] | None = None) -> dict:
                                    f"(threshold {STANDARD_LINES} lines or {STANDARD_FILES} files)"})
     mode = next((m for m in ("deep", "standard") if any(t["mode"] == m for t in triggers)), "light")
     if not entries:
-        reasons = ["no changes found"]
+        reasons = ["no changes found; for committed work or a pull request, pass --range BASE..HEAD"]
     elif triggers:
         reasons = [t["reason"] for t in triggers]
     elif not code:
@@ -279,9 +298,18 @@ CODEX_PLAN = ("codex --sandbox read-only  (plan in this read-only pass, then imp
               "Codex plan-mode and effort flags are not mapped yet)")
 
 
+def add_entrypoint(root: Path, host: str) -> str:
+    target = root.as_posix() if re.fullmatch(r"[\w./:@+-]+", root.as_posix()) else f'"{root}"'
+    return f"python3 scripts/oaw.py init --target {target} --host {host}"
+
+
 def instructions(mode: str, root: Path) -> dict:
-    """Exact host commands for a mode (flags checked with Claude Code 2.1.287 and codex-cli 0.167.0)."""
+    """Exact host commands for a mode (flags checked with Claude Code 2.1.287 and codex-cli 0.167.0).
+
+    Deep always plans at the highest effort; only its review falls back when a host lacks EGM.
+    """
     egm = egm_hosts(root)
+    deep_claude = "claude --permission-mode plan --effort max"
     if mode == "light":
         summary = "light: plain session, no extra review (the default)"
         claude, codex = ["claude"], ["codex"]
@@ -293,23 +321,22 @@ def instructions(mode: str, root: Path) -> dict:
         summary = "deep: plan first at the highest effort, then the EGM review"
         if not all(egm.values()):
             missing = "Claude Code" if not egm["claude"] else "Codex"
-            summary += f" ({missing} has no EGM entrypoint here: standard plus plan mode)"
+            summary += f" ({missing} has no EGM entrypoint here: one fresh-context review instead)"
         if egm["claude"]:
-            claude = ["claude --permission-mode plan --effort max",
-                      "review: type /egm-review  (explicit invocation only; the agent cannot start it)"]
+            claude = [deep_claude, "review: type /egm-review  (explicit invocation only; the agent cannot start it)"]
         else:
-            claude = ["claude --permission-mode plan --effort high", CLAUDE_REVIEW,
-                      "note: EGM's Claude Code entrypoint is not installed here; "
-                      "oaw.py init --host claude, run from the OAW checkout, adds it"]
+            claude = [deep_claude, CLAUDE_REVIEW,
+                      "note: EGM's Claude Code entrypoint is not installed here; from the OAW checkout, "
+                      + add_entrypoint(root, "claude") + " adds it"]
         if egm["codex"]:
             codex = [CODEX_PLAN, "review: select the egm-review skill in the skill picker"]
         else:
             codex = [CODEX_PLAN, CODEX_REVIEW,
-                     "note: EGM's Codex entrypoint is not installed here; "
-                     "oaw.py init --host codex, run from the OAW checkout, adds it"]
+                     "note: EGM's Codex entrypoint is not installed here; from the OAW checkout, "
+                     + add_entrypoint(root, "codex") + " adds it"]
     else:
-        summary = "deep: plan first, then one fresh-context review (EGM is not installed: standard plus plan mode)"
-        claude = ["claude --permission-mode plan --effort high", CLAUDE_REVIEW]
+        summary = "deep: plan first at the highest effort, then one fresh-context review (EGM is not installed)"
+        claude = [deep_claude, CLAUDE_REVIEW]
         codex = [CODEX_PLAN, CODEX_REVIEW]
     return {"mode": mode, "summary": summary, "egm": egm, "hosts": {"claude": claude, "codex": codex}}
 
@@ -338,7 +365,7 @@ def main(argv: list[str] | None = None) -> int:
     commands = parser.add_subparsers(dest="command", required=True)
     suggest = commands.add_parser("suggest", help="pick light, standard or deep from a change",
                                   description="Default: the working tree (staged, unstaged and untracked files) "
-                                              "against HEAD. " + SUGGEST_EXAMPLES)
+                                              "against HEAD; pass --range for committed work. " + SUGGEST_EXAMPLES)
     source = suggest.add_mutually_exclusive_group()
     source.add_argument("--range", dest="revision_range", metavar="A..B", help="a git revision range instead")
     source.add_argument("--paths", nargs="+", metavar="PATH",
@@ -346,7 +373,7 @@ def main(argv: list[str] | None = None) -> int:
     show = commands.add_parser("show", help="print how to run a mode")
     show.add_argument("mode", choices=MODES)
     for sub in (suggest, show):
-        sub.add_argument("--root", help="project directory (default: the git top level, else the current directory)")
+        sub.add_argument("--root", help="project directory (default: the folder that holds this script's scripts/ folder)")
         sub.add_argument("--json", action="store_true", help="print a machine-readable result")
     args = parser.parse_args(argv)
     try:
@@ -359,7 +386,7 @@ def main(argv: list[str] | None = None) -> int:
                 entries, label = path_entries(root, args.paths)
             else:
                 entries, label = diff_entries(root, args.revision_range)
-            result = {"schema_version": 1, "source": label, **classify(entries, hook_commands(root))}
+            result = {"schema_version": 1, "source": label, **classify(entries, hook_files(root))}
             text = render_suggest(result)
     except ModeError as exc:
         print(f"oaw_mode: {exc}", file=sys.stderr)

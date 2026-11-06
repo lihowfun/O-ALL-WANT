@@ -7,8 +7,8 @@ Use the skills enabled in this project's recipe; EGM keeps its explicit invocati
 <!-- oaw:else -->
 Use the skills enabled in this project's recipe.
 <!-- oaw:end -->
-Work light by default: a plain session with no extra review. Before any review, run
-`python3 scripts/oaw_mode.py suggest`, then follow `python3 scripts/oaw_mode.py show MODE`.
+Work light by default: no extra review. Before any review, run `python3 scripts/oaw_mode.py suggest`
+(add `--range BASE..HEAD` for committed work or a pull request), then the `show` command it prints.
 <!-- oaw:if egm -->
 Run the full EGM review only when `suggest` says deep, never on unrelated tasks.
 <!-- oaw:end -->

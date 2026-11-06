@@ -41,9 +41,10 @@ All notable changes to this project will be documented in this file.
   diff, a range or a path list with fixed rules (deep: harness or infrastructure that runs on every session, more
   than 5 deleted files, migrations or schema files, a new design document; standard: 300+ code lines or 10+ code
   files; light: everything else, docs included), and `show`, which prints the exact Claude Code and Codex commands
-  for a mode, naming the EGM review only for a host whose `egm-review` entrypoint is installed (without it, deep is
-  standard plus plan mode). The installed `AGENTS.md` adds two lines in both recipes (light by default; run
-  `suggest` before any review) and, only with EGM, one line limiting the full EGM review to deep; it replaces
+  for a mode: deep always plans at the highest effort and names the EGM review only for a host whose `egm-review`
+  entrypoint is installed (without it, the review falls back to one fresh-context review). The installed `AGENTS.md`
+  adds two lines in both recipes (light by default; run `suggest`, with `--range BASE..HEAD` for committed work,
+  before any review) and, only with EGM, one line limiting the full EGM review to deep; it replaces
   "Installing it does not require running its full review flow on unrelated tasks". Existing installs receive the
   new policy and helper through `oaw.py migrate`; doctor requires the helper once the install owns it or the policy
   names it, and only warns for an install made before this change. Evidence: `tests/test_oaw_mode.py`
@@ -251,6 +252,14 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Working modes after a cross-family fresh-context review of the first commit (`codex review --commit 08dbe3c`, five
+  P2 findings, each reproduced): the policy and a clean-tree `suggest` now point at `--range BASE..HEAD`, since a
+  clean tree alone said light for committed work; a `--root` inside a larger repository sees only its own files with
+  root-relative paths (`git diff --relative`), and the default root is the project that holds the script; the
+  entrypoint hint includes `--target <project>`, so it no longer installs into the OAW checkout; hook-command files
+  are compared as whole project-relative paths, so a root `check.sh` no longer matches `tools/check.sh`; installer
+  names such as `setupEnv.sh` and `installDeps.py` now match. Owner decision: deep always uses `--effort max`, with or
+  without EGM; only the review step falls back. Evidence: regression tests in `tests/test_oaw_mode.py`.
 - Removing EGM now removes it (D6; found by the 2026-11-06 EGM self-test). A recipe without any EGM
   skill, from `oaw.py init`/`migrate --skills` or `catalog.py remove egm --apply`, no longer writes or
   keeps the pinned runtime under `.oaw/integrations/egm/`: migrate previews its 66 files as `retire`,
