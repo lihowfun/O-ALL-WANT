@@ -1,0 +1,71 @@
+{
+ "opus": {
+  "E": {
+   "1": true,
+   "2": true,
+   "3": true
+  },
+  "N": {
+   "1": false,
+   "2": false,
+   "3": false,
+   "4": false,
+   "5": true,
+   "6": false
+  },
+  "P": {
+   "1": true,
+   "2": true,
+   "3": true
+  },
+  "E_caught": "3/3",
+  "N_caught": "1/6",
+  "fisher_p_one_sided": 0.047619047619047616,
+  "reading": "holds"
+ },
+ "codex": {
+  "E": {
+   "1": true,
+   "2": true,
+   "3": true
+  },
+  "N": {
+   "1": false,
+   "2": false,
+   "3": false,
+   "4": false,
+   "5": true,
+   "6": false
+  },
+  "P": {
+   "1": true,
+   "2": true,
+   "3": true
+  },
+  "E_caught": "3/3",
+  "N_caught": "1/6",
+  "fisher_p_one_sided": 0.047619047619047616,
+  "reading": "holds"
+ },
+ "verdict": "holds",
+ "tokens_events": {
+  "N": [
+   40819,
+   39614,
+   40595,
+   39667,
+   40637,
+   39983
+  ],
+  "E": [
+   1205598,
+   1068862,
+   1430844
+  ],
+  "P": [
+   42222,
+   40756,
+   40438
+  ]
+ }
+}
