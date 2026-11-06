@@ -1,0 +1,224 @@
+{
+ "questions": [
+  {
+   "id": "q1",
+   "type": "mechanism",
+   "question": "How does the extension host communicate with the main process?",
+   "facts": [
+    {
+     "id": "q1f1",
+     "fact": "Both sides talk through the same RPCProtocol class: getProxy(identifier) returns a JS Proxy that turns any $-prefixed method call into _remoteCall, which serializes a request (rpcId, method name, args), sends it on the message-passing protocol and returns a promise, while the receiving side's _receiveOneMessage/_receiveRequest/_doInvokeHandler calls that method on the object registered with set(identifier, instance), sends an Acknowledged message, then a ReplyOK or ReplyErr message that settles the caller's promise.",
+     "where": "src/vs/workbench/services/extensions/common/rpcProtocol.ts::RPCProtocol._createProxy, RPCProtocol._remoteCall, RPCProtocol._receiveOneMessage, RPCProtocol._receiveRequest",
+     "essential": true
+    },
+    {
+     "id": "q1f2",
+     "fact": "The contract is declared in extHost.protocol.ts: MainThread*Shape interfaces with MainContext identifiers (implemented on the main/workbench side and called from the extension host) and ExtHost*Shape interfaces with ExtHostContext identifiers (implemented in the extension host and called from the workbench), each identifier created with createProxyIdentifier, which assigns a numeric id (nid) used on the wire.",
+     "where": "src/vs/workbench/api/common/extHost.protocol.ts::MainContext, ExtHostContext; src/vs/workbench/services/extensions/common/proxyIdentifier.ts::createProxyIdentifier, ProxyIdentifier",
+     "essential": true
+    },
+    {
+     "id": "q1f3",
+     "fact": "The 'main' end of this RPC for the desktop local extension host is the workbench in the renderer (window) process, not the Electron main process: ExtensionHostManager._createExtensionHostCustomers creates the RPCProtocol there, instantiates every MainThread* class registered with @extHostNamedCustomer (ExtHostCustomersRegistry), sets each as the local actor for its MainContext id, and asserts that all MainContext ids are registered.",
+     "where": "src/vs/workbench/services/extensions/common/extensionHostManager.ts::ExtensionHostManager._createExtensionHostCustomers; src/vs/workbench/services/extensions/common/extHostCustomers.ts::extHostNamedCustomer, ExtHostCustomersRegistry",
+     "essential": true
+    },
+    {
+     "id": "q1f4",
+     "fact": "On desktop the local extension host is an Electron utility process: the renderer asks the main-process ExtensionHostStarter (over the 'extensionHostStarter' IPC channel) to create and start it, WindowUtilityProcess.start forks vs/workbench/api/node/extensionHostProcess with utilityProcess.fork, creates a MessageChannelMain, gives one port to the utility process and posts the other to the window on 'vscode:startExtensionHostMessagePortResult' with a nonce, and from then on the renderer and the extension host exchange messages directly over that MessagePort instead of relaying through the main process.",
+     "where": "src/vs/platform/extensions/electron-main/extensionHostStarter.ts::ExtensionHostStarter.start; src/vs/platform/utilityProcess/electron-main/utilityProcess.ts::WindowUtilityProcess.start, UtilityProcess.connect; src/vs/workbench/services/extensions/electron-browser/localProcessExtensionHost.ts::NativeLocalProcessExtensionHost._establishProtocol; src/vs/workbench/api/node/extensionHostProcess.ts::_createExtHostProtocol",
+     "essential": true
+    },
+    {
+     "id": "q1f5",
+     "fact": "Before RPC starts there is a raw handshake: the extension host sends a Ready message, the renderer replies with the JSON-serialized IExtensionHostInitData, the extension host answers Initialized (MessageType Ready/Initialized/Terminate in extensionHostProtocol.ts), and Terminate is later used to ask the extension host to shut down gracefully.",
+     "where": "src/vs/workbench/services/extensions/electron-browser/localProcessExtensionHost.ts::NativeLocalProcessExtensionHost._performHandshake; src/vs/workbench/api/node/extensionHostProcess.ts::connectToRenderer; src/vs/workbench/services/extensions/common/extensionHostProtocol.ts::MessageType",
+     "essential": false
+    },
+    {
+     "id": "q1f6",
+     "fact": "Each RPC message is a binary buffer that starts with a 1-byte MessageType and a 4-byte request id; the types are RequestJSONArgs/RequestMixedArgs (each with a WithCancellation variant), Acknowledged, Cancel, ReplyOKEmpty/ReplyOKVSBuffer/ReplyOKJSON/ReplyOKJSONWithBuffers and ReplyErrError/ReplyErrEmpty, with arguments JSON-stringified except VSBuffer and SerializableObjectWithBuffers values, which are sent as binary.",
+     "where": "src/vs/workbench/services/extensions/common/rpcProtocol.ts::MessageType, MessageBuffer, MessageIO.serializeRequestArguments, MessageIO.serializeRequest",
+     "essential": false
+    },
+    {
+     "id": "q1f7",
+     "fact": "Inside the extension host, ExtensionHostMain wraps the connected protocol in its own RPCProtocol (with a URI transformer for remote), exposes it as IExtHostRpcService, and createApiFactoryAndRegisterActors registers the ExtHost* actors with rpcProtocol.set and asserts every ExtHostContext id is registered, while API implementations call the workbench via rpcProtocol.getProxy(MainContext.X).",
+     "where": "src/vs/workbench/api/common/extensionHostMain.ts::ExtensionHostMain (constructor); src/vs/workbench/api/common/extHostRpcService.ts::ExtHostRpcService; src/vs/workbench/api/common/extHost.api.impl.ts::createApiFactoryAndRegisterActors",
+     "essential": false
+    },
+    {
+     "id": "q1f8",
+     "fact": "Other extension host kinds reuse the same RPCProtocol over different transports: the remote extension host over a PersistentProtocol socket from connectRemoteAgentExtensionHost, the web worker extension host over a MessagePort to a hidden iframe/worker, and extensionHostProcess.ts also supports IPC-pipe and Socket connections (ExtHostConnectionType) wrapped in PersistentProtocol.",
+     "where": "src/vs/workbench/services/extensions/common/remoteExtensionHost.ts::RemoteExtensionHost.start; src/vs/workbench/services/extensions/browser/webWorkerExtensionHost.ts::WebWorkerExtensionHost; src/vs/workbench/services/extensions/common/extensionHostEnv.ts::ExtHostConnectionType; src/vs/workbench/api/node/extensionHostProcess.ts::_createExtHostProtocol",
+     "essential": false
+    }
+   ]
+  },
+  {
+   "id": "q2",
+   "type": "flow",
+   "question": "This question follows on from \"How does the extension host communicate with the main process?\"; \"that path\" means the communication path between the extension host and the main process. Where in that path would a message be dropped if the extension host crashes?",
+   "facts": [
+    {
+     "id": "q2f1",
+     "fact": "The renderer learns of the crash only through the exit event of the utility process: ExtensionHostStarter.onDynamicExit (WindowUtilityProcess.onExit, fired from the process 'exit' event) reaches NativeLocalProcessExtensionHost._onExtHostProcessExit, which fires onExit unless the host was being terminated on purpose (_terminating), and the main process also logs the exit and force-kills the pid if it still exists 1 s later.",
+     "where": "src/vs/workbench/services/extensions/electron-browser/localProcessExtensionHost.ts::NativeLocalProcessExtensionHost._onExtHostProcessExit; src/vs/platform/extensions/electron-main/extensionHostStarter.ts::ExtensionHostStarter.createExtensionHost; src/vs/platform/utilityProcess/electron-main/utilityProcess.ts::UtilityProcess",
+     "essential": false
+    },
+    {
+     "id": "q2f2",
+     "fact": "That exit is handled by AbstractExtensionService._onExtensionHostCrashOrExit -> _onExtensionHostCrashed, which for a LocalProcess host calls _doStopExtensionHosts, whose ExtensionHostCollection.stopAllInReverse disconnects and disposes every extension host manager, and ExtensionHostManager.dispose disposes its RPCProtocol.",
+     "where": "src/vs/workbench/services/extensions/common/abstractExtensionService.ts::AbstractExtensionService._onExtensionHostCrashed, AbstractExtensionService._doStopExtensionHosts, ExtensionHostCollection.stopAllInReverse; src/vs/workbench/services/extensions/common/extensionHostManager.ts::ExtensionHostManager.dispose",
+     "essential": true
+    },
+    {
+     "id": "q2f3",
+     "fact": "RPCProtocol.dispose sets _isDisposed and rejects every entry in _pendingRPCReplies with a canceled error, so requests already sent to the crashed extension host never get a reply and their callers see a cancellation instead.",
+     "where": "src/vs/workbench/services/extensions/common/rpcProtocol.ts::RPCProtocol.dispose",
+     "essential": true
+    },
+    {
+     "id": "q2f4",
+     "fact": "After disposal, _remoteCall returns a CanceledLazyPromise without sending anything, so new proxy calls are dropped, and _receiveOneMessage returns immediately, so any late incoming message is ignored (replies for unknown request ids are also ignored by _receiveReply/_receiveReplyErr).",
+     "where": "src/vs/workbench/services/extensions/common/rpcProtocol.ts::RPCProtocol._remoteCall, RPCProtocol._receiveOneMessage, RPCProtocol._receiveReply; src/vs/workbench/services/extensions/common/lazyPromise.ts::CanceledLazyPromise",
+     "essential": true
+    },
+    {
+     "id": "q2f5",
+     "fact": "Between the crash and the exit notification nothing checks delivery: the renderer's send is a fire-and-forget port.postMessage on the MessagePort, and the only signal is that unacknowledged requests make RPCProtocol switch to ResponsiveState.Unresponsive after 3 s (UNRESPONSIVE_TIME), which ExtensionHostManager forwards and AbstractExtensionService logs as 'unresponsive'.",
+     "where": "src/vs/workbench/services/extensions/electron-browser/localProcessExtensionHost.ts::NativeLocalProcessExtensionHost._establishProtocol; src/vs/workbench/services/extensions/common/rpcProtocol.ts::RPCProtocol._onWillSendRequest, RPCProtocol._checkUnresponsive",
+     "essential": false
+    },
+    {
+     "id": "q2f6",
+     "fact": "During that shutdown NativeLocalProcessExtensionHost.disconnect tries to send a Terminate message (waiting at most 1 s for the protocol) and swallows any error, so with a crashed host the Terminate message is silently lost.",
+     "where": "src/vs/workbench/services/extensions/electron-browser/localProcessExtensionHost.ts::NativeLocalProcessExtensionHost.disconnect",
+     "essential": false
+    },
+    {
+     "id": "q2f7",
+     "fact": "Lost messages are not replayed: NativeExtensionService._onExtensionHostCrashed restarts the extension hosts automatically unless this is the third crash within 5 minutes (ExtensionHostCrashTracker), and the restarted host gets a fresh RPCProtocol and only re-runs previously requested activation events (_allRequestedActivateEvents).",
+     "where": "src/vs/workbench/services/extensions/electron-browser/nativeExtensionService.ts::NativeExtensionService._onExtensionHostCrashed; src/vs/workbench/services/extensions/common/abstractExtensionService.ts::ExtensionHostCrashTracker, AbstractExtensionService.startExtensionHosts",
+     "essential": false
+    },
+    {
+     "id": "q2f8",
+     "fact": "By contrast, socket-based connections (remote extension host) use PersistentProtocol, which keeps unacknowledged messages in _outgoingUnackMsg and resends them after reconnection, so a temporary connection loss does not drop messages; the extension host process terminates itself only if the renderer does not reconnect within the reconnection grace time.",
+     "where": "src/vs/base/parts/ipc/common/ipc.net.ts::PersistentProtocol; src/vs/workbench/api/node/extensionHostProcess.ts::_createExtHostProtocol",
+     "essential": false
+    }
+   ]
+  },
+  {
+   "id": "q3",
+   "type": "impact",
+   "question": "This question follows on from \"How does the extension host communicate with the main process?\"; \"that protocol\" means the protocol the extension host uses to talk to the main process, and \"a new message type\" means a new kind of call that the extension host can make to the main side. What would I need to change to add a new message type to that protocol?",
+   "facts": [
+    {
+     "id": "q3f1",
+     "fact": "Declare the call in extHost.protocol.ts: add a $-prefixed method to an existing MainThread*Shape interface, or define a new MainThreadXShape and add an entry MainThreadX: createProxyIdentifier<MainThreadXShape>('MainThreadX') to MainContext.",
+     "where": "src/vs/workbench/api/common/extHost.protocol.ts::MainContext (and the MainThread*Shape interfaces)",
+     "essential": true
+    },
+    {
+     "id": "q3f2",
+     "fact": "The method name must start with $ because RPCProtocol's proxy only synthesizes remote stubs for property names whose first character is '$' (CharCode.DollarSign), forwarding them to _remoteCall(rpcId, name, args).",
+     "where": "src/vs/workbench/services/extensions/common/rpcProtocol.ts::RPCProtocol._createProxy",
+     "essential": false
+    },
+    {
+     "id": "q3f3",
+     "fact": "Implement it on the main side in a MainThreadX class under src/vs/workbench/api/browser/ decorated with @extHostNamedCustomer(MainContext.MainThreadX), and import that file from extensionHost.contribution.ts so the decorator runs and ExtensionHostManager instantiates it and registers it with rpcProtocol.set for every extension host.",
+     "where": "src/vs/workbench/api/browser/extensionHost.contribution.ts; src/vs/workbench/services/extensions/common/extHostCustomers.ts::extHostNamedCustomer; src/vs/workbench/services/extensions/common/extensionHostManager.ts::ExtensionHostManager._createExtensionHostCustomers",
+     "essential": true
+    },
+    {
+     "id": "q3f4",
+     "fact": "A new MainContext identifier without a registered customer breaks extension host startup: MainThreadExtensionService passes all MainContext identifiers through _setAllMainProxyIdentifiers, and _createExtensionHostCustomers calls assertRegistered, which throws 'Missing proxy instance <id>'.",
+     "where": "src/vs/workbench/api/browser/mainThreadExtensionService.ts::MainThreadExtensionService (constructor); src/vs/workbench/services/extensions/common/rpcProtocol.ts::RPCProtocol.assertRegistered",
+     "essential": false
+    },
+    {
+     "id": "q3f5",
+     "fact": "Call it from the extension host via rpcProtocol.getProxy(MainContext.MainThreadX).$method(...) (IExtHostRpcService), usually inside an ExtHostX class; if the main side must call back, also add an ExtHostXShape with an ExtHostContext entry and register the instance with rpcProtocol.set(ExtHostContext.ExtHostX, ...) in createApiFactoryAndRegisterActors, where assertRegistered(Object.values(ExtHostContext)) checks it.",
+     "where": "src/vs/workbench/api/common/extHost.api.impl.ts::createApiFactoryAndRegisterActors; src/vs/workbench/api/common/extHostRpcService.ts::IExtHostRpcService",
+     "essential": true
+    },
+    {
+     "id": "q3f6",
+     "fact": "Arguments and results must survive serialization, as the Proxied<T>/Dto<T> types express: values are JSON-stringified (functions are dropped), VSBuffer and SerializableObjectWithBuffers go as binary, URIs travel as UriComponents to be revived (and transformed for remote), and a trailing CancellationToken argument becomes a WithCancellation request plus a Cancel message.",
+     "where": "src/vs/workbench/services/extensions/common/proxyIdentifier.ts::Dto, Proxied, SerializableObjectWithBuffers; src/vs/workbench/services/extensions/common/rpcProtocol.ts::MessageIO.serializeRequestArguments, RPCProtocol._remoteCall",
+     "essential": false
+    },
+    {
+     "id": "q3f7",
+     "fact": "No change is needed in the wire layer, because requests carry the rpcId (one byte, writeUInt8) and the method name generically; only a new wire-level kind would need a new MessageType enum value, new MessageIO serialize/deserialize methods and a new case in RPCProtocol._receiveOneMessage, whose default branch logs 'received unexpected message'.",
+     "where": "src/vs/workbench/services/extensions/common/rpcProtocol.ts::MessageType, MessageIO, RPCProtocol._receiveOneMessage",
+     "essential": false
+    },
+    {
+     "id": "q3f8",
+     "fact": "To expose the feature to extensions, the API also has to be added to src/vscode-dts/vscode.d.ts (or a vscode.proposed.*.d.ts proposal) and wired into the vscode namespace object that createApiFactoryAndRegisterActors returns.",
+     "where": "src/vscode-dts/vscode.d.ts; src/vs/workbench/api/common/extHost.api.impl.ts::createApiFactoryAndRegisterActors",
+     "essential": false
+    }
+   ]
+  },
+  {
+   "id": "q4",
+   "type": "mechanism",
+   "question": "How does the keybinding service resolve a chord to a command?",
+   "facts": [
+    {
+     "id": "q4f1",
+     "fact": "WorkbenchKeybindingService registers keydown and keyup listeners on every window (_registerKeyListeners); keydown wraps the event in a StandardKeyboardEvent and calls _dispatch, and keyup feeds _singleModifierDispatch for single-modifier chords such as 'shift shift'.",
+     "where": "src/vs/workbench/services/keybinding/browser/keybindingService.ts::WorkbenchKeybindingService._registerKeyListeners",
+     "essential": false
+    },
+    {
+     "id": "q4f2",
+     "fact": "The keyboard event is converted to a ResolvedKeybinding by the layout-aware keyboard mapper (resolveKeyboardEvent -> _keyboardMapper.resolveKeyboardEvent, using MacLinux/Windows/Fallback keyboard mappers), and getDispatchChords() gives the dispatch string for the pressed chord.",
+     "where": "src/vs/workbench/services/keybinding/browser/keybindingService.ts::WorkbenchKeybindingService.resolveKeyboardEvent; src/vs/workbench/services/keybinding/electron-browser/nativeKeyboardLayout.ts::KeyboardLayoutService.getKeyboardMapper (desktop); src/vs/workbench/services/keybinding/browser/keyboardLayoutService.ts::BrowserKeyboardLayoutService.getKeyboardMapper (web)",
+     "essential": false
+    },
+    {
+     "id": "q4f3",
+     "fact": "AbstractKeybindingService._doDispatch takes the context for the event target from the context key service (getContext(target)) and calls KeybindingResolver.resolve(context, currentChords, keypress), where currentChords are the chords already pressed in an ongoing multi-chord sequence (_currentChords).",
+     "where": "src/vs/platform/keybinding/common/abstractKeybindingService.ts::AbstractKeybindingService._doDispatch",
+     "essential": true
+    },
+    {
+     "id": "q4f4",
+     "fact": "KeybindingResolver.resolve looks up the candidates for the first chord in _map, keeps those whose later chords match the chords pressed so far, and _findCommand scans them from the end (later, higher-priority entries win) for the first whose when clause evaluates true; it returns MoreChordsNeeded if that keybinding has more chords than were pressed, KbFound(command, args, bubble) otherwise, and NoMatchingKb when nothing matches.",
+     "where": "src/vs/platform/keybinding/common/keybindingResolver.ts::KeybindingResolver.resolve, KeybindingResolver._findCommand",
+     "essential": true
+    },
+    {
+     "id": "q4f5",
+     "fact": "On MoreChordsNeeded the service stores the chord in _currentChords, shows the status message '(...) was pressed. Waiting for second key of chord...' and leaves chord mode after 5 s or when the window loses focus; on KbFound it leaves chord mode and runs ICommandService.executeCommand(commandId, args); on NoMatchingKb during chord mode it shows 'The key combination (...) is not a command.' and leaves chord mode.",
+     "where": "src/vs/platform/keybinding/common/abstractKeybindingService.ts::AbstractKeybindingService._doDispatch, AbstractKeybindingService._expectAnotherChord, AbstractKeybindingService._scheduleLeaveChordMode, AbstractKeybindingService._leaveChordMode",
+     "essential": true
+    },
+    {
+     "id": "q4f6",
+     "fact": "The resolver is built lazily in WorkbenchKeybindingService._getResolver from KeybindingsRegistry.getDefaultKeybindings() (core rules plus extension-contributed keybindings, sorted by weight from EditorCore to ExternalExtension) followed by the user's keybindings.json entries, after handleRemovals applies '-command' removals, and it is rebuilt when keybindings, extensions or the keyboard layout change.",
+     "where": "src/vs/workbench/services/keybinding/browser/keybindingService.ts::WorkbenchKeybindingService._getResolver, WorkbenchKeybindingService.updateResolver; src/vs/platform/keybinding/common/keybindingsRegistry.ts::KeybindingsRegistryImpl.getDefaultKeybindings; src/vs/platform/keybinding/common/keybindingResolver.ts::KeybindingResolver.handleRemovals",
+     "essential": false
+    },
+    {
+     "id": "q4f7",
+     "fact": "CommandService.executeCommand fires the onCommand:<id> activation event (activating the contributing extension if needed) and then runs the handler registered in CommandsRegistry.",
+     "where": "src/vs/workbench/services/commands/common/commandService.ts::CommandService.executeCommand, CommandService._tryExecuteCommand",
+     "essential": false
+    },
+    {
+     "id": "q4f8",
+     "fact": "Keystrokes that are part of an IME composition are not dispatched (_dispatch returns false when isKeyInComposition(e)).",
+     "where": "src/vs/platform/keybinding/common/abstractKeybindingService.ts::AbstractKeybindingService._dispatch",
+     "essential": false
+    }
+   ]
+  }
+ ]
+}
