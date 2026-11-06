@@ -18,6 +18,8 @@ case "$COND" in
   *) echo "COND must be opus48 or haiku"; exit 2 ;;
 esac
 TURNS=14
+# ADDENDUM-HAIKU.md (2026-11-06): the owner asked to finish Haiku's repeats 2 and 3; BUDGET_OVERRIDE raises the cap.
+BUDGET="${BUDGET_OVERRIDE:-$BUDGET}"
 GRADER=claude-opus-5-5
 EFFORT=high
 unset ANTHROPIC_API_KEY ANTHROPIC_AUTH_TOKEN ANTHROPIC_BASE_URL
@@ -49,3 +51,10 @@ python3 "$C/taste_grade.py" --questions "$Q" --rows "$OUT/rows.jsonl" --claude "
   --model "$GRADER" --effort "$EFFORT"
 echo "grade exit $?"
 python3 "$C/confirm_summary.py" "$OUT/rows.jsonl" "$OUT/grades.jsonl" "$OUT/summary.json"
+if [ -n "${GRADE_TWICE:-}" ]; then
+  # D29: an AI-graded quality difference counts only if it holds in a second, independent grading of the same answers.
+  python3 "$C/taste_grade.py" --questions "$Q" --rows "$OUT/rows.jsonl" --claude "$CLAUDE" --out "$OUT/grades-b.jsonl" \
+    --model "$GRADER" --effort "$EFFORT"
+  echo "grade-b exit $?"
+  python3 "$C/confirm_summary.py" "$OUT/rows.jsonl" "$OUT/grades-b.jsonl" "$OUT/summary-b.json"
+fi
