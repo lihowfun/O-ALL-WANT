@@ -1,0 +1,5 @@
+# Raw transcripts, work copies and copied files stay local (native transcripts are not published).
+*/out/raw/
+*/out/work/
+*/out/files/
+__pycache__/
