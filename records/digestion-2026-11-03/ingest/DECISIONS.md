@@ -300,3 +300,32 @@ feature, round or kit.
 6. Running food code inside the tasting area is the standing permission of D25. If the host's safety layer
    blocks it, the agent records "blocked" and asks the owner once for a standing rule scoped to the tasting
    area, never per food.
+
+## D29. Verdicts: default, optional or excrete (2026-11-06, owner in chat: "照建議改成 D29", on recommendation 1 of `records/digestion-2026-11-06/SOP_AUDIT.md`; refines D21 tier B and D28 item 5)
+The SOP audit and the EGM self-test showed the tasting rules both excreted cheap small gains (thresholds far
+above run-to-run noise, native at the ceiling, "not shown better" filed as declined) and absorbed costly small
+gains (cost ignored once "better"), and that verdict edges sat inside AI-grader noise.
+1. Every tasting compares the food with native on two axes, fixed in its PREREG before any run:
+   - quality: better, same or worse. An AI-graded difference counts only if it holds in two independent
+     gradings of the same answers; mechanical grading (hidden tests, executable checks) needs no second pass.
+     Anything inside the band is "same", including "the instrument cannot tell".
+   - cost: the food's token median over native's (per question, then median), with the PREREG's "cheaper" rule.
+2. Outcomes (with several model conditions, the lowest condition decides):
+   - default (進預設): better and cost <= 1.5x native; or same and cheaper by the PREREG rule.
+   - optional (可選用): same and cost <= 1.5x; or better but cost > 1.5x. Available, not default; called
+     explicitly (as EGM already is in V2).
+   - excrete (排掉): worse; or same and cost > 1.5x.
+3. Ledger verdicts: default -> `absorb` (rebuild, D21 A/B) or `plug-in` (official version); optional ->
+   `optional`; excrete -> `decline`. `not-shown-better` stays readable for old records and is not used for
+   new ones. D21 tiers still apply: anything tier C (food code at runtime, new runtime dependency) waits on the
+   owner before it is installed, whether default or optional. External plugins OAW does not install are
+   documented as optional; the owner installs them through the host.
+4. A recorded verdict must match its quality, cost and cheaper fields; the catalog engine checks this.
+5. Earlier foods are judged again on the same data and recorded as D29 re-judgments.
+
+## D30. Mechanical limits never stop a food; plain answers on request (2026-11-06, owner in chat: "停止試吃千萬別是甚麼snap 50MB之類的 不要因為這個卡", "snapshot exceeds 50 MB 限制沒有任何意義", "消化吸收盡量最大程度減少我需要審核或人工校閱的步驟 但我如果有問 要能夠直白找出來")
+1. Archive size and file-count caps only bound what is stored and scanned; past them files are skipped and
+   flagged F-PARTIAL and the food is tasted (claude/oaw-2 27a5312).
+2. `catalog.py why [food]` answers the owner plainly: verdict, reason, whether the food's own arm ran, numbers,
+   evidence commit, who it waits on (claude/oaw-2 13dcbb1).
+3. A grader or runner call that spends zero tokens or is cut by a usage limit is "not run", never a score.
