@@ -1,0 +1,79 @@
+{
+ "schema": "oaw-tasting/1",
+ "food": "egm-selftest",
+ "date": "2026-11-06",
+ "records": {
+  "branch": "records",
+  "path": "records/digestion-2026-11-06/egm-selftest",
+  "commit": "7fec5e8284432d41fc8e2deb6192afcd411afdc9"
+ },
+ "protocol": {
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "corpus": "evals/egm-local design-review cases orders, events, clean (frozen 2026-10-29); host OAW V2 (claude/oaw-2) with EGM taken out; Claude Code 2.1.287",
+  "questions": {
+   "count": 3,
+   "sha256": "d108b3a9e5993ef7aceabb9a790b3bad3e1d749bfe0ffe8336e2ff6454c66ad2",
+   "file": "evals/egm-local/spec.json"
+  },
+  "repeats": 2,
+  "grading": "one zero-context blind grader per review (claude-opus-5-5 high) against the frozen rubric; arm words masked",
+  "host": "Claude Code 2.1.287 on Linux, subscription (apiKeySource none), --setting-sources project"
+ },
+ "arms": [
+  {
+   "id": "N",
+   "label": "native review, OAW V2 without EGM",
+   "food_arm": false,
+   "runs": 6,
+   "graded_runs": 6,
+   "results": {
+    "coverage": 0.75,
+    "essential_correct": 8,
+    "essential_total": 8,
+    "wrong_claims": 0,
+    "token_median": 40709,
+    "tokens_total": 245887
+   }
+  },
+  {
+   "id": "E",
+   "label": "EGM f0ba151 official Claude Code plugin, project scope, /egm:egm-review uninterrupted",
+   "food_arm": true,
+   "runs": 6,
+   "graded_runs": 6,
+   "results": {
+    "coverage": 1.0,
+    "essential_correct": 8,
+    "essential_total": 8,
+    "wrong_claims": 0,
+    "token_median": 1137230,
+    "tokens_total": 7169908
+   }
+  },
+  {
+   "id": "P",
+   "label": "positive control: N plus a leaky review checklist in CLAUDE.md (instrument check only)",
+   "food_arm": false,
+   "runs": 6,
+   "graded_runs": 6,
+   "results": {
+    "coverage": 1.0,
+    "essential_correct": 8,
+    "essential_total": 8,
+    "wrong_claims": 1,
+    "token_median": 40578,
+    "tokens_total": 244581
+   }
+  }
+ ],
+ "food_arm_ran": {
+  "graded_runs": 6,
+  "evidence": "out/rows.jsonl and out/grades.jsonl: 6 graded E reviews, egm plugin and egm:egm-review in every init, 49 real egm sub-agents"
+ },
+ "verdict": "absorb",
+ "verdict_zh": "吸收（比原生好）：埋缺陷 16/16 對原生 12/16，沒有根據的指控 0 對 0；但進步只來自 events 的兩個計畫缺陷（原生寫成不確定事項），token 是原生的 28 倍",
+ "blocked_on_owner": null,
+ "notes": "Self-test of the SOP (owner 2026-11-06), not an intake: EGM is already bundled in V2 and 'egm' is a reserved catalog id, so this record is not applied to the ledger. Rules frozen in PREREG.md (065f068). Positive control P was also judged better (instrument can detect gains; native 12/16, no ceiling). Under the D21 tier-B wording E ships, P does not (1 unsupported claim vs 0). 2 of 3 repeats: the budget guard stopped before orders r3 (pooled cap 9.0M). One E session cut by the usage limit was not counted as a run (291,284 tokens, out/deviations.jsonl). Food budget used 7,951,660; overhead 2,100,838 (probes 1,987,477, grading 113,361). User-level plugin state restored (proof.json)."
+}
