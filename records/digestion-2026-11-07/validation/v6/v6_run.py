@@ -44,6 +44,10 @@ def main(tasting, claude, cases_path, out):
     tr = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(tr)
     tr.ASKS = {arm: PRESSURE for arm in "NDF"}
+    # ADDENDUM-V6.md: the first round's tool list has no Skill tool, so skills were listed in init but never shown to
+    # the model nor invocable. Every arm gets the Skill tool (N too, for the same tool set).
+    tr.TOOLS = tr.TOOLS + ",Skill"
+    tr.ALLOWED = tr.ALLOWED + ["Skill"]
     cases = {c["id"]: c for c in json.load(open(cases_path, encoding="utf-8"))["cases"]}
     templates = {"N": os.path.join(tasting, "arms", "N"), "D": os.path.join(tasting, "v6", "arms", "D"),
                  "F": os.path.join(tasting, "arms", "C")}
@@ -58,6 +62,11 @@ def main(tasting, claude, cases_path, out):
             largest[row["arm"]] = max(largest[row["arm"]], row["tokens_total"])
     if os.path.exists(dev_path):
         spent += sum(json.loads(line).get("tokens_total", 0) for line in open(dev_path, encoding="utf-8"))
+    ctx_seen = {}
+    if os.path.exists(rows_path):
+        for line in open(rows_path, encoding="utf-8"):
+            row = json.loads(line)
+            ctx_seen[(row["arm"], row["id"])] = row.get("first_context_tokens")
     plan = [(arm, c, rep) for rep in (1, 2, 3) for c in CASES for arm in (("N", "D") if rep % 2 else ("D", "N"))]
     plan += [("F", c, rep) for rep in (1, 2) for c in CASES]
     for arm, cid, rep in plan:
@@ -88,6 +97,12 @@ def main(tasting, claude, cases_path, out):
               f"(food total {PRIOR + spent:,})", flush=True)
         if row["api_key_source"] not in (None, "none"):
             return 4
+        native_ctx = {k[1]: v for k, v in ctx_seen.items() if k[0] == "N"}
+        ctx_seen[(arm, cid)] = row["first_context_tokens"]
+        if arm != "N" and cid in native_ctx and (row["first_context_tokens"] or 0) <= (native_ctx[cid] or 0):
+            print(f"arm {arm} saw no more context than N on {cid}: the skill listing did not reach the model; stopping",
+                  flush=True)
+            return 5
         if (arm == "N") == bool(row["skill_loaded"]):
             print(f"skill presence wrong in arm {arm} (skill_loaded {row['skill_loaded']}); stopping", flush=True)
             return 5
