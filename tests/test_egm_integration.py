@@ -223,13 +223,13 @@ class EgmIntegrationTests(unittest.TestCase):
         self.assertEqual({path.removeprefix(RUNTIME): data for path, data in package.items() if path.startswith(RUNTIME)},
                          snapshot(self.vendor))
 
-    def test_explicit_empty_selection_installs_core_and_runtime_without_native_skills(self):
+    def test_explicit_empty_selection_installs_core_without_native_skills_or_runtime(self):
         result = self.install(skills=[])
         self.assertEqual(result["pending_conflicts"], [])
         self.assertFalse((self.target / ".agents/skills").exists())
         self.assertTrue((self.target / "AGENTS.md").is_file())
         self.assertTrue((self.target / "scripts/context_hub.py").is_file())
-        self.assertEqual(snapshot(self.target / RUNTIME), snapshot(self.vendor))
+        self.assertFalse((self.target / ".oaw/integrations").exists())
         self.assertEqual(oaw.doctor(self.target)["status"], "healthy")
 
     def test_invalid_skill_selection_is_rejected_before_target_creation(self):
@@ -301,6 +301,144 @@ class EgmIntegrationTests(unittest.TestCase):
         self.install()
         self.assertEqual(snapshot(self.target), before)
         self.assertFalse((self.target / ".agents/skills/egm-draft").exists())
+
+    def manifest(self, target=None):
+        return json.loads(((target or self.target) / ".oaw/install.json").read_text(encoding="utf-8"))
+
+    def test_egm_free_recipe_has_no_runtime_files_and_policy_names_egm_only_with_egm(self):
+        template = (self.framework / "templates/AGENTS.md").read_bytes()
+        for hosts in (["codex"], ["codex", "claude"]):
+            for skills in ([], ["oaw-evidence"]):
+                with self.subTest(hosts=hosts, skills=skills):
+                    target = self.base / f"egm-free-{len(hosts)}-{len(skills)}"
+                    package = oaw.source_files("minimal", False, hosts=hosts, skills=skills)
+                    self.assertFalse(any(path.startswith((RUNTIME, ".claude/agents/")) for path in package))
+                    self.install(target=target, hosts=hosts, skills=skills)
+                    self.assertFalse((target / ".oaw/integrations").exists())
+                    manifest = self.manifest(target)
+                    self.assertEqual(manifest["integrations"], {})
+                    self.assertFalse(any(path.startswith(RUNTIME) for path in manifest["managed_files"]))
+                    policy = (target / "AGENTS.md").read_bytes()
+                    self.assertEqual(policy, oaw.render_policy(template, False))
+                    self.assertNotIn(b"EGM", policy)
+                    self.assertNotIn(b"oaw:", policy)
+                    self.assertIn(b"Use the skills enabled in this project's recipe.\n", policy)
+                    health = oaw.doctor(target)
+                    self.assertEqual(health["status"], "healthy", health)
+                    self.assertFalse(any(check["status"] != "PASS" for check in health["checks"]), health)
+        for skills in (None, ["egm-review"]):
+            with self.subTest(skills=skills):
+                target = self.base / f"with-egm-{skills is None}"
+                self.install(target=target, skills=skills)
+                policy = (target / "AGENTS.md").read_bytes()
+                self.assertEqual(policy, oaw.render_policy(template, True))
+                self.assertIn(b"OAW v2 includes the complete pinned EGM runtime and native skill entrypoints.\n", policy)
+                self.assertNotIn(b"oaw:", policy)
+                self.assertEqual(snapshot(target / RUNTIME), snapshot(self.vendor))
+                self.assertEqual(self.manifest(target)["integrations"], {"egm": oaw.EGM_INTEGRATION})
+
+    def test_policy_template_markers_are_strict(self):
+        plain = b"# Policy\nNo conditional text.\n"
+        self.assertEqual(oaw.render_policy(plain, True), plain)
+        self.assertEqual(oaw.render_policy(plain, False), plain)
+        block = b"a\n<!-- oaw:if egm -->\nwith\n<!-- oaw:else -->\nwithout\n<!-- oaw:end -->\nb\n"
+        self.assertEqual(oaw.render_policy(block, True), b"a\nwith\nb\n")
+        self.assertEqual(oaw.render_policy(block, False), b"a\nwithout\nb\n")
+        for broken in (b"<!-- oaw:if egm -->\nx\n", b"<!-- oaw:else -->\n", b"<!-- oaw:end -->\n",
+                       b"<!-- oaw:if egm -->\n<!-- oaw:if egm -->\n<!-- oaw:end -->\n"):
+            with self.subTest(template=broken), self.assertRaises(oaw.InstallError):
+                oaw.render_policy(broken, True)
+
+    def test_removing_every_egm_skill_retires_runtime_and_policy_text_then_readd_restores_the_layer(self):
+        self.install(hosts=["codex", "claude"])
+        layer = lambda: {path: data for path, data in snapshot(self.target).items()  # noqa: E731
+                         if not path.startswith((".oaw/backups/", ".oaw/proposals/")) and path != ".oaw/install.json"}
+        before, manifest_before = layer(), self.manifest()
+        plan = oaw.plan_install(self.target, "minimal", False, migrate=True, skills=["oaw-evidence"])
+        self.assertEqual(layer(), before, "a preview writes nothing")
+        actions = {action["path"]: action["action"] for action in plan["actions"]}
+        runtime = [path for path in manifest_before["managed_files"] if path.startswith(RUNTIME)]
+        self.assertEqual(len(runtime), len(snapshot(self.vendor)))
+        self.assertTrue(all(actions[path] == "retire" for path in runtime))
+        self.assertEqual(actions["AGENTS.md"], "replace")
+        result = oaw.apply_plan(plan, migrate=True)
+        self.assertEqual(result["pending_conflicts"], [])
+        self.assertFalse((self.target / ".oaw/integrations").exists())
+        backup = self.target / result["backup"]
+        self.assertEqual(snapshot(backup / RUNTIME), snapshot(self.vendor))
+        self.assertEqual((backup / "AGENTS.md").read_bytes(), before["AGENTS.md"])
+        self.assertNotIn(b"EGM", (self.target / "AGENTS.md").read_bytes())
+        manifest = self.manifest()
+        self.assertEqual(manifest["integrations"], {})
+        self.assertFalse(any(path.startswith(RUNTIME) or "egm" in path for path in manifest["managed_files"]))
+        health = oaw.doctor(self.target)
+        self.assertEqual(health["status"], "healthy", health)
+        self.assertFalse(any(check["status"] != "PASS" for check in health["checks"]), health)
+        readd = oaw.plan_install(self.target, "minimal", False, migrate=True, skills=manifest_before["skills"])
+        self.assertFalse(any(action["action"].startswith("retire") for action in readd["actions"]))
+        oaw.apply_plan(readd, migrate=True)
+        self.assertEqual(layer(), before)
+        manifest = self.manifest()
+        for field in ("managed_files", "custom_files", "integrations", "skills", "hosts", "installation_id"):
+            self.assertEqual(manifest[field], manifest_before[field], field)
+        self.assertEqual(oaw.doctor(self.target)["status"], "healthy")
+
+    def test_customized_policy_is_kept_when_egm_is_removed_and_its_egm_text_is_flagged(self):
+        self.install()
+        policy = self.target / "AGENTS.md"
+        custom = policy.read_bytes() + b"\nRun `make test` before claiming a change works.\n"
+        policy.write_bytes(custom)
+        result = self.install(skills=["oaw-evidence"], migrate=True)
+        self.assertEqual(result["pending_conflicts"], ["AGENTS.md"])
+        self.assertEqual(policy.read_bytes(), custom)
+        proposal = self.target / result["proposals"][0]
+        self.assertEqual(proposal.relative_to(self.target).parts[-1], "AGENTS.md")
+        self.assertNotIn(b"EGM", proposal.read_bytes())
+        self.assertFalse((self.target / RUNTIME).exists())
+        kept = self.install(skills=["oaw-evidence"], migrate=True, keep_custom=["AGENTS.md"])
+        self.assertEqual(kept["pending_conflicts"], [])
+        self.assertEqual(policy.read_bytes(), custom)
+        health = oaw.doctor(self.target)
+        self.assertEqual(health["status"], "healthy", health)
+        self.assertTrue(any(check["status"] == "WARN" and check["path"] == "AGENTS.md" for check in health["checks"]), health)
+
+    def test_edited_runtime_file_blocks_only_its_own_retirement(self):
+        self.install()
+        edited = self.target / RUNTIME / "README.md"
+        content = edited.read_bytes() + b"\nProject notes about EGM.\n"
+        edited.write_bytes(content)
+        result = self.install(skills=["oaw-evidence"], migrate=True)
+        self.assertEqual(result["pending_conflicts"], [RUNTIME + "README.md"])
+        self.assertEqual(edited.read_bytes(), content)
+        self.assertEqual(set(snapshot(self.target / RUNTIME)), {"README.md"})
+        self.assertEqual(self.manifest()["integrations"], {"egm": oaw.EGM_INTEGRATION})
+        self.assertEqual(oaw.doctor(self.target)["status"], "unhealthy")
+        self.install(skills=["oaw-evidence"], migrate=True, keep_custom=[RUNTIME + "README.md"])
+        self.assertEqual(edited.read_bytes(), content)
+        self.assertEqual(self.manifest()["integrations"], {})
+        health = oaw.doctor(self.target)
+        self.assertEqual(health["status"], "healthy", health)
+
+    def test_pre_fix_egm_free_install_is_flagged_then_migrated_with_backups(self):
+        # Before this fix an EGM-free recipe still received the runtime and the EGM policy text.
+        with patch.object(oaw, "egm_selected", return_value=True):
+            self.install(skills=["oaw-evidence"])
+        self.assertEqual(snapshot(self.target / RUNTIME), snapshot(self.vendor))
+        self.assertIn(b"EGM", (self.target / "AGENTS.md").read_bytes())
+        health = oaw.doctor(self.target)
+        self.assertEqual(health["status"], "healthy", health)
+        warned = {check["path"] for check in health["checks"] if check["status"] == "WARN"}
+        self.assertEqual(warned, {RUNTIME, "AGENTS.md"})
+        with self.assertRaises(oaw.InstallError):
+            self.install(skills=["oaw-evidence"])
+        self.assertEqual(snapshot(self.target / RUNTIME), snapshot(self.vendor))
+        result = self.install(skills=["oaw-evidence"], migrate=True)
+        self.assertEqual(result["pending_conflicts"], [])
+        self.assertFalse((self.target / RUNTIME).exists())
+        self.assertEqual(snapshot(self.target / result["backup"] / RUNTIME), snapshot(self.vendor))
+        self.assertNotIn(b"EGM", (self.target / "AGENTS.md").read_bytes())
+        health = oaw.doctor(self.target)
+        self.assertFalse(any(check["status"] != "PASS" for check in health["checks"]), health)
 
     def test_migration_preserves_custom_policy_project_memory_and_foreign_native_skills(self):
         retained = {
@@ -391,8 +529,27 @@ class EgmIntegrationTests(unittest.TestCase):
                 self.assertTrue(any(check["status"] == "FAIL" and check["path"] == RUNTIME
                                     for check in health["checks"]), health)
 
-    def test_doctor_requires_modern_v2_runtime_even_when_all_native_skills_are_disabled(self):
-        self.install(skills=[])
+    def test_doctor_needs_no_runtime_without_egm_and_only_warns_about_leftovers(self):
+        self.install(skills=["oaw-evidence"])
+        health = oaw.doctor(self.target)
+        self.assertEqual(health["status"], "healthy", health)
+        self.assertFalse(any(check["path"] in (RUNTIME, "AGENTS.md") and check["status"] != "PASS"
+                             for check in health["checks"]), health)
+        stray = self.target / RUNTIME / "README.md"
+        stray.parent.mkdir(parents=True)
+        stray.write_bytes(b"Left behind by hand.\n")
+        health = oaw.doctor(self.target)
+        self.assertEqual(health["status"], "healthy", health)
+        self.assertTrue(any(check["status"] == "WARN" and check["path"] == RUNTIME for check in health["checks"]), health)
+
+    def test_doctor_still_requires_runtime_for_a_retained_custom_egm_entrypoint(self):
+        self.install(skills=["egm-review"])
+        relative = ".agents/skills/egm-review/SKILL.md"
+        entry = self.target / relative
+        entry.write_bytes(entry.read_bytes() + b"\nProject-owned review guidance.\n")
+        self.install(skills=["oaw-evidence"], migrate=True, keep_custom=[relative])
+        self.assertEqual(snapshot(self.target / RUNTIME), snapshot(self.vendor))
+        self.assertEqual(oaw.doctor(self.target)["status"], "healthy")
         manifest_path = self.target / ".oaw/install.json"
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         manifest.pop("integrations")
@@ -492,7 +649,8 @@ class EgmIntegrationTests(unittest.TestCase):
             self.assertEqual((self.target / result["backup"] / relative).read_bytes(), content)
         self.assertEqual(foreign.read_bytes(), before[".claude/agents/project-reviewer.md"])
         self.assertTrue((self.target / ".claude/skills/oaw-evidence/SKILL.md").is_file())
-        self.assertEqual(snapshot(self.target / RUNTIME), snapshot(self.vendor))
+        self.assertFalse((self.target / RUNTIME).exists())
+        self.assertEqual(snapshot(self.target / result["backup"] / RUNTIME), snapshot(self.vendor))
         self.assertEqual(oaw.doctor(self.target)["status"], "healthy")
 
     def test_edited_native_agent_retirement_preserves_edit_and_remains_pending(self):

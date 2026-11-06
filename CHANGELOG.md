@@ -235,6 +235,22 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Removing EGM now removes it (D6; found by the 2026-11-06 EGM self-test). A recipe without any EGM
+  skill, from `oaw.py init`/`migrate --skills` or `catalog.py remove egm --apply`, no longer writes or
+  keeps the pinned runtime under `.oaw/integrations/egm/`: migrate previews its 66 files as `retire`,
+  backs them up and removes them (emptied folders included), and an edited runtime file stays a
+  conflict. The manifest records the EGM integration only while its runtime is installed. The installed
+  `AGENTS.md` names EGM only when EGM is installed: `templates/AGENTS.md` stays the one authored
+  source, with an `<!-- oaw:if egm -->` block that the installer renders per recipe (the EGM rendering
+  is byte-identical to the previous policy, so EGM installs and the examples are unchanged). An unedited
+  policy is replaced with backup; a customized one is never rewritten (a proposal is staged, and
+  `catalog.py remove egm` asks to resolve it through `oaw.py migrate` first). `readd egm` or a restore
+  point brings the same layer back. `oaw.py doctor` no longer fails a project without EGM; it still
+  verifies the runtime for a selected or retained EGM entrypoint, and warns (never fails) when an
+  EGM-free project still holds the runtime or the EGM policy text, as installs made before this fix
+  do. Re-running `init` on such an install now asks for `migrate`, like any other retirement.
+  Evidence: offline installer and catalog regression tests (`tests/test_egm_integration.py`,
+  `tests/test_catalog.py`, `tests/test_skills.py`); no host discovery or model run.
 - `wiki_sync.py memory-check` (prototype) after the goldfish diff review: line numbers count only
   line breaks, not U+2028 or form feeds (SL-01); calls such as `res.json()` and prose such as
   `A:B` are skipped (SL-02, SL-05); a top-level symlink or junction is never followed and bare

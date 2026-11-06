@@ -250,7 +250,7 @@ python3 scripts/sync_examples.py --write
 
 確切版本與使用狀態見 [v2.0.0 來源版本表](docs/releases/2.0.0-sources.md)。
 EGM **0.1.0**、commit [`f0ba151b252c9abf1318d9fe857a43265d06de89`](https://github.com/google/elephant-goldfish-model/tree/f0ba151b252c9abf1318d9fe857a43265d06de89)
-完整 runtime 已內建於 V2，安裝至 `.oaw/integrations/egm/`。上游檔案保留原文、Apache-2.0 授權與逐檔雜湊；入口轉接變更另列於來源紀錄。
+完整 runtime 已內建於 V2，recipe 選了任一 EGM skill 時安裝至 `.oaw/integrations/egm/`。上游檔案保留原文、Apache-2.0 授權與逐檔雜湊；入口轉接變更另列於來源紀錄。
 採用、替換與淘汰建議見 [review](docs/reviews/2026-10-29-pr4-egm.md)。
 
 **v2 保留的歷史概念來源**（當時未記錄上游版本；以下是閱讀入口，並非固定版本的 runtime 相依）

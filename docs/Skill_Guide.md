@@ -26,7 +26,8 @@ checks local references; it does not replace the host's full skill specification
 `oaw.py skills` lists bundled names and origins; `--skills LIST|none|default` on
 init/migrate chooses native entrypoints. Migrate previews retirement and backs
 up unchanged owned packages on apply; customized entrypoints block removal.
-The complete runtime remains at `.oaw/integrations/egm/`. External native skills
+The complete runtime lives at `.oaw/integrations/egm/` while any EGM skill is
+selected; a recipe without one retires it with the same backups. External native skills
 are user/project owned. Automatic scouting, ingestion and skill promotion are
 planned, not implemented by this selector.
 

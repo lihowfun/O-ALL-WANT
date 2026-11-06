@@ -250,7 +250,7 @@ See [CONTRIBUTING](CONTRIBUTING.md) and [CHANGELOG](CHANGELOG.md).
 
 Exact versions and usage status: [v2.0.0 source ledger](docs/releases/2.0.0-sources.md).
 EGM **0.1.0** at [`f0ba151b252c9abf1318d9fe857a43265d06de89`](https://github.com/google/elephant-goldfish-model/tree/f0ba151b252c9abf1318d9fe857a43265d06de89)
-is bundled in V2 and installed to `.oaw/integrations/egm/`. Upstream runtime files
+is bundled in V2 and installed to `.oaw/integrations/egm/` when the recipe selects an EGM skill. Upstream runtime files
 retain exact bytes, Apache-2.0 licensing and individual hashes. Native entrypoint
 adapters are documented separately in the source ledger.
 See the [review and replacement decisions](docs/reviews/2026-10-29-pr4-egm.md).

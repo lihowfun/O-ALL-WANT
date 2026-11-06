@@ -25,7 +25,7 @@ def manifest(profile, learning, payload, name):
         "hosts": ["codex"],
         "skills": oaw.selected_skills(oaw.default_skills(profile, learning)),
         "skills_explicit": False,
-        "integrations": {"egm": {"commit": oaw.EGM_COMMIT, "version": "0.1.0", "source_lock_sha256": oaw.EGM_LOCK_SHA256}},
+        "integrations": {"egm": dict(oaw.EGM_INTEGRATION)} if any(key.startswith(oaw.EGM_RUNTIME) for key in payload) else {},
         "managed_files": {key: oaw.digest(value) for key, value in payload.items() if not key.startswith("docs/")},
         "runtime": {"minimum_python": "3.10", "state": "project files", "host_settings": "not configured"},
         "status": "installed",

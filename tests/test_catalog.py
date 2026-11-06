@@ -528,6 +528,41 @@ class CatalogCliTests(unittest.TestCase):
         self.assertEqual((decisions[-1]["kind"], decisions[-1]["components"]), ("readd", sorted(oaw.EGM_SKILLS)))
         self.assertIn("tested again", decisions[-1]["note"])
 
+    def test_egm_remove_takes_its_runtime_and_policy_text_and_readd_or_restore_brings_the_same_layer_back(self):
+        runtime = self.project / oaw.EGM_RUNTIME
+        without_manifest = lambda files: {p: d for p, d in files.items() if p != oaw.MANIFEST_PATH}  # noqa: E731
+        before, manifest_before = catalog.layer_files(self.project)
+        self.assertTrue(any(p.startswith(oaw.EGM_RUNTIME) for p in before))
+        self.assertIn(b"EGM", before["AGENTS.md"])
+        preview = self.cli("remove", "egm")
+        actions = {a["path"]: a["action"] for a in preview["actions"]}
+        self.assertTrue(all(actions.get(p) == "retire" for p in before if p.startswith(oaw.EGM_RUNTIME)))
+        self.assertEqual(actions["AGENTS.md"], "replace")
+        self.assertEqual(catalog.layer_files(self.project)[0], before)
+        removed = self.cli("remove", "egm", "--reason", "trial without EGM", "--apply")
+        self.assertEqual(removed["doctor"]["status"], "healthy")
+        self.assertFalse(runtime.exists())
+        self.assertNotIn(b"EGM", (self.project / "AGENTS.md").read_bytes())
+        self.assertTrue((self.project / removed["backup"] / oaw.EGM_RUNTIME / "OAW_SOURCE.json").is_file())
+        without, manifest = catalog.layer_files(self.project)
+        self.assertFalse(any(p.startswith(oaw.EGM_RUNTIME) for p in without))
+        self.assertEqual(manifest["integrations"], {})
+        health = oaw.doctor(self.project)
+        self.assertFalse(any(c["status"] != "PASS" for c in health["checks"]), health)
+        readd = self.cli("readd", "egm", "--reason", "back after the trial", "--apply")
+        self.assertEqual(readd["doctor"]["status"], "healthy")
+        after, manifest_after = catalog.layer_files(self.project)
+        self.assertEqual(without_manifest(after), without_manifest(before))
+        for field in ("managed_files", "custom_files", "integrations", "skills", "hosts"):
+            self.assertEqual(manifest_after[field], manifest_before[field], field)
+        # A restore point moves between the two layers just the same.
+        self.cli("restore", removed["build"], "--apply")
+        self.assertFalse(runtime.exists())
+        self.assertEqual(without_manifest(catalog.layer_files(self.project)[0]), without_manifest(without))
+        self.cli("restore", removed["restore_point"], "--apply")
+        self.assertEqual(without_manifest(catalog.layer_files(self.project)[0]), without_manifest(before))
+        self.assertEqual(oaw.doctor(self.project)["status"], "healthy")
+
     # ------------------------------------------------------------------ review regressions: confirmation, restore, remove
 
     def save_builds(self, *builds):

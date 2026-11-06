@@ -55,7 +55,7 @@ Before manual recovery, stop installation/writers, inspect the receipt and prese
 
 V2 includes EGM 0.1.0 at commit
 `f0ba151b252c9abf1318d9fe857a43265d06de89`, installed under
-`.oaw/integrations/egm/`. Seven EGM entrypoints and `oaw-evidence` are the default
+`.oaw/integrations/egm/` whenever the recipe selects an EGM skill. Seven EGM entrypoints and `oaw-evidence` are the default
 recipe. Upstream manual invocation is preserved; inclusion does not force a
 nine-stage review after ordinary tasks. Claude installs also receive the nine
 upstream native agent adapters with their original tool/context restrictions.
@@ -66,8 +66,11 @@ For a custom recipe, preview
 apply with `--apply`. Unmodified owned entrypoints are backed up before removal.
 Edited entrypoints remain conflicts; they are never silently discarded. `none`
 selects no bundled native skills; `default` restores the profile defaults. An
-omitted flag preserves a prior custom recipe. Runtime source and project memory
-remain installed. This does not implement the future external skill catalog.
+omitted flag preserves a prior custom recipe. Project memory remains installed.
+A recipe without any EGM skill also retires the pinned runtime, the Claude
+native agents and the EGM sentences of an unedited `AGENTS.md`, with the same
+backups; an edited policy or runtime file stays a conflict. Selecting an EGM
+skill again reinstalls them. This does not implement the future external skill catalog.
 
 Codex's project path is `.agents/skills`; Claude Code's native project skills path is `.claude/skills`. The Claude policy import does not register skills. Use `--host` to generate the selected native packages, then verify the actual listing in each host. See [Skill Guide](Skill_Guide.md).
 

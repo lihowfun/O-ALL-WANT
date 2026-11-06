@@ -28,7 +28,11 @@ HOSTS = ("codex", "claude")
 EGM_COMMIT = "f0ba151b252c9abf1318d9fe857a43265d06de89"
 EGM_LOCK_SHA256 = "c6ff4b7b56ce8187e842baa190c0b3fda2a37d112450931839e43bd7faf3d25e"
 EGM_RUNTIME = ".oaw/integrations/egm/"
+EGM_INTEGRATION = {"commit": EGM_COMMIT, "version": "0.1.0", "source_lock_sha256": EGM_LOCK_SHA256}
 EGM_SKILLS = ("egm-bootstrap", "egm-brainstorm", "egm-draft", "egm-drift-report", "egm-resolve", "egm-review", "egm-review-loop")
+EGM_ENTRY = re.compile(r"\.(?:agents|claude)/skills/(" + "|".join(EGM_SKILLS) + r")/SKILL\.md")
+# templates/AGENTS.md is the one authored policy source; these lines select its EGM text per recipe.
+POLICY_IF_EGM, POLICY_ELSE, POLICY_END = "<!-- oaw:if egm -->", "<!-- oaw:else -->", "<!-- oaw:end -->"
 BUNDLED_SKILLS = (*EGM_SKILLS, "oaw-evidence", "oaw-wiki", "oaw-improve")
 ALWAYS_PRESERVE = {"AI_CONTEXT.md", "VERSION.json", "ROADMAP.md", ".agents/memory.md"}
 LEGACY_ADAPTERS = {"GEMINI.md", ".cursorrules", ".windsurfrules", ".github/copilot-instructions.md"}
@@ -143,7 +147,7 @@ def read_manifest(target: Path) -> dict | None:
     integrations = data.get("integrations", {})
     if not isinstance(integrations, dict):
         raise InstallError("Invalid integrations in install manifest.")
-    if "egm" in integrations and integrations["egm"] != {"commit": EGM_COMMIT, "version": "0.1.0", "source_lock_sha256": EGM_LOCK_SHA256}:
+    if "egm" in integrations and integrations["egm"] != EGM_INTEGRATION:
         raise InstallError("Unknown or modified EGM integration identity.")
     managed = data.get("managed_files")
     if not isinstance(managed, dict):
@@ -174,6 +178,46 @@ def selected_skills(skills: list[str]) -> list[str]:
     if not isinstance(skills, list) or any(not isinstance(s, str) or s not in BUNDLED_SKILLS for s in skills) or len(set(skills)) != len(skills):
         raise InstallError("Skills must be a unique list of bundled skill names; inspect `oaw.py skills`.")
     return sorted(skills)
+
+
+def egm_selected(skills) -> bool:
+    """EGM is installed exactly when the recipe selects at least one of its skills."""
+    return any(name in EGM_SKILLS for name in skills)
+
+
+def render_policy(template: bytes, egm: bool) -> bytes:
+    """Render the authored AGENTS.md for a recipe: its EGM text only when EGM is installed.
+
+    A line `<!-- oaw:if egm -->` opens text kept only with EGM, `<!-- oaw:else -->`
+    switches to text kept only without it, and `<!-- oaw:end -->` closes the block.
+    Marker lines are never installed; a template without markers is unchanged.
+    """
+    out, state = [], None
+    for line in template.decode("utf-8").splitlines(keepends=True):
+        marker = line.strip()
+        if marker == POLICY_IF_EGM and state is None:
+            state = "egm"
+        elif marker == POLICY_ELSE and state == "egm":
+            state = "no-egm"
+        elif marker == POLICY_END and state is not None:
+            state = None
+        elif marker in (POLICY_IF_EGM, POLICY_ELSE, POLICY_END):
+            raise InstallError("Unbalanced EGM block in templates/AGENTS.md.")
+        elif state is None or (state == "egm") == egm:
+            out.append(line)
+    if state is not None:
+        raise InstallError("Unterminated EGM block in templates/AGENTS.md.")
+    return "".join(out).encode("utf-8")
+
+
+def egm_policy_lines() -> set[str]:
+    """Policy lines that only an EGM install receives (doctor flags them in a project without EGM)."""
+    path = framework_root() / "templates" / "AGENTS.md"
+    check_path(path, kind="file")
+    template = path.read_bytes()
+    without = set(render_policy(template, False).decode("utf-8").splitlines())
+    return {line.strip() for line in render_policy(template, True).decode("utf-8").splitlines()
+            if line.strip() and line not in without}
 
 
 def egm_native_agents() -> dict[str, str]:
@@ -238,7 +282,8 @@ def source_files(profile: str, with_improve: bool, hosts: list[str] | None = Non
         trees.extend(["docs/raw", "docs/knowledge"])
     if with_improve:
         mappings["scripts/improvement.py"] = "scripts/improvement.py"
-    if "claude" in hosts and any(name in EGM_SKILLS for name in skills):
+    egm = egm_selected(skills)
+    if "claude" in hosts and egm:
         mappings.update(egm_native_agents())
     for tree in trees:
         source = joined(source_root / "templates", tree)
@@ -261,14 +306,16 @@ def source_files(profile: str, with_improve: bool, hosts: list[str] | None = Non
             found.append(item)
         if not found or (tree.startswith(".agents/skills/") and not (source / "SKILL.md").is_file()):
             raise InstallError(f"Required source tree is empty or lacks SKILL.md: {source}")
-    files = egm_payload()
+    # The pinned runtime ships only with an EGM skill; without one it is neither written nor kept.
+    files = egm_payload() if egm else {}
     for relative, source_relative in sorted(mappings.items()):
         relative_path(relative)
         source = joined(source_root, source_relative)
         check_path(source, kind="file")
         if not source.is_file():
             raise InstallError(f"Required source file is missing: {source}")
-        files[relative] = source.read_bytes()
+        content = source.read_bytes()
+        files[relative] = render_policy(content, egm) if relative == "AGENTS.md" else content
     return files
 
 
@@ -380,16 +427,17 @@ def plan_install(target: Path, profile: str, with_improve: bool, *, migrate: boo
                 actions.append({"path": relative, "action": "retire", "before": before, "after": None})
             managed.pop(relative, None)
     retained_egm = any(
-        re.fullmatch(r"\.(?:agents|claude)/skills/(" + "|".join(EGM_SKILLS) + r")/SKILL\.md", path)
+        EGM_ENTRY.fullmatch(path)
         for path in custom | {a["path"] for a in actions if a["action"] == "retire-conflict"})
-    if not any(name in EGM_SKILLS for name in skills) and not retained_egm:
-        for relative in egm_native_agents():
-            if relative in custom:
-                continue
-            if relative not in owned and relative not in custom:
+    if not egm_selected(skills) and not retained_egm:
+        # Without any EGM entrypoint, its native agents and the pinned runtime go too:
+        # owned, unchanged files are backed up and retired; edited ones stay as conflicts.
+        runtime = sorted(path for path in owned if path.startswith(EGM_RUNTIME))
+        for relative in [*egm_native_agents(), *runtime]:
+            if relative in custom or relative not in owned:
                 continue
             if not migrate:
-                raise InstallError("Retiring native EGM agents requires migrate to preview, then --apply.")
+                raise InstallError("Retiring native EGM agents or the EGM runtime requires migrate to preview, then --apply.")
             destination = joined(target, relative)
             check_path(destination, kind="file")
             if not destination.exists():
@@ -449,9 +497,11 @@ def plan_install(target: Path, profile: str, with_improve: bool, *, migrate: boo
         check_path(joined(target, relative), kind="file")
     for relative in (".oaw/backups", ".oaw/proposals"):
         check_path(joined(target, relative), kind="dir")
+    # The manifest records the EGM integration only while its runtime is part of the install.
+    integrations = {"egm": dict(EGM_INTEGRATION)} if any(path.startswith(EGM_RUNTIME) for path in managed) else {}
     return {"target": target, "profile": profile, "with_improve": with_improve, "hosts": hosts, "previous": previous,
             "manifest_before": manifest_before,
-            "skills": skills, "skills_explicit": explicit_skills,
+            "skills": skills, "skills_explicit": explicit_skills, "integrations": integrations,
             "package": package, "managed_files": managed, "custom_files": sorted(custom), "actions": actions}
 
 
@@ -473,6 +523,18 @@ def atomic_write(path: Path, content: bytes) -> None:
     finally:
         if os.path.exists(temporary):
             os.unlink(temporary)
+
+
+def prune_empty_parents(target: Path, path: Path) -> None:
+    """Remove directories a retirement left empty; never the project root or a nonempty directory."""
+    parent = path.parent
+    while parent != target and target in parent.parents:
+        check_path(parent, kind="dir")
+        try:
+            parent.rmdir()
+        except OSError:
+            return
+        parent = parent.parent
 
 
 def json_bytes(data: dict) -> bytes:
@@ -515,7 +577,7 @@ def apply_plan(plan: dict, *, migrate: bool) -> dict:
                 "profile": plan["profile"], "with_improve": plan["with_improve"], "managed_files": plan["managed_files"],
                 "hosts": plan["hosts"],
                 "skills": plan["skills"], "skills_explicit": plan["skills_explicit"],
-                "integrations": {"egm": {"commit": EGM_COMMIT, "version": "0.1.0", "source_lock_sha256": EGM_LOCK_SHA256}},
+                "integrations": plan["integrations"],
                 "custom_files": plan["custom_files"],
                 "runtime": {"minimum_python": "3.10", "state": "project files", "host_settings": "not configured"},
                 "status": "conflicts" if conflicts else "installed", "pending_conflicts": conflicts}
@@ -556,6 +618,7 @@ def apply_plan(plan: dict, *, migrate: bool) -> dict:
                 elif operation == "retire":
                     destination.unlink()
                     applied.append(action)
+                    prune_empty_parents(target, destination)
                 elif operation == "conflict":
                     proposal = proposal_relative + "/" + relative
                     atomic_write(joined(target, proposal), plan["package"][relative])
@@ -640,14 +703,24 @@ def doctor(target: Path) -> dict:
     else:
         if manifest.get("status") != "installed" or manifest.get("pending_conflicts"):
             checks.append({"status": "FAIL", "path": MANIFEST_PATH, "detail": "Migration has unresolved conflicts."})
-        native_egm = any(re.fullmatch(r"\.(?:agents|claude)/skills/(egm-[^/]+)/SKILL\.md", p)
-                         for p in manifest["managed_files"])
-        if "skills" in manifest or native_egm or "egm" in manifest.get("integrations", {}) or any(p.startswith(EGM_RUNTIME) for p in manifest["managed_files"]):
+        # EGM is expected when the recipe selects it, an EGM entrypoint is managed or retained,
+        # or the manifest still records its runtime. A project without EGM needs no runtime.
+        selected_egm = egm_selected(manifest.get("skills", []))
+        native_egm = any(EGM_ENTRY.fullmatch(p) for p in set(manifest["managed_files"]) | set(manifest.get("custom_files", [])))
+        runtime_managed = any(p.startswith(EGM_RUNTIME) for p in manifest["managed_files"])
+        runtime_root = joined(target, EGM_RUNTIME.rstrip("/"))
+        if selected_egm or native_egm or "egm" in manifest.get("integrations", {}) or runtime_managed:
             try:
-                egm_payload(joined(target, EGM_RUNTIME.rstrip("/")))
+                egm_payload(runtime_root)
                 checks.append({"status": "PASS", "path": EGM_RUNTIME, "detail": "Complete pinned EGM runtime and license verified."})
             except (InstallError, OSError, ValueError) as exc:
                 checks.append({"status": "FAIL", "path": EGM_RUNTIME, "detail": str(exc)})
+            if "skills" in manifest and not selected_egm and not native_egm:
+                checks.append({"status": "WARN", "path": EGM_RUNTIME, "detail": "No EGM skill is selected, yet the pinned runtime is still installed; preview `oaw.py migrate`, then --apply, to retire it."})
+        else:
+            check_path(runtime_root)
+            if os.path.lexists(runtime_root):
+                checks.append({"status": "WARN", "path": EGM_RUNTIME, "detail": "EGM is not installed, yet files remain here; OAW does not manage them."})
         for relative, expected in sorted(manifest["managed_files"].items()):
             path = joined(target, relative)
             if not path.is_file():
@@ -681,10 +754,14 @@ def doctor(target: Path) -> dict:
         for host in manifest.get("hosts", ["codex"]):
             prefix = ".agents" if host == "codex" else ".claude"
             required.extend(f"{prefix}/skills/{name}/SKILL.md" for name in skill_names)
-        retained_egm = any(re.fullmatch(r"\.(?:agents|claude)/skills/(" + "|".join(EGM_SKILLS) + r")/SKILL\.md", path)
-                           for path in set(manifest["managed_files"]) | set(manifest.get("custom_files", [])))
-        if "claude" in manifest.get("hosts", []) and (any(name in EGM_SKILLS for name in skill_names) or retained_egm):
+        if "claude" in manifest.get("hosts", []) and (egm_selected(skill_names) or native_egm):
             required.extend(egm_native_agents())
+        policy = joined(target, "AGENTS.md")
+        check_path(policy, kind="file")
+        if "skills" in manifest and not selected_egm and policy.is_file():
+            stale = egm_policy_lines() & {line.strip() for line in policy.read_text(encoding="utf-8", errors="replace").splitlines()}
+            if stale:
+                checks.append({"status": "WARN", "path": "AGENTS.md", "detail": "Policy still describes EGM, which this recipe does not install; preview `oaw.py migrate` or edit the project-owned text."})
         for relative in required:
             check_path(joined(target, relative), kind="file")
             declared = relative in manifest["managed_files"] or relative in manifest.get("custom_files", [])

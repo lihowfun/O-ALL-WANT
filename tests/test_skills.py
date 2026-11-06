@@ -179,8 +179,16 @@ class TemplateDefaultsTests(unittest.TestCase):
         templates = ROOT / "templates"
         self.assertEqual((templates / "CLAUDE.md").read_text(encoding="utf-8").strip(), "@AGENTS.md")
         policy = (templates / "AGENTS.md").read_text(encoding="utf-8")
-        self.assertLessEqual(len(policy.splitlines()), 25)
         self.assertNotIn("${", policy)
+        spec = importlib.util.spec_from_file_location("oaw_policy_render", ROOT / "scripts" / "oaw.py")
+        installer = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(installer)
+        for egm in (True, False):
+            with self.subTest(egm=egm):
+                # The installed policy stays short whether or not the recipe includes EGM.
+                installed = installer.render_policy(policy.encode("utf-8"), egm).decode("utf-8")
+                self.assertLessEqual(len(installed.splitlines()), 25)
+                self.assertEqual("EGM" in installed, egm)
         for retired in ("AGENT_RULES.md", "AI_CONTEXT.md", "ROADMAP.md", "VERSION.json", ".agents/memory.md"):
             with self.subTest(retired=retired):
                 self.assertFalse((templates / retired).exists())
