@@ -342,3 +342,12 @@ gains (cost ignored once "better"), and that verdict edges sat inside AI-grader 
    A large code change is standard. Everything else is light. The triggers live in code with tests and are themselves to be checked against outcomes later (D29 methods).
 3. EGM never runs by default. Its skills are already explicit-invocation only; the full EGM review is reserved for deep.
 4. When fairness or consistency between foods conflicts with saving tokens, keep one yardstick for every food. The owner chose to finish codegraph's Haiku repeats although the verdict could not change.
+5. Implemented on `claude/oaw-2` (2026-11-06):
+   - Commits 08dbe3c, 4225749 and 8e607f0. `scripts/oaw_mode.py suggest|show` is installed with every recipe, and AGENTS.md carries one rule: light by default; run `suggest` before any review; deep always uses `--effort max`.
+   - The change is deep by its own triggers, so it got cross-family fresh-context reviews (`codex review --commit`):
+     - round 1 found 5 P2;
+     - round 2 found 1 P1 (Windows test) and 2 P2;
+     - round 3 found none.
+   - harness_check passed 9/9 (508 tests, Linux).
+   - Adherence smoke test of the AGENTS.md rule: Sonnet 5.5, one run each on a CI-workflow change and a docs change. Both ran `suggest`, then `show deep` or `show light`, matching the change. This shows the rule is followed, not that it helps.
+   - Windows is not verified on a Windows host yet; CI runs only for PRs into main.
