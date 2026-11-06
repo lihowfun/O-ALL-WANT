@@ -3,8 +3,9 @@ import contextlib
 import importlib.util
 import io
 import json
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -90,6 +91,16 @@ class TriggerTests(unittest.TestCase):
                                    "ROOT/scripts/d.py; node ./e.js|tee /tmp/log ../outside.sh")
         self.assertTrue({"hooks/a.py", "cfg/b.json", "c.sh", "scripts/d.py", "e.js"} <= files, files)
         self.assertFalse({"/tmp/log", "../outside.sh", "tmp/log", "outside.sh"} & files, files)
+
+    def test_shell_wrapped_hook_commands_are_parsed_one_level(self):
+        # codex review of 4225749, item 2: `bash -c '...'` and `sh -lc "..."` hide the script in one word.
+        _, files = self.hook_files("bash -c 'bash tools/check.sh'",
+                                   'sh -lc "cd . && ./tools/lint.sh --fix"',
+                                   "/usr/bin/env zsh -e -c '$CLAUDE_PROJECT_DIR/hooks/z.py'")
+        self.assertTrue({"tools/check.sh", "tools/lint.sh", "hooks/z.py"} <= files, files)
+        self.assertMode("deep", [entry("tools/check.sh", lines=1)], files, rule="harness")
+        self.assertMode("light", [entry("check.sh", lines=1)], files)
+        self.assertEqual(mode.command_tokens("python3 -c 'print(1)' x.py"), ["python3", "-c", "print(1)", "x.py"])
 
     def test_renamed_harness_file_counts_by_its_old_path(self):
         self.assertMode("deep", [entry("archive/AGENTS.old", status="R", old_path="templates/AGENTS.md")], rule="harness")
@@ -318,17 +329,32 @@ class ShowTests(unittest.TestCase):
         self.assertEqual(result["egm"], {"claude": False, "codex": True})
         self.assertTrue(result["summary"].endswith("(Claude Code has no EGM entrypoint here: one fresh-context review instead)"))
         self.assertEqual(result["hosts"]["claude"][:2], ["claude --permission-mode plan --effort max", mode.CLAUDE_REVIEW])
-        self.assertIn(f"python3 scripts/oaw.py init --target {self.root.as_posix()} --host claude",
-                      result["hosts"]["claude"][-1])
+        self.assertTrue(result["hosts"]["claude"][-1].endswith(
+            "to add it, run from the OAW checkout: " + mode.add_entrypoint(self.root, "claude")))
         self.assertEqual(result["hosts"]["codex"][-1], "review: select the egm-review skill in the skill picker")
         self.entry(".claude")
         (self.root / ".agents/skills/egm-review/SKILL.md").unlink()
         codex = json.loads(run("show", "deep", "--root", str(self.root), "--json")[1])["hosts"]["codex"]
-        self.assertIn(f"--target {self.root.as_posix()} --host codex", codex[-1])
+        self.assertTrue(codex[-1].endswith(mode.add_entrypoint(self.root, "codex")))
 
-    def test_entrypoint_hint_quotes_a_path_with_spaces(self):
-        self.assertEqual(mode.add_entrypoint(Path("/work/my project"), "claude"),
-                         'python3 scripts/oaw.py init --target "/work/my project" --host claude')
+    def test_entrypoint_hint_quotes_the_target_for_the_shell(self):
+        # codex review of 4225749, items 1 and 3: one format on every platform, and no shell expansion.
+        for path in ("/work/project", "/work/my project", "/work/project$(printf WRONG)", "/work/a`id`b",
+                     "/work/it's \"here\"", "/work/$HOME/x"):
+            with self.subTest(path=path):
+                command = mode.add_entrypoint(PurePosixPath(path), "claude", platform="posix")
+                self.assertEqual(shlex.split(command), ["python3", "scripts/oaw.py", "init", "--target", path,
+                                                        "--host", "claude"])
+                if path != "/work/project":
+                    self.assertIn("'", command)
+        self.assertEqual(mode.add_entrypoint(PurePosixPath("/work/project"), "codex", platform="posix"),
+                         "python3 scripts/oaw.py init --target /work/project --host codex")
+        windows = mode.add_entrypoint(PureWindowsPath(r"C:\Users\RUNNER~1\my project"), "claude", platform="nt")
+        self.assertEqual(windows, 'python3 scripts/oaw.py init --target "C:/Users/RUNNER~1/my project" --host claude')
+        self.assertEqual(mode.add_entrypoint(PureWindowsPath(r"C:\work\proj"), "claude", platform="nt"),
+                         "python3 scripts/oaw.py init --target C:/work/proj --host claude")
+        self.assertTrue(mode.add_entrypoint(PureWindowsPath(r"C:\work\$x"), "claude", platform="nt").endswith(
+            "(check the quoting: this path contains %, $ or ` that a Windows shell may expand)"))
 
     def test_effort_levels_match_the_checked_claude_cli(self):
         # Claude Code 2.1.287 --help: --effort <level> (low, medium, high, xhigh, max); max is the highest.
@@ -377,8 +403,7 @@ class InstalledPolicyTests(unittest.TestCase):
                                      capture_output=True, text=True, check=False, cwd=temporary)
             self.assertEqual(process.returncode, 0, process.stderr)
             note = json.loads(process.stdout)["hosts"]["claude"][-1]
-            command = note.split("from the OAW checkout, ", 1)[1].removesuffix(" adds it")
-            argv = command.split()
+            argv = shlex.split(note.split("run from the OAW checkout: ", 1)[1])
             self.assertEqual(argv[:3], ["python3", "scripts/oaw.py", "init"])
             with contextlib.redirect_stdout(io.StringIO()):
                 self.assertEqual(oaw.main(argv[2:]), 0)

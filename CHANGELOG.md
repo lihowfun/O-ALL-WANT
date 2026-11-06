@@ -260,6 +260,13 @@ All notable changes to this project will be documented in this file.
   are compared as whole project-relative paths, so a root `check.sh` no longer matches `tools/check.sh`; installer
   names such as `setupEnv.sh` and `installDeps.py` now match. Owner decision: deep always uses `--effort max`, with or
   without EGM; only the review step falls back. Evidence: regression tests in `tests/test_oaw_mode.py`.
+- Working modes after a second codex review (`codex review --commit 4225749`, three findings): the entrypoint hint
+  quotes the target with `shlex.quote` on POSIX, so a path with `$`, a backtick or a quote is not expanded by the
+  shell, and on Windows prints forward slashes, double quotes when needed and a warning for `%`, `$` or a backtick
+  (the test now formats both platforms explicitly, so it no longer expects POSIX output on Windows CI, P1); a hook
+  wrapped in one `bash -c '...'` or `sh -lc "..."` shell now names its inner script, so editing that script is deep.
+  Evidence: regression tests in `tests/test_oaw_mode.py`; Windows behavior checked through the explicit-platform
+  test only, not on a Windows host.
 - Removing EGM now removes it (D6; found by the 2026-11-06 EGM self-test). A recipe without any EGM
   skill, from `oaw.py init`/`migrate --skills` or `catalog.py remove egm --apply`, no longer writes or
   keeps the pinned runtime under `.oaw/integrations/egm/`: migrate previews its 66 files as `retire`,

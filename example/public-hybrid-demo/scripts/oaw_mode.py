@@ -19,7 +19,7 @@ import argparse
 import fnmatch
 import json
 import os
-from pathlib import Path, PurePosixPath
+from pathlib import Path, PurePath, PurePosixPath
 import posixpath
 import re
 import shlex
@@ -181,18 +181,39 @@ def hook_commands(root: Path) -> list[str]:
     return commands
 
 
+SHELLS = {"bash", "sh", "zsh", "dash", "ksh"}
+
+
+def command_tokens(command: str) -> list[str]:
+    """Shell words of a hook command, plus the words of one `sh -c '...'`-style inner command."""
+    def split(text: str) -> list[str]:
+        try:
+            lexer = shlex.shlex(text, posix=True, punctuation_chars=True)
+            lexer.whitespace_split = True
+            return list(lexer)
+        except ValueError:
+            return text.split()
+
+    tokens = split(command)
+    inner = []
+    for index, token in enumerate(tokens):
+        if posixpath.basename(token) not in SHELLS:
+            continue
+        following = index + 1
+        while following < len(tokens) and tokens[following].startswith("-"):
+            if re.fullmatch(r"-[A-Za-z]*c[A-Za-z]*", tokens[following]) and following + 1 < len(tokens):
+                inner.extend(split(tokens[following + 1]))
+                break
+            following += 1
+    return tokens + inner
+
+
 def hook_files(root: Path) -> set[str]:
     """Project-relative paths named in hook commands; hooks run from the project directory."""
     prefixes = ("$CLAUDE_PROJECT_DIR/", "${CLAUDE_PROJECT_DIR}/", root.as_posix().rstrip("/") + "/")
     files = set()
     for command in hook_commands(root):
-        try:
-            lexer = shlex.shlex(command, posix=True, punctuation_chars=True)
-            lexer.whitespace_split = True
-            tokens = list(lexer)
-        except ValueError:
-            tokens = command.split()
-        for token in tokens:
+        for token in command_tokens(command):
             value = token.rsplit("=", 1)[-1].replace("\\", "/")
             value = next((value[len(p):] for p in prefixes if value.startswith(p)), value)
             if not value or value.startswith(("/", "$", "~", "-")) or re.match(r"[A-Za-z]:", value):
@@ -298,9 +319,19 @@ CODEX_PLAN = ("codex --sandbox read-only  (plan in this read-only pass, then imp
               "Codex plan-mode and effort flags are not mapped yet)")
 
 
-def add_entrypoint(root: Path, host: str) -> str:
-    target = root.as_posix() if re.fullmatch(r"[\w./:@+-]+", root.as_posix()) else f'"{root}"'
-    return f"python3 scripts/oaw.py init --target {target} --host {host}"
+def add_entrypoint(root: PurePath, host: str, *, platform: str = os.name) -> str:
+    """The init command that adds a host's entrypoints to this project, with the path quoted for a shell.
+
+    POSIX uses shlex.quote. Windows paths cannot contain double quotes, so they are double-quoted when
+    needed; cmd still expands %VAR% and PowerShell $ and backticks inside them, so those get a warning.
+    """
+    path = root.as_posix()
+    if platform != "nt":
+        return f"python3 scripts/oaw.py init --target {shlex.quote(path)} --host {host}"
+    target = path if re.fullmatch(r"[\w./:@+~-]+", path) else f'"{path}"'
+    warning = " (check the quoting: this path contains %, $ or ` that a Windows shell may expand)" \
+        if re.search(r"[%$`]", path) else ""
+    return f"python3 scripts/oaw.py init --target {target} --host {host}{warning}"
 
 
 def instructions(mode: str, root: Path) -> dict:
@@ -326,14 +357,14 @@ def instructions(mode: str, root: Path) -> dict:
             claude = [deep_claude, "review: type /egm-review  (explicit invocation only; the agent cannot start it)"]
         else:
             claude = [deep_claude, CLAUDE_REVIEW,
-                      "note: EGM's Claude Code entrypoint is not installed here; from the OAW checkout, "
-                      + add_entrypoint(root, "claude") + " adds it"]
+                      "note: EGM's Claude Code entrypoint is not installed here; to add it, run from the OAW checkout: "
+                      + add_entrypoint(root, "claude")]
         if egm["codex"]:
             codex = [CODEX_PLAN, "review: select the egm-review skill in the skill picker"]
         else:
             codex = [CODEX_PLAN, CODEX_REVIEW,
-                     "note: EGM's Codex entrypoint is not installed here; from the OAW checkout, "
-                     + add_entrypoint(root, "codex") + " adds it"]
+                     "note: EGM's Codex entrypoint is not installed here; to add it, run from the OAW checkout: "
+                     + add_entrypoint(root, "codex")]
     else:
         summary = "deep: plan first at the highest effort, then one fresh-context review (EGM is not installed)"
         claude = [deep_claude, CLAUDE_REVIEW]
