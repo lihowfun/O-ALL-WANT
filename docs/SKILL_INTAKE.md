@@ -105,7 +105,8 @@ owner 說：「你是一個自動自發的消化系統，不是每樣都要等�
 - 不會自動安裝或套用任何東西。
 - 抓取固定在一個 pinned SHA（hardened git fetch：不跑 hooks、不 checkout、只收 https 和 `file://`；沒有 git 時改用 codeload tarball，標 `unverified-against-commit`）。
 - 快照封存成 `LAB_HOME` 裡的唯讀 tar，在專案外；只在記憶體裡讀，不解壓、不 import、不執行。
-- **論文**：只用 https 抓兩樣東西：arXiv 的 OAI-PMH 中繼資料（`arXivRaw`：標題、作者、摘要、授權網址、版本清單）和固定版本的 PDF（`https://arxiv.org/pdf/<編號>v<N>`；沒指定版本就固定最新版）。轉址也只能到 https 的 arXiv；有時間上限（60 秒）和大小上限（中繼資料 2 MB、PDF 50 MB）。PDF 只檢查開頭是不是 `%PDF-`、算 sha256，不解析、不顯示、不執行。PDF 和一份 `metadata.json`（記每個檔案的 sha256，沒有時間戳記）一起封存成唯讀 tar，固定在「arXiv 版本＋內容 hash」，完整性標 `sha256-recorded`（arXiv 沒有可以驗證的 hash，只記下收到的內容）。本機 PDF 一樣封存，中繼資料只來自檔案本身（沒有標題、作者、版本、授權）。
+- **大小不擋食物**（2026-11-06，owner：「snapshot exceeds 50 MB 限制沒有任何意義」）：封存上限（單檔 5 MB、總共 200 MB、20,000 個檔案）只決定存多少、掃多少。超過的部分從最大的檔案開始跳過，每個跳過的檔案標 `F-PARTIAL`（沒存、沒掃），食物照樣往下走、照樣試吃。只有 tarball 備援路線（沒有 git 時）下載超過 400 MB 才會拒收。
+- **論文**：只用 https 抓兩樣東西：arXiv 的 OAI-PMH 中繼資料（`arXivRaw`：標題、作者、摘要、授權網址、版本清單）和固定版本的 PDF（`https://arxiv.org/pdf/<編號>v<N>`；沒指定版本就固定最新版）。轉址也只能到 https 的 arXiv；有時間上限（60 秒）和大小上限（中繼資料 2 MB、PDF 200 MB）。PDF 只檢查開頭是不是 `%PDF-`、算 sha256，不解析、不顯示、不執行。PDF 和一份 `metadata.json`（記每個檔案的 sha256，沒有時間戳記）一起封存成唯讀 tar，固定在「arXiv 版本＋內容 hash」，完整性標 `sha256-recorded`（arXiv 沒有可以驗證的 hash，只記下收到的內容）。本機 PDF 一樣封存，中繼資料只來自檔案本身（沒有標題、作者、版本、授權）。
 
 ### 3 靜態（D5、D7）
 

@@ -6,6 +6,11 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Size never stops a food (owner, 2026-11-06: "snapshot exceeds 50 MB 限制沒有任何意義"). The archive caps
+  (5 MB per file, now 200 MB and 20,000 files in all) only bound what is stored and scanned: past them the
+  largest files are skipped first and each one is flagged `F-PARTIAL`, and the food goes on to be tasted.
+  The codeload fallback's decompression guard stops reading instead of refusing; only its download over
+  400 MB is refused. codegraph and claude-mem, refused at 封存 before, now seal and taste.
 - The digestion system runs itself (owner decision D28): the catalog's "who a food waits on" gains `agent`
   (「自動（Claude 接手）」) and `release` (「等發布（合併 PR 時一次決定）」, one decision for the whole branch).
   `owner` is kept for entry choices, tier-C questions (D21), owner-only prerequisites and removing a skill.

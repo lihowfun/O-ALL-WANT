@@ -64,8 +64,10 @@ DECISION_KINDS = ("triage", "absorb", "excrete", "remove", "block", "reject")
 TRIAGE_OUTCOMES = ("benign", "allergen", "confirm-toxic")
 POPULARITY_FIELDS = ("stars", "stargazers_count", "author", "downloads", "requested_by", "official", "forks",
                      "watchers", "popularity", "scout", "intake")
-LIMITS = {"max_files": 5000, "max_total_bytes": 50 * 1024 * 1024, "max_file_bytes": 5 * 1024 * 1024,
-          "max_path": 240, "skill_body_bytes": 24000}
+# Size never stops a food (owner, 2026-11-06: "snapshot exceeds 50 MB 限制沒有任何意義"). The caps only bound what is
+# stored and scanned: past them the largest files are skipped and flagged F-PARTIAL; the food is still tasted.
+LIMITS = {"max_files": 20000, "max_total_bytes": 200 * 1024 * 1024, "max_file_bytes": 5 * 1024 * 1024,
+          "max_path": 240, "skill_body_bytes": 24000, "max_download_bytes": 400 * 1024 * 1024}
 TOKENS_PER_RUN = (600_000, 900_000)
 TOKEN_LABEL = "estimate: about 0.6-0.9M logical tokens per tool-using agent run"
 TOKEN_LABEL_ZH = "估計：每次會用工具的 agent run 約 0.6–0.9M 邏輯 tokens"
@@ -763,7 +765,7 @@ def static_scan(files: dict, *, food: str, commit: str | None = None, integrity:
     for path in sorted(gitlinks):
         flag("F-ARC", "low", path, 0, path, None, "submodule recorded, not fetched")
     for path in sorted(skipped):
-        flag("F-PARTIAL", "medium", path, 0, path, None, "file over the size limit was not stored or scanned")
+        flag("F-PARTIAL", "medium", path, 0, path, None, "file past the archive size or count cap was not stored or scanned")
 
     # S-DEP / S-EXCL / S-MODEL over declared packages and code imports (text only; nothing installed).
     local = {PurePosixPath(p).stem.casefold().replace("_", "-") for p in paths if p.endswith(".py")}

@@ -737,6 +737,19 @@ class CatalogCliTests(unittest.TestCase):
         self.assertTrue((self.project / ".agents/skills/notes/SKILL.md").is_file())
         self.assertFalse([p for p in self.project.rglob("build_index.py")])
 
+    def test_a_food_over_the_archive_caps_is_tasted_with_the_largest_files_flagged(self):
+        files = {"skills/big/SKILL.md": skill_md("big"), "LICENSE": MIT, "README.md": b"# Big\n",
+                 "data/a.bin": b"a" * 3000, "data/b.bin": b"b" * 4000, "data/huge.bin": b"h" * 9000}
+        repo = self.make_repo("big", files)
+        with patch.dict(core.LIMITS, {"max_total_bytes": 6000, "max_file_bytes": 8000}):
+            self.cli("add", repo.as_uri())
+        record = catalog.latest_static(catalog.load_evidence(self.project, "big"))
+        partial = sorted(f["path"] for f in record["flags"] if f["rule"] == "F-PARTIAL")
+        self.assertEqual(partial, ["data/b.bin", "data/huge.bin"])
+        card = self.cli("show", "big")["card"]
+        self.assertNotEqual(card["pipeline"]["stage"], "quarantine")
+        self.assertNotIn("拒收", json.dumps(card, ensure_ascii=False))
+
     def test_tarball_fallback_caps_the_unpacked_size_and_follows_only_transport_errors(self):
         member = b"\0" * (5 * 1024 * 1024 - 1)
         buffer = io.BytesIO()
@@ -745,10 +758,17 @@ class CatalogCliTests(unittest.TestCase):
                 info = tarfile.TarInfo(f"bomb-0123456/f{index}.bin")
                 info.size = len(member)
                 archive.addfile(info, io.BytesIO(member))
-        with patch.object(catalog.urllib.request, "urlopen", return_value=FakeResponse(buffer.getvalue())):
-            with self.assertRaises(catalog.CatalogError) as caught:
-                catalog.fetch_codeload(core.normalize_source("https://github.com/example/bomb"), None)
-        self.assertIn("50 MB", str(caught.exception))
+        # Size never refuses a food (owner, 2026-11-06): past the total cap the files are skipped, not the food.
+        with patch.dict(core.LIMITS, {"max_total_bytes": 50 * 1024 * 1024}), \
+                patch.object(catalog.urllib.request, "urlopen", return_value=FakeResponse(buffer.getvalue())):
+            snapshot = catalog.fetch_codeload(core.normalize_source("https://github.com/example/bomb"), None)
+        self.assertEqual((len(snapshot["files"]), len(snapshot["skipped"])), (10, 2))
+        # The decompression-bomb guard stops reading instead of refusing, and says so in one skipped entry.
+        with patch.dict(core.LIMITS, {"max_total_bytes": 1024 * 1024}), \
+                patch.object(catalog.urllib.request, "urlopen", return_value=FakeResponse(buffer.getvalue())):
+            snapshot = catalog.fetch_codeload(core.normalize_source("https://github.com/example/bomb"), None)
+        self.assertEqual(snapshot["files"], {})
+        self.assertTrue(snapshot["skipped"][-1].startswith("(members from #3 on were not read)"))
         self.cli("add", "https://github.com/example/bomb", "--no-taste")
         with patch.object(catalog, "find_git", return_value="git"), \
                 patch.object(catalog, "fetch_git", side_effect=catalog.CatalogError("Refused: snapshot exceeds the 50 MB limit.")), \

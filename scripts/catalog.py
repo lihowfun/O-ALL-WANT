@@ -441,8 +441,6 @@ def fetch_git(git: str, source: dict, ref, lab: Path) -> dict:
                 gitlinks.append(path)
             elif kind == "blob":
                 entries.append((mode, oid, path))
-        if len(entries) > core.LIMITS["max_files"]:
-            raise CatalogError(f"Refused: {len(entries)} files > {core.LIMITS['max_files']} limit.")
         checks = run_git(base + ["-C", str(repo), "cat-file", "--batch-check"], cwd=scratch, env=env,
                          data="".join(f"{oid}\n" for _m, oid, _p in entries).encode())
         sizes = {}
@@ -450,14 +448,16 @@ def fetch_git(git: str, source: dict, ref, lab: Path) -> dict:
             parts = line.split()
             if len(parts) == 3 and parts[1] == "blob":
                 sizes[parts[0]] = int(parts[2])
-        wanted_blobs = []
-        for mode, oid, path in entries:
-            if sizes.get(oid, 0) > core.LIMITS["max_file_bytes"]:
+        # Size never refuses a food: keep the smallest files first, up to the caps; the rest are skipped (F-PARTIAL).
+        wanted_blobs, kept_bytes = [], 0
+        for mode, oid, path in sorted(entries, key=lambda item: (sizes.get(item[1], 0), item[2])):
+            size = sizes.get(oid, 0)
+            if (size > core.LIMITS["max_file_bytes"] or len(wanted_blobs) >= core.LIMITS["max_files"]
+                    or kept_bytes + size > core.LIMITS["max_total_bytes"]):
                 skipped.append(path)
             else:
                 wanted_blobs.append((mode, oid, path))
-        if sum(sizes.get(oid, 0) for _m, oid, _p in wanted_blobs) > core.LIMITS["max_total_bytes"]:
-            raise CatalogError("Refused: snapshot exceeds the 50 MB limit.")
+                kept_bytes += size
         stream = run_git(base + ["-C", str(repo), "cat-file", "--batch"], cwd=scratch, env=env,
                          data="".join(f"{oid}\n" for _m, oid, _p in wanted_blobs).encode())
         blobs, offset = {}, 0
@@ -490,21 +490,24 @@ def fetch_codeload(source: dict, ref) -> dict:
     request = urllib.request.Request(url, headers={"User-Agent": "oaw-catalog/0"})
     try:
         with urllib.request.urlopen(request, timeout=60) as response:
-            data = response.read(core.LIMITS["max_total_bytes"] + 1)
+            data = response.read(core.LIMITS["max_download_bytes"] + 1)
     except (urllib.error.URLError, OSError) as exc:
         raise CatalogError(f"Tarball download failed: {exc}") from exc
-    if len(data) > core.LIMITS["max_total_bytes"]:
-        raise CatalogError("Refused: tarball exceeds the 50 MB limit.")
+    if len(data) > core.LIMITS["max_download_bytes"]:
+        raise CatalogError(f"Refused: tarball exceeds the {core.LIMITS['max_download_bytes'] // (1024 * 1024)} MB download limit.")
     files, modes, symlinks, skipped = {}, {}, {}, []
-    total, members = 0, 0
+    total, declared, members = 0, 0, 0
     try:
         with tarfile.open(fileobj=io.BytesIO(data), mode="r:gz") as archive:
             comment = str(archive.pax_headers.get("comment", ""))
             # Stream the members: the caps apply to the declared sizes before any member is read into memory.
             for member in archive:
                 members += 1
-                if members > core.LIMITS["max_files"] * 2:
-                    raise CatalogError("Refused: tarball has too many members.")
+                declared += max(member.size, 0)
+                # Decompression-bomb guard: stop reading (never refuse); what is left is recorded as one skipped entry.
+                if members > core.LIMITS["max_files"] * 2 or declared > core.LIMITS["max_total_bytes"] * 10:
+                    skipped.append(f"(members from #{members} on were not read)")
+                    break
                 parts = member.name.split("/", 1)
                 if len(parts) < 2 or not parts[1]:
                     continue
@@ -515,14 +518,11 @@ def fetch_codeload(source: dict, ref) -> dict:
                     symlinks[path] = core.sanitize_text(member.linkname, 200)
                 elif not member.isreg():
                     skipped.append(path)
-                elif member.size > core.LIMITS["max_file_bytes"]:
+                elif (member.size > core.LIMITS["max_file_bytes"] or len(files) >= core.LIMITS["max_files"]
+                      or total + member.size > core.LIMITS["max_total_bytes"]):
                     skipped.append(path)
                 else:
                     total += member.size
-                    if total > core.LIMITS["max_total_bytes"]:
-                        raise CatalogError("Refused: snapshot exceeds the 50 MB limit.")
-                    if len(files) >= core.LIMITS["max_files"]:
-                        raise CatalogError("Refused: too many files.")
                     handle = archive.extractfile(member)
                     files[path] = handle.read(core.LIMITS["max_file_bytes"] + 1) if handle else b""
                     modes[path] = "100755" if member.mode & 0o111 else "100644"
