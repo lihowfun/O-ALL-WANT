@@ -275,7 +275,8 @@ def source_files(profile: str, with_improve: bool, hosts: list[str] | None = Non
     with_improve = with_improve or "oaw-improve" in skills
     source_root = framework_root()
     mappings = {"AGENTS.md": "templates/AGENTS.md", "CLAUDE.md": "templates/CLAUDE.md",
-                "scripts/context_hub.py": "scripts/context_hub.py", "scripts/oaw_common.py": "scripts/oaw_common.py"}
+                "scripts/context_hub.py": "scripts/context_hub.py", "scripts/oaw_common.py": "scripts/oaw_common.py",
+                "scripts/oaw_mode.py": "scripts/oaw_mode.py"}
     trees = [".agents/skills/" + name for name in skills]
     if profile == "knowledge":
         mappings.update({"scripts/wiki_sync.py": "scripts/wiki_sync.py", "scripts/validate_skills.py": "scripts/validate_skills.py"})
@@ -762,6 +763,14 @@ def doctor(target: Path) -> dict:
             stale = egm_policy_lines() & {line.strip() for line in policy.read_text(encoding="utf-8", errors="replace").splitlines()}
             if stale:
                 checks.append({"status": "WARN", "path": "AGENTS.md", "detail": "Policy still describes EGM, which this recipe does not install; preview `oaw.py migrate` or edit the project-owned text."})
+        # The mode helper is required once the install owns it or its policy names it; an older
+        # install without either only gets a migrate hint.
+        mode_helper = "scripts/oaw_mode.py"
+        names_helper = policy.is_file() and "oaw_mode.py" in policy.read_text(encoding="utf-8", errors="replace")
+        if mode_helper in manifest["managed_files"] or mode_helper in manifest.get("custom_files", []) or names_helper:
+            required.append(mode_helper)
+        else:
+            checks.append({"status": "WARN", "path": mode_helper, "detail": "Installed before working modes; preview `oaw.py migrate`, then --apply, to add the helper and its policy line."})
         for relative in required:
             check_path(joined(target, relative), kind="file")
             declared = relative in manifest["managed_files"] or relative in manifest.get("custom_files", [])

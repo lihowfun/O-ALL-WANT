@@ -213,6 +213,7 @@ Run these from an installed project:
 | `python3 scripts/context_hub.py memory add "[DECISION] Keep the cache local — evidence: docs/experiment.md"` | Record durable evidence |
 | `python3 scripts/context_hub.py get Cache_Decision` | Read one knowledge page |
 | `python3 scripts/context_hub.py search "keyword" --compact` | One-line topic search |
+| `python3 scripts/oaw_mode.py suggest` · `show deep` | Pick light, standard or deep from the diff (light by default; EGM only for deep) |
 | `python3 scripts/wiki_sync.py refresh Topic` · `lint` | Render and check the wiki (knowledge profile) |
 | `python3 scripts/improvement.py --help` | Propose, compare and decide improvements (`--with-improve`) |
 

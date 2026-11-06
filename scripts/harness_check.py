@@ -17,7 +17,8 @@ ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_TEST_MODULES = ("test_context_hub", "test_gate", "test_improvement", "test_install", "test_skills", "test_wiki_sync",
                          "test_egm_pilot", "test_egm_local", "test_status", "test_egm_integration",
                          "test_catalog_core", "test_catalog", "test_catalog_ui", "test_cli_resolve",
-                         "test_goldfish_review", "test_codemap_eval", "test_code_index", "test_digest_mod")
+                         "test_goldfish_review", "test_codemap_eval", "test_code_index", "test_digest_mod",
+                         "test_oaw_mode")
 MINIMUM_TESTS = 426  # POSIX count; Windows adds junction cases.
 SUMMARY_MARKER = "OAW-TEST-SUMMARY "
 # Per-check subprocess limit: a guard against a hung command, not a test budget. The full
@@ -105,7 +106,8 @@ def syntax_check():
 
 def cli_check():
     required = {"oaw.py": ("init", "migrate", "doctor"),
-                "context_hub.py": ("memory", "search"), "wiki_sync.py": ("refresh", "lint", "cites"),
+                "context_hub.py": ("memory", "search"), "oaw_mode.py": ("suggest", "show"),
+                "wiki_sync.py": ("refresh", "lint", "cites"),
                 "improvement.py": ("propose", "compare", "decide"),
                 "goldfish_review.py": ("build", "run", "check"),
                 "code_index.py": ("find", "callers", "path", "affected", "stats"),
@@ -127,6 +129,8 @@ def install_check():
             [sys.executable, str(ROOT / "scripts/oaw.py"), "init", "--target", str(target), "--host", "both", "--json"],
             [sys.executable, str(ROOT / "scripts/oaw.py"), "doctor", "--target", str(target), "--json"],
             [sys.executable, str(target / "scripts/context_hub.py"), "status", "--compact"],
+            [sys.executable, str(target / "scripts/oaw_mode.py"), "suggest", "--paths", "README.md", "--root", str(target)],
+            [sys.executable, str(target / "scripts/oaw_mode.py"), "show", "deep", "--root", str(target)],
             [sys.executable, str(target / "scripts/wiki_sync.py"), "lint"],
             [sys.executable, str(target / "scripts/improvement.py"), "--help"],
         ]

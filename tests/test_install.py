@@ -34,6 +34,7 @@ class InstallTests(unittest.TestCase):
             "templates/CLAUDE.md": "@AGENTS.md\n",
             "scripts/context_hub.py": "from oaw_common import VALUE\n",
             "scripts/oaw_common.py": "VALUE = 1\n",
+            "scripts/oaw_mode.py": "print('mode helper')\n",
             "scripts/wiki_sync.py": "from oaw_common import VALUE\n",
             "scripts/validate_skills.py": "def lint_skill_file(path):\n    return [] if 'description:' in path.read_text(encoding='utf8') else ['missing description']\n",
             "scripts/improvement.py": "print('improvement workflow')\n",

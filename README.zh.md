@@ -213,6 +213,7 @@ OAW 不會偷改 host 設定。`doctor` 會把「支援」和「已啟用」分�
 | `python3 scripts/context_hub.py memory add "[DECISION] 保留本機快取 — 證據：docs/experiment.md"` | 記錄可長期使用的證據 |
 | `python3 scripts/context_hub.py get Cache_Decision` | 讀一頁知識頁 |
 | `python3 scripts/context_hub.py search "keyword" --compact` | 一行一個主題的搜尋 |
+| `python3 scripts/oaw_mode.py suggest` · `show deep` | 依 diff 判斷 light、standard 或 deep（預設 light；只有 deep 才跑 EGM） |
 | `python3 scripts/wiki_sync.py refresh Topic` · `lint` | 編譯和檢查 wiki（knowledge profile） |
 | `python3 scripts/improvement.py --help` | 提案、比較、決定改進（`--with-improve`） |
 

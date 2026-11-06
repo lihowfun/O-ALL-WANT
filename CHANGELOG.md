@@ -36,6 +36,18 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Working modes (owner, 2026-11-06: light when a task is light, deep only when it needs it, and the agent decides).
+  `scripts/oaw_mode.py`, installed with every recipe, has `suggest`, which picks light, standard or deep from a git
+  diff, a range or a path list with fixed rules (deep: harness or infrastructure that runs on every session, more
+  than 5 deleted files, migrations or schema files, a new design document; standard: 300+ code lines or 10+ code
+  files; light: everything else, docs included), and `show`, which prints the exact Claude Code and Codex commands
+  for a mode, naming the EGM review only for a host whose `egm-review` entrypoint is installed (without it, deep is
+  standard plus plan mode). The installed `AGENTS.md` adds two lines in both recipes (light by default; run
+  `suggest` before any review) and, only with EGM, one line limiting the full EGM review to deep; it replaces
+  "Installing it does not require running its full review flow on unrelated tasks". Existing installs receive the
+  new policy and helper through `oaw.py migrate`; doctor requires the helper once the install owns it or the policy
+  names it, and only warns for an install made before this change. Evidence: `tests/test_oaw_mode.py`
+  and an installed end-to-end run on Linux; the policy line is model-facing and no behavior A/B has measured it.
 - `catalog.py why [FOOD]`: plain answers for the owner (2026-11-06: "但我如果有問 要能夠直白找出來"). Without a food,
   one line per food: what was decided, who it waits on, why. With a food: the latest verdict and reason, whether
   the food's own arm was installed and run, the frozen questions and per-arm numbers, the records path and

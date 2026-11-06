@@ -52,6 +52,23 @@ Recall bounds the complete rendered output and returns continuation when records
 
 Topic identifiers cannot contain path separators/traversal or reserved output names. Missing topics and invalid operations return nonzero. Source and state paths are confined to the project, including symlink boundaries. Writer locks cover the complete read-modify-write transaction. Stable `.NAME.oaw.lock` sidecars are synchronization state; do not delete them while writers are running.
 
+## Working modes
+
+Installed with every recipe. The policy makes light the default and has the agent run `suggest` before any review, so the heavy EGM review runs only when the change calls for it.
+
+```bash
+python3 scripts/oaw_mode.py suggest [--range A..B | --paths PATH ...] [--root DIR] [--json]
+python3 scripts/oaw_mode.py show light|standard|deep [--root DIR] [--json]
+```
+
+`suggest` reads the working tree (staged, unstaged and untracked files) against HEAD, a `--range`, or a plain `--paths` list (planned or changed; a path that does not exist yet counts as new, and line counts are unknown). The rules are fixed in code; the highest mode wins and every matching reason is printed:
+
+- **deep**: harness or infrastructure that runs on every session (`AGENTS.md` or `CLAUDE.md` anywhere, `templates/`, `.github/workflows/`, `.claude/settings*.json`, `.claude/hooks/`, `.codex/`, `.githooks/`, `.husky/`, `.pre-commit-config.yaml`, installers named `install*`, `setup*` or `bootstrap*` with a script extension, OAW's own helpers and harness scripts in `scripts/`, and any file named in a Claude Code hook command in `.claude/settings*.json`); more than 5 deleted files; anything under a `migrations/` or `migration/` folder or `alembic/versions/`, and schema files (`schema.*`, `*.schema.json`, `*.prisma`); a new design document (an added `docs/designs/*.md` or `design*.md`). A rename is checked under its old and new path and is not a deletion.
+- **standard**: none of the above, and a code change of 300 or more lines (added plus deleted) or 10 or more files. Documentation (`docs/`, `.md`, `.markdown`, `.rst`, `.txt`, `.adoc`) never counts toward size; binary files count as files only.
+- **light**: everything else, including docs-only and small changes.
+
+`show` prints the host commands for a mode (flags checked with Claude Code 2.1.287 and codex-cli 0.167.0): light is a plain `claude` or `codex` session; standard is `claude --effort high` plus one new subagent with no conversation context that reviews the diff and the tests, or for Codex `codex review --uncommitted` (Codex has no mapped effort flag yet); deep is `claude --permission-mode plan --effort max`, then `/egm-review`, typed by the user because EGM keeps explicit invocation, or for Codex a `codex --sandbox read-only` planning pass and the `egm-review` skill from the skill picker (Codex plan-mode and effort flags are not mapped yet). Deep names EGM only for a host whose `egm-review/SKILL.md` is installed in the project (`.claude/skills/` or `.agents/skills/`); without it, deep falls back to standard plus plan mode (`--effort high`), and when only the other host has EGM it says how to add the entrypoint. Exit codes: 0 done, 2 a usage, path or git error. `oaw.py doctor` requires the helper once the install owns it or `AGENTS.md` names it; an install made before working modes gets a WARN and `migrate --apply` adds the helper and the policy lines. The rules route review effort; they do not measure review quality, and no behavior A/B has measured the policy line.
+
 ## Knowledge profile
 
 ```bash

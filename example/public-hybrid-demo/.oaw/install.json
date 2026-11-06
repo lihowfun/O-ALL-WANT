@@ -103,11 +103,12 @@
     ".oaw/integrations/egm/skills/egm-review/SKILL.md": "5e96e3b586a086c7c87b4f0185303a49adc9486028134d258827e9bbfb89e986",
     ".oaw/integrations/egm/skills/egm-review/agents/openai.yaml": "780d8877443f704ee27d504c13d08f304f0bca4c4418f5703f61ae40416fca74",
     ".oaw/integrations/egm/skills/egm-review/assets/icon.svg": "02154028864bd8547a45d7c9f55c59f95cb4ce3f57ecb3426f67034ab97d022f",
-    "AGENTS.md": "69fa4c1423372aae4fcf560786ab48b5d52a930147472ddeac63d1297b2c7a4a",
+    "AGENTS.md": "772b236d7d7979a15629ce4340e301f38801db68434cafd7f5640312dfc59a47",
     "CLAUDE.md": "336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49",
     "scripts/context_hub.py": "1fcc162e3d94792c3c5d173ceebde079ac3e238f9da5efd66978f821af8a1696",
     "scripts/improvement.py": "7ec437240dbd621d421413f79c994e754db7b4879af1b98584d5a4149e275420",
     "scripts/oaw_common.py": "33063249f7f244778d9caaec70e76d119ce1d4fe117c425db5995c47f48adc2c",
+    "scripts/oaw_mode.py": "2ed91840c46b637c87ab00d1f80e9f61efdcc18061492a747a5f7c2a0e746dd9",
     "scripts/validate_skills.py": "ebcd392ea41c7c9ac732fbb3fe6207b0a82bfdb81e3840c8c4bc076d585b0385",
     "scripts/wiki_sync.py": "0c7aa732c80b7df2d7e8e4839d4a289bec8bb456193536babbcfe7d8fdb0a96d"
   },
