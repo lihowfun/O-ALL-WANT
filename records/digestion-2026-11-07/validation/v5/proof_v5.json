@@ -1,0 +1,13 @@
+{
+ "restored": {
+  "claude_json_plugin_keys": false,
+  "files": true,
+  "installed_has_egm": true,
+  "marketplace_dir_egm_exists": true,
+  "marketplaces_has_egm": true,
+  "plugin_cache_egm_exists": true,
+  "plugin_list_from_home": true,
+  "user_enabledPlugins_count": true,
+  "user_enabledPlugins_has_egm": true
+ }
+}
