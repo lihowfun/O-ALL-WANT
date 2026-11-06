@@ -1,0 +1,114 @@
+{
+ "A": {
+  "summary": {
+   "N": {
+    "runs": 12,
+    "coverage_mean": 0.871,
+    "essential_ok_runs": 10,
+    "wrong_claims": 2,
+    "tokens_median": 112636,
+    "tool_calls_median": 10.67
+   },
+   "G": {
+    "runs": 12,
+    "coverage_mean": 0.813,
+    "essential_ok_runs": 9,
+    "wrong_claims": 9,
+    "tokens_median": 159867,
+    "tool_calls_median": 9.67
+   },
+   "S": {
+    "runs": 12,
+    "coverage_mean": 0.86,
+    "essential_ok_runs": 9,
+    "wrong_claims": 5,
+    "tokens_median": 150024,
+    "tool_calls_median": 7.33
+   },
+   "C": {
+    "runs": 12,
+    "coverage_mean": 0.859,
+    "essential_ok_runs": 9,
+    "wrong_claims": 3,
+    "tokens_median": 178518,
+    "tool_calls_median": 5.17
+   }
+  },
+  "quality_C": "same",
+  "quality_G": "worse",
+  "quality_S": "worse"
+ },
+ "B": {
+  "summary": {
+   "N": {
+    "runs": 12,
+    "coverage_mean": 0.859,
+    "essential_ok_runs": 10,
+    "wrong_claims": 3,
+    "tokens_median": 112636,
+    "tool_calls_median": 10.67
+   },
+   "G": {
+    "runs": 12,
+    "coverage_mean": 0.825,
+    "essential_ok_runs": 9,
+    "wrong_claims": 6,
+    "tokens_median": 159867,
+    "tool_calls_median": 9.67
+   },
+   "S": {
+    "runs": 12,
+    "coverage_mean": 0.872,
+    "essential_ok_runs": 9,
+    "wrong_claims": 4,
+    "tokens_median": 150024,
+    "tool_calls_median": 7.33
+   },
+   "C": {
+    "runs": 12,
+    "coverage_mean": 0.859,
+    "essential_ok_runs": 9,
+    "wrong_claims": 4,
+    "tokens_median": 178518,
+    "tool_calls_median": 5.17
+   }
+  },
+  "quality_C": "same",
+  "quality_G": "worse",
+  "quality_S": "same"
+ },
+ "haiku": {
+  "quality_A": "same",
+  "quality_B": "same",
+  "quality": "same",
+  "cost_ratio": 1.585
+ },
+ "d29": {
+  "per_condition": {
+   "opus-5-5": {
+    "quality": "same",
+    "cost_ratio": 1.2,
+    "outcome": "optional"
+   },
+   "sonnet-5-5": {
+    "quality": "same",
+    "cost_ratio": 1.308,
+    "outcome": "optional"
+   },
+   "opus-4-8": {
+    "quality": "same",
+    "cost_ratio": 1.722,
+    "outcome": "excrete"
+   },
+   "haiku-5-5": {
+    "quality": "same",
+    "cost_ratio": 1.585,
+    "outcome": "excrete"
+   }
+  },
+  "deciding_condition": "opus-4-8",
+  "outcome": "excrete",
+  "quality": "same",
+  "cost_ratio": 1.722
+ }
+}
