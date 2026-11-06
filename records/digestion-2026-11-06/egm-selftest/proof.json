@@ -1,0 +1,88 @@
+{
+ "after_install": {
+  "claude_json_plugin_keys": {
+   "officialMarketplaceAutoInstallAttempted": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+   "officialMarketplaceAutoInstalled": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+   "pluginPanes": "a2d2697864a5f64590e7f54df94e8b488a7f0b76e1db636b390fb6670143c760",
+   "pluginUsage": "8097dafcf4ead20a23b0e6a214a0d81f0f41b8841f57ef7fa95baaf1e71b705e"
+  },
+  "files": {
+   ".claude/plugins/installed_plugins.json": "8582c90ad34bfd31a8a13125d45d97d76bc39e432bdc4074e2456b1addf4845a",
+   ".claude/plugins/known_marketplaces.json": "9ea4e3e5a912d68b69b4c0f81156ff4af518d43f16402831364e188c631b9c11",
+   ".claude/settings.json": "4a55bb675280033bceffdb30229252a42547a6b3d0c976bba85a9695baa646d8",
+   ".claude/settings.local.json": "ab133839b9ed126ed99c338d818acc9befd8de569f76457d051e9aceddff0770"
+  },
+  "installed_has_egm": true,
+  "marketplace_dir_egm_exists": false,
+  "marketplaces_has_egm": true,
+  "plugin_cache_egm_exists": true,
+  "plugin_list_from_home": [
+   "egm@egm|project|False",
+   "egm@egm|project|False",
+   "egm@egm|project|False",
+   "other-plugin-1|user|True",
+   "other-plugin-2|user|True"
+  ],
+  "user_enabledPlugins_count": 2,
+  "user_enabledPlugins_has_egm": false
+ },
+ "after_uninstall_and_cache_removed": {
+  "claude_json_plugin_keys": {
+   "officialMarketplaceAutoInstallAttempted": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+   "officialMarketplaceAutoInstalled": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+   "pluginPanes": "a2d2697864a5f64590e7f54df94e8b488a7f0b76e1db636b390fb6670143c760",
+   "pluginUsage": "5af2fbd9edf511726b4707eec8066157dd4664599996a554c52623815ef89683"
+  },
+  "files": {
+   ".claude/plugins/installed_plugins.json": "059973775eb2c78a17af86c49a8aa9224754774dcdaf43be0ebc96c65b94e78a",
+   ".claude/plugins/known_marketplaces.json": "826736dbb618665e1e955706e95424fee86d781afd946a35ade25695b7b7d336",
+   ".claude/settings.json": "4a55bb675280033bceffdb30229252a42547a6b3d0c976bba85a9695baa646d8",
+   ".claude/settings.local.json": "ab133839b9ed126ed99c338d818acc9befd8de569f76457d051e9aceddff0770"
+  },
+  "installed_has_egm": false,
+  "marketplace_dir_egm_exists": false,
+  "marketplaces_has_egm": false,
+  "plugin_cache_egm_exists": false,
+  "plugin_list_from_home": [
+   "other-plugin-1|user|True",
+   "other-plugin-2|user|True"
+  ],
+  "user_enabledPlugins_count": 2,
+  "user_enabledPlugins_has_egm": false
+ },
+ "before_install": {
+  "claude_json_plugin_keys": {
+   "officialMarketplaceAutoInstallAttempted": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+   "officialMarketplaceAutoInstalled": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+   "pluginPanes": "a2d2697864a5f64590e7f54df94e8b488a7f0b76e1db636b390fb6670143c760",
+   "pluginUsage": "8097dafcf4ead20a23b0e6a214a0d81f0f41b8841f57ef7fa95baaf1e71b705e"
+  },
+  "files": {
+   ".claude/plugins/installed_plugins.json": "059973775eb2c78a17af86c49a8aa9224754774dcdaf43be0ebc96c65b94e78a",
+   ".claude/plugins/known_marketplaces.json": "826736dbb618665e1e955706e95424fee86d781afd946a35ade25695b7b7d336",
+   ".claude/settings.json": "4a55bb675280033bceffdb30229252a42547a6b3d0c976bba85a9695baa646d8",
+   ".claude/settings.local.json": "ab133839b9ed126ed99c338d818acc9befd8de569f76457d051e9aceddff0770"
+  },
+  "installed_has_egm": false,
+  "marketplace_dir_egm_exists": false,
+  "marketplaces_has_egm": false,
+  "plugin_cache_egm_exists": false,
+  "plugin_list_from_home": [
+   "other-plugin-1|user|True",
+   "other-plugin-2|user|True"
+  ],
+  "user_enabledPlugins_count": 2,
+  "user_enabledPlugins_has_egm": false
+ },
+ "note": "sha256 of user-level Claude Code plugin files and EGM presence by key; values are never stored; the owner's other plugins are placeholders. after_uninstall_and_cache_removed is after the project-scope uninstall in all four E workspaces (three cases and the probe), removing the egm marketplace and deleting the plugin cache folder the install created. ~/.claude.json pluginUsage changes with every session (usage counters of other plugins); it has no egm key.",
+ "restored": {
+  "files": true,
+  "installed_has_egm": true,
+  "marketplace_dir_egm_exists": true,
+  "marketplaces_has_egm": true,
+  "plugin_cache_egm_exists": true,
+  "plugin_list_from_home": true,
+  "user_enabledPlugins_count": true,
+  "user_enabledPlugins_has_egm": true
+ }
+}

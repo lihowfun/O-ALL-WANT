@@ -1,0 +1,137 @@
+{
+ "groups_compared": [
+  "clean r1",
+  "clean r2",
+  "events r1",
+  "events r2",
+  "orders r1",
+  "orders r2"
+ ],
+ "summary": {
+  "E": {
+   "runs": 6,
+   "planted_total": 16,
+   "detections": 16,
+   "critical": 8,
+   "major": 8,
+   "unsupported": 0,
+   "clean_false_alarms": 0,
+   "valid_reviews": 6,
+   "reports_found": 6,
+   "tokens_median": 1137230,
+   "tokens_total": 7169908,
+   "agent_calls_total": 49,
+   "seconds_median": 503.95000000000005,
+   "mutated_runs": 0,
+   "contaminated_runs": 0,
+   "per_case": {
+    "orders": {
+     "detections": 8,
+     "unsupported": 0,
+     "runs": 2
+    },
+    "events": {
+     "detections": 8,
+     "unsupported": 0,
+     "runs": 2
+    },
+    "clean": {
+     "detections": 0,
+     "unsupported": 0,
+     "runs": 2
+    }
+   }
+  },
+  "N": {
+   "runs": 6,
+   "planted_total": 16,
+   "detections": 12,
+   "critical": 8,
+   "major": 4,
+   "unsupported": 0,
+   "clean_false_alarms": 0,
+   "valid_reviews": 6,
+   "reports_found": 6,
+   "tokens_median": 40709,
+   "tokens_total": 245887,
+   "agent_calls_total": 0,
+   "seconds_median": 38.8,
+   "mutated_runs": 0,
+   "contaminated_runs": 0,
+   "per_case": {
+    "orders": {
+     "detections": 8,
+     "unsupported": 0,
+     "runs": 2
+    },
+    "events": {
+     "detections": 4,
+     "unsupported": 0,
+     "runs": 2
+    },
+    "clean": {
+     "detections": 0,
+     "unsupported": 0,
+     "runs": 2
+    }
+   }
+  },
+  "P": {
+   "runs": 6,
+   "planted_total": 16,
+   "detections": 16,
+   "critical": 8,
+   "major": 8,
+   "unsupported": 1,
+   "clean_false_alarms": 0,
+   "valid_reviews": 6,
+   "reports_found": 6,
+   "tokens_median": 40578,
+   "tokens_total": 244581,
+   "agent_calls_total": 0,
+   "seconds_median": 34.55,
+   "mutated_runs": 0,
+   "contaminated_runs": 0,
+   "per_case": {
+    "orders": {
+     "detections": 8,
+     "unsupported": 1,
+     "runs": 2
+    },
+    "events": {
+     "detections": 8,
+     "unsupported": 0,
+     "runs": 2
+    },
+    "clean": {
+     "detections": 0,
+     "unsupported": 0,
+     "runs": 2
+    }
+   }
+  }
+ },
+ "verdicts_vs_N": {
+  "E": {
+   "verdict": "better than native",
+   "current_tasting_rules": "absorb",
+   "d21_tier_b": "ships (parity or better)",
+   "detections_delta": 4,
+   "unsupported_delta": 0,
+   "tokens_median_ratio": 27.936
+  },
+  "P": {
+   "verdict": "better than native",
+   "current_tasting_rules": "absorb",
+   "d21_tier_b": "does not ship",
+   "detections_delta": 4,
+   "unsupported_delta": 1,
+   "tokens_median_ratio": 0.997
+  }
+ },
+ "ceiling": {
+  "native_detections": 12,
+  "planted_total": 16,
+  "quality_axis_can_show_better": true
+ }
+}
