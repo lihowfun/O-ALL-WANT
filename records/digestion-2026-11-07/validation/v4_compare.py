@@ -178,7 +178,7 @@ def main(records, out_path):
     report["court"] = {"opus_vs_codex": fact_agreement(court_opus, court_cx),
                        "codex_original_vs_reversed": fact_agreement(court_cx, load(os.path.join(HERE, "v4", "court", "grades-codex-reversed.jsonl"))),
                        "bottom_line_agreement": f"{sum(1 for a, b in bl if a == b)}/{len(bl)}",
-                       "coverage_by_arm": {g: {arm: round(statistics.mean(x["coverage"] for k, x in grades.items() if x["arm"] == arm), 3)
+                       "coverage_by_arm": {g: {arm: round(statistics.mean([x["coverage"] for x in grades.values() if x["arm"] == arm] or [0]), 3)
                                                for arm in ("N", "P", "C")} for g, grades in (("opus", court_opus), ("codex", court_cx))}}
     with open(out_path, "w", encoding="utf-8") as handle:
         json.dump(report, handle, ensure_ascii=False, indent=1)

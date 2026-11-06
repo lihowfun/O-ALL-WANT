@@ -1,0 +1,146 @@
+{
+ "per_grader": {
+  "grades-opus-1.jsonl": {
+   "label_accuracy_a_to_d": 1.0,
+   "label_accuracy_by_variant": {
+    "a": 1.0,
+    "b": 1.0,
+    "c": 1.0,
+    "d": 1.0
+   },
+   "wrong_claim_checks": {
+    "a_wrong_is_0": "4/4",
+    "b_wrong_is_0": "4/4",
+    "c_wrong_is_0": "4/4",
+    "d_wrong_at_least_1": "4/4"
+   },
+   "planted_wrong_delta_f_minus_e": [
+    2,
+    2,
+    1,
+    2
+   ],
+   "planted_detected_rate": 0.75,
+   "planted_partial_or_better_rate": 1.0,
+   "e_f_label_consistency": 1.0,
+   "graded": 24,
+   "reading": "passes the PREREG bar"
+  },
+  "grades-opus-2.jsonl": {
+   "label_accuracy_a_to_d": 1.0,
+   "label_accuracy_by_variant": {
+    "a": 1.0,
+    "b": 1.0,
+    "c": 1.0,
+    "d": 1.0
+   },
+   "wrong_claim_checks": {
+    "a_wrong_is_0": "4/4",
+    "b_wrong_is_0": "4/4",
+    "c_wrong_is_0": "4/4",
+    "d_wrong_at_least_1": "3/4"
+   },
+   "planted_wrong_delta_f_minus_e": [
+    2,
+    2,
+    1,
+    3
+   ],
+   "planted_detected_rate": 0.75,
+   "planted_partial_or_better_rate": 1.0,
+   "e_f_label_consistency": 1.0,
+   "graded": 24,
+   "reading": "passes the PREREG bar"
+  },
+  "grades-codex-1.jsonl": {
+   "label_accuracy_a_to_d": 1.0,
+   "label_accuracy_by_variant": {
+    "a": 1.0,
+    "b": 1.0,
+    "c": 1.0,
+    "d": 1.0
+   },
+   "wrong_claim_checks": {
+    "a_wrong_is_0": "4/4",
+    "b_wrong_is_0": "4/4",
+    "c_wrong_is_0": "4/4",
+    "d_wrong_at_least_1": "4/4"
+   },
+   "planted_wrong_delta_f_minus_e": [
+    2,
+    2,
+    2,
+    2
+   ],
+   "planted_detected_rate": 1.0,
+   "planted_partial_or_better_rate": 1.0,
+   "e_f_label_consistency": 0.891,
+   "graded": 24,
+   "reading": "passes the PREREG bar"
+  },
+  "grades-codex-2.jsonl": {
+   "label_accuracy_a_to_d": 1.0,
+   "label_accuracy_by_variant": {
+    "a": 1.0,
+    "b": 1.0,
+    "c": 1.0,
+    "d": 1.0
+   },
+   "wrong_claim_checks": {
+    "a_wrong_is_0": "4/4",
+    "b_wrong_is_0": "4/4",
+    "c_wrong_is_0": "4/4",
+    "d_wrong_at_least_1": "4/4"
+   },
+   "planted_wrong_delta_f_minus_e": [
+    2,
+    1,
+    2,
+    0
+   ],
+   "planted_detected_rate": 0.5,
+   "planted_partial_or_better_rate": 0.75,
+   "e_f_label_consistency": 0.927,
+   "graded": 24,
+   "reading": "wrong-claim counts of this grader must not decide a verdict alone"
+  }
+ },
+ "agreement": {
+  "grades-codex-1.jsonl vs grades-codex-2.jsonl": {
+   "fact_labels": 174,
+   "raw_agreement": 0.977,
+   "kappa": 0.955,
+   "wrong_claims_equal": "22/24"
+  },
+  "grades-codex-1.jsonl vs grades-opus-1.jsonl": {
+   "fact_labels": 174,
+   "raw_agreement": 0.971,
+   "kappa": 0.943,
+   "wrong_claims_equal": "21/24"
+  },
+  "grades-codex-1.jsonl vs grades-opus-2.jsonl": {
+   "fact_labels": 174,
+   "raw_agreement": 0.971,
+   "kappa": 0.943,
+   "wrong_claims_equal": "20/24"
+  },
+  "grades-codex-2.jsonl vs grades-opus-1.jsonl": {
+   "fact_labels": 174,
+   "raw_agreement": 0.977,
+   "kappa": 0.954,
+   "wrong_claims_equal": "21/24"
+  },
+  "grades-codex-2.jsonl vs grades-opus-2.jsonl": {
+   "fact_labels": 174,
+   "raw_agreement": 0.977,
+   "kappa": 0.954,
+   "wrong_claims_equal": "20/24"
+  },
+  "grades-opus-1.jsonl vs grades-opus-2.jsonl": {
+   "fact_labels": 174,
+   "raw_agreement": 1.0,
+   "kappa": 1.0,
+   "wrong_claims_equal": "22/24"
+  }
+ }
+}
