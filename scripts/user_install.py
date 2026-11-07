@@ -1031,7 +1031,15 @@ def plan_add(target, sources, *, choice=None, consent=None, on_conflict=(), host
                    "status": "install", "reason": None, "recommendation": None}
         if stored_key(source["key"]) in installed_keys:
             installed = installed_keys[stored_key(source["key"])]
-            package.update(status="skip", reason=f"已經裝過（{installed}）；要重裝先 oaw.py remove {installed}")
+            entry = record["packages"][installed]
+            have = set(entry["parts"]) | {f"{p['kind']}:{p['renamed_from']}" for p in entry["parts"].values() if p.get("renamed_from")}
+            missing = [part for part in parts if part_key(part) not in have]
+            if installed == name and entry["source"].get("tree_sha256") == snapshot["tree_sha256"] and missing:
+                # The same bytes again: add only the parts not installed yet (consent given later, or held back by 3).
+                for part in parts:
+                    part["already"] = part_key(part) in have
+            else:
+                package.update(status="skip", reason=f"已經裝過（{installed}）；要重裝先 oaw.py remove {installed}")
         if not parts and package["status"] == "install":
             package.update(status="skip", reason="沒有可以安裝的 skill、agent、hook 或 MCP server")
         if choice == "recommended" and package["status"] == "install":
@@ -1040,9 +1048,18 @@ def plan_add(target, sources, *, choice=None, consent=None, on_conflict=(), host
             if action == "skip":
                 package.update(status="skip", reason=reason)
             elif action == "explicit":
+                # Explicit-only reaches skills only; hooks and MCP servers would still start on their own, so an
+                # optional source gets them held back (listed with the command that turns them on), never enabled.
+                auto = [part for part in parts if part["kind"] in ("hooks", "mcp")]
                 for part in parts:
                     if part["kind"] == "skill":
                         part["explicit_only"] = True
+                    elif part in auto:
+                        part["held_back"] = True
+                if auto:
+                    package["recommendation"]["reason"] = reason.replace("：裝上，但只在你叫它時用", "：skill 裝上、只在你叫它時用") + (
+                        "；會自己執行的 " + "、".join(f"{'hook' if p['kind'] == 'hooks' else 'MCP server'} {p['name']}" for p in auto)
+                        + " 不打開（要用時再加，指令在清單上）")
         packages.append(package)
 
     # Overlaps with OAW's own skills of the same category (declared in verdicts.json; no semantic analysis).
@@ -1127,6 +1144,15 @@ def plan_add(target, sources, *, choice=None, consent=None, on_conflict=(), host
             if package["status"] != "install":
                 part["status"], part["reason"] = "skip", package["reason"]
                 continue
+            if part.get("already"):
+                part["status"], part["reason"] = "skip", "已經裝了"
+                continue
+            if part.get("held_back"):
+                part["enable_argv"] = enable_argv(package, part, target, hosts)
+                command = command_line(part["enable_argv"])
+                part["status"], part["reason"] = "held", "可選用的來源：會自己執行的部分不預設打開；要用：" + (
+                    command or "--json 的 enable_argv")
+                continue
             if part.get("blocked_reason"):
                 part["status"], part["reason"] = "blocked", part["blocked_reason"]
                 continue
@@ -1165,11 +1191,6 @@ def plan_add(target, sources, *, choice=None, consent=None, on_conflict=(), host
                     part["renamed_from"], part["name"] = part["name"], new
                 else:
                     part["replace"] = [prefix for prefix, _d in destinations(part)] or ([part["name"]] if part["kind"] == "mcp" else [])
-            if part["status"] == "install":
-                for prefix, _is_dir in destinations(part):
-                    claimed[prefix] = package["name"]
-                if part["kind"] == "mcp":
-                    servers_planned.add(part["name"])
             # Consent for anything that runs on its own (D34).
             missing = [need for need in part["needs"] if consents is None or need not in consents]
             if part["status"] == "install" and missing:
@@ -1180,6 +1201,12 @@ def plan_add(target, sources, *, choice=None, consent=None, on_conflict=(), host
             shared = SETTINGS if part["kind"] == "hooks" else MCP_FILE if part["kind"] == "mcp" else None
             if part["status"] in ("install", "needs-consent") and shared in shared_errors:
                 part["status"], part["reason"] = "blocked", shared_errors[shared]
+            # Only now, after consent and blocking checks, does a part claim its name; a skipped one claims nothing.
+            if part["status"] in ("install", "needs-consent"):
+                for prefix, _is_dir in destinations(part):
+                    claimed[prefix] = package["name"]
+                if part["kind"] == "mcp":
+                    servers_planned.add(part["name"])
 
     # Files the parts write; a second writer of one path is a conflict that is never resolved silently.
     writers = {}
@@ -1284,6 +1311,8 @@ def commit_parts(target: Path, plan: dict) -> dict:
         try:
             for package, part in installing:
                 entry = record["packages"].setdefault(package["name"], _package_record(package, plan, stamp))
+                entry["consents"] = sorted(set(entry.get("consents", [])) | set(plan["consents"] or ()))
+                entry["held_back"] = [key for key in entry.get("held_back", []) if key != part_key(part)]
                 files_record = []
                 deletes = set()
                 for prefix in part["replace"]:
@@ -1387,6 +1416,7 @@ def _package_record(package: dict, plan: dict, stamp: str) -> dict:
             "license": {"spdx": package["license"]["spdx"], "distribution": package["license"]["distribution"]},
             "tasting_at_install": {k: package["tasting"].get(k) for k in ("status", "label_zh", "date", "from")},
             "recommendation": package["recommendation"],
+            "held_back": [part_key(p) for p in package["parts"] if p["status"] == "held"],
             "consents": sorted(plan["consents"] or ()), "dependencies": package["dependencies"],
             "left_out": package["left_out"], "parts": {}}
 
@@ -1456,7 +1486,8 @@ def _package_view(package: dict) -> dict:
             "parts": [{"name": p["name"], "kind": p["kind"], "status": p["status"], "reason": p["reason"], "needs": p["needs"],
                        "renamed_from": p["renamed_from"], "explicit_only": p["explicit_only"], "replace": bool(p["replace"]),
                        "files": sorted(p.get("writes", {})), "shared_entries": _shared_entries(p),
-                       "scripts": p["scripts"], "background": p["background"]} for p in package["parts"]]}
+                       "scripts": p["scripts"], "background": p["background"], "enable_argv": p.get("enable_argv")}
+                      for p in package["parts"]]}
 
 
 def question_text(plan: dict) -> str:
@@ -1530,6 +1561,14 @@ def suggested_argv(plan: dict) -> list:
     return argv + ["--apply"]
 
 
+def enable_argv(package: dict, part: dict, target: Path, hosts: list) -> list:
+    """The `add` that turns on one held-back part of an installed source (it adds only what is missing)."""
+    source = package["source"]
+    return [sys.executable or "python3", str(oaw.framework_root() / "scripts" / "oaw.py"), "add", source["path"] or source["input"],
+            "--target", str(target), "--host", "both" if len(hosts) > 1 else hosts[0], "--choice", "oaw",
+            "--consent", ",".join(part["needs"]), "--apply"]
+
+
 def suggested_command(plan: dict) -> str | None:
     return command_line(suggested_argv(plan))
 
@@ -1572,7 +1611,8 @@ def preview_lines(plan: dict, sources) -> list:
             if package["status"] != "install":
                 break
             renamed = f"（原名 {part['renamed_from']}）" if part["renamed_from"] else ""
-            mark = {"install": "裝", "skip": "不裝", "needs-consent": "待同意", "needs-decision": "待決定", "blocked": "擋住"}[part["status"]]
+            mark = {"install": "裝", "skip": "不裝", "needs-consent": "待同意", "needs-decision": "待決定", "blocked": "擋住",
+                    "held": "沒打開"}[part["status"]]
             detail = f"{len(part.get('writes', {}))} 個檔案" + (f"，{len(_shared_entries(part))} 項共用設定" if _shared_entries(part) else "")
             lines.append(f"    [{mark}] {part['kind']} {part['name']}{renamed}：{detail}" + (f" · {part['reason']}" if part["reason"] else "")
                          + ("（只在你叫它時用）" if part["explicit_only"] else ""))
@@ -1683,8 +1723,18 @@ def list_receipt(target) -> dict:
              *receipt_lines(rows)]
     if retired:
         lines.append("你選擇用別人的版本，所以沒裝 OAW 的：" + "、".join(retired) + "（移除那份 skill 時會裝回來）")
+    held = [{"package": name, "parts": sorted(entry["held_back"])} for name, entry in sorted(record["packages"].items())
+            if entry.get("held_back")]
+    for item in held:
+        entry = record["packages"][item["package"]]
+        source = entry["source"]
+        where = (f"{source['url']}@{source['commit']}" if source["kind"] == "github" and source.get("commit")
+                 else source.get("url") or "<這個來源的資料夾>")
+        needs = sorted({"hooks" if key.startswith("hooks:") else "mcp" for key in item["parts"]})
+        lines.append(f"沒打開（可選用的來源，會自己執行）：{item['package']} 的 {'、'.join(item['parts'])}；要用："
+                     f"python3 <OAW>/scripts/oaw.py add {where} --target . --choice oaw --consent {','.join(needs)} --apply")
     return {"status": "list", "target": str(target), "profile": manifest["profile"] if manifest else None, "receipt": rows,
-            "retired_oaw_skills": retired, "lines": lines}
+            "retired_oaw_skills": retired, "held_back": held, "lines": lines}
 
 
 def _matches(record: dict, name: str) -> list:

@@ -51,6 +51,8 @@ python3 scripts/oaw.py remove NAME --target PROJECT [--dry-run] [--apply] [--for
   (`question`, `apply_command` and `apply_argv` in `--json`; a `--consent` you gave, even `none`, stays in them). The command repeats the preview's sources, target
   and hosts with every value quoted for the shell; on Windows a value with shell characters gets no
   `apply_command`, so use `apply_argv`.
+- Adding a source that is already installed, with the same bytes, installs only its missing parts (consent given
+  later, or parts held back by `recommended`); a changed source must be removed first.
 - Conflicts are structural and free: a same-named skill, agent or MCP server (`rename[:NEW]`, `skip`, `replace`;
   `replace` only when no host's copy belongs to another of your additions) and
   a declared category overlap with an OAW skill, such as a second code map (`keep-both`, `use-theirs` retires OAW's
@@ -68,7 +70,8 @@ python3 scripts/oaw.py remove NAME --target PROJECT [--dry-run] [--apply] [--for
   code is never executed, imported or built; dependencies are listed, not installed.
 - `recommended`: a tasting outcome of default installs as is, optional installs as explicit-only
   (`disable-model-invocation: true` for Claude and `agents/openai.yaml` `policy.allow_implicit_invocation: false`
-  for Codex, keeping the rest of a shipped file), excrete is not installed (with the condition it was tasted under), and no
+  for Codex, keeping the rest of a shipped file) while its hooks and MCP servers, which would start on their own,
+  are held back and listed with the `add` command that turns them on; excrete is not installed (with the condition it was tasted under), and no
   record installs it marked 未試吃. Consent is still yours.
 - A local folder is read without following symlinks or Windows junctions, and version-control metadata (`.git` as a
   file or folder, `.hg`, `.svn` and the like) never comes along. A skill installs under its folder name, and its

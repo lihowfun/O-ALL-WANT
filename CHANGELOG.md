@@ -25,6 +25,9 @@ All notable changes to this project will be documented in this file.
   project already had is never taken for the project's own; a tasting's version comes from the snapshot sealed
   before it (verdicts.json records it per tasting), not from the food's current pin; and `rename:NEW` survives into
   the printed apply command.
+- Under `recommended`, an optional source's hooks and MCP servers are held back rather than started (the receipt
+  lists them with the command that turns them on); re-adding an installed source at the same bytes adds only its
+  missing parts; a part skipped for consent no longer claims its name in the batch.
 - Files a `remove --keep` leaves to the user are never deleted by another part; `replace` checks every host's copy
   before overwriting; a quoted `allow_implicit_invocation` key (block, flow or JSON form) is set in place; and two
   identical hooks of one source are removed in one go.

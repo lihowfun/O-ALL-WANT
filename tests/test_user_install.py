@@ -288,7 +288,17 @@ class UserInstallTests(unittest.TestCase):
         self.assertEqual((self.project / ".mcp.json").read_bytes(), mcp)
         self.assertFalse((self.project / ".agents/skills/scripty").exists())
         self.assertFalse((self.project / ".claude/oaw-user").exists())
+        # Consent given later adds exactly the parts that are still missing; what is installed stays as it is.
         result = self.add("hooky", choice="oaw", consent="hooks", apply=True)
+        parts = {p["name"]: p for p in result["packages"][0]["parts"]}
+        self.assertEqual((parts["hooky"]["status"], parts["hooky-hooks"]["status"], parts["hooky-server"]["status"]),
+                         ("skip", "install", "skip"))
+        self.assertIn("已經裝了", parts["hooky"]["reason"])
+        result = self.add("hooky", choice="oaw", consent="all", apply=True)
+        self.assertEqual([p["status"] for p in result["packages"][0]["parts"] if p["name"] == "hooky-server"], ["install"])
+        self.assertEqual(self.add("hooky", choice="oaw", consent="all")["packages"][0]["status"], "skip")
+        self.put(self.sources, "hooky/skills/hooky/extra.md", "changed upstream\n")
+        result = self.add("hooky", choice="oaw", consent="all")
         self.assertEqual(result["packages"][0]["status"], "skip")
         self.assertIn("已經裝過", result["packages"][0]["reason"])
 
@@ -1047,6 +1057,45 @@ class UserInstallTests(unittest.TestCase):
         result = self.cli("remove", "dupes")
         self.assertEqual(result["conflicts"], [])
         self.assertFalse((self.project / ".claude/settings.json").exists())
+
+    # ------------------------------------------------------------------ review round 18
+
+    def test_an_optional_source_under_recommended_keeps_its_auto_running_parts_off(self):
+        verdicts = json.loads(self.verdicts.read_text(encoding="utf-8"))
+        verdicts["foods"][0]["tasting"].update(outcome="optional", label_zh="可選用（能力未定）", verdict="optional")
+        self.verdicts.write_text(json.dumps(verdicts), encoding="utf-8")
+        result = self.add("hooky", choice="recommended", consent="all", apply=True)
+        package = result["packages"][0]
+        self.assertIn("hook", package["recommendation"]["reason"])
+        parts = {p["name"]: p for p in package["parts"]}
+        self.assertEqual((parts["hooky-hooks"]["status"], parts["hooky-server"]["status"]), ("held", "held"))
+        enable = parts["hooky-hooks"]["enable_argv"]
+        self.assertIn("--consent", enable)
+        self.assertEqual(enable[enable.index("--choice") + 1], "oaw")
+        self.assertFalse((self.project / ".claude/settings.json").exists())
+        self.assertFalse((self.project / ".mcp.json").exists())
+        self.assertIn("disable-model-invocation: true", (self.project / ".agents/skills/hooky/SKILL.md").read_text(encoding="utf-8"))
+        listing = self.cli("list")
+        self.assertTrue(all(row["runs"] == "無" for row in listing["receipt"] if row.get("package") == "hooky"))
+        self.assertEqual(listing["held_back"][0]["package"], "hooky")
+        self.assertEqual(sorted(listing["held_back"][0]["parts"]), ["hooks:hooky-hooks", "mcp:hooky-server"])
+        with redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+            self.assertEqual(oaw.main(enable[2:] + ["--json"]), 0)
+        rows = {row["skill"].split("（")[0].split("，")[0]: row for row in self.cli("list")["receipt"] if row.get("package") == "hooky"}
+        self.assertIn("hook：PreToolUse", rows["hooky-hooks"]["runs"])
+        self.assertIn("只在你叫它時用", rows["hooky"]["skill"])
+        self.assertEqual(self.cli("list")["held_back"], [{"package": "hooky", "parts": ["mcp:hooky-server"]}])
+        self.assert_nothing_ran()
+
+    def test_a_refused_part_does_not_claim_its_name(self):
+        first, second = self.sources / "first-same", self.sources / "second-same"
+        self.put(first, "SKILL.md", "---\nname: same\ndescription: With a script.\n---\n\nRun it.\n")
+        self.put(first, "run.py", self.runs("same"), 0o755)
+        self.put(second, "SKILL.md", "---\nname: same\ndescription: Text only.\n---\n\nRead it.\n")
+        result = self.cli("add", str(first), str(second), "--choice", "only", "--consent", "none", "--apply")
+        statuses = {(pk["name"], p["name"]): p["status"] for pk in result["packages"] for p in pk["parts"]}
+        self.assertEqual(statuses, {("first-same", "same"): "skip", ("second-same", "same"): "install"})
+        self.assertIn("Text only.", (self.project / ".agents/skills/same/SKILL.md").read_text(encoding="utf-8"))
 
 
 def write_ledger(catalog: Path, food: str, *, current: str, snapshots: list, tasted_at: str) -> None:
