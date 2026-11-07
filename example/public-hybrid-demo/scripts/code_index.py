@@ -2058,11 +2058,15 @@ def _json_facts(path, text):
         if isinstance(data, dict) and (re.fullmatch(r"(?:ts|js)config(?:\.[\w.-]+)?\.json", name)
                                        or isinstance(data.get("compilerOptions"), dict) or "extends" in data):
             options = data.get("compilerOptions") if isinstance(data.get("compilerOptions"), dict) else {}
-            paths = options.get("paths") if isinstance(options.get("paths"), dict) else {}
-            config = {"baseUrl": options.get("baseUrl") if isinstance(options.get("baseUrl"), str) else None,
-                      "paths": {key: [item for item in value if isinstance(item, str)]
-                                for key, value in paths.items() if isinstance(value, list)},
-                      "extends": data.get("extends") if isinstance(data.get("extends"), (str, list)) else None}
+            config = {"extends": data.get("extends") if isinstance(data.get("extends"), (str, list)) else None}
+            # A key left out inherits; set (paths may be {}) or null replaces the parent's value.
+            if isinstance(options.get("baseUrl"), str) or ("baseUrl" in options and options["baseUrl"] is None):
+                config["baseUrl"] = options["baseUrl"]
+            if isinstance(options.get("paths"), dict):
+                config["paths"] = {key: [item for item in value if isinstance(item, str)]
+                                   for key, value in options["paths"].items() if isinstance(value, list)}
+            elif "paths" in options and options["paths"] is None:
+                config["paths"] = None
             return {"tsconfig": config}
     elif name == "package.json":
         data = _jsonc(text)
@@ -2691,11 +2695,18 @@ class Index:
                 parent = parent if parent.endswith(".json") else parent + ".json"
                 if self.files.get(parent, {}).get("tsconfig") is not None:
                     options.update(self._config_options(parent, depth + 1))
-        if config.get("baseUrl") is not None:
-            base = posixpath.normpath(posixpath.join(here, config["baseUrl"]))
-            options["baseUrl"] = "" if base == "." else base
-        if config.get("paths"):
-            options["paths"], options["paths_dir"] = config["paths"], here
+        if "baseUrl" in config:
+            if config["baseUrl"] is None:
+                options.pop("baseUrl", None)
+            else:
+                base = posixpath.normpath(posixpath.join(here, config["baseUrl"]))
+                options["baseUrl"] = "" if base == "." else base
+        if "paths" in config:  # an explicit {} replaces the parent's mapping too
+            if config["paths"] is None:
+                options.pop("paths", None)
+                options.pop("paths_dir", None)
+            else:
+                options["paths"], options["paths_dir"] = config["paths"], here
         return options
 
     def _ts_config(self, directory):
@@ -2728,7 +2739,7 @@ class Index:
             config = self._ts_config(directory)
             if config:
                 base, paths, root = config
-                for pattern in sorted(paths, key=lambda item: -len(item.split("*", 1)[0])):
+                for pattern in sorted(paths, key=lambda item: ("*" in item, -len(item.split("*", 1)[0]))):
                     head, star, tail = pattern.partition("*")
                     if star and spec.startswith(head) and spec.endswith(tail) and len(spec) >= len(head) + len(tail):
                         middle = spec[len(head):len(spec) - len(tail)]

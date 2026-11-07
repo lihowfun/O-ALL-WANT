@@ -818,6 +818,20 @@ REVIEW_FIXTURE = {  # Codex review round 10 of the JS/TS engine
                      "            <b>save()</b>\n            {cond && <i>Don't save()</i>}\n        </div>\n    );\n}\n"
                      "save();\n"),
     "jsx/old.js": "import React from 'react';\nimport { save } from '../lib/save';\nexport const A = () => <p>save()</p>;\nsave();\n",
+    # Codex review round 17
+    "pempty/tsconfig.base.json": '{"compilerOptions": {"baseUrl": ".", "paths": {"alias/*": ["src/*"]}}}\n',
+    "pempty/tsconfig.json": '{"extends": "./tsconfig.base.json", "compilerOptions": {"paths": {}}}\n',
+    "pempty/src/thing.ts": "export function thing() {}\n",
+    "pempty/use.ts": "import { thing } from 'alias/thing';\n",
+    "bnull/tsconfig.base.json": '{"compilerOptions": {"baseUrl": "src"}}\n',
+    "bnull/tsconfig.json": '{"extends": "./tsconfig.base.json", "compilerOptions": {"baseUrl": null}}\n',
+    "bnull/src/lib.ts": "export const lib = 1;\n",
+    "bnull/use.ts": "import { lib } from 'lib';\n",
+    "pexact/tsconfig.json": '{"compilerOptions": {"baseUrl": ".", "paths": {"foo*": ["wild/*"], "foo": ["exact.ts"]}}}\n',
+    "pexact/exact.ts": "export const exact = 1;\n",
+    "pexact/wild/index.ts": "export const wild = 1;\n",
+    "pexact/wild/bar.ts": "export const bar = 1;\n",
+    "pexact/use.ts": "import { exact } from 'foo';\n",
 }
 
 
@@ -947,6 +961,14 @@ class JavaScriptResolutionReviewTests(unittest.TestCase):
         self.assertEqual({line for path, line, resolved in rows if path == "jsx/view.tsx" and resolved}, {6, 12})
         self.assertEqual({line for path, line, resolved in rows if path == "jsx/old.js" and resolved}, {4})
         self.assertIn("View", {name for name, *_ in self.index.files["jsx/view.tsx"]["js"]["defs"]})
+
+    def test_an_explicit_empty_paths_or_null_base_url_replaces_the_parent(self):
+        self.assertIsNone(self.index.js_module("pempty/use.ts", "alias/thing"))  # paths: {} drops alias/*
+        self.assertIsNone(self.index.js_module("bnull/use.ts", "lib"))  # baseUrl: null unsets src
+
+    def test_exact_paths_keys_win_over_wildcards(self):
+        self.assertEqual(self.index.js_module("pexact/use.ts", "foo"), "pexact/exact.ts")
+        self.assertEqual(self.index.js_module("pexact/use.ts", "foobar"), "pexact/wild/bar.ts")
 
     def test_extends_may_name_any_local_json_file(self):
         self.assertEqual(self.index.js_module("jcfg/use.ts", "#lib/tool"), "jcfg/lib/tool.ts")
