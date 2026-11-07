@@ -1,0 +1,128 @@
+[
+ {
+  "host": "claude",
+  "config": "bare",
+  "rep": 1,
+  "prompt_tokens": 33112,
+  "apiKeySource": "none",
+  "skills_listed": 38
+ },
+ {
+  "host": "codex",
+  "config": "bare",
+  "rep": 1,
+  "prompt_tokens": 16124
+ },
+ {
+  "host": "claude",
+  "config": "v200",
+  "rep": 1,
+  "prompt_tokens": 34359,
+  "apiKeySource": "none",
+  "skills_listed": 46
+ },
+ {
+  "host": "codex",
+  "config": "v200",
+  "rep": 1,
+  "prompt_tokens": 16603
+ },
+ {
+  "host": "claude",
+  "config": "v201",
+  "rep": 1,
+  "prompt_tokens": 34354,
+  "apiKeySource": "none",
+  "skills_listed": 49
+ },
+ {
+  "host": "codex",
+  "config": "v201",
+  "rep": 1,
+  "prompt_tokens": 16630
+ },
+ {
+  "host": "claude",
+  "config": "v200",
+  "rep": 2,
+  "prompt_tokens": 36369,
+  "apiKeySource": "none",
+  "skills_listed": 46
+ },
+ {
+  "host": "codex",
+  "config": "v200",
+  "rep": 2,
+  "prompt_tokens": 16603
+ },
+ {
+  "host": "claude",
+  "config": "v201",
+  "rep": 2,
+  "prompt_tokens": 34358,
+  "apiKeySource": "none",
+  "skills_listed": 49
+ },
+ {
+  "host": "codex",
+  "config": "v201",
+  "rep": 2,
+  "prompt_tokens": 15237
+ },
+ {
+  "host": "claude",
+  "config": "bare",
+  "rep": 2,
+  "prompt_tokens": 33113,
+  "apiKeySource": "none",
+  "skills_listed": 38
+ },
+ {
+  "host": "codex",
+  "config": "bare",
+  "rep": 2,
+  "prompt_tokens": 16124
+ },
+ {
+  "host": "claude",
+  "config": "v201",
+  "rep": 3,
+  "prompt_tokens": 34354,
+  "apiKeySource": "none",
+  "skills_listed": 49
+ },
+ {
+  "host": "codex",
+  "config": "v201",
+  "rep": 3,
+  "prompt_tokens": 15237
+ },
+ {
+  "host": "claude",
+  "config": "bare",
+  "rep": 3,
+  "prompt_tokens": 35122,
+  "apiKeySource": "none",
+  "skills_listed": 38
+ },
+ {
+  "host": "codex",
+  "config": "bare",
+  "rep": 3,
+  "prompt_tokens": 14731
+ },
+ {
+  "host": "claude",
+  "config": "v200",
+  "rep": 3,
+  "prompt_tokens": 34358,
+  "apiKeySource": "none",
+  "skills_listed": 46
+ },
+ {
+  "host": "codex",
+  "config": "v200",
+  "rep": 3,
+  "prompt_tokens": 16603
+ }
+]
