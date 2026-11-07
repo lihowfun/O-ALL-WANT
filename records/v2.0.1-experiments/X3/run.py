@@ -186,21 +186,31 @@ def not_run(meta, events):
     return None
 
 
-def run_all(scratch: Path, claude: str, budget: int, spent_before: int):
+def run_all(scratch: Path, claude: str, budget: int, spent_before: int, default_estimate: int = DEFAULT_ESTIMATE,
+            sequential: bool = False, only_model: str = ""):
     ledger_path = scratch / "spend.json"
     ledger = json.loads(ledger_path.read_text()) if ledger_path.exists() else {
         "probes": spent_before, "runs": {}, "void": []}
     spent = lambda: ledger["probes"] + sum(m["tokens"] for m in ledger["runs"].values()) + sum(  # noqa: E731
         v["tokens"] for v in ledger["void"])
     for triple in run_order():
-        todo = [t for t in triple if run_id(t[0], t[2], t[3]) not in ledger["runs"]]
+        todo = [t for t in triple if run_id(t[0], t[2], t[3]) not in ledger["runs"] and (not only_model or t[0] == only_model)]
         if not todo:
             continue
         estimates = []
         for short, model, scenario, arm in todo:
             seen = [m["tokens"] for m in ledger["runs"].values() if m["scenario"] == scenario]
-            estimates.append(max(seen) if seen else DEFAULT_ESTIMATE)
-        if spent() + sum(estimates) > budget:
+            estimates.append(max(seen) if seen else default_estimate)
+        if sequential:
+            # Deviation 1 (see RESULT.md): one run at a time, each checked against the cap just before it starts.
+            seen = [m["tokens"] for m in ledger["runs"].values() if m["scenario"] == todo[0][2]]
+            estimate = max(seen) if seen else default_estimate
+            if spent() + estimate > budget:
+                print(f"STOP before {run_id(todo[0][0], todo[0][2], todo[0][3])}: spent {spent():,} + estimate "
+                      f"{estimate:,} > budget {budget:,}", flush=True)
+                break
+            todo = todo[:1]
+        elif spent() + sum(estimates) > budget:
             print(f"STOP before {[run_id(t[0], t[2], t[3]) for t in todo]}: spent {spent():,} + estimate "
                   f"{sum(estimates):,} > budget {budget:,}", flush=True)
             break
@@ -223,6 +233,8 @@ def run_all(scratch: Path, claude: str, budget: int, spent_before: int):
             ledger["runs"][meta["id"]] = meta
             print(f"{meta['id']}: {meta['tokens']:,} tokens, {meta['seconds']}s (spent {spent():,})", flush=True)
         ledger_path.write_text(json.dumps(ledger, indent=1))
+        if sequential and any(run_id(t[0], t[2], t[3]) not in ledger["runs"] for t in triple):
+            return run_all(scratch, claude, budget, spent_before, default_estimate, sequential, only_model)
     ledger_path.write_text(json.dumps(ledger, indent=1))
     print(f"done: {len(ledger['runs'])} runs, spent {spent():,}", flush=True)
 
@@ -440,7 +452,9 @@ def grade_one(folder: Path):
         "subtype": result.get("subtype") or ("timeout" if meta.get("timed_out") else "no-result"),
         "turns": result.get("num_turns"), "tool_calls": len(calls), "seconds": meta["seconds"],
         "tokens": meta["tokens"], "tokens_uncached": meta["tokens_uncached"], "thinking_tokens": thinking,
-        "apiKeySource": meta.get("apiKeySource"), "served_models": sorted(m for m in served if m),
+        "apiKeySource": next((e.get("apiKeySource") for e in events
+                              if e.get("type") == "system" and e.get("subtype") == "init"), None),
+        "served_models": sorted(m for m in served if m),
     }
 
 
@@ -478,6 +492,10 @@ def main():
     p.add_argument("--claude")
     p.add_argument("--budget", type=int, default=4_000_000)
     p.add_argument("--probes", type=int, default=0, help="tokens already spent on setup probes")
+    p.add_argument("--default-estimate", type=int, default=DEFAULT_ESTIMATE,
+                   help="estimate for a scenario not run yet (registered: 500,000)")
+    p.add_argument("--sequential", action="store_true", help="one run at a time (deviation 1)")
+    p.add_argument("--only-model", default="", help="run only this model block (short name)")
     a = p.parse_args()
     scratch = Path(a.scratch).resolve()
     if a.command == "setup":
@@ -485,7 +503,7 @@ def main():
     elif a.command == "verify":
         verify(scratch)
     elif a.command == "run":
-        run_all(scratch, a.claude, a.budget, a.probes)
+        run_all(scratch, a.claude, a.budget, a.probes, a.default_estimate, a.sequential, a.only_model)
     elif a.command == "grade":
         grade(scratch)
     else:
