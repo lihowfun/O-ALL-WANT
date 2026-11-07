@@ -2000,5 +2000,56 @@
     }
    }
   }
+ },
+ "callers_rerun_round11": {
+  "note": "(b) only, after the codex review round 11 fixes (arrow parameter, let/const block scope, default and require aliases) and a regression fix (a local bound by require() hid its own binding). Same truth sets. Every summary figure is unchanged; KeybindingResolver.resolve lists 2,776 same-name rows instead of 2,750 (57 added, 33 dropped): let/const in callback bodies are now block-scoped, so a const typed in one test callback no longer types the same name in the others. (a) and (c) were not rerun.",
+  "code_index_sha256": "e0de2076b7e7ad59d4f2475c8da37d3ee827edaa7b553742aa224b905f6f3551",
+  "ERPNext": {
+   "callers": {
+    "symbols": 20,
+    "true_callers": 110,
+    "recall_all_rows": 0.9545,
+    "recall_resolved_rows": 0.9,
+    "wrong_resolved_rows": 0,
+    "resolved_rows": 99,
+    "wrong_unresolved_rows": 9,
+    "unresolved_rows": 15,
+    "returned_dynamic_rows": 0,
+    "symbols_with_full_recall_all_rows": 17,
+    "file_level": {
+     "true": 75,
+     "S_found": 70,
+     "S_wrong": 8,
+     "R_found": 75,
+     "R_wrong": 80
+    },
+    "meets_0_95_all_rows": true,
+    "meets_0_95_resolved_rows": false
+   }
+  },
+  "VS Code": {
+   "callers": {
+    "symbols": 20,
+    "true_callers": 338,
+    "recall_all_rows": 1.0,
+    "recall_resolved_rows": 1.0,
+    "wrong_resolved_rows": 0,
+    "resolved_rows": 338,
+    "wrong_unresolved_rows": 988,
+    "unresolved_rows": 988,
+    "returned_dynamic_rows": 1,
+    "symbols_with_full_recall_all_rows": 20,
+    "file_level": {
+     "true": 124,
+     "S_found": 124,
+     "S_wrong": 404,
+     "R_found": 124,
+     "R_wrong": 1020
+    },
+    "meets_0_95_all_rows": true,
+    "meets_0_95_resolved_rows": true
+   },
+   "KeybindingResolver.resolve_truncated": 1776
+  }
  }
 }

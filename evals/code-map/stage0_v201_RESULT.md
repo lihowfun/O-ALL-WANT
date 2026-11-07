@@ -104,6 +104,16 @@ parameter no longer do. In the most-called list, ERPNext's last entry changed an
 (48 to 50, 50 to 55); VS Code's `equals` rose from 361 to 373 calls and moved up one place. The previous numbers are kept under
 `previous_run` in the results file.
 
+## Callers rerun after codex review round 11 (62362ac)
+
+Only (b) was rerun, with the same truth sets, after the round 11 fixes (a `x => ...` parameter
+shadows an import; `let`/`const` are scoped to their block; default-import and `require()` aliases
+follow the resolved default export) and one regression they exposed (a local bound by `require()`
+hid its own binding). Every figure in the (b) table is unchanged. One count moved:
+`KeybindingResolver.resolve` now lists 2,776 same-name rows instead of 2,750 (57 added, 33 dropped),
+because callback bodies are block scopes now, so a `const` typed in one test callback no longer types
+the same name in the other callbacks of the file. (a) and (c) were not rerun.
+
 ## Limits of this measurement
 
 - The truth sets were built by the author of the index, from grep and reading, before
