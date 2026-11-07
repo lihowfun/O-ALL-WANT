@@ -3,7 +3,7 @@
 Zero model tokens. Harness: `stage0_v201.py`; numbers: `stage0_v201_results.json`;
 callers truth sets: `stage0_v201_truth_erpnext.json`, `stage0_v201_truth_vscode.json`.
 Measured 2026-11-07 on Linux 6.8, Python 3.10.12, 56 CPUs, local SSD, with
-`scripts/code_index.py` of commit f959e0c. Arm R is `native_search.py`, the frozen
+`scripts/code_index.py` of commit 563481f (after the codex review round 10 fixes; see the end). Arm R is `native_search.py`, the frozen
 Stage 0-alpha grep baseline, unchanged.
 
 | repository | commit | files | Python | JS/TS |
@@ -79,16 +79,30 @@ source. Calls through string paths (hooks, `frappe.get_attr`, `run_method`) and 
 
 | | ERPNext | VS Code |
 |---|---|---|
-| cold build, up to 8 worker processes | 4.8 s, 301 MB peak | 34.9 s, 2,092 MB peak |
-| cold build, one process, no cache | 13.4 s, 287 MB | 76.3 s, 1,902 MB |
-| cache on disk (two files) | 52.6 MB | 366.0 MB |
-| warm `stats` / `callers` | 0.42 s / 1.03 s, 164 MB | 4.4 s / 6.3 s, 1,208 MB |
-| warm `find` (loads search units) | 2.5 s, 385 MB | 11.3 s, 2,635 MB |
-| warm `overview` | 1.2 s, 169 MB | 13.5 s, 1,228 MB |
-| `overview` size | 4,355 chars | 5,884 chars (cap 6,000) |
+| cold build, up to 8 worker processes | 4.9 s, 301 MB peak | 35.8 s, 2,125 MB peak |
+| cold build, one process, no cache | 13.6 s, 285 MB | 76.6 s, 1,928 MB |
+| cache on disk (two files) | 52.7 MB | 375.2 MB |
+| warm `stats` / `callers` | 0.43 s / 1.07 s, 165 MB | 4.6 s / 6.4 s, 1,270 MB |
+| warm `find` (loads search units) | 2.7 s, 386 MB | 11.4 s, 2,679 MB |
+| warm `overview` | 1.4 s, 171 MB | 13.6 s, 1,286 MB |
+| `overview` size | 4,388 chars | 5,884 chars (cap 6,000) |
 
 Peak RSS is `ru_maxrss` of the largest single process the command waited for; worker
 processes are not summed.
+
+## Rerun after codex review round 10 (563481f)
+
+The fixes (shadowing parameters and locals, exported names only, re-export aliases in
+callers and affected, anonymous default exports, alias calls in the call graph, root index
+files, `extends` arrays and any extended JSON file) changed no (a) or (b) number on these
+repositories: the same top-5 files, the same 110 and 338 true callers found, the same rows
+returned. (c) moved slightly: the cache grew 2.5% on VS Code (366.0 to 375.2 MB) and warm RSS
+by about 60 MB, from the recorded local names and export lists; times are within run-to-run
+noise. The overview's resolved call sites rose from 19,602 to 19,640 (ERPNext) and from 419,187
+to 419,298 (VS Code), because calls through import aliases now count and calls on a shadowing
+parameter no longer do. In the most-called list, ERPNext's last entry changed and two call counts rose
+(48 to 50, 50 to 55); VS Code's `equals` rose from 361 to 373 calls and moved up one place. The previous numbers are kept under
+`previous_run` in the results file.
 
 ## Limits of this measurement
 

@@ -1,7 +1,7 @@
 {
  "schema_version": 1,
  "title": "OAW 2.0.1 W2 Stage 0 (0 model tokens)",
- "code_index_sha256": "851762a8d9aebce6dd2b43654efe8e8669db94d5077c2ccd419b3139a9e5811d",
+ "code_index_sha256": "ea839008e8a66de5e77cfc1d0bce7bcd89afd38cad6b25e642b1c783780bc453",
  "native_search_sha256": "208b410291dce79ebed58f99e6476d014ae8324b4cf8fb4c88add19900814d95",
  "platform": "Linux 6.8.0-136-generic, Python 3.10.12, 56 CPUs",
  "repositories": {
@@ -16,13 +16,13 @@
    "truth_problems": [],
    "cost": {
     "cold_build": {
-     "seconds": 4.802,
-     "peak_rss_mb": 301.2,
+     "seconds": 4.944,
+     "peak_rss_mb": 301.1,
      "worker_processes": "up to 8",
-     "index_seconds_reported": 4.593
+     "index_seconds_reported": 4.744
     },
-    "cache_bytes": 52569290,
-    "cache_mb": 52.6,
+    "cache_bytes": 52747719,
+    "cache_mb": 52.7,
     "files": 5777,
     "kinds": {
      "yaml": 34,
@@ -39,28 +39,28 @@
     "imports": 20528,
     "calls": 227920,
     "one_process_build_no_cache": {
-     "seconds": 13.418,
-     "peak_rss_mb": 287.0
+     "seconds": 13.554,
+     "peak_rss_mb": 285.4
     },
     "warm_stats": {
-     "seconds": 0.422,
-     "peak_rss_mb": 155.5
+     "seconds": 0.427,
+     "peak_rss_mb": 156.6
     },
     "warm_callers": {
-     "seconds": 1.025,
-     "peak_rss_mb": 163.9
+     "seconds": 1.068,
+     "peak_rss_mb": 165.0
     },
     "warm_find": {
-     "seconds": 2.478,
-     "peak_rss_mb": 384.5
+     "seconds": 2.697,
+     "peak_rss_mb": 385.7
     },
     "warm_overview": {
-     "seconds": 1.193,
-     "peak_rss_mb": 168.9
+     "seconds": 1.357,
+     "peak_rss_mb": 170.9
     },
-    "overview_chars": 4355,
-    "overview_bytes": 4356,
-    "overview_text": "5777 files (javascript 828, json 1361, markdown 202, python 3130, shell 6, skipped 41, text 173, toml 2, yaml 34); 38524 definitions; 19602 resolved call sites\nEntry points:\n  .github/helper/documentation.py:62  if __name__ == \"__main__\"\n  .github/helper/postgres_compat.py:240  if __name__ == \"__main__\"\nTop-level directories (code files, definitions):\n  erpnext/  3804 files  37728 defs\n  banking/  142 files  715 defs\n  islands/  8 files  48 defs\n  .github/  9 files  39 defs\nInside erpnext/ (code files, definitions):\n  erpnext/accounts/  973 files  10035 defs\n  erpnext/stock/  574 files  8441 defs\n  erpnext/manufacturing/  303 files  4517 defs\n  erpnext/selling/  212 files  2315 defs\n  erpnext/buying/  137 files  1426 defs\n  erpnext/public/  78 files  1342 defs\n  erpnext/assets/  106 files  1275 defs\n  erpnext/setup/  168 files  1274 defs\n  erpnext/controllers/  47 files  1111 defs\n  erpnext/crm/  140 files  1044 defs\n  erpnext/projects/  102 files  986 defs\n  erpnext/patches/  510 files  828 defs\nLargest modules (definitions):\n  erpnext/manufacturing/doctype/work_order/test_work_order.py  282 defs\n  erpnext/accounts/doctype/sales_invoice/sales_invoice.py  228 defs\n  erpnext/manufacturing/doctype/job_card/job_card.py  228 defs\n  erpnext/stock/doctype/stock_entry/test_stock_entry.py  219 defs\n  erpnext/stock/doctype/purchase_receipt/test_purchase_receipt.py  201 defs\n  erpnext/accounts/doctype/payment_entry/payment_entry.py  197 defs\n  erpnext/accounts/doctype/sales_invoice/test_sales_invoice.py  191 defs\n  erpnext/manufacturing/doctype/bom/bom.py  191 defs\nMost-called definitions, top 20 (PageRank over resolved call sites, tests excluded):\n  banking/src/lib/utils.ts:16  cn  [function, 231 calls]\n      export function cn(...inputs: ClassValue[]) {\n  banking/src/lib/translate.ts:1  _  [function, 764 calls]\n      function _(txt: string, replace?: string[], context = null) {\n  banking/src/lib/translate.ts:27  format  [function, 1 calls]\n      function format(str: string, args: string[]) {\n  erpnext/stock/serial_batch_identity.py:18  SerialBatchIdentity  [class, 106 calls]\n      class SerialBatchIdentity:\n  erpnext/stock/doctype/company_restriction/company_restriction.py:63  get_allowed_companies  [function, 21 calls]\n      def get_allowed_companies(user, doctype):\n  erpnext/stock/utils.py:840  get_combine_datetime  [function, 51 calls]\n      def get_combine_datetime(posting_date, posting_time):\n  erpnext/__init__.py:46  get_company_currency  [function, 75 calls]\n      def get_company_currency(company):\n  erpnext/accounts/utils.py:67  get_fiscal_year  [function, 50 calls]\n      def get_fiscal_year(\n  erpnext/accounts/utils.py:100  get_fiscal_years  [function, 6 calls]\n      def get_fiscal_years(\n  erpnext/setup/utils.py:100  get_exchange_rate  [function, 48 calls]\n      def get_exchange_rate(\n  erpnext/stock/doctype/company_restriction/company_restriction.py:72  get_allowed_companies_condition  [function, 30 calls]\n      def get_allowed_companies_condition(field, doctype):\n  erpnext/accounts/doctype/accounting_dimension/accounting_dimension.py:262  get_accounting_dimensions  [function, 44 calls]\n      def get_accounting_dimensions(as_list=True):\n  erpnext/stock/doctype/serial_no/serial_no.py:164  get_serial_nos  [function, 50 calls]\n      def get_serial_nos(serial_no):\n  erpnext/__init__.py:11  get_default_company  [function, 25 calls]\n      def get_default_company(user=None):\n  erpnext/accounts/services/base_gl_composer.py:27  get_gl_dict  [function, 3 calls]\n      def get_gl_dict(doc, args: dict, account_currency: str | None = None, item=None) -> dict:\n  erpnext/accounts/doctype/account/account.py:555  get_account_currency  [function, 63 calls]\n      def get_account_currency(account):\n  erpnext/stock/doctype/item/item.py:1738  get_uom_conv_factor  [function, 6 calls]\n      def get_uom_conv_factor(uom: str | None, stock_uom: str | None):\n  erpnext/accounts/services/base_gl_composer.py:247  BaseGLComposer.get_gl_dict  [method, 69 calls]\n      def get_gl_dict(self, args: dict, account_currency: str | None = None, item=None) -> dict:\n  erpnext/stock/utils.py:524  get_valuation_method  [function, 34 calls]\n      def get_valuation_method(item_code, company=None):\n  erpnext/accounts/report/utils.py:453  get_filter_values  [function, 16 calls]\n      def get_filter_values(value) -> list:\n"
+    "overview_chars": 4388,
+    "overview_bytes": 4389,
+    "overview_text": "5777 files (javascript 828, json 1361, markdown 202, python 3130, shell 6, skipped 41, text 173, toml 2, yaml 34); 38524 definitions; 19640 resolved call sites\nEntry points:\n  .github/helper/documentation.py:62  if __name__ == \"__main__\"\n  .github/helper/postgres_compat.py:240  if __name__ == \"__main__\"\nTop-level directories (code files, definitions):\n  erpnext/  3804 files  37728 defs\n  banking/  142 files  715 defs\n  islands/  8 files  48 defs\n  .github/  9 files  39 defs\nInside erpnext/ (code files, definitions):\n  erpnext/accounts/  973 files  10035 defs\n  erpnext/stock/  574 files  8441 defs\n  erpnext/manufacturing/  303 files  4517 defs\n  erpnext/selling/  212 files  2315 defs\n  erpnext/buying/  137 files  1426 defs\n  erpnext/public/  78 files  1342 defs\n  erpnext/assets/  106 files  1275 defs\n  erpnext/setup/  168 files  1274 defs\n  erpnext/controllers/  47 files  1111 defs\n  erpnext/crm/  140 files  1044 defs\n  erpnext/projects/  102 files  986 defs\n  erpnext/patches/  510 files  828 defs\nLargest modules (definitions):\n  erpnext/manufacturing/doctype/work_order/test_work_order.py  282 defs\n  erpnext/accounts/doctype/sales_invoice/sales_invoice.py  228 defs\n  erpnext/manufacturing/doctype/job_card/job_card.py  228 defs\n  erpnext/stock/doctype/stock_entry/test_stock_entry.py  219 defs\n  erpnext/stock/doctype/purchase_receipt/test_purchase_receipt.py  201 defs\n  erpnext/accounts/doctype/payment_entry/payment_entry.py  197 defs\n  erpnext/accounts/doctype/sales_invoice/test_sales_invoice.py  191 defs\n  erpnext/manufacturing/doctype/bom/bom.py  191 defs\nMost-called definitions, top 20 (PageRank over resolved call sites, tests excluded):\n  banking/src/lib/utils.ts:16  cn  [function, 231 calls]\n      export function cn(...inputs: ClassValue[]) {\n  banking/src/lib/translate.ts:1  _  [function, 764 calls]\n      function _(txt: string, replace?: string[], context = null) {\n  banking/src/lib/translate.ts:27  format  [function, 1 calls]\n      function format(str: string, args: string[]) {\n  erpnext/stock/serial_batch_identity.py:18  SerialBatchIdentity  [class, 106 calls]\n      class SerialBatchIdentity:\n  erpnext/stock/doctype/company_restriction/company_restriction.py:63  get_allowed_companies  [function, 21 calls]\n      def get_allowed_companies(user, doctype):\n  erpnext/stock/utils.py:840  get_combine_datetime  [function, 51 calls]\n      def get_combine_datetime(posting_date, posting_time):\n  erpnext/__init__.py:46  get_company_currency  [function, 75 calls]\n      def get_company_currency(company):\n  erpnext/accounts/utils.py:67  get_fiscal_year  [function, 50 calls]\n      def get_fiscal_year(\n  erpnext/accounts/utils.py:100  get_fiscal_years  [function, 6 calls]\n      def get_fiscal_years(\n  erpnext/setup/utils.py:100  get_exchange_rate  [function, 50 calls]\n      def get_exchange_rate(\n  erpnext/stock/doctype/company_restriction/company_restriction.py:72  get_allowed_companies_condition  [function, 30 calls]\n      def get_allowed_companies_condition(field, doctype):\n  erpnext/accounts/doctype/accounting_dimension/accounting_dimension.py:262  get_accounting_dimensions  [function, 44 calls]\n      def get_accounting_dimensions(as_list=True):\n  erpnext/stock/doctype/serial_no/serial_no.py:164  get_serial_nos  [function, 55 calls]\n      def get_serial_nos(serial_no):\n  erpnext/__init__.py:11  get_default_company  [function, 25 calls]\n      def get_default_company(user=None):\n  erpnext/accounts/services/base_gl_composer.py:27  get_gl_dict  [function, 3 calls]\n      def get_gl_dict(doc, args: dict, account_currency: str | None = None, item=None) -> dict:\n  erpnext/accounts/doctype/account/account.py:555  get_account_currency  [function, 63 calls]\n      def get_account_currency(account):\n  erpnext/stock/doctype/item/item.py:1738  get_uom_conv_factor  [function, 6 calls]\n      def get_uom_conv_factor(uom: str | None, stock_uom: str | None):\n  erpnext/accounts/services/base_gl_composer.py:247  BaseGLComposer.get_gl_dict  [method, 69 calls]\n      def get_gl_dict(self, args: dict, account_currency: str | None = None, item=None) -> dict:\n  erpnext/stock/utils.py:524  get_valuation_method  [function, 34 calls]\n      def get_valuation_method(item_code, company=None):\n  erpnext/stock/doctype/inventory_dimension/inventory_dimension.py:418  get_inventory_dimensions  [function, 24 calls]\n      def get_inventory_dimensions():\n"
    },
    "find": {
     "questions": [
@@ -95,7 +95,7 @@
        "facts_hit": 3,
        "essential_facts_hit": 2,
        "text_bytes": 1034,
-       "seconds": 2.54
+       "seconds": 2.667
       },
       "R": {
        "top5": [
@@ -110,7 +110,7 @@
        "facts_hit": 0,
        "essential_facts_hit": 0,
        "text_bytes": 443,
-       "seconds": 12.852
+       "seconds": 13.149
       },
       "facts": 8,
       "essential_facts": 7
@@ -140,7 +140,7 @@
        "facts_hit": 2,
        "essential_facts_hit": 1,
        "text_bytes": 1215,
-       "seconds": 2.452
+       "seconds": 2.432
       },
       "R": {
        "top5": [
@@ -155,7 +155,7 @@
        "facts_hit": 0,
        "essential_facts_hit": 0,
        "text_bytes": 745,
-       "seconds": 9.743
+       "seconds": 9.596
       },
       "facts": 6,
       "essential_facts": 5
@@ -183,7 +183,7 @@
        "facts_hit": 6,
        "essential_facts_hit": 5,
        "text_bytes": 1095,
-       "seconds": 2.075
+       "seconds": 2.079
       },
       "R": {
        "top5": [
@@ -198,7 +198,7 @@
        "facts_hit": 0,
        "essential_facts_hit": 0,
        "text_bytes": 595,
-       "seconds": 8.097
+       "seconds": 8.064
       },
       "facts": 8,
       "essential_facts": 6
@@ -227,7 +227,7 @@
        "facts_hit": 5,
        "essential_facts_hit": 5,
        "text_bytes": 1080,
-       "seconds": 2.234
+       "seconds": 2.126
       },
       "R": {
        "top5": [
@@ -242,7 +242,7 @@
        "facts_hit": 0,
        "essential_facts_hit": 0,
        "text_bytes": 745,
-       "seconds": 9.825
+       "seconds": 9.572
       },
       "facts": 7,
       "essential_facts": 6
@@ -331,14 +331,14 @@
       "truncated": 0,
       "missed": [],
       "wrong_resolved_sites": [],
-      "seconds": 1.035,
+      "seconds": 1.04,
       "files": {
        "true": 12,
        "S_found": 12,
        "S_wrong": 0,
        "R_found": 12,
        "R_wrong": 2,
-       "R_seconds": 3.51
+       "R_seconds": 3.443
       }
      },
      {
@@ -359,14 +359,14 @@
       "truncated": 0,
       "missed": [],
       "wrong_resolved_sites": [],
-      "seconds": 1.049,
+      "seconds": 1.054,
       "files": {
        "true": 6,
        "S_found": 6,
        "S_wrong": 0,
        "R_found": 6,
        "R_wrong": 5,
-       "R_seconds": 3.265
+       "R_seconds": 3.238
       }
      },
      {
@@ -387,14 +387,14 @@
       "truncated": 0,
       "missed": [],
       "wrong_resolved_sites": [],
-      "seconds": 1.034,
+      "seconds": 1.061,
       "files": {
        "true": 3,
        "S_found": 3,
        "S_wrong": 0,
        "R_found": 3,
        "R_wrong": 0,
-       "R_seconds": 3.62
+       "R_seconds": 3.633
       }
      },
      {
@@ -417,14 +417,14 @@
        "erpnext/controllers/buying_controller.py:1378"
       ],
       "wrong_resolved_sites": [],
-      "seconds": 1.038,
+      "seconds": 1.051,
       "files": {
        "true": 4,
        "S_found": 3,
        "S_wrong": 3,
        "R_found": 4,
        "R_wrong": 3,
-       "R_seconds": 3.302
+       "R_seconds": 3.272
       }
      },
      {
@@ -447,14 +447,14 @@
        "erpnext/controllers/subcontracting_controller.py:1435"
       ],
       "wrong_resolved_sites": [],
-      "seconds": 1.062,
+      "seconds": 1.049,
       "files": {
        "true": 2,
        "S_found": 1,
        "S_wrong": 0,
        "R_found": 2,
        "R_wrong": 0,
-       "R_seconds": 2.411
+       "R_seconds": 2.458
       }
      },
      {
@@ -475,14 +475,14 @@
       "truncated": 0,
       "missed": [],
       "wrong_resolved_sites": [],
-      "seconds": 1.043,
+      "seconds": 1.062,
       "files": {
        "true": 1,
        "S_found": 1,
        "S_wrong": 3,
        "R_found": 1,
        "R_wrong": 4,
-       "R_seconds": 3.189
+       "R_seconds": 3.261
       }
      },
      {
@@ -507,7 +507,7 @@
        "erpnext/stock/doctype/stock_entry/stock_entry.py:2003"
       ],
       "wrong_resolved_sites": [],
-      "seconds": 1.056,
+      "seconds": 1.071,
       "files": {
        "true": 4,
        "S_found": 1,
@@ -535,14 +535,14 @@
       "truncated": 0,
       "missed": [],
       "wrong_resolved_sites": [],
-      "seconds": 1.043,
+      "seconds": 1.103,
       "files": {
        "true": 1,
        "S_found": 1,
        "S_wrong": 0,
        "R_found": 1,
        "R_wrong": 1,
-       "R_seconds": 3.284
+       "R_seconds": 3.406
       }
      },
      {
@@ -563,14 +563,14 @@
       "truncated": 0,
       "missed": [],
       "wrong_resolved_sites": [],
-      "seconds": 1.04,
+      "seconds": 1.059,
       "files": {
        "true": 1,
        "S_found": 1,
        "S_wrong": 0,
        "R_found": 1,
        "R_wrong": 0,
-       "R_seconds": 3.169
+       "R_seconds": 3.24
       }
      },
      {
@@ -591,14 +591,14 @@
       "truncated": 0,
       "missed": [],
       "wrong_resolved_sites": [],
-      "seconds": 1.053,
+      "seconds": 1.101,
       "files": {
        "true": 14,
        "S_found": 14,
        "S_wrong": 0,
        "R_found": 14,
        "R_wrong": 0,
-       "R_seconds": 3.301
+       "R_seconds": 3.337
       }
      },
      {
@@ -619,14 +619,14 @@
       "truncated": 0,
       "missed": [],
       "wrong_resolved_sites": [],
-      "seconds": 1.064,
+      "seconds": 1.059,
       "files": {
        "true": 1,
        "S_found": 1,
        "S_wrong": 0,
        "R_found": 1,
        "R_wrong": 0,
-       "R_seconds": 3.059
+       "R_seconds": 3.046
       }
      },
      {
@@ -647,14 +647,14 @@
       "truncated": 0,
       "missed": [],
       "wrong_resolved_sites": [],
-      "seconds": 1.047,
+      "seconds": 1.043,
       "files": {
        "true": 1,
        "S_found": 1,
        "S_wrong": 0,
        "R_found": 1,
        "R_wrong": 0,
-       "R_seconds": 2.646
+       "R_seconds": 2.598
       }
      },
      {
@@ -675,14 +675,14 @@
       "truncated": 0,
       "missed": [],
       "wrong_resolved_sites": [],
-      "seconds": 1.066,
+      "seconds": 1.067,
       "files": {
        "true": 0,
        "S_found": 0,
        "S_wrong": 0,
        "R_found": 0,
        "R_wrong": 45,
-       "R_seconds": 4.297
+       "R_seconds": 4.186
       }
      },
      {
@@ -703,14 +703,14 @@
       "truncated": 0,
       "missed": [],
       "wrong_resolved_sites": [],
-      "seconds": 1.038,
+      "seconds": 1.073,
       "files": {
        "true": 1,
        "S_found": 1,
        "S_wrong": 0,
        "R_found": 1,
        "R_wrong": 0,
-       "R_seconds": 2.684
+       "R_seconds": 2.695
       }
      },
      {
@@ -731,14 +731,14 @@
       "truncated": 0,
       "missed": [],
       "wrong_resolved_sites": [],
-      "seconds": 1.067,
+      "seconds": 1.09,
       "files": {
        "true": 1,
        "S_found": 1,
        "S_wrong": 0,
        "R_found": 1,
        "R_wrong": 0,
-       "R_seconds": 2.729
+       "R_seconds": 2.736
       }
      },
      {
@@ -759,14 +759,14 @@
       "truncated": 0,
       "missed": [],
       "wrong_resolved_sites": [],
-      "seconds": 1.043,
+      "seconds": 1.064,
       "files": {
        "true": 1,
        "S_found": 1,
        "S_wrong": 0,
        "R_found": 1,
        "R_wrong": 1,
-       "R_seconds": 3.794
+       "R_seconds": 3.834
       }
      },
      {
@@ -787,14 +787,14 @@
       "truncated": 0,
       "missed": [],
       "wrong_resolved_sites": [],
-      "seconds": 1.049,
+      "seconds": 1.071,
       "files": {
        "true": 4,
        "S_found": 4,
        "S_wrong": 0,
        "R_found": 4,
        "R_wrong": 15,
-       "R_seconds": 3.022
+       "R_seconds": 3.04
       }
      },
      {
@@ -815,14 +815,14 @@
       "truncated": 0,
       "missed": [],
       "wrong_resolved_sites": [],
-      "seconds": 1.047,
+      "seconds": 1.068,
       "files": {
        "true": 15,
        "S_found": 15,
        "S_wrong": 0,
        "R_found": 15,
        "R_wrong": 0,
-       "R_seconds": 3.006
+       "R_seconds": 3.055
       }
      },
      {
@@ -843,14 +843,14 @@
       "truncated": 0,
       "missed": [],
       "wrong_resolved_sites": [],
-      "seconds": 1.045,
+      "seconds": 1.059,
       "files": {
        "true": 1,
        "S_found": 1,
        "S_wrong": 0,
        "R_found": 1,
        "R_wrong": 0,
-       "R_seconds": 3.379
+       "R_seconds": 3.365
       }
      },
      {
@@ -871,14 +871,14 @@
       "truncated": 0,
       "missed": [],
       "wrong_resolved_sites": [],
-      "seconds": 1.06,
+      "seconds": 1.057,
       "files": {
        "true": 2,
        "S_found": 2,
        "S_wrong": 0,
        "R_found": 2,
        "R_wrong": 0,
-       "R_seconds": 3.328
+       "R_seconds": 3.327
       }
      }
     ],
@@ -916,13 +916,13 @@
    "truth_problems": [],
    "cost": {
     "cold_build": {
-     "seconds": 34.889,
-     "peak_rss_mb": 2091.7,
+     "seconds": 35.793,
+     "peak_rss_mb": 2124.7,
      "worker_processes": "up to 8",
-     "index_seconds_reported": 34.268
+     "index_seconds_reported": 35.152
     },
-    "cache_bytes": 365976274,
-    "cache_mb": 366.0,
+    "cache_bytes": 375247474,
+    "cache_mb": 375.2,
     "files": 20425,
     "kinds": {
      "text": 2037,
@@ -940,28 +940,28 @@
     "imports": 282541,
     "calls": 1755867,
     "one_process_build_no_cache": {
-     "seconds": 76.257,
-     "peak_rss_mb": 1902.1
+     "seconds": 76.582,
+     "peak_rss_mb": 1927.9
     },
     "warm_stats": {
-     "seconds": 4.42,
-     "peak_rss_mb": 1207.6
+     "seconds": 4.573,
+     "peak_rss_mb": 1269.7
     },
     "warm_callers": {
-     "seconds": 6.338,
-     "peak_rss_mb": 1207.8
+     "seconds": 6.425,
+     "peak_rss_mb": 1270.3
     },
     "warm_find": {
-     "seconds": 11.255,
-     "peak_rss_mb": 2634.6
+     "seconds": 11.374,
+     "peak_rss_mb": 2679.1
     },
     "warm_overview": {
-     "seconds": 13.488,
-     "peak_rss_mb": 1228.2
+     "seconds": 13.616,
+     "peak_rss_mb": 1285.6
     },
     "overview_chars": 5884,
     "overview_bytes": 5885,
-    "overview_text": "20425 files (javascript 15853, json 1139, markdown 366, python 8, python-regex 2, shell 113, skipped 61, text 2037, toml 11, yaml 835); 384708 definitions; 419187 resolved call sites\nEntry points:\n  package.json:17  package.json main -> ./out/main.js (not in the index)\n  build/builtin/package.json:4  package.json main -> build/builtin/main.js\n  extensions/configuration-editing/package.json:22  package.json main -> ./out/configurationEditingMain (not in the index)\n  extensions/copilot/package.json:91  package.json main -> ./dist/extension (not in the index)\n  extensions/css-language-features/package.json:17  package.json main -> ./client/out/node/cssClientMain (not in the index)\n  extensions/debug-auto-launch/package.json:21  package.json main -> ./out/extension (not in the index)\n  extensions/debug-server-ready/package.json:24  package.json main -> ./out/extension (not in the index)\n  extensions/emmet/package.json:23  package.json main -> ./out/node/emmetNodeMain (not in the index)\n  extensions/extension-editing/package.json:16  package.json main -> ./out/extensionEditingMain (not in the index)\n  extensions/git-base/package.json:17  package.json main -> ./out/extension.js (not in the index)\n  extensions/git/package.json:60  package.json main -> ./out/main (not in the index)\n  extensions/github-authentication/package.json:91  package.json main -> ./out/extension.js (not in the index)\n  extensions/github/package.json:23  package.json main -> ./out/extension.js (not in the index)\n  extensions/grunt/package.json:24  package.json main -> ./out/main (not in the index)\n  extensions/gulp/package.json:23  package.json main -> ./out/main (not in the index)\n  extensions/html-language-features/package.json:20  package.json main -> ./client/out/node/htmlClientMain (not in the index)\n  extensions/ipynb/package.json:24  package.json main -> ./out/ipynbMain.node.js (not in the index)\n  extensions/jake/package.json:23  package.json main -> ./out/main (not in the index)\n  extensions/json-language-features/package.json:22  package.json main -> ./client/out/node/jsonClientMain (not in the index)\n  extensions/markdown-language-features/package.json:23  package.json main -> ./out/extension (not in the index)\n  extensions/markdown-math/package.json:23  package.json main -> ./out/extension (not in the index)\n  extensions/merge-conflict/package.json:25  package.json main -> ./out/mergeConflictMain (not in the index)\n  extensions/mermaid-markdown-features/package.json:26  package.json main -> ./out/extension (not in the index)\n  extensions/microsoft-authentication/package.json:134  package.json main -> ./out/extension.js (not in the index)\n  extensions/npm/package.json:48  package.json main -> ./out/npmMain (not in the index)\nTop-level directories (code files, definitions):\n  src/  11534 files  315742 defs\n  extensions/  3748 files  60899 defs\n  build/  329 files  3786 defs\n  test/  161 files  2278 defs\n  scripts/  54 files  818 defs\n  .github/  21 files  483 defs\n  .eslint-plugin-local/  68 files  375 defs\n  .vscode/  19 files  267 defs\n  .agents/  12 files  55 defs\n  remote/  1 files  1 defs\n  resources/  19 files  0 defs\n  copilot_shim/  4 files  0 defs\nInside src/vs/ (code files, definitions):\n  src/vs/workbench/  5537 files  168317 defs\n  src/vs/platform/  3609 files  78299 defs\n  src/vs/sessions/  722 files  26581 defs\n  src/vs/editor/  893 files  23069 defs\n  src/vs/base/  512 files  14370 defs\n  src/vs/server/  30 files  565 defs\n  src/vs/code/  22 files  270 defs\nLargest modules (definitions):\n  src/vscode-dts/vscode.d.ts  1624 defs\n  src/vs/workbench/api/common/extHost.protocol.ts  1573 defs\n  src/vs/workbench/api/common/extHostTypes.ts  1072 defs\n  src/vs/sessions/contrib/providers/agentHost/test/browser/localAgentHostSessionsProvider.test.ts  1016 defs\n  src/vs/workbench/contrib/chat/test/browser/widget/chatListRenderer.test.ts  1001 defs\n  src/vs/monaco.d.ts  924 defs\n  src/vs/platform/agentHost/node/copilot/copilotAgentSession.ts  921 defs\n  src/vs/sessions/contrib/sessions/test/browser/sessionsList.test.ts  909 defs\nMost-called definitions, top 20 (PageRank over resolved call sites, tests excluded):\n  src/vs/nls.ts:86  localize  [function, 31469 calls]\n      export function localize(data: ILocalizeInfo | string /* | number when built */, message: string ...\n  src/vs/nls.ts:28  _format  [function, 4 calls]\n      function _format(message: string, args: (string | number | boolean | undefined | null)[]): string {\n  src/vs/base/common/uri.ts:739  decodeURIComponentGraceful  [function, 2 calls]\n      function decodeURIComponentGraceful(str: string): string {\n  src/vs/base/common/lifecycle.ts:467  DisposableStore.add  [method, 7127 calls]\n      public add<T extends IDisposable>(o: T): T {\n  src/vs/base/common/lifecycle.ts:280  setParentOfDisposable  [function, 9 calls]\n      function setParentOfDisposable(child: IDisposable, parent: IDisposable | null): void {\n  src/vs/base/common/lifecycle.ts:551  Disposable._register  [method, 15359 calls]\n      protected _register<T extends IDisposable>(o: T): T {\n  src/vs/base/common/lifecycle.ts:36  IDisposableTracker.setParent  [method, 2 calls]\n      setParent(child: IDisposable, parent: IDisposable | null): void;\n  src/vs/nls.ts:98  lookupMessage  [function, 2 calls]\n      function lookupMessage(index: number, fallback: string | null): string {\n  src/vs/nls.ts:6  getNLSMessages  [function, 4 calls]\n      export function getNLSMessages(): string[] {\n  src/vs/base/common/uri.ts:455  Uri  [class, 6 calls]\n      class Uri extends URI {\n  src/vs/base/common/objects.ts:113  equals  [function, 361 calls]\n      export function equals(one: any, other: any): boolean {\n  src/vs/base/common/uri.ts:386  URI.toString  [method, 2767 calls]\n      toString(skipEncoding: boolean = false): string {\ntruncated: directories 1 more, entry_points 29 more, most_called 1 more\n"
+    "overview_text": "20425 files (javascript 15853, json 1139, markdown 366, python 8, python-regex 2, shell 113, skipped 61, text 2037, toml 11, yaml 835); 384708 definitions; 419298 resolved call sites\nEntry points:\n  package.json:17  package.json main -> ./out/main.js (not in the index)\n  build/builtin/package.json:4  package.json main -> build/builtin/main.js\n  extensions/configuration-editing/package.json:22  package.json main -> ./out/configurationEditingMain (not in the index)\n  extensions/copilot/package.json:91  package.json main -> ./dist/extension (not in the index)\n  extensions/css-language-features/package.json:17  package.json main -> ./client/out/node/cssClientMain (not in the index)\n  extensions/debug-auto-launch/package.json:21  package.json main -> ./out/extension (not in the index)\n  extensions/debug-server-ready/package.json:24  package.json main -> ./out/extension (not in the index)\n  extensions/emmet/package.json:23  package.json main -> ./out/node/emmetNodeMain (not in the index)\n  extensions/extension-editing/package.json:16  package.json main -> ./out/extensionEditingMain (not in the index)\n  extensions/git-base/package.json:17  package.json main -> ./out/extension.js (not in the index)\n  extensions/git/package.json:60  package.json main -> ./out/main (not in the index)\n  extensions/github-authentication/package.json:91  package.json main -> ./out/extension.js (not in the index)\n  extensions/github/package.json:23  package.json main -> ./out/extension.js (not in the index)\n  extensions/grunt/package.json:24  package.json main -> ./out/main (not in the index)\n  extensions/gulp/package.json:23  package.json main -> ./out/main (not in the index)\n  extensions/html-language-features/package.json:20  package.json main -> ./client/out/node/htmlClientMain (not in the index)\n  extensions/ipynb/package.json:24  package.json main -> ./out/ipynbMain.node.js (not in the index)\n  extensions/jake/package.json:23  package.json main -> ./out/main (not in the index)\n  extensions/json-language-features/package.json:22  package.json main -> ./client/out/node/jsonClientMain (not in the index)\n  extensions/markdown-language-features/package.json:23  package.json main -> ./out/extension (not in the index)\n  extensions/markdown-math/package.json:23  package.json main -> ./out/extension (not in the index)\n  extensions/merge-conflict/package.json:25  package.json main -> ./out/mergeConflictMain (not in the index)\n  extensions/mermaid-markdown-features/package.json:26  package.json main -> ./out/extension (not in the index)\n  extensions/microsoft-authentication/package.json:134  package.json main -> ./out/extension.js (not in the index)\n  extensions/npm/package.json:48  package.json main -> ./out/npmMain (not in the index)\nTop-level directories (code files, definitions):\n  src/  11534 files  315742 defs\n  extensions/  3748 files  60899 defs\n  build/  329 files  3786 defs\n  test/  161 files  2278 defs\n  scripts/  54 files  818 defs\n  .github/  21 files  483 defs\n  .eslint-plugin-local/  68 files  375 defs\n  .vscode/  19 files  267 defs\n  .agents/  12 files  55 defs\n  remote/  1 files  1 defs\n  resources/  19 files  0 defs\n  copilot_shim/  4 files  0 defs\nInside src/vs/ (code files, definitions):\n  src/vs/workbench/  5537 files  168317 defs\n  src/vs/platform/  3609 files  78299 defs\n  src/vs/sessions/  722 files  26581 defs\n  src/vs/editor/  893 files  23069 defs\n  src/vs/base/  512 files  14370 defs\n  src/vs/server/  30 files  565 defs\n  src/vs/code/  22 files  270 defs\nLargest modules (definitions):\n  src/vscode-dts/vscode.d.ts  1624 defs\n  src/vs/workbench/api/common/extHost.protocol.ts  1573 defs\n  src/vs/workbench/api/common/extHostTypes.ts  1072 defs\n  src/vs/sessions/contrib/providers/agentHost/test/browser/localAgentHostSessionsProvider.test.ts  1016 defs\n  src/vs/workbench/contrib/chat/test/browser/widget/chatListRenderer.test.ts  1001 defs\n  src/vs/monaco.d.ts  924 defs\n  src/vs/platform/agentHost/node/copilot/copilotAgentSession.ts  921 defs\n  src/vs/sessions/contrib/sessions/test/browser/sessionsList.test.ts  909 defs\nMost-called definitions, top 20 (PageRank over resolved call sites, tests excluded):\n  src/vs/nls.ts:86  localize  [function, 31469 calls]\n      export function localize(data: ILocalizeInfo | string /* | number when built */, message: string ...\n  src/vs/nls.ts:28  _format  [function, 4 calls]\n      function _format(message: string, args: (string | number | boolean | undefined | null)[]): string {\n  src/vs/base/common/uri.ts:739  decodeURIComponentGraceful  [function, 2 calls]\n      function decodeURIComponentGraceful(str: string): string {\n  src/vs/base/common/lifecycle.ts:467  DisposableStore.add  [method, 7127 calls]\n      public add<T extends IDisposable>(o: T): T {\n  src/vs/base/common/lifecycle.ts:280  setParentOfDisposable  [function, 9 calls]\n      function setParentOfDisposable(child: IDisposable, parent: IDisposable | null): void {\n  src/vs/base/common/lifecycle.ts:551  Disposable._register  [method, 15359 calls]\n      protected _register<T extends IDisposable>(o: T): T {\n  src/vs/base/common/lifecycle.ts:36  IDisposableTracker.setParent  [method, 2 calls]\n      setParent(child: IDisposable, parent: IDisposable | null): void;\n  src/vs/nls.ts:98  lookupMessage  [function, 2 calls]\n      function lookupMessage(index: number, fallback: string | null): string {\n  src/vs/nls.ts:6  getNLSMessages  [function, 4 calls]\n      export function getNLSMessages(): string[] {\n  src/vs/base/common/objects.ts:113  equals  [function, 373 calls]\n      export function equals(one: any, other: any): boolean {\n  src/vs/base/common/uri.ts:455  Uri  [class, 6 calls]\n      class Uri extends URI {\n  src/vs/base/common/uri.ts:386  URI.toString  [method, 2767 calls]\n      toString(skipEncoding: boolean = false): string {\ntruncated: directories 1 more, entry_points 29 more, most_called 1 more\n"
    },
    "find": {
     "questions": [
@@ -1002,7 +1002,7 @@
        "facts_hit": 2,
        "essential_facts_hit": 1,
        "text_bytes": 1038,
-       "seconds": 11.271
+       "seconds": 11.289
       },
       "R": {
        "top5": [
@@ -1019,7 +1019,7 @@
        "facts_hit": 2,
        "essential_facts_hit": 1,
        "text_bytes": 716,
-       "seconds": 5.068
+       "seconds": 5.016
       },
       "facts": 8,
       "essential_facts": 4
@@ -1053,7 +1053,7 @@
        "facts_hit": 0,
        "essential_facts_hit": 0,
        "text_bytes": 1111,
-       "seconds": 12.436
+       "seconds": 12.468
       },
       "R": {
        "top5": [
@@ -1068,7 +1068,7 @@
        "facts_hit": 0,
        "essential_facts_hit": 0,
        "text_bytes": 803,
-       "seconds": 8.456
+       "seconds": 8.569
       },
       "facts": 8,
       "essential_facts": 3
@@ -1102,7 +1102,7 @@
        "facts_hit": 0,
        "essential_facts_hit": 0,
        "text_bytes": 1238,
-       "seconds": 13.479
+       "seconds": 13.482
       },
       "R": {
        "top5": [
@@ -1117,7 +1117,7 @@
        "facts_hit": 0,
        "essential_facts_hit": 0,
        "text_bytes": 942,
-       "seconds": 11.903
+       "seconds": 11.908
       },
       "facts": 8,
       "essential_facts": 3
@@ -1152,7 +1152,7 @@
        "facts_hit": 7,
        "essential_facts_hit": 3,
        "text_bytes": 1103,
-       "seconds": 11.136
+       "seconds": 11.035
       },
       "R": {
        "top5": [
@@ -1170,7 +1170,7 @@
        "facts_hit": 6,
        "essential_facts_hit": 2,
        "text_bytes": 922,
-       "seconds": 4.862
+       "seconds": 4.911
       },
       "facts": 8,
       "essential_facts": 3
@@ -1259,14 +1259,14 @@
       "truncated": 0,
       "missed": [],
       "wrong_resolved_sites": [],
-      "seconds": 6.271,
+      "seconds": 6.372,
       "files": {
        "true": 1,
        "S_found": 1,
        "S_wrong": 0,
        "R_found": 1,
        "R_wrong": 1,
-       "R_seconds": 6.139
+       "R_seconds": 6.16
       }
      },
      {
@@ -1287,14 +1287,14 @@
       "truncated": 0,
       "missed": [],
       "wrong_resolved_sites": [],
-      "seconds": 6.305,
+      "seconds": 6.401,
       "files": {
        "true": 1,
        "S_found": 1,
        "S_wrong": 0,
        "R_found": 1,
        "R_wrong": 1,
-       "R_seconds": 6.163
+       "R_seconds": 6.198
       }
      },
      {
@@ -1315,14 +1315,14 @@
       "truncated": 0,
       "missed": [],
       "wrong_resolved_sites": [],
-      "seconds": 6.283,
+      "seconds": 6.405,
       "files": {
        "true": 1,
        "S_found": 1,
        "S_wrong": 0,
        "R_found": 1,
        "R_wrong": 0,
-       "R_seconds": 5.734
+       "R_seconds": 5.69
       }
      },
      {
@@ -1343,14 +1343,14 @@
       "truncated": 0,
       "missed": [],
       "wrong_resolved_sites": [],
-      "seconds": 6.255,
+      "seconds": 6.409,
       "files": {
        "true": 1,
        "S_found": 1,
        "S_wrong": 0,
        "R_found": 1,
        "R_wrong": 0,
-       "R_seconds": 5.867
+       "R_seconds": 5.779
       }
      },
      {
@@ -1371,14 +1371,14 @@
       "truncated": 0,
       "missed": [],
       "wrong_resolved_sites": [],
-      "seconds": 6.252,
+      "seconds": 6.433,
       "files": {
        "true": 1,
        "S_found": 1,
        "S_wrong": 0,
        "R_found": 1,
        "R_wrong": 0,
-       "R_seconds": 6.097
+       "R_seconds": 6.095
       }
      },
      {
@@ -1399,14 +1399,14 @@
       "truncated": 0,
       "missed": [],
       "wrong_resolved_sites": [],
-      "seconds": 6.316,
+      "seconds": 6.473,
       "files": {
        "true": 1,
        "S_found": 1,
        "S_wrong": 2,
        "R_found": 1,
        "R_wrong": 13,
-       "R_seconds": 5.825
+       "R_seconds": 5.714
       }
      },
      {
@@ -1427,14 +1427,14 @@
       "truncated": 0,
       "missed": [],
       "wrong_resolved_sites": [],
-      "seconds": 6.213,
+      "seconds": 6.439,
       "files": {
        "true": 1,
        "S_found": 1,
        "S_wrong": 0,
        "R_found": 1,
        "R_wrong": 1,
-       "R_seconds": 5.459
+       "R_seconds": 5.517
       }
      },
      {
@@ -1455,14 +1455,14 @@
       "truncated": 0,
       "missed": [],
       "wrong_resolved_sites": [],
-      "seconds": 6.271,
+      "seconds": 6.415,
       "files": {
        "true": 80,
        "S_found": 80,
        "S_wrong": 0,
        "R_found": 80,
        "R_wrong": 2,
-       "R_seconds": 5.61
+       "R_seconds": 5.491
       }
      },
      {
@@ -1483,14 +1483,14 @@
       "truncated": 0,
       "missed": [],
       "wrong_resolved_sites": [],
-      "seconds": 6.284,
+      "seconds": 6.362,
       "files": {
        "true": 1,
        "S_found": 1,
        "S_wrong": 0,
        "R_found": 1,
        "R_wrong": 0,
-       "R_seconds": 4.928
+       "R_seconds": 4.896
       }
      },
      {
@@ -1511,14 +1511,14 @@
       "truncated": 0,
       "missed": [],
       "wrong_resolved_sites": [],
-      "seconds": 6.308,
+      "seconds": 6.3,
       "files": {
        "true": 1,
        "S_found": 1,
        "S_wrong": 0,
        "R_found": 1,
        "R_wrong": 0,
-       "R_seconds": 5.624
+       "R_seconds": 5.674
       }
      },
      {
@@ -1539,14 +1539,14 @@
       "truncated": 0,
       "missed": [],
       "wrong_resolved_sites": [],
-      "seconds": 6.187,
+      "seconds": 6.417,
       "files": {
        "true": 1,
        "S_found": 1,
        "S_wrong": 0,
        "R_found": 1,
        "R_wrong": 1,
-       "R_seconds": 5.749
+       "R_seconds": 5.665
       }
      },
      {
@@ -1567,14 +1567,14 @@
       "truncated": 0,
       "missed": [],
       "wrong_resolved_sites": [],
-      "seconds": 6.197,
+      "seconds": 6.262,
       "files": {
        "true": 1,
        "S_found": 1,
        "S_wrong": 0,
        "R_found": 1,
        "R_wrong": 1,
-       "R_seconds": 5.887
+       "R_seconds": 5.617
       }
      },
      {
@@ -1595,14 +1595,14 @@
       "truncated": 0,
       "missed": [],
       "wrong_resolved_sites": [],
-      "seconds": 6.258,
+      "seconds": 6.348,
       "files": {
        "true": 0,
        "S_found": 0,
        "S_wrong": 0,
        "R_found": 0,
        "R_wrong": 0,
-       "R_seconds": 1.642
+       "R_seconds": 1.644
       }
      },
      {
@@ -1623,14 +1623,14 @@
       "truncated": 0,
       "missed": [],
       "wrong_resolved_sites": [],
-      "seconds": 6.222,
+      "seconds": 6.453,
       "files": {
        "true": 2,
        "S_found": 2,
        "S_wrong": 0,
        "R_found": 2,
        "R_wrong": 0,
-       "R_seconds": 5.145
+       "R_seconds": 5.385
       }
      },
      {
@@ -1651,14 +1651,14 @@
       "truncated": 0,
       "missed": [],
       "wrong_resolved_sites": [],
-      "seconds": 6.189,
+      "seconds": 6.42,
       "files": {
        "true": 3,
        "S_found": 3,
        "S_wrong": 0,
        "R_found": 3,
        "R_wrong": 0,
-       "R_seconds": 5.313
+       "R_seconds": 5.545
       }
      },
      {
@@ -1679,14 +1679,14 @@
       "truncated": 0,
       "missed": [],
       "wrong_resolved_sites": [],
-      "seconds": 6.254,
+      "seconds": 6.353,
       "files": {
        "true": 1,
        "S_found": 1,
        "S_wrong": 0,
        "R_found": 1,
        "R_wrong": 0,
-       "R_seconds": 6.102
+       "R_seconds": 6.183
       }
      },
      {
@@ -1707,14 +1707,14 @@
       "truncated": 0,
       "missed": [],
       "wrong_resolved_sites": [],
-      "seconds": 6.171,
+      "seconds": 6.365,
       "files": {
        "true": 1,
        "S_found": 1,
        "S_wrong": 0,
        "R_found": 1,
        "R_wrong": 0,
-       "R_seconds": 5.724
+       "R_seconds": 5.805
       }
      },
      {
@@ -1735,14 +1735,14 @@
       "truncated": 1750,
       "missed": [],
       "wrong_resolved_sites": [],
-      "seconds": 6.457,
+      "seconds": 6.733,
       "files": {
        "true": 8,
        "S_found": 8,
        "S_wrong": 401,
        "R_found": 8,
        "R_wrong": 992,
-       "R_seconds": 8.341
+       "R_seconds": 8.635
       }
      },
      {
@@ -1763,14 +1763,14 @@
       "truncated": 0,
       "missed": [],
       "wrong_resolved_sites": [],
-      "seconds": 6.213,
+      "seconds": 6.474,
       "files": {
        "true": 2,
        "S_found": 2,
        "S_wrong": 0,
        "R_found": 2,
        "R_wrong": 0,
-       "R_seconds": 5.921
+       "R_seconds": 6.012
       }
      },
      {
@@ -1791,14 +1791,14 @@
       "truncated": 0,
       "missed": [],
       "wrong_resolved_sites": [],
-      "seconds": 6.292,
+      "seconds": 6.409,
       "files": {
        "true": 16,
        "S_found": 16,
        "S_wrong": 1,
        "R_found": 16,
        "R_wrong": 8,
-       "R_seconds": 5.448
+       "R_seconds": 5.442
       }
      }
     ],
@@ -1826,7 +1826,7 @@
    }
   }
  },
- "measured_at": "2026-11-07, code_index.py of commit f959e0c (sha256 above)",
+ "measured_at": "2026-11-07, code_index.py of commit 563481f (sha256 above)",
  "questions": {
   "ERPNext": "OAW-records records/digestion-2026-11-03/taste-graphify/erpnext/questions.json",
   "VS Code": "OAW-records records/digestion-2026-11-07/validation/v8/questions.json"
@@ -1887,6 +1887,117 @@
     "rule": "S top-5 file hit rate - R >= 0.15 in some question type, S text bytes <= R text bytes",
     "passed": false,
     "passed_with_two_more_hits": false
+   }
+  }
+ },
+ "previous_run": {
+  "note": "code_index.py of f959e0c (cherry-picked as 6ef9816), before the codex review round 10 fixes. (a) find and (b) callers were identical; (c) cost and overview changed as recorded here.",
+  "ERPNext": {
+   "code_index_sha256": "851762a8d9aebce6dd2b43654efe8e8669db94d5077c2ccd419b3139a9e5811d",
+   "callers": {
+    "symbols": 20,
+    "true_callers": 110,
+    "recall_all_rows": 0.9545,
+    "recall_resolved_rows": 0.9,
+    "wrong_resolved_rows": 0,
+    "resolved_rows": 99,
+    "wrong_unresolved_rows": 9,
+    "unresolved_rows": 15,
+    "returned_dynamic_rows": 0,
+    "symbols_with_full_recall_all_rows": 17,
+    "file_level": {
+     "true": 75,
+     "S_found": 70,
+     "S_wrong": 8,
+     "R_found": 75,
+     "R_wrong": 80
+    },
+    "meets_0_95_all_rows": true,
+    "meets_0_95_resolved_rows": false
+   },
+   "cost": {
+    "cold_build": {
+     "seconds": 4.802,
+     "peak_rss_mb": 301.2,
+     "worker_processes": "up to 8",
+     "index_seconds_reported": 4.593
+    },
+    "one_process_build_no_cache": {
+     "seconds": 13.418,
+     "peak_rss_mb": 287.0
+    },
+    "cache_mb": 52.6,
+    "overview_chars": 4355,
+    "warm_stats": {
+     "seconds": 0.422,
+     "peak_rss_mb": 155.5
+    },
+    "warm_callers": {
+     "seconds": 1.025,
+     "peak_rss_mb": 163.9
+    },
+    "warm_find": {
+     "seconds": 2.478,
+     "peak_rss_mb": 384.5
+    },
+    "warm_overview": {
+     "seconds": 1.193,
+     "peak_rss_mb": 168.9
+    }
+   }
+  },
+  "VS Code": {
+   "code_index_sha256": "851762a8d9aebce6dd2b43654efe8e8669db94d5077c2ccd419b3139a9e5811d",
+   "callers": {
+    "symbols": 20,
+    "true_callers": 338,
+    "recall_all_rows": 1.0,
+    "recall_resolved_rows": 1.0,
+    "wrong_resolved_rows": 0,
+    "resolved_rows": 338,
+    "wrong_unresolved_rows": 988,
+    "unresolved_rows": 988,
+    "returned_dynamic_rows": 1,
+    "symbols_with_full_recall_all_rows": 20,
+    "file_level": {
+     "true": 124,
+     "S_found": 124,
+     "S_wrong": 404,
+     "R_found": 124,
+     "R_wrong": 1020
+    },
+    "meets_0_95_all_rows": true,
+    "meets_0_95_resolved_rows": true
+   },
+   "cost": {
+    "cold_build": {
+     "seconds": 34.889,
+     "peak_rss_mb": 2091.7,
+     "worker_processes": "up to 8",
+     "index_seconds_reported": 34.268
+    },
+    "one_process_build_no_cache": {
+     "seconds": 76.257,
+     "peak_rss_mb": 1902.1
+    },
+    "cache_mb": 366.0,
+    "overview_chars": 5884,
+    "warm_stats": {
+     "seconds": 4.42,
+     "peak_rss_mb": 1207.6
+    },
+    "warm_callers": {
+     "seconds": 6.338,
+     "peak_rss_mb": 1207.8
+    },
+    "warm_find": {
+     "seconds": 11.255,
+     "peak_rss_mb": 2634.6
+    },
+    "warm_overview": {
+     "seconds": 13.488,
+     "peak_rss_mb": 1228.2
+    }
    }
   }
  }
