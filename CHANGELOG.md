@@ -6,6 +6,10 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- `oaw.py doctor` checks whether Claude can use the installed skills (plan W4): a project `.claude/settings*.json`
+  that denies the `Skill` tool is a WARN and makes Claude skill discovery NO. `--probe` starts Claude Code once, stops
+  it at its init event, and reports YES only when every installed OAW Claude skill is listed and the Skill tool is
+  present (a missing Skill tool hides skills from the model). Checked on Linux with Claude Code 2.1.287.
 - Users add skills themselves (plan W3, owner decision D34): `oaw.py add SOURCE...`, `list` and `remove NAME`, run
   from the checkout like `init`. One question (or flags) covers the choice - OAW plus these, only these (new
   `manager-only` profile that `doctor` understands), or a recommendation from OAW's tasting records - every
