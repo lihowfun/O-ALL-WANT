@@ -554,6 +554,22 @@ def file_bytes(root: Path, paths: list[str]) -> int:
     return total
 
 
+def inside_project(root: Path, relative: str) -> bool:
+    try:
+        project_file(root, relative)
+    except ModeError:
+        return False
+    return True
+
+
+def blob_digest(root: Path, revision: str, relative: str) -> str | None:
+    """sha256 of a file's content at a revision (None when the revision does not have it)."""
+    try:
+        return hashlib.sha256(git(root, "show", f"{revision}:./{relative}")).hexdigest()
+    except ModeError:
+        return None
+
+
 def report_dir(root: Path, target: str) -> str:
     identity = hashlib.sha256(f"{target}\0{file_digest(root, target)}".encode("utf-8")).hexdigest()
     return f"{REVIEWS_DIR}/{datetime.now(timezone.utc):%Y-%m-%d}-{slug(target)}-{identity[:10]}/"
@@ -602,9 +618,13 @@ def review_steps(result: dict, root: Path, settings: dict) -> list[dict]:
         if how == "egm" and not any(egm_hosts(root).values()):
             how, note = "fresh-context", "EGM is not installed in this project: one fresh-context review of the plan instead"
         if how != "none":
-            targets = result.get("design_docs") or []
+            found = result.get("design_docs") or []
+            targets = [target for target in found if inside_project(root, target)]
             step = {"step": "design-review", "before_code": True, "how": how, "switch": switch,
                     "targets": targets or ["the plan you save under docs/plans/"], "done": False}
+            outside = [target for target in found if target not in targets]
+            if outside:
+                step["refused"] = {"paths": outside, "why": "a link leads outside the project; not reviewed"}
             if switch == "auto":
                 step["basis"] = AUTO_BASIS
             if note:
@@ -612,8 +632,17 @@ def review_steps(result: dict, root: Path, settings: dict) -> list[dict]:
             if targets:
                 # One review per document, each with its own folder named by path and content: EGM reviews one
                 # TargetFile at a time and writes fixed file names, so a shared folder would overwrite reports.
-                step["reviews"] = [{"target": target, "report_dir": report_dir(root, target),
-                                    "done": already_reviewed(root, target, how) is not None} for target in targets]
+                step["reviews"] = []
+                for target in targets:
+                    review = {"target": target, "report_dir": report_dir(root, target),
+                              "done": already_reviewed(root, target, how) is not None}
+                    endpoint = result.get("range_end")
+                    if endpoint and blob_digest(root, endpoint, target) != file_digest(root, target):
+                        # A record is for the working-tree content; the range asks about the endpoint's content.
+                        review["done"] = False
+                        review["note"] = (f"the working tree differs from {endpoint} for this file: check out "
+                                          f"{endpoint} and review that version")
+                    step["reviews"].append(review)
                 step["done"] = all(review["done"] for review in step["reviews"])
             if how == "egm":
                 if targets:
@@ -659,11 +688,18 @@ CODEX_PLAN = ("codex --sandbox read-only  (plan in this read-only pass, then imp
               "Codex plan-mode and effort flags are not mapped yet)")
 
 
-def shell_word(value: str, *, platform: str = os.name) -> str:
-    """A file name printed inside a command stays one argument and never shell syntax."""
+WINDOWS_SHELL_CHARS = re.compile(r'[$`%!^&|<>()"\';]')
+
+
+def shell_word(value: str, *, platform: str = os.name) -> str | None:
+    """A file name printed inside a command stays one argument and never shell syntax. On Windows the shell
+    (cmd or PowerShell) is unknown, and double quotes do not stop $(...), %VAR% or backticks there, so a name
+    with those characters gets no command (None): the caller points at the exact path in --json instead."""
     if platform != "nt":
         return shlex.quote(value)
-    return value if re.fullmatch(r"[\w./:@+~-]+", value) else '"' + value.replace('"', '') + '"'
+    if WINDOWS_SHELL_CHARS.search(value):
+        return None
+    return value if re.fullmatch(r"[\w./:@+~-]+", value) else f'"{value}"'
 
 
 def add_entrypoint(root: PurePath, host: str, *, platform: str = os.name) -> str:
@@ -768,9 +804,15 @@ def render_steps(steps: list[dict]) -> list[str]:
                 if review["done"]:
                     lines.append(f"    {review['target']}: reviewed")
                 else:
-                    lines.append(f"    {review['target']}: reports in {review['report_dir']}; when done: python3 "
-                                 f"scripts/oaw_mode.py reviewed {shell_word(review['target'])} --how {step['how']} "
-                                 f"--report {shell_word(review['report_dir'])}")
+                    target, folder = shell_word(review["target"]), shell_word(review["report_dir"])
+                    if target is None or folder is None:
+                        lines.append(f"    {review['target']}: reports in {review['report_dir']}; when done, run reviewed "
+                                     "with the exact path from suggest --json (this name has shell characters)")
+                    else:
+                        lines.append(f"    {review['target']}: reports in {review['report_dir']}; when done: python3 "
+                                     f"scripts/oaw_mode.py reviewed {target} --how {step['how']} --report {folder}")
+                if review.get("note"):
+                    lines.append(f"      note: {review['note']}")
         else:
             lines.append(f"  {when}: code review by {step['who']}"
                          + (f", up to {step['rounds']} rounds" if step["rounds"] > 1 else ""))
@@ -899,6 +941,8 @@ def main(argv: list[str] | None = None) -> int:
                 entries, label = diff_entries(root, args.revision_range)
             settings = load_settings(root)
             result = {"schema_version": 1, "source": label, **classify(entries, hook_files(root))}
+            if args.revision_range:
+                result["range_end"] = args.revision_range.split("..")[-1].lstrip(".") or "HEAD"
             if args.plan:
                 add_plan(result, root, args.plan)
             result["settings"] = {k: settings[k] for k in DEFAULTS}

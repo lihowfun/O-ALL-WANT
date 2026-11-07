@@ -611,6 +611,9 @@ class SwitchAndStepTests(unittest.TestCase):
         self.assertIn("reviewed 'docs/plans/odd name;x.md' --how egm", text)  # codex review round 8
         self.assertEqual(mode.shell_word("docs/a b.md", platform="nt"), '"docs/a b.md"')
         self.assertEqual(mode.shell_word("docs/a.md", platform="nt"), "docs/a.md")
+        # Windows shells expand $(...), %VAR% and backticks even inside double quotes (codex review round 9).
+        for name in ("docs/$(whoami)-plan.md", "docs/%USERNAME%.md", "docs/a`b.md", "docs/a;b.md", "docs/a&b.md"):
+            self.assertIsNone(mode.shell_word(name, platform="nt"), name)
         for bad in ("../x.md", "/etc/passwd", "C:/x.md", "docs/missing.md"):
             with self.subTest(bad=bad):
                 code, _, errors = run("reviewed", bad, "--how", "egm", "--root", str(self.root))
@@ -679,6 +682,35 @@ class SwitchAndStepTests(unittest.TestCase):
         alone = json.loads(output)
         self.assertEqual((alone["mode"], alone["source"]), ("deep", "a saved plan only (not a git repository)"))
         self.assertEqual(run("suggest", "--root", str(plain))[0], 2, "without --plan, no git is still an error")
+
+    def test_linked_targets_are_refused_and_ranges_check_the_endpoint(self):
+        self.install_egm_entry()
+        outside = Path(tempfile.mkdtemp(prefix="oaw-mode-out-"))
+        self.addCleanup(shutil.rmtree, outside, True)
+        (outside / "x.md").write_text("# outside\n", encoding="utf-8")
+        (self.root / "docs/plans").mkdir(parents=True)
+        try:
+            (self.root / "docs/plans/linked.md").symlink_to(outside / "x.md")
+        except (OSError, NotImplementedError):
+            self.skipTest("symlinks are not available")
+        self.write("docs/plans/real.md", "# Real\n")
+        design = self.steps()["design-review"]
+        self.assertEqual(design["targets"], ["docs/plans/real.md"])
+        self.assertEqual(design["refused"]["paths"], ["docs/plans/linked.md"])
+        (self.root / "docs/plans/linked.md").unlink()
+        git = [GIT, "-C", str(self.root), "-c", "user.name=t", "-c", "user.email=t@example.invalid", "-c", "commit.gpgsign=false"]
+        subprocess.run([*git, "add", "-A"], check=True)
+        subprocess.run([*git, "commit", "-q", "--allow-empty", "-m", "base"], check=True, capture_output=True)
+        self.write("docs/plans/next.md", "# Version at B\n")
+        subprocess.run([*git, "add", "-A"], check=True)
+        subprocess.run([*git, "commit", "-q", "-m", "plan"], check=True, capture_output=True)
+        self.run_ok("reviewed", "docs/plans/next.md", "--how", "egm")
+        self.assertTrue(self.steps("--range", "HEAD~1..HEAD")["design-review"]["done"])
+        self.write("docs/plans/next.md", "# Working tree differs\n")
+        self.run_ok("reviewed", "docs/plans/next.md", "--how", "egm")
+        review = self.steps("--range", "HEAD~1..HEAD")["design-review"]["reviews"][0]
+        self.assertFalse(review["done"], "a record of other content never marks the range's version reviewed")
+        self.assertIn("differs from HEAD", review["note"])
 
     def test_a_lighter_review_never_stands_in_for_egm(self):
         self.install_egm_entry()
