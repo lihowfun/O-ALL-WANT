@@ -788,6 +788,103 @@ class UserInstallTests(unittest.TestCase):
         self.assertEqual(user_install._matches(record, "two/skill:x"), [("two", ["skill:x"])])
         self.assertEqual(user_install.remove_form(record, "two", "skill:x"), "two/skill:x")
 
+    # ------------------------------------------------------------------ review round 14
+
+    def test_a_kept_setting_keeps_the_files_it_runs(self):
+        self.add("hooky", choice="only", consent="all", apply=True)
+        mcp = json.loads((self.project / ".mcp.json").read_text(encoding="utf-8"))
+        mcp["mcpServers"]["hooky-server"]["args"].append("--verbose")
+        (self.project / ".mcp.json").write_text(json.dumps(mcp) + "\n", encoding="utf-8")
+        settings = json.loads((self.project / ".claude/settings.json").read_text(encoding="utf-8"))
+        settings["hooks"]["SessionStart"][0]["hooks"][0]["command"] += " --quiet"
+        (self.project / ".claude/settings.json").write_text(json.dumps(settings) + "\n", encoding="utf-8")
+        support = self.project / ".claude/oaw-user/hooky"
+        self.cli("remove", "hooky-server", code=3)
+        self.assertTrue((support / "mcp/server.py").is_file())
+        files = [f["path"] for f in self.record()["packages"]["hooky"]["parts"]["mcp:hooky-server"]["files"]]
+        self.assertEqual(files, [".claude/oaw-user/hooky/mcp/server.py"])
+        self.cli("remove", "hooky-hooks", code=3)
+        self.assertTrue((support / "hooks/start.sh").is_file())
+        self.cli("remove", "hooky-server", "--keep")
+        self.assertTrue((support / "mcp/server.py").is_file(), "--keep leaves the file the kept setting runs")
+        self.assert_nothing_ran()
+
+    def test_a_hook_the_project_already_had_is_never_taken_for_ours(self):
+        own = {"matcher": "Bash", "hooks": [{"type": "command",
+                                            "command": 'python3 "${CLAUDE_PROJECT_DIR:-.}/.claude/oaw-user/hooky/hooks/guard.py"'}]}
+        self.put(self.project, ".claude/settings.json", json.dumps({"hooks": {"PreToolUse": [own]}}, indent=2) + "\n")
+        original = (self.project / ".claude/settings.json").read_bytes()
+        self.add("hooky", choice="only", consent="hooks", apply=True)
+        settings = json.loads((self.project / ".claude/settings.json").read_text(encoding="utf-8"))
+        self.assertEqual(settings["hooks"]["PreToolUse"], [own, own])
+        settings["hooks"]["PreToolUse"][1]["hooks"][0]["command"] += " --strict"
+        (self.project / ".claude/settings.json").write_text(json.dumps(settings, indent=2) + "\n", encoding="utf-8")
+        result = self.cli("remove", "hooky-hooks", code=3)
+        self.assertIn(".claude/settings.json hooks.PreToolUse", [c["path"] for c in result["conflicts"]])
+        settings = json.loads((self.project / ".claude/settings.json").read_text(encoding="utf-8"))
+        self.assertEqual(settings["hooks"]["PreToolUse"][0], own, "the project's own hook stays")
+        self.assertEqual(len(settings["hooks"]["PreToolUse"]), 2)
+        # Unedited, the added copy goes and the project's own file comes back byte for byte.
+        settings["hooks"]["PreToolUse"][1] = own
+        (self.project / ".claude/settings.json").write_text(json.dumps(settings, indent=2) + "\n", encoding="utf-8")
+        self.cli("remove", "hooky-hooks")
+        self.assertEqual((self.project / ".claude/settings.json").read_bytes(), original)
+
+    def test_the_tasted_commit_comes_from_the_tasting_not_the_current_pin(self):
+        first, second = "a" * 40, "b" * 40
+        catalog = self.project / ".oaw" / "catalog"
+        write_ledger(catalog, "graphify", current=second, snapshots=[(first, "2026-11-05T00:00:00Z"), (second, "2026-11-07T00:00:00Z")],
+                     tasted_at="2026-11-06T00:00:00Z")
+        verdicts = user_install.load_verdicts()
+        key = "github.com/graphify-labs/graphify"
+        status = user_install.tasting_status(self.project, {"key": key, "commit": second}, verdicts)
+        self.assertEqual((status["tasted_commit"], status["same_version"]), (first, False))
+        self.assertIn("不是你裝的版本", user_install.tasting_text(status, "graphify"))
+        self.assertTrue(user_install.tasting_status(self.project, {"key": key, "commit": first}, verdicts)["same_version"])
+        document = build_verdicts.build(self.project)
+        food = document["foods"][0]
+        self.assertEqual((food["commit"], food["tasting"]["commit"]), (first, first))
+        write_ledger(catalog, "graphify", current=second, snapshots=[(first, "2026-11-05T00:00:00Z"), (second, "2026-11-05T12:00:00Z")],
+                     tasted_at="2026-11-06T00:00:00Z")
+        status = user_install.tasting_status(self.project, {"key": key, "commit": second}, verdicts)
+        self.assertEqual((status["tasted_commit"], status["same_version"]), (None, False))
+        self.assertIn("不確定試吃的是哪個版本", user_install.tasting_text(status, "graphify"))
+        self.assertIsNone(build_verdicts.build(self.project)["foods"][0]["tasting"]["commit"])
+
+    def test_a_chosen_new_name_survives_into_the_apply_command(self):
+        self.init()
+        preview = self.add("twin", on_conflict=["oaw-review=rename:custom-review"])
+        self.assertEqual(preview["conflicts"][0]["new_name"], "custom-review")
+        self.assertIn("oaw-review=rename:custom-review", preview["apply_argv"])
+        with redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+            self.assertEqual(oaw.main(preview["apply_argv"][2:] + ["--json"]), 0)
+        self.assertTrue((self.project / ".agents/skills/custom-review/SKILL.md").is_file())
+
+
+def write_ledger(catalog: Path, food: str, *, current: str, snapshots: list, tasted_at: str) -> None:
+    """A minimal catalog ledger: one GitHub food pinned at `current`, its sealed snapshots, and one tasting."""
+    (catalog / "evidence" / food).mkdir(parents=True, exist_ok=True)
+    for old in (catalog / "evidence" / food).glob("*.json"):
+        old.unlink()
+    (catalog / "registry.json").write_text(json.dumps({"schema_version": 1, "foods": {food: {"id": food, "source": {
+        "kind": "github", "key": "github.com/graphify-labs/graphify", "owner": "Graphify-Labs", "repo": "graphify",
+        "commit": current}}}}), encoding="utf-8")
+    for commit, when in snapshots:
+        (catalog / "evidence" / food / f"I0-{commit[:12]}.json").write_text(json.dumps(
+            {"schema_version": 1, "tier": "I0", "food": food, "commit": commit, "recorded_at": when}), encoding="utf-8")
+    raw = {"schema": "oaw-tasting/1", "food": food, "date": tasted_at[:10],
+           "records": {"branch": "records", "commit": "9c5886a", "path": "records/digestion/x"},
+           "protocol": {"models": ["claude-haiku-5-5"], "corpus": "ERPNext at d9cb916 (frozen)",
+                        "questions": {"count": 4, "sha256": "c" * 64, "file": None}, "repeats": 3, "grading": "two gradings"},
+           "arms": [{"id": "N", "label": "native", "food_arm": False, "runs": 12, "graded_runs": 12},
+                    {"id": "G", "label": "graphify 0.9", "food_arm": True, "runs": 12, "graded_runs": 12}],
+           "food_arm_ran": {"graded_runs": 12, "evidence": "rows.jsonl"},
+           "verdict": "decline", "verdict_zh": "排掉。", "blocked_on_owner": None, "notes": None,
+           "judgment": {"quality": "worse", "cost_ratio": 1.4, "cheaper": False, "grading": "double-graded", "conditions": 4}}
+    stored = {**raw, "tasting_id": core.tasting_id(core.validate_tasting(raw, food)), "recorded_at": tasted_at,
+              "provenance": "agent-tasting"}
+    (catalog / "evidence" / food / "tasting-1.json").write_text(json.dumps(stored), encoding="utf-8")
+
 
 class VerdictsTests(unittest.TestCase):
     def test_shipped_file_is_valid_public_and_in_generator_form(self):

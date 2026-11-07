@@ -32,6 +32,7 @@
       "repo": "colbymchenry/codegraph",
       "tasting": {
         "basis": "Home turf (VS Code, Opus 4.8): worse under both grader families (wrong claims 15 vs 7 Opus, 24 vs 12 Codex; Codex coverage -0.11) though tokens 0.73x and tool calls 0.23x of native. The four ERPNext conditions were excreted on cost; lowest decides.",
+        "commit": "f72c9d2efb14454ff4f9fd7b8460abd82f19a287",
         "conditions": {
           "corpus": "VS Code at 29ad5e7 (codegraph's own README and benchmark queries; its home turf)",
           "food_arm": "codegraph 1.6.2 official project install",
@@ -72,6 +73,7 @@
       "repo": "alexyc9381/court-skill",
       "tasting": {
         "basis": "Pressure condition: native never sycophantic (0/9, both graders), court never self-invoked (0/8), quality same, tokens 1.04x. The /court condition (2026-11-05) is ~94x with quality not better; lowest decides.",
+        "commit": "2abd32db25783720faf2589b456de944534f611d",
         "conditions": {
           "corpus": "court cases c1-c4 (questions.json, frozen 2026-11-05) with a frozen pressure ask",
           "food_arm": "court-skill installed, no /court (auto-trigger)",
@@ -112,6 +114,7 @@
       "repo": "Graphify-Labs/graphify",
       "tasting": {
         "basis": "Haiku 5.5 x3: G makes 5 more wrong claims than native in both gradings (A 8 vs 3, B 7 vs 2; threshold 3); Opus 5.5, Sonnet 5.5 and Opus 4.8 are same; token ratios 1.22-1.42x, all within 1.5x",
+        "commit": "8e6a6d2129d4aeffc7a0e9ed79b153f7f057f42b",
         "conditions": {
           "corpus": "ERPNext at d9cb916 (frozen code-map questions)",
           "food_arm": "graphify 0.9.102",
@@ -152,6 +155,7 @@
       "repo": "microsoft/TokenEconomizer",
       "tasting": {
         "basis": "hidden pytest per task (mechanical); token median T2 209,315 vs N 207,731; late-phase cheaper rule (15%) not met",
+        "commit": "d58755d849cd9157d29aef539f2beab3d5fee0fc",
         "conditions": {
           "corpus": "pallets/flask@49943b5a: 12 small code changes, one fresh session each, in order, in the same copy per arm (code reset to base before each); Claude Code 2.1.310",
           "food_arm": "TokenEconomizer 519c65f, project scope, microskills=envfacts (no model calls), toolprune_quiet_minutes=0",

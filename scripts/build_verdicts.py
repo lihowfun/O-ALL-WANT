@@ -66,14 +66,29 @@ def _load(path: Path):
         raise BuildError(f"Cannot read {path.name}: {exc}") from exc
 
 
-def tasting_entry(record: dict) -> dict:
+def tasted_commit(evidence: list, tasting: dict) -> str | None:
+    """The food commit a tasting ran on, from the snapshots (I0) sealed before it was recorded.
+
+    A tasting record names no commit, and the registry's pin moves with every later `taste --ref`, so the pin is
+    never used. Exactly one commit sealed before the tasting is taken as the tasted one; none, several, or a
+    tasting without a time means the version is not established (None), and no install may claim the same version.
+    """
+    when = tasting.get("recorded_at")
+    if not isinstance(when, str) or not when:
+        return None
+    commits = {r.get("commit") for r in evidence if r.get("tier") == "I0" and isinstance(r.get("recorded_at"), str)
+               and r["recorded_at"] <= when and isinstance(r.get("commit"), str) and re.fullmatch(r"[0-9a-f]{40}", r["commit"])}
+    return commits.pop() if len(commits) == 1 else None
+
+
+def tasting_entry(record: dict, commit: str | None = None) -> dict:
     """The latest valid tasting as users see it: outcome, label, the conditions it ran under and its evidence."""
     judgment = record.get("judgment") or {}
     protocol = record["protocol"]
     food_arm = next((arm for arm in record["arms"] if arm.get("food_arm")), {})
     label = core.d29_label(judgment) or core.TASTING_VERDICTS[record["verdict"]]
     return {
-        "date": record["date"], "tasting_id": record.get("tasting_id"), "verdict": record["verdict"],
+        "date": record["date"], "tasting_id": record.get("tasting_id"), "verdict": record["verdict"], "commit": commit,
         "outcome": judgment.get("outcome"), "outcome_zh": core.D29_OUTCOMES_ZH.get(judgment.get("outcome")),
         "label_zh": label, "quality": judgment.get("quality"), "quality_class": judgment.get("quality_class"),
         "cost_ratio": judgment.get("cost_ratio"), "cost_ci": judgment.get("cost_ci"), "grading": judgment.get("grading"),
@@ -105,11 +120,14 @@ def build(ledger: Path) -> dict:
                 if isinstance(value, dict):
                     evidence.append(value)
         records = core.food_records(evidence, fid)
-        tasting = tasting_entry(records["tastings"][-1]) if records["tastings"] else None
+        latest = records["tastings"][-1] if records["tastings"] else None
+        tasting = tasting_entry(latest, tasted_commit(evidence, latest)) if latest else None
         owner, repo = source["owner"], source["repo"]
+        # Installing a food by name installs the tasted commit when it is established, else the sealed pin.
         foods.append(_public({
             "id": fid, "repo": f"{owner}/{repo}", "key": source["key"], "url": f"https://github.com/{owner}/{repo}",
-            "commit": source.get("commit"), "category": FOOD_CATEGORIES.get(source["key"]), "tasting": tasting,
+            "commit": (tasting or {}).get("commit") or source.get("commit"), "category": FOOD_CATEGORIES.get(source["key"]),
+            "tasting": tasting,
         }, fid))
     return {
         "schema": SCHEMA,

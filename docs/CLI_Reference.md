@@ -71,9 +71,13 @@ python3 scripts/oaw.py remove NAME --target PROJECT [--dry-run] [--apply] [--for
 - `remove NAME` (a whole source, every part of that name, `KIND:NAME`, or `SOURCE/KIND:NAME`; the receipt prints the
   shortest form that means exactly one part) restores those files byte for byte and removes only its entries.
   When nothing of yours is left in a settings file, its original bytes come back. A file or entry you changed since
-  stays, and so do its record, backup and settings baseline: the result is `partial` (exit 3). Put it back and run
+  stays, and so do its record, backup and settings baseline, and every file a kept setting still runs: the result
+  is `partial` (exit 3). An added hook equal to one the project already had is recorded with that count, so remove
+  never takes the project's own copy for it; when it cannot tell them apart it reports a conflict. Put it back and run
   `remove` again, or finish with `--force` (back to before the install, over your edit) or `--keep` (your version
   stays and is no longer tracked). A built-in OAW skill is removed through migrate: preview, then `--apply`.
+- A tasting result counts as the same version only when the tasted commit is established: the one snapshot sealed
+  before the tasting was recorded, never the food's current pin; otherwise the receipt says the version is unknown.
 - `list` and the end of `add` print the receipt: skill, source, added by, tasting result (from records only; 未試吃
   points at `catalog.py taste`), startup cost (description estimate), what runs on its own, how to remove.
 - `--choice only` on an OAW project retires OAW's unchanged files with backups and keeps edited ones as yours

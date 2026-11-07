@@ -21,6 +21,10 @@ All notable changes to this project will be documented in this file.
   reports it as `partial` (exit 3), so the earlier content can still be restored: rerun after putting it back, or
   finish with `--force` or `--keep`. The receipt prints a remove name that means exactly one part
   (`KIND:NAME` or `SOURCE/KIND:NAME` when a name is shared), and `remove` accepts those forms.
+- Removal decides settings first and keeps every file a kept setting still runs; an added hook equal to one the
+  project already had is never taken for the project's own; a tasting's version comes from the snapshot sealed
+  before it (verdicts.json records it per tasting), not from the food's current pin; and `rename:NEW` survives into
+  the printed apply command.
 - `oaw-add` and `oaw-codemap` ship `agents/openai.yaml` with `allow_implicit_invocation: false`, because Codex
   ignores Claude's `disable-model-invocation`; `validate_skills.py` now requires that policy for an explicit-only
   skill in a Codex skills folder.

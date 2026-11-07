@@ -183,6 +183,8 @@ def load_verdicts(path: Path | None = None) -> dict:
         tasting = food.get("tasting")
         if tasting and tasting.get("outcome") not in (None, "default", "optional", "excrete"):
             raise InstallError(f"Invalid tasting outcome for {food['id']}.")
+        if tasting and not (tasting.get("commit") is None or re.fullmatch(r"[0-9a-f]{40}", str(tasting["commit"]))):
+            raise InstallError(f"Invalid tasted commit for {food['id']}.")
     return data
 
 
@@ -217,7 +219,8 @@ def ledger_tasting(target: Path, key: str) -> dict | None:
                 evidence.append(value)
         records = core.food_records(evidence, fid)
         if records["tastings"]:
-            return {**build_verdicts.tasting_entry(records["tastings"][-1]), "commit": entry["source"].get("commit"), "from": "project-ledger"}
+            latest = records["tastings"][-1]
+            return {**build_verdicts.tasting_entry(latest, build_verdicts.tasted_commit(evidence, latest)), "from": "project-ledger"}
     return None
 
 
@@ -226,7 +229,7 @@ def tasting_status(target: Path, source: dict, verdicts: dict) -> dict:
     found = ledger_tasting(target, source["key"])
     food = find_verdict(verdicts, key=source["key"])
     if found is None and food and food.get("tasting"):
-        found = {**food["tasting"], "commit": food.get("commit"), "from": "shipped-verdicts"}
+        found = {**food["tasting"], "from": "shipped-verdicts"}  # the tasting's own commit, never the food's pin
     category = food.get("category") if food else None
     if not found:
         return {"status": "untasted", "category": category}
@@ -257,6 +260,8 @@ def tasting_text(tasting: dict, package: str) -> str:
     text = f"{tasting['label_zh']}（{tasting['date']}，{conditions_short(tasting['conditions'])}）"
     if tasting.get("tasted_commit") and not tasting.get("same_version"):
         text += f"；試吃的是 {tasting['tasted_commit'][:7]}，不是你裝的版本"
+    elif not tasting.get("tasted_commit"):
+        text += "；不確定試吃的是哪個版本"
     return text
 
 
@@ -844,8 +849,8 @@ def recommend(tasting: dict) -> tuple[str, str]:
         return "install", "沒有試吃紀錄：照裝，清單上標「未試吃」"
     where = conditions_short(tasting["conditions"])
     outcome = tasting.get("outcome")
-    if not tasting.get("same_version") and tasting.get("tasted_commit"):
-        where += f"；試吃的是 {tasting['tasted_commit'][:7]}"
+    if not tasting.get("same_version"):
+        where += f"；試吃的是 {tasting['tasted_commit'][:7]}" if tasting.get("tasted_commit") else "；不確定試吃的是哪個版本"
     if outcome == "default":
         return "install", f"試吃結果「{tasting['label_zh']}」（{where}）：照裝"
     if outcome == "optional":
@@ -1009,7 +1014,7 @@ def plan_add(target, sources, *, choice=None, consent=None, on_conflict=(), host
                 described = owner_zh.get(who) or (f"你之前加的 {who[5:]}" if who.startswith("user:") else "這次一起加的另一份")
                 conflicts.append({"type": "same-name", "subject": part["name"], "kind": part["kind"], "owner": who,
                                   "text": f"{package['name']} 的 {part['kind']} {part['name']} 和{described}的 {part['name']} 同名", "options": options,
-                                  "decision": chosen[0] if chosen else None})
+                                  "decision": chosen[0] if chosen else None, "new_name": chosen[1] if chosen else None})
                 if not chosen:
                     part["status"], part["reason"] = "needs-decision", "同名，要你選 rename、skip 或 replace"
                 elif chosen[0] == "skip":
@@ -1178,6 +1183,10 @@ def commit_parts(target: Path, plan: dict) -> dict:
                         container = node.setdefault(key, [])
                         if not isinstance(container, list):
                             raise InstallError(f"{relative}: {'.'.join(item['pointer'])} is not a list; nothing was merged.")
+                        # Equal entries already there (the project's own, or another part's) and where ours went:
+                        # remove uses them so an equal entry that is not ours is never taken for ours.
+                        item["twins"] = sum(1 for value in container if value == item["value"])
+                        item["position"] = len(container)
                         container.append(copy.deepcopy(item["value"]))
                     else:
                         item["previous"] = copy.deepcopy(node.get(key))
@@ -1357,7 +1366,10 @@ def suggested_argv(plan: dict) -> list:
     if needs:
         argv += ["--consent", ",".join(needs) if plan["consents"] is None else (",".join(sorted(plan["consents"])) or "none")]
     for conflict in plan["conflicts"]:
-        argv += ["--on-conflict", f"{conflict['subject']}={conflict['decision'] or conflict['options'][0]}"]
+        answer = conflict["decision"] or conflict["options"][0]
+        if answer == "rename" and conflict.get("new_name"):
+            answer += ":" + conflict["new_name"]  # the name the user chose, not an automatic one
+        argv += ["--on-conflict", f"{conflict['subject']}={answer}"]
     return argv + ["--apply"]
 
 
@@ -1560,19 +1572,46 @@ def remove_form(record: dict, package: str, key: str) -> str:
     return f"{package}/{key}"
 
 
-def _locate(doc: dict, entry: dict):
-    """Where a recorded entry still sits unchanged: (container, key or index) or None."""
+def _later_copies(record: dict, entry: dict, skip=()) -> int:
+    """How many equal entries other recorded parts appended after this one (they counted ours as a twin)."""
+    if entry["op"] != "append" or entry.get("twins") is None:
+        return 0
+    count = 0
+    for package, data in record["packages"].items():
+        for key, part in data["parts"].items():
+            for index, other in enumerate(part.get("entries", [])):
+                if (package, key, index) in skip or other is entry:
+                    continue
+                if (other["file"], other["pointer"], other["op"], other["value"]) == (entry["file"], entry["pointer"], "append", entry["value"]) \
+                        and isinstance(other.get("twins"), int) and other["twins"] > entry["twins"]:
+                    count += 1
+    return count
+
+
+def _locate(doc: dict, entry: dict, later: int = 0):
+    """Where a recorded entry still sits unchanged: (container, key or index) or None.
+
+    `later` counts equal entries other recorded parts appended afterwards; an append entry is found only when
+    exactly the expected number of equal copies is there, so an equal entry that is not ours is never taken."""
     *parents, key = entry["pointer"]
     node = _get(doc, parents) if parents else doc
     if not isinstance(node, dict):
         return None
     if entry["op"] == "append":
         container = node.get(key)
-        if isinstance(container, list):
-            for index, value in enumerate(container):
-                if value == entry["value"]:
-                    return container, index
-        return None
+        if not isinstance(container, list):
+            return None
+        equal = [index for index, value in enumerate(container) if value == entry["value"]]
+        twins = entry.get("twins")
+        if twins is None:
+            # A record from before twins were kept: only a single equal entry is certainly ours.
+            return (container, equal[0]) if len(equal) == 1 else None
+        if len(equal) != twins + 1 + later:
+            # Fewer: ours or an equal one was edited or removed; more: another equal copy arrived. Either way
+            # an equal entry cannot be told from ours, so it is a conflict, never a guess.
+            return None
+        position = entry.get("position")
+        return container, min(equal, key=lambda index: (abs(index - position) if isinstance(position, int) else 0, -index))
     return (node, key) if key in node and node[key] == entry["value"] else None
 
 
@@ -1671,16 +1710,11 @@ def remove(target, name: str, *, dry_run: bool = False, apply_builtin: bool = Fa
     if dry_run:
         return {"status": "dry-run", "target": str(target), "remove": name, "files": plan["files"], "entries": plan["entries"],
                 "conflicts": plan["conflicts"], "restore_oaw": plan["restore_oaw"], "lines": lines + ["預覽：沒有改任何檔案"]}
-    entry_conflicts = []
+    entry_conflicts, handled = [], set()
     with oaw.install_lock(target):
         if record_bytes(load_record(target)) != record_bytes(record):
             raise InstallError(f"{RECORD_PATH} changed during the command; run it again.")
-        for item in plan["files"]:
-            if item["action"] == "restore":
-                backup = _dest(target, item["backup"])
-                _write(target, item["path"], backup.read_bytes(), stat.S_IMODE(backup.stat().st_mode))
-            elif item["action"] == "delete":
-                _delete(target, item["path"])
+        # Settings first: a setting the user changed stays, and so must every file it runs.
         for relative in SHARED_FILES:
             mine = [e for e in plan["entries"] if e["file"] == relative]
             if not mine:
@@ -1696,7 +1730,9 @@ def remove(target, name: str, *, dry_run: bool = False, apply_builtin: bool = Fa
             baseline_bytes = _read(target, shared["backup"]) if shared.get("backup") else None
             baseline = _json_doc(baseline_bytes, relative) if baseline_bytes is not None else {}
             for entry in mine:
-                spot = _locate(doc, entry)
+                original = record["packages"][entry["package"]]["parts"][entry["part"]]["entries"][entry["index"]]
+                spot = _locate(doc, entry, _later_copies(record, original, handled))
+                handled.add((entry["package"], entry["part"], entry["index"]))
                 if spot is None and force and entry["op"] == "set":
                     *parents, key = entry["pointer"]
                     node = _get(doc, parents)
@@ -1725,8 +1761,21 @@ def remove(target, name: str, *, dry_run: bool = False, apply_builtin: bool = Fa
                     _delete(target, relative)
             elif doc != _json_doc(current, relative):
                 _write(target, relative, _json_bytes(doc, current))
-        # A part with a conflict stays in the record with only what is left, plus its backups and the baseline,
-        # unless --keep makes the user's version theirs.
+        held = {(conflict["package"], conflict["part"]) for conflict in entry_conflicts}
+        held_paths = {item["path"] for package, part in held for item in record["packages"][package]["parts"][part]["files"]}
+        done_files = []
+        for item in plan["files"]:
+            if item["path"] in held_paths:
+                lines.append(f"  留著 {item['path']}：你保留的設定還會執行它")
+                continue
+            if item["action"] == "restore":
+                backup = _dest(target, item["backup"])
+                _write(target, item["path"], backup.read_bytes(), stat.S_IMODE(backup.stat().st_mode))
+            elif item["action"] == "delete":
+                _delete(target, item["path"])
+            done_files.append(item)
+        # A part with a conflict stays in the record with only what is left (and every file a kept setting runs),
+        # plus its backups and the baseline, unless --keep makes the user's version theirs.
         left = {}
         if not keep:
             for conflict in plan["conflicts"]:
@@ -1734,8 +1783,9 @@ def remove(target, name: str, *, dry_run: bool = False, apply_builtin: bool = Fa
                 left[(conflict["package"], conflict["part"])]["files"].add(conflict["path"])
                 left[(conflict["package"], conflict["part"])]["why"].append(f"{conflict['path']}：{conflict['reason']}")
             for conflict in entry_conflicts:
-                left.setdefault((conflict["package"], conflict["part"]), {"files": set(), "entries": set(), "why": []})
-                left[(conflict["package"], conflict["part"])]["entries"].add(conflict["index"])
+                rest = left.setdefault((conflict["package"], conflict["part"]), {"files": set(), "entries": set(), "why": []})
+                rest["entries"].add(conflict["index"])
+                rest["files"] |= {f["path"] for f in record["packages"][conflict["package"]]["parts"][conflict["part"]]["files"]}
                 left[(conflict["package"], conflict["part"])]["why"].append(f"{conflict['path']}：{conflict['reason']}")
         shared_paths = set(plan["shared"])
         for package, parts in plan["matches"]:
@@ -1744,7 +1794,8 @@ def remove(target, name: str, *, dry_run: bool = False, apply_builtin: bool = Fa
                 part = entry["parts"].pop(part_name)
                 rest = left.get((package, part_name))
                 for item in part["files"]:
-                    if item.get("backup") and item["path"] not in shared_paths and not (rest and item["path"] in rest["files"]):
+                    protected = shared_paths | (set() if keep else held_paths)
+                    if item.get("backup") and item["path"] not in protected and not (rest and item["path"] in rest["files"]):
                         _delete(target, item["backup"])
                 if rest:
                     entry["parts"][part_name] = {**part, "files": [f for f in part["files"] if f["path"] in rest["files"]],
@@ -1779,7 +1830,7 @@ def remove(target, name: str, *, dry_run: bool = False, apply_builtin: bool = Fa
         lines.append("完成：回到加之前的樣子")
     partial = bool(conflicts) and not keep
     return {"status": "partial" if partial else "removed", "target": str(target), "remove": name,
-            "files": plan["files"], "entries": plan["entries"], "conflicts": conflicts,
+            "files": done_files, "entries": plan["entries"], "conflicts": conflicts,
             "finish": [f"oaw.py remove {name}", f"oaw.py remove {name} --force", f"oaw.py remove {name} --keep"] if partial else [],
             "restored_oaw": plan["restore_oaw"] if restored else [], "lines": lines}
 
@@ -1856,7 +1907,7 @@ def doctor_checks(target: Path) -> list:
                     checks.append({"status": "PASS", "path": item["path"], "detail": f"Added by you ({package}/{name}); unchanged."})
             for item in part.get("entries", []):
                 doc = docs.get(item["file"])
-                if doc is not None and _locate(doc, item) is None:
+                if doc is not None and _locate(doc, item, _later_copies(record, item)) is None:
                     checks.append({"status": "WARN", "path": item["file"], "detail": f"The {'.'.join(item['pointer'])} entry of {package}/{name} was changed or removed."})
     return checks
 
