@@ -1,0 +1,634 @@
+{
+ "questions": [
+  {
+   "id": "q1",
+   "type": "impact",
+   "question": "Suppose update_bin_qty in erpnext/stock/stock_balance.py were changed to raise an error unless its qty_dict argument contains all four keys reserved_qty, indented_qty, ordered_qty and planned_qty. Leaving out patches and tests, which callers would start failing, and from which user-facing actions (submitting or cancelling documents, editing items on submitted orders, and so on)? Which caller would keep working, and why?",
+   "facts": [
+    {
+     "id": "q1f1",
+     "fact": "Purchase Order's ordered-qty update breaks. It passes only {'ordered_qty': get_ordered_qty(...)} for each item/warehouse, and it runs when a Purchase Order is submitted or cancelled (and from PO status changes and Purchase Receipt/Invoice updates through the buying controller).",
+     "where": "erpnext/buying/doctype/purchase_order/purchase_order.py::PurchaseOrder.update_ordered_qty",
+     "essential": true
+    },
+    {
+     "id": "q1f2",
+     "fact": "Subcontracting Order's ordered-qty update breaks. It passes only {'ordered_qty': ...}.",
+     "where": "erpnext/subcontracting/doctype/subcontracting_order/subcontracting_order.py::SubcontractingOrder.update_ordered_qty_for_subcontracting",
+     "essential": true
+    },
+    {
+     "id": "q1f3",
+     "fact": "Sales Order reserved-qty update breaks. It passes only {'reserved_qty': get_reserved_qty(...)}, including for packed items of product bundles, and it runs on Sales Order submit/cancel and from the selling controller (Delivery Note / Sales Invoice).",
+     "where": "erpnext/selling/doctype/sales_order/services/reservation.py::SalesOrderStockReservation.update_reserved_qty",
+     "essential": true
+    },
+    {
+     "id": "q1f4",
+     "fact": "Material Request's requested-qty update breaks. It passes only {'indented_qty': get_indented_qty(...)}.",
+     "where": "erpnext/stock/doctype/material_request/material_request.py::MaterialRequest.update_requested_qty",
+     "essential": true
+    },
+    {
+     "id": "q1f5",
+     "fact": "Work Order's planned-qty update breaks. It passes only {'planned_qty': get_planned_qty(...)} for the production item in fg_warehouse, and it is skipped when track_semi_finished_goods is set.",
+     "where": "erpnext/manufacturing/doctype/work_order/services/status.py::StatusService.update_planned_qty",
+     "essential": true
+    },
+    {
+     "id": "q1f6",
+     "fact": "Deleting rows through 'Update Items' on a submitted order breaks. update_bin_on_delete builds a partial dict: reserved_qty for a Sales Order, otherwise ordered_qty plus indented_qty only when the row has a material_request_item.",
+     "where": "erpnext/accounts/services/child_item_update.py::update_bin_on_delete",
+     "essential": true
+    },
+    {
+     "id": "q1f7",
+     "fact": "repost_stock keeps working because it always passes all four keys (reserved, indented, ordered, planned), adding actual_qty when only_bin is set. Its callers, stock_balance.repost and Item merge's recalculate_bin_qty, are therefore unaffected.",
+     "where": "erpnext/stock/stock_balance.py::repost_stock",
+     "essential": true
+    },
+    {
+     "id": "q1f8",
+     "fact": "update_bin_qty itself gets the Bin with get_bin and writes only the changed fields through bin.update_bin_columns, which also recomputes projected_qty in the same UPDATE.",
+     "where": "erpnext/stock/doctype/bin/bin.py::update_bin_columns",
+     "essential": false
+    }
+   ]
+  },
+  {
+   "id": "q3",
+   "type": "flow",
+   "question": "ERPNext has a scheduled job that books deferred revenue and deferred expense each month. Trace it from the scheduler to the accounting records it writes, in order: which documents it creates, how it picks invoices and accounts, and what it writes (GL entries or Journal Entries) depending on Accounts Settings.",
+   "facts": [
+    {
+     "id": "q3f1",
+     "fact": "hooks.py registers erpnext.accounts.deferred_revenue.process_deferred_accounting under scheduler_events 'monthly_long'. The job returns early unless the Accounts Settings field automatically_process_deferred_accounting_entry is set.",
+     "where": "erpnext/accounts/deferred_revenue.py::process_deferred_accounting",
+     "essential": true
+    },
+    {
+     "id": "q3f2",
+     "fact": "For every Company and for each type 'Income' and 'Expense', it creates a Process Deferred Accounting document with frappe.get_doc (start_date = today minus 1 month, end_date = yesterday), then inserts and submits it.",
+     "where": "erpnext/accounts/deferred_revenue.py::process_deferred_accounting",
+     "essential": true
+    },
+    {
+     "id": "q3f3",
+     "fact": "On submit, Process Deferred Accounting calls build_conditions and then convert_deferred_revenue_to_income (Income) or convert_deferred_expense_to_expense (Expense). These select submitted Sales/Purchase Invoices whose items have enable_deferred_revenue/expense and a service period overlapping the dates, then call book_deferred_income_or_expense for each invoice.",
+     "where": "erpnext/accounts/doctype/process_deferred_accounting/process_deferred_accounting.py::ProcessDeferredAccounting.on_submit",
+     "essential": true
+    },
+    {
+     "id": "q3f4",
+     "fact": "For each deferred item, book_deferred_income_or_expense gets booking dates and computes the amount with calculate_monthly_amount (when book_deferred_entries_based_on = 'Months') or calculate_amount. For a Sales Invoice it credits income_account and debits deferred_revenue_account. For a Purchase Invoice it credits deferred_expense_account and debits expense_account. If the books are frozen, the posting date moves after accounts_frozen_till_date.",
+     "where": "erpnext/accounts/deferred_revenue.py::book_deferred_income_or_expense",
+     "essential": true
+    },
+    {
+     "id": "q3f5",
+     "fact": "If Accounts Settings book_deferred_entries_via_journal_entry is set, book_revenue_via_journal_entry creates a Journal Entry (voucher_type 'Deferred Revenue' or 'Deferred Expense', linked through process_deferred_accounting, with reference to the invoice row), saves it, and submits it only when submit_journal_entries is set.",
+     "where": "erpnext/accounts/deferred_revenue.py::book_revenue_via_journal_entry",
+     "essential": true
+    },
+    {
+     "id": "q3f6",
+     "fact": "Otherwise, deferred_revenue.make_gl_entries builds a credit and a debit GL dict through the invoice's get_gl_dict (AccountsController.get_gl_dict delegating to base_gl_composer.get_gl_dict), with against_voucher_type 'Process Deferred Accounting' and against_voucher set to the process name. It then calls erpnext.accounts.general_ledger.make_gl_entries with merge_entries=True.",
+     "where": "erpnext/accounts/deferred_revenue.py::make_gl_entries",
+     "essential": true
+    },
+    {
+     "id": "q3f7",
+     "fact": "On a booking failure (outside tests) it rolls back, logs the error, and sets frappe.flags.deferred_accounting_error. The convert_* functions then email system managers through send_mail.",
+     "where": "erpnext/accounts/deferred_revenue.py::send_mail",
+     "essential": false
+    },
+    {
+     "id": "q3f8",
+     "fact": "Cancelling the Process Deferred Accounting fetches GL Entries whose against_voucher is the process and passes them to general_ledger.make_gl_entries with cancel=1.",
+     "where": "erpnext/accounts/doctype/process_deferred_accounting/process_deferred_accounting.py::ProcessDeferredAccounting.on_cancel",
+     "essential": false
+    }
+   ]
+  },
+  {
+   "id": "q4",
+   "type": "mechanism",
+   "question": "When a user picks an item on a Sales Invoice row, the form calls the whitelisted method erpnext.stock.get_item_details.get_item_details. How does ERPNext choose the cost_center returned for that row? Cover the order of precedence, where the Item, Item Group and Brand defaults come from, and what happens when some of those defaults are missing or the cost center belongs to another company.",
+   "facts": [
+    {
+     "id": "q4f1",
+     "fact": "get_item_details calls _get_item_details, which calls get_basic_details. That function loads item_defaults, item_group_defaults and brand_defaults for ctx.company and calls get_default_cost_center(ctx, item_defaults, item_group_defaults, brand_defaults).",
+     "where": "erpnext/stock/get_item_details.py::get_basic_details",
+     "essential": true
+    },
+    {
+     "id": "q4f2",
+     "fact": "The first source is the Project's cost_center when ctx.project is set.",
+     "where": "erpnext/stock/get_item_details.py::get_default_cost_center",
+     "essential": true
+    },
+    {
+     "id": "q4f3",
+     "fact": "If all three defaults dicts are non-empty: when ctx.customer is set it takes selling_cost_center from Item, then Item Group, then Brand defaults; otherwise it takes buying_cost_center in the same order.",
+     "where": "erpnext/stock/get_item_details.py::get_default_cost_center",
+     "essential": true
+    },
+    {
+     "id": "q4f4",
+     "fact": "get_item_defaults returns the Item as a dict merged with its Item Default row for the company, so it is never empty. get_item_group_defaults returns only the matching row of the item's own Item Group (no walk up parent groups), or an empty dict. get_brand_defaults returns the matching Brand Default row, or an empty dict when there is no brand or row.",
+     "where": "erpnext/setup/doctype/item_group/item_group.py::get_item_group_defaults",
+     "essential": true
+    },
+    {
+     "id": "q4f5",
+     "fact": "When the Item Group or Brand defaults are empty, the first branch is skipped. The code then loops over get_item_defaults, get_item_group_defaults and get_brand_defaults through frappe.get_attr string paths, and returns right away from the first source that has any selling or buying cost center. It prefers selling for a customer and buying for a supplier, but otherwise returns whichever exists, so a sales row can get a buying cost center. This early return skips the company check.",
+     "where": "erpnext/stock/get_item_details.py::get_default_cost_center",
+     "essential": true
+    },
+    {
+     "id": "q4f6",
+     "fact": "If still unset, it uses ctx.cost_center. If the chosen cost center belongs to a different company it returns None. Only when no cost center was found at all does it fall back to the Company's default cost_center.",
+     "where": "erpnext/stock/get_item_details.py::get_default_cost_center",
+     "essential": true
+    },
+    {
+     "id": "q4f7",
+     "fact": "The client side starts in the transaction form controller, which calls the method 'erpnext.stock.get_item_details.get_item_details' via frappe.call.",
+     "where": "erpnext/public/js/controllers/transaction.js::item_code",
+     "essential": false
+    }
+   ]
+  },
+  {
+   "id": "n1",
+   "type": "impact",
+   "question": "Suppose check_credit_limit in erpnext/selling/doctype/customer/customer.py were changed to also raise a validation error (frappe.throw) whenever the customer is on hold. Leaving out tests and patches, which functions call check_credit_limit directly, and through which user-facing actions (submitting, saving, re-opening or updating which documents) is each of those calls reached? On which path would the new error only be shown as a warning instead of blocking the action, and does submitting a POS Invoice reach the function at all?",
+   "facts": [
+    {
+     "id": "n1f1",
+     "fact": "Exactly five production functions call check_credit_limit directly: SalesOrder.check_credit_limit, DeliveryNote.check_credit_limit, SalesInvoice.check_credit_limit, JournalEntry.check_credit_limit and _check_credit_limit_warn in erpnext/accounts/utils.py (which has three call sites: its Sales Invoice, Sales Order and Delivery Note branches).",
+     "where": "erpnext/selling/doctype/sales_order/sales_order.py::SalesOrder.check_credit_limit; erpnext/stock/doctype/delivery_note/delivery_note.py::DeliveryNote.check_credit_limit; erpnext/accounts/doctype/sales_invoice/sales_invoice.py::SalesInvoice.check_credit_limit; erpnext/accounts/doctype/journal_entry/journal_entry.py::JournalEntry.check_credit_limit; erpnext/accounts/utils.py::_check_credit_limit_warn",
+     "essential": true
+    },
+    {
+     "id": "n1f2",
+     "fact": "Sales Order: SalesOrder.check_credit_limit (which calls check_credit_limit only when is_sales_order_credit_check_bypassed is false) is invoked from SalesOrder.on_submit, from SalesOrder.on_update_after_submit (any save of a submitted order), from StatusService.update_status when a submitted order is set back to status \"Draft\" (resume/re-open), and from ChildItemUpdater._post_update when items of a submitted Sales Order are changed with \"Update Items\".",
+     "where": "erpnext/selling/doctype/sales_order/sales_order.py::SalesOrder.on_submit; erpnext/selling/doctype/sales_order/sales_order.py::SalesOrder.on_update_after_submit; erpnext/selling/doctype/sales_order/services/status.py::StatusService.update_status; erpnext/accounts/services/child_item_update.py::ChildItemUpdater._post_update",
+     "essential": true
+    },
+    {
+     "id": "n1f3",
+     "fact": "The \"Draft\" re-check is reached from the whitelisted sales_order.update_status (Resume and Re-open buttons in sales_order.js send status \"Draft\"), from close_or_unclose_sales_orders when a Closed order is un-closed from the list, and from item_close.update_closed_status -> reopen_parent_if_closed when a closed row is reopened (REOPEN_STATUS[\"Sales Order\"] is \"Draft\"); \"Update Items\" reaches ChildItemUpdater via the whitelisted update_child_qty_rate.",
+     "where": "erpnext/selling/doctype/sales_order/sales_order.py::update_status; erpnext/selling/doctype/sales_order/sales_order.py::close_or_unclose_sales_orders; erpnext/controllers/item_close.py::update_closed_status; erpnext/controllers/item_close.py::reopen_parent_if_closed; erpnext/accounts/services/child_item_update.py::update_child_qty_rate",
+     "essential": false
+    },
+    {
+     "id": "n1f4",
+     "fact": "Other blocking paths are on submit only: DeliveryNote.on_submit calls DeliveryNote.check_credit_limit for non-return notes, SalesInvoice.on_submit calls SalesInvoice.check_credit_limit only when the invoice is not a return and is_opening is not \"Yes\", and JournalEntry.on_submit calls JournalEntry.check_credit_limit.",
+     "where": "erpnext/stock/doctype/delivery_note/delivery_note.py::DeliveryNote.on_submit; erpnext/accounts/doctype/sales_invoice/sales_invoice.py::SalesInvoice.on_submit; erpnext/accounts/doctype/journal_entry/journal_entry.py::JournalEntry.on_submit",
+     "essential": true
+    },
+    {
+     "id": "n1f5",
+     "fact": "Inner conditions: DeliveryNote.check_credit_limit returns early when per_billed is 100 and checks only when the bypass flag is set or some row has neither against_sales_order nor against_sales_invoice; SalesInvoice.check_credit_limit checks only when the bypass flag is set or some row has neither sales_order nor delivery_note; JournalEntry.check_credit_limit checks every Customer party that has a debit > 0 row.",
+     "where": "erpnext/stock/doctype/delivery_note/delivery_note.py::DeliveryNote.check_credit_limit; erpnext/accounts/doctype/sales_invoice/sales_invoice.py::SalesInvoice.check_credit_limit; erpnext/accounts/doctype/journal_entry/journal_entry.py::JournalEntry.check_credit_limit",
+     "essential": false
+    },
+    {
+     "id": "n1f6",
+     "fact": "Warning-only path: SalesOrder.validate, SalesInvoice.validate and DeliveryNote.validate call pre_submit_validation(..., check_credit_limit=True), which runs _check_credit_limit_warn only for drafts (docstatus 0) with a company when Accounts Settings preview_mode is on; _check_credit_limit_warn catches frappe.ValidationError and shows it as an orange \"Pre-Submit Warning: Credit Limit\" message, so saving the draft is not blocked (for a Delivery Note with the bypass flag it goes through DeliveryNote.check_credit_limit).",
+     "where": "erpnext/accounts/utils.py::pre_submit_validation; erpnext/accounts/utils.py::_check_credit_limit_warn; erpnext/selling/doctype/sales_order/sales_order.py::SalesOrder.validate; erpnext/accounts/doctype/sales_invoice/sales_invoice.py::SalesInvoice.validate; erpnext/stock/doctype/delivery_note/delivery_note.py::DeliveryNote.validate",
+     "essential": true
+    },
+    {
+     "id": "n1f7",
+     "fact": "POS Invoice never reaches check_credit_limit: POSInvoice subclasses SalesInvoice but its validate calls super(SalesInvoice, self).validate() (skipping SalesInvoice.validate and its pre_submit_validation) and its on_submit overrides SalesInvoice.on_submit without any credit check.",
+     "where": "erpnext/accounts/doctype/pos_invoice/pos_invoice.py::POSInvoice.validate; erpnext/accounts/doctype/pos_invoice/pos_invoice.py::POSInvoice.on_submit",
+     "essential": true
+    },
+    {
+     "id": "n1f8",
+     "fact": "Purchase Invoice also calls pre_submit_validation, but only with check_prev_docstatus=True, so it never reaches the credit check.",
+     "where": "erpnext/accounts/doctype/purchase_invoice/purchase_invoice.py::PurchaseInvoice.validate",
+     "essential": false
+    }
+   ]
+  },
+  {
+   "id": "n2",
+   "type": "impact",
+   "question": "Suppose get_last_purchase_details in erpnext/stock/doctype/item/item.py were changed to return None instead of an empty dict when the item has no submitted Purchase Order, Purchase Receipt or Purchase Invoice. Leaving out tests and patches, list every direct call site and say which would then raise an exception and which would keep working, and why. For the call sites that would raise, under which conditions and from which user actions are they reached?",
+   "facts": [
+    {
+     "id": "n2f1",
+     "fact": "There are exactly five production call sites: update_last_purchase_rate (erpnext/buying/utils.py), PurchaseOrder.get_last_purchase_rate and the module function item_last_purchase_rate (purchase_order.py), get_price_list_rate (erpnext/stock/get_item_details.py) and Item.set_last_purchase_rate (item.py).",
+     "where": "erpnext/buying/utils.py::update_last_purchase_rate; erpnext/buying/doctype/purchase_order/purchase_order.py::PurchaseOrder.get_last_purchase_rate; erpnext/buying/doctype/purchase_order/purchase_order.py::item_last_purchase_rate; erpnext/stock/get_item_details.py::get_price_list_rate; erpnext/stock/doctype/item/item.py::Item.set_last_purchase_rate",
+     "essential": true
+    },
+    {
+     "id": "n2f2",
+     "fact": "Three keep working because they only test truthiness: update_last_purchase_rate uses \"if last_purchase_details and (...)\" (else falls to the is_submit branch), while PurchaseOrder.get_last_purchase_rate and item_last_purchase_rate use \"if last_purchase_details:\" and otherwise fall back to the Item's last_purchase_rate field.",
+     "where": "erpnext/buying/utils.py::update_last_purchase_rate; erpnext/buying/doctype/purchase_order/purchase_order.py::PurchaseOrder.get_last_purchase_rate; erpnext/buying/doctype/purchase_order/purchase_order.py::item_last_purchase_rate",
+     "essential": true
+    },
+    {
+     "id": "n2f3",
+     "fact": "Two would raise: get_price_list_rate does out.update(get_last_purchase_details(...)) (update with None -> TypeError) and Item.set_last_purchase_rate does get_last_purchase_details(new_name).get(\"base_net_rate\", 0) (AttributeError on None).",
+     "where": "erpnext/stock/get_item_details.py::get_price_list_rate; erpnext/stock/doctype/item/item.py::Item.set_last_purchase_rate",
+     "essential": true
+    },
+    {
+     "id": "n2f4",
+     "fact": "In get_price_list_rate the call is reached only when a price-list rate was found (not None) but out.price_list_rate works out to 0, Buying Settings disable_last_purchase_rate is off, ctx.is_internal_supplier is falsy and ctx.transaction_type is \"buying\" - e.g. fetching item details/prices on purchase transactions (_get_item_details, apply_price_list_on_item) or BOM price-list costing (_get_price_list_item_rate passes transaction_type \"buying\").",
+     "where": "erpnext/stock/get_item_details.py::get_price_list_rate; erpnext/stock/get_item_details.py::_get_item_details; erpnext/stock/get_item_details.py::apply_price_list_on_item; erpnext/manufacturing/doctype/bom/bom.py::_get_price_list_item_rate",
+     "essential": true
+    },
+    {
+     "id": "n2f5",
+     "fact": "Item.set_last_purchase_rate is called only from Item.after_rename when merge is true, i.e. when an item is renamed into (merged with) an existing item.",
+     "where": "erpnext/stock/doctype/item/item.py::Item.after_rename",
+     "essential": true
+    },
+    {
+     "id": "n2f6",
+     "fact": "update_last_purchase_rate runs from BuyingController.on_submit (is_submit=1) and BuyingController.on_cancel (is_submit=0) for Purchase Order, Purchase Receipt and Purchase Invoice (not for returns) and from ChildItemUpdater._post_update after \"Update Items\" on a Purchase Order; it returns early for internal suppliers or when disable_last_purchase_rate is set.",
+     "where": "erpnext/controllers/buying_controller.py::BuyingController.on_submit; erpnext/controllers/buying_controller.py::BuyingController.on_cancel; erpnext/accounts/services/child_item_update.py::ChildItemUpdater._post_update",
+     "essential": false
+    },
+    {
+     "id": "n2f7",
+     "fact": "item_last_purchase_rate is reached from PurchaseOrder.set_last_purchase_rate (PurchaseOrder.validate and ChildItemUpdater._post_update) and from get_basic_details for purchase doctypes; PurchaseOrder.get_last_purchase_rate is the whitelisted document method behind the \"Update Rate as per Last Purchase\" button added in purchase_order.js.",
+     "where": "erpnext/buying/doctype/purchase_order/purchase_order.py::PurchaseOrder.set_last_purchase_rate; erpnext/stock/get_item_details.py::get_basic_details; erpnext/buying/doctype/purchase_order/purchase_order.js::add_from_mappers",
+     "essential": false
+    },
+    {
+     "id": "n2f8",
+     "fact": "get_last_purchase_details compares the latest submitted Purchase Order and Purchase Receipt by date, looks at Purchase Invoices only when neither applies, and returns frappe._dict() only when nothing is found.",
+     "where": "erpnext/stock/doctype/item/item.py::get_last_purchase_details",
+     "essential": false
+    }
+   ]
+  },
+  {
+   "id": "n3",
+   "type": "impact",
+   "question": "Suppose get_default_bom in erpnext/stock/get_item_details.py stopped falling back to the template item's default BOM, so that for a variant without its own default BOM it returns None. Leaving out tests and patches, list every place that calls it (including client-side calls of the whitelisted method) and say what each would do differently for such a variant. Which code that also looks up a default BOM for variants is not affected because it does not go through get_default_bom?",
+   "facts": [
+    {
+     "id": "n3f1",
+     "fact": "There are seven Python call sites: _get_item_details (get_item_details.py), get_work_order_items (sales_order.py), SubcontractingService.validate_fg_item_for_subcontracting in both selling/doctype/sales_order/services/subcontracting.py and buying/doctype/purchase_order/services/subcontracting.py, ChildItemUpdater._validate_fg_item_for_subcontracting (child_item_update.py), and SubcontractingBOM.validate_finished_good and get_finished_good_bom (subcontracting_bom.py).",
+     "where": "erpnext/stock/get_item_details.py::_get_item_details; erpnext/selling/doctype/sales_order/sales_order.py::get_work_order_items; erpnext/selling/doctype/sales_order/services/subcontracting.py::SubcontractingService.validate_fg_item_for_subcontracting; erpnext/buying/doctype/purchase_order/services/subcontracting.py::SubcontractingService.validate_fg_item_for_subcontracting; erpnext/accounts/services/child_item_update.py::ChildItemUpdater._validate_fg_item_for_subcontracting; erpnext/subcontracting/doctype/subcontracting_bom/subcontracting_bom.py::SubcontractingBOM.validate_finished_good; erpnext/subcontracting/doctype/subcontracting_bom/subcontracting_bom.py::get_finished_good_bom",
+     "essential": true
+    },
+    {
+     "id": "n3f2",
+     "fact": "The only client-side caller is erpnext.buying.get_default_bom in public/js/controllers/buying.js, which frappe.calls \"erpnext.stock.get_item_details.get_default_bom\" for rows with an empty bom; nothing in the repository invokes that JS helper.",
+     "where": "erpnext/public/js/controllers/buying.js::erpnext.buying.get_default_bom",
+     "essential": false
+    },
+    {
+     "id": "n3f3",
+     "fact": "Validations that would start throwing for a subcontracted finished-good variant whose BOM exists only on its template: the Sales Order SubcontractingService (when no active Subcontracting BOM exists: \"BOM not found for FG Item\") and the Purchase Order SubcontractingService (only for rows without a bom: \"Default BOM not found for FG Item\"), both run from the order's validate for subcontracted orders (is_subcontracted); ChildItemUpdater._validate_fg_item_for_subcontracting for new rows added via Update Items; and SubcontractingBOM.validate_finished_good (\"does not have a default BOM\").",
+     "where": "erpnext/selling/doctype/sales_order/services/subcontracting.py::SubcontractingService.validate_fg_item_for_subcontracting; erpnext/buying/doctype/purchase_order/services/subcontracting.py::SubcontractingService.validate_fg_item_for_subcontracting; erpnext/selling/doctype/sales_order/sales_order.py::SalesOrder.validate; erpnext/buying/doctype/purchase_order/purchase_order.py::PurchaseOrder.validate; erpnext/accounts/services/child_item_update.py::ChildItemUpdater._validate_fg_item_for_subcontracting; erpnext/subcontracting/doctype/subcontracting_bom/subcontracting_bom.py::SubcontractingBOM.validate_finished_good",
+     "essential": true
+    },
+    {
+     "id": "n3f4",
+     "fact": "get_work_order_items (whitelisted, called by make_work_order and make_raw_material_request in sales_order.js) only appends rows that have a bom, so such variant rows would silently disappear from the Work Order / raw-material request item lists instead of raising.",
+     "where": "erpnext/selling/doctype/sales_order/sales_order.py::get_work_order_items; erpnext/selling/doctype/sales_order/sales_order.js::make_work_order; erpnext/selling/doctype/sales_order/sales_order.js::make_raw_material_request",
+     "essential": true
+    },
+    {
+     "id": "n3f5",
+     "fact": "_get_item_details sets out.bom = ctx.bom or get_default_bom(ctx.item_code) only when ctx.is_subcontracted, so subcontracted transaction rows for such a variant would get no BOM filled in.",
+     "where": "erpnext/stock/get_item_details.py::_get_item_details",
+     "essential": false
+    },
+    {
+     "id": "n3f6",
+     "fact": "get_finished_good_bom keeps working: after the active Subcontracting BOM and item.default_bom it already calls get_default_bom(item.variant_of), i.e. it does the template fallback itself.",
+     "where": "erpnext/subcontracting/doctype/subcontracting_bom/subcontracting_bom.py::get_finished_good_bom",
+     "essential": true
+    },
+    {
+     "id": "n3f7",
+     "fact": "Work Order creation is unaffected: the Work Order mapper's own get_item_details uses _default_bom_for_item, which falls back to the is_default BOM of the item's variant_of without calling get_default_bom, and make_work_order uses _variant_default_bom.",
+     "where": "erpnext/manufacturing/doctype/work_order/mapper.py::get_item_details; erpnext/manufacturing/doctype/work_order/mapper.py::_default_bom_for_item; erpnext/manufacturing/doctype/work_order/mapper.py::_variant_default_bom",
+     "essential": true
+    }
+   ]
+  },
+  {
+   "id": "n4",
+   "type": "impact",
+   "question": "validate_expense_against_budget in erpnext/accounts/doctype/budget/budget.py is the older per-entry budget check. Leaving out tests and patches, list every direct call site and, for each, the conditions under which the call actually happens (settings, flags, voucher types, cancellation). From which document actions are the buying-side calls reached, and which of the calls still happen when Accounts Settings use_legacy_budget_controller is switched off?",
+   "facts": [
+    {
+     "id": "n4f1",
+     "fact": "There are exactly three production call sites: BuyingController.validate_budget (erpnext/controllers/buying_controller.py) and, in erpnext/accounts/general_ledger.py, distribute_gl_based_on_cost_center_allocation and make_entry.",
+     "where": "erpnext/controllers/buying_controller.py::BuyingController.validate_budget; erpnext/accounts/general_ledger.py::distribute_gl_based_on_cost_center_allocation; erpnext/accounts/general_ledger.py::make_entry",
+     "essential": true
+    },
+    {
+     "id": "n4f2",
+     "fact": "BuyingController.validate_budget calls it once per item row only when Accounts Settings use_legacy_budget_controller is on and docstatus is 1 (posting_date = schedule_date for Material Request, otherwise transaction_date); with the setting off it runs BudgetValidation(doc=self) from erpnext/controllers/budget_controller.py instead.",
+     "where": "erpnext/controllers/buying_controller.py::BuyingController.validate_budget",
+     "essential": true
+    },
+    {
+     "id": "n4f3",
+     "fact": "validate_budget is called from MaterialRequest.on_submit (only for material_request_type \"Purchase\" and only if a submitted Budget with applicable_on_material_request exists), from PurchaseOrder.on_submit, and from ChildItemUpdater._post_update for a Purchase Order (\"Update Items\" on a submitted PO).",
+     "where": "erpnext/stock/doctype/material_request/material_request.py::MaterialRequest.on_submit; erpnext/buying/doctype/purchase_order/purchase_order.py::PurchaseOrder.on_submit; erpnext/accounts/services/child_item_update.py::ChildItemUpdater._post_update",
+     "essential": true
+    },
+    {
+     "id": "n4f4",
+     "fact": "make_entry calls validate_expense_against_budget(args) after submitting each GL Entry unless from_repost is set, the voucher is a Period Closing Voucher, or the entry is cancelled (is_cancelled) and the voucher is not a Journal Entry; this call is not gated by use_legacy_budget_controller, so it also runs when the new controller is active.",
+     "where": "erpnext/accounts/general_ledger.py::make_entry",
+     "essential": true
+    },
+    {
+     "id": "n4f5",
+     "fact": "make_entry is used by save_entries (called from make_gl_entries for every voucher that posts GL) and by make_reverse_gl_entries with from_reversal=True; reversal rows get is_cancelled=1, or 0 when Accounts Settings enable_immutable_ledger is on, so reversals are budget-checked only for Journal Entries or under the immutable ledger.",
+     "where": "erpnext/accounts/general_ledger.py::save_entries; erpnext/accounts/general_ledger.py::make_gl_entries; erpnext/accounts/general_ledger.py::make_reverse_gl_entries",
+     "essential": false
+    },
+    {
+     "id": "n4f6",
+     "fact": "distribute_gl_based_on_cost_center_allocation (reached through process_gl_map for vouchers other than Period Closing Voucher; process_gl_map is called by make_gl_entries and also directly by the stock, Stock Entry, Purchase Receipt and Subcontracting Receipt GL composers and by Payment Entry) calls it with expense_amount = debit - credit, only for entries whose cost center has a Cost Center Allocation and only when not from_repost.",
+     "where": "erpnext/accounts/general_ledger.py::distribute_gl_based_on_cost_center_allocation; erpnext/accounts/general_ledger.py::process_gl_map",
+     "essential": false
+    },
+    {
+     "id": "n4f7",
+     "fact": "make_gl_entries runs the new BudgetValidation(gl_map=...) only when not cancelling, use_legacy_budget_controller is off and the voucher is not a Period Closing Voucher - so with the setting off GL postings go through both the new validation and the legacy per-entry calls, while the buying-side legacy call is skipped.",
+     "where": "erpnext/accounts/general_ledger.py::make_gl_entries",
+     "essential": false
+    }
+   ]
+  },
+  {
+   "id": "n5",
+   "type": "flow",
+   "question": "Trace, in order, what happens when the daily scheduler runs the subscription job that hooks.py registers from erpnext/accounts/doctype/process_subscription/process_subscription.py. How are subscriptions selected and dispatched, under which conditions does a Subscription get a new invoice, how is that invoice built and is it submitted, and how are the billing period and status updated afterwards? Include what happens when one subscription fails.",
+   "facts": [
+    {
+     "id": "n5f1",
+     "fact": "hooks.py scheduler_events \"daily_maintenance\" lists erpnext.accounts.doctype.process_subscription.process_subscription.create_subscription_process, which creates a new Process Subscription with subscription None and posting_date getdate(None) (today) and submits it.",
+     "where": "erpnext/hooks.py::scheduler_events; erpnext/accounts/doctype/process_subscription/process_subscription.py::create_subscription_process",
+     "essential": true
+    },
+    {
+     "id": "n5f2",
+     "fact": "ProcessSubscription.on_submit -> process_all_subscription selects all Subscriptions with status != \"Cancelled\" (or only the named one), splits them into batches of 500 with create_batch, and enqueues erpnext.accounts.doctype.subscription.subscription.process_all on the \"long\" queue with enqueue_after_commit=True.",
+     "where": "erpnext/accounts/doctype/process_subscription/process_subscription.py::ProcessSubscription.on_submit; erpnext/accounts/doctype/process_subscription/process_subscription.py::ProcessSubscription.process_all_subscription",
+     "essential": true
+    },
+    {
+     "id": "n5f3",
+     "fact": "process_all loads each Subscription and calls Subscription.process(posting_date), committing after each one (outside tests); on frappe.ValidationError it rolls back and logs \"Subscription failed\" via log_error, then continues with the next subscription.",
+     "where": "erpnext/accounts/doctype/subscription/subscription.py::process_all",
+     "essential": true
+    },
+    {
+     "id": "n5f4",
+     "fact": "Subscription.process generates an invoice only if is_current_invoice_generated(next_billing_period_start, next_billing_period_end) is false and can_generate_new_invoice(posting_date) is true (no cancelation_date; no unpaid invoice unless generate_new_invoices_past_due_date; posting date not before the trigger date from generate_invoice_at and not more than one billing cycle after the period end).",
+     "where": "erpnext/accounts/doctype/subscription/subscription.py::Subscription.process; erpnext/accounts/doctype/subscription/subscription.py::Subscription.is_current_invoice_generated; erpnext/accounts/doctype/subscription/subscription.py::Subscription.can_generate_new_invoice; erpnext/accounts/doctype/subscription/subscription.py::Subscription._next_invoice_trigger_date",
+     "essential": true
+    },
+    {
+     "id": "n5f5",
+     "fact": "generate_invoice -> create_invoice builds a Sales Invoice (party_type Customer) or Purchase Invoice: company, posting date by generate_invoice_at, party, currency of the first plan, accounting dimensions, items from the plans (prorated if enabled), tax template, a payment schedule from days_until_due, discounts (100% while trialling); _finalize_invoice sets subscription, from_date and to_date, saves, and submits only if submit_invoice is set.",
+     "where": "erpnext/accounts/doctype/subscription/subscription.py::Subscription.generate_invoice; erpnext/accounts/doctype/subscription/subscription.py::Subscription.create_invoice; erpnext/accounts/doctype/subscription/subscription.py::Subscription._finalize_invoice",
+     "essential": true
+    },
+    {
+     "id": "n5f6",
+     "fact": "After invoicing, if end_date is set and the next period would start after it, process calls cancel_subscription when cancel_at_period_end is set (otherwise set_subscription_status), saves and returns; otherwise the period moves on via update_subscription_period(next_billing_period_end + 1 day). Without a new invoice, a posting date past next_billing_period_end also advances the period (unless the period already reaches end_date), and with cancel_at_period_end the subscription is cancelled once the posting date reaches the period end or end_date.",
+     "where": "erpnext/accounts/doctype/subscription/subscription.py::Subscription.process; erpnext/accounts/doctype/subscription/subscription.py::Subscription.update_subscription_period; erpnext/accounts/doctype/subscription/subscription.py::Subscription.cancel_subscription",
+     "essential": false
+    },
+    {
+     "id": "n5f7",
+     "fact": "Finally set_subscription_status picks Trialing, Refunded, Completed (no outstanding and past end_date), Unpaid or Cancelled after the grace period (Subscription Settings grace_period / cancel_after_grace), Grace Period, or Active, and the Subscription is saved.",
+     "where": "erpnext/accounts/doctype/subscription/subscription.py::Subscription.set_subscription_status; erpnext/accounts/doctype/subscription/subscription.py::Subscription.get_status_for_past_grace_period; erpnext/accounts/doctype/subscription/subscription.py::Subscription.is_past_grace_period",
+     "essential": false
+    }
+   ]
+  },
+  {
+   "id": "n6",
+   "type": "flow",
+   "question": "Trace, in order, what the hourly repost_entries job registered in hooks.py (erpnext/stock/doctype/repost_item_valuation/repost_item_valuation.py) does, from the moment it fires until a Repost Item Valuation entry ends up Completed, Skipped, In Progress or Failed. Include when the job does nothing at all, how entries are picked and ordered, which ledgers are reposted for an entry and in what order, and what happens on an error.",
+   "facts": [
+    {
+     "id": "n6f1",
+     "fact": "hooks.py runs repost_entries under scheduler_events \"hourly_maintenance\"; it returns at once if Stock Reposting Settings enable_parallel_reposting is on (then run_parallel_reposting, scheduled on the \"0/15 * * * *\" cron, does the work) or if in_configured_timeslot() is false (limit_reposting_timeslot set, today is not limits_dont_apply_on, and now is outside start_time-end_time, which may wrap past midnight).",
+     "where": "erpnext/hooks.py::scheduler_events; erpnext/stock/doctype/repost_item_valuation/repost_item_valuation.py::repost_entries; erpnext/stock/doctype/repost_item_valuation/repost_item_valuation.py::in_configured_timeslot",
+     "essential": true
+    },
+    {
+     "id": "n6f2",
+     "fact": "get_repost_item_valuation_entries picks submitted entries with status Queued or In Progress and creation <= now, ordered by posting date+time, then creation, then status; they are processed one by one via execute_reposting_entry -> _execute_reposting_entry.",
+     "where": "erpnext/stock/doctype/repost_item_valuation/repost_item_valuation.py::get_repost_item_valuation_entries; erpnext/stock/doctype/repost_item_valuation/repost_item_valuation.py::execute_reposting_entry",
+     "essential": true
+    },
+    {
+     "id": "n6f3",
+     "fact": "_execute_reposting_entry skips an accounting-only entry (repost_only_accounting_ledgers) whose reposting_reference entry is not yet Completed or Skipped; otherwise, if status is Queued or In Progress, it calls repost(doc) and then doc.deduplicate_similar_repost().",
+     "where": "erpnext/stock/doctype/repost_item_valuation/repost_item_valuation.py::_execute_reposting_entry",
+     "essential": false
+    },
+    {
+     "id": "n6f4",
+     "fact": "repost() sets status In Progress, marks the company's Completed Stock Closing Entries with to_date >= posting_date as Outdated (mark_closing_entries_outdated) and commits; it recalculates valuation rates for Purchase Receipt / Purchase Invoice / Stock Entry when recalculate_valuation_rate is set and recreates stock ledger entries when recreate_stock_ledgers is set.",
+     "where": "erpnext/stock/doctype/repost_item_valuation/repost_item_valuation.py::repost; erpnext/stock/doctype/stock_closing_entry/stock_closing_entry.py::mark_closing_entries_outdated; erpnext/stock/doctype/repost_item_valuation/repost_item_valuation.py::RepostItemValuation._recalculate_valuation_rate; erpnext/stock/doctype/repost_item_valuation/repost_item_valuation.py::RepostItemValuation.recreate_stock_ledger_entries",
+     "essential": false
+    },
+    {
+     "id": "n6f5",
+     "fact": "Then, for an accounting-only entry only repost_gl_entries runs; otherwise repost_sl_entries calls repost_future_sle (erpnext/stock/stock_ledger.py) for the voucher (based_on Transaction) or the item/warehouse, then get_reposted_vouchers, repost_gl_entries for those vouchers and update_consumed_material_cost_for_vouchers.",
+     "where": "erpnext/stock/doctype/repost_item_valuation/repost_item_valuation.py::repost; erpnext/stock/doctype/repost_item_valuation/repost_item_valuation.py::repost_sl_entries; erpnext/stock/stock_ledger.py::repost_future_sle; erpnext/projects/doctype/project/project.py::update_consumed_material_cost_for_vouchers",
+     "essential": true
+    },
+    {
+     "id": "n6f6",
+     "fact": "repost_gl_entries does nothing unless perpetual inventory is enabled for the company; with Stock Reposting Settings enable_separate_reposting_for_gl and an Item-and-Warehouse entry it creates accounting-only entries (make_reposting_for_accounting_ledgers), otherwise it calls repost_gle_for_stock_vouchers in erpnext/accounts/utils.py.",
+     "where": "erpnext/stock/doctype/repost_item_valuation/repost_item_valuation.py::repost_gl_entries; erpnext/stock/doctype/repost_item_valuation/repost_item_valuation.py::make_reposting_for_accounting_ledgers; erpnext/accounts/utils.py::repost_gle_for_stock_vouchers",
+     "essential": false
+    },
+    {
+     "id": "n6f7",
+     "fact": "On success repost() calls skip_reposts_covered_by_dependents, sets status Completed and clears reposting_data_file and the attached file; afterwards deduplicate_similar_repost marks later Queued Item-and-Warehouse entries for the same item and warehouse (created before the repost started) as Skipped, or for accounting-only entries calls skipped_similar_reposts.",
+     "where": "erpnext/stock/doctype/repost_item_valuation/repost_item_valuation.py::RepostItemValuation.skip_reposts_covered_by_dependents; erpnext/stock/doctype/repost_item_valuation/repost_item_valuation.py::RepostItemValuation.deduplicate_similar_repost; erpnext/stock/doctype/repost_item_valuation/repost_item_valuation.py::RepostItemValuation.skipped_similar_reposts",
+     "essential": true
+    },
+    {
+     "id": "n6f8",
+     "fact": "On an exception repost() rolls back, logs the error, and stores error_log with status \"In Progress\" for RecoverableErrors (JobTimeoutException, QueryDeadlockError, QueryTimeoutError) or \"Failed\" otherwise; a JobTimeoutException is re-raised, and for Failed entries, if a default outgoing Email Account exists, notify_error_to_stock_managers emails users of notify_reposting_error_to_role (default Stock Manager).",
+     "where": "erpnext/stock/doctype/repost_item_valuation/repost_item_valuation.py::repost; erpnext/stock/doctype/repost_item_valuation/repost_item_valuation.py::notify_error_to_stock_managers; erpnext/stock/doctype/repost_item_valuation/repost_item_valuation.py::get_recipients",
+     "essential": true
+    }
+   ]
+  },
+  {
+   "id": "n7",
+   "type": "flow",
+   "question": "A user clicks \"Update latest price in all BOMs\" in the BOM Update Tool. Trace, in order, what happens from the client-side call until the resulting BOM Update Log is marked Completed: which documents and background jobs are created, how BOMs are grouped and in which order they are processed, what is done to each BOM, and what moves the process from one group to the next. Also say what happens when a batch raises an error.",
+   "facts": [
+    {
+     "id": "n7f1",
+     "fact": "The form handler update_latest_price_in_all_boms in bom_update_tool.js calls the whitelisted erpnext.manufacturing.doctype.bom_update_tool.bom_update_tool.enqueue_update_cost, which calls create_bom_update_log(update_type=\"Update Cost\") to insert and submit a BOM Update Log.",
+     "where": "erpnext/manufacturing/doctype/bom_update_tool/bom_update_tool.js::update_latest_price_in_all_boms; erpnext/manufacturing/doctype/bom_update_tool/bom_update_tool.py::enqueue_update_cost; erpnext/manufacturing/doctype/bom_update_tool/bom_update_tool.py::create_bom_update_log",
+     "essential": true
+    },
+    {
+     "id": "n7f2",
+     "fact": "BOMUpdateLog.validate for \"Update Cost\" runs validate_bom_cost_update_in_progress (throws if another Update Cost log is Queued/In Progress and was modified less than a day ago) and sets status Queued.",
+     "where": "erpnext/manufacturing/doctype/bom_update_log/bom_update_log.py::BOMUpdateLog.validate; erpnext/manufacturing/doctype/bom_update_log/bom_update_log.py::BOMUpdateLog.validate_bom_cost_update_in_progress",
+     "essential": false
+    },
+    {
+     "id": "n7f3",
+     "fact": "BOMUpdateLog.on_submit enqueues process_boms_cost_level_wise on the \"long\" queue (enqueue_after_commit); for a Queued log it starts level 0 with get_leaf_boms() (submitted, active BOMs with no submitted active child BOM in their BOM Items), marks the log Completed if there are none, else sets processed_boms \"{}\", status In Progress and current_level 0.",
+     "where": "erpnext/manufacturing/doctype/bom_update_log/bom_update_log.py::BOMUpdateLog.on_submit; erpnext/manufacturing/doctype/bom_update_log/bom_update_log.py::process_boms_cost_level_wise; erpnext/manufacturing/doctype/bom_update_log/bom_updation_utils.py::get_leaf_boms",
+     "essential": true
+    },
+    {
+     "id": "n7f4",
+     "fact": "queue_bom_cost_jobs splits the level's BOMs into batches of 7,000, inserts a BOM Update Batch row (level, batch_no, status Pending) per batch and enqueues bom_updation_utils.update_cost_in_level for each on the \"long\" queue.",
+     "where": "erpnext/manufacturing/doctype/bom_update_log/bom_update_log.py::queue_bom_cost_jobs",
+     "essential": true
+    },
+    {
+     "id": "n7f5",
+     "fact": "update_cost_in_level returns if the log is already Failed; otherwise update_cost_in_boms loads each BOM for_update and calls calculate_cost(save_updates=True, update_hour_rate=True) then db_update (committing every 50 BOMs), and the batch row is set to Completed with boms_updated as JSON.",
+     "where": "erpnext/manufacturing/doctype/bom_update_log/bom_updation_utils.py::update_cost_in_level; erpnext/manufacturing/doctype/bom_update_log/bom_updation_utils.py::update_cost_in_boms; erpnext/manufacturing/doctype/bom/bom.py::BOM.calculate_cost",
+     "essential": true
+    },
+    {
+     "id": "n7f6",
+     "fact": "Levels advance through resume_bom_cost_update_jobs, run by the \"0/15 * * * *\" cron in hooks.py: for each In Progress Update Cost log whose current-level batches have no Pending row, it merges boms_updated into processed_boms, gets the next level with get_next_higher_level_boms (parents all of whose child BOMs are processed), and either marks the log Completed and deletes its BOM Update Batch rows or calls process_boms_cost_level_wise with those parent BOMs (current_level + 1).",
+     "where": "erpnext/hooks.py::scheduler_events; erpnext/manufacturing/doctype/bom_update_log/bom_update_log.py::resume_bom_cost_update_jobs; erpnext/manufacturing/doctype/bom_update_log/bom_update_log.py::get_processed_current_boms; erpnext/manufacturing/doctype/bom_update_log/bom_updation_utils.py::get_next_higher_level_boms",
+     "essential": true
+    },
+    {
+     "id": "n7f7",
+     "fact": "Any exception in a batch (or in process_boms_cost_level_wise) goes to handle_exception, which rolls back, writes an Error Log and sets the log status Failed with error_log; later batches of a Failed log return without updating.",
+     "where": "erpnext/manufacturing/doctype/bom_update_log/bom_updation_utils.py::handle_exception; erpnext/manufacturing/doctype/bom_update_log/bom_updation_utils.py::update_cost_in_level",
+     "essential": false
+    },
+    {
+     "id": "n7f8",
+     "fact": "The same Update Cost log is also created by the daily job auto_update_latest_price_in_all_boms when Manufacturing Settings update_bom_costs_automatically is on and there is no Queued/In Progress Update Cost log younger than 10 days.",
+     "where": "erpnext/manufacturing/doctype/bom_update_tool/bom_update_tool.py::auto_update_latest_price_in_all_boms; erpnext/manufacturing/doctype/bom_update_tool/bom_update_tool.py::is_older_log",
+     "essential": false
+    }
+   ]
+  },
+  {
+   "id": "n8",
+   "type": "mechanism",
+   "question": "How does get_exchange_rate in erpnext/setup/utils.py decide which rate to return for a currency pair, a transaction date and an optional \"for_buying\"/\"for_selling\" argument? Give the order in which sources are tried, how stale and buying/selling-specific Currency Exchange records are handled, how pegged currencies are treated, and what is returned when everything fails.",
+   "facts": [
+    {
+     "id": "n8f1",
+     "fact": "It returns None if either currency is missing, throws \"Invalid currency\" for a non-existent Currency, and returns 1 when both currencies are the same.",
+     "where": "erpnext/setup/utils.py::get_exchange_rate",
+     "essential": false
+    },
+    {
+     "id": "n8f2",
+     "fact": "First source: stored Currency Exchange records via get_stored_exchange_rate(from, to, date, args, checkpoint_date) - the record with the latest date <= transaction date; with \"for_buying\"/\"for_selling\" only records flagged for that side qualify, and on the same date a side-only record beats one flagged for both (ordering by for_selling asc / for_buying asc, then name desc).",
+     "where": "erpnext/setup/utils.py::get_exchange_rate; erpnext/setup/utils.py::get_stored_exchange_rate",
+     "essential": true
+    },
+    {
+     "id": "n8f3",
+     "fact": "Staleness: unless Accounts Settings allow_stale is set, checkpoint_date = transaction date - stale_days and only records dated after the checkpoint are used.",
+     "where": "erpnext/setup/utils.py::get_exchange_rate; erpnext/setup/utils.py::get_stored_exchange_rate",
+     "essential": true
+    },
+    {
+     "id": "n8f4",
+     "fact": "Second source: if no direct record, it looks up the reverse pair (to -> from) with for_buying and for_selling swapped and returns 1 / reverse_rate.",
+     "where": "erpnext/setup/utils.py::get_exchange_rate",
+     "essential": true
+    },
+    {
+     "id": "n8f5",
+     "fact": "If Currency Exchange Settings is disabled it then returns 0.00; otherwise, when Accounts Settings allow_pegged_currencies_exchange_rates is on, get_pegged_rate uses the Pegged Currencies table: both pegged to the same base -> (1/from_ratio)*to_ratio; different bases -> recursive get_exchange_rate of the bases times the ratios; from pegged to to -> from ratio; to pegged to from -> 1/to ratio.",
+     "where": "erpnext/setup/utils.py::get_exchange_rate; erpnext/setup/utils.py::get_pegged_rate; erpnext/setup/utils.py::get_pegged_currencies",
+     "essential": true
+    },
+    {
+     "id": "n8f6",
+     "fact": "Last source: the external API configured in Currency Exchange Settings, cached under currency_exchange_rate_{date}:{from}:{to} for 21600 s (6 h); a cache miss by a non-system user raises PermissionError; the request uses api_endpoint/req_params formatted by format_ces_api plus get_auth_params, a timeout of currency_exchange_request_timeout or 10 s, walks result_key, and requires a positive finite number.",
+     "where": "erpnext/setup/utils.py::get_exchange_rate; erpnext/setup/utils.py::format_ces_api; erpnext/accounts/doctype/currency_exchange_settings/currency_exchange_settings.py::get_auth_params",
+     "essential": true
+    },
+    {
+     "id": "n8f7",
+     "fact": "For pegged currencies on the API path the request uses each currency's pegged_against currency and the result is multiplied by the to-currency ratio and divided by the from-currency ratio.",
+     "where": "erpnext/setup/utils.py::get_exchange_rate",
+     "essential": false
+    },
+    {
+     "id": "n8f8",
+     "fact": "Any other failure is logged (\"Unable to fetch exchange rate\"), a message asks the user to create a Currency Exchange record manually, and 0.0 is returned; PermissionError is re-raised.",
+     "where": "erpnext/setup/utils.py::get_exchange_rate",
+     "essential": false
+    }
+   ]
+  },
+  {
+   "id": "n9",
+   "type": "mechanism",
+   "question": "When a document such as an Issue is saved, how does ERPNext decide which Service Level Agreement, if any, applies to it? Describe the entry point and the cases in which nothing is done, the filters a candidate agreement must pass, the order of precedence when several agreements match (including default agreements), and when the agreement already on the document is kept.",
+   "facts": [
+    {
+     "id": "n9f1",
+     "fact": "Entry point: hooks.py doc_events[\"*\"][\"validate\"] includes erpnext.support.doctype.service_level_agreement.service_level_agreement.apply, so it runs on validate of every doctype.",
+     "where": "erpnext/hooks.py::doc_events; erpnext/support/doctype/service_level_agreement/service_level_agreement.py::apply",
+     "essential": true
+    },
+    {
+     "id": "n9f2",
+     "fact": "apply returns without changes during patch/migrate/install/setup wizard, when the doctype is not in get_documents_with_active_service_level_agreement() (cached set \"doctypes_with_active_sla\" of document_type values of all Service Level Agreements), or when stays_resolved(doc) is true (an existing document whose SLA, priority and service_level_agreement_creation are unchanged and whose old and new status are both fulfillment statuses).",
+     "where": "erpnext/support/doctype/service_level_agreement/service_level_agreement.py::apply; erpnext/support/doctype/service_level_agreement/service_level_agreement.py::get_documents_with_active_service_level_agreement; erpnext/support/doctype/service_level_agreement/service_level_agreement.py::stays_resolved",
+     "essential": false
+    },
+    {
+     "id": "n9f3",
+     "fact": "get_active_service_level_agreement_for returns None unless Support Settings track_service_level_agreement is on; candidates must be enabled SLAs for the document's doctype and, if the document has a priority, have a Service Level Priority row with that priority.",
+     "where": "erpnext/support/doctype/service_level_agreement/service_level_agreement.py::get_active_service_level_agreement_for",
+     "essential": true
+    },
+    {
+     "id": "n9f4",
+     "fact": "Non-default candidates must have no entity_type or an entity in get_sla_entities(customer) (the customer, its customer group and that group's ancestors, its territory and that territory's ancestors), must be valid today (start_date/end_date via is_valid_today), and their condition, if any, must evaluate true with frappe.safe_eval against get_context(doc).",
+     "where": "erpnext/support/doctype/service_level_agreement/service_level_agreement.py::get_active_service_level_agreement_for; erpnext/support/doctype/service_level_agreement/service_level_agreement.py::get_sla_entities; erpnext/support/doctype/service_level_agreement/service_level_agreement.py::get_customer_group; erpnext/support/doctype/service_level_agreement/service_level_agreement.py::get_customer_territory; erpnext/support/doctype/service_level_agreement/service_level_agreement.py::is_valid_today",
+     "essential": true
+    },
+    {
+     "id": "n9f5",
+     "fact": "Precedence: matching non-default SLAs are sorted by the position of their entity in the entities list (customer first, then customer group and ancestors, then territory and ancestors, then SLAs without an entity); default agreements (default_service_level_agreement = 1, valid today, same doctype/priority filters but no entity filter and no condition check) are appended after them.",
+     "where": "erpnext/support/doctype/service_level_agreement/service_level_agreement.py::get_active_service_level_agreement_for",
+     "essential": true
+    },
+    {
+     "id": "n9f6",
+     "fact": "get_selected_or_first returns the SLA already set on the document if it is still among the candidates; otherwise the first candidate (or None).",
+     "where": "erpnext/support/doctype/service_level_agreement/service_level_agreement.py::get_selected_or_first",
+     "essential": true
+    },
+    {
+     "id": "n9f7",
+     "fact": "With no candidate, remove_sla_if_applied clears service_level_agreement, response_by, sla_resolution_by and agreement_status; otherwise process_sla sets service_level_agreement, priority = document priority or the SLA's default_priority, and runs handle_status_change, update_response_and_resolution_metrics and update_agreement_status.",
+     "where": "erpnext/support/doctype/service_level_agreement/service_level_agreement.py::remove_sla_if_applied; erpnext/support/doctype/service_level_agreement/service_level_agreement.py::process_sla",
+     "essential": false
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,261 @@
+{
+ "locations": 199,
+ "names": 427,
+ "problems": [
+  {
+   "fact": "q1f7",
+   "token": "recalculate_bin_qty",
+   "problem": "name not in cited files",
+   "found_elsewhere": [
+    "erpnext/stock/doctype/item/item.py"
+   ]
+  },
+  {
+   "fact": "q3f1",
+   "token": "monthly_long",
+   "problem": "name not in cited files",
+   "found_elsewhere": [
+    "erpnext/hooks.py"
+   ]
+  },
+  {
+   "fact": "q3f1",
+   "token": "scheduler_events",
+   "problem": "name not in cited files",
+   "found_elsewhere": [
+    "erpnext/hooks.py"
+   ]
+  },
+  {
+   "fact": "q3f3",
+   "token": "book_deferred_income_or_expense",
+   "problem": "name not in cited files",
+   "found_elsewhere": [
+    "erpnext/accounts/deferred_revenue.py"
+   ]
+  },
+  {
+   "fact": "q3f3",
+   "token": "enable_deferred_revenue",
+   "problem": "name not in cited files",
+   "found_elsewhere": [
+    "erpnext/selling/doctype/sales_order/mapper.py",
+    "erpnext/accounts/services/deferred_accounting.py",
+    "erpnext/accounts/doctype/sales_invoice/test_sales_invoice.py"
+   ]
+  },
+  {
+   "fact": "q4f4",
+   "token": "get_brand_defaults",
+   "problem": "name not in cited files",
+   "found_elsewhere": [
+    "erpnext/assets/doctype/asset_capitalization/asset_capitalization.py",
+    "erpnext/controllers/buying_controller.py",
+    "erpnext/controllers/stock_controller.py"
+   ]
+  },
+  {
+   "fact": "q4f4",
+   "token": "get_item_defaults",
+   "problem": "name not in cited files",
+   "found_elsewhere": [
+    "erpnext/assets/doctype/asset_capitalization/asset_capitalization.py",
+    "erpnext/controllers/buying_controller.py",
+    "erpnext/controllers/stock_controller.py"
+   ]
+  },
+  {
+   "fact": "n1f3",
+   "token": "sales_order.js",
+   "problem": "name not in cited files",
+   "found_elsewhere": []
+  },
+  {
+   "fact": "n1f7",
+   "token": "check_credit_limit",
+   "problem": "name not in cited files",
+   "found_elsewhere": [
+    "erpnext/selling/doctype/customer/customer.py",
+    "erpnext/selling/doctype/sales_order/services/status.py",
+    "erpnext/selling/doctype/sales_order/sales_order.py"
+   ]
+  },
+  {
+   "fact": "n1f7",
+   "token": "pre_submit_validation",
+   "problem": "name not in cited files",
+   "found_elsewhere": [
+    "erpnext/selling/doctype/sales_order/sales_order.py",
+    "erpnext/accounts/doctype/sales_invoice/sales_invoice.py",
+    "erpnext/accounts/doctype/purchase_invoice/purchase_invoice.py"
+   ]
+  },
+  {
+   "fact": "n2f1",
+   "token": "purchase_order.py",
+   "problem": "name not in cited files",
+   "found_elsewhere": []
+  },
+  {
+   "fact": "n2f3",
+   "token": "AttributeError",
+   "problem": "name not in cited files",
+   "found_elsewhere": [
+    "erpnext/deprecation_dumpster.py",
+    "erpnext/manufacturing/doctype/bom_creator/step_file.py",
+    "erpnext/accounts/doctype/sales_invoice/services/pos.py"
+   ]
+  },
+  {
+   "fact": "n2f3",
+   "token": "TypeError",
+   "problem": "name not in cited files",
+   "found_elsewhere": [
+    "erpnext/controllers/item_variant.py",
+    "erpnext/crm/doctype/appointment/test_appointment.py",
+    "erpnext/tests/permission_test_utils.py"
+   ]
+  },
+  {
+   "fact": "n2f6",
+   "token": "disable_last_purchase_rate",
+   "problem": "name not in cited files",
+   "found_elsewhere": [
+    "erpnext/buying/doctype/buying_settings/buying_settings.json",
+    "erpnext/buying/doctype/buying_settings/buying_settings.py",
+    "erpnext/buying/doctype/purchase_order/test_purchase_order.py"
+   ]
+  },
+  {
+   "fact": "n2f7",
+   "token": "ChildItemUpdater._post_update",
+   "problem": "name not in cited files",
+   "found_elsewhere": [
+    "erpnext/projects/doctype/timesheet/test_timesheet.py",
+    "erpnext/accounts/services/child_item_update.py",
+    "erpnext/setup/doctype/authorization_control/test_authorization_control.py"
+   ]
+  },
+  {
+   "fact": "n2f7",
+   "token": "purchase_order.js",
+   "problem": "name not in cited files",
+   "found_elsewhere": []
+  },
+  {
+   "fact": "n3f1",
+   "token": "child_item_update.py",
+   "problem": "name not in cited files",
+   "found_elsewhere": []
+  },
+  {
+   "fact": "n3f1",
+   "token": "get_item_details.py",
+   "problem": "name not in cited files",
+   "found_elsewhere": [
+    "erpnext/stock/doctype/item/item.py"
+   ]
+  },
+  {
+   "fact": "n3f1",
+   "token": "sales_order.py",
+   "problem": "name not in cited files",
+   "found_elsewhere": []
+  },
+  {
+   "fact": "n3f1",
+   "token": "subcontracting_bom.py",
+   "problem": "name not in cited files",
+   "found_elsewhere": []
+  },
+  {
+   "fact": "n3f2",
+   "token": "frappe.calls",
+   "problem": "name not in cited files",
+   "found_elsewhere": [
+    "erpnext/projects/doctype/project/project.js",
+    "erpnext/controllers/tests/test_selling_controller.py",
+    "erpnext/bulk_transaction/doctype/bulk_transaction_log/bulk_transaction_log.py"
+   ]
+  },
+  {
+   "fact": "n3f4",
+   "token": "sales_order.js",
+   "problem": "name not in cited files",
+   "found_elsewhere": []
+  },
+  {
+   "fact": "n3f7",
+   "token": "get_default_bom",
+   "problem": "name not in cited files",
+   "found_elsewhere": [
+    "erpnext/selling/doctype/sales_order/services/subcontracting.py",
+    "erpnext/selling/doctype/sales_order/sales_order.py",
+    "erpnext/subcontracting/doctype/subcontracting_bom/subcontracting_bom.py"
+   ]
+  },
+  {
+   "fact": "n4f1",
+   "token": "buying_controller.py",
+   "problem": "name not in cited files",
+   "found_elsewhere": []
+  },
+  {
+   "fact": "n4f1",
+   "token": "general_ledger.py",
+   "problem": "name not in cited files",
+   "found_elsewhere": []
+  },
+  {
+   "fact": "n4f2",
+   "token": "budget_controller.py",
+   "problem": "name not in cited files",
+   "found_elsewhere": []
+  },
+  {
+   "fact": "n4f5",
+   "token": "enable_immutable_ledger",
+   "problem": "name not in cited files",
+   "found_elsewhere": [
+    "erpnext/accounts/doctype/gl_entry/test_gl_entry.py",
+    "erpnext/accounts/doctype/period_closing_voucher/test_period_closing_voucher.py",
+    "erpnext/accounts/doctype/payment_ledger_entry/test_payment_ledger_entry.py"
+   ]
+  },
+  {
+   "fact": "n6f5",
+   "token": "stock_ledger.py",
+   "problem": "name not in cited files",
+   "found_elsewhere": [
+    "erpnext/stock/tests/test_stock_ledger.py",
+    "erpnext/stock/expected_valuation.py"
+   ]
+  },
+  {
+   "fact": "n7f1",
+   "token": "bom_update_tool.js",
+   "problem": "name not in cited files",
+   "found_elsewhere": []
+  },
+  {
+   "fact": "n7f7",
+   "token": "process_boms_cost_level_wise",
+   "problem": "name not in cited files",
+   "found_elsewhere": [
+    "erpnext/manufacturing/doctype/bom_update_log/bom_update_log.py"
+   ]
+  },
+  {
+   "fact": "n8f5",
+   "token": "from_ratio",
+   "problem": "name not in cited files",
+   "found_elsewhere": []
+  },
+  {
+   "fact": "n8f5",
+   "token": "to_ratio",
+   "problem": "name not in cited files",
+   "found_elsewhere": []
+  }
+ ]
+}
