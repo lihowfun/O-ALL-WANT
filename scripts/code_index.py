@@ -1,22 +1,33 @@
 #!/usr/bin/env python3
-"""Regenerable, read-only code index: find, callers, import paths and affected files.
+"""Regenerable, read-only code index: find, callers, import paths, affected files and a one-page overview.
 
 Python files are parsed with ast, never imported or run; a file this Python
-cannot parse gets a regex pass instead. Markdown headings, shell functions,
-JSON/TOML/YAML keys and JavaScript functions get a light name pass, and other
-text files a word pass. The index is built on the fly, or kept as one JSON
-file per indexed root in a cache directory you name (--cache DIR or
-OAW_CODE_INDEX_CACHE); the cache records each file's size, mtime and sha256,
-and a stale file is re-indexed (with --frozen: reported, not re-indexed).
-Nothing is written inside the indexed tree unless you name a cache directory
-there. Results are pointers to read, ranked by word statistics: not verified
-facts and not model judgments.
+cannot parse gets a regex pass instead. JavaScript and TypeScript files get a
+scanner (comments, strings, template text and regular expressions blanked, then
+declarations, imports and call sites read with bracket matching) whose calls
+resolve through imports (relative paths, index files, tsconfig/jsconfig baseUrl
+and paths), this/super, class bases and the types the source writes. Markdown
+headings, shell functions and JSON/TOML/YAML keys get a light name pass, and
+other text files a word pass.
+
+The index is kept as two JSON files per indexed root in the user's local cache
+directory ($XDG_CACHE_HOME/oaw/code-index, ~/.cache/oaw/code-index or
+%LOCALAPPDATA%\\oaw\\code-index), or in a directory you name (--cache DIR or
+OAW_CODE_INDEX_CACHE); --no-cache builds it in memory and writes nothing. The
+cache records each file's size, mtime, inode change time and sha256: a file
+whose stat changed is hashed again and re-indexed when its content changed
+(with --frozen: reported, not re-indexed). Nothing is written inside the
+indexed tree unless you name a cache directory there. Results are pointers to
+read (path, line, one source line), ranked by word statistics or resolved by
+name: not verified facts, not descriptions of behavior, and not model output.
+callers and affected say whether a list is complete within the index.
 """
 
 from __future__ import annotations
 
 import argparse
 import ast
+import bisect
 import builtins
 from collections import Counter, deque
 from functools import lru_cache
@@ -34,7 +45,7 @@ import time
 import warnings
 
 SCHEMA_VERSION = 1  # JSON output contract.
-INDEX_VERSION = 1  # Cached record layout; a cache with another value is rebuilt.
+INDEX_VERSION = 2  # Cached record layout; a cache with another value is rebuilt.
 MAX_FILE_BYTES = 1024 * 1024
 CACHE_ENV = "OAW_CODE_INDEX_CACHE"
 SKIP_DIRS = frozenset((".git", ".hg", ".svn", "__pycache__", "node_modules", ".venv", "venv", ".tox", ".nox",
@@ -46,7 +57,7 @@ KINDS = {".py": "python", ".pyw": "python", ".pyi": "python", ".md": "markdown",
          ".sh": "shell", ".bash": "shell", ".zsh": "shell", ".ps1": "shell", ".json": "json",
          ".toml": "toml", ".ini": "toml", ".cfg": "toml", ".yml": "yaml", ".yaml": "yaml",
          ".js": "javascript", ".mjs": "javascript", ".cjs": "javascript", ".jsx": "javascript",
-         ".ts": "javascript", ".tsx": "javascript"}
+         ".ts": "javascript", ".tsx": "javascript", ".mts": "javascript", ".cts": "javascript"}
 CODE_KINDS = frozenset(("python", "python-regex", "shell", "javascript"))
 # sync_examples.py marks a generated example tree with this manifest and an
 # installation_id starting with GENERATED_PREFIX; its managed_files are copies.
@@ -325,6 +336,7 @@ class _PythonIndexer(ast.NodeVisitor):
         self.commands = []  # (subcommand, help text) from argparse add_parser calls
         self.strings, self.syspath_names = {}, set()  # module-level string constants; names put on sys.path
         self.stack = [("", "module", self.module)]
+        self.main = None  # line of `if __name__ == "__main__":`
 
     def _docstring(self, node, unit):
         body = getattr(node, "body", None)
@@ -443,6 +455,16 @@ class _PythonIndexer(ast.NodeVisitor):
                 self.visit(target)
         self.stack.pop()
 
+    def visit_If(self, node):
+        test = node.test
+        if (len(self.stack) == 1 and isinstance(test, ast.Compare) and len(test.ops) == 1
+                and isinstance(test.ops[0], ast.Eq) and len(test.comparators) == 1):
+            sides = [test.left, test.comparators[0]]
+            if any(isinstance(side, ast.Name) and side.id == "__name__" for side in sides) and any(
+                    isinstance(side, ast.Constant) and side.value == "__main__" for side in sides):
+                self.main = self.main or node.lineno
+        self.generic_visit(node)
+
     def visit_Import(self, node):
         scope, _, unit = self.stack[-1]
         for alias in node.names:
@@ -551,6 +573,8 @@ def _python_record(lines, text):
     refs = [ref for ref in indexer.refs if ref[2].split(".", 1)[0] in bound]
     python = {"defs": indexer.defs, "imports": indexer.imports, "calls": indexer.calls, "refs": refs,
               "assigns": indexer.assigns, "bases": indexer.bases, "syspath": indexer.syspath[:20]}
+    if indexer.main:
+        python["main"] = indexer.main
     return indexer.units, python
 
 
@@ -627,6 +651,10 @@ def _python_fallback(lines):
             if unit[0] == definition[0] and unit[2] == definition[2]:
                 definition[3] = unit[4]
     python = {"defs": defs, "imports": imports, "calls": calls, "refs": [], "assigns": [], "bases": {}, "syspath": []}
+    main = next((number for number, line in enumerate(lines, 1)
+                 if re.match(r"if\s+__name__\s*==\s*['\"]__main__['\"]\s*:", line)), None)
+    if main:
+        python["main"] = main
     return units, python
 
 
@@ -768,6 +796,934 @@ def _other_units(kind, lines):
     return _text_units(lines)
 
 
+# ---------------------------------------------------------------- JavaScript and TypeScript
+#
+# A scanner, not a parser. Comments, strings, template text and regular expression literals are
+# blanked first (line breaks kept); declarations, imports and call sites are then read from what is
+# left with regular expressions and bracket matching. Calls resolve like Python's: through imports
+# (relative paths, index files, tsconfig/jsconfig baseUrl and paths), `this`/`super`, class bases,
+# and types written in the source (`x: Foo`, `new Foo()`, parameter and field annotations).
+# Not resolved: dynamic dispatch beyond these, inferred types, dependency injection, decorators'
+# effects, `any`, computed member names, JSX elements, object-literal methods, and values passed
+# around (callbacks, re-assigned variables). Dynamic import() is kept as an import edge only.
+
+JS_SOURCE = (".ts", ".tsx", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs")
+_JS_ALTERNATES = {".js": (".ts", ".tsx", ".d.ts"), ".jsx": (".tsx", ".d.ts"), ".mjs": (".mts", ".d.mts"),
+                  ".cjs": (".cts", ".d.cts")}
+_JS_TOP = re.compile(r"""[^'"`/\\]+|//[^\n]*|/\*.*?(?:\*/|\Z)|'(?:[^'\\\n]|\\.)*'?|"(?:[^"\\\n]|\\.)*"?|.""", re.S)
+_JS_INNER = re.compile(r"""[^'"`/\\{}]+|//[^\n]*|/\*.*?(?:\*/|\Z)|'(?:[^'\\\n]|\\.)*'?|"(?:[^"\\\n]|\\.)*"?|.""", re.S)
+_JS_TEMPLATE = re.compile(r"(?:[^`\\$]|\\.|\$(?!\{))*", re.S)
+_JS_REGEX = re.compile(r"/(?![*/])(?:[^\\/\[\n]|\\.|\[(?:[^\]\\\n]|\\.)*\])+/[A-Za-z]*")
+_JS_LAST_WORD = re.compile(r"[\w$]+$")
+_JS_BEFORE_REGEX = frozenset("return typeof instanceof in of new delete void throw case do else yield await".split())
+_JS_DECL = re.compile(
+    r"[ \t]*(?:@[\w$.]+(?:\([^()\n]*\))?[ \t]+)*"
+    r"(?P<mods>(?:(?:export|default|declare|abstract|async|public|private|protected|static|readonly|override|accessor)"
+    r"[ \t]+)*)"
+    r"(?:(?P<kw>function|class)\b[ \t]*\*?[ \t]*(?P<kname>[A-Za-z_$][\w$]*)?"
+    r"|(?P<kw2>const[ \t]+enum|interface|enum|type|namespace|module|const|let|var)[ \t]+"
+    r"(?P<name2>[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*)"
+    r"|(?P<cjs>(?:module\.)?exports\.)(?P<cname>[A-Za-z_$][\w$]*)[ \t]*=(?!=)"
+    r"|(?P<owner>[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*)\.prototype\.(?P<pname>[A-Za-z_$][\w$]*)[ \t]*=(?!=)"
+    r"|(?P<lhs>[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)+)[ \t]*=[ \t]*class\b[ \t]*(?P<xname>[A-Za-z_$][\w$]*)?"
+    r"|(?:(?P<acc>get|set)[ \t]+)?\*?[ \t]*(?P<mname>#?[A-Za-z_$][\w$]*)[ \t]*[?!]?[ \t]*(?P<after>[(<:=;]))")
+_JS_CALL_REV = re.compile(  # read backwards from a "(": optional ?. and type arguments, a dotted chain, what precedes
+    r"\s*(?:\.\?)?\s*(?:>(?:[^<>()\n;{}=&|]|>[^<>()\n;{}=&|]*<)*<\s*)?!?\s*"
+    r"(?P<chain>[\w$]+#?(?:\s*\.\??!?\s*[\w$]+#?)*)"
+    r"(?P<lead>\s*(?:\.\??!?|wen\b|noitcnuf\b|teg\b|tes\b|cnysa\b|citats\b)?)")
+_JS_BRACKET = re.compile(r"[{}()\[\]]")
+_JS_CLOSERS = {"}": "{", ")": "(", "]": "["}
+_JS_SCAN = re.compile(r"[{;(\[\n]|=>")
+_JS_STATEMENT = re.compile(r"[;(\[{)\]}\n]")
+_JS_VALUE = re.compile(
+    r"\s*(?:async\s+)?(?:(?P<fn>function\b\s*\*?\s*[\w$]*\s*)|(?P<new>new\s+)(?P<cls>[A-Za-z_$][\w$]*(?:\s*\.\s*[A-Za-z_$][\w$]*)*)"
+    r"|(?P<cexp>class\b)\s*(?P<xname>[A-Za-z_$][\w$]*)?|(?P<single>[A-Za-z_$][\w$]*)\s*=>|(?P<paren>[(<])"
+    r"|(?P<call>(?:this\.)?[A-Za-z_$][\w$]*(?:\s*\.\s*[A-Za-z_$][\w$]*)*)\s*(?P<open>\())")
+_JS_ARROW = re.compile(r"\s*(?::[^;{}=]*(?:=>[^;{}=]*)?)?=>\s*")
+_JS_PARAM = re.compile(r"(?P<mods>(?:(?:public|private|protected|readonly|override)\s+)*)(?:\.\.\.)?"
+                       r"(?P<name>[A-Za-z_$][\w$]*)\s*\??\s*(?::(?P<type>.*))?$", re.S)
+_JS_PARAM_DECORATOR = re.compile(r"@[\w$.]+\s*(?:\((?:[^()]|\([^()]*\))*\))?")
+_JS_TYPE_NAME = re.compile(r"(?:readonly\s+)?([A-Za-z_$][\w$]*(?:\s*\.\s*[A-Za-z_$][\w$]*)*)\s*(?:<.*>)?$", re.S)
+_JS_MODIFIERS_ONLY = re.compile(r"[ \t]*(?:(?:public|private|protected|static|readonly|abstract|async|declare|override)"
+                                r"[ \t]+)*")
+_JS_THIS_NEW = re.compile(r"this\.(#?[A-Za-z_$][\w$]*)\s*=\s*new\s+([A-Za-z_$][\w$]*(?:\s*\.\s*[A-Za-z_$][\w$]*)*)")
+# Matched only where the keyword occurs (a literal search), never by scanning every position.
+_JS_IMPORT = re.compile(r"import\s+(?:type\s+)?(?P<clause>[\w$*{}\s,]*?)\s*\bfrom\s*(?P<q>\")")
+_JS_IMPORT_SIDE = re.compile(r"import\s*(?P<q>\")")
+_JS_IMPORT_EQUALS = re.compile(r"import\s+(?P<local>[A-Za-z_$][\w$]*)\s*=\s*require\s*\(\s*(?P<q>\")")
+_JS_DYNAMIC = re.compile(r"import\s*\(\s*(?P<q>\")")
+_JS_REEXPORT = re.compile(
+    r"export\s+(?:type\s+)?(?P<clause>\*(?:\s+as\s+[A-Za-z_$][\w$]*)?|\{[^{}]*\})\s*from\s*(?P<q>\")")
+_JS_EXPORT_LIST = re.compile(r"export\s+(?:type\s+)?\{(?P<list>[^{}]*)\}(?!\s*from\b)")
+_JS_EXPORT_DEFAULT = re.compile(r"export\s+default\s+(?!(?:class|function|async|abstract|interface|enum)\b)"
+                                r"(?P<name>[A-Za-z_$][\w$]*)\s*(?:;|$)", re.M)
+_JS_EXPORT_ASSIGN = re.compile(r"(?:export\s*=|module\.exports\s*=)\s*(?:(?P<name>[A-Za-z_$][\w$]*)\s*(?:;|$)"
+                               r"|(?P<obj>\{))", re.M)
+_JS_REQUIRE = re.compile(r"require\s*\(\s*(?P<q>\")")
+_JS_REQUIRE_BIND = re.compile(r"\b(?:const|let|var)\s+([A-Za-z_$][\w$]*|\{[^{}]*\})\s*=\s*$")
+_JS_SPECIFIER = re.compile(r"(?:type\s+)?([\w$]+)(?:\s+as\s+([\w$]+))?")
+_JS_KEYWORDS = frozenset("""if for while switch catch function return typeof instanceof in of new delete void throw
+case do else yield await async super import export class extends const let var with debugger default try finally
+""".split())
+_JS_PRIMITIVES = frozenset("""any unknown never void undefined null object this Object Record Partial Readonly
+Required Pick Omit Iterable IterableIterator AsyncIterable Thenable""".split())  # say nothing about the class
+# Built-in types: a receiver written with one of these is not user code (its methods resolve as external).
+_JS_BUILTIN_TYPES = frozenset("""string number boolean symbol bigint Function Array ReadonlyArray Promise Map Set
+WeakMap WeakSet ReadonlyMap ReadonlySet Error RegExp Date String Number Boolean Uint8Array ArrayBuffer""".split())
+# Language words that Python's ast pass never sees as identifiers: left out of JS/TS search terms.
+_JS_NOISE = frozenset("""break case catch class const continue debugger default delete do else enum export extends
+false finally for function if import in instanceof new null return super switch this throw true try typeof var void
+while with yield let static implements interface private protected public await async of as from type readonly
+declare abstract override keyof infer unknown any never undefined string number boolean object symbol bigint""".split())
+JS_GLOBALS = frozenset("""console Math JSON Object Array Promise Number String Boolean Symbol Date RegExp Error
+TypeError RangeError Map Set WeakMap WeakSet Reflect Proxy parseInt parseFloat isNaN isFinite setTimeout
+clearTimeout setInterval clearInterval setImmediate require process Buffer globalThis window document navigator
+URL URLSearchParams encodeURIComponent decodeURIComponent encodeURI decodeURI fetch structuredClone
+queueMicrotask atob btoa BigInt Uint8Array Int32Array Float64Array ArrayBuffer TextEncoder TextDecoder""".split())
+
+
+def _js_regex_here(out):
+    """Whether a '/' after the code emitted so far starts a regular expression literal (not a division)."""
+    for piece in reversed(out):
+        stripped = piece.rstrip()
+        if stripped:
+            last = stripped[-1]
+            if last.isalnum() or last in "_$":
+                return _JS_LAST_WORD.search(stripped).group() in _JS_BEFORE_REGEX
+            return last not in ')]"'
+    return True
+
+
+def _js_mask(text):
+    """(code, strings, comments): comments, strings, template text and regular expressions blanked with
+    line breaks kept, strings as '""' keyed by their offset in code -> (offset in text, contents)."""
+    out, strings, comments = [], {}, []
+    stack, pos, size, length, template = [], 0, len(text), 0, False
+    if text.startswith("#!"):
+        pos = text.find("\n")
+        pos = size if pos < 0 else pos
+    while pos < size:
+        if template:
+            match = _JS_TEMPLATE.match(text, pos)
+            breaks = match.group().count("\n")
+            if breaks:
+                out.append("\n" * breaks)
+                length += breaks
+            pos, template = match.end(), False
+            if pos >= size:
+                break
+            if text[pos] == "`":
+                out.append('"')
+                length, pos = length + 1, pos + 1
+            else:  # ${ opens an expression: kept as code, in parentheses
+                out.append(" (")
+                length, pos = length + 2, pos + 2
+                stack.append(0)
+            continue
+        match = (_JS_INNER if stack else _JS_TOP).match(text, pos)
+        piece, end = match.group(), match.end()
+        first = piece[0]
+        if first == "/":
+            if piece.startswith("//"):
+                comments.append((pos, piece))
+                piece = ""
+            elif piece.startswith("/*"):
+                comments.append((pos, piece))
+                piece = "\n" * piece.count("\n") or " "
+            elif _js_regex_here(out):
+                literal = _JS_REGEX.match(text, pos)
+                if literal:
+                    piece, end = '""', literal.end()
+        elif first in "'\"":
+            closed = len(piece) > 1 and piece[-1] == first
+            strings[length] = (pos, piece[1:-1] if closed else piece[1:])
+            piece = '""' + "\n" * piece.count("\n")
+        elif first == "`":
+            out.append('"')
+            length, pos, template = length + 1, end, True
+            continue
+        elif stack and first == "{":
+            stack[-1] += 1
+        elif stack and first == "}":
+            if stack[-1] == 0:
+                stack.pop()
+                out.append(") ")
+                length, pos, template = length + 2, end, True
+                continue
+            stack[-1] -= 1
+        out.append(piece)
+        length += len(piece)
+        pos = end
+    return "".join(out), strings, comments
+
+
+def _js_brackets(code, points):
+    """Matching bracket offsets, and for each point (sorted offsets) the innermost open bracket around it."""
+    pairs, stack, around, index, count = {}, [], [], 0, len(points)
+    for match in _JS_BRACKET.finditer(code):
+        at = match.start()
+        while index < count and points[index] < at:
+            around.append(stack[-1][1] if stack else -1)
+            index += 1
+        char = match.group()
+        if char in "{([":
+            stack.append((char, at))
+            continue
+        want = _JS_CLOSERS[char]
+        for depth in range(len(stack) - 1, max(-1, len(stack) - 4), -1):
+            if stack[depth][0] == want:
+                pairs[stack[depth][1]] = at
+                del stack[depth:]
+                break
+    while index < count:
+        around.append(stack[-1][1] if stack else -1)
+        index += 1
+    return pairs, around
+
+
+def _js_split(text, separator=","):
+    """Split at separator characters outside brackets (and outside <...> type arguments)."""
+    parts, depth, start, index, size = [], 0, 0, 0, len(text)
+    while index < size:
+        char = text[index]
+        if char == "=" and text.startswith("=>", index):
+            index += 2
+            continue
+        if char in "([{<":
+            depth += 1
+        elif char in ")]}>":
+            depth = max(0, depth - 1)
+        elif char == separator and depth == 0:
+            parts.append(text[start:index])
+            start = index + 1
+        index += 1
+    parts.append(text[start:])
+    return parts
+
+
+def _js_type(text):
+    """The class or interface name a type annotation names ('Foo', 'ns.Foo'), or None."""
+    if not text:
+        return None
+    kept = [part.strip() for part in _js_split(text.strip(), "|")]
+    kept = [part for part in kept if part and part not in ("undefined", "null", "void")]
+    if len(kept) != 1:
+        return None
+    if kept[0].endswith("[]"):
+        return "!Array"
+    match = _JS_TYPE_NAME.match(kept[0])
+    if not match:
+        return None
+    chain = re.sub(r"\s+", "", match.group(1))
+    if chain in _JS_BUILTIN_TYPES:
+        return "!" + chain
+    return None if chain in _JS_PRIMITIVES else chain
+
+
+def _js_params(text):
+    """(name, type, is_property) for each parameter in a parameter list's text."""
+    found = []
+    for piece in _js_split(text):
+        piece = _JS_PARAM_DECORATOR.sub(" ", piece).strip()
+        default = _js_split(piece, "=")
+        match = _JS_PARAM.match(default[0].strip()) if default else None
+        if match:
+            found.append((match.group("name"), _js_type(match.group("type")), bool(match.group("mods"))))
+    return found
+
+
+def _js_skip(code, pos):
+    """Position after whitespace."""
+    size = len(code)
+    while pos < size and code[pos] in " \t\n":
+        pos += 1
+    return pos
+
+
+def _js_generics(code, pos):
+    """Position after a <...> type parameter list starting at pos (pos itself when there is none)."""
+    if pos >= len(code) or code[pos] != "<":
+        return pos
+    depth, index, stop = 0, pos, min(len(code), pos + 1000)
+    while index < stop:
+        char = code[index]
+        if char == "=" and code.startswith("=>", index):
+            index += 2
+            continue
+        if char == "<":
+            depth += 1
+        elif char == ">":
+            depth -= 1
+            if depth == 0:
+                return index + 1
+        elif char in ";{":
+            return pos
+        index += 1
+    return pos
+
+
+def _js_body(code, pos, pairs, header=False):
+    """Offset of the '{' that opens a body after a parameter list (or a class header) ending at pos."""
+    stop = min(len(code), pos + (4000 if header else 1500))
+    while pos < stop:
+        match = _JS_SCAN.search(code, pos, stop)
+        if not match:
+            return None
+        token, at = match.group(), match.start()
+        if token == ";":
+            return None
+        if token in "([":
+            close = pairs.get(at)
+            if close is None:
+                return None
+            pos = close + 1
+            continue
+        if token == "=>":
+            pos = at + 2
+            continue
+        before = code[max(0, at - 200):at].rstrip()
+        if token == "\n":
+            if header:
+                pos = at + 1
+                continue
+            after = _js_skip(code, at)
+            if after < len(code) and (code[after] in "{:|&.>=" or (before and before[-1] in ":|&,<(=")):
+                pos = at + 1
+                continue
+            return None
+        if before and before[-1] in ":|&<," and not header:  # an object type in a return annotation
+            close = pairs.get(at)
+            if close is None:
+                return None
+            pos = close + 1
+            continue
+        return at
+    return None
+
+
+def _js_end(code, pos, pairs):
+    """Offset where the expression or statement starting at pos ends (an arrow body, a type alias)."""
+    pos = _js_skip(code, pos)
+    size = len(code)
+    stop = min(size, pos + 20000)
+    while pos < stop:
+        match = _JS_STATEMENT.search(code, pos, stop)
+        if not match:
+            return stop
+        token, at = match.group(), match.start()
+        if token in "([{":
+            close = pairs.get(at)
+            if close is None:
+                return at
+            pos = close + 1
+            continue
+        if token != "\n":
+            return at
+        before = code[max(0, at - 200):at].rstrip()
+        after = _js_skip(code, at)
+        if (before and before[-1] in "=+-*/%&|^!?:,.<>(") or (after < size and code[after] in ".?:+-*/%&|^=><"):
+            pos = at + 1
+            continue
+        return at
+    return stop
+
+
+def _js_value(code, pos, pairs):
+    """What an initializer at pos is: ('function', params open, body open or None, end), ('new', type),
+    ('class', name or None, header end) or None."""
+    match = _JS_VALUE.match(code, pos)
+    if not match:
+        return None
+    if match.group("call"):  # `= factory(...)` alone: its written return type types the variable
+        if match.group("call") in ("require", "import"):  # module bindings, kept with the imports
+            return None
+        close = pairs.get(match.start("open"))
+        after = _js_skip(code, close + 1) if close is not None else len(code)
+        if close is None or (after < len(code) and code[after] not in ";,)}" and code[close + 1:after].count("\n") == 0):
+            return None
+        return ("call", re.sub(r"\s+", "", match.group("call")) + "()")
+    if match.group("new"):
+        return ("new", re.sub(r"\s+", "", match.group("cls")))
+    if match.group("cexp"):
+        return ("class", match.group("xname"), match.end())
+    if match.group("single"):
+        end_arrow = match.end()
+        body = _js_skip(code, end_arrow)
+        if body < len(code) and code[body] == "{" and body in pairs:
+            return ("function", None, body, pairs[body])
+        return ("function", None, None, _js_end(code, end_arrow, pairs))
+    if match.group("fn") is not None:
+        opening = _js_skip(code, _js_generics(code, match.end()))
+        close = pairs.get(opening) if opening < len(code) and code[opening] == "(" else None
+        if close is None:
+            return None
+        body = _js_body(code, close + 1, pairs)
+        return ("function", opening, body, pairs.get(body, close) if body is not None else close)
+    opening = _js_skip(code, _js_generics(code, match.start("paren")))
+    if opening >= len(code) or code[opening] != "(" or opening not in pairs:
+        return None
+    close = pairs[opening]
+    arrow = _JS_ARROW.match(code, close + 1)
+    if not arrow:
+        return None
+    body = arrow.end()
+    if body < len(code) and code[body] == "{" and body in pairs:
+        return ("function", opening, body, pairs[body])
+    return ("function", opening, None, _js_end(code, body, pairs))
+
+
+def _js_returns(code, close, body):
+    """The class or interface a function's written return type names (text between ')' and its body)."""
+    text = code[close + 1:body if body is not None else min(len(code), close + 300)].strip()
+    if not text.startswith(":"):
+        return None
+    text = text[1:]
+    for stop in (";", "\n", "{"):
+        if body is None and stop in text:
+            text = text[:text.index(stop)]
+    return _js_type(text.rstrip(" ={"))
+
+
+def _js_type_and_value(code, pos, pairs):
+    """(annotation text, offset after '=') of a declaration's ': Type = value' part starting at pos."""
+    index = _js_skip(code, pos)
+    if index < len(code) and code[index] == "!":
+        index = _js_skip(code, index + 1)
+    if index < len(code) and code[index] == "=" and not code.startswith("=>", index):
+        return None, index + 1
+    if index >= len(code) or code[index] != ":":
+        return None, None
+    start = index + 1
+    stop = min(len(code), start + 2000)
+    index = start
+    while index < stop:
+        char = code[index]
+        if char in "([{":
+            close = pairs.get(index)
+            if close is None:
+                return code[start:index], None
+            index = close + 1
+            continue
+        if char == "=":
+            if code.startswith("=>", index):
+                index += 2
+                continue
+            return code[start:index], index + 1
+        if char in ";,)\n}":
+            return code[start:index], None
+        index += 1
+    return code[start:index], None
+
+
+def _js_words(code, word):
+    """Offsets where word occurs as a whole word (not a member name)."""
+    found, at = [], code.find(word)
+    while at >= 0:
+        end = at + len(word)
+        if (not at or not (code[at - 1].isalnum() or code[at - 1] in "_$.")) and \
+                (end >= len(code) or not (code[end].isalnum() or code[end] in "_$")):
+            found.append(at)
+        at = code.find(word, end)
+    return found
+
+
+def _js_record(text):
+    """Units for find, and definitions, imports, calls, references and written types for callers."""
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
+    code, strings, comments = _js_mask(text)
+    lines = code.split("\n")
+    if lines and lines[-1] == "":
+        lines.pop()
+    count = max(1, len(lines))
+    starts, offset = [], 0
+    for line in lines:
+        starts.append(offset)
+        offset += len(line) + 1
+    breaks = [match.start() for match in re.finditer("\n", code)]
+
+    def line_of(at):
+        return bisect.bisect_left(breaks, at) + 1
+
+    # Declaration candidates (one per line start) and call candidates (one per "(").
+    decls = []
+    for number, line in enumerate(lines, 1):
+        if not line or line.isspace():
+            continue
+        match = _JS_DECL.match(line)
+        if match:
+            decls.append((starts[number - 1] + len(line) - len(line.lstrip()), number, match))
+    reverse, total, calls = code[::-1], len(code), []
+    for match in re.finditer(r"\(", code):
+        at = match.start()
+        found = _JS_CALL_REV.match(reverse, total - at)
+        if not found:
+            continue
+        chain_start, chain_end = found.span("chain")
+        forward = code[total - chain_end:total - chain_start]
+        parts = [part for part in re.split(r"\s*\??!?\s*\.\s*\??\s*", forward.strip())]
+        if not parts or any(not part or part.lstrip("#")[:1].isdigit() for part in parts):
+            continue
+        lead = found.group("lead").strip()[::-1]
+        if lead in ("function", "get", "set", "async", "static"):
+            continue
+        if len(parts) == 1 and parts[0] in _JS_KEYWORDS:
+            continue
+        name_at = total - chain_start - len(parts[-1])
+        chain = ".".join(parts)
+        receiver = None
+        if lead.startswith("."):
+            chain = "?." + chain
+            receiver = total - found.end("lead") - 1  # the receiver ends here (whitespace allowed)
+            while receiver > 0 and code[receiver] in " \t\n":
+                receiver -= 1
+            receiver = receiver if code[receiver] == ")" else None
+        calls.append((name_at, at, chain, receiver))
+    points = sorted([start for start, _, _ in decls] + [call[0] for call in calls])
+    pairs, around_list = _js_brackets(code, points)
+    around = dict(zip(points, around_list))
+    if any(call[3] is not None for call in calls):  # a.b().c(: the receiver is what a.b() returns
+        opens, chains = {close: opening for opening, close in pairs.items()}, {}
+        for index, (name_at, at, chain, receiver) in enumerate(calls):
+            if receiver is not None and opens.get(receiver) in chains:
+                inner = chains[opens[receiver]]
+                if not inner.startswith("?"):
+                    chain = inner + "()." + chain[2:]
+                    calls[index] = (name_at, at, chain, receiver)
+            chains[at] = chain
+
+    defs, extra, names_at = [], [], set()  # extra[i]: (start, end, body) offsets of defs[i]
+    types, bases, implements, exports = [], {}, {}, []
+    class_bodies, interface_bodies, stack, params_of = {}, {}, [], {}
+    position = {}
+
+    def parent_at(at):
+        while stack and stack[-1][1] < at:
+            stack.pop()
+        return stack[-1] if stack else None
+
+    def add(qualname, kind, start, end, body=None, name_at=None):
+        index = position.get(qualname)
+        if index is not None:
+            if body is None or extra[index][2] is not None:
+                return False
+            defs[index][2:] = [line_of(start), line_of(end)]
+            extra[index] = (start, end, body)
+        else:
+            position[qualname] = len(defs)
+            defs.append([qualname, kind, line_of(start), line_of(end)])
+            extra.append((start, end, body))
+        if name_at is not None:
+            names_at.add(name_at)
+        stack.append((start, end, qualname, kind))
+        return True
+
+    def add_params(owner, opening, close, is_constructor=False, cls=None):
+        for name, kind, is_property in _js_params(code[opening + 1:close]):
+            params_of.setdefault(owner, []).append(name)
+            if kind:
+                types.append([owner, name, kind])
+                if is_constructor and is_property and cls:
+                    types.append([cls, "this." + name, kind])
+
+    def add_class(qualname, header_at, start, export_default=False):
+        body = _js_body(code, header_at, pairs, header=True)
+        if body is None or body not in pairs:
+            return
+        header = code[header_at:body]
+        extends = re.search(r"\bextends\s+([A-Za-z_$][\w$]*(?:\s*\.\s*[A-Za-z_$][\w$]*)*)", header)
+        if extends:
+            bases[qualname] = [re.sub(r"\s+", "", extends.group(1))]
+        clause = re.search(r"\bimplements\s+(.*)$", header, re.S)
+        if clause:
+            implements[qualname] = [kind for kind in map(_js_type, _js_split(clause.group(1))) if kind]
+        if add(qualname, "class", start, pairs[body], body):
+            class_bodies[body] = qualname
+            if export_default:
+                exports.append(["default", qualname])
+
+    for start, number, match in decls:
+        enclosing = around.get(start, -1)
+        bracket = code[enclosing] if enclosing >= 0 else ""
+        parent = parent_at(start)
+        prefix = parent[2] + "." if parent else ""
+        mods = match.group("mods") or ""
+        default = "default" in mods.split()
+        if match.group("mname") is not None:
+            owner = class_bodies.get(enclosing)
+            if owner is None and enclosing not in interface_bodies:
+                continue
+            if owner is None:  # an interface member: method signatures only
+                if match.group("after") in "(<":
+                    opening = _js_skip(code, _js_generics(code, match.start("after") + starts[number - 1]))
+                    close = pairs.get(opening)
+                    if close is not None and add(interface_bodies[enclosing] + "." + match.group("mname"), "method",
+                                                 start, close, name_at=starts[number - 1] + match.start("mname")):
+                        stack.pop()
+                        returns = _js_returns(code, close, None)
+                        if returns:
+                            types.append([interface_bodies[enclosing] + "." + match.group("mname"), "()", returns])
+                continue
+            name, after = match.group("mname"), match.group("after")
+            qualname = owner + "." + name
+            name_at = starts[number - 1] + match.start("mname")
+            after_at = starts[number - 1] + match.start("after")
+            if after in "(<":
+                opening = _js_skip(code, _js_generics(code, after_at))
+                close = pairs.get(opening) if opening < len(code) and code[opening] == "(" else None
+                if close is None:
+                    continue
+                body = _js_body(code, close + 1, pairs)
+                end = pairs.get(body, close) if body is not None else close
+                if add(qualname, "method", start, end, body, name_at):
+                    add_params(qualname, opening, close, name == "constructor", owner)
+                    returns = _js_returns(code, close, body)
+                    if returns:
+                        types.append([qualname, "()", returns])
+                continue
+            annotation, value_at = (None, after_at + 1) if after == "=" else (
+                _js_type_and_value(code, after_at, pairs) if after == ":" else (None, None))
+            kind = _js_type(annotation)
+            value = _js_value(code, value_at, pairs) if value_at is not None else None
+            if value and value[0] == "new":
+                kind = value[1]
+            elif value and value[0] == "call":
+                kind = kind or value[1]
+            if kind:
+                types.append([owner, "this." + name, kind])
+            if value and value[0] == "function":
+                if add(qualname, "method", start, value[3], value[2], name_at) and value[1] is not None:
+                    add_params(qualname, value[1], pairs[value[1]])
+            else:
+                end = _js_end(code, value_at, pairs) if value_at is not None else after_at
+                if add(qualname, "variable", start, end, None, name_at):
+                    stack.pop()
+            continue
+        if enclosing >= 0 and (bracket != "{" or enclosing in class_bodies or enclosing in interface_bodies):
+            continue
+        if parent and parent[3] in ("interface", "enum", "type"):
+            continue
+        line_at = starts[number - 1]
+        keyword = match.group("kw")
+        if keyword == "function":
+            name = match.group("kname") or ("default" if default else None)
+            if not name:
+                continue
+            after = match.end("kname") if match.group("kname") else match.end()
+            opening = _js_skip(code, _js_generics(code, _js_skip(code, line_at + after)))
+            close = pairs.get(opening) if opening < len(code) and code[opening] == "(" else None
+            if close is None:
+                continue
+            body = _js_body(code, close + 1, pairs)
+            name_at = line_at + match.start("kname") if match.group("kname") else None
+            if add(prefix + name, "function", start, pairs.get(body, close) if body is not None else close, body,
+                   name_at):
+                add_params(prefix + name, opening, close)
+                returns = _js_returns(code, close, body)
+                if returns:
+                    types.append([prefix + name, "()", returns])
+                if default and name != "default":
+                    exports.append(["default", prefix + name])
+            continue
+        if keyword == "class":
+            name = match.group("kname")
+            if name in (None, "extends", "implements"):
+                name = "default" if default else None
+                header_at = line_at + match.start("kname") if match.group("kname") else line_at + match.end()
+            else:
+                header_at = line_at + match.end("kname")
+                names_at.add(line_at + match.start("kname"))
+            if name:
+                add_class(prefix + name, header_at, start, default and name != "default")
+            continue
+        if match.group("lhs"):
+            name = match.group("xname") or match.group("lhs").rsplit(".", 1)[-1]
+            header_at = line_at + (match.end("xname") if match.group("xname") else match.end())
+            add_class(prefix + name, header_at, start)
+            continue
+        if match.group("cname") or match.group("pname"):
+            name = match.group("cname") or match.group("pname")
+            qualname = name if match.group("cname") else match.group("owner") + "." + name
+            value_at = line_at + match.end()
+            value = _js_value(code, value_at, pairs)
+            if value and value[0] == "function":
+                if add(qualname, "function" if match.group("cname") else "method", start, value[3], value[2]):
+                    if value[1] is not None:
+                        add_params(qualname, value[1], pairs[value[1]])
+            elif match.group("cname") and not parent:
+                if add(qualname, "variable", start, _js_end(code, value_at, pairs)):
+                    stack.pop()
+            if match.group("cname"):
+                exports.append([name, qualname])
+            continue
+        keyword, name = match.group("kw2"), match.group("name2")
+        if keyword is None:
+            continue
+        name_at = line_at + match.start("name2")
+        if keyword in ("interface", "enum") or keyword.startswith("const") and keyword.endswith("enum"):
+            body = _js_body(code, line_at + match.end("name2"), pairs, header=True)
+            if body is None or body not in pairs:
+                continue
+            kind = "interface" if keyword == "interface" else "enum"
+            if kind == "interface":
+                extends = re.search(r"\bextends\s+(.*)$", code[line_at + match.end("name2"):body], re.S)
+                if extends:
+                    bases[prefix + name] = [kind for kind in map(_js_type, _js_split(extends.group(1))) if kind]
+            if add(prefix + name, kind, start, pairs[body], body, name_at) and kind == "interface":
+                interface_bodies[body] = prefix + name
+            continue
+        if keyword in ("namespace", "module"):
+            body = _js_body(code, line_at + match.end("name2"), pairs, header=True)
+            if body is not None and body in pairs:
+                add(prefix + name, "namespace", start, pairs[body], body, name_at)
+            continue
+        if keyword == "type":
+            equals = code.find("=", line_at + match.end("name2"))
+            if equals < 0:
+                continue
+            if add(prefix + name, "type", start, _js_end(code, equals + 1, pairs), None, name_at):
+                stack.pop()
+            continue
+        if "." in name:
+            continue
+        annotation, value_at = _js_type_and_value(code, line_at + match.end("name2"), pairs)
+        kind = _js_type(annotation)
+        value = _js_value(code, value_at, pairs) if value_at is not None else None
+        scope = parent[2] if parent else ""
+        if value and value[0] == "new":
+            kind = value[1]
+        elif value and value[0] == "call":
+            kind = kind or value[1]
+        if kind:
+            types.append([scope, name, kind])
+        if value and value[0] == "function":
+            if add(prefix + name, "function", start, value[3], value[2], name_at) and value[1] is not None:
+                add_params(prefix + name, value[1], pairs[value[1]])
+        elif value and value[0] == "class":
+            add_class(prefix + name, value[2], start)
+        elif not parent or parent[3] == "namespace":
+            end = _js_end(code, value_at, pairs) if value_at is not None else line_at + match.end()
+            if add(prefix + name, "variable", start, end, None, name_at):
+                stack.pop()
+                if default:
+                    exports.append(["default", prefix + name])
+
+    # Scopes: the innermost definition around each call, import and reference.
+    order = sorted((index for index in range(len(defs)) if defs[index][1] != "variable"),
+                   key=lambda index: (extra[index][0], -extra[index][1]))
+
+    def scopes(offsets):
+        found, open_defs, pointer = [], [], 0
+        for at in offsets:
+            while pointer < len(order) and extra[order[pointer]][0] <= at:
+                index = order[pointer]
+                while open_defs and extra[open_defs[-1]][1] < extra[index][0]:
+                    open_defs.pop()
+                open_defs.append(index)
+                pointer += 1
+            while open_defs and extra[open_defs[-1]][1] < at:
+                open_defs.pop()
+            found.append(defs[open_defs[-1]][0] if open_defs else "")
+        return found
+
+    kinds = {qualname: defs[index][1] for qualname, index in position.items()}
+    kept = []
+    for name_at, at, chain, _receiver in calls:
+        if name_at in names_at:
+            continue
+        enclosing = around.get(name_at, -1)
+        if enclosing in interface_bodies:
+            continue
+        close = pairs.get(at)
+        if close is not None:
+            after = _js_skip(code, close + 1)
+            if after < len(code) and code[after] == "{" and not chain.startswith("?."):
+                continue  # object-literal method shorthand: name(args) { ... }
+            if after < len(code) and code[after] == ":" and "." not in chain:
+                before = code[code.rfind("\n", 0, name_at) + 1:name_at]
+                if _JS_MODIFIERS_ONLY.fullmatch(before) or before.rstrip()[-1:] in ("{", ";", ","):
+                    continue  # a method signature in a type literal: name(args): Type
+        kept.append((name_at, chain))
+    call_scopes = scopes([name_at for name_at, _ in kept])
+    calls_out = [[line_of(name_at), scope, chain] for (name_at, chain), scope in zip(kept, call_scopes)
+                 if kinds.get(scope) not in ("type", "interface")]
+    assigned = list(_JS_THIS_NEW.finditer(code))
+    for match, scope in zip(assigned, scopes([match.start() for match in assigned])):
+        owner = scope
+        while owner and kinds.get(owner) != "class":
+            owner = owner.rpartition(".")[0]
+        if owner:
+            types.append([owner, "this." + match.group(1), re.sub(r"\s+", "", match.group(2))])
+
+    # Imports and exports.
+    imports, taken = [], set()
+
+    def spec(match):
+        found = strings.get(match.start("q"))
+        if found is None or not found[1] or len(found[1]) > 300:
+            return None
+        taken.add(match.start("q"))
+        return found[1]
+
+    import_sites, at_import, at_export = [], _js_words(code, "import"), _js_words(code, "export")
+    for match in filter(None, (_JS_IMPORT_EQUALS.match(code, at) for at in at_import)):
+        target = spec(match)
+        if target:
+            import_sites.append((match.start(), target, "require", None, match.group("local")))
+    for match in filter(None, (_JS_IMPORT.match(code, at) for at in at_import)):
+        target = spec(match)
+        if target is None:
+            continue
+        clause = match.group("clause").strip()
+        rest = clause
+        head = re.match(r"([A-Za-z_$][\w$]*)\s*(?:,|$)", clause)
+        if head and head.group(1) != "type":
+            import_sites.append((match.start(), target, "default", "default", head.group(1)))
+            rest = clause[head.end():]
+        namespace = re.search(r"\*\s*as\s+([A-Za-z_$][\w$]*)", rest)
+        if namespace:
+            import_sites.append((match.start(), target, "namespace", None, namespace.group(1)))
+        braces = re.search(r"\{([^{}]*)\}", rest)
+        if braces:
+            for item in braces.group(1).split(","):
+                specifier = _JS_SPECIFIER.fullmatch(item.strip())
+                if specifier:
+                    import_sites.append((match.start(), target, "named", specifier.group(1),
+                                         specifier.group(2) or specifier.group(1)))
+        if not head and not namespace and not braces:
+            import_sites.append((match.start(), target, "side", None, None))
+    for match in filter(None, (_JS_REEXPORT.match(code, at) for at in at_export)):
+        target = spec(match)
+        if target is None:
+            continue
+        clause = match.group("clause")
+        if clause.startswith("*"):
+            alias = re.search(r"as\s+([A-Za-z_$][\w$]*)", clause)
+            import_sites.append((match.start(), target, "reexport-namespace" if alias else "reexport-all", None,
+                                 alias.group(1) if alias else None))
+            continue
+        for item in clause.strip("{} \n\t").split(","):
+            specifier = _JS_SPECIFIER.fullmatch(item.strip())
+            if specifier:
+                import_sites.append((match.start(), target, "reexport", specifier.group(1),
+                                     specifier.group(2) or specifier.group(1)))
+    for match in filter(None, (_JS_REQUIRE.match(code, at) for at in _js_words(code, "require"))):
+        if match.start("q") in taken:
+            continue
+        target = spec(match)
+        if target is None:
+            continue
+        binding = _JS_REQUIRE_BIND.search(code, max(0, match.start() - 300), match.start())
+        bind = binding.group(1) if binding else None
+        if not bind:
+            import_sites.append((match.start(), target, "side", None, None))
+        elif bind.startswith("{"):
+            for item in bind.strip("{} \n\t").split(","):
+                pair = re.fullmatch(r"\s*([\w$]+)\s*(?::\s*([\w$]+))?\s*", item)
+                if pair:
+                    import_sites.append((match.start(), target, "named", pair.group(1), pair.group(2) or pair.group(1)))
+        else:
+            import_sites.append((match.start(), target, "require", None, bind))
+    for match in filter(None, (_JS_DYNAMIC.match(code, at) for at in at_import)):
+        target = spec(match)
+        if target is not None:
+            import_sites.append((match.start(), target, "dynamic", None, None))
+    for match in filter(None, (_JS_IMPORT_SIDE.match(code, at) for at in at_import)):
+        if match.start("q") not in taken:
+            target = spec(match)
+            if target is not None:
+                import_sites.append((match.start(), target, "side", None, None))
+    import_sites.sort()
+    import_scopes = scopes([site[0] for site in import_sites])
+    for (at, target, kind, imported, local), scope in zip(import_sites, import_scopes):
+        imports.append([line_of(at), scope, target, kind, imported, local])
+    for match in filter(None, (_JS_EXPORT_LIST.match(code, at) for at in at_export)):
+        for item in match.group("list").split(","):
+            specifier = _JS_SPECIFIER.fullmatch(item.strip())
+            if specifier:
+                exports.append([specifier.group(2) or specifier.group(1), specifier.group(1)])
+    for match in filter(None, (_JS_EXPORT_DEFAULT.match(code, at) for at in at_export)):
+        exports.append(["default", match.group("name")])
+    for match in filter(None, (_JS_EXPORT_ASSIGN.match(code, at) for at in at_export + [
+            at for at in _js_words(code, "module") if code.startswith("module.exports", at)])):
+        if match.group("name"):
+            exports.append(["default", match.group("name")])
+        elif match.start("obj") in pairs:
+            body = code[match.start("obj") + 1:pairs[match.start("obj")]]
+            for item in _js_split(body):
+                pair = re.fullmatch(r"\s*([A-Za-z_$][\w$]*)\s*(?::\s*([A-Za-z_$][\w$]*)\s*)?", item)
+                if pair:
+                    exports.append([pair.group(1), pair.group(2) or pair.group(1)])
+
+    # References: dotted names whose head an import binds (ns.Name, mod.func passed as a value).
+    refs = []
+    bound = sorted({site[4] for site in import_sites if site[4] and site[2] in ("namespace", "require", "default")})
+    if bound:
+        pattern = re.compile(r"(?<![\w$.#])(?:" + "|".join(map(re.escape, bound)) + r")(?:\s*\??\.\s*#?[A-Za-z_$][\w$]*)+"
+                             r"(?![\w$])(?!\s*(?:<[^<>()\n]*>)?\s*\()")
+        found = list(pattern.finditer(code))
+        for match, scope in zip(found, scopes([match.start() for match in found])):
+            refs.append([line_of(match.start()), scope, re.sub(r"[\s?]", "", match.group())])
+
+    # Units for find: one per definition, words weighted like Python's.
+    units = [_new_unit("", "module", 1, 1, count)]
+    unit_of = {}
+    for index, (qualname, kind, line, end) in enumerate(defs):
+        start_line = line
+        while start_line > 1 and lines[start_line - 2].lstrip().startswith("@"):
+            start_line -= 1
+        unit = _new_unit(qualname, kind, line, start_line, max(end, line))
+        body = extra[index][2]
+        unit.append(line_of(body) if body is not None else line)
+        name = qualname.rsplit(".", 1)[-1].lstrip("#")
+        _add_ident(unit[6], name, W_NAME)
+        for part in qualname.split(".")[:-1]:
+            _add_ident(unit[6], part, W_QUAL)
+        unit_of[qualname] = len(units)
+        units.append(unit)
+    owner = _owner_map(units, count)
+    unit_starts = {}
+    for index, unit in enumerate(units[1:], 1):
+        unit_starts.setdefault(unit[3], index)
+    text_breaks = [match.start() for match in re.finditer("\n", text)]
+    raw_lines = text.split("\n")
+    for at, raw in comments:
+        first = bisect.bisect_left(text_breaks, at) + 1
+        last = first + raw.count("\n")
+        body = raw[2:-2] if raw.startswith("/*") else raw[2:]
+        index = owner[first] if first < len(owner) else 0
+        if not text[text.rfind("\n", 0, at) + 1:at].strip():  # a whole-line comment describes what follows it
+            following = last + 1
+            while following <= len(raw_lines) and raw_lines[following - 1].lstrip().startswith(("//", "/*", "*")):
+                following += 1
+            target = unit_starts.get(following)
+            if target is not None:
+                if raw.startswith("/**") and not units[target][5]:
+                    units[target][5] = _first_line(re.sub(r"(?m)^\s*\*+ ?", "", body).replace("@", " "))
+                _add_text(units[target][6], body[:8000], W_DOC if raw.startswith("/**") else W_COMMENT)
+                continue
+        _add_text(units[index][6], body[:8000], W_COMMENT)
+    for at, value in strings.values():
+        if value:
+            number = bisect.bisect_left(text_breaks, at) + 1
+            _add_text(units[owner[number] if number < len(owner) else 0][6], value[:4000], W_STRING)
+    for number, line in enumerate(lines, 1):
+        if line and not line.isspace():
+            terms = units[owner[number]][6]
+            for ident in _IDENT.findall(line):
+                if ident not in _JS_NOISE:
+                    for term in _ident_terms(ident):
+                        terms[term] = terms.get(term, 0.0) + W_IDENT
+    for qualname, names in params_of.items():
+        if qualname in unit_of:
+            for name in names:
+                _add_ident(units[unit_of[qualname]][6], name, W_PARAM)
+    js = {"defs": defs, "imports": imports, "calls": calls_out, "refs": refs, "bases": bases,
+          "implements": implements, "types": types, "exports": exports}
+    if text.startswith("#!") and "node" in text[:text.find("\n") if "\n" in text else len(text)]:
+        js["main"] = 1
+    return units, js
+
+
 def _kind(path, data):
     suffix = os.path.splitext(path)[1].lower()
     if suffix in KINDS:
@@ -781,6 +1737,50 @@ def _kind(path, data):
     return "text"
 
 
+_JSONC = re.compile(r'"(?:[^"\\\n]|\\.)*"|//[^\n]*|/\*.*?\*/', re.S)
+
+
+def _jsonc(text):
+    """Parse JSON with comments and trailing commas (tsconfig.json, jsconfig.json); None if it does not parse."""
+    stripped = _JSONC.sub(lambda match: match.group() if match.group().startswith('"') else " ", text)
+    stripped = re.sub(r",(\s*[}\]])", r"\1", stripped)
+    try:
+        return json.loads(stripped)
+    except ValueError:
+        return None
+
+
+def _json_facts(path, text):
+    """Module-resolution settings of tsconfig/jsconfig files and entry points of package.json files."""
+    name = path.rsplit("/", 1)[-1]
+    if re.fullmatch(r"(?:ts|js)config(?:\.[\w.-]+)?\.json", name):
+        data = _jsonc(text)
+        if isinstance(data, dict):
+            options = data.get("compilerOptions") if isinstance(data.get("compilerOptions"), dict) else {}
+            paths = options.get("paths") if isinstance(options.get("paths"), dict) else {}
+            config = {"baseUrl": options.get("baseUrl") if isinstance(options.get("baseUrl"), str) else None,
+                      "paths": {key: [item for item in value if isinstance(item, str)]
+                                for key, value in paths.items() if isinstance(value, list)},
+                      "extends": data.get("extends") if isinstance(data.get("extends"), (str, list)) else None}
+            return {"tsconfig": config}
+    elif name == "package.json":
+        data = _jsonc(text)
+        if isinstance(data, dict):
+            entry = {key: data[key] for key in ("name", "main", "module", "bin")
+                     if isinstance(data.get(key), str) or (key == "bin" and isinstance(data.get(key), dict))}
+            if isinstance(entry.get("bin"), dict):
+                entry["bin"] = {key: value for key, value in entry["bin"].items() if isinstance(value, str)}
+            lines = {}
+            for number, line in enumerate(_lines(text), 1):
+                found = re.match(r'\s*"(main|module|bin)"\s*:', line)
+                if found and found.group(1) in entry:
+                    lines.setdefault(found.group(1), number)
+            if lines:
+                entry["lines"] = lines
+            return {"package": entry} if entry else {}
+    return {}
+
+
 def extract(path, data):
     """Index one file's bytes: its kind, search units and (for Python) definitions, imports and calls."""
     if data.startswith(b"\xef\xbb\xbf"):
@@ -788,7 +1788,7 @@ def extract(path, data):
     kind = _kind(path, data)
     text = data.decode("utf-8", errors="replace")
     lines = _lines(text)
-    python, error = None, None
+    python, script, error, facts = None, None, None, {}
     if kind == "python":
         try:
             units, python = _python_record(lines, text)
@@ -797,8 +1797,16 @@ def extract(path, data):
             if getattr(exc, "lineno", None):
                 error += f" (line {exc.lineno})"
             units, python = _python_fallback(lines)
+    elif kind == "javascript":
+        try:
+            units, script = _js_record(text)
+        except (ValueError, IndexError, KeyError, RecursionError, MemoryError) as exc:  # a scanner bug: keep the file
+            error = f"{type(exc).__name__}: {exc}"[:160]
+            units = _other_units(kind, lines)
     else:
         units = _other_units(kind, lines)
+        if kind == "json":
+            facts = _json_facts(path, text)
     kept = []
     for index, unit in enumerate(units):
         if not unit[6] and not unit[0] and index:
@@ -807,8 +1815,11 @@ def extract(path, data):
         unit[7] = round(sum(unit[6].values()), 1)
         kept.append(unit)
     record = {"kind": kind, "lines": len(lines), "units": kept}
+    record.update(facts)
     if python is not None:
         record["py"] = python
+    if script is not None:
+        record["js"] = script
     if error:
         record["error"] = error
     return record
@@ -883,27 +1894,113 @@ def _walk(root, counts, include_generated=False, cache_dir=None):
             yield path, full, info
 
 
+def _ctime(info):
+    """Inode change time on POSIX (any write or metadata change moves it, and it cannot be set back); None
+    on Windows, where st_ctime is the creation time."""
+    return None if os.name == "nt" else info.st_ctime_ns
+
+
+def default_cache_dir():
+    """The user's local cache directory for indexes: $XDG_CACHE_HOME/oaw/code-index or ~/.cache/oaw/code-index,
+    %LOCALAPPDATA%\\oaw\\code-index on Windows; None when no absolute location is known."""
+    if os.name == "nt":
+        import ntpath
+        base = os.environ.get("LOCALAPPDATA") or ntpath.join(os.path.expanduser("~"), "AppData", "Local")
+        return ntpath.join(base, "oaw", "code-index") if ntpath.isabs(base) else None
+    base = os.environ.get("XDG_CACHE_HOME") or ""
+    if not os.path.isabs(base):
+        base = os.path.join(os.path.expanduser("~"), ".cache")
+    return os.path.join(base, "oaw", "code-index") if os.path.isabs(base) else None
+
+
+def _inside(path, root):
+    try:
+        relative = os.path.relpath(os.path.abspath(path), os.path.abspath(root))
+    except ValueError:  # another Windows drive
+        return False
+    return relative == "." or not (relative == ".." or relative.startswith(".." + os.sep))
+
+
+def choose_cache(root, cache=None, no_cache=False):
+    """(cache directory or None, where it came from) for the command line: --no-cache, --cache, the
+    environment variable, else the user's local cache directory unless that lies inside the indexed tree."""
+    if no_cache:
+        return None, "none"
+    if cache:
+        return cache, "--cache"
+    if os.environ.get(CACHE_ENV):
+        return os.environ[CACHE_ENV], CACHE_ENV
+    default = default_cache_dir()
+    if default is None or _inside(default, root):
+        return None, "none"
+    return default, "default"
+
+
+def _engine():
+    """Fingerprint of this file: a cache written by other indexing code is rebuilt, not trusted."""
+    try:
+        with open(__file__, "rb") as handle:
+            return hashlib.sha256(handle.read()).hexdigest()[:16]
+    except (OSError, NameError):
+        return str(INDEX_VERSION)
+
+
+ENGINE = _engine()
+
+
 def _cache_file(root, cache_dir):
     digest = hashlib.sha256(os.path.normcase(root).encode("utf-8", "surrogatepass")).hexdigest()[:16]
     return os.path.join(cache_dir, f"code-index-{digest}.json")
 
 
-def _load_cache(path, root, include_generated):
+def _units_file(cache_path):
+    """Search units live beside the main cache file, so that callers, affected, path and overview never load
+    them; both files carry the same token, written units first."""
+    return cache_path[:-len(".json")] + ".units.json"
+
+
+def _load_cache(path, root, include_generated, need_units):
+    """(files, token, units loaded) from a matching cache, or None."""
     try:
         with open(path, encoding="utf-8") as handle:
             data = json.load(handle)
     except (OSError, ValueError):
         return None
     if (not isinstance(data, dict) or data.get("index_version") != INDEX_VERSION or data.get("root") != root
-            or data.get("include_generated") != include_generated or not isinstance(data.get("files"), dict)):
+            or data.get("engine") != ENGINE or data.get("include_generated") != include_generated
+            or not isinstance(data.get("files"), dict)):
         return None
-    return data["files"]
+    token = data.get("token")
+    if need_units:
+        return (data["files"], token, True) if _attach_units(path, token, data["files"]) else None
+    try:
+        with open(_units_file(path), encoding="utf-8") as handle:
+            head = handle.read(200)
+    except OSError:
+        return None
+    found = re.match(r'\{"token":"([0-9a-f]+)"', head)
+    return (data["files"], token, False) if found and found.group(1) == token else None
 
 
-def _save_cache(path, root, include_generated, files):
-    directory = os.path.dirname(path)
-    data = {"index_version": INDEX_VERSION, "root": root, "include_generated": include_generated, "files": files}
-    handle, temporary = tempfile.mkstemp(prefix=".code-index-", suffix=".tmp", dir=directory)
+def _attach_units(path, token, files):
+    """Put each record's search units back from the units file; False when it is missing or does not match."""
+    try:
+        with open(_units_file(path), encoding="utf-8") as handle:
+            data = json.load(handle)
+    except (OSError, ValueError):
+        return False
+    if not isinstance(data, dict) or data.get("token") != token or not isinstance(data.get("files"), dict):
+        return False
+    units = data["files"]
+    for name, record in files.items():
+        entry = units.get(name)
+        if isinstance(entry, dict) and "units" in entry and isinstance(record, dict):
+            record["units"] = entry["units"]
+    return True
+
+
+def _write_json(path, data):
+    handle, temporary = tempfile.mkstemp(prefix=".code-index-", suffix=".tmp", dir=os.path.dirname(path))
     try:
         with os.fdopen(handle, "w", encoding="utf-8") as stream:
             json.dump(data, stream, separators=(",", ":"), ensure_ascii=False)
@@ -916,13 +2013,45 @@ def _save_cache(path, root, include_generated, files):
         raise
 
 
-def build_index(root=".", cache_dir=None, frozen=False, include_generated=False):
-    """Index root (on the fly, or through the cache in cache_dir) and return an Index."""
+def _save_cache(path, root, include_generated, files):
+    token = os.urandom(8).hex()
+    _write_json(_units_file(path), {"token": token, "files": {
+        name: {"units": record["units"]} for name, record in files.items() if "units" in record}})
+    _write_json(path, {"token": token, "index_version": INDEX_VERSION, "engine": ENGINE, "root": root,
+                       "include_generated": include_generated,
+                       "files": {name: {key: value for key, value in record.items() if key != "units"}
+                                 for name, record in files.items()}})
+
+
+PARALLEL_MIN_FILES = 200  # fewer files to (re-)index are done in this process
+MAX_JOBS = 8
+
+
+def _extract_item(item):
+    return extract(*item)
+
+
+def _extract_all(todo):
+    """{path: record} for [(path, bytes)]; in worker processes (standard library) when there are many."""
+    jobs = min(MAX_JOBS, os.cpu_count() or 1)
+    if len(todo) >= PARALLEL_MIN_FILES and jobs > 1:
+        try:
+            import concurrent.futures
+            with concurrent.futures.ProcessPoolExecutor(jobs) as pool:
+                return dict(zip((path for path, _ in todo), pool.map(_extract_item, todo, chunksize=16)))
+        except (OSError, ImportError, NotImplementedError, RuntimeError):  # no process support: one process
+            pass
+    return {path: extract(path, data) for path, data in todo}
+
+
+def build_index(root=".", cache_dir=None, frozen=False, include_generated=False, need_units=True):
+    """Index root (on the fly, or through the cache in cache_dir) and return an Index. need_units=False
+    leaves out the search units that only find uses, when the cache can supply everything else."""
     started = time.perf_counter()
     root = os.path.abspath(root)
     if not os.path.isdir(root):
         raise CodeIndexError(f"root is not a directory: {root}")
-    cache_path, old = None, None
+    cache_path, old, token, units_loaded = None, None, None, True
     if cache_dir:
         cache_dir = os.path.abspath(cache_dir)
         try:
@@ -930,11 +2059,14 @@ def build_index(root=".", cache_dir=None, frozen=False, include_generated=False)
         except OSError as exc:
             raise CodeIndexError(f"cannot create cache directory {cache_dir}: {exc.strerror or exc}") from None
         cache_path = _cache_file(root, cache_dir)
-        old = _load_cache(cache_path, root, include_generated)
-    counts, files, stale = Counter(), {}, []
+        loaded = _load_cache(cache_path, root, include_generated, need_units)
+        if loaded:
+            old, token, units_loaded = loaded
+    counts, files, stale, todo, details = Counter(), {}, [], [], {}
     for path, full, info in _walk(root, counts, include_generated, cache_dir):
         previous = old.get(path) if old else None
-        if previous and previous.get("size") == info.st_size and previous.get("mtime_ns") == info.st_mtime_ns:
+        if previous and previous.get("size") == info.st_size and previous.get("mtime_ns") == info.st_mtime_ns \
+                and previous.get("ctime_ns") == _ctime(info):
             files[path] = previous
             counts["reused"] += 1
             continue
@@ -945,7 +2077,7 @@ def build_index(root=".", cache_dir=None, frozen=False, include_generated=False)
             continue
         if info.st_size > MAX_FILE_BYTES:
             files[path] = {"kind": "skipped", "reason": "over 1 MB", "size": info.st_size,
-                           "mtime_ns": info.st_mtime_ns, "sha256": None}
+                           "mtime_ns": info.st_mtime_ns, "ctime_ns": _ctime(info), "sha256": None}
             counts["indexed"] += 1
             continue
         try:
@@ -956,22 +2088,33 @@ def build_index(root=".", cache_dir=None, frozen=False, include_generated=False)
             continue
         digest = hashlib.sha256(data).hexdigest()
         if previous and previous.get("sha256") == digest:
-            previous["mtime_ns"], previous["size"] = info.st_mtime_ns, info.st_size
+            previous["mtime_ns"], previous["size"], previous["ctime_ns"] = info.st_mtime_ns, info.st_size, _ctime(info)
             files[path] = previous
             counts["reused"] += 1
             counts["touched"] += 1
             continue
+        details[path] = dict(size=info.st_size, mtime_ns=info.st_mtime_ns, ctime_ns=_ctime(info), sha256=digest)
+        files[path] = None
         if b"\0" in data[:8192]:
-            record = {"kind": "skipped", "reason": "binary"}
+            files[path] = {"kind": "skipped", "reason": "binary"}
         else:
-            record = extract(path, data)
-        record.update(size=info.st_size, mtime_ns=info.st_mtime_ns, sha256=digest)
-        files[path] = record
+            todo.append((path, data))
         counts["indexed"] += 1
     removed = sorted(set(old or ()) - set(files) - set(stale))
     if frozen:
         stale.extend(path for path in removed if path not in stale)
-    if cache_path and (counts["indexed"] or counts["touched"] or removed or old is None) and not (frozen and old):
+    write = cache_path and (counts["indexed"] or counts["touched"] or removed or old is None) and not (frozen and old)
+    if write and not units_loaded and not _attach_units(cache_path, token, files):
+        for path, record in files.items():  # units file lost since loading: index those files again
+            if record is not None and "units" not in record and record.get("kind") != "skipped":
+                with open(os.path.join(root, *path.split("/")), "rb") as handle:
+                    todo.append((path, handle.read(MAX_FILE_BYTES + 1)))
+                details[path] = {key: record[key] for key in ("size", "mtime_ns", "ctime_ns", "sha256")}
+    for path, record in _extract_all(todo).items():
+        files[path] = record
+    for path, detail in details.items():
+        files[path].update(detail)
+    if write:
         try:
             _save_cache(cache_path, root, include_generated, files)
         except OSError as exc:
@@ -994,13 +2137,31 @@ class Index:
         self._bindings = {}
         self._edges = None
         self._dirs = None
+        self._js_modules = {}
+        self._configs = {}
 
     # -------- paths and modules
 
     def tables(self):
         if self._tables is None:
             defs, by_name, module_names, var_types, classes = {}, {}, {}, {}, {}
+            js_types, js_bases, js_implements, js_exports = {}, {}, {}, {}
             for path, record in self.files.items():
+                script = record.get("js")
+                if script:
+                    for qualname, kind, line, end in script["defs"]:
+                        defs.setdefault((path, qualname), (kind, line, end))
+                        by_name.setdefault(qualname.rsplit(".", 1)[-1], []).append((path, qualname))
+                    for scope, name, chain in script["types"]:
+                        js_types.setdefault((path, scope, name), chain)
+                    for qualname, chains in script["bases"].items():
+                        js_bases[(path, qualname)] = chains
+                    for qualname, chains in script["implements"].items():
+                        js_implements[(path, qualname)] = chains
+                    exports = {}
+                    for name, local in script["exports"]:
+                        exports.setdefault(name, local)
+                    js_exports[path] = exports
                 python = record.get("py")
                 if not python:
                     continue
@@ -1028,7 +2189,8 @@ class Index:
                     if owner:
                         attr_types.setdefault((path, owner, target), value)
             self._tables = {"defs": defs, "by_name": by_name, "modules": module_names, "classes": classes,
-                            "var_types": var_types, "attr_types": attr_types}
+                            "var_types": var_types, "attr_types": attr_types, "js_types": js_types,
+                            "js_bases": js_bases, "js_implements": js_implements, "js_exports": js_exports}
         return self._tables
 
     def user_path(self, text):
@@ -1061,7 +2223,7 @@ class Index:
                 return paths[0]
         if not os.path.isabs(raw) and not _DRIVE.match(slashed):
             normalized = posixpath.normpath(slashed)
-            for suffix in (".py", "/__init__.py"):
+            for suffix in (".py", "/__init__.py") + JS_SOURCE + tuple("/index" + item for item in JS_SOURCE):
                 if normalized + suffix in self.files:
                     return normalized + suffix
         raise CodeIndexError(f"not an indexed file or module under {self.root}: {text}")
@@ -1162,6 +2324,14 @@ class Index:
         if self._edges is None:
             edges = {}
             for path, record in self.files.items():
+                script = record.get("js")
+                if script:
+                    found = []
+                    for line, scope, spec, kind, imported, local in script["imports"]:
+                        target = self.js_module(path, spec)
+                        if target and target != path:
+                            found.append((line, scope, target, _js_label(spec, kind, imported, local)))
+                    edges[path] = found
                 python = record.get("py")
                 if not python:
                     continue
@@ -1178,6 +2348,288 @@ class Index:
                 edges[path] = found
             self._edges = edges
         return self._edges
+
+    # -------- JavaScript and TypeScript modules
+
+    def _js_file(self, base, typescript):
+        """The indexed file an import of base names: base itself, its TypeScript twin of a .js name, an added
+        extension, or an index file."""
+        files = self.files
+        stem, suffix = posixpath.splitext(base)
+        twins = [stem + other for other in _JS_ALTERNATES.get(suffix, ())]
+        for candidate in (twins + [base]) if typescript else ([base] + twins):
+            if candidate in files:
+                return candidate
+        for candidate in [base + item for item in JS_SOURCE + (".d.ts",)] + \
+                [base + "/index" + item for item in JS_SOURCE + (".d.ts",)]:
+            if candidate in files:
+                return candidate
+        return None
+
+    def _config(self, path, depth=0):
+        """(baseUrl, paths, directory paths are relative to) of a tsconfig/jsconfig file, after local extends."""
+        config = self.files[path]["tsconfig"]
+        here = posixpath.dirname(path)
+        base, paths, root = None, {}, None
+        extends = config.get("extends")
+        for item in extends if isinstance(extends, list) else [extends] if extends else []:
+            if isinstance(item, str) and item.startswith(".") and depth < 5:
+                parent = posixpath.normpath(posixpath.join(here, item))
+                parent = parent if parent.endswith(".json") else parent + ".json"
+                if self.files.get(parent, {}).get("tsconfig") is not None:
+                    base, paths, root = self._config(parent, depth + 1)
+        if config.get("baseUrl") is not None:
+            base = posixpath.normpath(posixpath.join(here, config["baseUrl"]))
+            base = "" if base == "." else base
+        if config.get("paths"):
+            paths, root = config["paths"], here
+        return base, paths, base if base is not None else root
+
+    def _ts_config(self, directory):
+        """Module settings of the nearest tsconfig.json or jsconfig.json at or above directory."""
+        if directory not in self._configs:
+            found = None
+            for name in ("tsconfig.json", "jsconfig.json"):
+                path = posixpath.join(directory, name) if directory else name
+                if self.files.get(path, {}).get("tsconfig") is not None:
+                    found = self._config(path)
+                    break
+            if found is None and directory:
+                found = self._ts_config(posixpath.dirname(directory))
+            self._configs[directory] = found
+        return self._configs[directory]
+
+    def js_module(self, path, spec):
+        """Repository file of an import specifier in path, or None for a package or anything not indexed."""
+        typescript = path.endswith((".ts", ".tsx", ".mts", ".cts"))
+        directory = posixpath.dirname(path)
+        key = (directory, spec, typescript)
+        if key in self._js_modules:
+            return self._js_modules[key]
+        result = None
+        if spec.startswith(("./", "../")) or spec in (".", ".."):
+            base = posixpath.normpath(posixpath.join(directory, spec))
+            if base != ".." and not base.startswith("../"):
+                result = self._js_file("" if base == "." else base, typescript)
+        elif spec and not spec.startswith(("/", "\\")) and ":" not in spec:
+            config = self._ts_config(directory)
+            if config:
+                base, paths, root = config
+                for pattern in sorted(paths, key=lambda item: -len(item.split("*", 1)[0])):
+                    head, star, tail = pattern.partition("*")
+                    if star and spec.startswith(head) and spec.endswith(tail) and len(spec) >= len(head) + len(tail):
+                        middle = spec[len(head):len(spec) - len(tail)]
+                    elif not star and spec == pattern:
+                        middle = ""
+                    else:
+                        continue
+                    for item in paths[pattern]:
+                        candidate = posixpath.normpath(posixpath.join(root or "", item.replace("*", middle)))
+                        if candidate != ".." and not candidate.startswith("../"):
+                            result = self._js_file(candidate, typescript)
+                            if result:
+                                break
+                    break
+                if result is None and base is not None:
+                    candidate = posixpath.normpath(posixpath.join(base, spec))
+                    if candidate != ".." and not candidate.startswith("../"):
+                        result = self._js_file(candidate, typescript)
+        self._js_modules[key] = result
+        return result
+
+    def js_bindings(self, path):
+        """Names a JS/TS file's imports bind: ('symbol', file, exported name) | ('module', file) | ('ext', name)."""
+        if path in self._bindings:
+            return self._bindings[path]
+        bound = {}
+        for _line, _scope, spec, kind, imported, local in self.files[path]["js"]["imports"]:
+            if not local or kind not in ("named", "default", "namespace", "require"):
+                continue
+            target = self.js_module(path, spec)
+            if kind == "named":
+                bound[local] = ("symbol", target, imported) if target else ("ext", f"{spec}.{imported}")
+            elif kind == "default":
+                bound[local] = ("symbol", target, "default") if target else ("ext", spec)
+            else:
+                bound[local] = ("module", target) if target else ("ext", spec)
+        self._bindings[path] = bound
+        return bound
+
+    def js_export(self, path, name, depth=0, fallback=True):
+        """What module path exports as name: a definition, a module, an external name, or None."""
+        if depth > 8 or path is None or not self.files.get(path, {}).get("js"):
+            return None
+        tables = self.tables()
+        defs = tables["defs"]
+        local = tables["js_exports"].get(path, {}).get(name)
+        if local is not None:
+            found = self._js_local(path, local, depth + 1)
+            if found:
+                return found
+        if name != "default" and (path, name) in defs:
+            return ("def", path, name)
+        for _line, _scope, spec, kind, imported, alias in self.files[path]["js"]["imports"]:
+            if kind in ("reexport", "reexport-namespace") and alias == name:
+                target = self.js_module(path, spec)
+                if kind == "reexport-namespace":
+                    return ("module", target) if target else ("ext", spec)
+                return self.js_export(target, imported, depth + 1) if target else ("ext", f"{spec}.{imported}")
+        if name != "default":
+            for _line, _scope, spec, kind, _imported, _alias in self.files[path]["js"]["imports"]:
+                if kind == "reexport-all":
+                    found = self.js_export(self.js_module(path, spec), name, depth + 1, False)
+                    if found:
+                        return found
+            return None
+        return ("module", path) if fallback else None  # CommonJS: the default import is the module object
+
+    def _js_local(self, path, name, depth=0):
+        """A module-level name in path: its definition, or what the import that binds it names."""
+        if (path, name) in self.tables()["defs"]:
+            return ("def", path, name)
+        bound = self.js_bindings(path).get(name)
+        return self.js_member(bound, [], depth + 1) if bound else None
+
+    def _js_bases(self, path, qualname, depth=0):
+        """Resolved base classes (or extended interfaces) of a class or interface."""
+        parent = qualname.rpartition(".")[0]
+        for chain in self.tables()["js_bases"].get((path, qualname), ()):
+            base = self.js_resolve(path, parent, chain, depth + 1)
+            if base and base[0] == "def":
+                yield base
+
+    def _js_kind(self, path, scope, chain, depth=0):
+        """The class or interface a written type names, resolved from path/scope ('ext' for built-in types)."""
+        if chain.startswith("!"):
+            return ("ext", chain[1:])
+        target = self.js_resolve(path, scope, chain, depth + 1)
+        if target and target[0] == "def" and self.tables()["defs"].get((target[1], target[2]), ("",))[0] in (
+                "class", "interface"):
+            return target
+        return None
+
+    def _js_field(self, path, owner, name, depth=0):
+        """The class or interface of this.name in class owner (or in its base classes)."""
+        if depth > 8:
+            return None
+        chain = self.tables()["js_types"].get((path, owner, "this." + name))
+        if chain:
+            return self._js_kind(path, owner.rpartition(".")[0], chain, depth + 1)
+        if (path, f"{owner}.{name}") in self.tables()["defs"]:  # a getter: this.name is what it returns
+            return self._js_result(("def", path, f"{owner}.{name}"), depth + 1)
+        for base in self._js_bases(path, owner, depth):
+            found = self._js_field(base[1], base[2], name, depth + 1)
+            if found:
+                return found
+        return None
+
+    def _js_result(self, target, depth=0):
+        """What calling a resolved target gives: an instance of a class, or the class or interface a function's
+        written return type names."""
+        if not target or target[0] != "def" or depth > 8:
+            return ("ext", target[1] + "()") if target and target[0] == "ext" else None
+        kind = self.tables()["defs"].get((target[1], target[2]), ("",))[0]
+        if kind == "class":
+            return target
+        chain = self.tables()["js_types"].get((target[1], target[2], "()"))
+        return self._js_kind(target[1], target[2], chain, depth + 1) if chain else None
+
+    def js_member(self, target, rest, depth=0):
+        """Follow member names from a resolved JS/TS target: module exports, class and namespace members,
+        base classes, and instances whose class the source names (`const x = new Foo()`)."""
+        if target is None or depth > 8:
+            return None
+        if target[0] == "ext":
+            return ("ext", ".".join([target[1]] + list(rest))) if rest else target
+        if target[0] == "symbol":
+            resolved = self.js_export(target[1], target[2], depth + 1)
+            return self.js_member(resolved, rest, depth + 1) if resolved else None
+        if target[0] == "module":
+            if not rest:
+                return target
+            found = self.js_export(target[1], rest[0], depth + 1, False)
+            if found:
+                return self.js_member(found, rest[1:], depth + 1)
+            default = self.js_export(target[1], "default", depth + 1, False)
+            return self.js_member(default, rest, depth + 1) if default and default[0] == "def" else None
+        if not rest:
+            return target
+        path, qualname = target[1], target[2]
+        defs = self.tables()["defs"]
+        member = (path, f"{qualname}.{rest[0]}")
+        if member in defs:
+            return self.js_member(("def",) + member, rest[1:], depth + 1)
+        kind = defs.get((path, qualname), ("",))[0]
+        if kind in ("class", "interface"):
+            for base in self._js_bases(path, qualname, depth):
+                found = self.js_member(base, rest, depth + 1)
+                if found:
+                    return found
+        elif kind == "variable":
+            parent, _, name = qualname.rpartition(".")
+            chain = self.tables()["js_types"].get((path, parent, name))
+            instance = self._js_kind(path, parent, chain, depth + 1) if chain else None
+            if instance:
+                return self.js_member(instance, rest, depth + 1)
+        return None
+
+    def js_resolve(self, path, scope, chain, depth=0):
+        """Resolve a JS/TS call or reference chain in path/scope like resolve() does for Python."""
+        if depth > 8:
+            return None
+        if "()" in chain:  # a.b().c: follow written return types through each call
+            segments = chain.split("()")
+            target = self.js_resolve(path, scope, segments[0], depth + 1)
+            for segment in segments[1:]:
+                target = self._js_result(target, depth + 1)
+                rest = segment.lstrip(".")
+                if target and rest:
+                    target = self.js_member(target, rest.split("."), depth + 1)
+                if not target:
+                    return None
+            return target
+        parts = chain.split(".")
+        head, rest = parts[0], parts[1:]
+        tables = self.tables()
+        defs, types = tables["defs"], tables["js_types"]
+        if head == "?":
+            return None
+        if head == "this":
+            owner = self._class_of(path, scope)
+            if not owner or not rest:
+                return None
+            if len(rest) == 1:
+                return self.js_member(("def", path, owner), rest, depth + 1)
+            field = self._js_field(path, owner, rest[0], depth + 1)
+            return self.js_member(field, rest[1:], depth + 1) if field else None
+        if head == "super":
+            owner = self._class_of(path, scope)
+            for base in self._js_bases(path, owner, depth) if owner else ():
+                found = self.js_member(base, rest, depth + 1)
+                if found:
+                    return found
+            return None
+        current = scope
+        while True:
+            if defs.get((path, current), ("",))[0] not in ("class", "interface"):
+                written = types.get((path, current, head))
+                if written is not None:
+                    instance = self._js_kind(path, current, written, depth + 1) if rest else None
+                    return self.js_member(instance, rest, depth + 1) if instance else None
+                qualname = f"{current}.{head}" if current else head
+                if (path, qualname) in defs and defs[(path, qualname)][0] != "variable":
+                    return self.js_member(("def", path, qualname), rest, depth + 1)
+            if not current:
+                break
+            current = current.rpartition(".")[0]
+        bound = self.js_bindings(path).get(head)
+        if bound:
+            if not rest and bound[0] == "module":  # calling what require() returned: the module's default export
+                return self.js_export(bound[1], "default", depth + 1, False)
+            return self.js_member(bound, rest, depth + 1)
+        if head in JS_GLOBALS:
+            return ("ext", chain)
+        return None
 
     # -------- name resolution
 
@@ -1326,7 +2778,12 @@ class Index:
                 qualname = chain.replace("::", ".")
                 if (path, qualname) in defs:
                     return {("def", path, qualname)}, path
-                found = self.member(("module", path), qualname.split(".")) if self.files[path].get("py") else None
+                if self.files[path].get("py"):
+                    found = self.member(("module", path), qualname.split("."))
+                elif self.files[path].get("js"):
+                    found = self.js_member(("module", path), qualname.split("."))
+                else:
+                    found = None
                 return ({found} if found and found[0] == "def" else set()), path
             text = text.replace("::", ".")
         parts = text.split(".")
@@ -1342,6 +2799,24 @@ class Index:
         found = {("def", path, name) for path, name in tables["by_name"].get(parts[-1], ())
                  if name == qualname or name.endswith("." + qualname)}
         return found, None
+
+
+def _js_label(spec, kind, imported, local):
+    if kind == "named":
+        return f"import {{{imported}{'' if local == imported else ' as ' + local}}} from '{spec}'"
+    if kind == "default":
+        return f"import {local} from '{spec}'"
+    if kind == "namespace":
+        return f"import * as {local} from '{spec}'"
+    if kind == "require":
+        return f"{local} = require('{spec}')"
+    if kind == "dynamic":
+        return f"import('{spec}')"
+    if kind == "reexport":
+        return f"export {{{imported}{'' if local == imported else ' as ' + local}}} from '{spec}'"
+    if kind in ("reexport-all", "reexport-namespace"):
+        return f"export *{' as ' + local if local else ''} from '{spec}'"
+    return f"import '{spec}'"
 
 
 # ---------------------------------------------------------------- queries
@@ -1361,7 +2836,11 @@ def _read_lines(index, path):
 def _is_test(path):
     name = path.rsplit("/", 1)[-1]
     return ("/" + path).count("/tests/") > 0 or ("/" + path).count("/test/") > 0 or name.startswith("test_") \
-        or name.endswith("_test.py") or name == "conftest.py"
+        or name.endswith("_test.py") or name == "conftest.py" or "/__tests__/" in "/" + path \
+        or bool(_JS_TEST_NAME.search(name))
+
+
+_JS_TEST_NAME = re.compile(r"\.(?:test|spec|integrationTest)\.[cm]?[jt]sx?$")
 
 
 def _snippet(lines, line, limit=110):
@@ -1499,16 +2978,62 @@ def _scope_label(scope):
     return scope or "<module>"
 
 
+LIMITS = ("complete means every match in this index, not every real caller: only Python and JavaScript/"
+          "TypeScript calls and imports are indexed; dynamic dispatch, string-named calls, reflection, dependency "
+          "injection and values of unknown type are not followed")
+
+
+def _is_js(index, path):
+    return index.files.get(path, {}).get("js") is not None
+
+
+def _completeness(total, shown):
+    return {"complete": total <= shown, "truncated": max(0, total - shown), "limits": LIMITS}
+
+
+def _js_dispatch(index, targets):
+    """Methods a call may reach a JS/TS target method through: the same name on its class's ancestors and on
+    the interfaces they implement (a call resolved to one of these may run the target at run time)."""
+    found = set()
+    tables = index.tables()
+    defs = tables["defs"]
+    for target in targets:
+        if not _is_js(index, target[1]) or "." not in target[2]:
+            continue
+        owner, _, name = target[2].rpartition(".")
+        if defs.get((target[1], owner), ("",))[0] != "class":
+            continue
+        seen, queue = set(), deque([("def", target[1], owner)])
+        while queue and len(seen) < 64:
+            current = queue.popleft()
+            if current in seen:
+                continue
+            seen.add(current)
+            if current[0] != "def":
+                continue
+            parent = current[2].rpartition(".")[0]
+            for chain in tables["js_implements"].get((current[1], current[2]), ()):
+                kind = index._js_kind(current[1], parent, chain)
+                if kind:
+                    queue.append(kind)
+            queue.extend(index._js_bases(current[1], current[2]))
+        for kind in seen - {("def", target[1], owner)}:
+            if kind[0] == "def" and (kind[1], f"{kind[2]}.{name}") in defs:
+                found.add(("def", kind[1], f"{kind[2]}.{name}"))
+    return found
+
+
 def callers(index, symbol, limit=50):
     """Call sites of the named definition(s). Calls on receivers of unknown type that use the same name come
-    after the resolved ones, those whose receiver is named like the target's class first."""
+    after the resolved ones, those whose receiver is named like the target's class first (for JS/TS also
+    calls that resolve to the same method on a base class or an implemented interface)."""
     targets, path = index.targets(symbol)
     names = {target[2].rsplit(".", 1)[-1] for target in targets}
     classes = {target for target in targets
                if index.tables()["defs"].get((target[1], target[2]), ("",))[0] == "class"}
     wanted = set(targets)
-    for target in list(targets):  # Instantiating a class calls its __init__.
-        if target[2].endswith(".__init__"):
+    for target in list(targets):  # Instantiating a class calls its __init__ (its constructor in JS/TS).
+        if target[2].endswith(".__init__") or (target[2].endswith(".constructor") and _is_js(index, target[1])):
             wanted.add(("def", target[1], target[2].rsplit(".", 1)[0]))
             names.add(target[2].rsplit(".", 2)[-2])
     owners = set()  # Receiver names that suggest the target's class: index.resolve() for Index.resolve.
@@ -1517,21 +3042,25 @@ def callers(index, symbol, limit=50):
             owner = target[2].rsplit(".", 2)[-2]
             parts = _CAMEL.findall(owner)
             owners.update({owner.lower(), "_".join(parts).lower(), parts[-1].lower() if parts else ""} - {""})
+    dispatch = _js_dispatch(index, targets)
     external = None
     if not targets and path is None:
         external = symbol.strip().replace("::", ".")
         names = {external.rsplit(".", 1)[-1]}
     rows = []
     for file, record in sorted(index.files.items()):
-        python = record.get("py")
-        if not python:
+        python, script = record.get("py"), record.get("js")
+        if python:
+            local, calls, resolve = names | _aliases(index, file, names), python["calls"], index.resolve
+        elif script:
+            local, calls, resolve = names | _js_aliases(index, file, names), script["calls"], index.js_resolve
+        else:
             continue
-        local = names | _aliases(index, file, names)
-        for line, scope, chain in python["calls"]:
+        for line, scope, chain in calls:
             last = chain.rsplit(".", 1)[-1]
             if last not in local:
                 continue
-            target = index.resolve(file, scope, chain)
+            target = resolve(file, scope, chain)
             if external is not None:
                 if target and target[0] == "ext" and (target[1] == external or target[1].endswith("." + external)
                                                       or chain == external):
@@ -1539,23 +3068,25 @@ def callers(index, symbol, limit=50):
                 continue
             if target and (target in wanted or target in classes):
                 rows.append((0, file, line, scope))
-            elif target is None:  # Receiver type unknown (or a name nothing defines): same name only.
-                receiver = chain.rsplit(".", 2)[-2].strip("_").lower() if "." in chain else ""
-                rows.append((1 if receiver in owners else 2, file, line, scope))
+            elif target is None or target in dispatch:  # Receiver type unknown (or a name nothing defines).
+                receiver = chain.rsplit(".", 2)[-2].strip("_#").lower() if "." in chain else ""
+                rows.append((1 if receiver in owners or target in dispatch else 2, file, line, scope))
     rows.sort()
     results = [{"path": file, "line": line, "symbol": _scope_label(scope), "resolved": rank == 0}
                for rank, file, line, scope in rows[:limit]]
-    return {"schema_version": SCHEMA_VERSION, "targets": [f"{t[1]}::{t[2]}" for t in sorted(targets)]
-            or ([external] if external else []), "total": len(rows), "resolved": sum(1 for row in rows if not row[0]),
-            "results": results}
+    report = {"schema_version": SCHEMA_VERSION, "targets": [f"{t[1]}::{t[2]}" for t in sorted(targets)]
+              or ([external] if external else []), "total": len(rows),
+              "resolved": sum(1 for row in rows if not row[0]), "results": results}
+    report.update(_completeness(len(rows), len(results)))
+    return report
 
 
 def import_path(index, source, target):
     """Shortest import chain from source to target; if there is none, from target back to source."""
     start, goal = index.user_path(source), index.user_path(target)
     for module in (start, goal):
-        if index.files[module].get("py") is None:
-            raise CodeIndexError(f"not a Python module: {module}")
+        if index.files[module].get("py") is None and index.files[module].get("js") is None:
+            raise CodeIndexError(f"not a Python or JavaScript/TypeScript module: {module}")
     edges = index.import_edges()
     for first, last, direction in ((start, goal, "forward"), (goal, start, "reverse")):
         previous, queue = {first: None}, deque([first])
@@ -1591,9 +3122,11 @@ def affected(index, target, hops=1, limit=50):
             seen.add(file)
             rows.append({"path": file, "line": line, "symbol": _scope_label(scope), "hop": hop, "_label": label})
 
-    if index.files[path].get("py") is None:
-        return {"schema_version": SCHEMA_VERSION, "target": path, "note": "only Python imports and calls are tracked",
-                "results": []}
+    if index.files[path].get("py") is None and index.files[path].get("js") is None:
+        report = {"schema_version": SCHEMA_VERSION, "target": path, "total": 0, "results": [],
+                  "note": "only Python and JavaScript/TypeScript imports and calls are tracked"}
+        report.update(_completeness(0, 0))
+        return report
     if not separator:
         for file in sorted(importers):
             line, scope, label = min(importers[file])
@@ -1608,8 +3141,10 @@ def affected(index, target, hops=1, limit=50):
         qualname = chain.replace("::", ".")
         defs = index.tables()["defs"]
         if (path, qualname) not in defs:
-            return {"schema_version": SCHEMA_VERSION, "target": f"{path}::{qualname}",
-                    "note": "no such definition", "results": []}
+            report = {"schema_version": SCHEMA_VERSION, "target": f"{path}::{qualname}", "total": 0,
+                      "note": "no such definition", "results": []}
+            report.update(_completeness(0, 0))
+            return report
         sites = _symbol_sites(index, ("def", path, qualname))
         hop_scopes = []
         for file, line, scope, label in sites:
@@ -1630,8 +3165,10 @@ def affected(index, target, hops=1, limit=50):
                             if imported == file:
                                 add(other, line, where, label + f" (via {file})", 2)
     rows.sort(key=lambda row: (row["hop"], row["path"]))
-    return {"schema_version": SCHEMA_VERSION, "target": path + (f"::{chain.replace('::', '.')}" if separator else ""),
-            "total": len(rows), "results": rows[:limit]}
+    report = {"schema_version": SCHEMA_VERSION, "target": path + (f"::{chain.replace('::', '.')}" if separator else ""),
+              "total": len(rows), "results": rows[:limit], "hops": hops}
+    report.update(_completeness(len(rows), len(report["results"])))
+    return report
 
 
 def _aliases(index, path, names):
@@ -1640,14 +3177,35 @@ def _aliases(index, path, names):
             if isinstance(bound, tuple) and bound[0] == "symbol" and bound[2] in names}
 
 
+def _js_aliases(index, path, names):
+    """Local names that `import {name as alias}` or a default import binds to one of names."""
+    found = set()
+    for _line, _scope, spec, kind, imported, local in index.files[path]["js"]["imports"]:
+        if not local or local in names:
+            continue
+        if kind == "named" and imported in names:
+            found.add(local)
+        elif kind == "default":
+            target = index.js_module(path, spec)
+            exported = index.tables()["js_exports"].get(target, {}).get("default") if target else None
+            if exported and exported.rsplit(".", 1)[-1] in names:
+                found.add(local)
+    return found
+
+
 def _symbol_sites(index, target):
     """(file, line, scope, label) where a definition is called, imported by name, or referenced as module.name."""
     defs = index.tables()["defs"]
     name = target[2].rsplit(".", 1)[-1]
-    unique = len(index.tables()["by_name"].get(name, ())) == 1
+    script = _is_js(index, target[1])
+    unique = sum(1 for path, _ in index.tables()["by_name"].get(name, ()) if _is_js(index, path) == script) == 1
     is_class = defs.get((target[1], target[2]), ("",))[0] == "class"
     sites = []
     for file, record in sorted(index.files.items()):
+        if script:
+            if record.get("js"):
+                sites.extend(_js_sites(index, target, file, record["js"], name, unique, is_class))
+            continue
         python = record.get("py")
         if not python:
             continue
@@ -1669,11 +3227,212 @@ def _symbol_sites(index, target):
     return sorted(set(sites), key=lambda site: (site[0], site[1]))
 
 
+def _js_sites(index, target, file, script, name, unique, is_class):
+    local = {name} | _js_aliases(index, file, {name})
+    for line, scope, chain in script["calls"]:
+        if chain.rsplit(".", 1)[-1] not in local:
+            continue
+        resolved = index.js_resolve(file, scope, chain)
+        if resolved == target or (resolved is None and unique and "." in chain and not is_class):
+            yield file, line, scope, f"calls {chain}"
+    for line, scope, spec, kind, imported, alias in script["imports"]:
+        if (kind in ("named", "reexport") and imported == name) or (kind == "default" and alias in local):
+            module = index.js_module(file, spec)
+            if module and index.js_export(module, imported, 0, False) == target:
+                yield file, line, scope, f"imports {alias}"
+    for line, scope, chain in script["refs"]:
+        if chain.rsplit(".", 1)[-1] == name and index.js_resolve(file, scope, chain) == target:
+            yield file, line, scope, f"uses {chain}"
+
+
+OVERVIEW_CHARS = 6000  # about 1.5k tokens
+_OVERVIEW_LIMITS = ("pointers only; most-called = PageRank over call sites this index resolves (Python and "
+                    "JavaScript/TypeScript, tests excluded); unresolved calls are not counted")
+
+
+def call_graph(index):
+    """Counter of resolved call edges (caller (path, scope), callee (path, qualname)), test files left out."""
+    by_name, edges = index.tables()["by_name"], Counter()
+    for path, record in index.files.items():
+        python, script = record.get("py"), record.get("js")
+        if _is_test(path) or not (python or script):
+            continue
+        resolve, seen = (index.resolve if python else index.js_resolve), {}
+        for _line, scope, chain in (python or script)["calls"]:
+            if chain.rsplit(".", 1)[-1] not in by_name:
+                continue
+            key = (scope, chain)
+            if key not in seen:
+                seen[key] = resolve(path, scope, chain)
+            target = seen[key]
+            if target and target[0] == "def" and not _is_test(target[1]):
+                edges[((path, scope), (target[1], target[2]))] += 1
+    return edges
+
+
+def pagerank(edges, damping=0.85, rounds=60, tolerance=1e-9):
+    """PageRank of a weighted directed graph {(source, target): weight}, by power iteration."""
+    nodes = sorted({node for edge in edges for node in edge})
+    if not nodes:
+        return {}
+    number = {node: index for index, node in enumerate(nodes)}
+    out = [0.0] * len(nodes)
+    links = []
+    for (source, target), weight in edges.items():
+        out[number[source]] += weight
+        links.append((number[source], number[target], weight))
+    size = len(nodes)
+    rank = [1.0 / size] * size
+    for _ in range(rounds):
+        dangling = sum(rank[index] for index in range(size) if not out[index])
+        fresh = [(1.0 - damping + damping * dangling) / size] * size
+        for source, target, weight in links:
+            fresh[target] += damping * rank[source] * weight / out[source]
+        change = sum(abs(a - b) for a, b in zip(fresh, rank))
+        rank = fresh
+        if change < tolerance:
+            break
+    return {node: rank[number[node]] for node in nodes}
+
+
+def overview(index, max_chars=OVERVIEW_CHARS):
+    """One page of pointers: entry points, main directories and modules, and the most-called definitions."""
+    defs = index.tables()["defs"]
+    entries, by_dir, modules = [], {}, []
+    for path, record in sorted(index.files.items()):
+        python, script, package = record.get("py"), record.get("js"), record.get("package")
+        if package and not _is_test(path):
+            directory = posixpath.dirname(path)
+            keys = package.get("lines", {})
+            targets = [(key, package[key]) for key in ("main", "module") if package.get(key)]
+            bins = package.get("bin")
+            targets += [("bin", bins)] if isinstance(bins, str) else [("bin " + name, value)
+                                                                         for name, value in sorted((bins or {}).items())]
+            for key, value in targets:
+                found = index._js_file(posixpath.normpath(posixpath.join(directory, value)), True)
+                entries.append({"path": path, "line": keys.get(key.split()[0], 1), "kind": "package.json " + key,
+                                "target": found or value, "indexed": bool(found)})
+        if python and not _is_test(path):
+            parser_line = min((line for line, _scope, chain in python["calls"]
+                               if chain.rsplit(".", 1)[-1] == "ArgumentParser"), default=None)
+            kinds = (["__main__.py"] if path.rsplit("/", 1)[-1] == "__main__.py" else []) + (
+                ['if __name__ == "__main__"'] if python.get("main") else []) + (["argparse"] if parser_line else [])
+            if kinds:
+                entries.append({"path": path, "line": python.get("main") or parser_line or 1, "kind": ", ".join(kinds)})
+        if script and script.get("main") and not _is_test(path):
+            entries.append({"path": path, "line": 1, "kind": "#! node script"})
+        if record.get("kind") not in CODE_KINDS:
+            continue
+        count = len((python or script or {}).get("defs", ()))
+        modules.append((count, path))
+        parts = path.split("/")[:-1]
+        for depth in range(len(parts) + 1):
+            totals = by_dir.setdefault("/".join(parts[:depth]), [0, 0])
+            totals[0] += 1
+            totals[1] += count
+    entries.sort(key=lambda entry: (entry["path"].count("/"), entry["kind"] != "package.json main", entry["path"]))
+
+    def children(directory):
+        prefix = directory + "/" if directory else ""
+        found = [(key, value) for key, value in by_dir.items()
+                 if key.startswith(prefix) and key != directory and "/" not in key[len(prefix):]]
+        return sorted(found, key=lambda item: (-item[1][1], -item[1][0], item[0]))
+
+    top = children("")
+    inside, current = None, ""
+    while by_dir.get(current, [0, 0])[1]:
+        below = children(current)
+        if not below or below[0][1][1] < 0.7 * by_dir[current][1]:
+            break
+        current = below[0][0]
+    if current:
+        inside = current
+    edges = call_graph(index)
+    ranks = pagerank(edges)
+    calls_in = Counter()
+    for (_source, target), weight in edges.items():
+        calls_in[target] += weight
+    ranked = sorted((node for node in ranks if node[1] and node in defs),
+                    key=lambda node: (-ranks[node], node))
+    report = {"schema_version": SCHEMA_VERSION, "files": len(index.files),
+              "definitions": len(defs), "resolved_call_edges": sum(edges.values()),
+              "entry_points": [], "directories": [], "inside": inside, "inside_directories": [], "modules": [],
+              "most_called": [], "limits": _OVERVIEW_LIMITS}
+    lines, cut, owners = [], {}, []
+    budget = max_chars - 120  # room for the closing "truncated: ..." line
+
+    def emit(text, section=None, row=None):
+        size = sum(len(line) + 1 for line in lines)
+        if size + len(text) + 1 > budget:
+            if section:
+                cut[section] = cut.get(section, 0) + 1
+            return False
+        lines.append(text)
+        owners.append(section)
+        if section:
+            report[section].append(row)
+        return True
+
+    kinds = Counter(record.get("kind", "?") for record in index.files.values())
+    emit(f"{len(index.files)} files ({', '.join(f'{kind} {count}' for kind, count in sorted(kinds.items()))}); "
+         f"{len(defs)} definitions; {sum(edges.values())} resolved call sites")
+    emit("Entry points:")
+    for entry in entries[:25]:
+        detail = f"  {entry['path']}:{entry['line']}  {entry['kind']}"
+        if "target" in entry:
+            detail += f" -> {entry['target']}" + ("" if entry["indexed"] else " (not in the index)")
+        emit(detail, "entry_points", entry)
+    if len(entries) > 25:
+        cut["entry_points"] = cut.get("entry_points", 0) + len(entries) - 25
+    if not entries:
+        emit("  (none found)")
+    emit("Top-level directories (code files, definitions):")
+    for key, (files, count) in top[:12]:
+        emit(f"  {key}/  {files} files  {count} defs", "directories", {"path": key, "files": files, "definitions": count})
+    if len(top) > 12:
+        cut["directories"] = len(top) - 12
+    if inside:
+        emit(f"Inside {inside}/ (code files, definitions):")
+        for key, (files, count) in children(inside)[:12]:
+            emit(f"  {key}/  {files} files  {count} defs", "inside_directories",
+                 {"path": key, "files": files, "definitions": count})
+    emit("Largest modules (definitions):")
+    for count, path in sorted(modules, key=lambda item: (-item[0], item[1]))[:8]:
+        emit(f"  {path}  {count} defs", "modules", {"path": path, "definitions": count})
+    emit("Most-called definitions, top 20 (PageRank over resolved call sites, tests excluded):")
+    sources = {}
+    for node in ranked[:20]:
+        kind, line, _end = defs[node]
+        if node[0] not in sources:
+            sources[node[0]] = _read_lines(index, node[0])
+        signature = _snippet(sources[node[0]], line, 100)
+        row = {"path": node[0], "line": line, "symbol": node[1], "kind": kind, "calls": calls_in[node],
+               "signature": signature}
+        if not emit(f"  {node[0]}:{line}  {node[1]}  [{kind}, {calls_in[node]} calls]\n      {signature}",
+                    "most_called", row):
+            break
+    while True:
+        closing = ["truncated: " + ", ".join(f"{key} {value} more" for key, value in sorted(cut.items()))] if cut \
+            else []
+        if len("\n".join(lines + closing)) <= max_chars or not lines:
+            break
+        section = owners.pop()  # drop rows from the end until the page fits
+        lines.pop()
+        if section:
+            report[section].pop()
+            cut[section] = cut.get(section, 0) + 1
+    report["truncated"] = dict(sorted(cut.items()))
+    lines += closing
+    report["text"] = "\n".join(lines)
+    report["chars"] = len(report["text"])
+    return report
+
+
 def stats(index):
     kinds = Counter(record.get("kind", "?") for record in index.files.values())
     symbols = imports = calls = 0
     for record in index.files.values():
-        python = record.get("py")
+        python = record.get("py") or record.get("js")
         if python:
             symbols += len(python["defs"])
             imports += len(python["imports"])
@@ -1684,10 +3443,11 @@ def stats(index):
     cache = None
     if info["cache"]:
         try:
-            size = os.path.getsize(info["cache"])
+            size = os.path.getsize(info["cache"]) + os.path.getsize(_units_file(info["cache"]))
         except OSError:
             size = None
-        cache = {"path": info["cache"], "bytes": size, "reused": info["counts"].get("reused", 0),
+        cache = {"path": info["cache"], "origin": info.get("cache_origin", "--cache"), "bytes": size,
+                 "reused": info["counts"].get("reused", 0),
                  "indexed": info["counts"].get("indexed", 0), "removed": info["removed"],
                  "stale": info["stale"], "frozen": info["frozen"]}
     skipped = {key: value for key, value in info["counts"].items()
@@ -1727,11 +3487,18 @@ def _print_sites(index, report, verb):
         mark = "" if row.get("resolved", True) else "~ "
         hop = f"[hop {row['hop']}] " if row.get("hop", 1) > 1 else ""
         print(f"{mark}{hop}{row['path']}:{row['line']}  {row['symbol']}  {_snippet(cache[row['path']], row['line'], 90)}")
-    shown, total = len(rows), report.get("total", len(rows))
-    if total > shown:
-        print(f"... {total - shown} more (raise --limit)")
     if verb == "callers" and any(not row.get("resolved", True) for row in rows):
         print("~ = same name on a receiver whose type is not known; check before relying on it")
+    print(_completeness_line(report))
+
+
+def _completeness_line(report):
+    scope = "Python and JS/TS calls and imports"
+    if "hops" in report:
+        scope += f", {report['hops']} hop" + ("s" if report["hops"] > 1 else "")
+    if report.get("truncated"):
+        return f"truncated: {report['truncated']} more (raise --limit); within the index ({scope})"
+    return f"complete within the index ({scope}; dynamic dispatch, string-named calls, reflection and DI not followed)"
 
 
 def _emit(report, as_json, printer):
@@ -1748,7 +3515,10 @@ def parser():
     shared = argparse.ArgumentParser(add_help=False)
     shared.add_argument("--root", default=argparse.SUPPRESS, help="repository root to index (default: current directory)")
     shared.add_argument("--cache", metavar="DIR", default=argparse.SUPPRESS,
-                        help=f"keep the index in DIR and refresh stale files (default: ${CACHE_ENV}, else no cache)")
+                        help=f"keep the index in DIR and refresh stale files (default: ${CACHE_ENV}, else the "
+                             "user cache directory, ~/.cache/oaw/code-index or %%LOCALAPPDATA%%\\oaw\\code-index)")
+    shared.add_argument("--no-cache", action="store_true", default=argparse.SUPPRESS,
+                        help="index on the fly and write nothing")
     shared.add_argument("--frozen", action="store_true", default=argparse.SUPPRESS,
                         help="use the cache as it is and report stale files instead of re-indexing them")
     shared.add_argument("--include-generated", action="store_true", default=argparse.SUPPRESS,
@@ -1763,11 +3533,16 @@ Commands:
   callers SYMBOL [--limit N]          Call sites of path::Name, module.func, Class.method or a name
   path A B                            Shortest import chain between two local modules
   affected PATH[::Symbol] [--hops 2]  Files that import the module or call the symbol
+  overview                            One page: entry points, main directories, most-called code
   stats                               Files, symbols, build time and cache state
 
-The index is rebuilt from source on every run unless --cache names a directory
-outside (or deliberately inside) the tree. Agents read it; nothing writes it
-except this command. Results are pointers to check in the source.
+Python is parsed with ast; JavaScript and TypeScript with a scanner that
+resolves imports (relative, index files, tsconfig paths), this/super, class
+bases and written types. The index is cached in the user's local cache
+directory (not in the project, not on a network share by default) and
+re-indexed where a file's size or content changed; --no-cache indexes on the
+fly. Results are pointers to read in the source, not descriptions of behavior;
+callers and affected say whether a list is complete within the index.
 """)
     commands = result.add_subparsers(dest="command", required=True, metavar="COMMAND")
     find_parser = commands.add_parser("find", parents=[shared], help="rank files for a free-text description")
@@ -1784,6 +3559,8 @@ except this command. Results are pointers to check in the source.
     affected_parser.add_argument("target", help="PATH or PATH::Symbol (Class.method or Class::method)")
     affected_parser.add_argument("--hops", type=int, choices=(1, 2), default=1, help="1 (default) or 2")
     affected_parser.add_argument("--limit", type=_limit, default=50, help="files to show (default 50)")
+    commands.add_parser("overview", parents=[shared],
+                        help="one page: entry points, main directories, most-called definitions")
     commands.add_parser("stats", parents=[shared], help="files, symbols, build time and cache state")
     return result
 
@@ -1802,11 +3579,17 @@ def main(argv=None):
     for stream in (sys.stdout, sys.stderr):
         if hasattr(stream, "reconfigure"):
             stream.reconfigure(encoding="utf-8", errors="backslashreplace")
-    args = parser().parse_args(argv)
+    command_line = parser()
+    args = command_line.parse_args(argv)
     as_json = getattr(args, "json", False)
+    if getattr(args, "no_cache", False) and getattr(args, "cache", None):
+        command_line.error("--cache and --no-cache cannot be combined")
     try:
-        index = build_index(getattr(args, "root", "."), getattr(args, "cache", None) or os.environ.get(CACHE_ENV),
-                            getattr(args, "frozen", False), getattr(args, "include_generated", False))
+        root = getattr(args, "root", ".")
+        cache, origin = choose_cache(root, getattr(args, "cache", None), getattr(args, "no_cache", False))
+        index = build_index(root, cache, getattr(args, "frozen", False), getattr(args, "include_generated", False),
+                            need_units=args.command == "find")
+        index.info["cache_origin"] = origin
         if index.info["stale"]:
             names = index.info["stale"]
             print(f"code_index: {len(names)} stale file(s) not re-indexed (--frozen): "
@@ -1820,6 +3603,7 @@ def main(argv=None):
             def show():
                 if not report["results"]:
                     print(f"No call sites of {', '.join(report['targets']) or args.symbol}.")
+                    print(_completeness_line(report))
                     return
                 resolved = report["resolved"]
                 print(f"{report['total']} call sites of {', '.join(report['targets'][:3])}"
@@ -1844,11 +3628,19 @@ def main(argv=None):
                 if not report["results"]:
                     print(f"Nothing else imports or calls {report['target']}."
                           + (f" ({report['note']})" if report.get("note") else ""))
+                    print(_completeness_line(report))
                     return
                 print(f"{report['total']} files affected by {report['target']} ({args.hops} hop"
                       + ("s" if args.hops > 1 else "") + ")")
                 _print_sites(index, report, "affected")
             _emit(report, as_json, show)
+        elif args.command == "overview":
+            report = overview(index)
+            if as_json:
+                print(json.dumps({key: value for key, value in report.items() if key != "text"}, ensure_ascii=False,
+                                 indent=1))
+            else:
+                print(report["text"])
         else:
             report = stats(index)
 
