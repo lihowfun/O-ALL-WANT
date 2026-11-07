@@ -1125,7 +1125,7 @@ def apply_add(plan_args: dict, *, plan: dict | None = None) -> dict:
             raise
         backup = f"; its backups are in {oaw_result['backup']}" if oaw_result and oaw_result.get("backup") else ""
         raise InstallError(f"{exc}. OAW's own change ({step['kind']}) was already applied and stays{backup}.") from exc
-    setting = oaw.remember_checkout()
+    setting = oaw.remember_checkout(again["target"])
     rows = receipt_rows(again["target"], oaw.read_manifest(again["target"]), record, again["verdicts"])
     return {"status": "installed", "target": str(again["target"]), "choice": again["choice"], "oaw_step": _step_view(step, oaw_result),
             "packages": [_package_view(p) for p in again["packages"]], "notes": again["notes"], "receipt": rows,

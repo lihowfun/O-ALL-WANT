@@ -571,14 +571,25 @@ def config_home() -> Path:
     return Path(os.path.abspath(base)) / "oaw"
 
 
-def remember_checkout() -> str | None:
+def _in_temp(path: Path) -> bool:
+    try:
+        temp = os.path.realpath(tempfile.gettempdir())
+        return os.path.commonpath([os.path.normcase(os.path.realpath(path)), os.path.normcase(temp)]) == os.path.normcase(temp)
+    except ValueError:
+        return False
+
+
+def remember_checkout(target: Path | None = None) -> str | None:
     """Record this OAW checkout in the user's settings so the oaw-add skill can find it.
 
     The path stays out of every project. A checkout without scripts/oaw.py (a test fixture) is never
-    recorded; a settings folder that cannot be written only loses the convenience.
+    recorded, nor is an install into a throwaway project under the system temp folder unless
+    OAW_CONFIG_HOME names the settings folder; a folder that cannot be written only loses the convenience.
     """
     root = framework_root()
     if not (root / "scripts" / "oaw.py").is_file():
+        return None
+    if target is not None and _in_temp(target) and not os.environ.get("OAW_CONFIG_HOME"):
         return None
     path = config_home() / CHECKOUT_SETTING
     data = {"schema": "oaw-checkout/1", "path": str(root), "version": FRAMEWORK_VERSION}
@@ -1031,7 +1042,7 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 result = apply_plan(plan, migrate=migrate)
                 code = 3 if result["pending_conflicts"] else 0
-                setting = remember_checkout()
+                setting = remember_checkout(target)
                 if setting:
                     result["checkout_setting"] = setting
         print_result(result, as_json=args.json)
