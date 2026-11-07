@@ -777,6 +777,22 @@ REVIEW_FIXTURE = {  # Codex review round 10 of the JS/TS engine
     "defalias/req.js": "const renamed = require('./dlib');\nrenamed();\n",
     "reqlocal/use.js": ("function f() {\n    const path = require('path');\n    return path.resolve('x');\n}\n"
                         "if (ok) {\n    const lib = require('../lib/save');\n    lib.save();\n}\n"),
+    # Codex review round 13
+    "req2/a.js": "function save() {}\nmodule.exports = save;\n",
+    "req2/b.js": "function save() {}\nmodule.exports = save;\n",
+    "req2/use.js": "const save = require('./a');\nsave();\nfunction f() {\n    const save = require('./b');\n    save();\n}\n",
+    "destr/use.ts": ("import { save } from '../lib/save';\nexport function run({ save }) {\n    save();\n}\n"
+                     "export function run2([first, { save: other = 1 }], ...rest) {\n    other();\n    save();\n}\n"
+                     "export const run3 = ({ save } = {}) => save();\n"),
+    "rx/use.ts": ("import { save } from '../lib/save';\nexport function check(ok, value) {\n"
+                  "    if (ok) /save()/.test(value);\n    while (ok) /save()/.test(value);\n"
+                  "    const half = (value) / 2; save(); const third = 3 / 1;\n}\nsave();\n"),
+    "ext/lib.js": "function jsLib() {}\nmodule.exports = jsLib;\n",
+    "ext/lib.ts": "export default function tsLib() {}\n",
+    "ext/pkg/index.js": "module.exports = {};\n",
+    "ext/pkg/index.ts": "export {};\n",
+    "ext/use.js": "const lib = require('./lib');\nlib();\n",
+    "ext/use.ts": "import lib from './lib';\nlib();\n",
 }
 
 
@@ -857,6 +873,30 @@ class JavaScriptResolutionReviewTests(unittest.TestCase):
     def test_a_local_bound_by_require_keeps_resolving_through_it(self):
         self.assertEqual(self.index.js_resolve("reqlocal/use.js", "f", "path.resolve"), ("ext", "path.resolve"))
         self.assertIn(("reqlocal/use.js", 7, True), self.rows("lib/save.ts::save"))
+
+    def test_require_bindings_keep_their_scope(self):
+        self.assertEqual(self.index.js_resolve("req2/use.js", "", "save"), ("def", "req2/a.js", "save"))
+        self.assertEqual(self.index.js_resolve("req2/use.js", "f", "save"), ("def", "req2/b.js", "save"))
+        self.assertIn(("req2/use.js", 2, True), self.rows("req2/a.js::save"))
+        self.assertNotIn(("req2/use.js", 5, True), self.rows("req2/a.js::save"))
+
+    def test_destructured_parameters_shadow_imports(self):
+        rows = self.rows("lib/save.ts::save")
+        self.assertIn(("destr/use.ts", 7, True), rows)
+        self.assertNotIn(("destr/use.ts", 3, True), rows)  # function run({ save })
+        self.assertNotIn(("destr/use.ts", 9, True), rows)  # ({ save } = {}) => save()
+        self.assertIsNone(self.index.js_resolve("destr/use.ts", "run", "save"))
+        self.assertIsNone(self.index.js_resolve("destr/use.ts", "run2", "other"))
+
+    def test_a_regular_expression_after_a_control_statement_is_not_code(self):
+        lines = {line for path, line, _resolved in self.rows("lib/save.ts::save") if path == "rx/use.ts"}
+        self.assertEqual(lines, {5, 7})  # not the /save()/ literals on lines 3 and 4; (value) / 2 is a division
+
+    def test_extensionless_imports_prefer_the_importer_language(self):
+        self.assertEqual(self.index.js_module("ext/use.js", "./lib"), "ext/lib.js")
+        self.assertEqual(self.index.js_module("ext/use.ts", "./lib"), "ext/lib.ts")
+        self.assertEqual(self.index.js_module("ext/use.js", "./pkg"), "ext/pkg/index.js")
+        self.assertEqual(self.index.js_module("ext/use.ts", "./pkg"), "ext/pkg/index.ts")
 
     def test_extends_may_name_any_local_json_file(self):
         self.assertEqual(self.index.js_module("jcfg/use.ts", "#lib/tool"), "jcfg/lib/tool.ts")

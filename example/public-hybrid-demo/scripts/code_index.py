@@ -808,6 +808,7 @@ def _other_units(kind, lines):
 # around (callbacks, re-assigned variables). Dynamic import() is kept as an import edge only.
 
 JS_SOURCE = (".ts", ".tsx", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs")
+_JS_SOURCE_FOR_JS = (".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx", ".mts", ".cts", ".d.ts")
 _JS_ALTERNATES = {".js": (".ts", ".tsx", ".d.ts"), ".jsx": (".tsx", ".d.ts"), ".mjs": (".mts", ".d.mts"),
                   ".cjs": (".cts", ".d.cts")}
 _JS_TOP = re.compile(r"""[^'"`/\\]+|//[^\n]*|/\*.*?(?:\*/|\Z)|'(?:[^'\\\n]|\\.)*'?|"(?:[^"\\\n]|\\.)*"?|.""", re.S)
@@ -891,8 +892,37 @@ def _js_regex_here(out):
             last = stripped[-1]
             if last.isalnum() or last in "_$":
                 return _JS_LAST_WORD.search(stripped).group() in _JS_BEFORE_REGEX
-            return last not in ')]"'
+            if last == ")":
+                return _js_control_paren(out)
+            return last not in ']"'
     return True
+
+
+_JS_CONTROL = re.compile(r"(?<![\w$.])(?:if|while|for|with)\s*$")
+
+
+def _js_control_paren(out, budget=4000):
+    """Whether the last ')' emitted closes the condition of if/while/for/with (then a '/' after it starts a
+    regular expression; after any other ')' it is a division)."""
+    depth = 0
+    for number in range(len(out) - 1, -1, -1):
+        piece = out[number]
+        for index in range(len(piece) - 1, -1, -1):
+            budget -= 1
+            if budget < 0:
+                return False
+            char = piece[index]
+            if char == ")":
+                depth += 1
+            elif char == "(":
+                depth -= 1
+                if depth == 0:
+                    before = piece[:index]
+                    while len(before.strip()) < 6 and number > 0:  # the keyword may sit in an earlier piece
+                        number -= 1
+                        before = out[number] + before
+                    return bool(_JS_CONTROL.search(before[-40:]))
+    return False
 
 
 def _js_mask(text):
@@ -1022,15 +1052,51 @@ def _js_type(text):
 
 
 def _js_params(text):
-    """(name, type, is_property) for each parameter in a parameter list's text."""
+    """(name, type, is_property) for each parameter in a parameter list's text; a destructuring pattern
+    ({a, b: c}, [d, ...e], with defaults) gives each name it binds, type unknown."""
     found = []
     for piece in _js_split(text):
         piece = _JS_PARAM_DECORATOR.sub(" ", piece).strip()
         default = _js_split(piece, "=")
-        match = _JS_PARAM.match(default[0].strip()) if default else None
+        head = default[0].strip() if default else ""
+        if head.startswith("..."):
+            head = head[3:].lstrip()
+        if head[:1] in ("{", "["):
+            found.extend((name, None, False) for name in _js_pattern_names(head))
+            continue
+        match = _JS_PARAM.match(head) if head else None
         if match:
             found.append((match.group("name"), _js_type(match.group("type")), bool(match.group("mods"))))
     return found
+
+
+def _js_pattern_names(text, depth=0):
+    """Names a destructuring pattern starting at text[0] ('{' or '[') binds."""
+    level, close = 0, None
+    for index, char in enumerate(text):
+        if char in "{[(":
+            level += 1
+        elif char in "}])":
+            level -= 1
+            if level == 0:
+                close = index
+                break
+    if close is None or depth > 8:
+        return []
+    names, is_object = [], text[0] == "{"
+    for element in _js_split(text[1:close]):
+        element = element.strip()
+        if element.startswith("..."):
+            element = element[3:].lstrip()
+        if is_object:
+            parts = _js_split(element, ":")
+            element = ":".join(parts[1:]).strip() if len(parts) > 1 else element
+        element = _js_split(element, "=")[0].strip() if element else ""
+        if element[:1] in ("{", "["):
+            names.extend(_js_pattern_names(element, depth + 1))
+        elif re.fullmatch(r"[A-Za-z_$][\w$]*", element):
+            names.append(element)
+    return names
 
 
 def _js_skip(code, pos):
@@ -2190,6 +2256,7 @@ class Index:
         self._dirs = None
         self._js_modules = {}
         self._configs = {}
+        self._scoped = {}
 
     # -------- paths and modules
 
@@ -2412,8 +2479,9 @@ class Index:
             if candidate in files:
                 return candidate
         prefix = base + "/" if base else ""
-        for candidate in ([base + item for item in JS_SOURCE + (".d.ts",)] if base else []) + \
-                [prefix + "index" + item for item in JS_SOURCE + (".d.ts",)]:
+        suffixes = JS_SOURCE + (".d.ts",) if typescript else _JS_SOURCE_FOR_JS  # the importer's language first
+        candidates = ([base + item for item in suffixes] if base else []) + [prefix + "index" + item for item in suffixes]
+        for candidate in candidates:
             if candidate in files:
                 return candidate
         return None
@@ -2497,22 +2565,30 @@ class Index:
         return result
 
     def js_bindings(self, path):
-        """Names a JS/TS file's imports bind: ('symbol', file, exported name) | ('module', file) | ('ext', name)."""
-        if path in self._bindings:
-            return self._bindings[path]
-        bound = {}
-        for _line, _scope, spec, kind, imported, local in self.files[path]["js"]["imports"]:
-            if not local or kind not in ("named", "default", "namespace", "require"):
-                continue
-            target = self.js_module(path, spec)
-            if kind == "named":
-                bound[local] = ("symbol", target, imported) if target else ("ext", f"{spec}.{imported}")
-            elif kind == "default":
-                bound[local] = ("symbol", target, "default") if target else ("ext", spec)
-            else:
-                bound[local] = ("module", target) if target else ("ext", spec)
-        self._bindings[path] = bound
-        return bound
+        """Names a JS/TS file's module-level imports bind: ('symbol', file, exported name) | ('module', file) |
+        ('ext', name). A require() inside a function or block binds only there (js_scoped_bindings)."""
+        if path not in self._bindings:
+            self._bindings[path], self._scoped[path] = {}, {}
+            for _line, scope, spec, kind, imported, local in self.files[path]["js"]["imports"]:
+                if not local or kind not in ("named", "default", "namespace", "require"):
+                    continue
+                target = self.js_module(path, spec)
+                if kind == "named":
+                    binding = ("symbol", target, imported) if target else ("ext", f"{spec}.{imported}")
+                elif kind == "default":
+                    binding = ("symbol", target, "default") if target else ("ext", spec)
+                else:
+                    binding = ("module", target) if target else ("ext", spec)
+                if scope:
+                    self._scoped[path][(scope, local)] = binding
+                else:
+                    self._bindings[path][local] = binding
+        return self._bindings[path]
+
+    def js_scoped_bindings(self, path):
+        """(scope, name) -> binding for imports made inside a function or block (const x = require(...))."""
+        self.js_bindings(path)
+        return self._scoped[path]
 
     def js_export(self, path, name, depth=0, fallback=True):
         """What module path exports as name: a definition, a module, an external name, or None."""
@@ -2666,8 +2742,13 @@ class Index:
                 if found:
                     return found
             return None
-        current = scope
+        current, scoped = scope, self.js_scoped_bindings(path)
         while True:
+            local = scoped.get((current, head)) if scoped and current else None
+            if local:  # the nearest require() binding of this name
+                if not rest and local[0] == "module":
+                    return self.js_export(local[1], "default", depth + 1, False)
+                return self.js_member(local, rest, depth + 1)
             if defs.get((path, current), ("",))[0] not in ("class", "interface"):
                 written = types.get((path, current, head))
                 if written is not None and rest:
@@ -3366,7 +3447,8 @@ def call_graph(index):
         if _is_test(path) or not (python or script):
             continue
         resolve, seen = (index.resolve if python else index.js_resolve), {}
-        bound = index.bindings(path) if python else index.js_bindings(path)  # import aliases: from m import a as b
+        bound = index.bindings(path) if python else set(index.js_bindings(path)) | {  # import aliases (a as b)
+            name for _scope, name in index.js_scoped_bindings(path)}
         for _line, scope, chain in (python or script)["calls"]:
             if chain.rsplit(".", 1)[-1] not in by_name and chain.split(".", 1)[0] not in bound:
                 continue
