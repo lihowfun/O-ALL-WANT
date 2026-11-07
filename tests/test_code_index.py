@@ -775,6 +775,8 @@ REVIEW_FIXTURE = {  # Codex review round 10 of the JS/TS engine
     "defalias/app.ts": "import renamed from './barrel';\nrenamed();\n",
     "defalias/dlib.js": "function original2() {}\nmodule.exports = original2;\n",
     "defalias/req.js": "const renamed = require('./dlib');\nrenamed();\n",
+    "reqlocal/use.js": ("function f() {\n    const path = require('path');\n    return path.resolve('x');\n}\n"
+                        "if (ok) {\n    const lib = require('../lib/save');\n    lib.save();\n}\n"),
 }
 
 
@@ -851,6 +853,10 @@ class JavaScriptResolutionReviewTests(unittest.TestCase):
         self.assertEqual(self.index.js_resolve("defalias/req.js", "", "renamed"),
                          ("def", "defalias/dlib.js", "original2"))
         self.assertIn(("defalias/req.js", 2, True), self.rows("defalias/dlib.js::original2"))
+
+    def test_a_local_bound_by_require_keeps_resolving_through_it(self):
+        self.assertEqual(self.index.js_resolve("reqlocal/use.js", "f", "path.resolve"), ("ext", "path.resolve"))
+        self.assertIn(("reqlocal/use.js", 7, True), self.rows("lib/save.ts::save"))
 
     def test_extends_may_name_any_local_json_file(self):
         self.assertEqual(self.index.js_module("jcfg/use.ts", "#lib/tool"), "jcfg/lib/tool.ts")

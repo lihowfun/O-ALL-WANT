@@ -860,6 +860,7 @@ _JS_EXPORT_DEFAULT = re.compile(r"export\s+default\s+(?!(?:class|function|async|
 _JS_EXPORT_ASSIGN = re.compile(r"(?:export\s*=|module\.exports\s*=)\s*(?:(?P<name>[A-Za-z_$][\w$]*)\s*(?:;|$)"
                                r"|(?P<obj>\{))", re.M)
 _JS_REQUIRE = re.compile(r"require\s*\(\s*(?P<q>\")")
+_JS_BINDS_MODULE = re.compile(r"\s*(?:await\s+)?(?:require|import)\s*\(")  # const x = require(...): a binding
 _JS_REQUIRE_BIND = re.compile(r"\b(?:const|let|var)\s+([A-Za-z_$][\w$]*|\{[^{}]*\})\s*=\s*$")
 _JS_SPECIFIER = re.compile(r"(?:type\s+)?([\w$]+)(?:\s+as\s+([\w$]+))?")
 _JS_KEYWORDS = frozenset("""if for while switch catch function return typeof instanceof in of new delete void throw
@@ -1537,7 +1538,8 @@ def _js_record(text):
             kind = kind or value[1]
         if kind:
             types.append([scope, name, kind])
-        elif parent and parent[3] != "namespace" and not (value and value[0] in ("function", "class")):
+        elif parent and parent[3] != "namespace" and not (value and value[0] in ("function", "class")) and not (
+                value_at is not None and _JS_BINDS_MODULE.match(code, value_at)):
             types.append([scope, name, "?"])  # a local variable shadows an import of the same name
         if exported and not parent:
             exports.append([name, name])
