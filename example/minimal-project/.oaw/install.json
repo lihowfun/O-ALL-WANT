@@ -34,6 +34,7 @@
     ".agents/skills/egm-review/SKILL.md": "a268af361aeceb1e7bf49a3112ffa20727953e024e7453717a56d313b73770c1",
     ".agents/skills/egm-review/agents/openai.yaml": "659ab99489607ab3722800805993b59bbe8db9eaa156f9bb4a4995b233f540f9",
     ".agents/skills/egm-review/assets/icon.svg": "02154028864bd8547a45d7c9f55c59f95cb4ce3f57ecb3426f67034ab97d022f",
+    ".agents/skills/oaw-add/SKILL.md": "af94fb53ecea8f98cf4a3e27632edd94c65ace5cf601a09086c878252ec0693f",
     ".agents/skills/oaw-codemap/SKILL.md": "3cc13ae80abdf8c861baa034bda34f33511325e5466ca8108706dcbbb49fe2da",
     ".agents/skills/oaw-evidence/SKILL.md": "e1a0c9f4739f860f8b610e3a900fbb5999fc06c03fc1eeba9e9a1bb8d4ca0b30",
     ".agents/skills/oaw-review/SKILL.md": "445aa4b002a3a513a42f5992731b0214eb69116e984011d2320617a51aeea817",
@@ -126,6 +127,7 @@
     "egm-resolve",
     "egm-review",
     "egm-review-loop",
+    "oaw-add",
     "oaw-codemap",
     "oaw-evidence",
     "oaw-review"

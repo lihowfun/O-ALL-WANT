@@ -42,7 +42,7 @@ class InstallTests(unittest.TestCase):
             "templates/docs/knowledge/index.md": "# Knowledge index\n",
             "templates/docs/raw/README.md": "# Source notes\n",
         }
-        for name in ("oaw-codemap", "oaw-evidence", "oaw-review", "oaw-wiki", "oaw-improve"):
+        for name in ("oaw-add", "oaw-codemap", "oaw-evidence", "oaw-review", "oaw-wiki", "oaw-improve"):
             files[f"templates/.agents/skills/{name}/SKILL.md"] = f"---\nname: {name}\ndescription: Use this workflow when relevant.\n---\n\n# Workflow\n"
         for relative, text in files.items():
             self.write(self.framework, relative, text.encode())
@@ -73,6 +73,10 @@ class InstallTests(unittest.TestCase):
         self.root_patch = patch.object(oaw, "FRAMEWORK_ROOT", self.framework)
         self.root_patch.start()
         self.addCleanup(self.root_patch.stop)
+        # init records the checkout in the user's settings; keep that inside the test's directory.
+        environment = patch.dict(os.environ, {"OAW_CONFIG_HOME": str(self.base / "config")})
+        environment.start()
+        self.addCleanup(environment.stop)
 
     @staticmethod
     def write(root, relative, content):

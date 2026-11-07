@@ -3,6 +3,7 @@
 
 Init never overwrites different existing content. Migrate previews by default;
 --apply backs up recognized replacements and stages custom-content proposals.
+add, list and remove manage the user's own skills (scripts/user_install.py).
 """
 from __future__ import annotations
 
@@ -20,10 +21,18 @@ import sys
 import tempfile
 import uuid
 
+if __name__ == "__main__":
+    # user_install and catalog import `oaw`; let them reuse this module rather than load a second copy.
+    sys.modules.setdefault("oaw", sys.modules[__name__])
+
 FRAMEWORK_ROOT = Path(__file__).resolve().parents[1]
 FRAMEWORK_VERSION = "2.0.0"
 MANIFEST_PATH = ".oaw/install.json"
 PROFILES = ("minimal", "knowledge")
+# Plan W3 choice 2: OAW only manages the user's own skills; no OAW policy, skills or helpers are installed.
+MANAGER_ONLY = "manager-only"
+CHECKOUT_SETTING = "checkout.json"
+USER_RECORD = ".oaw/user-skills.json"
 HOSTS = ("codex", "claude")
 EGM_COMMIT = "f0ba151b252c9abf1318d9fe857a43265d06de89"
 EGM_LOCK_SHA256 = "c6ff4b7b56ce8187e842baa190c0b3fda2a37d112450931839e43bd7faf3d25e"
@@ -33,7 +42,7 @@ EGM_SKILLS = ("egm-bootstrap", "egm-brainstorm", "egm-draft", "egm-drift-report"
 EGM_ENTRY = re.compile(r"\.(?:agents|claude)/skills/(" + "|".join(EGM_SKILLS) + r")/SKILL\.md")
 # templates/AGENTS.md is the one authored policy source; these lines select its EGM text per recipe.
 POLICY_IF_EGM, POLICY_ELSE, POLICY_END = "<!-- oaw:if egm -->", "<!-- oaw:else -->", "<!-- oaw:end -->"
-BUNDLED_SKILLS = (*EGM_SKILLS, "oaw-codemap", "oaw-evidence", "oaw-review", "oaw-wiki", "oaw-improve")
+BUNDLED_SKILLS = (*EGM_SKILLS, "oaw-add", "oaw-codemap", "oaw-evidence", "oaw-review", "oaw-wiki", "oaw-improve")
 ALWAYS_PRESERVE = {"AI_CONTEXT.md", "VERSION.json", "ROADMAP.md", ".agents/memory.md"}
 LEGACY_ADAPTERS = {"GEMINI.md", ".cursorrules", ".windsurfrules", ".github/copilot-instructions.md"}
 
@@ -135,8 +144,10 @@ def read_manifest(target: Path) -> dict | None:
     data = read_json(path)
     if data.get("schema_version") != 1 or not isinstance(data.get("framework_version"), str):
         raise InstallError("Unsupported/invalid install manifest schema or framework version.")
-    if data.get("profile") not in PROFILES or not isinstance(data.get("with_improve"), bool):
+    if data.get("profile") not in (*PROFILES, MANAGER_ONLY) or not isinstance(data.get("with_improve"), bool):
         raise InstallError("Invalid profile/with_improve in install manifest.")
+    if data["profile"] == MANAGER_ONLY and (data.get("managed_files") or data.get("skills") or data["with_improve"]):
+        raise InstallError("A manager-only install owns no OAW files, skills or features.")
     if not isinstance(data.get("hosts", ["codex"]), list):
         raise InstallError("Invalid hosts in install manifest.")
     selected_hosts(data.get("hosts", ["codex"]))
@@ -171,7 +182,7 @@ def read_manifest(target: Path) -> dict | None:
 
 
 def default_skills(profile: str, with_improve: bool) -> list[str]:
-    return [*EGM_SKILLS, "oaw-codemap", "oaw-evidence", "oaw-review", *(["oaw-wiki"] if profile == "knowledge" else []), *(["oaw-improve"] if with_improve else [])]
+    return [*EGM_SKILLS, "oaw-add", "oaw-codemap", "oaw-evidence", "oaw-review", *(["oaw-wiki"] if profile == "knowledge" else []), *(["oaw-improve"] if with_improve else [])]
 
 
 def selected_skills(skills: list[str]) -> list[str]:
@@ -506,6 +517,84 @@ def plan_install(target: Path, profile: str, with_improve: bool, *, migrate: boo
             "package": package, "managed_files": managed, "custom_files": sorted(custom), "actions": actions}
 
 
+def plan_manager_only(target: Path, *, migrate: bool = False, hosts: list[str] | None = None) -> dict:
+    """Plan W3 choice 2: OAW keeps only its manifest and manages the user's own skills.
+
+    Every OAW-owned file still matching its installed hash retires (backed up by apply_plan); an
+    edited one stays as a project-owned custom file, so project policy text is never deleted.
+    Switching back is `init` or `migrate --profile minimal`.
+    """
+    target = target_path(target)
+    manifest_path = joined(target, MANIFEST_PATH)
+    check_path(manifest_path, kind="file")
+    manifest_before = manifest_path.read_bytes() if manifest_path.exists() else None
+    previous = read_manifest(target)
+    hosts = selected_hosts(hosts)
+    if previous:
+        hosts = [host for host in HOSTS if host in hosts or host in previous.get("hosts", ["codex"])]
+    owned = previous["managed_files"] if previous else {}
+    custom = set(previous.get("custom_files", [])) if previous else set()
+    actions = []
+    for relative in sorted(owned):
+        destination = joined(target, relative)
+        check_path(destination, kind="file")
+        if not destination.exists():
+            continue
+        before = digest(destination.read_bytes())
+        if before == owned[relative]:
+            actions.append({"path": relative, "action": "retire", "before": before, "after": None})
+        else:
+            actions.append({"path": relative, "action": "preserve-retired-edit", "before": before, "after": None})
+            custom.add(relative)
+    if actions and not migrate:
+        raise InstallError("Switching to manager-only retires OAW's files; use migrate --profile manager-only to preview, then --apply.")
+    for relative in (MANIFEST_PATH, ".oaw/install.lock"):
+        check_path(joined(target, relative), kind="file")
+    for relative in (".oaw/backups", ".oaw/proposals"):
+        check_path(joined(target, relative), kind="dir")
+    return {"target": target, "profile": MANAGER_ONLY, "with_improve": False, "hosts": hosts, "previous": previous,
+            "manifest_before": manifest_before, "skills": [], "skills_explicit": False, "integrations": {},
+            "package": {}, "managed_files": {}, "custom_files": sorted(custom), "actions": actions}
+
+
+def config_home() -> Path:
+    """The user's OAW settings folder (outside every project). OAW_CONFIG_HOME overrides it."""
+    override = os.environ.get("OAW_CONFIG_HOME")
+    if override:
+        return Path(os.path.abspath(override))
+    if os.name == "nt":
+        base = Path(os.environ.get("APPDATA") or Path.home() / "AppData" / "Roaming")
+    elif sys.platform == "darwin":
+        base = Path.home() / "Library" / "Application Support"
+    else:
+        base = Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config")
+    return Path(os.path.abspath(base)) / "oaw"
+
+
+def remember_checkout() -> str | None:
+    """Record this OAW checkout in the user's settings so the oaw-add skill can find it.
+
+    The path stays out of every project. A checkout without scripts/oaw.py (a test fixture) is never
+    recorded; a settings folder that cannot be written only loses the convenience.
+    """
+    root = framework_root()
+    if not (root / "scripts" / "oaw.py").is_file():
+        return None
+    path = config_home() / CHECKOUT_SETTING
+    data = {"schema": "oaw-checkout/1", "path": str(root), "version": FRAMEWORK_VERSION}
+    try:
+        if path.is_file() and json.loads(path.read_text(encoding="utf-8")) == data:
+            return str(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        handle, temporary = tempfile.mkstemp(prefix=".oaw-", dir=path.parent)
+        with os.fdopen(handle, "w", encoding="utf-8") as stream:
+            stream.write(json.dumps(data, indent=2) + "\n")
+        os.replace(temporary, path)
+    except (OSError, ValueError):
+        return None
+    return str(path)
+
+
 def atomic_write(path: Path, content: bytes) -> None:
     check_path(path, kind="file")
     existing_mode = stat.S_IMODE(path.stat().st_mode) if path.exists() else None
@@ -742,7 +831,8 @@ def doctor(target: Path) -> dict:
             retained_agent = relative.startswith(".claude/agents/egm-") and selected is not None and not any(name in EGM_SKILLS for name in selected)
             if path.is_file() and (retained_skill or retained_agent):
                 checks.append({"status": "WARN", "path": relative, "detail": "Explicitly retained project-owned entrypoint remains active outside the selected recipe; disable it manually before claiming an ablation."})
-        required = ["AGENTS.md", "CLAUDE.md", "scripts/context_hub.py", "scripts/oaw_common.py"]
+        manager_only = manifest["profile"] == MANAGER_ONLY
+        required = [] if manager_only else ["AGENTS.md", "CLAUDE.md", "scripts/context_hub.py", "scripts/oaw_common.py"]
         skill_names = manifest.get("skills", ["oaw-evidence"])
         if manifest["profile"] == "knowledge":
             required.extend(["scripts/wiki_sync.py", "scripts/validate_skills.py"])
@@ -759,7 +849,7 @@ def doctor(target: Path) -> dict:
             required.extend(egm_native_agents())
         policy = joined(target, "AGENTS.md")
         check_path(policy, kind="file")
-        if "skills" in manifest and not selected_egm and policy.is_file():
+        if "skills" in manifest and not selected_egm and policy.is_file() and not manager_only:
             stale = egm_policy_lines() & {line.strip() for line in policy.read_text(encoding="utf-8", errors="replace").splitlines()}
             if stale:
                 checks.append({"status": "WARN", "path": "AGENTS.md", "detail": "Policy still describes EGM, which this recipe does not install; preview `oaw.py migrate` or edit the project-owned text."})
@@ -767,8 +857,10 @@ def doctor(target: Path) -> dict:
         # install without either only gets a migrate hint.
         mode_helper = "scripts/oaw_mode.py"
         names_helper = policy.is_file() and "oaw_mode.py" in policy.read_text(encoding="utf-8", errors="replace")
-        if mode_helper in manifest["managed_files"] or mode_helper in manifest.get("custom_files", []) or names_helper:
+        if mode_helper in manifest["managed_files"] or mode_helper in manifest.get("custom_files", []) or (names_helper and not manager_only):
             required.append(mode_helper)
+        elif manager_only:
+            checks.append({"status": "PASS", "path": MANIFEST_PATH, "detail": "Manager-only install: OAW keeps no policy, skills or helpers here; `oaw.py list` shows what it manages."})
         else:
             checks.append({"status": "WARN", "path": mode_helper, "detail": "Installed before working modes; preview `oaw.py migrate`, then --apply, to add the helper and its policy line."})
         for relative in required:
@@ -777,9 +869,11 @@ def doctor(target: Path) -> dict:
             if not joined(target, relative).is_file() or not declared:
                 checks.append({"status": "FAIL", "path": relative, "detail": "Required policy/skill/helper is missing or unmanaged."})
         claude = joined(target, "CLAUDE.md")
-        if claude.is_file() and not imports_agents(claude.read_bytes()):
+        if not manager_only and claude.is_file() and not imports_agents(claude.read_bytes()):
             checks.append({"status": "WARN", "path": "CLAUDE.md",
                            "detail": "CLAUDE.md does not import @AGENTS.md; Claude and Codex may follow different policy."})
+    if manifest and os.path.lexists(joined(target, USER_RECORD)):
+        checks.extend(_user_install().doctor_checks(target))
     if manifest:
         inventory = set(manifest["managed_files"]) | set(manifest.get("custom_files", [])) | set(required)
         for relative in sorted(inventory):
@@ -817,6 +911,8 @@ def print_result(result: dict, *, as_json: bool) -> None:
         print(f"  {item['capability']}: SUPPORT={item['support']} ENABLED={item['enabled']}")
     if result.get("backup"):
         print(f"  Backup/receipt: {result['backup']}")
+    if result.get("checkout_setting"):
+        print(f"  OAW checkout recorded for the oaw-add skill (outside the project): {result['checkout_setting']}")
     for proposal in result.get("proposals", []):
         print(f"  Proposed replacement: {proposal}")
     if result.get("pending_conflicts"):
@@ -845,6 +941,15 @@ def skill_inventory(target: Path | None = None) -> dict:
             "scope": "Bundled skills only. External host-native skills remain project/user owned; no global host settings changed."}
 
 
+def _user_install():
+    """The user install route (plan W3), loaded on demand and bound to this module."""
+    scripts = str(Path(__file__).resolve().parent)
+    if scripts not in sys.path:
+        sys.path.insert(0, scripts)
+    import user_install
+    return user_install
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
@@ -856,7 +961,8 @@ def main(argv: list[str] | None = None) -> int:
         sub.add_argument("--target", default=".", help="project directory (default: current directory)")
         sub.add_argument("--json", action="store_true", help="print a machine-readable result")
         if command != "doctor":
-            sub.add_argument("--profile", choices=PROFILES, default="minimal")
+            sub.add_argument("--profile", choices=(*PROFILES, MANAGER_ONLY), default=None,
+                             help="minimal (default), knowledge, or manager-only (OAW only manages your own skills)")
             sub.add_argument("--host", choices=(*HOSTS, "both"), default="codex",
                              help="native skill folder(s) to install; existing hosts are retained")
             sub.add_argument("--with-improve", action="store_true", help="also install the opt-in improvement workflow")
@@ -865,7 +971,27 @@ def main(argv: list[str] | None = None) -> int:
             sub.add_argument("--apply", action="store_true", help="apply with backups; otherwise only preview")
             sub.add_argument("--keep-custom", action="append", default=[], metavar="PATH",
                              help="with --apply, acknowledge a reviewed conflict as project-owned (repeatable)")
+    add = commands.add_parser("add", help="add your own skills (GitHub URL[@ref], local folder, or a name from OAW's verdicts)")
+    add.add_argument("sources", nargs="*", metavar="SOURCE",
+                     help="what to add; without one, only the --choice (for example switching to manager-only) is applied")
+    add.add_argument("--choice", choices=("oaw", "only", "recommended"),
+                     help="oaw: OAW plus these (default); only: only these, OAW just manages them; recommended: from OAW's tasting records")
+    add.add_argument("--consent", help="what may run on its own: comma-separated hooks, mcp, scripts; or all, none")
+    add.add_argument("--on-conflict", action="append", default=[], metavar="NAME=ACTION",
+                     help="rename[:NEW], skip or replace for a same name; keep-both, use-theirs or use-oaw for an overlap (repeatable)")
+    add.add_argument("--host", choices=(*HOSTS, "both"), help="skill folders to fill (default: the project's hosts, else codex)")
+    add.add_argument("--apply", action="store_true", help="install; otherwise preview (a terminal asks one question instead)")
+    user_list = commands.add_parser("list", help="the receipt: every skill here, where it came from, tasting result, how to remove it")
+    remove = commands.add_parser("remove", help="undo one addition exactly; a built-in OAW skill goes through migrate (--apply)")
+    remove.add_argument("name", help="a skill, agent, hook set or MCP server name, or the source name shown by list")
+    remove.add_argument("--dry-run", action="store_true", help="show what would be restored without changing anything")
+    remove.add_argument("--apply", action="store_true", help="needed to remove a built-in OAW skill")
+    for sub in (add, user_list, remove):
+        sub.add_argument("--target", default=".", help="project directory (default: current directory)")
+        sub.add_argument("--json", action="store_true", help="print a machine-readable result")
     args = parser.parse_args(argv)
+    if args.command in ("add", "list", "remove"):
+        return _user_install().run(args)
     try:
         if sys.version_info < (3, 10):
             raise InstallError("Python 3.10+ is required.")
@@ -882,10 +1008,18 @@ def main(argv: list[str] | None = None) -> int:
         else:
             migrate = args.command == "migrate"
             selection = None if args.skills in (None, "default") else ([] if args.skills == "none" else [name.strip() for name in args.skills.split(",")])
-            plan = plan_install(target, args.profile, args.with_improve, migrate=migrate,
-                                keep_custom=args.keep_custom if migrate else None,
-                                hosts=list(HOSTS) if args.host == "both" else [args.host],
-                                skills=selection, reset_recipe=args.skills == "default")
+            hosts = list(HOSTS) if args.host == "both" else [args.host]
+            previous = read_manifest(target)
+            # A manager-only project stays manager-only until a profile is named (init or migrate --profile minimal).
+            profile = args.profile or (MANAGER_ONLY if previous and previous["profile"] == MANAGER_ONLY else "minimal")
+            if profile == MANAGER_ONLY:
+                if args.skills or args.with_improve or (migrate and args.keep_custom):
+                    raise InstallError("A manager-only install takes no --skills, --with-improve or --keep-custom.")
+                plan = plan_manager_only(target, migrate=migrate, hosts=hosts)
+            else:
+                plan = plan_install(target, profile, args.with_improve, migrate=migrate,
+                                    keep_custom=args.keep_custom if migrate else None,
+                                    hosts=hosts, skills=selection, reset_recipe=args.skills == "default")
             if migrate and not args.apply:
                 result = {"status": "dry-run", "target": str(target), "profile": plan["profile"],
                           "hosts": plan["hosts"],
@@ -897,6 +1031,9 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 result = apply_plan(plan, migrate=migrate)
                 code = 3 if result["pending_conflicts"] else 0
+                setting = remember_checkout()
+                if setting:
+                    result["checkout_setting"] = setting
         print_result(result, as_json=args.json)
         return code
     except (InstallError, OSError, UnicodeError) as exc:

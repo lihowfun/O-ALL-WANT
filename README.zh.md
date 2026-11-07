@@ -191,6 +191,16 @@ python3 scripts/oaw.py migrate --target /path/to/project --apply   # 備份 + pr
 
 可識別且未改動的 framework 檔會直接更新。客製的 policy 和 skill 會變成 proposal，不會被覆寫。記憶、knowledge、原始筆記、`AI_CONTEXT.md`、`ROADMAP.md` 和根目錄 `VERSION.json` 都歸你所有。proposal 處理完之前，不要把升級當成完成。見 [UPGRADING](docs/UPGRADING.md)。
 
+### ➕ 自己加 skill
+
+```bash
+python3 scripts/oaw.py add <GitHub 網址｜資料夾｜名字> ... --target /path/to/project   # 問一題就裝
+python3 scripts/oaw.py list --target /path/to/project                                 # 吸收清單：裝了什麼、試吃過沒、怎麼移除
+python3 scripts/oaw.py remove <名字> --target /path/to/project                        # 回到加之前的樣子
+```
+
+hook、MCP server 和附帶的 script 要你同意才裝；抓下來的程式一律不執行。細節見 [CLI Reference](docs/CLI_Reference.md#your-own-skills-add-list-remove)。
+
 ### 🔌 Host 對應
 
 | Host | Policy 檔 | Skills 目錄 |

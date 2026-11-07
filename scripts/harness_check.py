@@ -18,7 +18,7 @@ REQUIRED_TEST_MODULES = ("test_context_hub", "test_gate", "test_improvement", "t
                          "test_egm_pilot", "test_egm_local", "test_status", "test_egm_integration",
                          "test_catalog_core", "test_catalog", "test_catalog_ui", "test_cli_resolve",
                          "test_goldfish_review", "test_codemap_eval", "test_code_index", "test_digest_mod",
-                         "test_oaw_mode", "test_eval_stats")
+                         "test_oaw_mode", "test_eval_stats", "test_user_install")
 MINIMUM_TESTS = 426  # POSIX count; Windows adds junction cases.
 SUMMARY_MARKER = "OAW-TEST-SUMMARY "
 # Per-check subprocess limit: a guard against a hung command, not a test budget. The full
@@ -42,9 +42,14 @@ class Check:
     stderr: str = ""
 
 
+# `oaw.py init` records the checkout in the user's OAW settings; the gate keeps that in a throwaway folder.
+GATE_CONFIG_HOME = tempfile.mkdtemp(prefix="oaw-gate-config-")
+
+
 def run(command, *, cwd=ROOT, env=None):
     environment = os.environ.copy()
-    environment.update({"PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8", "PYTHONDONTWRITEBYTECODE": "1"})
+    environment.update({"PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8", "PYTHONDONTWRITEBYTECODE": "1",
+                        "OAW_CONFIG_HOME": GATE_CONFIG_HOME})
     if env:
         environment.update(env)
     return subprocess.run(command, cwd=cwd, env=environment, capture_output=True,
@@ -105,7 +110,7 @@ def syntax_check():
 
 
 def cli_check():
-    required = {"oaw.py": ("init", "migrate", "doctor"),
+    required = {"oaw.py": ("init", "migrate", "doctor", "add", "list", "remove"),
                 "context_hub.py": ("memory", "search"), "oaw_mode.py": ("suggest", "show"),
                 "wiki_sync.py": ("refresh", "lint", "cites"),
                 "improvement.py": ("propose", "compare", "decide"),

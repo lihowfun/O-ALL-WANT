@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- Users add skills themselves (plan W3, owner decision D34): `oaw.py add SOURCE...`, `list` and `remove NAME`, run
+  from the checkout like `init`. One question (or flags) covers the choice - OAW plus these, only these (new
+  `manager-only` profile that `doctor` understands), or a recommendation from OAW's tasting records - every
+  structural conflict, and consent for hooks, MCP servers and bundled scripts. Every part keeps a change record in
+  `.oaw/user-skills.json`, so `remove` restores its files byte for byte and takes out only its settings entries.
+  The receipt lists each skill's source, who added it, its tasting result (records only; otherwise 未試吃), startup
+  cost and what runs on its own. Fetched code is never executed. OAW's own absorb keeps its blocks.
+- `catalog/verdicts.json` ships OAW's tasting results (outcome, conditions, evidence commit, category), generated
+  from the maintainer's ledger by `scripts/build_verdicts.py`.
+- The explicit-invocation `oaw-add` skill is the chat entry for the same three verbs; `init` records the OAW
+  checkout in the user's settings (outside the project) so the skill can find it.
+
 ### Changed
 
 - AGENTS.md keeps only lines with a reason (plan W4): 24 rendered lines become 20. Removed: the product sentence

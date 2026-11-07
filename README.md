@@ -191,6 +191,16 @@ python3 scripts/oaw.py migrate --target /path/to/project --apply   # backups + p
 
 Known unmodified framework files update. Custom policy and skills become proposals and are never overwritten. Memory, knowledge, raw notes, `AI_CONTEXT.md`, `ROADMAP.md` and root `VERSION.json` stay yours. Review unresolved proposals before treating the migration as done. See [UPGRADING](docs/UPGRADING.md).
 
+### ➕ Add your own skills
+
+```bash
+python3 scripts/oaw.py add <GitHub URL | folder | name> ... --target /path/to/project   # one question, then installs
+python3 scripts/oaw.py list --target /path/to/project                                   # what is installed, tested or not, how to remove
+python3 scripts/oaw.py remove <name> --target /path/to/project                          # back to how it was before
+```
+
+Hooks, MCP servers and bundled scripts install only with your consent; nothing fetched is run. See the [CLI Reference](docs/CLI_Reference.md#your-own-skills-add-list-remove).
+
 ### 🔌 Hosts
 
 | Host | Policy file | Skills folder |
