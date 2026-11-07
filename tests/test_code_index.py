@@ -766,6 +766,15 @@ REVIEW_FIXTURE = {  # Codex review round 10 of the JS/TS engine
     "jcfg/tsconfig.json": '{"extends": "./config/base.json"}\n',
     "jcfg/lib/tool.ts": "export function tool() {}\n",
     "jcfg/use.ts": "import { tool } from '#lib/tool';\ntool();\n",
+    # Codex review round 11
+    "arrow/use.ts": "import { save } from '../lib/save';\nexport const run = save => save();\nexport const run2 = () => save();\n",
+    "block/use.ts": ("import { save } from '../lib/save';\nexport function f(flag) {\n    if (flag) {\n"
+                     "        const save = () => 1;\n        save();\n    }\n    save();\n}\n"),
+    "defalias/lib.ts": "export function original() {}\n",
+    "defalias/barrel.ts": "export { original as default } from './lib';\n",
+    "defalias/app.ts": "import renamed from './barrel';\nrenamed();\n",
+    "defalias/dlib.js": "function original2() {}\nmodule.exports = original2;\n",
+    "defalias/req.js": "const renamed = require('./dlib');\nrenamed();\n",
 }
 
 
@@ -823,6 +832,25 @@ class JavaScriptResolutionReviewTests(unittest.TestCase):
 
     def test_extends_lists_merge_option_by_option(self):
         self.assertEqual(self.index.js_module("cfg/use.ts", "@x/thing"), "cfg/x/thing.ts")
+
+    def test_a_single_arrow_parameter_shadows_an_import(self):
+        rows = self.rows("lib/save.ts::save")
+        self.assertIn(("arrow/use.ts", 3, True), rows)
+        self.assertNotIn(("arrow/use.ts", 2, True), rows)  # const run = save => save()
+        self.assertIsNone(self.index.js_resolve("arrow/use.ts", "run", "save"))
+
+    def test_let_and_const_are_scoped_to_their_block(self):
+        report = code_index.callers(self.index, "lib/save.ts::save")
+        rows = {(row["path"], row["line"], row["resolved"]): row["symbol"] for row in report["results"]}
+        self.assertEqual(rows.get(("block/use.ts", 7, True)), "f")  # after the block: the import
+        self.assertNotIn(("block/use.ts", 5, True), rows)  # inside the block: the block's own save
+
+    def test_default_and_require_aliases_follow_the_resolved_export(self):
+        self.assertEqual(self.index.js_resolve("defalias/app.ts", "", "renamed"), ("def", "defalias/lib.ts", "original"))
+        self.assertIn(("defalias/app.ts", 2, True), self.rows("defalias/lib.ts::original"))
+        self.assertEqual(self.index.js_resolve("defalias/req.js", "", "renamed"),
+                         ("def", "defalias/dlib.js", "original2"))
+        self.assertIn(("defalias/req.js", 2, True), self.rows("defalias/dlib.js::original2"))
 
     def test_extends_may_name_any_local_json_file(self):
         self.assertEqual(self.index.js_module("jcfg/use.ts", "#lib/tool"), "jcfg/lib/tool.ts")

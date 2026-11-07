@@ -1146,12 +1146,12 @@ def _js_value(code, pos, pairs):
         return ("new", re.sub(r"\s+", "", match.group("cls")))
     if match.group("cexp"):
         return ("class", match.group("xname"), match.end())
-    if match.group("single"):
+    if match.group("single"):  # x => ...: the fifth item names the one parameter
         end_arrow = match.end()
         body = _js_skip(code, end_arrow)
         if body < len(code) and code[body] == "{" and body in pairs:
-            return ("function", None, body, pairs[body])
-        return ("function", None, None, _js_end(code, end_arrow, pairs))
+            return ("function", None, body, pairs[body], match.group("single"))
+        return ("function", None, None, _js_end(code, end_arrow, pairs), match.group("single"))
     if match.group("fn") is not None:
         opening = _js_skip(code, _js_generics(code, match.end()))
         close = pairs.get(opening) if opening < len(code) and code[opening] == "(" else None
@@ -1213,6 +1213,19 @@ def _js_type_and_value(code, pos, pairs):
             return code[start:index], None
         index += 1
     return code[start:index], None
+
+
+def _plain_scope(scope):
+    """A scope without the "{line}" parts that name let/const blocks: what to show for it."""
+    return ".".join(part for part in scope.split(".") if not (part.startswith("{") and part.endswith("}"))) \
+        if "{" in scope else scope
+
+
+def _owner_scope(scope):
+    """The definition a scope belongs to: trailing "{line}" block parts dropped."""
+    while scope.endswith("}") and "{" in scope.rsplit(".", 1)[-1]:
+        scope = scope.rpartition(".")[0]
+    return scope
 
 
 def _js_words(code, word):
@@ -1297,7 +1310,7 @@ def _js_record(text):
     defs, extra, names_at = [], [], set()  # extra[i]: (start, end, body) offsets of defs[i]
     types, bases, implements, exports = [], {}, {}, []
     class_bodies, interface_bodies, stack, params_of = {}, {}, [], {}
-    position = {}
+    position, bodies, blocks, spans = {}, set(), {}, []  # spans: (start, end, scope) of let/const blocks
 
     def parent_at(at):
         while stack and stack[-1][1] < at:
@@ -1317,6 +1330,8 @@ def _js_record(text):
             extra.append((start, end, body))
         if name_at is not None:
             names_at.add(name_at)
+        if body is not None:
+            bodies.add(body)
         stack.append((start, end, qualname, kind))
         return True
 
@@ -1326,6 +1341,13 @@ def _js_record(text):
             types.append([owner, name, kind or "?"])  # "?": a local name whose type is not written
             if kind and is_constructor and is_property and cls:
                 types.append([cls, "this." + name, kind])
+
+    def add_value_params(qualname, value):
+        if value[1] is not None:
+            add_params(qualname, value[1], pairs[value[1]])
+        elif len(value) > 4:
+            params_of.setdefault(qualname, []).append(value[4])
+            types.append([qualname, value[4], "?"])
 
     def add_class(qualname, header_at, start, export_default=False, exported=False):
         body = _js_body(code, header_at, pairs, header=True)
@@ -1396,8 +1418,8 @@ def _js_record(text):
             if kind:
                 types.append([owner, "this." + name, kind])
             if value and value[0] == "function":
-                if add(qualname, "method", start, value[3], value[2], name_at) and value[1] is not None:
-                    add_params(qualname, value[1], pairs[value[1]])
+                if add(qualname, "method", start, value[3], value[2], name_at):
+                    add_value_params(qualname, value)
             else:
                 end = _js_end(code, value_at, pairs) if value_at is not None else after_at
                 if add(qualname, "variable", start, end, None, name_at):
@@ -1454,8 +1476,7 @@ def _js_record(text):
             value = _js_value(code, value_at, pairs)
             if value and value[0] == "function":
                 if add(qualname, "function" if match.group("cname") else "method", start, value[3], value[2]):
-                    if value[1] is not None:
-                        add_params(qualname, value[1], pairs[value[1]])
+                    add_value_params(qualname, value)
             elif match.group("cname") and not parent:
                 if add(qualname, "variable", start, _js_end(code, value_at, pairs)):
                     stack.pop()
@@ -1465,6 +1486,14 @@ def _js_record(text):
         keyword, name = match.group("kw2"), match.group("name2")
         if keyword is None:
             continue
+        if keyword in ("let", "const") and bracket == "{" and enclosing not in bodies and enclosing in pairs:
+            # let/const in a block that is not a function body: a scope of its own, named "{line}"
+            if enclosing not in blocks:
+                blocks[enclosing] = f"{prefix}{{{line_of(enclosing)}}}"
+                spans.append((enclosing, pairs[enclosing], blocks[enclosing]))
+                stack.append((enclosing, pairs[enclosing], blocks[enclosing], "block"))
+            parent = (enclosing, pairs[enclosing], blocks[enclosing], "block")
+            prefix = blocks[enclosing] + "."
         name_at = line_at + match.start("name2")
         if keyword in ("interface", "enum") or keyword.startswith("const") and keyword.endswith("enum"):
             body = _js_body(code, line_at + match.end("name2"), pairs, header=True)
@@ -1513,8 +1542,8 @@ def _js_record(text):
         if exported and not parent:
             exports.append([name, name])
         if value and value[0] == "function":
-            if add(prefix + name, "function", start, value[3], value[2], name_at) and value[1] is not None:
-                add_params(prefix + name, value[1], pairs[value[1]])
+            if add(prefix + name, "function", start, value[3], value[2], name_at):
+                add_value_params(prefix + name, value)
         elif value and value[0] == "class":
             add_class(prefix + name, value[2], start)
         elif not parent or parent[3] == "namespace":
@@ -1525,21 +1554,21 @@ def _js_record(text):
                     exports.append(["default", prefix + name])
 
     # Scopes: the innermost definition around each call, import and reference.
-    order = sorted((index for index in range(len(defs)) if defs[index][1] != "variable"),
-                   key=lambda index: (extra[index][0], -extra[index][1]))
+    order = sorted([(extra[index][0], extra[index][1], defs[index][0]) for index in range(len(defs))
+                    if defs[index][1] != "variable"] + spans, key=lambda span: (span[0], -span[1]))
 
     def scopes(offsets):
-        found, open_defs, pointer = [], [], 0
+        found, open_spans, pointer = [], [], 0
         for at in offsets:
-            while pointer < len(order) and extra[order[pointer]][0] <= at:
-                index = order[pointer]
-                while open_defs and extra[open_defs[-1]][1] < extra[index][0]:
-                    open_defs.pop()
-                open_defs.append(index)
+            while pointer < len(order) and order[pointer][0] <= at:
+                span = order[pointer]
+                while open_spans and open_spans[-1][1] < span[0]:
+                    open_spans.pop()
+                open_spans.append(span)
                 pointer += 1
-            while open_defs and extra[open_defs[-1]][1] < at:
-                open_defs.pop()
-            found.append(defs[open_defs[-1]][0] if open_defs else "")
+            while open_spans and open_spans[-1][1] < at:
+                open_spans.pop()
+            found.append(open_spans[-1][2] if open_spans else "")
         return found
 
     kinds = {qualname: defs[index][1] for qualname, index in position.items()}
@@ -1688,12 +1717,12 @@ def _js_record(text):
         start_line = line
         while start_line > 1 and lines[start_line - 2].lstrip().startswith("@"):
             start_line -= 1
-        unit = _new_unit(qualname, kind, line, start_line, max(end, line))
+        unit = _new_unit(_plain_scope(qualname), kind, line, start_line, max(end, line))
         body = extra[index][2]
         unit.append(line_of(body) if body is not None else line)
         name = qualname.rsplit(".", 1)[-1].lstrip("#")
         _add_ident(unit[6], name, W_NAME)
-        for part in qualname.split(".")[:-1]:
+        for part in _plain_scope(qualname).split(".")[:-1]:
             _add_ident(unit[6], part, W_QUAL)
         unit_of[qualname] = len(units)
         units.append(unit)
@@ -3003,7 +3032,7 @@ def _place(index, result, bases, idf):
 
 
 def _scope_label(scope):
-    return scope or "<module>"
+    return _plain_scope(scope) or "<module>"
 
 
 LIMITS = ("complete means every match in this index, not every real caller: only Python and JavaScript/"
@@ -3196,9 +3225,10 @@ def affected(index, target, hops=1, limit=50):
             add(file, line, scope, label, 1)
         if hops > 1:
             for file, scope in hop_scopes:
+                scope = _owner_scope(scope)
                 if scope and (file, scope) in defs:
                     for other, line, where, label in _symbol_sites(index, ("def", file, scope)):
-                        add(other, line, where, label + f" (via {file}::{scope})", 2)
+                        add(other, line, where, label + f" (via {file}::{_plain_scope(scope)})", 2)
                 else:
                     for other, found in sorted(edges.items()):
                         for line, where, imported, label in sorted(found):
@@ -3256,12 +3286,14 @@ def _js_aliases(index, path, names, reach=(), targets=()):
         elif kind == "default":
             module = index.js_module(path, spec)
             exported = index.tables()["js_exports"].get(module, {}).get("default") if module else None
-            if exported and (exported.rsplit(".", 1)[-1] in names
-                             or (targets and index.js_export(module, "default", 0, False) in targets)):
-                found.add(local)
-        elif kind in ("namespace", "require") and reach:
+            if (exported and exported.rsplit(".", 1)[-1] in names) or (
+                    targets and module and index.js_export(module, "default", 0, False) in targets):
+                found.add(local)  # also `export { original as default } from ...` in a barrel
+        elif kind in ("namespace", "require"):
             module = index.js_module(path, spec)
-            if module:
+            if module and kind == "require" and targets and index.js_export(module, "default", 0, False) in targets:
+                found.add(local)  # const renamed = require('./lib'); renamed()
+            if module and reach:
                 found.update(alias for alias in reach if index.js_export(module, alias, 0, False) in targets)
     return found
 
@@ -3341,7 +3373,7 @@ def call_graph(index):
                 seen[key] = resolve(path, scope, chain)
             target = seen[key]
             if target and target[0] == "def" and not _is_test(target[1]):
-                edges[((path, scope), (target[1], target[2]))] += 1
+                edges[((path, _owner_scope(scope)), (target[1], target[2]))] += 1
     return edges
 
 
