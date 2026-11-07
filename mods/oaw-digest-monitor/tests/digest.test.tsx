@@ -338,3 +338,30 @@ test('agent and release are drawn apart from the owner, and a tasting or absorpt
   expect(status.foods.find(f => f.id === 'graphify')?.tasting).toBe('沒證明比原生好（不收）（2026-11-05）')
   expect(status.release.units).toBe(1)
 })
+
+test('the EGM switch shows the project setting and sets it through oaw_mode.py', async ($, on) => {
+  const w = world(on)
+  w.files.set(`${PROJECT}/.oaw/settings.json`, { text: JSON.stringify({ review: { egm: 'on' } }), mtime: NOW - 100 })
+  await start($)
+  const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+  expect(await ui.find({ type: 'Text', text: /每個 deep 任務都跑完整 EGM/ })).toBeDefined()
+  const before = w.runs.length
+  w.answer = { exitCode: 0, stdout: '{"egm": "off"}', stderr: '', isStdoutTruncated: false, isStderrTruncated: false }
+  w.files.set(`${PROJECT}/.oaw/settings.json`, { text: JSON.stringify({ review: { egm: 'off' } }), mtime: NOW })
+  await ui.press({ key: 'egm:off' })
+  expect(w.runs.length).toBe(before + 1)
+  expect(w.runs[w.runs.length - 1]).toEqual(['python3', `${OAW}/scripts/oaw_mode.py`, 'egm', 'off', '--root', PROJECT, '--json'])
+  expect(w.toasts).toContain('EGM 審查已切到「關」')
+  expect(await ui.find({ type: 'Text', text: /不跑 EGM/ })).toBeDefined()
+  await ui.unmount()
+})
+
+test('without a settings file the EGM switch is the default, auto', async ($, on) => {
+  const w = world(on)
+  await start($)
+  const ui = await $.ui.mount({ ...PANE, surface: 'terminal' })
+  expect(await ui.find({ type: 'Text', text: /現在是 EGM（預設）/ })).toBeDefined()
+  expect(w.runs.length).toBe(0)
+  await ui.unmount()
+})
+

@@ -48,6 +48,13 @@ export type DigestFood = {
   components: DigestComponent[]
 }
 
+// The project's EGM switch (owner decision D33), read from .oaw/settings.json and set through scripts/oaw_mode.py.
+export type EgmView = {
+  position: 'on' | 'auto' | 'off' | null
+  isDefault: boolean
+  problem: string | null
+}
+
 export type DigestLive = {
   food: string
   stage: string
@@ -98,6 +105,7 @@ declare module 'claude-code' {
       pending: DigestPending | null
       busy: string | null
       message: DigestMessage | null
+      egm: EgmView | null
     }
   }
 }

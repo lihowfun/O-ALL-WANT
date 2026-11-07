@@ -10,9 +10,15 @@ import type { EngineInterface, Register } from 'claude-code'
 
 import type { DigestAction, DigestFood, DigestModel, DigestPending, DigestProblem } from '../types'
 import {
+  EGM_LABELS,
+  EGM_MEANING,
+  EGM_POSITIONS,
   PREVIEWED,
   NEEDS_REASON,
   VIEW_SOURCES,
+  egmArgv,
+  parseEgmSetting,
+  type EgmPosition,
   actionArgv,
   addArgv,
   askBrief,
@@ -48,6 +54,7 @@ const picksAtom = atom({ plugin: 'oaw-digest-monitor', key: 'picks' } as const, 
 const pendingAtom = atom({ plugin: 'oaw-digest-monitor', key: 'pending' } as const, null)
 const busyAtom = atom({ plugin: 'oaw-digest-monitor', key: 'busy' } as const, null)
 const messageAtom = atom({ plugin: 'oaw-digest-monitor', key: 'message' } as const, null)
+const egmAtom = atom({ plugin: 'oaw-digest-monitor', key: 'egm' } as const, null)
 
 type Options = { project: string; oawCheckout: string; python: string; motion: boolean }
 type Where = { project: string | null; oaw: string | null }
@@ -210,6 +217,7 @@ async function load($: EngineInterface, why: 'start' | 'poll' | 'manual'): Promi
   loading = true
   try {
     if (!where || why !== 'poll') where = await discover($)
+    if (why !== 'poll') await loadEgm($)
     if (!where.project) {
       const problem: DigestProblem = {
         kind: 'no-project',
@@ -273,6 +281,34 @@ async function load($: EngineInterface, why: 'start' | 'poll' | 'manual'): Promi
     $.ui.status(statusLine(model))
   } finally {
     loading = false
+  }
+}
+
+async function loadEgm($: EngineInterface): Promise<void> {
+  const project = where?.project
+  if (!project) {
+    await update($, egmAtom, () => null)
+    return
+  }
+  const path = joinPath(project, '.oaw', 'settings.json')
+  const text = (await stat(path, $)) === null ? null : await readText($, path)
+  const parsed = parseEgmSetting(text)
+  await update($, egmAtom, () => parsed)
+}
+
+async function setEgm($: EngineInterface, position: EgmPosition): Promise<void> {
+  const run = runner(await read($, modelAtom))
+  if (!run) {
+    await update($, messageAtom, () => ({ kind: 'error' as const, text: '找不到 OAW checkout（scripts/oaw_mode.py），沒辦法切換。' }))
+    return
+  }
+  const result = await runCommand($, 'EGM 開關', egmArgv(run, position), run.project)
+  if (result.ok) {
+    await loadEgm($)
+    await update($, messageAtom, () => ({ kind: 'ok' as const, text: `EGM 審查：${EGM_LABELS[position]}。${EGM_MEANING[position]}` }))
+    $.ui.toast(`EGM 審查已切到「${EGM_LABELS[position]}」`)
+  } else {
+    await update($, messageAtom, () => outcome('EGM 開關', result))
   }
 }
 
@@ -460,6 +496,7 @@ export const register: Register = (on, opts) => {
     const pending = await read($, pendingAtom)
     const busy = await read($, busyAtom)
     const message = await read($, messageAtom)
+    const egm = await read($, egmAtom)
     const columns = e.props.bodyColumns
     const food = model?.foods.find(f => f.id === selected) ?? null
 
@@ -682,6 +719,25 @@ export const register: Register = (on, opts) => {
         )}
 
         {entry}
+
+        {egm && (
+          <Box flexDirection="column">
+            <Box flexDirection="row" flexWrap="wrap" gap={1}>
+              <Text bold>EGM 審查</Text>
+              {EGM_POSITIONS.map(position => (
+                <Button
+                  key={`egm:${position}`}
+                  variant={egm.position === position ? 'primary' : undefined}
+                  label={egm.position === position ? `● ${EGM_LABELS[position]}` : EGM_LABELS[position]}
+                  onPress={() => void setEgm($, position)}
+                />
+              ))}
+            </Box>
+            <Text dimColor wrap="wrap">
+              {egm.position ? EGM_MEANING[egm.position] : egm.problem ?? ''}
+            </Text>
+          </Box>
+        )}
 
         <Box flexDirection="row" gap={1}>
           <Button key="refresh" onPress={() => void load($, 'manual')}>

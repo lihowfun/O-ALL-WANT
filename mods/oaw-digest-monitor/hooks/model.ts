@@ -297,6 +297,38 @@ function catalog(run: Runner, ...args: string[]): string[] {
   return [...run.python, joinPath(run.oaw, 'scripts', 'catalog.py'), ...args, '--target', run.project]
 }
 
+// ------------------------------------------------------------- EGM switch (D33)
+
+export type EgmPosition = 'on' | 'auto' | 'off'
+export const EGM_POSITIONS: EgmPosition[] = ['on', 'auto', 'off']
+export const EGM_LABELS: Record<EgmPosition, string> = { on: '開', auto: '自動', off: '關' }
+export const EGM_MEANING: Record<EgmPosition, string> = {
+  on: '每個 deep 任務都跑完整 EGM 設計審查（品質優先，比較貴）',
+  auto: '用目前證據最好的設計審查，現在是 EGM（預設）',
+  off: '不跑 EGM：deep 只做計畫和 code review（省 token）',
+}
+
+/** The switch from .oaw/settings.json text; a missing file is the default (auto). */
+export function parseEgmSetting(text: string | null): { position: EgmPosition | null; isDefault: boolean; problem: string | null } {
+  if (text === null) return { position: 'auto', isDefault: true, problem: null }
+  try {
+    const data = JSON.parse(text) as { review?: { egm?: unknown } }
+    const value = data && typeof data === 'object' ? data.review?.egm : undefined
+    if (value === undefined) return { position: 'auto', isDefault: true, problem: null }
+    if (typeof value === 'string' && (EGM_POSITIONS as string[]).includes(value)) {
+      return { position: value as EgmPosition, isDefault: false, problem: null }
+    }
+    return { position: null, isDefault: false, problem: '.oaw/settings.json 的 review.egm 不是 on、auto 或 off' }
+  } catch {
+    return { position: null, isDefault: false, problem: '.oaw/settings.json 讀不懂：修正或刪掉它' }
+  }
+}
+
+/** Sets the switch through OAW's own helper, which locks and checks the file. */
+export function egmArgv(run: Runner, position: EgmPosition): string[] {
+  return [...run.python, joinPath(run.oaw, 'scripts', 'oaw_mode.py'), 'egm', position, '--root', run.project, '--json']
+}
+
 export function addArgv(run: Runner, urls: string[]): string[] {
   return catalog(run, 'add', ...urls)
 }
