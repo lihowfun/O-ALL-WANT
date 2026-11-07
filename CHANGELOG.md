@@ -6,6 +6,19 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- One review entry and an EGM switch (owner decisions D31, D33; plan `docs/plans/v2.0.1-execution.md` W1):
+  the new default skill `oaw-review` runs `scripts/oaw_mode.py suggest` before a change (planned paths) and after
+  it, and follows its new `steps`. Deep plans first and gets a design review before any code; the design review
+  follows `.oaw/settings.json` `review.egm` - `on`, `auto` (default: the best-evidenced review, EGM today) or `off` -
+  set with `oaw_mode.py egm on|auto|off`, with a rough cost estimate and an ask-first cap (25M tokens by default).
+  `oaw_mode.py reviewed` records a finished review so the same file content is not reviewed twice; a review cut
+  short never counts. `second-opinion codex|claude` sends code review to the other model family only on the
+  user's consent. AGENTS.md no longer says EGM is explicit-only and stays within 25 lines. A new plan or
+  decision document (`docs/plans/`, `docs/adr/`, `docs/rfcs/`, `*-plan.md`) is deep under the new rule
+  `new-plan-doc`, kept apart from the V7-checked `new-design-doc`. Both rules now skip tool runtimes, installed
+  skills and vendored code (`.oaw/`, `.claude/`, `.agents/`, `.codex/`, `vendor/`, `third_party/`, `node_modules/`):
+  an uncommitted OAW install made the EGM runtime's `design_doc.md` look like a new design. Not yet measured: whether agents follow the
+  steps unprompted (X3) and which design review is best (X2).
 - What the owner reads for a D29 tasting is honest about resolution (2026-11-06 research on agent A/B power):
   with 4-12 tasks "same" means no difference was detected, so `why` shows 沒測出差異（未定）, and the
   verdicts read 可選用（能力未定）, 因成本不採用（能力未定）, 進預設（更好）, and so on. Display only: stored

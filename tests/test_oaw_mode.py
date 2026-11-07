@@ -124,6 +124,24 @@ class TriggerTests(unittest.TestCase):
                 self.assertMode("light", [entry(path, status="M", lines=40)])
         self.assertMode("light", [entry("docs/designs/diagram.png", status="A"), entry("docs/redesign.md", status="A")])
 
+    def test_a_new_plan_or_decision_document_is_deep_and_marked_as_added_in_2_0_1(self):
+        for path in ("docs/plans/v2.0.1-execution.md", "docs/adr/0001-cache.md", "docs/rfcs/x.md", "plan.md",
+                     "notes/migration-plan.md", "notes/rollout_plan.md", "Docs/Plans/X.md"):
+            with self.subTest(path=path):
+                result = self.assertMode("deep", [entry(path, status="A", lines=40)], rule="new-plan-doc")
+                self.assertEqual(result["triggers"][0]["since"], "2.0.1")
+                self.assertEqual(result["design_docs"], [path])
+                self.assertMode("light", [entry(path, status="M", lines=40)])
+        # The V7-checked design rule keeps its own name; a path both rules match counts once, as a design doc.
+        result = self.assertMode("deep", [entry("docs/designs/x-plan.md", status="A")], rule="new-design-doc")
+        self.assertEqual([t["rule"] for t in result["triggers"]], ["new-design-doc"])
+        for path in ("explan.md", "docs/planning.md", "docs/plans/diagram.png", "src/plan.py",
+                     ".oaw/integrations/egm/agents/design_critic.md", ".oaw/integrations/egm/skills/x/design_doc.md",
+                     ".claude/skills/x/plan.md", ".agents/skills/x/design.md", "vendor/lib/docs/plans/a.md",
+                     "node_modules/p/design.md"):
+            with self.subTest(path=path):
+                self.assertMode("light", [entry(path, status="A", lines=4)])
+
     def test_size_threshold_counts_code_only(self):
         self.assertMode("light", [entry("src/a.py", lines=299)])
         self.assertMode("standard", [entry("src/a.py", lines=300)], rule="size")
@@ -268,7 +286,7 @@ class GitDiffTests(unittest.TestCase):
         self.assertEqual(code, 0)
         lines = output.splitlines()
         self.assertEqual(lines[0], "mode: light  (working tree against HEAD: 1 file, 1 code line)")
-        self.assertEqual(lines[-1], "how to run it: python3 scripts/oaw_mode.py show light")
+        self.assertEqual(lines[-1], "how to run it: the oaw-review skill, or python3 scripts/oaw_mode.py show light")
 
 
 class ShowTests(unittest.TestCase):
@@ -313,10 +331,11 @@ class ShowTests(unittest.TestCase):
         self.entry(".agents")
         lines = self.show("deep").splitlines()
         self.assertEqual(lines, [
-            "deep: plan first at the highest effort, then the EGM review",
+            "deep: plan first at the highest effort, then the EGM design review (EGM switch: auto)",
             "Claude Code:",
             "  claude --permission-mode plan --effort max",
-            "  review: type /egm-review  (explicit invocation only; the agent cannot start it)",
+            "  design review: the agent runs EGM through the oaw-review skill before any code; "
+            "to run it yourself, type /egm-review",
             "Codex:",
             "  " + mode.CODEX_PLAN,
             "  review: select the egm-review skill in the skill picker",
@@ -372,11 +391,16 @@ class InstalledPolicyTests(unittest.TestCase):
                 policy = package["AGENTS.md"].decode("utf-8")
                 self.assertEqual(package["AGENTS.md"], oaw.render_policy(template, egm))
                 self.assertIn("Work light by default: no extra review.", policy)
+                self.assertIn("Before starting a change and after finishing it, use the `oaw-review` skill", policy)
                 self.assertIn("`python3 scripts/oaw_mode.py suggest`", policy)
                 # Committed work needs its range; a clean tree alone says light (codex review of 08dbe3c, item 1).
                 self.assertIn("(add `--range BASE..HEAD` for committed work or a pull request)", policy)
                 self.assertEqual("EGM" in policy, egm)
-                self.assertEqual("Run the full EGM review only when `suggest` says deep" in policy, egm)
+                self.assertEqual("EGM runs only as the design review of deep work" in policy, egm)
+                self.assertNotIn("explicit invocation", policy)  # D33: the agent starts EGM by the switch
+                installed = {p.split("/")[2] for p in package if p.startswith(".agents/skills/")}
+                # The default recipe ships the review skill; an explicit selection keeps the suggest fallback line.
+                self.assertEqual("oaw-review" in installed, skills is None)
                 self.assertLessEqual(len(policy.splitlines()), 25)
 
     def test_installed_helper_reads_the_recipe(self):
@@ -410,7 +434,7 @@ class InstalledPolicyTests(unittest.TestCase):
             self.assertTrue((target / ".claude/skills/egm-review/SKILL.md").is_file())
             self.assertFalse((ROOT / ".claude/skills/egm-review").exists(), "never installs into the checkout")
             lines = mode.instructions("deep", target)["hosts"]["claude"]
-            self.assertEqual(lines[1], "review: type /egm-review  (explicit invocation only; the agent cannot start it)")
+            self.assertTrue(lines[1].startswith("design review: the agent runs EGM through the oaw-review skill"), lines)
 
     def test_install_from_before_working_modes_is_warned_then_migrated(self):
         with tempfile.TemporaryDirectory(prefix="oaw-mode-upgrade-") as temporary:
@@ -446,3 +470,155 @@ class InstalledPolicyTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SwitchAndStepTests(unittest.TestCase):
+    """The EGM switch (D33), review steps and review records."""
+
+    def setUp(self):
+        if GIT is None:
+            self.skipTest("git is not installed")
+        self.temporary = tempfile.TemporaryDirectory(prefix="oaw-mode-steps-")
+        self.addCleanup(self.temporary.cleanup)
+        self.root = Path(self.temporary.name).resolve()
+        subprocess.run([GIT, "init", "-q", str(self.root)], check=True)
+
+    def run_ok(self, *args):
+        code, output, errors = run(*args, "--root", str(self.root))
+        self.assertEqual(code, 0, errors)
+        return output
+
+    def json(self, *args):
+        return json.loads(self.run_ok(*args, "--json"))
+
+    def install_egm_entry(self):
+        path = self.root / ".claude/skills/egm-review/SKILL.md"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("---\nname: egm-review\n---\n", encoding="utf-8")
+
+    def write(self, relative, text):
+        path = self.root / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+
+    def steps(self, *args):
+        return {step["step"]: step for step in self.json("suggest", *args)["steps"]}
+
+    def test_default_switch_is_auto_and_auto_means_egm_today(self):
+        result = self.json("egm")
+        self.assertEqual((result["egm"], result["source"]), ("auto", "default"))
+        self.assertIn("EGM today", result["meaning"])
+        self.assertIn("3/3", result["basis"])
+        self.assertEqual(mode.AUTO_DESIGN_REVIEW, "egm")
+        self.assertFalse((self.root / ".oaw/settings.json").exists(), "showing the switch writes nothing")
+
+    def test_switch_positions_change_the_deep_design_review(self):
+        self.install_egm_entry()
+        self.write("docs/plans/cache.md", "# Cache plan\n")
+        design = self.steps()["design-review"]
+        self.assertEqual((design["how"], design["switch"], design["before_code"], design["done"]), ("egm", "auto", True, False))
+        self.assertEqual(design["targets"], ["docs/plans/cache.md"])
+        self.assertTrue(design["report_dir"].startswith(".oaw/reviews/") and design["report_dir"].endswith("-cache/"))
+        self.assertGreaterEqual(design["estimate"]["tokens_low"], int(mode.EGM_TOKENS_FLOOR * mode.ESTIMATE_LOW))
+        self.assertFalse(design["ask_first"])
+        self.run_ok("egm", "off")
+        steps = self.steps()
+        self.assertEqual(list(steps), ["plan", "code-review"])
+        self.assertEqual(steps["code-review"]["rounds"], 3)
+        self.run_ok("egm", "on")
+        self.assertEqual(self.steps()["design-review"]["how"], "egm")
+        self.assertNotIn("basis", self.steps()["design-review"], "on is the user's choice, not evidence")
+        output = self.run_ok("egm")
+        self.assertIn("EGM switch: on", output)
+        self.assertIn("every deep task gets the full EGM design review", output)
+
+    def test_without_egm_installed_deep_falls_back_to_a_fresh_context_review(self):
+        self.write("docs/plans/cache.md", "# Cache plan\n")
+        design = self.steps()["design-review"]
+        self.assertEqual(design["how"], "fresh-context")
+        self.assertIn("EGM is not installed", design["note"])
+        self.assertNotIn("estimate", design)
+
+    def test_light_has_no_steps_and_standard_has_one_code_review(self):
+        self.write("a.py", "A = 1\n")
+        self.assertEqual(self.json("suggest")["steps"], [])
+        self.write("big.py", "".join(f"X{i} = {i}\n" for i in range(300)))
+        steps = self.json("suggest")["steps"]
+        self.assertEqual([(s["step"], s["rounds"], s["before_code"]) for s in steps], [("code-review", 1, False)])
+
+    def test_planned_paths_before_code_ask_for_a_plan_first(self):
+        self.install_egm_entry()
+        steps = self.steps("--paths", ".github/workflows/ci.yml")
+        self.assertEqual(list(steps), ["plan", "design-review", "code-review"])
+        self.assertEqual(steps["design-review"]["targets"], ["the plan you save under docs/plans/"])
+        self.assertNotIn("estimate", steps["design-review"])
+        text = self.run_ok("suggest", "--paths", ".github/workflows/ci.yml")
+        self.assertIn("before code: plan, then save it under docs/plans/", text)
+        self.assertIn("before code: design review by EGM (EGM switch: auto)", text)
+        self.assertIn("after code: code review by a fresh session of the same model family, up to 3 rounds", text)
+
+    def test_a_recorded_review_counts_only_for_the_same_file_content(self):
+        self.install_egm_entry()
+        self.write("docs/plans/cache.md", "# Cache plan\n")
+        self.run_ok("reviewed", "docs/plans/cache.md", "--how", "egm", "--status", "cut")
+        self.assertFalse(self.steps()["design-review"]["done"], "a run cut short is not a review")
+        output = self.run_ok("reviewed", "./docs/plans/cache.md", "--how", "egm", "--report", ".oaw/reviews/r1/", "--tokens", "1200000")
+        self.assertIn("reviewed by egm (done)", output)
+        self.assertTrue(self.steps()["design-review"]["done"])
+        self.assertIn("[done for this file content]", self.run_ok("suggest"))
+        self.write("docs/plans/cache.md", "# Cache plan\nChanged.\n")
+        self.assertFalse(self.steps()["design-review"]["done"])
+        records = json.loads((self.root / ".oaw/reviews/index.json").read_text(encoding="utf-8"))["reviews"]
+        self.assertEqual([r["status"] for r in records], ["cut", "done"])
+        for bad in ("../x.md", "/etc/passwd", "C:/x.md", "docs/missing.md"):
+            with self.subTest(bad=bad):
+                code, _, errors = run("reviewed", bad, "--how", "egm", "--root", str(self.root))
+                self.assertEqual(code, 2, errors)
+
+    def test_cap_and_estimate(self):
+        self.install_egm_entry()
+        self.write("docs/plans/big.md", "x" * 120_000)
+        design = self.steps()["design-review"]
+        self.assertTrue(design["ask_first"], design["estimate"])  # 120 KB is above the default 25M at the high end
+        self.run_ok("egm", "auto", "--max-tokens", "900000000")
+        self.assertFalse(self.steps()["design-review"]["ask_first"])
+        small, large = mode.egm_estimate(2_300), mode.egm_estimate(105_000)
+        self.assertLess(small["tokens_low"], 1_100_000)
+        self.assertGreater(small["tokens_high"], 1_100_000)
+        self.assertLess(large["tokens_low"], 18_500_000)
+        self.assertGreater(large["tokens_high"], 18_500_000)
+        self.assertEqual(mode.egm_estimate(0)["tokens_low"], int(mode.EGM_TOKENS_FLOOR * mode.ESTIMATE_LOW))
+        output = self.run_ok("egm", "estimate", "docs/plans/big.md")
+        self.assertIn("one EGM run reading 120,000 bytes", output)
+        for args in (("egm", "estimate"), ("egm", "estimate", "nope.md"), ("egm", "off", "x.md"), ("egm", "--max-tokens", "0")):
+            with self.subTest(args=args):
+                self.assertEqual(run(*args, "--root", str(self.root))[0], 2)
+
+    def test_settings_keep_other_keys_and_refuse_bad_values(self):
+        self.write(".oaw/settings.json", json.dumps({"mine": 1, "review": {"egm": "off", "custom": True}}))
+        self.run_ok("egm", "on")
+        data = json.loads((self.root / ".oaw/settings.json").read_text(encoding="utf-8"))
+        self.assertEqual(data, {"mine": 1, "review": {"egm": "on", "custom": True}})
+        self.run_ok("second-opinion", "codex")
+        review = self.steps("--paths", "AGENTS.md")["code-review"]
+        self.assertIn("codex review", review["claude"])
+        self.assertIn("the codex family", review["who"])
+        self.run_ok("second-opinion", "claude")
+        self.assertIn("claude -p", self.steps("--paths", "AGENTS.md")["code-review"]["codex"])
+        for content, words in (("{bad", "not readable JSON"), ('{"review": {"egm": "maybe"}}', "review.egm must be"),
+                               ('{"review": {"egm_max_tokens": true}}', "egm_max_tokens"),
+                               ('{"review": {"dry_run": "yes"}}', "dry_run"), ('{"review": []}', '"review" object')):
+            with self.subTest(content=content):
+                self.write(".oaw/settings.json", content)
+                code, _, errors = run("suggest", "--root", str(self.root))
+                self.assertEqual(code, 2)
+                self.assertIn(words, errors)
+                self.assertEqual(run("egm", "on", "--root", str(self.root))[0], 2, "never overwrites a broken file")
+                self.assertEqual((self.root / ".oaw/settings.json").read_text(encoding="utf-8"), content)
+
+    def test_dry_run_is_reported(self):
+        self.write(".oaw/settings.json", json.dumps({"review": {"dry_run": True}}))
+        self.write("docs/plans/a.md", "# A\n")
+        self.assertTrue(self.json("suggest")["dry_run"])
+        self.assertIn("dry run", self.run_ok("suggest"))
+

@@ -41,7 +41,7 @@ class InstallTests(unittest.TestCase):
             "templates/docs/knowledge/index.md": "# Knowledge index\n",
             "templates/docs/raw/README.md": "# Source notes\n",
         }
-        for name in ("oaw-evidence", "oaw-wiki", "oaw-improve"):
+        for name in ("oaw-evidence", "oaw-review", "oaw-wiki", "oaw-improve"):
             files[f"templates/.agents/skills/{name}/SKILL.md"] = f"---\nname: {name}\ndescription: Use this workflow when relevant.\n---\n\n# Workflow\n"
         for relative, text in files.items():
             self.write(self.framework, relative, text.encode())
@@ -142,7 +142,7 @@ class InstallTests(unittest.TestCase):
         code, result = self.invoke("init", "--host", "both", "--profile", "knowledge", "--with-improve")
         self.assertEqual(code, 0, result)
         self.assertEqual(result["hosts"], ["codex", "claude"])
-        for name in ("oaw-evidence", "oaw-wiki", "oaw-improve"):
+        for name in ("oaw-evidence", "oaw-review", "oaw-wiki", "oaw-improve"):
             self.assertEqual((self.target / f".agents/skills/{name}/SKILL.md").read_bytes(),
                              (self.target / f".claude/skills/{name}/SKILL.md").read_bytes())
         self.assertEqual(self.invoke("doctor")[0], 0)

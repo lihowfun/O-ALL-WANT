@@ -1,22 +1,31 @@
 #!/usr/bin/env python3
-"""Pick a working mode (light, standard or deep) from a change, and print how to run it.
+"""Pick a working mode (light, standard or deep) from a change, list its review steps, and keep the EGM switch.
 
 Light is the default. `suggest` applies fixed rules to a git diff or a path list:
 
   deep      harness or infrastructure that runs on every session, an
-            irreversible-looking change, or a new design document
+            irreversible-looking change, or a new design or plan document
   standard  a code change of 300+ lines or 10+ files with no deep trigger
   light     everything else, including docs-only and small changes
 
-`show MODE` prints the host commands for that mode. Deep names the EGM review
-only for a host whose `egm-review` entrypoint is installed in this project.
+Run it before a change (`--paths` with the files you plan to touch) and after
+it (the working tree, or `--range`). Its `steps` say what to do and when:
+deep plans first and gets a design review before any code, chosen by the
+project's EGM switch; standard and deep get a fresh-context code review.
+
+`egm on|auto|off` sets the switch in .oaw/settings.json (auto, the default,
+uses the best-evidenced design review: EGM today). `reviewed` records a
+finished design review so it is not run twice for the same file content.
+`show MODE` prints the host commands for that mode.
 
 Part of OAW. https://github.com/lihowfun/O-ALL-WANT
 """
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 import fnmatch
+import hashlib
 import json
 import os
 from pathlib import Path, PurePath, PurePosixPath
@@ -25,6 +34,7 @@ import re
 import shlex
 import subprocess
 import sys
+import tempfile
 
 MODES = ("light", "standard", "deep")
 # Size threshold for standard: non-documentation files only (added + deleted lines).
@@ -42,6 +52,32 @@ HOOK_PREFIXES = (".claude/hooks/", ".codex/", ".githooks/", ".husky/")
 INSTALLER = re.compile(r"(?i)^(?:install|setup|bootstrap)[^/]*\.(?:sh|ps1|bat|cmd|py)$")
 UNTRACKED_LINE_LIMIT = 1_000_000  # bytes; larger untracked files count as files without line counts
 SUGGEST_EXAMPLES = "Examples: --range main..HEAD, --paths docs/a.md scripts/b.py"
+# Added in 2.0.1 and not yet checked against outcomes (unlike the V7-checked triggers): new plan or decision docs.
+PLAN_DIRS = ("docs/plans/", "docs/adr/", "docs/adrs/", "docs/rfc/", "docs/rfcs/")
+PLAN_NAME = re.compile(r"(?:^|[-_.])plan\.md$")
+# Tool runtimes, installed skills and vendored code hold design-like file names that are not this project's designs
+# (an uncommitted OAW install adds the EGM runtime's design_doc.md, for example).
+NOT_PROJECT_DOCS = (".oaw/", ".claude/", ".agents/", ".codex/", "vendor/", "third_party/", "node_modules/")
+
+# The EGM switch (owner decision D33). "auto" uses the design review with the best evidence; update both
+# lines together when new evidence (the 2.0.1 X2 study) ranks another review higher.
+SETTINGS_FILE = ".oaw/settings.json"
+EGM_SWITCH = ("on", "auto", "off")
+AUTO_DESIGN_REVIEW = "egm"
+AUTO_BASIS = ("EGM is the only design review with a measured gain so far: 3/3 planted plan defects found versus "
+              "native 1/6, two grader families agreeing (OAW validation, 2026-11-07); the X2 study may change this")
+DEFAULT_EGM_MAX_TOKENS = 25_000_000
+SECOND_OPINIONS = ("same", "codex", "claude")
+DEFAULTS = {"egm": "auto", "egm_max_tokens": DEFAULT_EGM_MAX_TOKENS, "second_opinion": "same", "dry_run": False}
+REVIEWS_DIR = ".oaw/reviews"
+# Rough EGM cost from the bytes it reads (target plus context), fitted to two measured runs with Opus 5.5:
+# about 2.3 KB -> 1.1M tokens in 8 minutes, about 105 KB -> 18.5M tokens in 31 minutes. Mostly cache reads.
+EGM_TOKENS_BASE, EGM_TOKENS_PER_KB = 710_000, 169_000
+EGM_MINUTES_BASE, EGM_MINUTES_PER_KB = 7.9, 0.22
+# Even a tiny plan starts six or more reviewer subagents: the measured small runs used 1.07M-1.43M tokens.
+EGM_TOKENS_FLOOR, EGM_MINUTES_FLOOR = 1_000_000, 7
+ESTIMATE_LOW, ESTIMATE_HIGH = 0.8, 1.6
+REVIEW_NAMES = {"egm": "EGM", "fresh-context": "one fresh-context reviewer", "none": "none"}
 
 
 class ModeError(Exception):
@@ -245,8 +281,16 @@ def schema_rule(path: str) -> bool:
 
 def design_rule(entry: dict) -> bool:
     path, name = entry["path"], PurePosixPath(entry["path"]).name.lower()
-    return entry["status"] == "A" and name.endswith(".md") and (
+    return entry["status"] == "A" and name.endswith(".md") and not path.startswith(NOT_PROJECT_DOCS) and (
         path.startswith("docs/designs/") or fnmatch.fnmatchcase(name, "design*.md"))
+
+
+def plan_rule(entry: dict) -> bool:
+    """A new plan or decision document that the design rule does not already cover (added in 2.0.1)."""
+    path, name = entry["path"], PurePosixPath(entry["path"]).name.lower()
+    return (entry["status"] == "A" and name.endswith(".md") and not design_rule(entry)
+            and not path.startswith(NOT_PROJECT_DOCS)
+            and (path.lower().startswith(PLAN_DIRS) or bool(PLAN_NAME.search(name))))
 
 
 def plural(count: int, word: str) -> str:
@@ -266,6 +310,7 @@ def classify(entries: list[dict], hooked: set[str] | None = None) -> dict:
     schema = paths(schema_rule)
     deleted = [e["path"] for e in entries if e["status"] == "D"]
     design = [e["path"] for e in entries if design_rule(e)]
+    plans = [e["path"] for e in entries if plan_rule(e)]
     code = [e for e in entries if not is_doc(e["path"])]
     code_lines = sum(e["lines"] for e in code)
     lines_known = all(e["lines_known"] for e in code)
@@ -283,6 +328,9 @@ def classify(entries: list[dict], hooked: set[str] | None = None) -> dict:
     if design:
         triggers.append({"mode": "deep", "rule": "new-design-doc", "paths": design,
                          "reason": "new design document: " + listed(design)})
+    if plans:
+        triggers.append({"mode": "deep", "rule": "new-plan-doc", "paths": plans, "since": "2.0.1",
+                         "reason": "new plan or decision document: " + listed(plans)})
     if code_lines >= STANDARD_LINES or len(code) >= STANDARD_FILES:
         triggers.append({"mode": "standard", "rule": "size", "paths": [e["path"] for e in code],
                          "reason": f"code change of {plural(code_lines, 'line')} in {plural(len(code), 'file')} "
@@ -299,7 +347,7 @@ def classify(entries: list[dict], hooked: set[str] | None = None) -> dict:
                    f"(below {STANDARD_LINES} lines and {STANDARD_FILES} files)"]
     if code and not lines_known:
         reasons.append("some line counts are unknown (path list or binary files); only the file count applied to them")
-    return {"mode": mode, "reasons": reasons, "triggers": triggers, "files": len(entries),
+    return {"mode": mode, "reasons": reasons, "triggers": triggers, "design_docs": design + plans, "files": len(entries),
             "code_files": len(code), "code_lines": code_lines, "deleted_files": len(deleted),
             "thresholds": {"standard_lines": STANDARD_LINES, "standard_files": STANDARD_FILES,
                            "deep_deleted_files": DEEP_DELETED_FILES}}
@@ -311,6 +359,189 @@ def egm_hosts(root: Path) -> dict[str, bool]:
             "codex": (root / ".agents/skills/egm-review/SKILL.md").is_file()}
 
 
+def load_settings(root: Path) -> dict:
+    """The project's review settings: .oaw/settings.json "review", with defaults for anything missing."""
+    path = root / SETTINGS_FILE
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return {**DEFAULTS, "source": "default"}
+    except (OSError, ValueError) as exc:
+        raise ModeError(f"{SETTINGS_FILE} is not readable JSON ({exc}); fix or delete it") from exc
+    review = data.get("review", {}) if isinstance(data, dict) else None
+    if not isinstance(review, dict):
+        raise ModeError(f'{SETTINGS_FILE} must be an object with a "review" object')
+    settings = {**DEFAULTS, **{k: v for k, v in review.items() if k in DEFAULTS}, "source": SETTINGS_FILE}
+    problems = []
+    if settings["egm"] not in EGM_SWITCH:
+        problems.append(f"review.egm must be one of {', '.join(EGM_SWITCH)}")
+    if isinstance(settings["egm_max_tokens"], bool) or not isinstance(settings["egm_max_tokens"], int) \
+            or settings["egm_max_tokens"] <= 0:
+        problems.append("review.egm_max_tokens must be a positive whole number")
+    if settings["second_opinion"] not in SECOND_OPINIONS:
+        problems.append(f"review.second_opinion must be one of {', '.join(SECOND_OPINIONS)}")
+    if not isinstance(settings["dry_run"], bool):
+        problems.append("review.dry_run must be true or false")
+    if problems:
+        raise ModeError(f"{SETTINGS_FILE}: " + "; ".join(problems))
+    return settings
+
+
+def save_settings(root: Path, **changes) -> dict:
+    """Set review settings, keeping every other key of the file; written atomically."""
+    load_settings(root)  # refuse to overwrite a file that is broken
+    path = root / SETTINGS_FILE
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        data = {}
+    data.setdefault("review", {}).update(changes)
+    write_json(path, data)
+    return load_settings(root)
+
+
+def write_json(path: Path, data) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    handle, temporary = tempfile.mkstemp(prefix=path.name + ".", suffix=".tmp", dir=path.parent)
+    try:
+        with os.fdopen(handle, "w", encoding="utf-8", newline="\n") as stream:
+            json.dump(data, stream, indent=2, ensure_ascii=False)
+            stream.write("\n")
+        os.replace(temporary, path)
+    except BaseException:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
+        raise
+
+
+def file_digest(path: Path) -> str | None:
+    try:
+        return hashlib.sha256(path.read_bytes()).hexdigest()
+    except OSError:
+        return None
+
+
+def review_records(root: Path) -> list[dict]:
+    path = root / REVIEWS_DIR / "index.json"
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return []
+    except (OSError, ValueError) as exc:
+        raise ModeError(f"{REVIEWS_DIR}/index.json is not readable JSON ({exc})") from exc
+    records = data.get("reviews") if isinstance(data, dict) else None
+    return [r for r in records if isinstance(r, dict)] if isinstance(records, list) else []
+
+
+def already_reviewed(root: Path, target: str) -> dict | None:
+    """The finished design review of this exact file content, if one is recorded."""
+    digest = file_digest(root / target)
+    if digest is None:
+        return None
+    return next((r for r in reversed(review_records(root))
+                 if r.get("target") == target and r.get("sha256") == digest and r.get("status") == "done"), None)
+
+
+def record_review(root: Path, target: str, how: str, report: str | None, status: str, tokens: int | None) -> dict:
+    target = PurePosixPath(target.replace("\\", "/")).as_posix().removeprefix("./")
+    if PurePosixPath(target).is_absolute() or re.match(r"[A-Za-z]:", target) or ".." in target.split("/"):
+        raise ModeError(f"give the reviewed file relative to the project: {target}")
+    digest = file_digest(root / target)
+    if digest is None:
+        raise ModeError(f"cannot read the reviewed file: {target}")
+    entry = {"target": target, "sha256": digest, "how": how, "status": status, "report": report,
+             "tokens": tokens, "recorded": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")}
+    records = review_records(root) + [entry]
+    write_json(root / REVIEWS_DIR / "index.json", {"schema_version": 1, "reviews": records})
+    return entry
+
+
+def egm_estimate(total_bytes: int) -> dict:
+    """A rough range for one EGM run that reads this many bytes (two calibration points; see the constants)."""
+    kilobytes = total_bytes / 1024
+    tokens = max(EGM_TOKENS_FLOOR, EGM_TOKENS_BASE + EGM_TOKENS_PER_KB * kilobytes)
+    minutes = max(EGM_MINUTES_FLOOR, EGM_MINUTES_BASE + EGM_MINUTES_PER_KB * kilobytes)
+    return {"bytes": total_bytes, "tokens_low": int(tokens * ESTIMATE_LOW), "tokens_high": int(tokens * ESTIMATE_HIGH),
+            "minutes_low": round(minutes * ESTIMATE_LOW), "minutes_high": round(minutes * ESTIMATE_HIGH),
+            "basis": "rough: fitted to two measured EGM runs (Opus 5.5); most of the tokens are cache reads"}
+
+
+def file_bytes(root: Path, paths: list[str]) -> int:
+    total = 0
+    for path in paths:
+        try:
+            total += (root / path).stat().st_size
+        except OSError:
+            continue
+    return total
+
+
+def slug(path: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", PurePosixPath(path).stem.lower()).strip("-") or "plan"
+
+
+def second_opinion_review(settings: dict) -> dict:
+    """Who reviews code: a fresh session of the same family, or the other family once the user agreed to it."""
+    choice = settings["second_opinion"]
+    claude = {"same": CLAUDE_REVIEW.removeprefix("review: "), "codex": CODEX_REVIEW.removeprefix("review: "),
+              "claude": CLAUDE_REVIEW.removeprefix("review: ")}[choice]
+    codex = {"same": CODEX_REVIEW.removeprefix("review: "), "codex": CODEX_REVIEW.removeprefix("review: "),
+             "claude": CLAUDE_CROSS_REVIEW}[choice]
+    return {"who": "a fresh session of the same model family" if choice == "same" else f"the {choice} family "
+            "(the user agreed to send the diff there)", "claude": claude, "codex": codex}
+
+
+def review_steps(result: dict, root: Path, settings: dict) -> list[dict]:
+    """What to do for this mode, and when: steps marked before_code must finish before any code changes."""
+    mode, steps = result["mode"], []
+    if mode == "light":
+        return steps
+    if mode == "deep":
+        steps.append({"step": "plan", "before_code": True,
+                      "do": "plan first (the host's plan mode if it has one); then save the plan as docs/plans/<name>.md"})
+        switch = settings["egm"]
+        how = {"on": "egm", "off": "none", "auto": AUTO_DESIGN_REVIEW}[switch]
+        note = None
+        if how == "egm" and not any(egm_hosts(root).values()):
+            how, note = "fresh-context", "EGM is not installed in this project: one fresh-context review of the plan instead"
+        if how != "none":
+            targets = result.get("design_docs") or []
+            step = {"step": "design-review", "before_code": True, "how": how, "switch": switch,
+                    "targets": targets or ["the plan you save under docs/plans/"], "done": False}
+            if switch == "auto":
+                step["basis"] = AUTO_BASIS
+            if note:
+                step["note"] = note
+            if targets:
+                done = [already_reviewed(root, target) for target in targets]
+                step["done"] = all(done)
+                step["report_dir"] = f"{REVIEWS_DIR}/{datetime.now(timezone.utc):%Y-%m-%d}-{slug(targets[0])}/"
+            if how == "egm":
+                if targets:
+                    estimate = egm_estimate(file_bytes(root, targets))
+                    estimate["basis"] += "; covers the plan only: add the size of the context files you pass " \
+                                         "(python3 scripts/oaw_mode.py egm estimate PLAN CONTEXT...)"
+                    step["estimate"] = estimate
+                    step["ask_first"] = estimate["tokens_high"] > settings["egm_max_tokens"]
+                step["do"] = ("follow the installed egm-review skill (its bridge file names the runtime) with "
+                              "Step: uninterrupted, TargetFile: the plan, GoldfishContext: only the files the plan "
+                              "names; write reports to report_dir; resolve the findings yourself and hand the user "
+                              "only blockers you reject; then run python3 scripts/oaw_mode.py reviewed PLAN --how egm "
+                              "--report report_dir. A run cut short is not a review: stop and do not write code.")
+            else:
+                step["do"] = "have one fresh-context reviewer read the plan and the files it names; resolve the " \
+                             "findings; then run python3 scripts/oaw_mode.py reviewed PLAN --how fresh-context"
+            steps.append(step)
+    review = second_opinion_review(settings)
+    steps.append({"step": "code-review", "before_code": False, "rounds": 3 if mode == "deep" else 1,
+                  "who": review["who"], "claude": review["claude"], "codex": review["codex"],
+                  "do": "after the change, review the diff and tests" + (
+                      "; repeat until a round finds nothing new" if mode == "deep" else "")})
+    return steps
+
+
+CLAUDE_CROSS_REVIEW = ("git diff HEAD | claude -p \"Review this diff and its tests for defects; cite file:line\" "
+                       "--permission-mode plan  (a fresh Claude session; for committed work pipe git diff BASE..HEAD)")
 CLAUDE_REVIEW = ("review: before finishing, start one new subagent with no conversation context; give it only "
                  "the diff (git diff HEAD, or the commit range) and the test command, and have it review both")
 CODEX_REVIEW = ("review: codex review --uncommitted  (a fresh-context review; "
@@ -334,12 +565,15 @@ def add_entrypoint(root: PurePath, host: str, *, platform: str = os.name) -> str
     return f"python3 scripts/oaw.py init --target {target} --host {host}{warning}"
 
 
-def instructions(mode: str, root: Path) -> dict:
+def instructions(mode: str, root: Path, settings: dict | None = None) -> dict:
     """Exact host commands for a mode (flags checked with Claude Code 2.1.287 and codex-cli 0.167.0).
 
-    Deep always plans at the highest effort; only its review falls back when a host lacks EGM.
+    Deep always plans at the highest effort; its design review follows the EGM switch and falls back to a
+    fresh-context review when a host lacks EGM.
     """
+    settings = settings or load_settings(root)
     egm = egm_hosts(root)
+    switch = settings["egm"]
     deep_claude = "claude --permission-mode plan --effort max"
     if mode == "light":
         summary = "light: plain session, no extra review (the default)"
@@ -348,13 +582,17 @@ def instructions(mode: str, root: Path) -> dict:
         summary = "standard: higher effort and one fresh-context review"
         claude = ["claude --effort high", CLAUDE_REVIEW]
         codex = ["codex  (effort flag not mapped yet)", CODEX_REVIEW]
+    elif switch == "off" and any(egm.values()):
+        summary = "deep: plan first at the highest effort, then code review (the EGM switch is off)"
+        claude, codex = [deep_claude, CLAUDE_REVIEW], [CODEX_PLAN, CODEX_REVIEW]
     elif any(egm.values()):
-        summary = "deep: plan first at the highest effort, then the EGM review"
+        summary = f"deep: plan first at the highest effort, then the EGM design review (EGM switch: {switch})"
         if not all(egm.values()):
             missing = "Claude Code" if not egm["claude"] else "Codex"
             summary += f" ({missing} has no EGM entrypoint here: one fresh-context review instead)"
         if egm["claude"]:
-            claude = [deep_claude, "review: type /egm-review  (explicit invocation only; the agent cannot start it)"]
+            claude = [deep_claude, "design review: the agent runs EGM through the oaw-review skill before any code; "
+                                   "to run it yourself, type /egm-review"]
         else:
             claude = [deep_claude, CLAUDE_REVIEW,
                       "note: EGM's Claude Code entrypoint is not installed here; to add it, run from the OAW checkout: "
@@ -369,7 +607,8 @@ def instructions(mode: str, root: Path) -> dict:
         summary = "deep: plan first at the highest effort, then one fresh-context review (EGM is not installed)"
         claude = [deep_claude, CLAUDE_REVIEW]
         codex = [CODEX_PLAN, CODEX_REVIEW]
-    return {"mode": mode, "summary": summary, "egm": egm, "hosts": {"claude": claude, "codex": codex}}
+    return {"mode": mode, "summary": summary, "egm": egm, "egm_switch": switch,
+            "hosts": {"claude": claude, "codex": codex}}
 
 
 def render_show(result: dict) -> str:
@@ -380,11 +619,69 @@ def render_show(result: dict) -> str:
     return "\n".join(lines)
 
 
+def tokens_text(value: int) -> str:
+    return f"{value / 1_000_000:.1f}M" if value >= 1_000_000 else f"{value // 1000}k"
+
+
+def render_steps(steps: list[dict]) -> list[str]:
+    lines = []
+    for step in steps:
+        when = "before code" if step["before_code"] else "after code"
+        if step["step"] == "plan":
+            lines.append(f"  {when}: plan, then save it under docs/plans/")
+        elif step["step"] == "design-review":
+            text = f"  {when}: design review by {REVIEW_NAMES.get(step['how'], step['how'])} (EGM switch: {step['switch']})"
+            if step.get("estimate"):
+                e = step["estimate"]
+                text += (f"; about {tokens_text(e['tokens_low'])}-{tokens_text(e['tokens_high'])} tokens, "
+                         f"{e['minutes_low']}-{e['minutes_high']} min")
+            if step.get("ask_first"):
+                text += "; above this project's cap: ask the user first"
+            if step["done"]:
+                text += "  [done for this file content]"
+            lines.append(text)
+            if step.get("note"):
+                lines.append(f"    note: {step['note']}")
+        else:
+            lines.append(f"  {when}: code review by {step['who']}"
+                         + (f", up to {step['rounds']} rounds" if step["rounds"] > 1 else ""))
+    return lines
+
+
 def render_suggest(result: dict) -> str:
     lines = [f"mode: {result['mode']}  ({result['source']}: {plural(result['files'], 'file')}, "
              f"{plural(result['code_lines'], 'code line')})"]
     lines.extend("- " + reason for reason in result["reasons"])
-    lines.append(f"how to run it: python3 scripts/oaw_mode.py show {result['mode']}")
+    if result.get("steps"):
+        lines.append("steps:")
+        lines.extend(render_steps(result["steps"]))
+    if result.get("dry_run"):
+        lines.append("dry run (.oaw/settings.json review.dry_run): report the steps; do not run any review")
+    lines.append(f"how to run it: the oaw-review skill, or python3 scripts/oaw_mode.py show {result['mode']}")
+    return "\n".join(lines)
+
+
+def describe_switch(root: Path, settings: dict) -> dict:
+    meaning = {"on": "every deep task gets the full EGM design review before any code",
+               "auto": f"deep tasks get the best-evidenced design review: {REVIEW_NAMES[AUTO_DESIGN_REVIEW]} today",
+               "off": "EGM never runs; deep tasks get a plan and code review only"}
+    installed = any(egm_hosts(root).values())
+    result = {"egm": settings["egm"], "meaning": meaning[settings["egm"]], "egm_max_tokens": settings["egm_max_tokens"],
+              "second_opinion": settings["second_opinion"], "source": settings["source"], "egm_installed": installed}
+    if settings["egm"] == "auto":
+        result["basis"] = AUTO_BASIS
+    return result
+
+
+def render_switch(result: dict) -> str:
+    lines = [f"EGM switch: {result['egm']}" + ("  (default)" if result["source"] == "default" else ""),
+             f"  {result['meaning']}"]
+    if result.get("basis"):
+        lines.append(f"  why: {result['basis']}")
+    lines.append(f"  asks first when one EGM run may exceed {result['egm_max_tokens']:,} tokens")
+    if not result["egm_installed"]:
+        lines.append("  note: EGM is not installed in this project, so deep tasks get a fresh-context review")
+    lines.append("  change it: python3 scripts/oaw_mode.py egm on|auto|off   (one EGM run only: type /egm-review)")
     return "\n".join(lines)
 
 
@@ -403,7 +700,25 @@ def main(argv: list[str] | None = None) -> int:
                         help="a plain path list (planned or changed); a missing path counts as new")
     show = commands.add_parser("show", help="print how to run a mode")
     show.add_argument("mode", choices=MODES)
-    for sub in (suggest, show):
+    egm = commands.add_parser("egm", help="show or set the EGM switch (on, auto, off), or estimate one EGM run",
+                              description="on: every deep task gets the full EGM design review. auto (default): the "
+                                          "best-evidenced design review, EGM today. off: never EGM. "
+                                          "estimate FILE...: a rough cost for one EGM run reading those files.")
+    egm.add_argument("action", nargs="?", choices=(*EGM_SWITCH, "estimate"))
+    egm.add_argument("files", nargs="*", metavar="FILE", help="with estimate: the plan and its context files")
+    egm.add_argument("--max-tokens", type=int, metavar="N", help="ask first when one EGM run may exceed N tokens")
+    opinion = commands.add_parser("second-opinion", help="who reviews code: same family (default), codex or claude",
+                                  description="codex or claude sends diffs to that family under your own login; "
+                                              "setting it is your consent.")
+    opinion.add_argument("who", nargs="?", choices=SECOND_OPINIONS)
+    reviewed = commands.add_parser("reviewed", help="record a finished design review of a file's current content")
+    reviewed.add_argument("target", help="the reviewed plan or design file, relative to the project")
+    reviewed.add_argument("--how", required=True, choices=("egm", "fresh-context", "checklist", "cross-family"))
+    reviewed.add_argument("--report", help="where the review report was written")
+    reviewed.add_argument("--status", default="done", choices=("done", "cut"),
+                          help="cut: stopped early (a usage limit, for example); it does not count as reviewed")
+    reviewed.add_argument("--tokens", type=int, help="tokens the review used, if known")
+    for sub in (suggest, show, egm, opinion, reviewed):
         sub.add_argument("--root", help="project directory (default: the folder that holds this script's scripts/ folder)")
         sub.add_argument("--json", action="store_true", help="print a machine-readable result")
     args = parser.parse_args(argv)
@@ -412,12 +727,45 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "show":
             result = instructions(args.mode, root)
             text = render_show(result)
+        elif args.command == "egm":
+            if args.action == "estimate":
+                if not args.files:
+                    raise ModeError("estimate needs the plan and its context files")
+                missing = [path for path in args.files if not (root / path).is_file()]
+                if missing:
+                    raise ModeError("not a file in the project: " + ", ".join(missing))
+                result = egm_estimate(file_bytes(root, args.files))
+                text = (f"one EGM run reading {result['bytes']:,} bytes: about {tokens_text(result['tokens_low'])}-"
+                        f"{tokens_text(result['tokens_high'])} tokens, {result['minutes_low']}-{result['minutes_high']} "
+                        f"min ({result['basis']})")
+            else:
+                if args.files:
+                    raise ModeError("files are only for estimate")
+                if args.max_tokens is not None and args.max_tokens <= 0:
+                    raise ModeError("--max-tokens must be positive")
+                changes = {key: value for key, value in (("egm", args.action), ("egm_max_tokens", args.max_tokens))
+                           if value is not None}
+                settings = save_settings(root, **changes) if changes else load_settings(root)
+                result = describe_switch(root, settings)
+                text = render_switch(result)
+        elif args.command == "second-opinion":
+            settings = save_settings(root, second_opinion=args.who) if args.who else load_settings(root)
+            result = {"second_opinion": settings["second_opinion"], **second_opinion_review(settings)}
+            text = f"code review: {result['who']}\n  Claude Code: {result['claude']}\n  Codex: {result['codex']}"
+        elif args.command == "reviewed":
+            result = record_review(root, args.target, args.how, args.report, args.status, args.tokens)
+            text = (f"recorded: {result['target']} reviewed by {result['how']} ({result['status']})"
+                    + ("" if result["status"] == "done" else "; it does not count until a full review is recorded"))
         else:
             if args.paths:
                 entries, label = path_entries(root, args.paths)
             else:
                 entries, label = diff_entries(root, args.revision_range)
+            settings = load_settings(root)
             result = {"schema_version": 1, "source": label, **classify(entries, hook_files(root))}
+            result["settings"] = {k: settings[k] for k in DEFAULTS}
+            result["steps"] = review_steps(result, root, settings)
+            result["dry_run"] = settings["dry_run"]
             text = render_suggest(result)
     except ModeError as exc:
         print(f"oaw_mode: {exc}", file=sys.stderr)

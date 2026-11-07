@@ -3,15 +3,12 @@
 OAW adds portable project evidence and optional wiki tools to your native agent.
 <!-- oaw:if egm -->
 OAW v2 includes the complete pinned EGM runtime and native skill entrypoints.
-Use the skills enabled in this project's recipe; EGM keeps its explicit invocation policy.
+Use the skills enabled in this project's recipe. EGM runs only as the design review of deep work; its switch is `python3 scripts/oaw_mode.py egm`.
 <!-- oaw:else -->
 Use the skills enabled in this project's recipe.
 <!-- oaw:end -->
-Work light by default: no extra review. Before any review, run `python3 scripts/oaw_mode.py suggest`
-(add `--range BASE..HEAD` for committed work or a pull request), then the `show` command it prints.
-<!-- oaw:if egm -->
-Run the full EGM review only when `suggest` says deep, never on unrelated tasks.
-<!-- oaw:end -->
+Work light by default: no extra review. Before starting a change and after finishing it, use the `oaw-review` skill,
+or run `python3 scripts/oaw_mode.py suggest` (add `--range BASE..HEAD` for committed work or a pull request) and follow its steps.
 
 Use the host's skills, session memory, context management, and permissions.
 Load project notes only when the current task needs them.
