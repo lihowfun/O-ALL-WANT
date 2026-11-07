@@ -109,6 +109,18 @@ class UserInstallTests(unittest.TestCase):
                     ]}
         self.verdicts.write_text(json.dumps(document), encoding="utf-8")
 
+    def test_a_local_source_never_writes_its_path_into_the_project(self):
+        self.add("scripty", choice="oaw", consent="all", apply=True)
+        text = (self.project / ".oaw" / "user-skills.json").read_text(encoding="utf-8")
+        self.assertNotIn(str(self.sources), text)
+        self.assertNotIn("file://", text)
+        self.assertIn('"key": "local:', text)
+        again = self.add("scripty", choice="oaw", consent="all")
+        self.assertIn("已經裝過", json.dumps(again, ensure_ascii=False), "the hashed key still finds the earlier install")
+        listed = json.dumps(self.cli("list"), ensure_ascii=False)
+        self.assertIn("local/scripty", listed)
+        self.assertNotIn(str(self.sources), listed)
+
     # ------------------------------------------------------------------ helpers
 
     def cli(self, *args, code=0):
@@ -206,7 +218,8 @@ class UserInstallTests(unittest.TestCase):
         self.assertEqual(record["schema"], "oaw-user-skills/1")
         self.assertEqual(record["packages"]["hooky"]["consents"], ["hooks", "mcp", "scripts"])
         self.assertEqual(record["packages"]["hooky"]["license"]["spdx"], "MIT")
-        self.assertEqual(record["packages"]["twin"]["source"]["path"], self.fixtures["twin"])
+        self.assertIsNone(record["packages"]["twin"]["source"]["path"])  # never a local path in the project
+        self.assertTrue(record["packages"]["twin"]["source"]["key"].startswith("local:"))
         self.assertTrue(record["packages"]["twin"]["source"]["tree_sha256"])
         self.assertTrue(self.cli("doctor")["status"] == "healthy")
 

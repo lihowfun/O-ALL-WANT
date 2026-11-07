@@ -242,6 +242,14 @@ def conditions_short(conditions: dict) -> str:
     return "、".join(part for part in (corpus, models) if part)
 
 
+def stored_key(key: str) -> str:
+    """The source key written into .oaw/user-skills.json. A local folder's key spells out a local path, and the
+    record may be committed, so only a hash of it is stored (lookups during an install still use the real key)."""
+    if key.startswith("file://"):
+        return "local:" + hashlib.sha256(key.encode("utf-8")).hexdigest()[:16]
+    return key
+
+
 def tasting_text(tasting: dict, package: str) -> str:
     if tasting["status"] != "tasted":
         return f"未試吃（試吃：catalog.py taste {package}）"
@@ -747,7 +755,7 @@ def plan_add(target, sources, *, choice=None, consent=None, on_conflict=(), host
     hosts = _resolve_hosts(manifest, host)
     snapshots = {} if snapshots is None else snapshots
     taken = {name: entry["source"]["key"] for name, entry in record["packages"].items()}
-    installed_keys = {entry["source"]["key"]: name for name, entry in record["packages"].items()}
+    installed_keys = {entry["source"]["key"]: name for name, entry in record["packages"].items()}  # stored keys
     packages, seen = [], set()
     for text in sources:
         source = parse_source(text, verdicts)
@@ -759,8 +767,8 @@ def plan_add(target, sources, *, choice=None, consent=None, on_conflict=(), host
         snapshot = snapshots[source["key"]]
         source["commit"] = snapshot.get("commit")
         source["tree_sha256"] = snapshot["tree_sha256"]
-        name = core.food_id({"repo": source["repo"], "owner": source["owner"] or "local", "key": source["key"]}, taken)
-        taken[name] = source["key"]
+        name = core.food_id({"repo": source["repo"], "owner": source["owner"] or "local", "key": stored_key(source["key"])}, taken)
+        taken[name] = stored_key(source["key"])
         scan = core.static_scan(snapshot["files"], food=name, commit=snapshot.get("commit"), integrity=snapshot["integrity"],
                                 modes=snapshot["modes"], skipped=snapshot["skipped"], symlinks=snapshot["symlinks"],
                                 gitlinks=snapshot.get("gitlinks", []))
@@ -771,8 +779,9 @@ def plan_add(target, sources, *, choice=None, consent=None, on_conflict=(), host
                    "dependencies": scan["dependencies"]["non_stdlib"][:20], "flags": len(scan["flags"]),
                    "allergens": scan["allergens"], "skipped_files": len(snapshot["skipped"]), "symlinks": len(snapshot["symlinks"]),
                    "status": "install", "reason": None, "recommendation": None}
-        if source["key"] in installed_keys:
-            package.update(status="skip", reason=f"已經裝過（{installed_keys[source['key']]}）；要重裝先 oaw.py remove {installed_keys[source['key']]}")
+        if stored_key(source["key"]) in installed_keys:
+            installed = installed_keys[stored_key(source["key"])]
+            package.update(status="skip", reason=f"已經裝過（{installed}）；要重裝先 oaw.py remove {installed}")
         if not parts and package["status"] == "install":
             package.update(status="skip", reason="沒有可以安裝的 skill、agent、hook 或 MCP server")
         if choice == "recommended" and package["status"] == "install":
@@ -1085,8 +1094,8 @@ def commit_parts(target: Path, plan: dict) -> dict:
 def _package_record(package: dict, plan: dict, stamp: str) -> dict:
     source = package["source"]
     return {"name": package["name"], "added_at": stamp, "choice": plan["choice"], "category": package["category"],
-            "source": {"kind": source["kind"], "display": source["display"], "key": source["key"], "url": source["url"],
-                       "path": source["path"], "ref": source["ref"], "commit": source.get("commit"),
+            "source": {"kind": source["kind"], "display": source["display"], "key": stored_key(source["key"]),
+                       "url": source["url"], "path": None, "ref": source["ref"], "commit": source.get("commit"),
                        "tree_sha256": source["tree_sha256"], "from_verdicts": source.get("from_verdicts")},
             "license": {"spdx": package["license"]["spdx"], "distribution": package["license"]["distribution"]},
             "tasting_at_install": {k: package["tasting"].get(k) for k in ("status", "label_zh", "date", "from")},
@@ -1280,7 +1289,14 @@ def receipt_rows(target: Path, manifest: dict | None, record: dict, verdicts: di
         pin = (source.get("commit") or "")[:7]
         origin = (f"{source['url'].removeprefix('https://')}@{pin}" if source["kind"] == "github"
                   else f"{source['display']}（內容 {source['tree_sha256'][:8]}）")
-        tasting = tasting_status(target, {"key": source["key"], "commit": source.get("commit")}, verdicts)
+        if source["key"].startswith("local:"):
+            # A local folder's real key is not stored; show what the records said when it was installed.
+            at_install = entry.get("tasting_at_install") or {}
+            tasting = ({"status": "tasted", "label_zh": f"{at_install.get('label_zh')}（安裝時的紀錄）",
+                        "date": at_install.get("date"), "conditions": {}} if at_install.get("status") == "tasted"
+                       else {"status": "untasted"})
+        else:
+            tasting = tasting_status(target, {"key": source["key"], "commit": source.get("commit")}, verdicts)
         for name, part in sorted(entry["parts"].items()):
             if part["kind"] == "skill":
                 skill_file = next((f["path"] for f in part["files"] if f["path"].endswith("/SKILL.md") and f.get("sha256")), None)
