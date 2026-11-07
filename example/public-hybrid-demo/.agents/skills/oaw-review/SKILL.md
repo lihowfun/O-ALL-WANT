@@ -13,14 +13,15 @@ Run from the project root with Python 3.10+ (`py -3` on Windows if needed).
 2. Do the `steps` in order. Finish every step marked `"before_code": true` before you change any code.
    Skip a step whose `done` is true.
    - `plan`: plan first, save the plan as `docs/plans/<name>.md`, then run
-     `suggest --paths docs/plans/<name>.md --json` to get its design-review step.
+     `suggest --paths <files you plan to change> --plan docs/plans/<name>.md --json` for its design-review step.
    - `design-review`, `how: egm`: pick the context files the plan names, then run
      `python3 scripts/oaw_mode.py egm estimate <plan> <context files> --json`. State the estimate in one line;
      if `ask_first` is true, ask the user before running. Read the installed `egm-review` skill file (`.claude/skills/egm-review/SKILL.md` or
      `.agents/skills/egm-review/SKILL.md`) and follow the upstream entry it names with `Step: uninterrupted`,
-     `TargetFile:` the plan and `GoldfishContext:` only the files the plan names. Write reports to `report_dir`.
+     `TargetFile:` the plan and `GoldfishContext:` only the files the plan names. Review one plan at a time and
+     write its reports to its own `report_dir` in `reviews`.
      Resolve each finding yourself: fix the plan, or reject it with a reason. Show the user only blockers you reject.
-     Then run `python3 scripts/oaw_mode.py reviewed <plan> --how egm --report <report_dir>`.
+     Then run `python3 scripts/oaw_mode.py reviewed <plan> --how egm --report <its report_dir>`.
      If a usage limit or an error stops EGM early, record it with `--status cut`, tell the user, and write no code.
    - `design-review`, `how: fresh-context`: one reviewer with no conversation context reads the plan and the
      files it names; resolve the findings; record it with `--how fresh-context`.

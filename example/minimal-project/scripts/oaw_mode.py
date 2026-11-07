@@ -542,6 +542,25 @@ def file_bytes(root: Path, paths: list[str]) -> int:
     return total
 
 
+def report_dir(root: Path, target: str) -> str:
+    identity = hashlib.sha256(f"{target}\0{file_digest(root, target)}".encode("utf-8")).hexdigest()
+    return f"{REVIEWS_DIR}/{datetime.now(timezone.utc):%Y-%m-%d}-{slug(target)}-{identity[:10]}/"
+
+
+def add_plan(result: dict, root: Path, plan: str) -> None:
+    """A saved plan named with --plan is a design-review target whatever git says (any project, git or not)."""
+    plan = PurePosixPath(plan.replace("\\", "/")).as_posix().removeprefix("./")
+    if not project_file(root, plan).is_file():
+        raise ModeError(f"--plan is not a file in the project: {plan}")
+    if plan not in result["design_docs"]:
+        result["design_docs"].append(plan)
+    if result["mode"] != "deep":
+        result["triggers"].append({"mode": "deep", "rule": "plan-given", "paths": [plan],
+                                   "reason": f"a saved plan to review: {plan}"})
+        result["reasons"] = [t["reason"] for t in result["triggers"]]
+        result["mode"] = "deep"
+
+
 def slug(path: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", PurePosixPath(path).stem.lower()).strip("-") or "plan"
 
@@ -579,12 +598,11 @@ def review_steps(result: dict, root: Path, settings: dict) -> list[dict]:
             if note:
                 step["note"] = note
             if targets:
-                done = [already_reviewed(root, target, how) for target in targets]
-                step["done"] = all(done)
-                # Unique per target set and content: EGM writes fixed file names, so a shared folder would overwrite.
-                identity = hashlib.sha256("\0".join(f"{t}\0{file_digest(root, t)}" for t in targets).encode()).hexdigest()
-                step["report_dir"] = (f"{REVIEWS_DIR}/{datetime.now(timezone.utc):%Y-%m-%d}-{slug(targets[0])}-"
-                                      f"{identity[:10]}/")
+                # One review per document, each with its own folder named by path and content: EGM reviews one
+                # TargetFile at a time and writes fixed file names, so a shared folder would overwrite reports.
+                step["reviews"] = [{"target": target, "report_dir": report_dir(root, target),
+                                    "done": already_reviewed(root, target, how) is not None} for target in targets]
+                step["done"] = all(review["done"] for review in step["reviews"])
             if how == "egm":
                 if targets:
                     estimate = egm_estimate(file_bytes(root, targets))
@@ -597,7 +615,8 @@ def review_steps(result: dict, root: Path, settings: dict) -> list[dict]:
                               "user first when it says ask_first; then follow the installed egm-review skill (its "
                               "bridge file names the runtime) with "
                               "Step: uninterrupted, TargetFile: the plan, GoldfishContext: only the files the plan "
-                              "names; write reports to report_dir; resolve the findings yourself and hand the user "
+                              "names; write each plan's reports to its report_dir in reviews; resolve the findings "
+                              "yourself and hand the user "
                               "only blockers you reject; then run python3 scripts/oaw_mode.py reviewed PLAN --how egm "
                               "--report report_dir. A run cut short is not a review: stop and do not write code.")
             else:
@@ -782,6 +801,8 @@ def main(argv: list[str] | None = None) -> int:
     source.add_argument("--range", dest="revision_range", metavar="A..B", help="a git revision range instead")
     source.add_argument("--paths", nargs="+", metavar="PATH",
                         help="a plain path list (planned or changed); a missing path counts as new")
+    suggest.add_argument("--plan", metavar="FILE",
+                         help="a saved plan to review before code: always a design-review target (works without git)")
     show = commands.add_parser("show", help="print how to run a mode")
     show.add_argument("mode", choices=MODES)
     egm = commands.add_parser("egm", help="show or set the EGM switch (on, auto, off), or estimate one EGM run",
@@ -850,6 +871,8 @@ def main(argv: list[str] | None = None) -> int:
                 entries, label = diff_entries(root, args.revision_range)
             settings = load_settings(root)
             result = {"schema_version": 1, "source": label, **classify(entries, hook_files(root))}
+            if args.plan:
+                add_plan(result, root, args.plan)
             result["settings"] = {k: settings[k] for k in DEFAULTS}
             result["steps"] = review_steps(result, root, settings)
             result["dry_run"] = settings["dry_run"]

@@ -35,7 +35,7 @@
     ".agents/skills/egm-review/agents/openai.yaml": "659ab99489607ab3722800805993b59bbe8db9eaa156f9bb4a4995b233f540f9",
     ".agents/skills/egm-review/assets/icon.svg": "02154028864bd8547a45d7c9f55c59f95cb4ce3f57ecb3426f67034ab97d022f",
     ".agents/skills/oaw-evidence/SKILL.md": "e1a0c9f4739f860f8b610e3a900fbb5999fc06c03fc1eeba9e9a1bb8d4ca0b30",
-    ".agents/skills/oaw-review/SKILL.md": "aa44d4676aac485625e5439043994d07f63ea8bd786d626aeb2c6625e84fab90",
+    ".agents/skills/oaw-review/SKILL.md": "445aa4b002a3a513a42f5992731b0214eb69116e984011d2320617a51aeea817",
     ".oaw/integrations/egm/.claude-plugin/agents/bootstrap_orchestrator.md": "b07f80ac2b54b840a48b290221e4a15d97b2e90de5ed3d2760efba4112760930",
     ".oaw/integrations/egm/.claude-plugin/agents/codebase_details.md": "17d4f89bb8786f78eca6d9e01e31493497cf4c2af55fa97342507648e185b78d",
     ".oaw/integrations/egm/.claude-plugin/agents/comprehension.md": "78356e3e5e89c3d4a6b9d51865ad81f1b256cb3289869a4070e149b7b90ae7f2",
@@ -106,7 +106,7 @@
     "CLAUDE.md": "336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49",
     "scripts/context_hub.py": "1fcc162e3d94792c3c5d173ceebde079ac3e238f9da5efd66978f821af8a1696",
     "scripts/oaw_common.py": "33063249f7f244778d9caaec70e76d119ce1d4fe117c425db5995c47f48adc2c",
-    "scripts/oaw_mode.py": "fe2c411e24a99f32fc6c8b87d481e7235b2745f06efab032a6e4fcbc90bbccf3"
+    "scripts/oaw_mode.py": "6cb07b8f404bef41a8ddd842174f1985c9b6baef88b8aad576cae8587a22e16a"
   },
   "pending_conflicts": [],
   "profile": "minimal",

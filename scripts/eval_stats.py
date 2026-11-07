@@ -54,7 +54,14 @@ def _quantile(values: list[float], p: float) -> float:
 
 
 def _per_question(food: dict, native: dict, *, log_ratio: bool) -> dict:
-    shared = sorted(q for q in set(food) & set(native) if food[q] and native[q])
+    """Both arms must cover the same frozen questions with at least one run each; an unfinished arm is refused."""
+    if set(food) != set(native):
+        missing = sorted(set(food) ^ set(native))
+        raise StatsError(f"the arms answer different questions ({', '.join(missing[:5])}); finish or drop them first")
+    empty = sorted(q for q in food if not food[q] or not native[q])
+    if empty:
+        raise StatsError(f"no runs for {', '.join(empty[:5])}; a cell without runs is not a result")
+    shared = sorted(food)
     if not shared:
         raise StatsError("no question has values in both arms")
     result = {}

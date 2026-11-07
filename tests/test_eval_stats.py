@@ -63,8 +63,12 @@ class CompareTests(unittest.TestCase):
     def test_results_are_deterministic_and_inputs_checked(self):
         food = {q: [NATIVE[q][0] + 0.01 * i] for i, q in enumerate(QUESTIONS)}
         self.assertEqual(stats.compare(food, NATIVE, 0.1), stats.compare(food, NATIVE, 0.1))
+        partial = {q: v for q, v in food.items() if q == "q1"}
+        holed = {**food, "q2": []}
         for call in (lambda: stats.compare({}, NATIVE, 0.1), lambda: stats.compare(food, NATIVE, 0),
-                     lambda: stats.compare(food, NATIVE, 0.1, floor_sd=-1)):
+                     lambda: stats.compare(food, NATIVE, 0.1, floor_sd=-1),
+                     lambda: stats.compare(partial, NATIVE, 0.1), lambda: stats.compare(holed, NATIVE, 0.1),
+                     lambda: stats.cost(partial, NATIVE)):
             with self.assertRaises(stats.StatsError):
                 call()
 
@@ -82,6 +86,8 @@ class CostTests(unittest.TestCase):
                 self.assertEqual(result["class"], expected, result)
         with self.assertRaises(stats.StatsError):
             stats.cost({"q1": [0]}, {"q1": [10]})
+        with self.assertRaisesRegex(stats.StatsError, "different questions"):  # codex review round 5
+            stats.cost({"q1": [5]}, {"q1": [5], "q2": [5]})
 
     def test_edge_ratios_keep_full_precision_for_the_catalog(self):
         # codex review of d8b1cfc: rounding made 0.99999x read 1.0 while its class said cheaper.

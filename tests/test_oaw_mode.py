@@ -533,13 +533,16 @@ class SwitchAndStepTests(unittest.TestCase):
         design = self.steps()["design-review"]
         self.assertEqual((design["how"], design["switch"], design["before_code"], design["done"]), ("egm", "auto", True, False))
         self.assertEqual(design["targets"], ["docs/plans/cache.md"])
-        self.assertRegex(design["report_dir"], r"^\.oaw/reviews/\d{4}-\d{2}-\d{2}-cache-[0-9a-f]{10}/$")
+        first = design["reviews"][0]["report_dir"]
+        self.assertRegex(first, r"^\.oaw/reviews/\d{4}-\d{2}-\d{2}-cache-[0-9a-f]{10}/$")
+        # Two documents in one change: one folder each (codex review rounds 4 and 5).
         self.write("docs/designs/cache.md", "# Same stem, other folder\n")
-        other = self.json("suggest", "--paths", "docs/designs/cache.md")["steps"][1]
-        self.assertNotEqual(other["report_dir"], design["report_dir"], "reports never share a folder (codex review round 4)")
+        both = self.steps()["design-review"]["reviews"]
+        self.assertEqual([r["target"] for r in both], ["docs/designs/cache.md", "docs/plans/cache.md"])
+        self.assertEqual(len({r["report_dir"] for r in both}), 2)
         (self.root / "docs/designs/cache.md").unlink()
         self.write("docs/plans/cache.md", "# Cache plan, revised\n")
-        self.assertNotEqual(self.steps()["design-review"]["report_dir"], design["report_dir"])
+        self.assertNotEqual(self.steps()["design-review"]["reviews"][0]["report_dir"], first)
         self.write("docs/plans/cache.md", "# Cache plan\n")
         self.assertGreaterEqual(design["estimate"]["tokens_low"], int(mode.EGM_TOKENS_FLOOR * mode.ESTIMATE_LOW))
         self.assertFalse(design["ask_first"])
@@ -638,6 +641,23 @@ class SwitchAndStepTests(unittest.TestCase):
                 self.assertIn(words, errors)
                 self.assertEqual(run("egm", "on", "--root", str(self.root))[0], 2, "never overwrites a broken file")
                 self.assertEqual((self.root / ".oaw/settings.json").read_text(encoding="utf-8"), content)
+
+    def test_a_named_plan_is_reviewed_with_or_without_git(self):
+        plain = Path(tempfile.mkdtemp(prefix="oaw-mode-nogit-"))
+        self.addCleanup(shutil.rmtree, plain, True)
+        (plain / "docs/plans").mkdir(parents=True)
+        (plain / "docs/plans/ci.md").write_text("# CI plan\n", encoding="utf-8")
+        code, output, errors = run("suggest", "--root", str(plain), "--paths", "docs/plans/ci.md", "--json")
+        self.assertEqual(json.loads(output)["mode"], "light", "without git an existing file is not known to be new")
+        code, output, errors = run("suggest", "--root", str(plain), "--paths", ".github/workflows/ci.yml",
+                                   "--plan", "docs/plans/ci.md", "--json")
+        self.assertEqual(code, 0, errors)
+        result = json.loads(output)
+        design = {s["step"]: s for s in result["steps"]}["design-review"]
+        self.assertEqual((result["mode"], design["targets"]), ("deep", ["docs/plans/ci.md"]))
+        code, output, _ = run("suggest", "--root", str(plain), "--paths", "README.md", "--plan", "docs/plans/ci.md", "--json")
+        self.assertEqual([t["rule"] for t in json.loads(output)["triggers"]], ["plan-given"])
+        self.assertEqual(run("suggest", "--root", str(plain), "--paths", "a", "--plan", "nope.md")[0], 2)
 
     def test_a_lighter_review_never_stands_in_for_egm(self):
         self.install_egm_entry()
