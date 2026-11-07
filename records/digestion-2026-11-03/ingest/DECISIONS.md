@@ -351,3 +351,46 @@ gains (cost ignored once "better"), and that verdict edges sat inside AI-grader 
    - harness_check passed 9/9 (508 tests, Linux).
    - Adherence smoke test of the AGENTS.md rule: Sonnet 5.5, one run each on a CI-workflow change and a docs change. Both ran `suggest`, then `show deep` or `show light`, matching the change. This shows the rule is followed, not that it helps.
    - Windows is not verified on a Windows host yet; CI runs only for PRs into main.
+
+## D32. Tasting yardstick (2026-11-07, owner in chat: "全部照建議開工", approving Q1 of `docs/plans/v2.0.1-execution.md` §8 on `claude/oaw-2` db27874; refines D29)
+Source: `records/digestion-2026-11-07/validation/RESULT.md`. Implemented by plan item W0.
+1. The second grading always comes from a different model family (Codex). Grading twice with the same family is not independent: Opus vs Opus kappa 0.97, Opus vs Codex 0.46–0.62 (V4).
+2. Wrong-claim counts decide a verdict only when both families agree (V3, V4).
+3. The default sample is 12 questions × 1 run. Questions are treated as a random sample, and questions at the ceiling are replaced.
+4. Zero-spread floor: the interval never collapses to a point. With one run per question, the floor is the pooled within-question SD from earlier repeated runs of the same question bank and model.
+5. Before excreting a food, test at least one condition on the food's home turf (V8).
+6. Cost: "too expensive" only when the CI's lower bound exceeds 1.5×. A CI straddling 1.5× is "cost undetermined".
+
+## D33. One review switch; EGM in deep (2026-11-07, owner in chat: "全部照建議開工" on Q2, then "EGM 貴的有道理的話那很棒啊 但後續要想一個按鈕開關 需要品質好審查時候開 不需要可以關 預設先調整最好版本"; refines D31 item 3 and V2's "EGM keeps its explicit invocation policy")
+1. Each project has one EGM switch with three positions:
+   - on: every deep task gets the full EGM design review.
+   - off: EGM never runs.
+   - auto, the default: deep runs whichever design review the current evidence ranks best.
+     - Today that is EGM, the only design review with a measured gain (V5: 3/3 vs native 1/6).
+     - X2's pre-registered rule can move auto to a readiness checklist, a single cross-family review, or no extra design review.
+     - The owner's later words ("預設先調整最好版本") take auto to EGM before X2 reports, instead of the plan's "only after X2 selects E".
+2. The agent starts the review itself; the owner types nothing.
+   - Before each EGM run the agent prints an estimate of tokens and minutes.
+   - Over the project's cap (default 25M logical tokens) it asks first.
+   - If a usage limit cuts the run, implementation waits until the review finishes.
+3. The switch lives in one project setting with three faces:
+   - the CLI (`scripts/oaw_mode.py egm on|auto|off`);
+   - the chat (the `oaw-review` skill);
+   - later, a button in the digestion pane.
+
+## D34. User install route (2026-11-07, owner in chat: "全部照建議開工" on Q3)
+- `oaw.py add/list/remove` installs into the user's own project.
+- With explicit consent given in the single install question, it may install untasted skills, scripts, hooks and MCP servers.
+- Every component keeps a change record, so removal restores exactly what it changed, including its entries in shared settings files.
+- OAW's own absorb into its defaults keeps its blocks: no hooks or MCP, executable skills held, and runtime code is tier C under D21.
+
+## D35. Higher caps while building 2.0.1 (2026-11-07, owner in chat: "D13 10M上限先放寬 我們還在建立中 多點機會試", then "甚至你放寬到20M 或更高 只要合理使用 我都覺得還好"; refines D13)
+- The owner set no number. The agent chose 30M as "higher, used reasonably".
+- Until 2.0.1 is released:
+  - 30M logical tokens (input + output + cache) per food or experiment;
+  - 30M digestion overhead per round.
+  - Above 30M the agent still stops and asks.
+- Subscription billing only and `apiKeySource: none` are unchanged.
+- Records report both logical tokens and tokens without cache reads.
+- The 2026-11-07 plan review (EGM 18.5M) is within this cap; its deviation note stays as history.
+- Applied to the 2.0.1 plan: X1 adds the fourth cell (VS Code × Haiku 5.5), and X2 grows to 12 cases (10 new).
