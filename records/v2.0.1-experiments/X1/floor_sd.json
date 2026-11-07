@@ -27,12 +27,27 @@
     "cells": 16,
     "runs": 48
    }
+  },
+  "codex": {
+   "opus": {
+    "coverage": 0.08381775865928812,
+    "wrong": 0.4564354645876384,
+    "cells": 16,
+    "runs": 48
+   },
+   "codex": {
+    "coverage": 0.12747025796893433,
+    "wrong": 1.0,
+    "cells": 16,
+    "runs": 48
+   }
   }
  },
  "sources": {
   "opus/opus": "digestion-2026-11-06/taste-codegraph/out-opus/grades.jsonl",
   "opus/codex": "digestion-2026-11-07/validation/v4/opus/grades-codex-original.jsonl",
   "haiku/opus": "digestion-2026-11-06/taste-codegraph/out-haiku/grades.jsonl",
-  "haiku/codex": "digestion-2026-11-07/validation/v4/haiku/grades-codex-original.jsonl"
+  "haiku/codex": "digestion-2026-11-07/validation/v4/haiku/grades-codex-original.jsonl",
+  "codex/*": "amendment 2026-11-08: no repeated Codex answers exist on this bank; the larger floor of the opus and haiku cells per grader (the haiku values)"
  }
 }

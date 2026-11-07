@@ -18,8 +18,17 @@ tool set idea, same row fields). Changes for X1:
   folder (--ledger) to this folder's, and starts a question only if both arms of it, plus one run of the other
   stream in flight, fit under --budget.
 
+Amendment 2026-11-08 (PREREG "補登", before any scored run):
+- M also gets POLICY_LINE appended to AGENTS.md (CLAUDE.md imports it): X3b showed a skill is not used without a
+  policy line, and the X1 pilot's M never used the map;
+- --host codex runs the same arms in Codex CLI (`codex exec`, read-only sandbox, user config ignored, no session
+  kept): `oaw.py init --host codex`, the skill lives in .agents/skills, and M sets the skill's
+  `allow_implicit_invocation` to true in agents/openai.yaml. Codex tokens are on the ChatGPT plan, so the Claude
+  budget guard does not apply to that stream. tokens_total = input (cached input included) + output.
+
     python3 x1_run.py --questions questions.json --label opus --model claude-opus-5-5 --scratch DIR \
         --erp-repo REPO --oaw-src DIR --claude CLI --out DIR --budget N [--ids q1,n2] [--timeout 1500]
+    python3 x1_run.py ... --label codex --host codex --model gpt-6.1-sol --codex CLI --budget 0
 """
 import argparse
 import hashlib
@@ -46,6 +55,9 @@ TOOLS = "Read,Grep,Glob,Bash,Skill"
 ALLOWED = "Read Grep Glob Bash Skill"
 LIMIT = re.compile(r"hit your (?:\w+ )?limit|usage limit|rate limit|too many requests|\b429\b|limit \W* resets", re.I)
 SKILL_LINE = "disable-model-invocation: true"
+CODEX_POLICY = "allow_implicit_invocation: false"
+POLICY_LINE = ("To find who calls a function, what a change would affect, or how this repository is laid out, use the "
+               "`oaw-codemap` skill (`python3 scripts/code_index.py`), then read the code it points to before relying on it.")
 
 
 def sh(argv, **kw):
@@ -55,7 +67,7 @@ def sh(argv, **kw):
     return done.stdout
 
 
-def prepare(arm, work, cache, erp_repo, oaw_src):
+def prepare(arm, work, cache, erp_repo, oaw_src, host="claude"):
     """A fresh ERPNext copy with OAW 2.0.1 and the arm's edit; returns facts about the copy for the row."""
     shutil.rmtree(work, ignore_errors=True)
     os.makedirs(work)
@@ -63,23 +75,31 @@ def prepare(arm, work, cache, erp_repo, oaw_src):
     sh(["tar", "-x", "-C", work], stdin=archive.stdout)
     archive.wait()
     init = json.loads(sh(["/usr/bin/python3", os.path.join(oaw_src, "scripts", "oaw.py"), "init", "--target", work,
-                          "--host", "claude", "--json"]))
+                          "--host", host, "--json"]))
     if init.get("status") != "installed" or "oaw-codemap" not in init.get("skills", []):
         raise SystemExit(f"oaw init did not install the code map: {init.get('status')}")
-    skill_dir = os.path.join(work, ".claude", "skills", "oaw-codemap")
+    skill_dir = os.path.join(work, ".claude" if host == "claude" else ".agents", "skills", "oaw-codemap")
     index = os.path.join(work, "scripts", "code_index.py")
     facts = {"oaw_status": init["status"], "oaw_skills": init["skills"]}
     if arm == "N":
         shutil.rmtree(skill_dir)
         os.remove(index)
     else:
-        path = os.path.join(skill_dir, "SKILL.md")
+        if host == "claude":
+            path, old, new = os.path.join(skill_dir, "SKILL.md"), SKILL_LINE + "\n", ""
+        else:
+            path = os.path.join(skill_dir, "agents", "openai.yaml")
+            old, new = CODEX_POLICY, CODEX_POLICY.replace("false", "true")
         text = open(path, encoding="utf-8").read()
-        if SKILL_LINE + "\n" not in text:
-            raise SystemExit("SKILL.md has no disable-model-invocation line to remove")
+        if old not in text:
+            raise SystemExit(f"{path} has no invocation policy to change")
         with open(path, "w", encoding="utf-8") as handle:
-            handle.write(text.replace(SKILL_LINE + "\n", "", 1))
+            handle.write(text.replace(old, new, 1))
         facts["skill_sha256"] = hashlib.sha256(open(path, "rb").read()).hexdigest()
+        agents = os.path.join(work, "AGENTS.md")
+        with open(agents, "a", encoding="utf-8") as handle:
+            handle.write("\n" + POLICY_LINE + "\n")
+        facts["agents_sha256"] = hashlib.sha256(open(agents, "rb").read()).hexdigest()
         shutil.rmtree(cache, ignore_errors=True)
         started = time.time()
         out = sh(["/usr/bin/python3", "scripts/code_index.py", "stats"], cwd=work,
@@ -166,9 +186,74 @@ def run_one(arm, work, cache, question, claude, raw_dir, timeout, model, effort,
     return row
 
 
+def run_one_codex(arm, work, cache, question, codex, raw_dir, timeout, model, effort):
+    """One `codex exec` session; the row has the fields run_one() writes, read from Codex's JSONL events."""
+    env = {"HOME": os.environ["HOME"], "LANG": "C.UTF-8", "TERM": "dumb",
+           "PATH": ":".join([os.path.dirname(codex), "/usr/bin", "/bin"])}
+    if arm == "M":
+        env["OAW_CODE_INDEX_CACHE"] = cache
+    prompt = PROMPT.format(question=question["question"])
+    argv = [codex, "exec", "--json", "--model", model, "-c", f'model_reasoning_effort="{effort}"',
+            "--sandbox", "read-only", "--skip-git-repo-check", "--ephemeral", "--ignore-user-config", "--cd", work, "-"]
+    started = time.time()
+    try:
+        done = subprocess.run(argv, cwd=work, env=env, input=prompt, capture_output=True, text=True, timeout=timeout)
+        stdout, code, stderr = done.stdout, done.returncode, done.stderr
+    except subprocess.TimeoutExpired as exc:
+        stdout = exc.stdout.decode("utf-8", "replace") if isinstance(exc.stdout, bytes) else (exc.stdout or "")
+        stderr = exc.stderr.decode("utf-8", "replace") if isinstance(exc.stderr, bytes) else (exc.stderr or "")
+        code = "timeout"
+    seconds = round(time.time() - started, 1)
+    with open(os.path.join(raw_dir, f"{arm}-{question['id']}.jsonl"), "w", encoding="utf-8") as handle:
+        handle.write(stdout)
+    row = {"arm": arm, "id": question["id"], "rep": 1, "exit": code, "seconds": seconds, "api_key_source": "chatgpt",
+           "answer": "", "tools": {}, "bash": [], "skill_calls": [], "map_commands": 0, "usage": {}, "model_usage": {},
+           "turns": 0, "is_error": False, "subtype": None, "result_seen": False, "skills_seen": None,
+           "hit_turn_limit": False, "model": model, "host": "codex", "stderr_tail": stderr[-400:]}
+    texts, errors = [], []
+    usage = {"input_tokens": 0, "cached_input_tokens": 0, "output_tokens": 0, "reasoning_output_tokens": 0}
+    for line in stdout.splitlines():
+        try:
+            event = json.loads(line)
+        except ValueError:
+            continue
+        kind = event.get("type")
+        if kind == "item.completed":
+            item = event.get("item") or {}
+            itype = item.get("type") or item.get("item_type")
+            if itype == "agent_message" and str(item.get("text", "")).strip():
+                texts.append(item["text"])
+            elif itype:
+                row["tools"][itype] = row["tools"].get(itype, 0) + (itype != "reasoning")
+                if itype == "command_execution":
+                    command = str(item.get("command", ""))
+                    row["bash"].append(command[:240])
+                    if "code_index" in command:
+                        row["map_commands"] += 1
+                    if "oaw-codemap" in command:
+                        row["skill_calls"].append(command[:80])
+        elif kind == "turn.completed":
+            row["turns"] += 1
+            for key, value in (event.get("usage") or {}).items():
+                usage[key] = usage.get(key, 0) + int(value or 0)
+            row["result_seen"] = True
+        elif kind in ("turn.failed", "error"):
+            errors.append(json.dumps(event)[:300])
+    row["tools"] = {k: v for k, v in row["tools"].items() if v}
+    row["answer"] = texts[-1] if texts else ""
+    row["usage"] = usage
+    row["errors"] = errors
+    row["is_error"] = bool(errors) and not row["result_seen"]
+    row["tokens_total"] = usage["input_tokens"] + usage["output_tokens"]
+    row["tokens_all_models"] = row["tokens_total"]
+    row["tool_calls"] = sum(row["tools"].values())
+    row["limit_seen"] = bool(LIMIT.search(" ".join(errors) + " " + stderr[-600:]) or LIMIT.search(row["answer"][:300]))
+    return row
+
+
 def not_run(row):
     """Why this session is not a run (D30), or '' when it is one. A timeout is a run with the text it produced."""
-    if row["api_key_source"] not in (None, "none"):
+    if row["api_key_source"] not in (None, "none") and not (row.get("host") == "codex" and row["api_key_source"] == "chatgpt"):
         return f"billing source {row['api_key_source']}"
     if row["limit_seen"]:
         return "usage limit"
@@ -190,7 +275,9 @@ def main(argv=None):
     parser.add_argument("--scratch", required=True)
     parser.add_argument("--erp-repo", required=True)
     parser.add_argument("--oaw-src", required=True)
-    parser.add_argument("--claude", required=True)
+    parser.add_argument("--claude", default="")
+    parser.add_argument("--codex", default="")
+    parser.add_argument("--host", choices=("claude", "codex"), default="claude")
     parser.add_argument("--out", required=True)
     parser.add_argument("--budget", type=int, required=True, help="global cap for all Claude tokens of X1")
     parser.add_argument("--spent", type=int, default=0, help="tokens X1 used before these runs")
@@ -199,6 +286,11 @@ def main(argv=None):
     parser.add_argument("--timeout", type=int, default=1500)
     parser.add_argument("--ids", default="")
     args = parser.parse_args(argv)
+    if args.host == "codex":
+        status = subprocess.run([args.codex, "login", "status"], capture_output=True, text=True)
+        if "ChatGPT" not in status.stdout + status.stderr or os.environ.get("OPENAI_API_KEY"):
+            print("codex is not on the ChatGPT plan; stopping", flush=True)
+            return 4
     questions = json.load(open(args.questions, encoding="utf-8"))["questions"]
     index = {q["id"]: i for i, q in enumerate(questions)}
     if args.ids:
@@ -235,16 +327,20 @@ def main(argv=None):
         if not todo:
             continue
         estimate = len(todo) * max(mine, 150_000) + (max(other, 150_000) if args.ledger else 0)
-        if spent + estimate > args.budget:
+        if args.host == "claude" and spent + estimate > args.budget:
             print(f"budget guard: {spent:,} spent, next question needs about {estimate:,}; not starting {question['id']}",
                   flush=True)
             return 3
         for arm in todo:
             work = os.path.join(args.scratch, "work", f"{args.label}-{arm}")
             cache = os.path.join(args.scratch, "cache", f"{args.label}-M")
-            facts = prepare(arm, work, cache, args.erp_repo, args.oaw_src)
-            row = run_one(arm, work, cache, question, args.claude, raw_dir, args.timeout, args.model, args.effort,
-                          args.max_turns)
+            facts = prepare(arm, work, cache, args.erp_repo, args.oaw_src, args.host)
+            if args.host == "codex":
+                row = run_one_codex(arm, work, cache, question, args.codex, raw_dir, args.timeout, args.model,
+                                    args.effort)
+            else:
+                row = run_one(arm, work, cache, question, args.claude, raw_dir, args.timeout, args.model, args.effort,
+                              args.max_turns)
             row["prepared"] = facts
             reason = not_run(row)
             spent = ledger()[0] + max(row["tokens_total"], row["tokens_all_models"])

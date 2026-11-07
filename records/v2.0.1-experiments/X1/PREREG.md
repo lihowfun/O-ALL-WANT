@@ -2,6 +2,43 @@
 
 依 `claude/oaw-2` 12799d9 的 `docs/plans/v2.0.1-execution.md` 第 6 節 X1，量測規則照 `docs/EVAL_PROTOCOL.md`（D32）。W2 的 Stage 0 裡 `find` 在 VS Code 沒過 D24，所以 X1 只跑 ERPNext 的兩格（Opus 5.5、Haiku 5.5）。
 
+## 補登（2026-11-08，任何計分作答之前）
+owner 2026-11-08 決定 X1 繼續，並指定「最主要測試是 Opus 5.5 和 Codex gpt-6.1-sol，這兩個 agent 才是最重要的」。這一節取代下面和它衝突的寫法；其他照舊。
+
+- **兩格改成 Opus 5.5 和 Codex**：
+  - 拿掉 Haiku 那格。
+  - Codex 格：Codex CLI 0.167.0，`codex exec --json`，`gpt-6.1-sol`，reasoning high。
+    - 唯讀沙箱，`--ignore-user-config`，`--ephemeral`，`--skip-git-repo-check`。
+    - 提示、題目、順序、每次上限 1,500 秒，都和 Opus 格相同。
+    - 計費必須是 ChatGPT 方案：`codex login status` 要是 ChatGPT，且環境裡沒有 `OPENAI_API_KEY`。
+  - Codex 的副本用 `oaw.py init --host codex`，skill 在 `.agents/skills/`。
+    - N 刪掉 `.agents/skills/oaw-codemap/` 和 `scripts/code_index.py`。
+    - M 把 `agents/openai.yaml` 的 `allow_implicit_invocation: false` 改成 `true`。
+- **M 加一行政策（兩格都加）**：在 AGENTS.md 最後加上 `x1_run.py` 的 `POLICY_LINE`；Claude 的 CLAUDE.md 用 `@AGENTS.md` 引入它。原文：
+
+  > To find who calls a function, what a change would affect, or how this repository is laid out, use the `oaw-codemap` skill (`python3 scripts/code_index.py`), then read the code it points to before relying on it.
+
+  原因：X3b 證明 skill 沒有政策行就不會被叫用，X1 試跑的 M 也兩次都沒用到地圖。原設計等於在量「沒人會用的地圖」。現在量的是「真的要出貨的預設」：skill 可以自動叫用，再加一行政策。N 的 AGENTS.md 不變。
+- **Codex 的 token**：
+  - `tokens_total` 是每個 `turn.completed` 的 input（含 cached input）加 output。
+  - 比值只在同一格內比（M 對 N），不跨格比。
+  - Codex 用的是 ChatGPT 方案，不算進 Claude 預算，所以預算守門只管 Opus 格。
+- **Codex 格的 floor_sd**：這套題庫沒有 Codex 重複作答的資料，每家評分改用 opus、haiku 兩格中較大的 floor（就是 haiku 的值），寫在 `floor_sd.json` 的 `codex`：
+  - Opus 評分：覆蓋率 0.0838、錯誤陳述 0.4564。
+  - Codex 評分：覆蓋率 0.1275、錯誤陳述 1.0。
+- **預算**：
+  - X1 的 Claude logical token 合計不超過 D35 的每項 30M。
+  - `run_x1.sh` 的 `BUDGET` 是 29,300,000（留 0.7M 給 Opus 評 48 份）。`SPENT` 照舊是 22,114,537。
+  - 答題可用約 7.2M，Opus 格估 2.4–6M。
+- **Codex 試跑**（不計分，題目 p1，就是上面「試跑」的同一題）：
+  - 第 1 次被 runner 的計費檢查擋下：它只認 Claude 的 `none`。已修正，這次 N 照算 Codex 的用量。
+  - 第 2 次：
+    - N 294,673 token、94 秒、11 次指令。
+    - M 315,192 token、96 秒、14 次指令。M 讀了 `oaw-codemap/SKILL.md`，跑了 5 次 `code_index.py --no-cache callers`，都成功（唯讀沙箱寫不了快取，它自己加了 `--no-cache`）。
+  - Opus 格這次沒有再試跑。
+- **判定規則不變**，只是格名從 opus、haiku 改成 opus、codex：每格兩家評分用 `agree()`，兩格用 `lowest()`。不完整的格照舊算未定。
+- **檔案**：`x1_run.py`（加 `--host codex` 和 `POLICY_LINE`）sha256 `8cba9d27…`，`run_x1.sh` `8f017f66…`，`floor_sd.json` `988d8af1…`。
+
 ## 狀態（先講結論）
 - 題目、組別、評分和判定規則都已凍結。本頁推上 records 之前，沒有任何計分的作答。
 - **計分的作答還沒開跑，因為已經超過預算**。呼叫者給 X1 的上限是 8M Claude logical token（含出題和評分，快取讀取也算）。目前已花 22,114,537：
