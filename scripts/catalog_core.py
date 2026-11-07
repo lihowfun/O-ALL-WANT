@@ -2133,9 +2133,9 @@ def _judgment(raw, verdict: str, kind: str, *, stored: bool = False):
         if quality != {"better": "better", "worse": "worse"}.get(quality_class, "same"):
             raise RecordError(f"{kind}: judgment.quality {quality} does not match quality_class {quality_class} "
                               "(equivalent and undetermined are recorded as quality same).")
-        if quality_class in ("better", "worse") and grading not in ("cross-family", "mechanical"):
-            raise RecordError(f"Refused: under D32 a difference counts only when graders of two model families both "
-                              f"find it (grading cross-family) or the grading is mechanical, not {grading}.")
+        if quality_class != "undetermined" and grading not in ("cross-family", "mechanical"):
+            raise RecordError(f"Refused: under D32 better, equivalent or worse counts only when graders of two model "
+                              f"families both find it (grading cross-family) or the grading is mechanical, not {grading}.")
         if cheaper and quality_class != "equivalent":
             raise RecordError(f"{kind}: judgment.cheaper needs quality_class equivalent; an undetermined quality "
                               "does not become a default (D32).")

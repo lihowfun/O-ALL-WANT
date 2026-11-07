@@ -1297,6 +1297,10 @@ class CatalogCliTests(unittest.TestCase):
         error = record("dg.json", "absorb", code=2, quality="better", quality_class="better",
                        **{**base, "grading": "double-graded"})["error"]
         self.assertIn("two model families", error)
+        # Equivalence needs both families too (codex review round 6): one grading cannot make a default.
+        error = record("eq1.json", "absorb", code=2, quality="same", quality_class="equivalent", cheaper=True,
+                       cost_ratio=0.7, cost_ci=[0.6, 0.8], grading="single-graded")["error"]
+        self.assertIn("two model families", error)
         # Undetermined is never cheaper, never a default; equivalent and cheaper is.
         cheap = dict(cost_ratio=0.7, cost_ci=[0.6, 0.8], grading="cross-family")
         self.assertIn("needs quality_class equivalent", record("u.json", "absorb", code=2, quality="same",

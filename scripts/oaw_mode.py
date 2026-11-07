@@ -177,6 +177,14 @@ def diff_entries(root: Path, revision_range: str | None) -> tuple[list[dict], st
     return sorted(entries.values(), key=lambda entry: entry["path"]), source
 
 
+def in_git(root: Path) -> bool:
+    try:
+        git(root, "rev-parse", "--git-dir")
+    except ModeError:
+        return False
+    return True
+
+
 def head_files(root: Path, paths: list[str]) -> set[str] | None:
     """Which of these project-relative paths HEAD has; None outside a git repository."""
     try:
@@ -867,6 +875,8 @@ def main(argv: list[str] | None = None) -> int:
         else:
             if args.paths:
                 entries, label = path_entries(root, args.paths)
+            elif args.plan and args.revision_range is None and not in_git(root):
+                entries, label = [], "a saved plan only (not a git repository)"
             else:
                 entries, label = diff_entries(root, args.revision_range)
             settings = load_settings(root)

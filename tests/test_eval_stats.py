@@ -86,6 +86,8 @@ class CostTests(unittest.TestCase):
                 self.assertEqual(result["class"], expected, result)
         with self.assertRaises(stats.StatsError):
             stats.cost({"q1": [0]}, {"q1": [10]})
+        with self.assertRaisesRegex(stats.StatsError, "did not run"):  # codex review round 6: never averaged away
+            stats.cost({q: [0, 100_000] for q in QUESTIONS}, {q: [100_000, 100_000] for q in QUESTIONS})
         with self.assertRaisesRegex(stats.StatsError, "different questions"):  # codex review round 5
             stats.cost({"q1": [5]}, {"q1": [5], "q2": [5]})
 

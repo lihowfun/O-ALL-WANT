@@ -658,6 +658,12 @@ class SwitchAndStepTests(unittest.TestCase):
         code, output, _ = run("suggest", "--root", str(plain), "--paths", "README.md", "--plan", "docs/plans/ci.md", "--json")
         self.assertEqual([t["rule"] for t in json.loads(output)["triggers"]], ["plan-given"])
         self.assertEqual(run("suggest", "--root", str(plain), "--paths", "a", "--plan", "nope.md")[0], 2)
+        # --plan alone, no git (codex review round 6).
+        code, output, errors = run("suggest", "--root", str(plain), "--plan", "docs/plans/ci.md", "--json")
+        self.assertEqual(code, 0, errors)
+        alone = json.loads(output)
+        self.assertEqual((alone["mode"], alone["source"]), ("deep", "a saved plan only (not a git repository)"))
+        self.assertEqual(run("suggest", "--root", str(plain))[0], 2, "without --plan, no git is still an error")
 
     def test_a_lighter_review_never_stands_in_for_egm(self):
         self.install_egm_entry()

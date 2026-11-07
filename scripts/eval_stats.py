@@ -64,6 +64,10 @@ def _per_question(food: dict, native: dict, *, log_ratio: bool) -> dict:
     shared = sorted(food)
     if not shared:
         raise StatsError("no question has values in both arms")
+    if log_ratio:
+        unrun = sorted(q for q in shared if any(v <= 0 for v in (*food[q], *native[q])))
+        if unrun:
+            raise StatsError(f"a run with 0 tokens did not run (D30): {', '.join(unrun[:5])}; drop or rerun it")
     result = {}
     for q in shared:
         f, n = statistics.mean(food[q]), statistics.mean(native[q])
