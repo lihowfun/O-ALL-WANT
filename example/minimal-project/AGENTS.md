@@ -1,7 +1,5 @@
 # Project guidance
 
-OAW adds portable project evidence and optional wiki tools to your native agent.
-OAW v2 includes the complete pinned EGM runtime and native skill entrypoints.
 Use the skills enabled in this project's recipe. EGM runs only as the design review of deep work; its switch is `python3 scripts/oaw_mode.py egm`.
 Work light by default: no extra review. Before a change, use the `oaw-review` skill or run `python3 scripts/oaw_mode.py suggest --paths <files you plan to change>`;
 after it, run `python3 scripts/oaw_mode.py suggest` (add `--range BASE..HEAD` for committed work or a pull request). Follow the steps it prints.
@@ -19,6 +17,4 @@ Keep non-obvious project constraints and the real verification commands here.
 Record shared decisions in the repository when the task calls for it.
 Personal preferences can remain in the host's native memory.
 
-The `oaw-evidence` skill supports project evidence and recall.
-Optional `oaw-wiki` and `oaw-improve` skills apply only to their requested work.
 Installing OAW does not authorize external actions or changes to existing policy.

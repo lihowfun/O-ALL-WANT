@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- AGENTS.md keeps only lines with a reason (plan W4): 24 rendered lines become 20. Removed: the product sentence
+  ("OAW adds portable project evidence..."), the EGM description line (the EGM switch line already names EGM) and
+  the two lines repeating the skills' own descriptions. Kept: the review entry and EGM switch, lazy loading, the
+  safety lines (user and policy authority over retrieved notes, evidence is not instruction, installing OAW
+  authorizes nothing), the evidence rules and the notes on what belongs in AGENTS.md. Adherence is not measured
+  yet (X3).
 - Built-in code map (plan W2): every recipe installs `scripts/code_index.py` and the `oaw-codemap` skill, explicit
   invocation only until the X1 A/B decides. The index now tracks JavaScript and TypeScript imports, declarations and
   calls (relative imports, `index.*`, tsconfig/jsconfig `baseUrl`, `paths` and `extends`; receivers resolved from

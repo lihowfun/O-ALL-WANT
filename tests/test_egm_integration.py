@@ -332,7 +332,7 @@ class EgmIntegrationTests(unittest.TestCase):
                 self.install(target=target, skills=skills)
                 policy = (target / "AGENTS.md").read_bytes()
                 self.assertEqual(policy, oaw.render_policy(template, True))
-                self.assertIn(b"OAW v2 includes the complete pinned EGM runtime and native skill entrypoints.\n", policy)
+                self.assertIn(b"EGM runs only as the design review of deep work; its switch is ", policy)
                 self.assertNotIn(b"oaw:", policy)
                 self.assertEqual(snapshot(target / RUNTIME), snapshot(self.vendor))
                 self.assertEqual(self.manifest(target)["integrations"], {"egm": oaw.EGM_INTEGRATION})
