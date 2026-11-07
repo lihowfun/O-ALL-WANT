@@ -106,7 +106,7 @@
     "CLAUDE.md": "336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49",
     "scripts/context_hub.py": "1fcc162e3d94792c3c5d173ceebde079ac3e238f9da5efd66978f821af8a1696",
     "scripts/oaw_common.py": "33063249f7f244778d9caaec70e76d119ce1d4fe117c425db5995c47f48adc2c",
-    "scripts/oaw_mode.py": "ffb17435fd6b098776eacb93957b5543b963aba73345c988b989f43c30340691"
+    "scripts/oaw_mode.py": "d97877416edc840bccb00a9db6d8de55a1c9576187d5904da456e37a3c46790b"
   },
   "pending_conflicts": [],
   "profile": "minimal",

@@ -109,7 +109,7 @@ def compare(food: dict, native: dict, margin: float, *, lower_is_better: bool = 
     cls = "better" if good else "worse" if bad else "equivalent" if equivalent else "undetermined"
     result.update({"class": cls, "within_margin": equivalent, "margin": margin, "lower_is_better": lower_is_better,
                    "mde": MDE_FACTOR * result["se"], "per_question": diffs})
-    return _rounded(result)
+    return result
 
 
 def cost(food: dict, native: dict, *, cap: float = COST_CAP, draws: int = DRAWS, seed: int = SEED) -> dict:
@@ -119,8 +119,9 @@ def cost(food: dict, native: dict, *, cap: float = COST_CAP, draws: int = DRAWS,
     lo, hi = (math.exp(v) for v in result["ci95"])
     ratio = math.exp(result["point"])
     cls = "over" if lo > cap else "cheaper" if hi < 1 else "within" if hi <= cap else "undetermined"
-    return _rounded({"ratio": ratio, "ci95": [lo, hi], "class": cls, "cap": cap, "questions": result["questions"],
-                     "per_question": {q: math.exp(v) for q, v in logs.items()}})
+    # Full precision: the catalog checks the class against these numbers (round only for display).
+    return {"ratio": ratio, "ci95": [lo, hi], "class": cls, "cap": cap, "questions": result["questions"],
+            "per_question": {q: math.exp(v) for q, v in logs.items()}}
 
 
 def _check(*classes: str) -> None:
@@ -228,7 +229,7 @@ def main(argv: list[str] | None = None) -> int:
     except (OSError, ValueError) as exc:
         print(f"eval_stats: {exc}", file=sys.stderr)
         return 2
-    print(json.dumps(result, indent=2, ensure_ascii=False))
+    print(json.dumps(_rounded(result), indent=2, ensure_ascii=False))
     return 0
 
 

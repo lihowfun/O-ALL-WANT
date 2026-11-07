@@ -609,12 +609,18 @@ def review_steps(result: dict, root: Path, settings: dict) -> list[dict]:
     return steps
 
 
-CLAUDE_CROSS_REVIEW = ("git diff HEAD | claude -p \"Review this diff and its tests for defects; cite file:line\" "
-                       "--permission-mode plan  (a fresh Claude session; for committed work pipe git diff BASE..HEAD)")
+CLAUDE_CROSS_REVIEW = ("claude -p \"Review the uncommitted changes in this repository, untracked files included "
+                       "(git status, git diff HEAD, then read each new file), and their tests for defects; cite "
+                       "file:line\" --permission-mode plan --allowedTools Read Grep Glob \"Bash(git status:*)\" "
+                       "\"Bash(git diff:*)\" \"Bash(git ls-files:*)\"  (a fresh Claude session; for committed work "
+                       "ask for git diff BASE..HEAD instead)")
 CLAUDE_REVIEW = ("review: before finishing, start one new subagent with no conversation context; give it only "
                  "the diff (git diff HEAD, or the commit range) and the test command, and have it review both")
 CODEX_REVIEW = ("review: codex review --uncommitted  (a fresh-context review; "
                 "--base BRANCH or --commit SHA for committed work)")
+DEEP_ROUNDS = "after fixes, review again until a round finds nothing new (at most 3 rounds)"
+FRESH_DESIGN_REVIEW = ("design review: before any code, one reviewer with no conversation context reads the plan and "
+                       "the files it names")
 CODEX_PLAN = ("codex --sandbox read-only  (plan in this read-only pass, then implement in a normal session; "
               "Codex plan-mode and effort flags are not mapped yet)")
 
@@ -655,7 +661,7 @@ def instructions(mode: str, root: Path, settings: dict | None = None) -> dict:
         codex = ["codex  (effort flag not mapped yet)", codex_review]
     elif switch == "off" and any(egm.values()):
         summary = "deep: plan first at the highest effort, then code review (the EGM switch is off)"
-        claude, codex = [deep_claude, claude_review], [CODEX_PLAN, codex_review]
+        claude, codex = [deep_claude, claude_review, DEEP_ROUNDS], [CODEX_PLAN, codex_review, DEEP_ROUNDS]
     elif any(egm.values()):
         summary = f"deep: plan first at the highest effort, then the EGM design review (EGM switch: {switch})"
         if not all(egm.values()):
@@ -663,21 +669,22 @@ def instructions(mode: str, root: Path, settings: dict | None = None) -> dict:
             summary += f" ({missing} has no EGM entrypoint here: one fresh-context review instead)"
         if egm["claude"]:
             claude = [deep_claude, "design review: the agent runs EGM through the oaw-review skill before any code; "
-                                   "to run it yourself, type /egm-review"]
+                                   "to run it yourself, type /egm-review", claude_review, DEEP_ROUNDS]
         else:
-            claude = [deep_claude, claude_review,
+            claude = [deep_claude, FRESH_DESIGN_REVIEW, claude_review, DEEP_ROUNDS,
                       "note: EGM's Claude Code entrypoint is not installed here; to add it, run from the OAW checkout: "
                       + add_entrypoint(root, "claude")]
         if egm["codex"]:
-            codex = [CODEX_PLAN, "review: select the egm-review skill in the skill picker"]
+            codex = [CODEX_PLAN, "design review: select the egm-review skill in the skill picker", codex_review,
+                     DEEP_ROUNDS]
         else:
-            codex = [CODEX_PLAN, codex_review,
+            codex = [CODEX_PLAN, FRESH_DESIGN_REVIEW, codex_review, DEEP_ROUNDS,
                      "note: EGM's Codex entrypoint is not installed here; to add it, run from the OAW checkout: "
                      + add_entrypoint(root, "codex")]
     else:
         summary = "deep: plan first at the highest effort, then one fresh-context review (EGM is not installed)"
-        claude = [deep_claude, claude_review]
-        codex = [CODEX_PLAN, codex_review]
+        claude = [deep_claude, FRESH_DESIGN_REVIEW, claude_review, DEEP_ROUNDS]
+        codex = [CODEX_PLAN, FRESH_DESIGN_REVIEW, codex_review, DEEP_ROUNDS]
     return {"mode": mode, "summary": summary, "egm": egm, "egm_switch": switch,
             "hosts": {"claude": claude, "codex": codex}}
 

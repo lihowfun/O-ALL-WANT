@@ -46,7 +46,7 @@ class CompareTests(unittest.TestCase):
         self.assertEqual(bare["class"], "better")
         floored = stats.compare(food, NATIVE, 0.10, floor_sd=0.15)
         self.assertTrue(floored["floor_applied"])
-        self.assertAlmostEqual(floored["se"], round(0.15 * math.sqrt(2 / 12), 4), places=4)
+        self.assertAlmostEqual(floored["se"], 0.15 * math.sqrt(2 / 12))
         self.assertEqual(floored["class"], "undetermined")
         same = stats.compare(NATIVE, NATIVE, 0.10, floor_sd=0.05)
         self.assertEqual(same["class"], "equivalent")
@@ -57,7 +57,7 @@ class CompareTests(unittest.TestCase):
         food = {q: [0, 1, 0] for q in QUESTIONS}
         result = stats.compare(food, native, 0.5, lower_is_better=True)
         self.assertEqual(result["class"], "better")
-        self.assertAlmostEqual(result["point"], round(1 / 3 - 7 / 3, 4))
+        self.assertAlmostEqual(result["point"], 1 / 3 - 7 / 3)
         self.assertEqual(stats.compare(native, food, 0.5, lower_is_better=True)["class"], "worse")
 
     def test_results_are_deterministic_and_inputs_checked(self):
@@ -82,6 +82,20 @@ class CostTests(unittest.TestCase):
                 self.assertEqual(result["class"], expected, result)
         with self.assertRaises(stats.StatsError):
             stats.cost({"q1": [0]}, {"q1": [10]})
+
+    def test_edge_ratios_keep_full_precision_for_the_catalog(self):
+        # codex review of d8b1cfc: rounding made 0.99999x read 1.0 while its class said cheaper.
+        for per_run, expected in ((99_999, "cheaper"), (150_001, "over")):
+            with self.subTest(per_run=per_run):
+                result = stats.cost({q: [per_run] for q in QUESTIONS}, {q: [100_000] for q in QUESTIONS})
+                self.assertEqual(result["class"], expected)
+                judged = stats.judgment("equivalent" if expected == "cheaper" else "better", result, grading="cross-family")
+                low, high = judged["cost_ci"]
+                self.assertTrue(low <= judged["cost_ratio"] <= high)
+                if expected == "cheaper":
+                    self.assertTrue(judged["cheaper"] and high < 1)
+                else:
+                    self.assertGreater(low, 1.5)
 
 
 class CombineTests(unittest.TestCase):

@@ -344,9 +344,13 @@ class ShowTests(unittest.TestCase):
             "  claude --permission-mode plan --effort max",
             "  design review: the agent runs EGM through the oaw-review skill before any code; "
             "to run it yourself, type /egm-review",
+            "  " + mode.CLAUDE_REVIEW,
+            "  " + mode.DEEP_ROUNDS,
             "Codex:",
             "  " + mode.CODEX_PLAN,
-            "  review: select the egm-review skill in the skill picker",
+            "  design review: select the egm-review skill in the skill picker",
+            "  " + mode.CODEX_REVIEW,
+            "  " + mode.DEEP_ROUNDS,
         ])
 
     def test_deep_with_egm_for_one_host_names_the_missing_entrypoint(self):
@@ -355,10 +359,12 @@ class ShowTests(unittest.TestCase):
         result = json.loads(output)
         self.assertEqual(result["egm"], {"claude": False, "codex": True})
         self.assertTrue(result["summary"].endswith("(Claude Code has no EGM entrypoint here: one fresh-context review instead)"))
-        self.assertEqual(result["hosts"]["claude"][:2], ["claude --permission-mode plan --effort max", mode.CLAUDE_REVIEW])
+        self.assertEqual(result["hosts"]["claude"][:4], ["claude --permission-mode plan --effort max", mode.FRESH_DESIGN_REVIEW,
+                                                         mode.CLAUDE_REVIEW, mode.DEEP_ROUNDS])
         self.assertTrue(result["hosts"]["claude"][-1].endswith(
             "to add it, run from the OAW checkout: " + mode.add_entrypoint(self.root, "claude")))
-        self.assertEqual(result["hosts"]["codex"][-1], "review: select the egm-review skill in the skill picker")
+        self.assertEqual(result["hosts"]["codex"][1:], ["design review: select the egm-review skill in the skill picker",
+                                                        mode.CODEX_REVIEW, mode.DEEP_ROUNDS])
         self.entry(".claude")
         (self.root / ".agents/skills/egm-review/SKILL.md").unlink()
         codex = json.loads(run("show", "deep", "--root", str(self.root), "--json")[1])["hosts"]["codex"]
@@ -665,7 +671,8 @@ class SwitchAndStepTests(unittest.TestCase):
         standard = mode.instructions("standard", self.root)["hosts"]
         self.assertTrue(standard["claude"][1].startswith("review: codex review"), standard)
         self.run_ok("second-opinion", "claude")
-        self.assertIn("claude -p", mode.instructions("deep", self.root)["hosts"]["codex"][1])
+        codex = mode.instructions("deep", self.root)["hosts"]["codex"]
+        self.assertTrue(any("claude -p" in line and "untracked files included" in line for line in codex), codex)
 
     def test_concurrent_writers_keep_every_review(self):
         self.write("docs/plans/a.md", "# A\n")
