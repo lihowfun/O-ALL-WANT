@@ -1323,12 +1323,11 @@ def _js_record(text):
     def add_params(owner, opening, close, is_constructor=False, cls=None):
         for name, kind, is_property in _js_params(code[opening + 1:close]):
             params_of.setdefault(owner, []).append(name)
-            if kind:
-                types.append([owner, name, kind])
-                if is_constructor and is_property and cls:
-                    types.append([cls, "this." + name, kind])
+            types.append([owner, name, kind or "?"])  # "?": a local name whose type is not written
+            if kind and is_constructor and is_property and cls:
+                types.append([cls, "this." + name, kind])
 
-    def add_class(qualname, header_at, start, export_default=False):
+    def add_class(qualname, header_at, start, export_default=False, exported=False):
         body = _js_body(code, header_at, pairs, header=True)
         if body is None or body not in pairs:
             return
@@ -1343,6 +1342,8 @@ def _js_record(text):
             class_bodies[body] = qualname
             if export_default:
                 exports.append(["default", qualname])
+            elif exported:
+                exports.append([qualname, qualname])
 
     for start, number, match in decls:
         enclosing = around.get(start, -1)
@@ -1351,6 +1352,7 @@ def _js_record(text):
         prefix = parent[2] + "." if parent else ""
         mods = match.group("mods") or ""
         default = "default" in mods.split()
+        exported = "export" in mods.split()
         if match.group("mname") is not None:
             owner = class_bodies.get(enclosing)
             if owner is None and enclosing not in interface_bodies:
@@ -1424,8 +1426,10 @@ def _js_record(text):
                 returns = _js_returns(code, close, body)
                 if returns:
                     types.append([prefix + name, "()", returns])
-                if default and name != "default":
+                if default:  # an anonymous default function is the definition named "default"
                     exports.append(["default", prefix + name])
+                elif exported and not parent:
+                    exports.append([name, name])
             continue
         if keyword == "class":
             name = match.group("kname")
@@ -1436,7 +1440,7 @@ def _js_record(text):
                 header_at = line_at + match.end("kname")
                 names_at.add(line_at + match.start("kname"))
             if name:
-                add_class(prefix + name, header_at, start, default and name != "default")
+                add_class(prefix + name, header_at, start, default, exported and not parent)
             continue
         if match.group("lhs"):
             name = match.group("xname") or match.group("lhs").rsplit(".", 1)[-1]
@@ -1471,13 +1475,17 @@ def _js_record(text):
                 extends = re.search(r"\bextends\s+(.*)$", code[line_at + match.end("name2"):body], re.S)
                 if extends:
                     bases[prefix + name] = [kind for kind in map(_js_type, _js_split(extends.group(1))) if kind]
-            if add(prefix + name, kind, start, pairs[body], body, name_at) and kind == "interface":
-                interface_bodies[body] = prefix + name
+            if add(prefix + name, kind, start, pairs[body], body, name_at):
+                if kind == "interface":
+                    interface_bodies[body] = prefix + name
+                if exported and not parent:
+                    exports.append([name, name])
             continue
         if keyword in ("namespace", "module"):
             body = _js_body(code, line_at + match.end("name2"), pairs, header=True)
-            if body is not None and body in pairs:
-                add(prefix + name, "namespace", start, pairs[body], body, name_at)
+            if body is not None and body in pairs and add(prefix + name, "namespace", start, pairs[body], body, name_at) \
+                    and exported and not parent:
+                exports.append([name, name])
             continue
         if keyword == "type":
             equals = code.find("=", line_at + match.end("name2"))
@@ -1485,6 +1493,8 @@ def _js_record(text):
                 continue
             if add(prefix + name, "type", start, _js_end(code, equals + 1, pairs), None, name_at):
                 stack.pop()
+                if exported and not parent:
+                    exports.append([name, name])
             continue
         if "." in name:
             continue
@@ -1498,6 +1508,10 @@ def _js_record(text):
             kind = kind or value[1]
         if kind:
             types.append([scope, name, kind])
+        elif parent and parent[3] != "namespace" and not (value and value[0] in ("function", "class")):
+            types.append([scope, name, "?"])  # a local variable shadows an import of the same name
+        if exported and not parent:
+            exports.append([name, name])
         if value and value[0] == "function":
             if add(prefix + name, "function", start, value[3], value[2], name_at) and value[1] is not None:
                 add_params(prefix + name, value[1], pairs[value[1]])
@@ -1754,11 +1768,14 @@ def _jsonc(text):
 
 
 def _json_facts(path, text):
-    """Module-resolution settings of tsconfig/jsconfig files and entry points of package.json files."""
+    """Module-resolution settings of tsconfig/jsconfig files (and of any JSON file with compilerOptions or
+    extends, which a tsconfig may extend) and entry points of package.json files."""
     name = path.rsplit("/", 1)[-1]
-    if re.fullmatch(r"(?:ts|js)config(?:\.[\w.-]+)?\.json", name):
+    if name != "package.json" and (re.fullmatch(r"(?:ts|js)config(?:\.[\w.-]+)?\.json", name)
+                                   or '"compilerOptions"' in text or '"extends"' in text):
         data = _jsonc(text)
-        if isinstance(data, dict):
+        if isinstance(data, dict) and (re.fullmatch(r"(?:ts|js)config(?:\.[\w.-]+)?\.json", name)
+                                       or isinstance(data.get("compilerOptions"), dict) or "extends" in data):
             options = data.get("compilerOptions") if isinstance(data.get("compilerOptions"), dict) else {}
             paths = options.get("paths") if isinstance(options.get("paths"), dict) else {}
             config = {"baseUrl": options.get("baseUrl") if isinstance(options.get("baseUrl"), str) else None,
@@ -2363,30 +2380,38 @@ class Index:
         for candidate in (twins + [base]) if typescript else ([base] + twins):
             if candidate in files:
                 return candidate
-        for candidate in [base + item for item in JS_SOURCE + (".d.ts",)] + \
-                [base + "/index" + item for item in JS_SOURCE + (".d.ts",)]:
+        prefix = base + "/" if base else ""
+        for candidate in ([base + item for item in JS_SOURCE + (".d.ts",)] if base else []) + \
+                [prefix + "index" + item for item in JS_SOURCE + (".d.ts",)]:
             if candidate in files:
                 return candidate
         return None
 
-    def _config(self, path, depth=0):
+    def _config(self, path):
         """(baseUrl, paths, directory paths are relative to) of a tsconfig/jsconfig file, after local extends."""
+        options = self._config_options(path)
+        base = options.get("baseUrl")
+        return base, options.get("paths", {}), base if base is not None else options.get("paths_dir")
+
+    def _config_options(self, path, depth=0):
+        """baseUrl and paths a config file sets or inherits: each local extends entry in order, then the file's own
+        compilerOptions, override option by option (as TypeScript merges them)."""
         config = self.files[path]["tsconfig"]
         here = posixpath.dirname(path)
-        base, paths, root = None, {}, None
+        options = {}
         extends = config.get("extends")
         for item in extends if isinstance(extends, list) else [extends] if extends else []:
             if isinstance(item, str) and item.startswith(".") and depth < 5:
                 parent = posixpath.normpath(posixpath.join(here, item))
                 parent = parent if parent.endswith(".json") else parent + ".json"
                 if self.files.get(parent, {}).get("tsconfig") is not None:
-                    base, paths, root = self._config(parent, depth + 1)
+                    options.update(self._config_options(parent, depth + 1))
         if config.get("baseUrl") is not None:
             base = posixpath.normpath(posixpath.join(here, config["baseUrl"]))
-            base = "" if base == "." else base
+            options["baseUrl"] = "" if base == "." else base
         if config.get("paths"):
-            paths, root = config["paths"], here
-        return base, paths, base if base is not None else root
+            options["paths"], options["paths_dir"] = config["paths"], here
+        return options
 
     def _ts_config(self, directory):
         """Module settings of the nearest tsconfig.json or jsconfig.json at or above directory."""
@@ -2469,8 +2494,6 @@ class Index:
             found = self._js_local(path, local, depth + 1)
             if found:
                 return found
-        if name != "default" and (path, name) in defs:
-            return ("def", path, name)
         for _line, _scope, spec, kind, imported, alias in self.files[path]["js"]["imports"]:
             if kind in ("reexport", "reexport-namespace") and alias == name:
                 target = self.js_module(path, spec)
@@ -3057,6 +3080,7 @@ def callers(index, symbol, limit=50):
             parts = _CAMEL.findall(owner)
             owners.update({owner.lower(), "_".join(parts).lower(), parts[-1].lower() if parts else ""} - {""})
     dispatch = _js_dispatch(index, targets)
+    reach = _js_reach(index, targets)
     external = None
     if not targets and path is None:
         external = symbol.strip().replace("::", ".")
@@ -3067,7 +3091,8 @@ def callers(index, symbol, limit=50):
         if python:
             local, calls, resolve = names | _aliases(index, file, names), python["calls"], index.resolve
         elif script:
-            local, calls, resolve = names | _js_aliases(index, file, names), script["calls"], index.js_resolve
+            local = names | _js_aliases(index, file, names, reach, targets)
+            calls, resolve = script["calls"], index.js_resolve
         else:
             continue
         for line, scope, chain in calls:
@@ -3192,19 +3217,52 @@ def _aliases(index, path, names):
             if isinstance(bound, tuple) and bound[0] == "symbol" and bound[2] in names}
 
 
-def _js_aliases(index, path, names):
-    """Local names that `import {name as alias}` or a default import binds to one of names."""
+def _js_reach(index, targets):
+    """Names under which JS/TS modules export one of targets beyond its own name: export-list and re-export
+    aliases (export {original as renamed} [from ...]) and default exports, followed through re-export chains."""
+    targets = {target for target in targets if _is_js(index, target[1])}
+    names = {target[2] for target in targets}
+    found = set()
+    for path, table in index.tables()["js_exports"].items():
+        for exported, local in table.items():
+            if exported != local and local in names and index.js_export(path, exported, 0, False) in targets:
+                found.add(exported)
+    for _ in range(5):
+        grown = False
+        for path, record in index.files.items():
+            for _line, _scope, _spec, kind, imported, alias in (record.get("js") or {}).get("imports", ()):
+                if kind == "reexport" and alias not in found and alias not in names and imported in names | found \
+                        and index.js_export(path, alias, 0, False) in targets:
+                    found.add(alias)
+                    grown = True
+        if not grown:
+            break
+    return found
+
+
+def _js_aliases(index, path, names, reach=(), targets=()):
+    """Local names that bind one of names: `import {name as alias}`, a default import, and (with reach and
+    targets from _js_reach) imports of re-export aliases, plus alias names reached through a namespace import."""
     found = set()
     for _line, _scope, spec, kind, imported, local in index.files[path]["js"]["imports"]:
         if not local or local in names:
             continue
         if kind == "named" and imported in names:
             found.add(local)
-        elif kind == "default":
-            target = index.js_module(path, spec)
-            exported = index.tables()["js_exports"].get(target, {}).get("default") if target else None
-            if exported and exported.rsplit(".", 1)[-1] in names:
+        elif kind == "named" and imported in reach:
+            module = index.js_module(path, spec)
+            if module and index.js_export(module, imported, 0, False) in targets:
                 found.add(local)
+        elif kind == "default":
+            module = index.js_module(path, spec)
+            exported = index.tables()["js_exports"].get(module, {}).get("default") if module else None
+            if exported and (exported.rsplit(".", 1)[-1] in names
+                             or (targets and index.js_export(module, "default", 0, False) in targets)):
+                found.add(local)
+        elif kind in ("namespace", "require") and reach:
+            module = index.js_module(path, spec)
+            if module:
+                found.update(alias for alias in reach if index.js_export(module, alias, 0, False) in targets)
     return found
 
 
@@ -3215,11 +3273,11 @@ def _symbol_sites(index, target):
     script = _is_js(index, target[1])
     unique = sum(1 for path, _ in index.tables()["by_name"].get(name, ()) if _is_js(index, path) == script) == 1
     is_class = defs.get((target[1], target[2]), ("",))[0] == "class"
-    sites = []
+    sites, reach = [], (_js_reach(index, {target}) if script else set())
     for file, record in sorted(index.files.items()):
         if script:
             if record.get("js"):
-                sites.extend(_js_sites(index, target, file, record["js"], name, unique, is_class))
+                sites.extend(_js_sites(index, target, file, record["js"], name, unique, is_class, reach))
             continue
         python = record.get("py")
         if not python:
@@ -3242,8 +3300,8 @@ def _symbol_sites(index, target):
     return sorted(set(sites), key=lambda site: (site[0], site[1]))
 
 
-def _js_sites(index, target, file, script, name, unique, is_class):
-    local = {name} | _js_aliases(index, file, {name})
+def _js_sites(index, target, file, script, name, unique, is_class, reach=()):
+    local = {name} | _js_aliases(index, file, {name}, reach, {target})
     for line, scope, chain in script["calls"]:
         if chain.rsplit(".", 1)[-1] not in local:
             continue
@@ -3251,7 +3309,8 @@ def _js_sites(index, target, file, script, name, unique, is_class):
         if resolved == target or (resolved is None and unique and "." in chain and not is_class):
             yield file, line, scope, f"calls {chain}"
     for line, scope, spec, kind, imported, alias in script["imports"]:
-        if (kind in ("named", "reexport") and imported == name) or (kind == "default" and alias in local):
+        if (kind in ("named", "reexport") and (imported == name or imported in reach)) or (
+                kind == "default" and alias in local):
             module = index.js_module(file, spec)
             if module and index.js_export(module, imported, 0, False) == target:
                 yield file, line, scope, f"imports {alias}"
@@ -3273,8 +3332,9 @@ def call_graph(index):
         if _is_test(path) or not (python or script):
             continue
         resolve, seen = (index.resolve if python else index.js_resolve), {}
+        bound = index.bindings(path) if python else index.js_bindings(path)  # import aliases: from m import a as b
         for _line, scope, chain in (python or script)["calls"]:
-            if chain.rsplit(".", 1)[-1] not in by_name:
+            if chain.rsplit(".", 1)[-1] not in by_name and chain.split(".", 1)[0] not in bound:
                 continue
             key = (scope, chain)
             if key not in seen:

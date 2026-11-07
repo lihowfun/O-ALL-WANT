@@ -735,5 +735,98 @@ class JavaScriptIndexTests(unittest.TestCase):
         self.assertEqual(code_index.pagerank({}), {})
 
 
+REVIEW_FIXTURE = {  # Codex review round 10 of the JS/TS engine
+    "lib/save.ts": "export function save() {}\n",
+    "app/shadow.ts": ("import { save } from '../lib/save';\nexport function run(save) {\n    save();\n}\n"
+                      "export function run2() {\n    save();\n}\nexport function run3() {\n    const save = make();\n"
+                      "    save();\n}\n"),
+    "star/a.ts": "function save() {}\nexport function other() { save(); }\n",
+    "star/b.ts": "export function save() {}\n",
+    "star/barrel.ts": "export * from './a';\nexport * from './b';\n",
+    "star/use.ts": "import { save } from './barrel';\nsave();\n",
+    "alias/lib.ts": "export function original() {}\n",
+    "alias/barrel.ts": "export { original as renamed } from './lib';\n",
+    "alias/app.ts": "import { renamed } from './barrel';\nrenamed();\n",
+    "alias/ns.ts": "import * as barrel from './barrel';\nbarrel.renamed();\n",
+    "alias/direct.ts": "import { original as renamed } from './lib';\nexport function go() {\n    renamed();\n}\n",
+    "pylib.py": "def original():\n    return 1\n",
+    "pyapp.py": "from pylib import original as renamed\n\n\ndef main():\n    return renamed()\n",
+    "anon/fn.ts": "export default function () {\n    return 1;\n}\n",
+    "anon/cls.ts": "export default class {\n    run() {}\n}\n",
+    "anon/use.ts": "import make from './fn';\nimport Thing from './cls';\nmake();\nnew Thing().run();\n",
+    "index.js": "export function rootThing() {}\n",
+    "main.js": "const root = require('./');\nroot.rootThing();\n",
+    "sub/use.ts": "import { rootThing } from '..';\nrootThing();\n",
+    "cfg/tsconfig.a.json": '{"compilerOptions": {"baseUrl": ".", "paths": {"@x/*": ["x/*"]}}}\n',
+    "cfg/tsconfig.b.json": '{"compilerOptions": {"strict": true}}\n',
+    "cfg/tsconfig.json": '{"extends": ["./tsconfig.a.json", "./tsconfig.b.json"]}\n',
+    "cfg/x/thing.ts": "export function thing() {}\n",
+    "cfg/use.ts": "import { thing } from '@x/thing';\nthing();\n",
+    "jcfg/config/base.json": '{"compilerOptions": {"baseUrl": "..", "paths": {"#lib/*": ["lib/*"]}}}\n',
+    "jcfg/tsconfig.json": '{"extends": "./config/base.json"}\n',
+    "jcfg/lib/tool.ts": "export function tool() {}\n",
+    "jcfg/use.ts": "import { tool } from '#lib/tool';\ntool();\n",
+}
+
+
+class JavaScriptResolutionReviewTests(unittest.TestCase):
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory(prefix="oaw-code-index-review-")
+        self.addCleanup(temporary.cleanup)
+        self.root = os.path.join(temporary.name, "repo")
+        os.makedirs(self.root)
+        write_tree(self.root, REVIEW_FIXTURE)
+        self.index = code_index.build_index(self.root)
+
+    def rows(self, symbol):
+        return {(row["path"], row["line"], row["resolved"]) for row in code_index.callers(self.index, symbol)["results"]}
+
+    def test_parameters_and_local_names_shadow_imports(self):
+        rows = self.rows("lib/save.ts::save")
+        self.assertIn(("app/shadow.ts", 6, True), rows)
+        self.assertNotIn(("app/shadow.ts", 3, True), rows)  # function run(save) { save(); }
+        self.assertNotIn(("app/shadow.ts", 10, True), rows)  # const save = make(); save();
+        self.assertIsNone(self.index.js_resolve("app/shadow.ts", "run", "save"))
+        edges = code_index.call_graph(self.index)
+        self.assertIn((("app/shadow.ts", "run2"), ("lib/save.ts", "save")), edges)
+        self.assertNotIn((("app/shadow.ts", "run"), ("lib/save.ts", "save")), edges)
+
+    def test_export_star_skips_names_a_module_does_not_export(self):
+        self.assertEqual(self.index.js_resolve("star/use.ts", "", "save"), ("def", "star/b.ts", "save"))
+        self.assertIn(("star/use.ts", 2, True), self.rows("star/b.ts::save"))
+        self.assertNotIn(("star/use.ts", 2, True), self.rows("star/a.ts::save"))
+
+    def test_callers_and_affected_follow_reexport_aliases(self):
+        report = code_index.callers(self.index, "alias/lib.ts::original")
+        self.assertTrue({("alias/app.ts", 2, True), ("alias/ns.ts", 2, True), ("alias/direct.ts", 3, True)}
+                        <= {(row["path"], row["line"], row["resolved"]) for row in report["results"]})
+        self.assertTrue(report["complete"])
+        affected = {row["path"] for row in code_index.affected(self.index, "alias/lib.ts::original")["results"]}
+        self.assertTrue({"alias/app.ts", "alias/barrel.ts", "alias/direct.ts"} <= affected)
+
+    def test_anonymous_default_exports_are_exported(self):
+        self.assertEqual(self.rows("anon/fn.ts::default"), {("anon/use.ts", 3, True)})
+        self.assertEqual(self.rows("anon/cls.ts::default.run"), {("anon/use.ts", 4, True)})
+        affected = code_index.affected(self.index, "anon/fn.ts::default")["results"]
+        self.assertEqual([row["path"] for row in affected], ["anon/use.ts"])
+
+    def test_call_graph_keeps_calls_through_import_aliases(self):
+        edges = code_index.call_graph(self.index)
+        self.assertIn((("pyapp.py", "main"), ("pylib.py", "original")), edges)
+        self.assertIn((("alias/direct.ts", "go"), ("alias/lib.ts", "original")), edges)
+        self.assertIn((("alias/app.ts", ""), ("alias/lib.ts", "original")), edges)
+
+    def test_index_files_at_the_root_resolve(self):
+        self.assertEqual(self.index.js_module("main.js", "./"), "index.js")
+        self.assertEqual(self.index.js_module("sub/use.ts", ".."), "index.js")
+        self.assertIn(("main.js", 2, True), self.rows("index.js::rootThing"))
+
+    def test_extends_lists_merge_option_by_option(self):
+        self.assertEqual(self.index.js_module("cfg/use.ts", "@x/thing"), "cfg/x/thing.ts")
+
+    def test_extends_may_name_any_local_json_file(self):
+        self.assertEqual(self.index.js_module("jcfg/use.ts", "#lib/tool"), "jcfg/lib/tool.ts")
+
+
 if __name__ == "__main__":
     unittest.main()

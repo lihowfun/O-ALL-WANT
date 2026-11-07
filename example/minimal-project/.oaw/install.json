@@ -105,7 +105,7 @@
     ".oaw/integrations/egm/skills/egm-review/assets/icon.svg": "02154028864bd8547a45d7c9f55c59f95cb4ce3f57ecb3426f67034ab97d022f",
     "AGENTS.md": "ed2f9b4f0cbefdc2edc3412bd023225014aff597e082d394328106fc4f942004",
     "CLAUDE.md": "336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49",
-    "scripts/code_index.py": "851762a8d9aebce6dd2b43654efe8e8669db94d5077c2ccd419b3139a9e5811d",
+    "scripts/code_index.py": "ea839008e8a66de5e77cfc1d0bce7bcd89afd38cad6b25e642b1c783780bc453",
     "scripts/context_hub.py": "1fcc162e3d94792c3c5d173ceebde079ac3e238f9da5efd66978f821af8a1696",
     "scripts/oaw_common.py": "33063249f7f244778d9caaec70e76d119ce1d4fe117c425db5995c47f48adc2c",
     "scripts/oaw_mode.py": "79b53bd94ff5cc450e21751302a898cc039e0368c54835a535f9097eb3bf5f04"
