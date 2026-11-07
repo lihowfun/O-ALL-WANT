@@ -147,6 +147,12 @@ class CliTests(unittest.TestCase):
             self.assertEqual(json.loads(output)["class"], "better")
             code, output, _ = self.run_cli("cost", str(food), str(native))
             self.assertEqual((code, json.loads(output)["class"]), (0, "within"))
+            # The JSON keeps full precision (codex review round 4): 0.99999x stays below 1.
+            food.write_text(json.dumps({q: [99_999] for q in NATIVE}), encoding="utf-8")
+            native.write_text(json.dumps({q: [100_000] for q in NATIVE}), encoding="utf-8")
+            result = json.loads(self.run_cli("cost", str(food), str(native))[1])
+            self.assertEqual(result["class"], "cheaper")
+            self.assertLess(result["ci95"][1], 1)
             code, _, errors = self.run_cli("cost", str(bad), str(native))
             self.assertEqual(code, 2)
             self.assertIn("expected an object", errors)

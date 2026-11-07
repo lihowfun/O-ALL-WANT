@@ -119,7 +119,7 @@ def cost(food: dict, native: dict, *, cap: float = COST_CAP, draws: int = DRAWS,
     lo, hi = (math.exp(v) for v in result["ci95"])
     ratio = math.exp(result["point"])
     cls = "over" if lo > cap else "cheaper" if hi < 1 else "within" if hi <= cap else "undetermined"
-    # Full precision: the catalog checks the class against these numbers (round only for display).
+    # Full precision: the catalog checks the class against these numbers.
     return {"ratio": ratio, "ci95": [lo, hi], "class": cls, "cap": cap, "questions": result["questions"],
             "per_question": {q: math.exp(v) for q, v in logs.items()}}
 
@@ -184,16 +184,6 @@ def pooled_within_sd(cells: dict) -> float:
     return math.sqrt(numerator / denominator)
 
 
-def _rounded(value):
-    if isinstance(value, float):
-        return round(value, 4)
-    if isinstance(value, dict):
-        return {k: _rounded(v) for k, v in value.items()}
-    if isinstance(value, list):
-        return [_rounded(v) for v in value]
-    return value
-
-
 def _load(path: str) -> dict:
     with open(path, encoding="utf-8") as handle:
         data = json.load(handle)
@@ -226,7 +216,7 @@ def main(argv: list[str] | None = None) -> int:
     except (OSError, ValueError) as exc:
         print(f"eval_stats: {exc}", file=sys.stderr)
         return 2
-    print(json.dumps(_rounded(result), indent=2, ensure_ascii=False))
+    print(json.dumps(result, indent=2, ensure_ascii=False))  # full precision: records are built from it
     return 0
 
 

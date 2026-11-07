@@ -581,7 +581,10 @@ def review_steps(result: dict, root: Path, settings: dict) -> list[dict]:
             if targets:
                 done = [already_reviewed(root, target, how) for target in targets]
                 step["done"] = all(done)
-                step["report_dir"] = f"{REVIEWS_DIR}/{datetime.now(timezone.utc):%Y-%m-%d}-{slug(targets[0])}/"
+                # Unique per target set and content: EGM writes fixed file names, so a shared folder would overwrite.
+                identity = hashlib.sha256("\0".join(f"{t}\0{file_digest(root, t)}" for t in targets).encode()).hexdigest()
+                step["report_dir"] = (f"{REVIEWS_DIR}/{datetime.now(timezone.utc):%Y-%m-%d}-{slug(targets[0])}-"
+                                      f"{identity[:10]}/")
             if how == "egm":
                 if targets:
                     estimate = egm_estimate(file_bytes(root, targets))
@@ -715,6 +718,9 @@ def render_steps(steps: list[dict]) -> list[str]:
                          f"{e['minutes_low']}-{e['minutes_high']} min")
             if step.get("ask_first"):
                 text += "; above this project's cap: ask the user first"
+            if step.get("estimate_command"):
+                text += "\n    before EGM: " + step["estimate_command"].replace(" --json", "").replace(
+                    "(ask the user first when it says ask_first)", "(ask the user first when it says so)")
             if step["done"]:
                 text += "  [done for this file content]"
             lines.append(text)

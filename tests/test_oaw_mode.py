@@ -533,7 +533,14 @@ class SwitchAndStepTests(unittest.TestCase):
         design = self.steps()["design-review"]
         self.assertEqual((design["how"], design["switch"], design["before_code"], design["done"]), ("egm", "auto", True, False))
         self.assertEqual(design["targets"], ["docs/plans/cache.md"])
-        self.assertTrue(design["report_dir"].startswith(".oaw/reviews/") and design["report_dir"].endswith("-cache/"))
+        self.assertRegex(design["report_dir"], r"^\.oaw/reviews/\d{4}-\d{2}-\d{2}-cache-[0-9a-f]{10}/$")
+        self.write("docs/designs/cache.md", "# Same stem, other folder\n")
+        other = self.json("suggest", "--paths", "docs/designs/cache.md")["steps"][1]
+        self.assertNotEqual(other["report_dir"], design["report_dir"], "reports never share a folder (codex review round 4)")
+        (self.root / "docs/designs/cache.md").unlink()
+        self.write("docs/plans/cache.md", "# Cache plan, revised\n")
+        self.assertNotEqual(self.steps()["design-review"]["report_dir"], design["report_dir"])
+        self.write("docs/plans/cache.md", "# Cache plan\n")
         self.assertGreaterEqual(design["estimate"]["tokens_low"], int(mode.EGM_TOKENS_FLOOR * mode.ESTIMATE_LOW))
         self.assertFalse(design["ask_first"])
         self.run_ok("egm", "off")
@@ -570,6 +577,7 @@ class SwitchAndStepTests(unittest.TestCase):
         text = self.run_ok("suggest", "--paths", ".github/workflows/ci.yml")
         self.assertIn("before code: plan, then save it under docs/plans/", text)
         self.assertIn("before code: design review by EGM (EGM switch: auto)", text)
+        self.assertIn("before EGM: python3 scripts/oaw_mode.py egm estimate PLAN CONTEXT...", text)
         self.assertIn("after code: code review by a fresh session of the same model family, up to 3 rounds", text)
 
     def test_a_recorded_review_counts_only_for_the_same_file_content(self):
