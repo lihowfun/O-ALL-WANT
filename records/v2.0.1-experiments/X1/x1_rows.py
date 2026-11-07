@@ -20,6 +20,7 @@ def main(src, scratch, label, out):
                 work = os.path.join(scratch, "work", f"{label}-{arm}")
                 text = text.replace(work + "/", "").replace(work, ".")
             text = text.replace(scratch, "<scratch>").replace(home, "<home>")
+            text = re.sub(r"/tmp/claude-\d+[^\s\"'\\]*", "<tmp>", text)
             text = re.sub(r"/mnt/[\w./-]*" + re.escape(user), "<mnt>", text)
             text = re.sub(rf"\b{re.escape(user)}\b", "<user>", text)
             row = json.loads(text)
