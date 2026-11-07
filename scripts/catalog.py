@@ -988,9 +988,12 @@ def cmd_why(target: Path, ident=None) -> dict:
             lines.append(f"    依據：{core.sanitize_text(latest['food_arm_evidence'], 300)}")
         judgment = latest.get("judgment")
         if judgment:
-            lines.append(f"  D29：品質{core.D29_QUALITY_ZH[judgment['quality']]}"
-                         f"（{({'double-graded': '兩次評分都成立', 'mechanical': '程式評分', 'single-graded': '只評一次'})[judgment['grading']]}）、"
-                         f"token 是原生的 {judgment['cost_ratio']:g} 倍" + ("、依規則算比較省" if judgment["cheaper"] else "")
+            quality_zh = ({"equivalent": "和原生相當", "undetermined": "沒測出差異（未定）"}.get(judgment.get("quality_class"))
+                          or core.D29_QUALITY_ZH[judgment["quality"]])
+            interval = (f"（區間 {judgment['cost_ci'][0]:g}–{judgment['cost_ci'][1]:g}）" if judgment.get("cost_ci") else "")
+            lines.append(f"  D29：品質{quality_zh}"
+                         f"（{({'double-graded': '兩次評分都成立', 'mechanical': '程式評分', 'single-graded': '只評一次', 'cross-family': '兩家評分都成立'})[judgment['grading']]}）、"
+                         f"token 是原生的 {judgment['cost_ratio']:g} 倍{interval}" + ("、依規則算比較省" if judgment["cheaper"] else "")
                          + f" → {core.d29_label(judgment)}" + (f"（{judgment['conditions']} 個條件取最低）" if (judgment.get("conditions") or 0) > 1 else ""))
         protocol = latest["protocol"]
         lines.append(f"  怎麼測：{protocol['questions']['count']} 題（凍結，sha256 {protocol['questions']['sha256'][:12]}…）× 每格 "

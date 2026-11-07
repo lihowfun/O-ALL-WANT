@@ -18,7 +18,7 @@ REQUIRED_TEST_MODULES = ("test_context_hub", "test_gate", "test_improvement", "t
                          "test_egm_pilot", "test_egm_local", "test_status", "test_egm_integration",
                          "test_catalog_core", "test_catalog", "test_catalog_ui", "test_cli_resolve",
                          "test_goldfish_review", "test_codemap_eval", "test_code_index", "test_digest_mod",
-                         "test_oaw_mode")
+                         "test_oaw_mode", "test_eval_stats")
 MINIMUM_TESTS = 426  # POSIX count; Windows adds junction cases.
 SUMMARY_MARKER = "OAW-TEST-SUMMARY "
 # Per-check subprocess limit: a guard against a hung command, not a test budget. The full

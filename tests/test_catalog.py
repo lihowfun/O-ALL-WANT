@@ -1281,6 +1281,53 @@ class CatalogCliTests(unittest.TestCase):
         result = self.cli("record-tasting", "--food", name, "--file", str(owner), "--apply")
         self.assertEqual((result["stage"], result["waiting_on"]), ("approve", "owner"))
 
+    def test_d32_judgment_classes_cost_interval_and_cross_family_grading(self):
+        name = self.clean_food()
+        self.cli("taste", name)
+
+        def record(fname, verdict, code=0, **judgment):
+            path = self.tasting_file(fname, verdict=verdict, verdict_zh="D32", judgment=judgment)
+            return self.cli("record-tasting", "--food", name, "--file", str(path), code=code)
+
+        base = dict(cost_ratio=1.6, cost_ci=[1.2, 2.1], cheaper=False, grading="cross-family", conditions=2)
+        # 1.6x but the interval reaches below 1.5: not "too expensive" (D32), so better stays a default.
+        self.assertEqual(record("b.json", "absorb", quality="better", quality_class="better", **base)["status"], "preview")
+        self.assertIn("does not match D29", record("b2.json", "optional", code=2, quality="better", quality_class="better", **base)["error"])
+        # A same-family double grading cannot claim a difference under D32.
+        error = record("dg.json", "absorb", code=2, quality="better", quality_class="better",
+                       **{**base, "grading": "double-graded"})["error"]
+        self.assertIn("two model families", error)
+        # Undetermined is never cheaper, never a default; equivalent and cheaper is.
+        cheap = dict(cost_ratio=0.7, cost_ci=[0.6, 0.8], grading="cross-family")
+        self.assertIn("needs quality_class equivalent", record("u.json", "absorb", code=2, quality="same",
+                      quality_class="undetermined", cheaper=True, **cheap)["error"])
+        self.assertEqual(record("u2.json", "optional", quality="same", quality_class="undetermined", cheaper=False,
+                                **cheap)["status"], "preview")
+        result = self.cli("record-tasting", "--food", name, "--file", str(self.tasting_file(
+            "e.json", verdict="absorb", verdict_zh="D32", judgment=dict(quality="same", quality_class="equivalent",
+                                                                        cheaper=True, **cheap))), "--apply")
+        self.assertEqual(result["status"], "recorded")
+        text = self.cli("why", name)["answer_zh"]
+        self.assertIn("判定：進預設（品質相當、比較省）", text)
+        self.assertIn("D29：品質和原生相當（兩家評分都成立）、token 是原生的 0.7 倍（區間 0.6–0.8）、依規則算比較省", text)
+        for bad, words in ((dict(quality="better", quality_class="equivalent", cheaper=False, **cheap), "does not match quality_class"),
+                           (dict(quality="same", quality_class="maybe", cheaper=False, **cheap), "quality_class must be"),
+                           (dict(quality="same", quality_class="equivalent", cheaper=False, cost_ratio=0.7, cost_ci=[0.8, 0.9],
+                                 grading="cross-family"), "around cost_ratio"),
+                           (dict(quality="same", quality_class="equivalent", cheaper=True, cost_ratio=0.7, cost_ci=[0.5, 1.1],
+                                 grading="cross-family"), "upper end below 1"),
+                           (dict(quality="same", cheaper=False, cost_ratio=0.7, cost_ci=[0.6, 0.8], grading="cross-family"),
+                            "goes with judgment.quality_class")):
+            with self.subTest(words=words):
+                self.assertIn(words, record("bad.json", "optional", code=2, **bad)["error"])
+        self.assertEqual([core.d32_outcome(c, low, k) for c, low, k in
+                          (("better", 1.5, False), ("better", 1.51, False), ("equivalent", 0.6, True),
+                           ("equivalent", 1.4, False), ("undetermined", 0.6, False), ("undetermined", 1.6, False),
+                           ("worse", 0.5, False))],
+                         ["default", "optional", "default", "optional", "optional", "excrete", "excrete"])
+        self.assertEqual(core.d29_label({"outcome": "optional", "quality": "same", "quality_class": "equivalent"}),
+                         "可選用（品質相當）")
+
     def test_why_answers_plainly_whether_the_food_ran_why_and_where_the_evidence_is(self):
         name = self.clean_food()
         self.cli("taste", name)

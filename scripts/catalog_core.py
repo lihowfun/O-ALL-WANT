@@ -1846,7 +1846,11 @@ TASTING_VERDICTS = {"absorb": "吸收", "plug-in": "插上（接上官方版，�
 # the quality was graded) fixes its outcome; the recorded verdict must match. Outcome -> allowed verdicts.
 D29_COST_CAP = 1.5
 D29_QUALITY = ("better", "same", "worse")
-D29_GRADING = ("double-graded", "mechanical", "single-graded")
+D29_GRADING = ("double-graded", "mechanical", "single-graded", "cross-family")
+# D32 (2026-11-07): a tasting may also carry the four-class quality and the cost interval of eval_stats.py. Then a
+# difference needs cross-family or mechanical grading, "too expensive" needs the interval's lower end above the cap,
+# and an undetermined quality is never cheaper (it does not become a default).
+D32_CLASSES = ("better", "equivalent", "undetermined", "worse")
 D29_OUTCOMES = {"default": ("absorb", "plug-in"), "optional": ("optional",), "excrete": ("decline",)}
 D29_OUTCOMES_ZH = {"default": "進預設", "optional": "可選用", "excrete": "排掉"}
 # What the owner reads (display only; stored records keep D29_OUTCOMES_ZH). With 4-12 tasks a "same" quality
@@ -1857,10 +1861,15 @@ D29_LABELS_ZH = {("default", "better"): "進預設（更好）", ("default", "sa
                  ("excrete", "same"): "因成本不採用（能力未定）", ("excrete", "worse"): "排掉（比原生差）"}
 
 
+D32_EQUIVALENT_ZH = {"default": "進預設（品質相當、比較省）", "optional": "可選用（品質相當）", "excrete": "因成本不採用（品質相當）"}
+
+
 def d29_label(judgment) -> str | None:
     """The plain verdict label of a D29 judgment, or None for a record made before D29."""
     if not judgment:
         return None
+    if judgment.get("quality_class") == "equivalent":
+        return D32_EQUIVALENT_ZH.get(judgment.get("outcome"))
     return D29_LABELS_ZH.get((judgment.get("outcome"), judgment.get("quality")))
 # D21 tiers: what makes a unit automatic and what asks the owner.
 TIERS = {"A": "A 級：只改機制、不碰模型會讀的文字、不執行食物程式、可還原（D17 允許靜態證據）",
@@ -2070,6 +2079,19 @@ def d29_outcome(quality: str, cost_ratio: float, cheaper: bool) -> str:
     return "optional" if cost_ratio <= D29_COST_CAP else "excrete"
 
 
+def d32_outcome(quality_class: str, cost_low: float, cheaper: bool) -> str:
+    """D29's table with D32's classes: undetermined is never a default; too expensive only when the interval's
+    lower end (or, without an interval, the point) is above the cap."""
+    over = cost_low > D29_COST_CAP
+    if quality_class == "worse":
+        return "excrete"
+    if quality_class == "better":
+        return "optional" if over else "default"
+    if quality_class == "equivalent" and cheaper:
+        return "default"
+    return "excrete" if over else "optional"
+
+
 def _judgment(raw, verdict: str, kind: str, *, stored: bool = False):
     """The D29 judgment of a tasting, checked against its verdict; None for a record made before D29.
 
@@ -2081,7 +2103,7 @@ def _judgment(raw, verdict: str, kind: str, *, stored: bool = False):
             raise RecordError(f"{kind}: an optional verdict needs its D29 judgment (quality, cost_ratio, cheaper, grading).")
         return None
     where = "judgment"
-    doc = _keys(raw, {"quality", "cost_ratio", "cheaper", "grading", "conditions", "basis"}
+    doc = _keys(raw, {"quality", "cost_ratio", "cheaper", "grading", "conditions", "basis", "quality_class", "cost_ci"}
                 | ({"outcome", "outcome_zh"} if stored else set()), where, kind)
     quality, grading = doc.get("quality"), doc.get("grading")
     if quality not in D29_QUALITY:
@@ -2102,14 +2124,43 @@ def _judgment(raw, verdict: str, kind: str, *, stored: bool = False):
     conditions = _rnumber(doc, "conditions", where, kind, integer=True, maximum=100, required=False)
     if verdict in ("not-shown-better", "no-verdict"):
         raise RecordError(f"{kind}: a D29 judgment ends in absorb, plug-in, optional or decline, not {verdict}.")
-    outcome = d29_outcome(quality, cost, cheaper)
+    quality_class, cost_ci = doc.get("quality_class"), doc.get("cost_ci")
+    if quality_class is None and cost_ci is not None:
+        raise RecordError(f"{kind}: judgment.cost_ci goes with judgment.quality_class (D32).")
+    if quality_class is not None:
+        if quality_class not in D32_CLASSES:
+            raise RecordError(f"{kind}: judgment.quality_class must be one of {', '.join(D32_CLASSES)}.")
+        if quality != {"better": "better", "worse": "worse"}.get(quality_class, "same"):
+            raise RecordError(f"{kind}: judgment.quality {quality} does not match quality_class {quality_class} "
+                              "(equivalent and undetermined are recorded as quality same).")
+        if quality_class in ("better", "worse") and grading not in ("cross-family", "mechanical"):
+            raise RecordError(f"Refused: under D32 a difference counts only when graders of two model families both "
+                              f"find it (grading cross-family) or the grading is mechanical, not {grading}.")
+        if cheaper and quality_class != "equivalent":
+            raise RecordError(f"{kind}: judgment.cheaper needs quality_class equivalent; an undetermined quality "
+                              "does not become a default (D32).")
+        if cost_ci is not None:
+            if (not isinstance(cost_ci, list) or len(cost_ci) != 2
+                    or not all(isinstance(v, (int, float)) and not isinstance(v, bool) and 0 < v <= 100000 for v in cost_ci)
+                    or not cost_ci[0] <= cost <= cost_ci[1]):
+                raise RecordError(f"{kind}: judgment.cost_ci must be [low, high] around cost_ratio, both above 0.")
+            if cheaper and cost_ci[1] >= 1:
+                raise RecordError(f"{kind}: judgment.cheaper needs the cost interval's upper end below 1.")
+        outcome = d32_outcome(quality_class, cost_ci[0] if cost_ci else cost, cheaper)
+    else:
+        outcome = d29_outcome(quality, cost, cheaper)
     if verdict not in D29_OUTCOMES[outcome]:
         raise RecordError(f"Refused: the verdict does not match D29: quality {quality}, cost {cost:g}x native"
                           + (", cheaper" if cheaper else "") + f" -> {outcome} ({D29_OUTCOMES_ZH[outcome]}), "
                           f"which is recorded as {' or '.join(D29_OUTCOMES[outcome])}, not {verdict}.")
-    return {"quality": quality, "cost_ratio": cost, "cheaper": cheaper, "grading": grading,
-            "conditions": conditions, "outcome": outcome, "outcome_zh": D29_OUTCOMES_ZH[outcome],
-            "basis": _rtext(doc, "basis", where, kind, 400, required=False)}
+    judged = {"quality": quality, "cost_ratio": cost, "cheaper": cheaper, "grading": grading,
+              "conditions": conditions, "outcome": outcome, "outcome_zh": D29_OUTCOMES_ZH[outcome],
+              "basis": _rtext(doc, "basis", where, kind, 400, required=False)}
+    if quality_class is not None:
+        judged["quality_class"] = quality_class
+        if cost_ci is not None:
+            judged["cost_ci"] = [float(v) for v in cost_ci]
+    return judged
 
 
 def tasting_id(record: dict) -> str:

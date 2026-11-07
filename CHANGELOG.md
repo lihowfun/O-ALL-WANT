@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Tasting statistics and verdicts follow owner decision D32 (plan W0): `scripts/eval_stats.py` compares 12 questions x
+  1 run with a bootstrap over questions, four classes (better, equivalent, undetermined, worse), a zero-spread floor
+  from earlier repeated runs, and a cost class from the ratio's interval. `record-tasting` accepts `quality_class`
+  and `cost_ci`: then a difference needs `cross-family` (or mechanical) grading, "too expensive" needs the interval's
+  lower end above 1.5x, and an undetermined quality is never cheaper and never a default. Records without these
+  fields keep the D29 rule. One page: `docs/EVAL_PROTOCOL.md`.
 - One review entry and an EGM switch (owner decisions D31, D33; plan `docs/plans/v2.0.1-execution.md` W1):
   the new default skill `oaw-review` runs `scripts/oaw_mode.py suggest` before a change (planned paths) and after
   it, and follows its new `steps`. Deep plans first and gets a design review before any code; the design review
