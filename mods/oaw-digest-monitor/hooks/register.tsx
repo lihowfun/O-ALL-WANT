@@ -548,20 +548,17 @@ export const register: Register = (on, opts) => {
               <Button
                 key={`food:${f.id}`}
                 plain
+                label={
+                  `${f.id === selected ? '▸ ' : '  '}${f.verdict.symbol || '•'} ${f.display} · ${f.stageLabel}` +
+                  ` ${model.symbols[f.state] ?? ''}${waitingLabel(f) ? ` · ${waitingLabel(f)}` : ''}` +
+                  `${model.live?.isRunning && model.live.food === f.id ? ' · 試吃中' : ''}`
+                }
                 onPress={() => {
                   void update($, selectedAtom, current => (current === f.id ? null : f.id))
                   void update($, picksAtom, () => [])
                   void update($, pendingAtom, () => null)
                 }}
-              >
-                {f.id === selected ? '▸ ' : '  '}
-                {f.verdict.symbol || '•'} {f.display}
-                <Text dimColor>
-                  {' '}
-                  · {f.stageLabel} {model.symbols[f.state] ?? ''} {waitingLabel(f) ? `· ${waitingLabel(f)}` : ''}
-                  {model.live?.isRunning && model.live.food === f.id ? ' · 試吃中' : ''}
-                </Text>
-              </Button>
+              />
             ))}
           </Box>
         )}
@@ -609,13 +606,11 @@ export const register: Register = (on, opts) => {
                     <Button
                       key={`pick:${c.id}`}
                       plain
+                      label={`${picks.includes(c.id) ? '☑ ' : '☐ '}${c.name}`}
                       onPress={() =>
                         void update($, picksAtom, list => (list.includes(c.id) ? list.filter(id => id !== c.id) : [...list, c.id]))
                       }
-                    >
-                      {picks.includes(c.id) ? '☑ ' : '☐ '}
-                      {c.name}
-                    </Button>
+                    />
                   ))}
               </Box>
             )}
@@ -633,9 +628,8 @@ export const register: Register = (on, opts) => {
                         text: `「${action.label}」要你在自己的終端輸入確認碼，指令已複製：\n${command}`,
                       }))
                     }}
-                  >
-                    {action.label}（複製終端指令）
-                  </Button>
+                    label={`${action.label}（複製終端指令）`}
+                  />
                 ) : (
                   <Button
                     key={`act:${action.id}`}
