@@ -824,6 +824,7 @@ _JS_DECL = re.compile(
     r"(?:(?P<kw>function|class)\b[ \t]*\*?[ \t]*(?P<kname>[A-Za-z_$][\w$]*)?"
     r"|(?P<kw2>const[ \t]+enum|interface|enum|type|namespace|module|const|let|var)[ \t]+"
     r"(?P<name2>[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*)"
+    r"|(?P<kw3>const|let|var)[ \t]*(?P<pattern>[{\[])"
     r"|(?P<cjs>(?:module\.)?exports\.)(?P<cname>[A-Za-z_$][\w$]*)[ \t]*=(?!=)"
     r"|(?P<owner>[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*)\.prototype\.(?P<pname>[A-Za-z_$][\w$]*)[ \t]*=(?!=)"
     r"|(?P<lhs>[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)+)[ \t]*=[ \t]*class\b[ \t]*(?P<xname>[A-Za-z_$][\w$]*)?"
@@ -1346,7 +1347,7 @@ def _js_record(text):
         lead = found.group("lead").strip()[::-1]
         if lead in ("function", "get", "set", "async", "static"):
             continue
-        if len(parts) == 1 and parts[0] in _JS_KEYWORDS:
+        if len(parts) == 1 and parts[0] in _JS_KEYWORDS and parts[0] != "super":  # super(...): the base constructor
             continue
         name_at = total - chain_start - len(parts[-1])
         chain = ".".join(parts)
@@ -1550,7 +1551,7 @@ def _js_record(text):
             if match.group("cname"):
                 exports.append([name, qualname])
             continue
-        keyword, name = match.group("kw2"), match.group("name2")
+        keyword, name = match.group("kw2") or match.group("kw3"), match.group("name2")
         if keyword is None:
             continue
         if keyword in ("let", "const") and bracket == "{" and enclosing not in bodies and enclosing in pairs:
@@ -1561,6 +1562,18 @@ def _js_record(text):
                 stack.append((enclosing, pairs[enclosing], blocks[enclosing], "block"))
             parent = (enclosing, pairs[enclosing], blocks[enclosing], "block")
             prefix = blocks[enclosing] + "."
+        elif keyword == "var" and parent and parent[3] == "block":  # var belongs to the function, not the block
+            parent = next((entry for entry in reversed(stack) if entry[3] != "block" and entry[1] >= start), None)
+            prefix = parent[2] + "." if parent else ""
+        if match.group("pattern"):  # const { a, b: c } = value; let [d, ...e] = value
+            open_at = line_at + match.start("pattern")
+            close = pairs.get(open_at)
+            if close is None:
+                continue
+            _annotation, value_at = _js_type_and_value(code, close + 1, pairs)
+            if parent and parent[3] != "namespace" and not (value_at is not None and _JS_BINDS_MODULE.match(code, value_at)):
+                types.extend([parent[2], bound, "?"] for bound in _js_pattern_names(code[open_at:close + 1]))
+            continue
         name_at = line_at + match.start("name2")
         if keyword in ("interface", "enum") or keyword.startswith("const") and keyword.endswith("enum"):
             body = _js_body(code, line_at + match.end("name2"), pairs, header=True)
@@ -2738,6 +2751,9 @@ class Index:
         if head == "super":
             owner = self._class_of(path, scope)
             for base in self._js_bases(path, owner, depth) if owner else ():
+                if not rest:  # super(...): the base's constructor, or the base class when it writes none
+                    constructor = (base[1], base[2] + ".constructor")
+                    return ("def",) + constructor if constructor in defs else base
                 found = self.js_member(base, rest, depth + 1)
                 if found:
                     return found
@@ -3164,6 +3180,13 @@ def _js_dispatch(index, targets):
     return found
 
 
+def _js_super_named(index, path, scope, class_names):
+    """Whether the class around scope writes one of class_names as its base (extends ...Name)."""
+    owner = index._class_of(path, scope)
+    return bool(owner) and any(chain.rsplit(".", 1)[-1] in class_names
+                               for chain in index.tables()["js_bases"].get((path, owner), ()))
+
+
 def _js_abstract(index, target):
     """Whether a resolved JS/TS target is an interface member (the receiver's concrete class is not known)."""
     if target[0] != "def":
@@ -3193,6 +3216,17 @@ def callers(index, symbol, limit=50):
             owners.update({owner.lower(), "_".join(parts).lower(), parts[-1].lower() if parts else ""} - {""})
     dispatch = _js_dispatch(index, targets)
     reach = _js_reach(index, targets)
+    defs = index.tables()["defs"]
+    for target in list(classes):  # a JS/TS class is also called through its constructor, from super(...) too
+        if _is_js(index, target[1]):
+            names.add("super")
+            if (target[1], target[2] + ".constructor") in defs:
+                wanted.add(("def", target[1], target[2] + ".constructor"))
+    for target in targets:
+        if target[2].endswith(".constructor") and _is_js(index, target[1]):
+            names.add("super")
+    class_names = {target[2].rsplit(".", 1)[-1] for target in wanted
+                   if defs.get((target[1], target[2]), ("",))[0] == "class"}
     external = None
     if not targets and path is None:
         external = symbol.strip().replace("::", ".")
@@ -3212,6 +3246,12 @@ def callers(index, symbol, limit=50):
             if last not in local:
                 continue
             target = resolve(file, scope, chain)
+            if script and chain == "super" and external is None:
+                if target and (target in wanted or target in classes):
+                    rows.append((0, file, line, scope))
+                elif target is None and _js_super_named(index, file, scope, class_names):
+                    rows.append((1, file, line, scope))  # base not resolved, but written with the class's name
+                continue
             if external is not None:
                 if target and target[0] == "ext" and (target[1] == external or target[1].endswith("." + external)
                                                       or chain == external):
@@ -3450,7 +3490,7 @@ def call_graph(index):
         bound = index.bindings(path) if python else set(index.js_bindings(path)) | {  # import aliases (a as b)
             name for _scope, name in index.js_scoped_bindings(path)}
         for _line, scope, chain in (python or script)["calls"]:
-            if chain.rsplit(".", 1)[-1] not in by_name and chain.split(".", 1)[0] not in bound:
+            if chain.rsplit(".", 1)[-1] not in by_name and chain.split(".", 1)[0] not in bound and chain != "super":
                 continue
             key = (scope, chain)
             if key not in seen:

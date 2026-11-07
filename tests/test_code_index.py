@@ -793,6 +793,17 @@ REVIEW_FIXTURE = {  # Codex review round 10 of the JS/TS engine
     "ext/pkg/index.ts": "export {};\n",
     "ext/use.js": "const lib = require('./lib');\nlib();\n",
     "ext/use.ts": "import lib from './lib';\nlib();\n",
+    # Codex review round 14
+    "lib/run.ts": "export function run() {}\n",
+    "destr2/use.ts": ("import { run } from '../lib/run';\nexport function f(obj, items) {\n    const { run } = obj;\n"
+                      "    run();\n}\nexport function g(items) {\n    const [first, { inner: run = 1 }] = items;\n"
+                      "    run();\n}\nexport function h() {\n    if (ok) {\n        let { run } = make();\n"
+                      "        run();\n    }\n    run();\n}\nexport function k(obj) {\n    if (ok) {\n"
+                      "        var { run } = obj;\n    }\n    run();\n}\n"),
+    "sup/a.ts": "export class A {\n    constructor() {}\n    hello() {}\n}\nexport class Plain {}\n",
+    "sup/b.ts": ("import { A, Plain } from './a';\nexport class B extends A {\n    constructor() {\n        super();\n"
+                 "        super.hello();\n    }\n}\nexport class C extends Plain {\n    constructor() {\n"
+                 "        super();\n    }\n}\n"),
 }
 
 
@@ -833,7 +844,7 @@ class JavaScriptResolutionReviewTests(unittest.TestCase):
 
     def test_anonymous_default_exports_are_exported(self):
         self.assertEqual(self.rows("anon/fn.ts::default"), {("anon/use.ts", 3, True)})
-        self.assertEqual(self.rows("anon/cls.ts::default.run"), {("anon/use.ts", 4, True)})
+        self.assertEqual({row for row in self.rows("anon/cls.ts::default.run") if row[2]}, {("anon/use.ts", 4, True)})
         affected = code_index.affected(self.index, "anon/fn.ts::default")["results"]
         self.assertEqual([row["path"] for row in affected], ["anon/use.ts"])
 
@@ -897,6 +908,16 @@ class JavaScriptResolutionReviewTests(unittest.TestCase):
         self.assertEqual(self.index.js_module("ext/use.ts", "./lib"), "ext/lib.ts")
         self.assertEqual(self.index.js_module("ext/use.js", "./pkg"), "ext/pkg/index.js")
         self.assertEqual(self.index.js_module("ext/use.ts", "./pkg"), "ext/pkg/index.ts")
+
+    def test_destructuring_declarations_shadow_imports(self):
+        lines = {line for path, line, resolved in self.rows("lib/run.ts::run") if path == "destr2/use.ts" and resolved}
+        self.assertEqual(lines, {15})  # const {run}, const [, {inner: run}], block let {run}, var {run} shadow it
+
+    def test_super_calls_reach_the_base_constructor(self):
+        self.assertEqual(self.rows("sup/a.ts::A.constructor"), {("sup/b.ts", 4, True)})
+        self.assertIn(("sup/b.ts", 4, True), self.rows("sup/a.ts::A"))
+        self.assertEqual(self.rows("sup/a.ts::A.hello"), {("sup/b.ts", 5, True)})
+        self.assertEqual(self.rows("sup/a.ts::Plain"), {("sup/b.ts", 10, True)})  # no constructor written
 
     def test_extends_may_name_any_local_json_file(self):
         self.assertEqual(self.index.js_module("jcfg/use.ts", "#lib/tool"), "jcfg/lib/tool.ts")
