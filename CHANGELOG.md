@@ -25,6 +25,9 @@ All notable changes to this project will be documented in this file.
   project already had is never taken for the project's own; a tasting's version comes from the snapshot sealed
   before it (verdicts.json records it per tasting), not from the food's current pin; and `rename:NEW` survives into
   the printed apply command.
+- User installs copy what a hook or MCP script needs (its folder and local imports, bounded), skip junctions and VCS
+  metadata in local sources, keep hosts added to a manager-only project, rewrite an invalid skill name to its
+  installed folder, and keep identical hooks from two sources removable in any order.
 - `oaw-add` and `oaw-codemap` ship `agents/openai.yaml` with `allow_implicit_invocation: false`, because Codex
   ignores Claude's `disable-model-invocation`; `validate_skills.py` now requires that policy for an explicit-only
   skill in a Codex skills folder.

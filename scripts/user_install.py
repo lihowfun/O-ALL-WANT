@@ -13,6 +13,7 @@ puts exactly those back; a file or entry the user changed since is reported and 
 """
 from __future__ import annotations
 
+import ast
 import copy
 from datetime import datetime, timezone
 import hashlib
@@ -20,6 +21,7 @@ import json
 import math
 import os
 from pathlib import Path, PurePosixPath
+import posixpath
 import re
 import shlex
 import shutil
@@ -57,6 +59,10 @@ CONTEXT_EVENTS = ("sessionstart", "userpromptsubmit", "precompact", "subagentsta
 NAME = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
 SERVER_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,63}")
 EXIT_CHOICE = 3
+# Version-control metadata never comes along: a worktree's .git file names a private path.
+VCS_NAMES = frozenset({".git", ".hg", ".svn", ".bzr", "_darcs", ".jj"})
+# What one hook set or MCP server may take along beyond the scripts it names (their folder and local imports).
+SUPPORT_LIMITS = {"files": 300, "bytes": 10 * 1024 * 1024}
 TASTE_COST_ZH = "程式理解類約 2–4M token"
 EXPLICIT_YAML = b"# Added by OAW: this skill runs only when you call it.\npolicy:\n  allow_implicit_invocation: false\n"
 NOT_INSTALLED_ZH = {
@@ -343,18 +349,22 @@ def read_local(root: Path) -> dict:
         prefix = "" if relative_dir == "." else relative_dir + "/"
         kept = []
         for name in sorted(dirnames):
-            if name == ".git":
+            if name in VCS_NAMES:
                 continue
-            if os.path.islink(os.path.join(directory, name)):
-                symlinks[prefix + name] = "(directory link, not followed)"
+            full = os.path.join(directory, name)
+            # A Windows junction is not a symlink to os.path.islink and os.walk would enter it.
+            if os.path.islink(full) or oaw.is_path_alias(Path(full)):
+                symlinks[prefix + name] = "(directory link or junction, not followed)"
             else:
                 kept.append(name)
         dirnames[:] = kept
         for name in sorted(filenames):
             relative, full = prefix + name, os.path.join(directory, name)
+            if name in VCS_NAMES:
+                continue
             info = os.lstat(full)
-            if stat.S_ISLNK(info.st_mode):
-                symlinks[relative] = core.sanitize_text(os.readlink(full), 200)
+            if stat.S_ISLNK(info.st_mode) or oaw.is_path_alias(Path(full)):
+                symlinks[relative] = core.sanitize_text(os.readlink(full) if stat.S_ISLNK(info.st_mode) else "(junction)", 200)
                 continue
             if not stat.S_ISREG(info.st_mode) or core.member_path_error(relative, seen):
                 skipped.append(relative)
@@ -396,6 +406,10 @@ def fetch(source: dict, target: Path) -> dict:
             raise InstallError(f"Cannot fetch {source['display']}: {exc}") from exc
         finally:
             catalog.rmtree(lab)
+    for path in [p for p in snapshot["files"] if VCS_NAMES & set(p.split("/"))]:
+        del snapshot["files"][path]
+        snapshot["modes"].pop(path, None)
+        snapshot["skipped"] = [*snapshot["skipped"], path]
     snapshot["tree_sha256"] = core.tree_sha256({p: sha(d) for p, d in snapshot["files"].items()})
     return snapshot
 
@@ -522,6 +536,80 @@ def _rewrite_value(value, root: str, paths, used: set, *, shell: bool = False, d
     return value
 
 
+def _local_imports(path: str, files: dict) -> set:
+    """Source files a script loads by a local import (Python, JavaScript/TypeScript, shell `source`)."""
+    folder, found = posixpath.dirname(path), set()
+
+    def take(*candidates):
+        for candidate in candidates:
+            candidate = posixpath.normpath(candidate)
+            if not candidate.startswith("../") and candidate != ".." and candidate in files:
+                found.add(candidate)
+                return True
+        return False
+    text = files[path].decode("utf-8", "replace")
+    suffix = PurePosixPath(path).suffix.casefold()
+    if suffix in (".py", ".pyw"):
+        try:
+            tree = ast.parse(text)
+        except (SyntaxError, ValueError, RecursionError, MemoryError):
+            return found
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                modules = [alias.name for alias in node.names]
+                base = folder
+            elif isinstance(node, ast.ImportFrom):
+                base = folder
+                for _level in range(max(node.level - 1, 0)):
+                    base = posixpath.dirname(base)
+                module = node.module or ""
+                modules = [module] if module else []
+                modules += [f"{module}.{alias.name}" if module else alias.name for alias in node.names]
+            else:
+                continue
+            for module in modules:
+                parts = module.split(".")
+                for depth in range(1, len(parts) + 1):
+                    stem = posixpath.join(base, *parts[:depth])
+                    take(stem + ".py", stem + "/__init__.py")
+    elif suffix in (".js", ".mjs", ".cjs", ".ts", ".mts", ".cts", ".jsx", ".tsx"):
+        for spec in re.findall(r"(?:require\(\s*|import\s*\(\s*|\bfrom\s+|\bimport\s+)['\"](\.{1,2}/[^'\"]+)['\"]", text):
+            stem = posixpath.join(folder, spec)
+            take(stem, *(stem + ext for ext in (".js", ".mjs", ".cjs", ".ts", ".json")),
+                 *(posixpath.join(stem, "index" + ext) for ext in (".js", ".ts")))
+    elif suffix in (".sh", ".bash", ".zsh") or text.startswith("#!"):
+        for spec in re.findall(r"(?m)(?:^|[;&|]\s*)(?:source|\.)\s+[\"']?([^\s;&|\"']+)", text):
+            spec = re.sub(r"^(?:\$\(dirname\s+\"?\$0\"?\)|\$\{BASH_SOURCE%/\*\}|\$\{?SCRIPT_DIR\}?)/", "", spec)
+            take(posixpath.join(folder, spec), spec)
+    return found
+
+
+def support_closure(used: set, files: dict) -> set:
+    """What a hook set or MCP server needs: the scripts it names, each one's folder when it has its own (modules and
+    data next to it), and everything those import locally. A script at the source root brings only its imports, so a
+    root-level script never drags in the whole repository."""
+    wanted, queue = set(), list(used)
+    for path in used:
+        folder = posixpath.dirname(path)
+        if folder:
+            queue += [p for p in files if p.startswith(folder + "/")]
+    while queue:
+        path = queue.pop()
+        if path in wanted:
+            continue
+        wanted.add(path)
+        queue += sorted(_local_imports(path, files) - wanted)
+    return wanted
+
+
+def _support_problem(members: set, files: dict) -> str | None:
+    total = sum(len(files[p]) for p in members)
+    if len(members) > SUPPORT_LIMITS["files"] or total > SUPPORT_LIMITS["bytes"]:
+        return (f"它要執行的 support 檔案太多（{len(members)} 個、{total} bytes；上限 {SUPPORT_LIMITS['files']} 個、"
+                f"{SUPPORT_LIMITS['bytes']} bytes），不裝，免得裝了也跑不起來")
+    return None
+
+
 def build_parts(package: str, snapshot: dict, scan: dict) -> tuple[list, list]:
     """Installable parts (skills, agents, commands, hook sets, MCP servers) and what is left out, with why."""
     files, modes = snapshot["files"], snapshot["modes"]
@@ -544,7 +632,7 @@ def build_parts(package: str, snapshot: dict, scan: dict) -> tuple[list, list]:
             members = {m: (m[len(directory) + 1:] if directory else m) for m in component["paths"]}
             scripts = sorted(m for m in members if core.file_role(m, files[m], modes.get(m)) in ("executable", "manifest", "binary"))
             fields, _body = core.parse_frontmatter(files[facts["path"]].decode("utf-8", "replace"))
-            parts.append({**base, "kind": "skill", "name": name, "members": members, "scripts": scripts,
+            parts.append({**base, "kind": "skill", "name": name, "source_name": fields.get("name"), "members": members, "scripts": scripts,
                           "needs": ["scripts"] if scripts else [],
                           "explicit_only": str(fields.get("disable-model-invocation", "")).casefold() == "true",
                           "description_bytes": facts["description_bytes"] + facts["name_bytes"]})
@@ -552,7 +640,8 @@ def build_parts(package: str, snapshot: dict, scan: dict) -> tuple[list, list]:
             path = component["paths"][0]
             name = core.slug(PurePosixPath(path).stem)
             fields, _body = core.parse_frontmatter(files[path].decode("utf-8", "replace"))
-            parts.append({**base, "kind": kind, "name": name, "members": {path: name + ".md"}, "scripts": [], "needs": [],
+            parts.append({**base, "kind": kind, "name": name, "source_name": fields.get("name"), "members": {path: name + ".md"},
+                          "scripts": [], "needs": [],
                           "description_bytes": len(str(fields.get("description", "")).encode("utf-8"))})
         elif kind == "hook-set":
             config = next((p for p in component["paths"] if p in hook_configs), None)
@@ -563,10 +652,12 @@ def build_parts(package: str, snapshot: dict, scan: dict) -> tuple[list, list]:
             used = set()
             groups = {event: [_rewrite_value(g, root, paths, used, shell=True) for g in entries]
                       for event, entries in hook_configs[config]["groups"].items()}
-            # Each part carries exactly the files its own commands name; a file two parts name is shared.
+            # Each part carries the files its own commands name plus what they need; a file two parts need is shared.
+            members = support_closure(used, files)
             parts.append({**base, "kind": "hooks", "name": f"{package}-hooks" + (f"-{hook_sets}" if hook_sets > 1 else ""),
                           "config": config, "groups": groups, "ignored_keys": hook_configs[config]["ignored"],
-                          "members": {p: p for p in sorted(used)}, "scripts": [], "needs": ["hooks"]})
+                          "members": {p: p for p in sorted(members)}, "scripts": [], "needs": ["hooks"],
+                          "blocked_reason": _support_problem(members, files)})
         elif kind == "mcp-server":
             found = mcp_configs.get(component["name"])
             if found is None or not SERVER_NAME.fullmatch(found[1]):
@@ -575,9 +666,10 @@ def build_parts(package: str, snapshot: dict, scan: dict) -> tuple[list, list]:
             config, server, spec = found
             used = set()
             rewritten = _rewrite_value(spec, root, paths, used)
+            members = support_closure(used, files)
             parts.append({**base, "kind": "mcp", "name": server, "config": config, "spec": rewritten,
-                          "remote": bool(spec.get("url")), "members": {p: p for p in sorted(used)},
-                          "scripts": [], "needs": ["mcp"]})
+                          "remote": bool(spec.get("url")), "members": {p: p for p in sorted(members)},
+                          "scripts": [], "needs": ["mcp"], "blocked_reason": _support_problem(members, files)})
         else:
             left_out.append({"part": component["id"], "kind": kind, "files": component["file_count"],
                              "reason": NOT_INSTALLED_ZH.get(kind, "不是可以安裝的部分")})
@@ -645,7 +737,9 @@ def force_explicit_policy(data: bytes) -> bytes:
 
 def part_files(part: dict, package: str, hosts: list, files: dict, modes: dict) -> dict:
     """Project path -> (bytes, mode) that one part writes."""
-    out, renamed = {}, part["renamed_from"] is not None
+    out = {}
+    # The installed name is the folder's: a rename, or a source whose frontmatter name is missing or invalid.
+    renamed = part["renamed_from"] is not None or part.get("source_name") != part["name"]
     if part["kind"] == "skill":
         for host in hosts:
             prefix = SKILL_ROOTS[host] + part["name"] + "/"
@@ -662,7 +756,7 @@ def part_files(part: dict, package: str, hosts: list, files: dict, modes: dict) 
         folder = ".claude/agents/" if part["kind"] == "agent" else ".claude/commands/"
         for source in part["members"]:
             data = files[source]
-            if renamed:
+            if part["renamed_from"] is not None or (part.get("source_name") and part["source_name"] != part["name"]):
                 data = _frontmatter_edit(data, name=part["name"], explicit=False)
             out[folder + part["name"] + ".md"] = (data, 0o644)
     else:
@@ -743,10 +837,10 @@ def plan_oaw_step(target: Path, manifest: dict | None, choice: str, hosts: list,
     step = {"kind": "none", "plan": None, "actions": [], "skills": list(manifest.get("skills", [])) if state == "oaw" else [],
             "blocked": None}
     if choice == "only":
-        if state == "only":
+        if state == "only" and not set(hosts) - set(manifest.get("hosts", ["codex"])):
             return step
         plan = oaw.plan_manager_only(target, migrate=True, hosts=hosts)
-        step.update(kind="manager-only", plan=plan, skills=[])
+        step.update(kind="hosts" if state == "only" else "manager-only", plan=plan, skills=[])
     elif state in ("clean", "only"):
         skills = [name for name in oaw.default_skills("minimal", False) if name not in retire]
         plan = oaw.plan_install(target, "minimal", False, hosts=hosts, skills=skills if retire else None)
@@ -998,6 +1092,9 @@ def plan_add(target, sources, *, choice=None, consent=None, on_conflict=(), host
             if package["status"] != "install":
                 part["status"], part["reason"] = "skip", package["reason"]
                 continue
+            if part.get("blocked_reason"):
+                part["status"], part["reason"] = "blocked", part["blocked_reason"]
+                continue
             if part["kind"] == "mcp":
                 user = _server_owner(record, part["name"]) if part["name"] in existing_servers else None
                 who = ("user:" + user if user else "project") if part["name"] in existing_servers else (
@@ -1056,6 +1153,10 @@ def plan_add(target, sources, *, choice=None, consent=None, on_conflict=(), host
                               if part["status"] in ("install", "needs-consent", "needs-decision") else {})
             if part["status"] != "install":
                 continue
+            problem = _native_skill_problem(part)
+            if problem:
+                part["status"], part["reason"] = "blocked", problem
+                continue
             shared_root = f"{SUPPORT_DIR}/{package['name']}/"
             clash = next((path for path in part["writes"] if path in writers
                           and not (path.startswith(shared_root) and writers[path][0] == package["name"])), None)
@@ -1094,6 +1195,23 @@ def plan_add(target, sources, *, choice=None, consent=None, on_conflict=(), host
             "default_choice": default_choice, "hosts": hosts, "packages": packages, "conflicts": conflicts,
             "open_conflicts": open_conflicts, "consent_needed": consent_needed, "consents": consents,
             "notes": notes, "oaw_step": step, "retire": sorted(retire), "snapshots": snapshots, "verdicts": verdicts}
+
+
+def _native_skill_problem(part: dict) -> str | None:
+    """A skill whose installed SKILL.md breaks the native rules (name equals its folder, lowercase words; a
+    description) is not written at all."""
+    if part["kind"] != "skill":
+        return None
+    for path, (data, _mode) in part["writes"].items():
+        if not path.endswith("/SKILL.md") or path.count("/") != 3:
+            continue
+        fields, _body = core.parse_frontmatter(data.decode("utf-8", "replace"))
+        folder = path.split("/")[2]
+        if fields.get("name") != folder or not NAME.fullmatch(folder):
+            return f"裝好的 SKILL.md 名稱（{core.sanitize_text(fields.get('name'), 40)}）和資料夾 {folder} 不一致"
+        if not str(fields.get("description") or "").strip():
+            return "SKILL.md 沒有 description，主機不會載入它"
+    return None
 
 
 def _server_owner(record: dict, server: str) -> str | None:
@@ -1710,7 +1828,7 @@ def remove(target, name: str, *, dry_run: bool = False, apply_builtin: bool = Fa
     if dry_run:
         return {"status": "dry-run", "target": str(target), "remove": name, "files": plan["files"], "entries": plan["entries"],
                 "conflicts": plan["conflicts"], "restore_oaw": plan["restore_oaw"], "lines": lines + ["預覽：沒有改任何檔案"]}
-    entry_conflicts, handled = [], set()
+    entry_conflicts, handled, popped = [], set(), []
     with oaw.install_lock(target):
         if record_bytes(load_record(target)) != record_bytes(record):
             raise InstallError(f"{RECORD_PATH} changed during the command; run it again.")
@@ -1747,6 +1865,7 @@ def remove(target, name: str, *, dry_run: bool = False, apply_builtin: bool = Fa
                 container, key = spot
                 if entry["op"] == "append":
                     container.pop(key)
+                    popped.append(original)
                 elif entry.get("had_previous"):
                     container[key] = copy.deepcopy(entry["previous"])
                 else:
@@ -1761,6 +1880,15 @@ def remove(target, name: str, *, dry_run: bool = False, apply_builtin: bool = Fa
                     _delete(target, relative)
             elif doc != _json_doc(current, relative):
                 _write(target, relative, _json_bytes(doc, current))
+        # Every equal copy recorded after a removed one counted it as a twin; now there is one copy fewer.
+        for gone in popped:
+            for data in record["packages"].values():
+                for part in data["parts"].values():
+                    for other in part.get("entries", []):
+                        if (other is not gone and not any(other is p for p in popped) and isinstance(other.get("twins"), int)
+                                and (other["file"], other["pointer"], other["op"], other["value"]) == (gone["file"], gone["pointer"], "append", gone["value"])
+                                and other["twins"] > gone.get("twins", 0)):
+                            other["twins"] -= 1
         held = {(conflict["package"], conflict["part"]) for conflict in entry_conflicts}
         held_paths = {item["path"] for package, part in held for item in record["packages"][package]["parts"][part]["files"]}
         done_files = []

@@ -860,6 +860,84 @@ class UserInstallTests(unittest.TestCase):
             self.assertEqual(oaw.main(preview["apply_argv"][2:] + ["--json"]), 0)
         self.assertTrue((self.project / ".agents/skills/custom-review/SKILL.md").is_file())
 
+    # ------------------------------------------------------------------ review round 15
+
+    def test_two_sources_adding_the_same_hook_both_remove_cleanly(self):
+        for name in ("echo-one", "echo-two"):
+            self.put(self.sources / name, "hooks/hooks.json",
+                     json.dumps({"hooks": {"PreToolUse": [{"hooks": [{"type": "command", "command": "echo same"}]}]}}))
+            self.put(self.sources / name, "skills/" + name + "/SKILL.md", f"---\nname: {name}\ndescription: Echo.\n---\n\nEcho.\n")
+        self.cli("add", str(self.sources / "echo-one"), str(self.sources / "echo-two"), "--choice", "only", "--consent", "hooks", "--apply")
+        self.assertEqual(self.cli("remove", "echo-one")["conflicts"], [])
+        self.assertEqual(self.cli("remove", "echo-two")["conflicts"], [])
+        self.assertFalse((self.project / ".claude/settings.json").exists())
+
+    def test_support_files_keep_what_the_entry_script_needs(self):
+        need = self.sources / "need"
+        self.put(need, ".mcp.json", json.dumps({"mcpServers": {"deep": {"command": "python3", "args": ["srv/main.py"]},
+                                                               "flat": {"command": "python3", "args": ["tool.py"]}}}))
+        self.put(need, "srv/main.py", "import helper\n" + self.runs("deep"))
+        self.put(need, "srv/helper.py", "VALUE = 1\n")
+        self.put(need, "srv/data/table.json", "{}\n")
+        self.put(need, "tool.py", "from lib import util\n" + self.runs("flat"))
+        self.put(need, "lib/__init__.py", "")
+        self.put(need, "lib/util.py", "from . import more\n")
+        self.put(need, "lib/more.py", "X = 2\n")
+        self.put(need, "unrelated.py", "Y = 3\n")
+        self.put(need, "hooks/hooks.json", json.dumps({"hooks": {"Stop": [{"hooks": [{"type": "command", "command": "node hooks/run.js"}]}]}}))
+        self.put(need, "hooks/run.js", "const u = require('../shared/util.js');\n")
+        self.put(need, "shared/util.js", "module.exports = {};\n")
+        self.cli("add", str(need), "--choice", "only", "--consent", "all", "--apply")
+        root = self.project / ".claude/oaw-user/need"
+        for relative in ("srv/main.py", "srv/helper.py", "srv/data/table.json", "tool.py", "lib/__init__.py", "lib/util.py",
+                         "lib/more.py", "hooks/run.js", "shared/util.js"):
+            self.assertTrue((root / relative).is_file(), relative)
+        self.assertFalse((root / "unrelated.py").exists())
+        self.cli("remove", "need")
+        self.assertFalse(root.exists())
+        with patch.object(user_install, "SUPPORT_LIMITS", {"files": 1, "bytes": 10 ** 6}):
+            result = self.cli("add", str(need), "--choice", "only", "--consent", "all", "--apply")
+        parts = {p["name"]: p for p in result["packages"][0]["parts"]}
+        self.assertEqual(parts["deep"]["status"], "blocked")
+        self.assertIn("support", parts["deep"]["reason"])
+        self.assert_nothing_ran()
+
+    def test_local_sources_skip_junctions_and_vcs_metadata(self):
+        source = self.sources / "linked"
+        self.put(source, "SKILL.md", "---\nname: linked\ndescription: Linked.\n---\n\nLinked.\n")
+        self.put(source, ".git", "gitdir: /home/someone/private/repo/.git/worktrees/linked\n")
+        self.put(source, "sub/.hg/store", "x\n")
+        self.put(source, "junction/secret.txt", "from elsewhere\n")
+        real_alias = oaw.is_path_alias
+        with patch.object(user_install.oaw, "is_path_alias", lambda path: Path(path).name == "junction" or real_alias(path)):
+            snapshot = user_install.read_local(source)
+        self.assertNotIn("junction/secret.txt", snapshot["files"])
+        self.assertIn("junction", snapshot["symlinks"])
+        self.assertFalse(any(p == ".git" or "/.hg/" in "/" + p for p in snapshot["files"]))
+        self.cli("add", str(source), "--choice", "only", "--apply")
+        self.assertFalse((self.project / ".agents/skills/linked/.git").exists())
+        self.assertNotIn("/home/someone", json.dumps(tree(self.project).__repr__()))
+
+    def test_manager_only_keeps_new_hosts(self):
+        self.add("mapper", choice="only", apply=True)
+        self.add("scripty", choice="only", host="both", consent="scripts", apply=True)
+        self.assertEqual(json.loads((self.project / ".oaw/install.json").read_text(encoding="utf-8"))["hosts"], ["codex", "claude"])
+        self.cli("add", str(self.sources / "twin"), "--apply")
+        for root in (".agents/skills", ".claude/skills"):
+            self.assertTrue((self.project / root / "oaw-review/SKILL.md").is_file(), root)
+
+    def test_an_invalid_skill_name_is_rewritten_to_the_installed_folder(self):
+        self.put(self.sources, "badname/tool/SKILL.md", "---\nname: Bad_Name\ndescription: Bad name.\n---\n\nBody.\n")
+        self.cli("add", str(self.sources / "badname"), "--choice", "only", "--apply")
+        installed = self.project / ".agents/skills/tool/SKILL.md"
+        fields, _body = core.parse_frontmatter(installed.read_text(encoding="utf-8"))
+        self.assertEqual(fields["name"], "tool")
+        self.assertEqual(oaw.skill_issues(installed), [])
+        self.put(self.sources, "nodesc/x/SKILL.md", "---\nname: x\n---\n\nBody.\n")
+        result = self.cli("add", str(self.sources / "nodesc"), "--choice", "only", "--apply")
+        self.assertEqual(result["packages"][0]["parts"][0]["status"], "blocked")
+        self.assertFalse((self.project / ".agents/skills/x").exists())
+
 
 def write_ledger(catalog: Path, food: str, *, current: str, snapshots: list, tasted_at: str) -> None:
     """A minimal catalog ledger: one GitHub food pinned at `current`, its sealed snapshots, and one tasting."""

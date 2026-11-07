@@ -58,13 +58,19 @@ python3 scripts/oaw.py remove NAME --target PROJECT [--dry-run] [--apply] [--for
 - Consent (owner decision D34): hooks merge into `.claude/settings.json`, MCP servers into `.mcp.json`, and the files
   they run go to `.claude/oaw-user/<source>/` with `${CLAUDE_PLUGIN_ROOT}` and relative paths pointed there
   (every string under `command`, `args`, `cwd` and `env`; a hook command keeps each path one quoted shell word).
-  Each hook set or server carries only the files its own commands name; a file two of them name stays until the
-  last one is removed. A skill's bundled scripts stay in its folder (`scripts`). Without consent those parts are not installed. Fetched
+  Each hook set or server carries the files its own commands name, the folder of each such file when it has one
+  (modules and data next to it), and their local Python, JavaScript/TypeScript and shell imports; a script at the
+  source root brings only its imports. Past 300 files or 10 MB the part is not installed rather than installed
+  without what it needs. A file two parts need stays until the last one is removed. A skill's bundled scripts stay in its folder (`scripts`). Without consent those parts are not installed. Fetched
   code is never executed, imported or built; dependencies are listed, not installed.
 - `recommended`: a tasting outcome of default installs as is, optional installs as explicit-only
   (`disable-model-invocation: true` for Claude and `agents/openai.yaml` `policy.allow_implicit_invocation: false`
   for Codex, keeping the rest of a shipped file), excrete is not installed (with the condition it was tasted under), and no
   record installs it marked 未試吃. Consent is still yours.
+- A local folder is read without following symlinks or Windows junctions, and version-control metadata (`.git` as a
+  file or folder, `.hg`, `.svn` and the like) never comes along. A skill installs under its folder name, and its
+  SKILL.md `name` is rewritten to match; one without a description is not installed. Hosts added with `--host`
+  are kept in the manifest, manager-only projects included.
 - Skills go to `.agents/skills/` and/or `.claude/skills/` by the project's hosts, agents and commands to
   `.claude/agents/` and `.claude/commands/`. `.oaw/user-skills.json` records, per part, every file written (with the
   earlier content's hash and a backup under `.oaw/user-skills/`) and every settings entry added.
