@@ -1,0 +1,27 @@
+{
+  "frozen": "2026-11-08, before any X2 case is written; the authors see this list, never the R checklist or the arms",
+  "categories": {
+    "K1": "concurrency or atomicity: a race, lost update or non-atomic check-then-act",
+    "K2": "retries, duplicates or idempotency: a redelivered or repeated request has a wrong effect",
+    "K3": "ordering, staleness or consistency: out-of-order or stale data overwrites or misleads",
+    "K4": "conflict with an accepted decision record or a stated project constraint",
+    "K5": "a requirement the sources state is not met (numbers, capacity, retention or latency arithmetic)",
+    "K6": "security or privacy: secrets, authorization, personal data",
+    "K7": "the design misstates the current source code, or cites a file, function or table that does not exist",
+    "K8": "a component, interface or term the design depends on is never defined",
+    "K9": "the implementation plan is not executable: no scope, no done criteria, or open design choices",
+    "K10": "failure handling, migration or rollback is missing for a risk the design itself raises"
+  },
+  "cases": [
+    {"id": "invoices",  "author": "opus",  "kind": "defect", "domain": "monthly invoice generation for a subscription billing service"},
+    {"id": "flags",     "author": "codex", "kind": "defect", "domain": "a feature-flag service with per-tenant overrides"},
+    {"id": "uploads",   "author": "opus",  "kind": "defect", "domain": "a file upload pipeline with malware scanning"},
+    {"id": "ratelimit", "author": "codex", "kind": "defect", "domain": "a rate limiter for a public API gateway"},
+    {"id": "search",    "author": "opus",  "kind": "defect", "domain": "search indexing fed by database change events"},
+    {"id": "digest",    "author": "codex", "kind": "defect", "domain": "daily notification digest emails"},
+    {"id": "export",    "author": "opus",  "kind": "defect", "domain": "a user data export for privacy requests"},
+    {"id": "registry",  "author": "opus",  "kind": "clean",  "domain": "a model registry with staged rollout"},
+    {"id": "supplier",  "author": "codex", "kind": "clean",  "domain": "inventory sync with an external supplier feed"},
+    {"id": "sessions",  "author": "codex", "kind": "clean",  "domain": "session token refresh for a mobile app"}
+  ]
+}
