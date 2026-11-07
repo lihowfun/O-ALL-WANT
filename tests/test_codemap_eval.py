@@ -343,5 +343,31 @@ class FrozenHarnessTests(unittest.TestCase):
         self.assertEqual(document["corpus"]["commit"], "6481437f14705dacf18f5b7d713003598e2f0bfe")
 
 
+
+stage0 = load("codemap_stage0_v201", "stage0_v201.py")
+
+
+class Stage0V201Tests(CodeMapFixture):
+    def test_gold_files_and_truth_sites_parse_the_frozen_formats(self):
+        question = {"facts": [
+            {"id": "f1", "essential": True, "where": "src/a.ts::A.run, A.stop; src/b.ts::B (constructor)"},
+            {"id": "f2", "essential": False, "where": "src/b.ts::helper (desktop)"},
+            {"id": "f3", "where": "src/c.ts"}]}
+        files, facts = stage0.gold_files(question)
+        self.assertEqual(files, ["src/a.ts", "src/b.ts", "src/c.ts"])
+        self.assertEqual([fact["files"] for fact in facts], [["src/a.ts", "src/b.ts"], ["src/b.ts"], ["src/c.ts"]])
+        self.assertEqual(stage0.sites_of([{"site": "pkg/core.py:4", "how": "x"}, "app/main.py:5 run_method(...)",
+                                          "no site here"]), {("pkg/core.py", 4), ("app/main.py", 5)})
+
+    def test_truth_check_flags_lines_that_do_not_name_the_symbol(self):
+        root = self.corpus
+        truth = {"symbols": [{"symbol": "pkg/core.py::write_record", "callers": [
+            {"site": "pkg/service.py:6", "how": "call"}, {"site": "pkg/service.py:1", "how": "wrong line"},
+            {"site": "pkg/missing.py:1", "how": "no file"}]}]}
+        self.assertEqual(stage0.check_truth(root, truth), [
+            "pkg/core.py::write_record: pkg/missing.py:1 missing",
+            "pkg/core.py::write_record: pkg/service.py:1 does not contain write_record"])
+
+
 if __name__ == "__main__":
     unittest.main()
