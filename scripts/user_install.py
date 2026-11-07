@@ -1451,9 +1451,8 @@ def receipt_rows(target: Path, manifest: dict | None, record: dict, verdicts: di
                        else {"status": "untasted"})
         else:
             tasting = tasting_status(target, {"key": source["key"], "commit": source.get("commit")}, verdicts)
-        names = [part["name"] for part in entry["parts"].values()]
         for name, part in sorted(((part["name"], part) for part in entry["parts"].values()), key=lambda item: (item[0], item[1]["kind"])):
-            remove_as = part_key(part) if names.count(name) > 1 else name
+            remove_as = remove_form(record, package, part_key(part))
             if part["kind"] == "skill":
                 skill_file = next((f["path"] for f in part["files"] if f["path"].endswith("/SKILL.md") and f.get("sha256")), None)
                 startup = _skill_startup(oaw.joined(target, skill_file)) if skill_file else "未知"
@@ -1478,6 +1477,8 @@ def receipt_rows(target: Path, manifest: dict | None, record: dict, verdicts: di
                 label += f"，原名 {part['renamed_from']}"
             if part.get("explicit_only"):
                 label += "，只在你叫它時用"
+            if part.get("left_in_place"):
+                label += "，移除到一半：你改過的地方留著"
             rows.append({"skill": label, "kind": part["kind"], "package": package, "source": origin, "added_by": "你",
                          "tasting": tasting_text(tasting, package), "startup": startup, "runs": "、".join(runs) or "無",
                          "remove": f"oaw.py remove {remove_as}"})
@@ -1518,10 +1519,20 @@ def list_receipt(target) -> dict:
 
 
 def _matches(record: dict, name: str) -> list:
-    """(package, part names) that `remove NAME` means: a whole package, or the parts with that name."""
+    """(package, part keys) that `remove NAME` means: SOURCE/KIND:NAME or SOURCE/NAME, a whole source, one
+    KIND:NAME, or every part with that name. A form that names parts of several sources is refused."""
+    if "/" in name:
+        package, _sep, rest = name.partition("/")
+        entry = record["packages"].get(package)
+        if entry is None:
+            return []
+        keys = [rest] if rest in entry["parts"] else sorted(k for k, part in entry["parts"].items() if part["name"] == rest)
+        return [(package, keys)] if keys else []
     if name in record["packages"]:
         return [(name, sorted(record["packages"][name]["parts"]))]
     exact = [(package, [name]) for package, entry in record["packages"].items() if name in entry["parts"]]
+    if len(exact) > 1:
+        raise InstallError(f"{name} is in several additions; remove one as " + " or ".join(f"{p}/{name}" for p, _k in exact) + ".")
     if exact:
         return exact
     found = {}
@@ -1531,8 +1542,22 @@ def _matches(record: dict, name: str) -> list:
                 found.setdefault(package, []).append(key)
     found = sorted(found.items())
     if len(found) > 1:
-        raise InstallError(f"{name} names parts of several additions ({', '.join(p for p, _ in found)}); remove one of those instead.")
+        raise InstallError(f"{name} names parts of several additions; remove one as "
+                           + " or ".join(f"{p}/{k}" for p, keys in found for k in keys) + ".")
     return found
+
+
+def remove_form(record: dict, package: str, key: str) -> str:
+    """The shortest NAME for `remove` that means exactly this one part, checked across the whole record."""
+    part = record["packages"][package]["parts"][key]
+    name = part["name"]
+    same_name = [(p, k) for p, entry in record["packages"].items() for k, other in entry["parts"].items() if other["name"] == name]
+    whole_package = name in record["packages"] and not (name == package and len(record["packages"][package]["parts"]) == 1)
+    if len(same_name) == 1 and not whole_package:
+        return name
+    if sum(1 for entry in record["packages"].values() if key in entry["parts"]) == 1:
+        return key
+    return f"{package}/{key}"
 
 
 def _locate(doc: dict, entry: dict):
@@ -1565,7 +1590,7 @@ def _prune(doc: dict, pointer: list, baseline: dict) -> None:
             break
 
 
-def plan_remove(target: Path, record: dict, name: str) -> dict:
+def plan_remove(target: Path, record: dict, name: str, *, force: bool = False) -> dict:
     """What `remove NAME` restores: file by file and entry by entry, with conflicts where the user changed things."""
     matches = _matches(record, name)
     if not matches:
@@ -1589,20 +1614,23 @@ def plan_remove(target: Path, record: dict, name: str) -> dict:
                 current = _read(target, item["path"])
                 current_sha = sha(current) if current is not None else None
                 backup = _read(target, item["backup"]) if item.get("backup") else None
+                where = {"package": package, "part": part_name}
                 if item.get("backup") and (backup is None or sha(backup) != item["previous_sha256"]):
-                    conflicts.append({"path": item["path"], "reason": "備份不見或被改過，原本的內容沒辦法還原", "backup": item.get("backup")})
+                    conflicts.append({**where, "path": item["path"], "reason": "備份不見或被改過，原本的內容沒辦法還原", "backup": item.get("backup")})
                     continue
                 if current_sha == item["sha256"] or (current is None and item["sha256"] is not None):
                     action = "restore" if item["previous_sha256"] else ("delete" if current is not None else "gone")
                 elif item["sha256"] is None and current is None:
                     action = "restore"
+                elif force:
+                    action = "restore" if item["previous_sha256"] else "delete"  # --force: back to before the install
                 else:
-                    conflicts.append({"path": item["path"], "backup": item.get("backup"),
+                    conflicts.append({**where, "path": item["path"], "backup": item.get("backup"),
                                       "reason": "你在安裝之後改過這個檔案，所以留著" + (f"（原本的內容在 {item['backup']}）" if item.get("backup") else "")})
                     continue
                 files.append({**item, "action": action, "package": package, "part": part_name})
-            for entry in part.get("entries", []):
-                entries.append({**entry, "package": package, "part": part_name})
+            for index, entry in enumerate(part.get("entries", [])):
+                entries.append({**entry, "package": package, "part": part_name, "index": index})
     retire_back = []
     for package, parts in matches:
         if set(parts) == set(record["packages"][package]["parts"]):
@@ -1614,13 +1642,21 @@ def plan_remove(target: Path, record: dict, name: str) -> dict:
             "shared": shared, "restore_oaw": sorted(set(retire_back))}
 
 
-def remove(target, name: str, *, dry_run: bool = False, apply_builtin: bool = False) -> dict:
+def remove(target, name: str, *, dry_run: bool = False, apply_builtin: bool = False, force: bool = False,
+           keep: bool = False) -> dict:
+    """Undo one addition. Anything the user changed since is left alone and stays in the record with its backups
+    and baseline, so nothing that could restore it is lost; rerun after putting it back, or finish with --force
+    (back to before the install, over the edit) or --keep (the edit becomes yours, the record is dropped)."""
+    if force and keep:
+        raise InstallError("--force and --keep are opposite answers; choose one.")
     target = oaw.target_path(target)
     manifest = oaw.read_manifest(target)
     record = load_record(target)
     if not _matches(record, name) and (name == "egm" or name in oaw.BUNDLED_SKILLS):
+        if force or keep:
+            raise InstallError("--force and --keep apply to what you added, not to a built-in OAW skill.")
         return remove_builtin(target, manifest, name, apply=apply_builtin and not dry_run)
-    plan = plan_remove(target, record, name)
+    plan = plan_remove(target, record, name, force=force)
     lines = [f"remove {name}: " + "、".join(f"{p}（{'、'.join(parts)}）" for p, parts in plan["matches"])]
     for item in plan["files"]:
         lines.append(f"  {({'restore': '還原', 'delete': '刪除', 'gone': '已不在'})[item['action']]:4} {item['path']}")
@@ -1653,15 +1689,24 @@ def remove(target, name: str, *, dry_run: bool = False, apply_builtin: bool = Fa
             try:
                 doc = _json_doc(current, relative)
             except InstallError as exc:
-                entry_conflicts.extend({"path": relative, "reason": str(exc)} for _e in mine)
+                entry_conflicts.extend({"path": relative, "reason": str(exc), "package": e["package"], "part": e["part"],
+                                        "index": e["index"]} for e in mine)
                 continue
             shared = record["shared"].get(relative, {})
             baseline_bytes = _read(target, shared["backup"]) if shared.get("backup") else None
             baseline = _json_doc(baseline_bytes, relative) if baseline_bytes is not None else {}
             for entry in mine:
                 spot = _locate(doc, entry)
+                if spot is None and force and entry["op"] == "set":
+                    *parents, key = entry["pointer"]
+                    node = _get(doc, parents)
+                    if isinstance(node, dict) and (key in node or entry.get("had_previous")):
+                        spot = (node, key)  # --force: the setting goes back to before the install, over the edit
                 if spot is None:
-                    entry_conflicts.append({"path": f"{relative} {'.'.join(entry['pointer'])}", "reason": "你改過或移除了這一項，所以沒有動"})
+                    entry_conflicts.append({"path": f"{relative} {'.'.join(entry['pointer'])}", "package": entry["package"],
+                                            "part": entry["part"], "index": entry["index"],
+                                            "reason": "你改過或移除了這一項，所以沒有動" + (
+                                                "；--force 也認不出是哪一項（請手動處理，或用 --keep）" if force else "")})
                     continue
                 container, key = spot
                 if entry["op"] == "append":
@@ -1669,7 +1714,7 @@ def remove(target, name: str, *, dry_run: bool = False, apply_builtin: bool = Fa
                 elif entry.get("had_previous"):
                     container[key] = copy.deepcopy(entry["previous"])
                 else:
-                    container.pop(key)
+                    container.pop(key, None)
                 _prune(doc, entry["pointer"], baseline)
             others = any(e["file"] == relative for p, pe in record["packages"].items() for n, part in pe["parts"].items()
                          if (p, n) not in plan["removing"] for e in part.get("entries", []))
@@ -1680,14 +1725,31 @@ def remove(target, name: str, *, dry_run: bool = False, apply_builtin: bool = Fa
                     _delete(target, relative)
             elif doc != _json_doc(current, relative):
                 _write(target, relative, _json_bytes(doc, current))
-        conflict_paths = {c["path"] for c in plan["conflicts"]} | set(plan["shared"])
+        # A part with a conflict stays in the record with only what is left, plus its backups and the baseline,
+        # unless --keep makes the user's version theirs.
+        left = {}
+        if not keep:
+            for conflict in plan["conflicts"]:
+                left.setdefault((conflict["package"], conflict["part"]), {"files": set(), "entries": set(), "why": []})
+                left[(conflict["package"], conflict["part"])]["files"].add(conflict["path"])
+                left[(conflict["package"], conflict["part"])]["why"].append(f"{conflict['path']}：{conflict['reason']}")
+            for conflict in entry_conflicts:
+                left.setdefault((conflict["package"], conflict["part"]), {"files": set(), "entries": set(), "why": []})
+                left[(conflict["package"], conflict["part"])]["entries"].add(conflict["index"])
+                left[(conflict["package"], conflict["part"])]["why"].append(f"{conflict['path']}：{conflict['reason']}")
+        shared_paths = set(plan["shared"])
         for package, parts in plan["matches"]:
             entry = record["packages"][package]
             for part_name in parts:
                 part = entry["parts"].pop(part_name)
+                rest = left.get((package, part_name))
                 for item in part["files"]:
-                    if item.get("backup") and item["path"] not in conflict_paths:
+                    if item.get("backup") and item["path"] not in shared_paths and not (rest and item["path"] in rest["files"]):
                         _delete(target, item["backup"])
+                if rest:
+                    entry["parts"][part_name] = {**part, "files": [f for f in part["files"] if f["path"] in rest["files"]],
+                                                 "entries": [e for i, e in enumerate(part.get("entries", [])) if i in rest["entries"]],
+                                                 "left_in_place": rest["why"]}
             if not entry["parts"]:
                 del record["packages"][package]
         for relative in list(record["shared"]):
@@ -1707,9 +1769,19 @@ def remove(target, name: str, *, dry_run: bool = False, apply_builtin: bool = Fa
         except InstallError as exc:
             lines.append(f"  OAW 的 {'、'.join(plan['restore_oaw'])} 沒有裝回來：{exc}；用 oaw.py migrate --skills default 預覽後 --apply")
     conflicts = plan["conflicts"] + entry_conflicts
-    lines.append("完成" + (f"；{len(conflicts)} 個地方你改過，留著沒動" if conflicts else "：回到加之前的樣子"))
-    return {"status": "removed", "target": str(target), "remove": name, "files": plan["files"], "entries": plan["entries"],
-            "conflicts": conflicts, "restored_oaw": plan["restore_oaw"] if restored else [], "lines": lines}
+    if conflicts and keep:
+        lines.append(f"完成；{len(conflicts)} 個你改過的地方照你的版本留著，不再記錄（--keep）")
+    elif conflicts:
+        lines += [f"還沒完成：{len(conflicts)} 個地方你改過，留著沒動；紀錄、備份和原本的設定都還在。",
+                  f"  改回安裝時的樣子後再跑一次 `oaw.py remove {name}`；或用 `--force` 換回安裝前的內容（蓋掉你的修改），"
+                  "或 `--keep` 把現在的內容當成你的、不再記錄。"]
+    else:
+        lines.append("完成：回到加之前的樣子")
+    partial = bool(conflicts) and not keep
+    return {"status": "partial" if partial else "removed", "target": str(target), "remove": name,
+            "files": plan["files"], "entries": plan["entries"], "conflicts": conflicts,
+            "finish": [f"oaw.py remove {name}", f"oaw.py remove {name} --force", f"oaw.py remove {name} --keep"] if partial else [],
+            "restored_oaw": plan["restore_oaw"] if restored else [], "lines": lines}
 
 
 def _builtin_change(target: Path, manifest: dict, names: list, *, adding: bool) -> dict:
@@ -1893,8 +1965,8 @@ def run(args) -> int:
         elif args.command == "list":
             result, code = list_receipt(args.target), 0
         else:
-            result = remove(args.target, args.name, dry_run=args.dry_run, apply_builtin=args.apply)
-            code = 0
+            result = remove(args.target, args.name, dry_run=args.dry_run, apply_builtin=args.apply, force=args.force, keep=args.keep)
+            code = EXIT_CHOICE if result["status"] == "partial" else 0
     except (InstallError, OSError, UnicodeError, core.SourceError, ValueError) as exc:
         result, code = {"status": "error", "error": str(exc), "lines": [f"OAW error: {exc}"]}, 2
     _print(result, args.json)

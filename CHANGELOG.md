@@ -17,6 +17,10 @@ All notable changes to this project will be documented in this file.
   from the maintainer's ledger by `scripts/build_verdicts.py`.
 - The explicit-invocation `oaw-add` skill is the chat entry for the same three verbs; `init` records the OAW
   checkout in the user's settings (outside the project) so the skill can find it.
+- `oaw.py remove` keeps the record, backups and settings baseline of anything you changed since the install and
+  reports it as `partial` (exit 3), so the earlier content can still be restored: rerun after putting it back, or
+  finish with `--force` or `--keep`. The receipt prints a remove name that means exactly one part
+  (`KIND:NAME` or `SOURCE/KIND:NAME` when a name is shared), and `remove` accepts those forms.
 - `oaw-add` and `oaw-codemap` ship `agents/openai.yaml` with `allow_implicit_invocation: false`, because Codex
   ignores Claude's `disable-model-invocation`; `validate_skills.py` now requires that policy for an explicit-only
   skill in a Codex skills folder.

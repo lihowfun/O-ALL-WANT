@@ -41,7 +41,7 @@ tasted).
 ```bash
 python3 scripts/oaw.py add SOURCE [SOURCE ...] --target PROJECT [--choice oaw|only|recommended] [--consent hooks,mcp,scripts|all|none] [--on-conflict NAME=ACTION ...] [--host codex|claude|both] [--apply] [--json]
 python3 scripts/oaw.py list --target PROJECT [--json]
-python3 scripts/oaw.py remove NAME --target PROJECT [--dry-run] [--apply] [--json]
+python3 scripts/oaw.py remove NAME --target PROJECT [--dry-run] [--apply] [--force|--keep] [--json]
 ```
 
 - `add` previews and writes nothing. In a terminal without `--choice` it asks one question and then installs: the
@@ -68,9 +68,12 @@ python3 scripts/oaw.py remove NAME --target PROJECT [--dry-run] [--apply] [--jso
 - Skills go to `.agents/skills/` and/or `.claude/skills/` by the project's hosts, agents and commands to
   `.claude/agents/` and `.claude/commands/`. `.oaw/user-skills.json` records, per part, every file written (with the
   earlier content's hash and a backup under `.oaw/user-skills/`) and every settings entry added.
-- `remove NAME` (a part, every part of that name, `KIND:NAME` for one of them, or a whole source) restores those files byte for byte and removes only its entries; a file
-  or entry you changed since stays and is reported. When nothing of yours is left in a settings file, its original
-  bytes come back. A built-in OAW skill is removed through migrate: preview, then `--apply`.
+- `remove NAME` (a whole source, every part of that name, `KIND:NAME`, or `SOURCE/KIND:NAME`; the receipt prints the
+  shortest form that means exactly one part) restores those files byte for byte and removes only its entries.
+  When nothing of yours is left in a settings file, its original bytes come back. A file or entry you changed since
+  stays, and so do its record, backup and settings baseline: the result is `partial` (exit 3). Put it back and run
+  `remove` again, or finish with `--force` (back to before the install, over your edit) or `--keep` (your version
+  stays and is no longer tracked). A built-in OAW skill is removed through migrate: preview, then `--apply`.
 - `list` and the end of `add` print the receipt: skill, source, added by, tasting result (from records only; 未試吃
   points at `catalog.py taste`), startup cost (description estimate), what runs on its own, how to remove.
 - `--choice only` on an OAW project retires OAW's unchanged files with backups and keeps edited ones as yours

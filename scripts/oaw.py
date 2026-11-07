@@ -997,6 +997,9 @@ def main(argv: list[str] | None = None) -> int:
     remove.add_argument("name", help="a skill, agent, hook set or MCP server name, or the source name shown by list")
     remove.add_argument("--dry-run", action="store_true", help="show what would be restored without changing anything")
     remove.add_argument("--apply", action="store_true", help="needed to remove a built-in OAW skill")
+    finish = remove.add_mutually_exclusive_group()
+    finish.add_argument("--force", action="store_true", help="where you changed something, put back what was there before the install anyway")
+    finish.add_argument("--keep", action="store_true", help="where you changed something, keep your version and stop tracking it")
     for sub in (add, user_list, remove):
         sub.add_argument("--target", default=".", help="project directory (default: current directory)")
         sub.add_argument("--json", action="store_true", help="print a machine-readable result")

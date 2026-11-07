@@ -322,10 +322,10 @@ class UserInstallTests(unittest.TestCase):
         settings = json.loads((self.project / ".claude/settings.json").read_text(encoding="utf-8"))
         settings["hooks"]["SessionStart"][0]["hooks"][0]["command"] = "bash my-own.sh"
         (self.project / ".claude/settings.json").write_text(json.dumps(settings, indent=4) + "\n", encoding="utf-8")
-        result = self.cli("remove", "mapper")
+        result = self.cli("remove", "mapper", code=3)
         self.assertEqual([c["path"] for c in result["conflicts"]], [".agents/skills/mapper/SKILL.md"])
         self.assertIn("my note", skill.read_text(encoding="utf-8"))
-        result = self.cli("remove", "hooky")
+        result = self.cli("remove", "hooky", code=3)
         self.assertEqual([c["path"] for c in result["conflicts"]], [".claude/settings.json hooks.SessionStart"])
         settings = json.loads((self.project / ".claude/settings.json").read_text(encoding="utf-8"))
         self.assertEqual(settings["hooks"]["SessionStart"][0]["hooks"][0]["command"], "bash my-own.sh")
@@ -700,6 +700,93 @@ class UserInstallTests(unittest.TestCase):
                           ("github.com/owner/repo.git@release/2.0", "release/2.0")):
             source = user_install.parse_source(text, verdicts)
             self.assertEqual((source["key"], source["ref"]), ("github.com/owner/repo", ref), text)
+
+    # ------------------------------------------------------------------ review round 13
+
+    def replaced_server(self):
+        """hooky's MCP server replaces one of the user's own, and the user then edits the installed setting."""
+        self.put(self.project, ".mcp.json", '{"mcpServers": {"hooky-server": {"command": "my-original"}}}\n')
+        original = (self.project / ".mcp.json").read_bytes()
+        self.add("hooky", choice="only", consent="mcp", on_conflict=["hooky-server=replace"], apply=True)
+        servers = json.loads((self.project / ".mcp.json").read_text(encoding="utf-8"))
+        servers["mcpServers"]["hooky-server"]["command"] = "my-edit"
+        (self.project / ".mcp.json").write_text(json.dumps(servers) + "\n", encoding="utf-8")
+        return original
+
+    def record(self):
+        return json.loads((self.project / ".oaw/user-skills.json").read_text(encoding="utf-8"))
+
+    def test_a_conflicted_remove_keeps_every_restore_source(self):
+        original = self.replaced_server()
+        result = self.cli("remove", "hooky-server", code=3)
+        self.assertEqual(result["status"], "partial")
+        self.assertEqual([c["path"] for c in result["conflicts"]], [".mcp.json mcpServers.hooky-server"])
+        self.assertIn("oaw.py remove hooky-server --force", result["finish"])
+        part = self.record()["packages"]["hooky"]["parts"]["mcp:hooky-server"]
+        self.assertEqual(part["entries"][0]["previous"], {"command": "my-original"})
+        self.assertTrue(part["left_in_place"])
+        self.assertTrue((self.project / self.record()["shared"][".mcp.json"]["backup"]).is_file())
+        self.cli("remove", "hooky-server", code=3)  # still edited: still kept, nothing lost
+        self.assertIn("mcp:hooky-server", self.record()["packages"]["hooky"]["parts"])
+        self.cli("remove", "hooky-server", "--force")
+        self.assertEqual((self.project / ".mcp.json").read_bytes(), original)
+        self.assertNotIn("mcp:hooky-server", self.record()["packages"]["hooky"]["parts"])
+        self.assertNotIn(".mcp.json", self.record()["shared"])
+
+    def test_a_conflict_resolved_by_hand_finishes_on_the_next_remove(self):
+        original = self.replaced_server()
+        self.cli("remove", "hooky-server", code=3)
+        servers = json.loads((self.project / ".mcp.json").read_text(encoding="utf-8"))
+        servers["mcpServers"]["hooky-server"]["command"] = "python3"
+        (self.project / ".mcp.json").write_text(json.dumps(servers) + "\n", encoding="utf-8")
+        self.assertEqual(self.cli("remove", "hooky-server")["conflicts"], [])
+        self.assertEqual((self.project / ".mcp.json").read_bytes(), original)
+
+    def test_keep_accepts_the_edit_and_forgets_the_part(self):
+        self.replaced_server()
+        self.cli("remove", "hooky-server", code=3)
+        self.cli("remove", "hooky-server", "--keep")
+        self.assertEqual(json.loads((self.project / ".mcp.json").read_text(encoding="utf-8"))["mcpServers"]["hooky-server"],
+                         {"command": "my-edit", "args": ["${CLAUDE_PROJECT_DIR:-.}/.claude/oaw-user/hooky/mcp/server.py"]})
+        self.assertNotIn("mcp:hooky-server", self.record()["packages"]["hooky"]["parts"])
+        self.assertFalse((self.project / ".oaw/user-skills/baselines/.mcp.json").exists())
+
+    def test_force_puts_back_an_overwritten_file(self):
+        self.init()
+        original = (self.project / ".agents/skills/oaw-review/SKILL.md").read_bytes()
+        self.add("twin", choice="oaw", on_conflict=["oaw-review=replace"], apply=True)
+        skill = self.project / ".agents/skills/oaw-review/SKILL.md"
+        skill.write_text(skill.read_text(encoding="utf-8") + "\nmy note\n", encoding="utf-8")
+        self.cli("remove", "twin", code=3)
+        backup = self.record()["packages"]["twin"]["parts"]["skill:oaw-review"]["files"][0]["backup"]
+        self.assertTrue((self.project / backup).is_file())
+        self.cli("remove", "twin", "--force")
+        self.assertEqual(skill.read_bytes(), original)
+        self.assertFalse((self.project / ".oaw/user-skills.json").exists())
+
+    def test_receipt_remove_commands_are_unambiguous(self):
+        alpha, beta = self.sources / "alpha", self.sources / "beta"
+        self.put(alpha, "skills/beta/SKILL.md", "---\nname: beta\ndescription: Beta inside alpha.\n---\n\nBeta.\n")
+        self.put(alpha, "agents/beta.md", "---\nname: beta\ndescription: Beta agent.\n---\n\nAgent.\n")
+        self.put(beta, "SKILL.md", "---\nname: gamma\ndescription: Gamma inside beta.\n---\n\nGamma.\n")
+        self.cli("add", str(alpha), str(beta), "--choice", "only", "--apply")
+        rows = {(row["package"], row["kind"]): row["remove"] for row in self.cli("list")["receipt"]}
+        self.assertEqual(rows[("alpha", "skill")], "oaw.py remove skill:beta")
+        self.assertEqual(rows[("alpha", "agent")], "oaw.py remove agent:beta")
+        self.assertEqual(rows[("beta", "skill")], "oaw.py remove gamma")
+        self.cli("remove", "skill:beta")
+        self.assertFalse((self.project / ".agents/skills/beta").exists())
+        self.assertTrue((self.project / ".agents/skills/gamma/SKILL.md").is_file())
+        self.assertTrue((self.project / ".claude/agents/beta.md").is_file())
+        self.cli("remove", "alpha/agent:beta")
+        self.assertFalse((self.project / ".claude/agents/beta.md").exists())
+        self.assertTrue((self.project / ".agents/skills/gamma/SKILL.md").is_file())
+        record = {"schema": "oaw-user-skills/1", "shared": {}, "packages": {
+            name: {"parts": {"skill:x": {"name": "x", "kind": "skill", "files": [], "entries": []}}} for name in ("one", "two")}}
+        with self.assertRaises(oaw.InstallError):
+            user_install._matches(record, "skill:x")
+        self.assertEqual(user_install._matches(record, "two/skill:x"), [("two", ["skill:x"])])
+        self.assertEqual(user_install.remove_form(record, "two", "skill:x"), "two/skill:x")
 
 
 class VerdictsTests(unittest.TestCase):
