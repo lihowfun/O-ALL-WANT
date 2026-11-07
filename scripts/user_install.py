@@ -815,6 +815,10 @@ def plan_add(target, sources, *, choice=None, consent=None, on_conflict=(), host
 
     # Same names, same files, shared settings: structural checks only.
     notes, claimed = [], {}
+    policy = _read(target, "AGENTS.md") if retire else None
+    for name in sorted(retire):
+        if policy is not None and name.encode() in policy:
+            notes.append(f"AGENTS.md 還提到 {name}；改用別人的版本後，這段政策要你自己改（OAW 不動專案政策）")
     settings_now = _read(target, SETTINGS)
     mcp_now = _read(target, MCP_FILE)
     shared_errors = {}
@@ -1114,7 +1118,13 @@ def apply_add(plan_args: dict, *, plan: dict | None = None) -> dict:
     if again["oaw_step"]["kind"] != "none" or again["open_conflicts"] or again["consent_needed"]:
         raise InstallError("The project changed while OAW's side was applied; run the command again.")
     again["retired_by"] = retired_by
-    record = commit_parts(again["target"], again) if any(p["status"] == "install" for pk in again["packages"] for p in pk["parts"]) else again["record"]
+    try:
+        record = commit_parts(again["target"], again) if any(p["status"] == "install" for pk in again["packages"] for p in pk["parts"]) else again["record"]
+    except InstallError as exc:
+        if step["kind"] == "none":
+            raise
+        backup = f"; its backups are in {oaw_result['backup']}" if oaw_result and oaw_result.get("backup") else ""
+        raise InstallError(f"{exc}. OAW's own change ({step['kind']}) was already applied and stays{backup}.") from exc
     setting = oaw.remember_checkout()
     rows = receipt_rows(again["target"], oaw.read_manifest(again["target"]), record, again["verdicts"])
     return {"status": "installed", "target": str(again["target"]), "choice": again["choice"], "oaw_step": _step_view(step, oaw_result),

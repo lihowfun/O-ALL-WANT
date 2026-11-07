@@ -199,7 +199,7 @@ python3 scripts/oaw.py list --target /path/to/project                           
 python3 scripts/oaw.py remove <名字> --target /path/to/project                        # 回到加之前的樣子
 ```
 
-hook、MCP server 和附帶的 script 要你同意才裝；抓下來的程式一律不執行。細節見 [CLI Reference](docs/CLI_Reference.md#your-own-skills-add-list-remove)。
+沒有終端機時，`add` 會印出那一題和回答它的指令。hook、MCP server 和附帶的 script 要你同意才裝；抓下來的程式一律不執行。細節見 [CLI Reference](docs/CLI_Reference.md#your-own-skills-add-list-remove)。
 
 ### 🔌 Host 對應
 

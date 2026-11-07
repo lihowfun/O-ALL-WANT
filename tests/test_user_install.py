@@ -357,6 +357,25 @@ class UserInstallTests(unittest.TestCase):
         self.assertFalse((self.project / ".agents").exists())
         self.assertEqual(json.loads((self.project / ".oaw/install.json").read_text(encoding="utf-8"))["hosts"], ["claude"])
 
+    def test_a_new_host_adds_oaw_folders_for_it_too(self):
+        self.init()
+        result = self.add("mapper", choice="oaw", host="claude", on_conflict=["mapper=keep-both"], apply=True)
+        self.assertEqual(result["oaw_step"]["kind"], "hosts")
+        self.assertEqual(json.loads((self.project / ".oaw/install.json").read_text(encoding="utf-8"))["hosts"], ["codex", "claude"])
+        for root in (".agents/skills", ".claude/skills"):
+            self.assertTrue((self.project / root / "mapper/SKILL.md").is_file())
+            self.assertTrue((self.project / root / "oaw-review/SKILL.md").is_file())
+        self.assertEqual(self.cli("doctor")["status"], "healthy")
+
+    def test_use_theirs_warns_when_project_policy_names_the_oaw_skill(self):
+        self.init()
+        self.put(self.sources, "mapper/SKILL.md", "---\nname: reviewer\ndescription: Review changes.\n---\n\nReview.\n")
+        verdicts = json.loads(self.verdicts.read_text(encoding="utf-8"))
+        verdicts["foods"][2]["category"] = "review"
+        self.verdicts.write_text(json.dumps(verdicts), encoding="utf-8")
+        preview = self.add("mapper", choice="oaw", on_conflict=["mapper=use-theirs"])
+        self.assertTrue(any("AGENTS.md 還提到 oaw-review" in note for note in preview["notes"]))
+
     # ------------------------------------------------------------------ choice 2
 
     def test_choice_only_on_clean_project_is_manager_only(self):

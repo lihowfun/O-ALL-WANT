@@ -199,7 +199,7 @@ python3 scripts/oaw.py list --target /path/to/project                           
 python3 scripts/oaw.py remove <name> --target /path/to/project                          # back to how it was before
 ```
 
-Hooks, MCP servers and bundled scripts install only with your consent; nothing fetched is run. See the [CLI Reference](docs/CLI_Reference.md#your-own-skills-add-list-remove).
+Without a terminal, `add` prints that one question and the command that answers it. Hooks, MCP servers and bundled scripts install only with your consent; nothing fetched is run. See the [CLI Reference](docs/CLI_Reference.md#your-own-skills-add-list-remove).
 
 ### 🔌 Hosts
 
