@@ -177,8 +177,22 @@ def diff_entries(root: Path, revision_range: str | None) -> tuple[list[dict], st
     return sorted(entries.values(), key=lambda entry: entry["path"]), source
 
 
+def head_files(root: Path, paths: list[str]) -> set[str] | None:
+    """Which of these project-relative paths HEAD has; None outside a git repository."""
+    try:
+        git(root, "rev-parse", "--git-dir")
+    except ModeError:
+        return None
+    try:
+        git(root, "rev-parse", "--verify", "--quiet", "HEAD^{commit}")
+    except ModeError:
+        return set()  # no commit yet: everything is new
+    return set(split_z(git(root, "ls-tree", "-r", "-z", "--name-only", "HEAD", "--", *paths))) - {""}
+
+
 def path_entries(root: Path, paths: list[str]) -> tuple[list[dict], str]:
-    """A plain list: a path that does not exist yet counts as added; line counts are unknown."""
+    """A plain list: a path that does not exist yet, or that HEAD does not have, counts as added (a plan saved a
+    moment ago is new); line counts are unknown."""
     entries = {}
     for raw in paths:
         value = raw.replace("\\", "/")
@@ -191,9 +205,13 @@ def path_entries(root: Path, paths: list[str]) -> tuple[list[dict], str]:
         value = PurePosixPath(value).as_posix().removeprefix("./")
         if value in ("", ".") or ".." in value.split("/"):
             raise ModeError(f"not a project path: {raw}")
-        exists = os.path.lexists(root / value)
-        entries[value] = {"path": value, "status": "M" if exists else "A", "old_path": None,
+        entries[value] = {"path": value, "status": "M" if os.path.lexists(root / value) else "A", "old_path": None,
                           "lines": 0, "lines_known": False}
+    tracked = head_files(root, list(entries)) if entries else None
+    if tracked is not None:
+        for value, item in entries.items():
+            if item["status"] == "M" and value not in tracked and not any(t.startswith(value + "/") for t in tracked):
+                item["status"] = "A"
     return sorted(entries.values(), key=lambda entry: entry["path"]), "path list"
 
 
@@ -359,19 +377,65 @@ def egm_hosts(root: Path) -> dict[str, bool]:
             "codex": (root / ".agents/skills/egm-review/SKILL.md").is_file()}
 
 
-def load_settings(root: Path) -> dict:
-    """The project's review settings: .oaw/settings.json "review", with defaults for anything missing."""
-    path = root / SETTINGS_FILE
+def _common():
+    """oaw_common (installed next to this script): path confinement and locked read-modify-write."""
+    folder = str(Path(__file__).resolve().parent)
+    if folder not in sys.path:
+        sys.path.insert(0, folder)
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
+        import oaw_common
+    except ImportError as exc:
+        raise ModeError("scripts/oaw_common.py is missing; preview `oaw.py migrate`, then --apply, to restore it") from exc
+    return oaw_common
+
+
+def project_file(root: Path, relative: str) -> Path:
+    """A project path, refused when '..', an absolute path or a symlink leads outside the project."""
+    try:
+        return Path(_common().confined_path(root, *PurePosixPath(relative).parts))
+    except ValueError as exc:
+        raise ModeError(f"{relative}: {exc}") from exc
+
+
+def read_text(root: Path, relative: str) -> str | None:
+    path = project_file(root, relative)
+    try:
+        return path.read_text(encoding="utf-8")
     except FileNotFoundError:
-        return {**DEFAULTS, "source": "default"}
-    except (OSError, ValueError) as exc:
-        raise ModeError(f"{SETTINGS_FILE} is not readable JSON ({exc}); fix or delete it") from exc
+        return None
+    except OSError as exc:
+        raise ModeError(f"cannot read {relative}: {exc}") from exc
+
+
+def update_json(root: Path, relative: str, mutate) -> dict:
+    """Read, change and write one JSON file of the project under a process lock, inside the project only."""
+    common = _common()
+    project_file(root, str(PurePosixPath(relative).parent)).mkdir(parents=True, exist_ok=True)
+    project_file(root, relative)
+    result = {}
+
+    def apply(text: str) -> str:
+        try:
+            data = json.loads(text) if text.strip() else {}
+        except ValueError as exc:
+            raise ModeError(f"{relative} is not readable JSON ({exc}); fix or delete it") from exc
+        result["data"] = mutate(data)
+        return json.dumps(result["data"], indent=2, ensure_ascii=False) + "\n"
+
+    try:
+        common.locked_update(relative, apply, root=root)
+    except ValueError as exc:
+        raise ModeError(f"{relative}: {exc}") from exc
+    except OSError as exc:
+        raise ModeError(f"cannot write {relative}: {exc}") from exc
+    return result["data"]
+
+
+def checked_settings(data, source: str) -> dict:
     review = data.get("review", {}) if isinstance(data, dict) else None
     if not isinstance(review, dict):
         raise ModeError(f'{SETTINGS_FILE} must be an object with a "review" object')
-    settings = {**DEFAULTS, **{k: v for k, v in review.items() if k in DEFAULTS}, "source": SETTINGS_FILE}
+    settings = {**DEFAULTS, **{k: v for k, v in review.items() if k in DEFAULTS}, "source": source}
     problems = []
     if settings["egm"] not in EGM_SWITCH:
         problems.append(f"review.egm must be one of {', '.join(EGM_SWITCH)}")
@@ -387,72 +451,74 @@ def load_settings(root: Path) -> dict:
     return settings
 
 
+def load_settings(root: Path) -> dict:
+    """The project's review settings: .oaw/settings.json "review", with defaults for anything missing."""
+    text = read_text(root, SETTINGS_FILE)
+    if text is None:
+        return {**DEFAULTS, "source": "default"}
+    try:
+        data = json.loads(text)
+    except ValueError as exc:
+        raise ModeError(f"{SETTINGS_FILE} is not readable JSON ({exc}); fix or delete it") from exc
+    return checked_settings(data, SETTINGS_FILE)
+
+
 def save_settings(root: Path, **changes) -> dict:
-    """Set review settings, keeping every other key of the file; written atomically."""
-    load_settings(root)  # refuse to overwrite a file that is broken
-    path = root / SETTINGS_FILE
+    """Set review settings, keeping every other key of the file; refuses to overwrite a broken file."""
+    def mutate(data):
+        checked_settings(data, SETTINGS_FILE)
+        data.setdefault("review", {}).update(changes)
+        checked_settings(data, SETTINGS_FILE)
+        return data
+
+    return checked_settings(update_json(root, SETTINGS_FILE, mutate), SETTINGS_FILE)
+
+
+def file_digest(root: Path, relative: str) -> str | None:
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except FileNotFoundError:
-        data = {}
-    data.setdefault("review", {}).update(changes)
-    write_json(path, data)
-    return load_settings(root)
-
-
-def write_json(path: Path, data) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    handle, temporary = tempfile.mkstemp(prefix=path.name + ".", suffix=".tmp", dir=path.parent)
-    try:
-        with os.fdopen(handle, "w", encoding="utf-8", newline="\n") as stream:
-            json.dump(data, stream, indent=2, ensure_ascii=False)
-            stream.write("\n")
-        os.replace(temporary, path)
-    except BaseException:
-        if os.path.exists(temporary):
-            os.unlink(temporary)
-        raise
-
-
-def file_digest(path: Path) -> str | None:
-    try:
-        return hashlib.sha256(path.read_bytes()).hexdigest()
-    except OSError:
+        return hashlib.sha256(project_file(root, relative).read_bytes()).hexdigest()
+    except (OSError, ModeError):
         return None
 
 
-def review_records(root: Path) -> list[dict]:
-    path = root / REVIEWS_DIR / "index.json"
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except FileNotFoundError:
-        return []
-    except (OSError, ValueError) as exc:
-        raise ModeError(f"{REVIEWS_DIR}/index.json is not readable JSON ({exc})") from exc
+def _records(data) -> list[dict]:
     records = data.get("reviews") if isinstance(data, dict) else None
     return [r for r in records if isinstance(r, dict)] if isinstance(records, list) else []
 
 
-def already_reviewed(root: Path, target: str) -> dict | None:
-    """The finished design review of this exact file content, if one is recorded."""
-    digest = file_digest(root / target)
+def review_records(root: Path) -> list[dict]:
+    text = read_text(root, f"{REVIEWS_DIR}/index.json")
+    if text is None:
+        return []
+    try:
+        return _records(json.loads(text))
+    except ValueError as exc:
+        raise ModeError(f"{REVIEWS_DIR}/index.json is not readable JSON ({exc})") from exc
+
+
+def already_reviewed(root: Path, target: str, how: str) -> dict | None:
+    """A finished review of this exact file content by the required kind: a full EGM review counts for any kind,
+    a lighter one never counts when EGM is required."""
+    digest = file_digest(root, target)
     if digest is None:
         return None
     return next((r for r in reversed(review_records(root))
-                 if r.get("target") == target and r.get("sha256") == digest and r.get("status") == "done"), None)
+                 if r.get("target") == target and r.get("sha256") == digest and r.get("status") == "done"
+                 and r.get("how") in (how, "egm")), None)
 
 
 def record_review(root: Path, target: str, how: str, report: str | None, status: str, tokens: int | None) -> dict:
     target = PurePosixPath(target.replace("\\", "/")).as_posix().removeprefix("./")
     if PurePosixPath(target).is_absolute() or re.match(r"[A-Za-z]:", target) or ".." in target.split("/"):
         raise ModeError(f"give the reviewed file relative to the project: {target}")
-    digest = file_digest(root / target)
+    project_file(root, target)
+    digest = file_digest(root, target)
     if digest is None:
         raise ModeError(f"cannot read the reviewed file: {target}")
     entry = {"target": target, "sha256": digest, "how": how, "status": status, "report": report,
              "tokens": tokens, "recorded": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")}
-    records = review_records(root) + [entry]
-    write_json(root / REVIEWS_DIR / "index.json", {"schema_version": 1, "reviews": records})
+    update_json(root, f"{REVIEWS_DIR}/index.json",
+                lambda data: {"schema_version": 1, "reviews": _records(data) + [entry]})
     return entry
 
 
@@ -470,8 +536,8 @@ def file_bytes(root: Path, paths: list[str]) -> int:
     total = 0
     for path in paths:
         try:
-            total += (root / path).stat().st_size
-        except OSError:
+            total += project_file(root, path).stat().st_size
+        except (OSError, ModeError):
             continue
     return total
 
@@ -513,17 +579,20 @@ def review_steps(result: dict, root: Path, settings: dict) -> list[dict]:
             if note:
                 step["note"] = note
             if targets:
-                done = [already_reviewed(root, target) for target in targets]
+                done = [already_reviewed(root, target, how) for target in targets]
                 step["done"] = all(done)
                 step["report_dir"] = f"{REVIEWS_DIR}/{datetime.now(timezone.utc):%Y-%m-%d}-{slug(targets[0])}/"
             if how == "egm":
                 if targets:
                     estimate = egm_estimate(file_bytes(root, targets))
-                    estimate["basis"] += "; covers the plan only: add the size of the context files you pass " \
-                                         "(python3 scripts/oaw_mode.py egm estimate PLAN CONTEXT...)"
+                    estimate["basis"] += "; the plan only: before running, estimate the plan with its context"
                     step["estimate"] = estimate
                     step["ask_first"] = estimate["tokens_high"] > settings["egm_max_tokens"]
-                step["do"] = ("follow the installed egm-review skill (its bridge file names the runtime) with "
+                step["estimate_command"] = ("python3 scripts/oaw_mode.py egm estimate PLAN CONTEXT... --json "
+                                            "(ask the user first when it says ask_first)")
+                step["do"] = ("run estimate_command with the plan and the context files you will pass, and ask the "
+                              "user first when it says ask_first; then follow the installed egm-review skill (its "
+                              "bridge file names the runtime) with "
                               "Step: uninterrupted, TargetFile: the plan, GoldfishContext: only the files the plan "
                               "names; write reports to report_dir; resolve the findings yourself and hand the user "
                               "only blockers you reject; then run python3 scripts/oaw_mode.py reviewed PLAN --how egm "
@@ -574,17 +643,19 @@ def instructions(mode: str, root: Path, settings: dict | None = None) -> dict:
     settings = settings or load_settings(root)
     egm = egm_hosts(root)
     switch = settings["egm"]
+    review = second_opinion_review(settings)
+    claude_review, codex_review = "review: " + review["claude"], "review: " + review["codex"]
     deep_claude = "claude --permission-mode plan --effort max"
     if mode == "light":
         summary = "light: plain session, no extra review (the default)"
         claude, codex = ["claude"], ["codex"]
     elif mode == "standard":
         summary = "standard: higher effort and one fresh-context review"
-        claude = ["claude --effort high", CLAUDE_REVIEW]
-        codex = ["codex  (effort flag not mapped yet)", CODEX_REVIEW]
+        claude = ["claude --effort high", claude_review]
+        codex = ["codex  (effort flag not mapped yet)", codex_review]
     elif switch == "off" and any(egm.values()):
         summary = "deep: plan first at the highest effort, then code review (the EGM switch is off)"
-        claude, codex = [deep_claude, CLAUDE_REVIEW], [CODEX_PLAN, CODEX_REVIEW]
+        claude, codex = [deep_claude, claude_review], [CODEX_PLAN, codex_review]
     elif any(egm.values()):
         summary = f"deep: plan first at the highest effort, then the EGM design review (EGM switch: {switch})"
         if not all(egm.values()):
@@ -594,19 +665,19 @@ def instructions(mode: str, root: Path, settings: dict | None = None) -> dict:
             claude = [deep_claude, "design review: the agent runs EGM through the oaw-review skill before any code; "
                                    "to run it yourself, type /egm-review"]
         else:
-            claude = [deep_claude, CLAUDE_REVIEW,
+            claude = [deep_claude, claude_review,
                       "note: EGM's Claude Code entrypoint is not installed here; to add it, run from the OAW checkout: "
                       + add_entrypoint(root, "claude")]
         if egm["codex"]:
             codex = [CODEX_PLAN, "review: select the egm-review skill in the skill picker"]
         else:
-            codex = [CODEX_PLAN, CODEX_REVIEW,
+            codex = [CODEX_PLAN, codex_review,
                      "note: EGM's Codex entrypoint is not installed here; to add it, run from the OAW checkout: "
                      + add_entrypoint(root, "codex")]
     else:
         summary = "deep: plan first at the highest effort, then one fresh-context review (EGM is not installed)"
-        claude = [deep_claude, CLAUDE_REVIEW]
-        codex = [CODEX_PLAN, CODEX_REVIEW]
+        claude = [deep_claude, claude_review]
+        codex = [CODEX_PLAN, codex_review]
     return {"mode": mode, "summary": summary, "egm": egm, "egm_switch": switch,
             "hosts": {"claude": claude, "codex": codex}}
 
@@ -731,13 +802,16 @@ def main(argv: list[str] | None = None) -> int:
             if args.action == "estimate":
                 if not args.files:
                     raise ModeError("estimate needs the plan and its context files")
-                missing = [path for path in args.files if not (root / path).is_file()]
+                missing = [path for path in args.files if not project_file(root, path).is_file()]
                 if missing:
                     raise ModeError("not a file in the project: " + ", ".join(missing))
+                cap = load_settings(root)["egm_max_tokens"]
                 result = egm_estimate(file_bytes(root, args.files))
+                result.update({"egm_max_tokens": cap, "ask_first": result["tokens_high"] > cap})
                 text = (f"one EGM run reading {result['bytes']:,} bytes: about {tokens_text(result['tokens_low'])}-"
                         f"{tokens_text(result['tokens_high'])} tokens, {result['minutes_low']}-{result['minutes_high']} "
-                        f"min ({result['basis']})")
+                        f"min ({result['basis']})"
+                        + (f"\nabove this project's cap of {cap:,} tokens: ask the user first" if result["ask_first"] else ""))
             else:
                 if args.files:
                     raise ModeError("files are only for estimate")

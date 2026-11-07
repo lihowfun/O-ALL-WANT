@@ -272,10 +272,18 @@ class GitDiffTests(unittest.TestCase):
 
     def test_path_list_counts_missing_paths_as_new(self):
         self.write("docs/designs/old.md", "# Old\n")
+        self.commit("old design")
         result = self.suggest("--paths", "docs/designs/old.md", "./docs/designs/new.md", str(self.repo / "src/a.py"))
         self.assertEqual(result["mode"], "deep")
         self.assertEqual(result["triggers"][0]["paths"], ["docs/designs/new.md"])
         self.assertEqual(result["source"], "path list")
+        # A plan saved a moment ago exists but HEAD does not have it: still new (codex review of 78e02e1, P1).
+        self.write("docs/plans/cache.md", "# Plan\n")
+        result = self.suggest("--paths", "docs/plans/cache.md")
+        self.assertEqual((result["mode"], result["triggers"][0]["rule"]), ("deep", "new-plan-doc"))
+        self.assertEqual([s["step"] for s in result["steps"]], ["plan", "design-review", "code-review"])
+        self.commit("plan")
+        self.assertEqual(self.suggest("--paths", "docs/plans/cache.md", "docs")["mode"], "light")
         code, _, errors = run("suggest", "--root", str(self.repo), "--paths", "../elsewhere.py")
         self.assertEqual(code, 2)
         self.assertIn("not a project path", errors)
@@ -615,6 +623,68 @@ class SwitchAndStepTests(unittest.TestCase):
                 self.assertIn(words, errors)
                 self.assertEqual(run("egm", "on", "--root", str(self.root))[0], 2, "never overwrites a broken file")
                 self.assertEqual((self.root / ".oaw/settings.json").read_text(encoding="utf-8"), content)
+
+    def test_a_lighter_review_never_stands_in_for_egm(self):
+        self.install_egm_entry()
+        self.write("docs/plans/cache.md", "# Cache plan\n")
+        self.run_ok("reviewed", "docs/plans/cache.md", "--how", "fresh-context")
+        self.assertFalse(self.steps()["design-review"]["done"], "EGM is required (codex review of 78e02e1)")
+        self.run_ok("egm", "off")
+        self.run_ok("reviewed", "docs/plans/cache.md", "--how", "egm")
+        self.run_ok("egm", "on")
+        self.assertTrue(self.steps()["design-review"]["done"])
+
+    def test_state_never_leaves_the_project_through_links(self):
+        outside = Path(tempfile.mkdtemp(prefix="oaw-mode-outside-"))
+        self.addCleanup(shutil.rmtree, outside, True)
+        (outside / "secret.md").write_text("# not ours\n", encoding="utf-8")
+        try:
+            (self.root / ".oaw").symlink_to(outside, target_is_directory=True)
+            (self.root / "linked.md").symlink_to(outside / "secret.md")
+        except (OSError, NotImplementedError):
+            self.skipTest("symlinks are not available")
+        for args in (("egm", "off"), ("reviewed", "linked.md", "--how", "egm"), ("egm", "estimate", "linked.md")):
+            with self.subTest(args=args):
+                code, _, errors = run(*args, "--root", str(self.root))
+                self.assertEqual(code, 2, errors)
+                self.assertIn("outside the project", errors)
+        self.assertEqual(sorted(p.name for p in outside.iterdir()), ["secret.md"], "nothing written outside")
+
+    def test_estimate_with_context_applies_the_cap(self):
+        self.write("docs/plans/small.md", "x" * 2_300)
+        self.write("docs/context.md", "y" * 105_000)
+        alone = self.json("egm", "estimate", "docs/plans/small.md")
+        self.assertFalse(alone["ask_first"])
+        both = self.json("egm", "estimate", "docs/plans/small.md", "docs/context.md")
+        self.assertTrue(both["ask_first"], both)
+        self.assertEqual(both["egm_max_tokens"], mode.DEFAULT_EGM_MAX_TOKENS)
+        self.assertIn("ask the user first", self.run_ok("egm", "estimate", "docs/plans/small.md", "docs/context.md"))
+
+    def test_show_follows_the_second_opinion_setting(self):
+        self.run_ok("second-opinion", "codex")
+        standard = mode.instructions("standard", self.root)["hosts"]
+        self.assertTrue(standard["claude"][1].startswith("review: codex review"), standard)
+        self.run_ok("second-opinion", "claude")
+        self.assertIn("claude -p", mode.instructions("deep", self.root)["hosts"]["codex"][1])
+
+    def test_concurrent_writers_keep_every_review(self):
+        self.write("docs/plans/a.md", "# A\n")
+        import threading
+        errors = []
+
+        def record():
+            try:
+                mode.record_review(self.root, "docs/plans/a.md", "egm", None, "done", None)
+            except Exception as exc:  # pragma: no cover - reported below
+                errors.append(exc)
+
+        threads = [threading.Thread(target=record) for _ in range(8)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+        self.assertEqual(errors, [])
+        self.assertEqual(len(mode.review_records(self.root)), 8)
 
     def test_dry_run_is_reported(self):
         self.write(".oaw/settings.json", json.dumps({"review": {"dry_run": True}}))
