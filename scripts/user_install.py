@@ -21,6 +21,7 @@ import math
 import os
 from pathlib import Path, PurePosixPath
 import re
+import shlex
 import shutil
 import stat
 import sys
@@ -277,9 +278,9 @@ def parse_source(text: str, verdicts: dict) -> dict:
     if food:
         source = core.normalize_source(food["url"])
         return {**_github(source, food.get("commit")), "input": raw, "from_verdicts": food["id"]}
-    url, ref = raw, None
-    if "@" in raw.rsplit("/", 1)[-1] and not raw.startswith("git@") or raw.count("@") > 1:
-        url, ref = raw.rsplit("@", 1)
+    if "?" in raw or "#" in raw:
+        raise InstallError(f"A GitHub source takes no query string or fragment: {core.sanitize_text(raw, 80)!r}")
+    url, ref = split_ref(raw)
     try:
         source = core.normalize_source(url)
     except core.SourceError as exc:
@@ -289,6 +290,17 @@ def parse_source(text: str, verdicts: dict) -> dict:
     if ref is not None and (not re.fullmatch(r"[A-Za-z0-9._/-]{1,200}", ref) or ref.startswith("-")):
         raise InstallError(f"Unsafe ref: {core.sanitize_text(ref, 60)!r}")
     return {**_github(source, ref or source["ref"]), "input": raw}
+
+
+_GITHUB_PREFIX = re.compile(r"(?i)git@github\.com:|(?:https?|ssh|git)://(?:[^/@]+@)?(?:www\.)?github\.com/|(?:www\.)?github\.com/")
+
+
+def split_ref(raw: str) -> tuple:
+    """`OWNER/REPO@REF` after any GitHub transport prefix -> (repository URL, REF); a REF may hold slashes."""
+    prefix = _GITHUB_PREFIX.match(raw)
+    head = prefix.group(0) if prefix else ""
+    match = re.fullmatch(r"([^/@]+)/([^/@]+)@(.+)", raw[len(head):])
+    return (head + match.group(1) + "/" + match.group(2), match.group(3)) if match else (raw, None)
 
 
 def _github(source: dict, ref) -> dict:
@@ -437,26 +449,71 @@ def support_root(package: str) -> str:
     return "${CLAUDE_PROJECT_DIR:-.}/" + SUPPORT_DIR + "/" + package
 
 
-def rewrite_command(command: str, root: str, paths) -> str:
-    """Point a hook or MCP command at the package's installed copy of the files it names. Nothing else changes."""
-    def token(match):
+_REFERENCE = re.compile(_TOKEN.pattern + "|" + _PLUGIN_ROOT.pattern)
+REWRITE_KEYS = ("command", "args", "cwd", "env", "hooks")
+
+
+def _resolve(text: str, paths) -> str | None:
+    """The one source file a command token names, or None."""
+    stripped = re.sub(r"^(?:\$\{[^}]+\}|\$[A-Za-z_]+|%[^%]+%)[/\\]?", "", text).replace("\\", "/")
+    while stripped.startswith("./"):
+        stripped = stripped[2:]
+    if stripped in paths:
+        return stripped
+    hits = [p for p in paths if p.endswith("/" + stripped)]
+    return hits[0] if len(hits) == 1 else None
+
+
+def _quote_state(command: str, end: int) -> str | None:
+    """The shell quote open at `end`: None, a double quote or a single quote."""
+    state, index = None, 0
+    while index < end:
+        char = command[index]
+        if state != "'" and char == "\\":
+            index += 2
+            continue
+        if state is None and char in "'\"":
+            state = char
+        elif state == char:
+            state = None
+        index += 1
+    return state
+
+
+def rewrite_command(command: str, root: str, paths, *, shell: bool = False, used: set | None = None) -> str:
+    """Point a hook or MCP value at the package's installed copy of the files it names. Nothing else changes.
+
+    With shell=True (a hook command) a rewritten path stays one shell word even when the project path has
+    spaces: it is double-quoted, unless it already sits in double quotes; inside single quotes the quote is
+    closed around it so the variable still expands. `used` collects the source files the value names.
+    """
+    def replace(match):
         text = match.group(0)
-        stripped = re.sub(r"^(?:\$\{[^}]+\}|\$[A-Za-z_]+|%[^%]+%)[/\\]?", "", text).replace("\\", "/")
-        while stripped.startswith("./"):
-            stripped = stripped[2:]
-        hits = [p for p in paths if p == stripped or p.endswith("/" + stripped)]
-        return f"{root}/{hits[0]}" if len(hits) == 1 else text
-    return _PLUGIN_ROOT.sub(root, _TOKEN.sub(token, command))
+        if _PLUGIN_ROOT.fullmatch(text):
+            new = root
+        else:
+            hit = _resolve(text, paths)
+            if hit is None:
+                return text
+            if used is not None:
+                used.add(hit)
+            new = f"{root}/{hit}"
+        if not shell:
+            return new
+        state = _quote_state(command, match.start())
+        return new if state == '"' else (f"'\"{new}\"'" if state == "'" else f'"{new}"')
+    return _REFERENCE.sub(replace, command)
 
 
-def _rewrite_value(value, root: str, paths):
+def _rewrite_value(value, root: str, paths, used: set, *, shell: bool = False, deep: bool = False, key: str | None = None):
+    """Rewrite every string under a command, args, cwd, env or hooks key, however deeply nested."""
     if isinstance(value, str):
-        return rewrite_command(value, root, paths)
+        return rewrite_command(value, root, paths, shell=shell and key == "command", used=used) if deep else value
     if isinstance(value, list):
-        return [_rewrite_value(item, root, paths) for item in value]
+        return [_rewrite_value(item, root, paths, used, shell=shell, deep=deep, key=key) for item in value]
     if isinstance(value, dict):
-        return {key: (_rewrite_value(item, root, paths) if key in ("command", "args", "cwd", "env", "hooks") else item)
-                for key, item in value.items()}
+        return {name: _rewrite_value(item, root, paths, used, shell=shell, deep=deep or name in REWRITE_KEYS, key=name)
+                for name, item in value.items()}
     return value
 
 
@@ -465,8 +522,7 @@ def build_parts(package: str, snapshot: dict, scan: dict) -> tuple[list, list]:
     files, modes = snapshot["files"], snapshot["modes"]
     flags = {f["id"]: f for f in scan["flags"]}
     hook_configs, mcp_configs = _hook_configs(files), _mcp_configs(files)
-    support = sorted({p for c in scan["components"] if c["kind"] in ("hook-set", "mcp-server") for p in c["paths"]
-                      if p not in hook_configs and p not in {v[0] for v in mcp_configs.values()}})
+    paths = sorted(files)
     root = support_root(package)
     parts, left_out, hook_sets = [], [], 0
     for component in scan["components"]:
@@ -499,18 +555,23 @@ def build_parts(package: str, snapshot: dict, scan: dict) -> tuple[list, list]:
                 left_out.append({"part": component["id"], "kind": kind, "files": component["file_count"], "reason": "hook 設定讀不懂"})
                 continue
             hook_sets += 1
-            groups = {event: [_rewrite_value(g, root, support) for g in entries] for event, entries in hook_configs[config]["groups"].items()}
+            used = set()
+            groups = {event: [_rewrite_value(g, root, paths, used, shell=True) for g in entries]
+                      for event, entries in hook_configs[config]["groups"].items()}
+            # Each part carries exactly the files its own commands name; a file two parts name is shared.
             parts.append({**base, "kind": "hooks", "name": f"{package}-hooks" + (f"-{hook_sets}" if hook_sets > 1 else ""),
                           "config": config, "groups": groups, "ignored_keys": hook_configs[config]["ignored"],
-                          "members": {p: p for p in component["paths"] if p != config}, "scripts": [], "needs": ["hooks"]})
+                          "members": {p: p for p in sorted(used)}, "scripts": [], "needs": ["hooks"]})
         elif kind == "mcp-server":
             found = mcp_configs.get(component["name"])
             if found is None or not SERVER_NAME.fullmatch(found[1]):
                 left_out.append({"part": component["id"], "kind": kind, "files": component["file_count"], "reason": "MCP 設定讀不懂或名稱不合規則"})
                 continue
             config, server, spec = found
-            parts.append({**base, "kind": "mcp", "name": server, "config": config, "spec": _rewrite_value(spec, root, support),
-                          "remote": bool(spec.get("url")), "members": {p: p for p in component["paths"] if p != config},
+            used = set()
+            rewritten = _rewrite_value(spec, root, paths, used)
+            parts.append({**base, "kind": "mcp", "name": server, "config": config, "spec": rewritten,
+                          "remote": bool(spec.get("url")), "members": {p: p for p in sorted(used)},
                           "scripts": [], "needs": ["mcp"]})
         else:
             left_out.append({"part": component["id"], "kind": kind, "files": component["file_count"],
@@ -538,6 +599,45 @@ def _frontmatter_edit(data: bytes, *, name: str | None, explicit: bool) -> bytes
     return (head + body + tail + text[match.end():]).encode("utf-8")
 
 
+def force_explicit_policy(data: bytes) -> bytes:
+    """A Codex agents/openai.yaml with every key kept and policy.allow_implicit_invocation forced to false.
+
+    Codex reads only this file for implicit invocation (default true); Claude's frontmatter flag does not reach it.
+    Handles a block or flow `policy:` mapping in the simple YAML these files use, or appends one.
+    """
+    lines = data.decode("utf-8", "replace").splitlines()
+    for index, line in enumerate(lines):
+        match = re.match(r"policy:[ \t]*(.*?)[ \t]*(#.*)?$", line)
+        if not match:
+            continue
+        inline = match.group(1)
+        if inline.startswith("{") and inline.endswith("}"):
+            body = inline[1:-1].strip()
+            if re.search(r"\ballow_implicit_invocation\s*:", body):
+                body = re.sub(r"(\ballow_implicit_invocation\s*:\s*)[^,}]*", r"\1false", body)
+            else:
+                body = "allow_implicit_invocation: false" + (", " + body if body else "")
+            lines[index] = "policy: {" + body + "}"
+            break
+        if inline:
+            lines[index] = "policy:"
+        end = index + 1
+        while end < len(lines) and (not lines[end].strip() or lines[end][:1] in " \t"):
+            end += 1
+        block = lines[index + 1:end]
+        indent = next((re.match(r"[ \t]+", item).group(0) for item in block if item.strip() and not item.lstrip().startswith("#")), "  ")
+        for offset, item in enumerate(block):
+            if re.match(r"[ \t]+allow_implicit_invocation\s*:", item):
+                lines[index + 1 + offset] = f"{indent}allow_implicit_invocation: false"
+                break
+        else:
+            lines.insert(index + 1, f"{indent}allow_implicit_invocation: false")
+        break
+    else:
+        lines += ["policy:", "  allow_implicit_invocation: false"]
+    return ("\n".join(lines) + "\n").encode("utf-8")
+
+
 def part_files(part: dict, package: str, hosts: list, files: dict, modes: dict) -> dict:
     """Project path -> (bytes, mode) that one part writes."""
     out, renamed = {}, part["renamed_from"] is not None
@@ -548,6 +648,8 @@ def part_files(part: dict, package: str, hosts: list, files: dict, modes: dict) 
                 data = files[source]
                 if inner == "SKILL.md" and (renamed or part["explicit_only"]):
                     data = _frontmatter_edit(data, name=part["name"] if renamed else None, explicit=part["explicit_only"])
+                if inner == "agents/openai.yaml" and part["explicit_only"]:
+                    data = force_explicit_policy(data)
                 out[prefix + inner] = (data, 0o755 if modes.get(source) == "100755" else 0o644)
             if part["explicit_only"] and host == "codex" and "agents/openai.yaml" not in part["members"].values():
                 out[prefix + "agents/openai.yaml"] = (EXPLICIT_YAML, 0o644)
@@ -584,6 +686,16 @@ def load_record(target: Path) -> dict:
     for package, entry in record["packages"].items():
         if not NAME.fullmatch(package) or not isinstance(entry.get("parts"), dict):
             raise InstallError(f"Invalid package in {RECORD_PATH}: {package!r}")
+        # Parts are keyed KIND:NAME (a skill and an MCP server may share a name); a record keyed by name alone
+        # (the first 2.0.1 drafts) is read the same way and written back in the new form.
+        rekeyed = {}
+        for key, part in entry["parts"].items():
+            if not isinstance(part, dict) or not isinstance(part.get("kind"), str) or not isinstance(part.get("name"), str):
+                raise InstallError(f"Invalid part in {RECORD_PATH}: {package}/{key!r}")
+            rekeyed[part_key(part)] = part
+        if len(rekeyed) != len(entry["parts"]):
+            raise InstallError(f"Duplicate parts in {RECORD_PATH}: {package}")
+        entry["parts"] = rekeyed
         for part in entry["parts"].values():
             for item in part.get("files", []):
                 oaw.relative_path(item["path"])
@@ -596,6 +708,10 @@ def load_record(target: Path) -> dict:
         if relative not in SHARED_FILES or (baseline.get("backup") and not baseline["backup"].startswith(STATE_DIR + "/")):
             raise InstallError("Record names an unknown shared settings baseline.")
     return record
+
+
+def part_key(part: dict) -> str:
+    return f"{part['kind']}:{part['name']}"
 
 
 def record_bytes(record: dict) -> bytes:
@@ -935,11 +1051,14 @@ def plan_add(target, sources, *, choice=None, consent=None, on_conflict=(), host
                               if part["status"] in ("install", "needs-consent", "needs-decision") else {})
             if part["status"] != "install":
                 continue
-            clash = next((path for path in part["writes"] if path in writers), None)
+            shared_root = f"{SUPPORT_DIR}/{package['name']}/"
+            clash = next((path for path in part["writes"] if path in writers
+                          and not (path.startswith(shared_root) and writers[path][0] == package["name"])), None)
             if clash:
-                part["status"], part["reason"] = "blocked", f"和 {writers[clash]} 寫同一個檔案 {clash}"
+                part["status"], part["reason"] = "blocked", f"和 {writers[clash][1]} 寫同一個檔案 {clash}"
                 continue
-            writers.update({path: f"{package['name']}/{part['name']}" for path in part["writes"]})
+            for path in part["writes"]:
+                writers.setdefault(path, (package["name"], f"{package['name']}/{part['name']}"))
     events = {}
     for package in packages:
         for part in package["parts"]:
@@ -994,7 +1113,7 @@ def _shared_entries(part: dict) -> list:
 def commit_parts(target: Path, plan: dict) -> dict:
     """Write every part to install with its change record, under OAW's install lock. All or nothing."""
     installing = [(package, part) for package in plan["packages"] for part in package["parts"] if part["status"] == "install"]
-    undo, stamp = [], now_iso()
+    undo, stamp, written = [], now_iso(), {}
     with oaw.install_lock(target):
         record = load_record(target)
         if record_bytes(record) != record_bytes(plan["record"]):
@@ -1014,6 +1133,9 @@ def commit_parts(target: Path, plan: dict) -> dict:
                         if root.is_dir():
                             deletes |= {p.relative_to(target).as_posix() for p in root.rglob("*") if p.is_file()} - set(part["writes"])
                 for relative in sorted(set(part["writes"]) | deletes):
+                    if relative in written:
+                        files_record.append(dict(written[relative]))  # a support file another part of this source also runs
+                        continue
                     before = _read(target, relative)
                     backup = None
                     if before is not None:
@@ -1029,6 +1151,7 @@ def commit_parts(target: Path, plan: dict) -> dict:
                         _write(target, relative, data, mode)
                         files_record.append({"path": relative, "sha256": sha(data), "mode": oct(mode), "previous_sha256": sha(before) if before is not None else None,
                                              "backup": backup})
+                        written[relative] = files_record[-1]
                     else:
                         _delete(target, relative)
                         files_record.append({"path": relative, "sha256": None, "previous_sha256": sha(before), "backup": backup})
@@ -1061,7 +1184,7 @@ def commit_parts(target: Path, plan: dict) -> dict:
                         item["had_previous"] = key in node
                         node[key] = copy.deepcopy(item["value"])
                     entries.append(item)
-                entry["parts"][part["name"]] = {
+                entry["parts"][part_key(part)] = {
                     "name": part["name"], "kind": part["kind"], "renamed_from": part["renamed_from"],
                     "explicit_only": part["explicit_only"], "needs": part["needs"], "scripts": len(part["scripts"]),
                     "background": part["background"], "events": sorted(part.get("groups", {})), "remote": part.get("remote", False),
@@ -1204,15 +1327,46 @@ def question_text(plan: dict) -> str:
     return "\n".join(lines)
 
 
-def suggested_command(plan: dict, sources) -> str:
-    parts = ["python3", "<OAW>/scripts/oaw.py", "add", *sources, "--target", ".", "--choice", plan["choice"]]
+WINDOWS_SHELL_CHARS = re.compile(r'[$`%!^&|<>()"\';]')
+
+
+def command_line(argv: list, *, platform: str = os.name) -> str | None:
+    """argv as one command a shell runs with every value as one plain argument.
+
+    POSIX quotes with shlex. On Windows the shell (cmd or PowerShell) is unknown and double quotes do not stop
+    $(...), %VAR% or backticks there, so a value with shell characters gets no command (None): use --json's argv.
+    """
+    if platform != "nt":
+        return shlex.join(argv)
+    words = []
+    for value in argv:
+        if WINDOWS_SHELL_CHARS.search(value):
+            return None
+        words.append(value if re.fullmatch(r"[\w./:@+~\\-]+", value) else f'"{value}"')
+    return " ".join(words)
+
+
+def suggested_argv(plan: dict) -> list:
+    """The `add --apply` that answers the question as previewed: same sources, target and hosts."""
+    sources = [package["source"]["path"] or package["source"]["input"] for package in plan["packages"]]
+    host = "both" if len(plan["hosts"]) > 1 else plan["hosts"][0]
+    argv = [sys.executable or "python3", str(oaw.framework_root() / "scripts" / "oaw.py"), "add", *sources,
+            "--target", str(plan["target"]), "--host", host, "--choice", plan["choice"]]
     needs = sorted({n for pk in plan["packages"] for p in pk["parts"] for n in p["needs"]
                     if p["status"] in ("install", "needs-consent", "needs-decision")})
     if needs:
-        parts += ["--consent", ",".join(needs) if plan["consents"] is None else (",".join(sorted(plan["consents"])) or "none")]
+        argv += ["--consent", ",".join(needs) if plan["consents"] is None else (",".join(sorted(plan["consents"])) or "none")]
     for conflict in plan["conflicts"]:
-        parts += ["--on-conflict", f"{conflict['subject']}={conflict['decision'] or conflict['options'][0]}"]
-    return " ".join(parts + ["--apply"])
+        argv += ["--on-conflict", f"{conflict['subject']}={conflict['decision'] or conflict['options'][0]}"]
+    return argv + ["--apply"]
+
+
+def suggested_command(plan: dict) -> str | None:
+    return command_line(suggested_argv(plan))
+
+
+def _command_text(command: str | None) -> str:
+    return command or ("這個指令有 Windows shell 會展開的字元，所以不印可以直接執行的版本；請用 --json 的 apply_argv。")
 
 
 def _runs_text(part: dict) -> str:
@@ -1297,7 +1451,9 @@ def receipt_rows(target: Path, manifest: dict | None, record: dict, verdicts: di
                        else {"status": "untasted"})
         else:
             tasting = tasting_status(target, {"key": source["key"], "commit": source.get("commit")}, verdicts)
-        for name, part in sorted(entry["parts"].items()):
+        names = [part["name"] for part in entry["parts"].values()]
+        for name, part in sorted(((part["name"], part) for part in entry["parts"].values()), key=lambda item: (item[0], item[1]["kind"])):
+            remove_as = part_key(part) if names.count(name) > 1 else name
             if part["kind"] == "skill":
                 skill_file = next((f["path"] for f in part["files"] if f["path"].endswith("/SKILL.md") and f.get("sha256")), None)
                 startup = _skill_startup(oaw.joined(target, skill_file)) if skill_file else "未知"
@@ -1324,7 +1480,7 @@ def receipt_rows(target: Path, manifest: dict | None, record: dict, verdicts: di
                 label += "，只在你叫它時用"
             rows.append({"skill": label, "kind": part["kind"], "package": package, "source": origin, "added_by": "你",
                          "tasting": tasting_text(tasting, package), "startup": startup, "runs": "、".join(runs) or "無",
-                         "remove": f"oaw.py remove {name}"})
+                         "remove": f"oaw.py remove {remove_as}"})
     return rows
 
 
@@ -1365,8 +1521,16 @@ def _matches(record: dict, name: str) -> list:
     """(package, part names) that `remove NAME` means: a whole package, or the parts with that name."""
     if name in record["packages"]:
         return [(name, sorted(record["packages"][name]["parts"]))]
-    found = [(package, [part]) for package, entry in record["packages"].items() for part in entry["parts"] if part == name]
-    if len({package for package, _parts in found}) > 1:
+    exact = [(package, [name]) for package, entry in record["packages"].items() if name in entry["parts"]]
+    if exact:
+        return exact
+    found = {}
+    for package, entry in record["packages"].items():
+        for key, part in entry["parts"].items():
+            if part["name"] == name:
+                found.setdefault(package, []).append(key)
+    found = sorted(found.items())
+    if len(found) > 1:
         raise InstallError(f"{name} names parts of several additions ({', '.join(p for p, _ in found)}); remove one of those instead.")
     return found
 
@@ -1406,12 +1570,22 @@ def plan_remove(target: Path, record: dict, name: str) -> dict:
     matches = _matches(record, name)
     if not matches:
         raise InstallError(f"{core.sanitize_text(name, 80)!r} is not something you added; `oaw.py list` shows what is here.")
-    files, entries, conflicts = [], [], []
+    files, entries, conflicts, shared = [], [], [], []
     removing = {(package, part) for package, parts in matches for part in parts}
+    # A support file another remaining part still runs stays; one that several removed parts list is handled once.
+    still_used = {item["path"] for package, entry in record["packages"].items() for key, part in entry["parts"].items()
+                  if (package, key) not in removing for item in part["files"] if item.get("sha256")}
+    seen = set()
     for package, parts in matches:
         for part_name in parts:
             part = record["packages"][package]["parts"][part_name]
             for item in part["files"]:
+                if item["path"] in seen:
+                    continue
+                seen.add(item["path"])
+                if item["path"] in still_used:
+                    shared.append(item["path"])
+                    continue
                 current = _read(target, item["path"])
                 current_sha = sha(current) if current is not None else None
                 backup = _read(target, item["backup"]) if item.get("backup") else None
@@ -1437,7 +1611,7 @@ def plan_remove(target: Path, record: dict, name: str) -> dict:
                 if not still:
                     retire_back.append(skill)
     return {"matches": matches, "removing": removing, "files": files, "entries": entries, "conflicts": conflicts,
-            "restore_oaw": sorted(set(retire_back))}
+            "shared": shared, "restore_oaw": sorted(set(retire_back))}
 
 
 def remove(target, name: str, *, dry_run: bool = False, apply_builtin: bool = False) -> dict:
@@ -1452,6 +1626,8 @@ def remove(target, name: str, *, dry_run: bool = False, apply_builtin: bool = Fa
         lines.append(f"  {({'restore': '還原', 'delete': '刪除', 'gone': '已不在'})[item['action']]:4} {item['path']}")
     for entry in plan["entries"]:
         lines.append(f"  移除設定 {entry['file']} {'.'.join(entry['pointer'])}")
+    for path in plan["shared"]:
+        lines.append(f"  留著 {path}：同一個來源還有別的部分會執行它")
     for conflict in plan["conflicts"]:
         lines.append(f"  留著 {conflict['path']}：{conflict['reason']}")
     if plan["restore_oaw"]:
@@ -1504,7 +1680,7 @@ def remove(target, name: str, *, dry_run: bool = False, apply_builtin: bool = Fa
                     _delete(target, relative)
             elif doc != _json_doc(current, relative):
                 _write(target, relative, _json_bytes(doc, current))
-        conflict_paths = {c["path"] for c in plan["conflicts"]}
+        conflict_paths = {c["path"] for c in plan["conflicts"]} | set(plan["shared"])
         for package, parts in plan["matches"]:
             entry = record["packages"][package]
             for part_name in parts:
@@ -1591,7 +1767,7 @@ def doctor_checks(target: Path) -> list:
             docs[relative] = None
             checks.append({"status": "WARN", "path": relative, "detail": str(exc)})
     for package, entry in sorted(record["packages"].items()):
-        for name, part in sorted(entry["parts"].items()):
+        for name, part in sorted(((part["name"], part) for part in entry["parts"].values()), key=lambda item: (item[0], item[1]["kind"])):
             for item in part["files"]:
                 if not item.get("sha256"):
                     continue
@@ -1664,9 +1840,10 @@ def add(target, sources, *, choice=None, consent=None, on_conflict=(), host=None
                   "default_choice": plan["default_choice"], "hosts": plan["hosts"], "oaw_step": _step_view(plan["oaw_step"]),
                   "packages": [_package_view(p) for p in plan["packages"]], "conflicts": plan["conflicts"],
                   "consent_needed": {k: [p["name"] for p in v] for k, v in plan["consent_needed"].items()},
-                  "notes": plan["notes"], "question": question_text(plan), "apply_command": suggested_command(plan, sources)}
+                  "notes": plan["notes"], "question": question_text(plan), "apply_command": suggested_command(plan),
+                  "apply_argv": suggested_argv(plan)}
         result["lines"] = preview_lines(plan, sources) + ["", "預覽：沒有寫任何檔案。要裝請回答下面這一題（或直接用最後一行的指令）：",
-                                                          question_text(plan), "", result["apply_command"]]
+                                                          question_text(plan), "", _command_text(result["apply_command"])]
         return result, 0
     plan_args.update(verdicts=plan["verdicts"], snapshots=plan["snapshots"], consent=plan["consents"], choice=plan["choice"],
                      on_conflict=plan_args["on_conflict"])
@@ -1675,8 +1852,8 @@ def add(target, sources, *, choice=None, consent=None, on_conflict=(), host=None
     except NeedsChoice as exc:
         result = {"status": "needs-choice", "target": str(plan["target"]), "error": str(exc), "question": question_text(exc.plan),
                   "conflicts": exc.plan["open_conflicts"], "consent_needed": {k: [p["name"] for p in v] for k, v in exc.plan["consent_needed"].items()},
-                  "apply_command": suggested_command(exc.plan, sources)}
-        result["lines"] = [str(exc), question_text(exc.plan), "", result["apply_command"]]
+                  "apply_command": suggested_command(exc.plan), "apply_argv": suggested_argv(exc.plan)}
+        result["lines"] = [str(exc), question_text(exc.plan), "", _command_text(result["apply_command"])]
         return result, EXIT_CHOICE
     result["lines"] = [f"OAW add：完成（{CHOICE_ZH[result['choice']]}）"]
     if result["oaw_step"]["kind"] != "none":

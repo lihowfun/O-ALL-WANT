@@ -5,7 +5,10 @@ import io
 import json
 import os
 from pathlib import Path
+import shlex
+import shutil
 import stat
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -197,7 +200,7 @@ class UserInstallTests(unittest.TestCase):
         commands = [h["command"] for group in hooks["PreToolUse"] for h in group["hooks"]]
         self.assertEqual(commands[0], "echo mine")
         self.assertIn('python3 "${CLAUDE_PROJECT_DIR:-.}/.claude/oaw-user/hooky/hooks/guard.py"', commands)
-        self.assertIn("bash ${CLAUDE_PROJECT_DIR:-.}/.claude/oaw-user/pinger/hooks/ping.sh", commands)
+        self.assertIn('bash "${CLAUDE_PROJECT_DIR:-.}/.claude/oaw-user/pinger/hooks/ping.sh"', commands)
         self.assertTrue((self.project / ".claude/oaw-user/hooky/hooks/guard.py").is_file())
         servers = json.loads((self.project / ".mcp.json").read_text(encoding="utf-8"))["mcpServers"]
         self.assertEqual(sorted(servers), ["hooky-server", "mine"])
@@ -235,7 +238,7 @@ class UserInstallTests(unittest.TestCase):
         self.assertFalse(any(p in after for p in hooky_paths))
         hooks = json.loads(after[".claude/settings.json"][0])["hooks"]
         self.assertEqual([h["command"] for group in hooks["PreToolUse"] for h in group["hooks"]],
-                         ["echo mine", "bash ${CLAUDE_PROJECT_DIR:-.}/.claude/oaw-user/pinger/hooks/ping.sh"])
+                         ["echo mine", 'bash "${CLAUDE_PROJECT_DIR:-.}/.claude/oaw-user/pinger/hooks/ping.sh"'])
         self.assertNotIn("SessionStart", hooks)
         self.assertEqual(after[".mcp.json"][0], mcp)
         self.assertNotIn("hooky", json.loads(after[".oaw/user-skills.json"][0])["packages"])
@@ -531,7 +534,7 @@ class UserInstallTests(unittest.TestCase):
         record = json.loads(path.read_text(encoding="utf-8"))
         for bad in ("AGENTS.md", "../outside", ".git/config"):
             tampered = json.loads(json.dumps(record))
-            tampered["packages"]["mapper"]["parts"]["mapper"]["files"][0]["path"] = bad
+            tampered["packages"]["mapper"]["parts"]["skill:mapper"]["files"][0]["path"] = bad
             path.write_text(json.dumps(tampered), encoding="utf-8")
             with self.assertRaises(oaw.InstallError):
                 user_install.load_record(self.project)
@@ -547,6 +550,156 @@ class UserInstallTests(unittest.TestCase):
         self.assertEqual(result["checkout_setting"], str(setting))
         self.assertEqual(json.loads(setting.read_text(encoding="utf-8"))["path"], str(ROOT.resolve()))
         self.assertFalse(any("checkout.json" in p.name for p in self.project.rglob("*")))
+
+    # ------------------------------------------------------------------ review round 12
+
+    def test_apply_command_is_quoted_and_sources_with_queries_are_refused(self):
+        verdicts = user_install.load_verdicts()
+        for bad in ("https://github.com/owner/repo?x=$(id)", "https://github.com/owner/repo#$(id)", "owner/repo?ref=main"):
+            with self.assertRaises(oaw.InstallError, msg=bad):
+                user_install.parse_source(bad, verdicts)
+        odd = self.sources / "my skill $(id)"
+        self.put(odd, "SKILL.md", "---\nname: odd\ndescription: A skill in an oddly named folder.\n---\n\nOdd.\n")
+        out = io.StringIO()
+        with redirect_stdout(out), redirect_stderr(io.StringIO()):
+            self.assertEqual(oaw.main(["add", str(odd), "--target", str(self.project), "--json"]), 0)
+        preview = json.loads(out.getvalue())
+        self.assertIn(str(odd), preview["apply_argv"])
+        if os.name != "nt":
+            words = shlex.split(preview["apply_command"])
+            self.assertEqual(words, preview["apply_argv"])
+            self.assertIn(str(odd), words)
+        self.assertEqual(user_install.command_line(["python3", "a b"], platform="posix"), "python3 'a b'")
+        self.assertEqual(user_install.command_line(["python3", "a b"], platform="nt"), 'python3 "a b"')
+        self.assertIsNone(user_install.command_line(["python3", "$(id)"], platform="nt"))
+        self.assertIsNone(user_install.command_line(["python3", "100%"], platform="nt"))
+
+    def test_apply_command_reproduces_target_and_hosts(self):
+        preview = self.add("mapper", host="claude")
+        argv = preview["apply_argv"]
+        self.assertEqual(argv[argv.index("--target") + 1], str(self.project))
+        self.assertEqual(argv[argv.index("--host") + 1], "claude")
+        self.init()
+        self.cli("init", "--host", "both")
+        argv = self.add("mapper")["apply_argv"]
+        self.assertEqual(argv[argv.index("--host") + 1], "both")
+
+    def test_parts_sharing_one_name_across_kinds_are_all_recorded_and_removed(self):
+        same = self.sources / "same"
+        self.put(same, "skills/foo/SKILL.md", "---\nname: foo\ndescription: Foo skill.\n---\n\nFoo.\n")
+        self.put(same, "agents/foo.md", "---\nname: foo\ndescription: Foo agent.\n---\n\nAgent.\n")
+        self.put(same, ".mcp.json", json.dumps({"mcpServers": {"foo": {"command": "python3", "args": ["srv/foo.py"]}}}))
+        self.put(same, "srv/foo.py", self.runs("foo-server"))
+        self.init()
+        before = tree(self.project)
+        self.cli("add", str(same), "--choice", "oaw", "--consent", "all", "--apply")
+        record = json.loads((self.project / ".oaw/user-skills.json").read_text(encoding="utf-8"))
+        parts = record["packages"]["same"]["parts"]
+        self.assertEqual(sorted((p["kind"], p["name"]) for p in parts.values()), [("agent", "foo"), ("mcp", "foo"), ("skill", "foo")])
+        rows = [row for row in self.cli("list")["receipt"] if row.get("package") == "same"]
+        self.assertEqual(len(rows), 3)
+        self.cli("remove", "same")
+        self.assertEqual(tree(self.project), before)
+        self.assert_nothing_ran()
+
+    def test_old_records_keyed_by_name_still_load(self):
+        self.add("mapper", choice="oaw", on_conflict=["mapper=keep-both"], apply=True)
+        path = self.project / ".oaw/user-skills.json"
+        record = json.loads(path.read_text(encoding="utf-8"))
+        record["packages"]["mapper"]["parts"] = {"mapper": next(iter(record["packages"]["mapper"]["parts"].values()))}
+        path.write_text(json.dumps(record), encoding="utf-8")
+        self.assertEqual(list(user_install.load_record(self.project)["packages"]["mapper"]["parts"]), ["skill:mapper"])
+        self.cli("remove", "mapper")
+        self.assertFalse((self.project / ".agents/skills/mapper").exists())
+
+    def test_each_mcp_server_keeps_its_own_scripts(self):
+        pair = self.sources / "pair"
+        self.put(pair, ".mcp.json", json.dumps({"mcpServers": {"first": {"command": "python3", "args": ["first.py"]},
+                                                               "second": {"command": "python3", "args": ["second.py"]}}}))
+        self.put(pair, "first.py", self.runs("first"))
+        self.put(pair, "second.py", self.runs("second"))
+        self.put(pair, "hooks/hooks.json", json.dumps({"hooks": {"Stop": [{"hooks": [{"type": "command", "command": "python3 common.py"}]}]}}))
+        self.put(pair, "common.py", self.runs("common"))
+        self.put(pair, "third.json", "{}")
+        servers_spec = json.loads((pair / ".mcp.json").read_text(encoding="utf-8"))
+        servers_spec["mcpServers"]["third"] = {"command": "python3", "args": ["common.py"]}
+        (pair / ".mcp.json").write_text(json.dumps(servers_spec), encoding="utf-8")
+        self.init()
+        self.cli("add", str(pair), "--choice", "oaw", "--consent", "all", "--apply")
+        support = self.project / ".claude/oaw-user/pair"
+        self.assertTrue(all((support / name).is_file() for name in ("first.py", "second.py", "common.py")))
+        result = self.cli("remove", "first")
+        self.assertEqual(result["conflicts"], [])
+        self.assertFalse((support / "first.py").exists())
+        self.assertTrue((support / "second.py").is_file())
+        self.assertEqual(sorted(json.loads((self.project / ".mcp.json").read_text(encoding="utf-8"))["mcpServers"]), ["second", "third"])
+        self.cli("remove", "pair-hooks")
+        self.assertTrue((support / "common.py").is_file(), "the third server still runs common.py")
+        self.cli("remove", "third")
+        self.assertFalse((support / "common.py").exists())
+        self.cli("remove", "second")
+        self.assertFalse(support.exists())
+        self.assert_nothing_ran()
+
+    def test_explicit_oaw_skills_ship_a_codex_policy(self):
+        for name in ("oaw-add", "oaw-codemap"):
+            policy = ROOT / "templates/.agents/skills" / name / "agents/openai.yaml"
+            self.assertRegex(policy.read_text(encoding="utf-8"), r"(?m)^policy:\n  allow_implicit_invocation: false$")
+        self.init()
+        for name in ("oaw-add", "oaw-codemap"):
+            self.assertTrue((self.project / ".agents/skills" / name / "agents/openai.yaml").is_file())
+
+    def test_explicit_only_keeps_a_shipped_openai_yaml_and_forces_the_policy(self):
+        self.put(self.sources, "mapper/agents/openai.yaml",
+                 'interface:\n  display_name: "Mapper"\npolicy:\n  allow_implicit_invocation: true\n  other: kept\n')
+        self.add("mapper", choice="recommended", apply=True)
+        text = (self.project / ".agents/skills/mapper/agents/openai.yaml").read_text(encoding="utf-8")
+        self.assertIn('display_name: "Mapper"', text)
+        self.assertIn("other: kept", text)
+        self.assertIn("allow_implicit_invocation: false", text)
+        self.assertNotIn("allow_implicit_invocation: true", text)
+        merged = user_install.force_explicit_policy(b'interface:\n  display_name: "X"\n')
+        self.assertTrue(merged.decode().endswith("policy:\n  allow_implicit_invocation: false\n"))
+        self.assertIn(b"allow_implicit_invocation: false", user_install.force_explicit_policy(b"policy: {allow_implicit_invocation: true}\n"))
+
+    def test_mcp_env_values_point_at_the_installed_copy(self):
+        envy = self.sources / "envy"
+        self.put(envy, ".mcp.json", json.dumps({"mcpServers": {"envy": {
+            "command": "python3", "args": ["${CLAUDE_PLUGIN_ROOT}/srv.py"],
+            "env": {"PLUGIN_HOME": "${CLAUDE_PLUGIN_ROOT}", "TOOL": "${CLAUDE_PLUGIN_ROOT}/srv.py", "NESTED": ["${CLAUDE_PLUGIN_ROOT}"]}}}}))
+        self.put(envy, "srv.py", self.runs("envy"))
+        self.cli("add", str(envy), "--choice", "only", "--consent", "mcp", "--apply")
+        spec = json.loads((self.project / ".mcp.json").read_text(encoding="utf-8"))["mcpServers"]["envy"]
+        root = "${CLAUDE_PROJECT_DIR:-.}/.claude/oaw-user/envy"
+        self.assertEqual(spec["env"], {"PLUGIN_HOME": root, "TOOL": root + "/srv.py", "NESTED": [root]})
+        self.assertNotIn("CLAUDE_PLUGIN_ROOT", json.dumps(spec))
+
+    def test_hook_paths_stay_one_argument_in_a_project_with_spaces(self):
+        self.project = self.base / "my project"
+        self.project.mkdir()
+        self.add("hooky", choice="only", consent="all", apply=True)
+        hooks = json.loads((self.project / ".claude/settings.json").read_text(encoding="utf-8"))["hooks"]
+        start = hooks["SessionStart"][0]["hooks"][0]["command"]
+        guard = hooks["PreToolUse"][0]["hooks"][0]["command"]
+        self.assertEqual(start, 'bash "${CLAUDE_PROJECT_DIR:-.}/.claude/oaw-user/hooky/hooks/start.sh"')
+        self.assertEqual(guard, 'python3 "${CLAUDE_PROJECT_DIR:-.}/.claude/oaw-user/hooky/hooks/guard.py"')
+        self.assertEqual(user_install.rewrite_command("cd '${CLAUDE_PLUGIN_ROOT}/x.sh'", "${R:-.}/p", ["x.sh"], shell=True),
+                         "cd ''\"${R:-.}/p/x.sh\"''")
+        shell = shutil.which("sh")
+        if shell and os.name != "nt":
+            # Only printf runs: the hook's own script is never executed.
+            probe = subprocess.run([shell, "-c", "printf '%s\\n' " + start.removeprefix("bash ")], capture_output=True, text=True,
+                                   env={**os.environ, "CLAUDE_PROJECT_DIR": str(self.project)}, check=True)
+            self.assertEqual(probe.stdout.splitlines(), [str(self.project / ".claude/oaw-user/hooky/hooks/start.sh")])
+        self.assert_nothing_ran()
+
+    def test_github_refs_may_contain_slashes(self):
+        verdicts = user_install.load_verdicts()
+        for text, ref in (("https://github.com/owner/repo@feature/branch", "feature/branch"), ("owner/repo@feature/x", "feature/x"),
+                          ("git@github.com:owner/repo@v1", "v1"), ("https://github.com/owner/repo/tree/main", "main"),
+                          ("github.com/owner/repo.git@release/2.0", "release/2.0")):
+            source = user_install.parse_source(text, verdicts)
+            self.assertEqual((source["key"], source["ref"]), ("github.com/owner/repo", ref), text)
 
 
 class VerdictsTests(unittest.TestCase):

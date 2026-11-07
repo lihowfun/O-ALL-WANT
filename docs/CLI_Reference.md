@@ -34,8 +34,8 @@ are disabled; this is selection, not a new product named after a combination.
 
 ## Your own skills: add, list, remove
 
-Run these from the OAW checkout, like `init`. A SOURCE is a GitHub repository (optionally `URL@ref`), a local
-folder, or a food name from OAW's shipped tasting results (`catalog/verdicts.json`; that installs the commit OAW
+Run these from the OAW checkout, like `init`. A SOURCE is a GitHub repository (optionally `URL@REF`, where REF
+may contain slashes; no query string or fragment), a local folder, or a food name from OAW's shipped tasting results (`catalog/verdicts.json`; that installs the commit OAW
 tasted).
 
 ```bash
@@ -48,22 +48,27 @@ python3 scripts/oaw.py remove NAME --target PROJECT [--dry-run] [--apply] [--jso
   choice (`oaw` = OAW plus these, the default; `only` = only these, OAW just keeps the receipt and can remove and
   restore; `recommended` = from OAW's tasting records), every conflict, and consent for what runs on its own.
   Elsewhere pass the answer as flags with `--apply`; a missing answer returns exit 3 with the question
-  (`question` and `apply_command` in `--json`).
+  (`question`, `apply_command` and `apply_argv` in `--json`). The command repeats the preview's sources, target
+  and hosts with every value quoted for the shell; on Windows a value with shell characters gets no
+  `apply_command`, so use `apply_argv`.
 - Conflicts are structural and free: a same-named skill, agent or MCP server (`rename[:NEW]`, `skip`, `replace`) and
   a declared category overlap with an OAW skill, such as a second code map (`keep-both`, `use-theirs` retires OAW's
   skill until you remove theirs, `use-oaw` skips theirs). Several hooks on one event and several MCP servers are
   reported. Semantic overlap is left to the `oaw-add` skill (choice 3 or on request).
 - Consent (owner decision D34): hooks merge into `.claude/settings.json`, MCP servers into `.mcp.json`, and the files
-  they run go to `.claude/oaw-user/<source>/` with `${CLAUDE_PLUGIN_ROOT}` and relative paths pointed there. A
-  skill's bundled scripts stay in its folder (`scripts`). Without consent those parts are not installed. Fetched
+  they run go to `.claude/oaw-user/<source>/` with `${CLAUDE_PLUGIN_ROOT}` and relative paths pointed there
+  (every string under `command`, `args`, `cwd` and `env`; a hook command keeps each path one quoted shell word).
+  Each hook set or server carries only the files its own commands name; a file two of them name stays until the
+  last one is removed. A skill's bundled scripts stay in its folder (`scripts`). Without consent those parts are not installed. Fetched
   code is never executed, imported or built; dependencies are listed, not installed.
 - `recommended`: a tasting outcome of default installs as is, optional installs as explicit-only
-  (`disable-model-invocation: true`), excrete is not installed (with the condition it was tasted under), and no
+  (`disable-model-invocation: true` for Claude and `agents/openai.yaml` `policy.allow_implicit_invocation: false`
+  for Codex, keeping the rest of a shipped file), excrete is not installed (with the condition it was tasted under), and no
   record installs it marked 未試吃. Consent is still yours.
 - Skills go to `.agents/skills/` and/or `.claude/skills/` by the project's hosts, agents and commands to
   `.claude/agents/` and `.claude/commands/`. `.oaw/user-skills.json` records, per part, every file written (with the
   earlier content's hash and a backup under `.oaw/user-skills/`) and every settings entry added.
-- `remove NAME` (a part or a whole source) restores those files byte for byte and removes only its entries; a file
+- `remove NAME` (a part, every part of that name, `KIND:NAME` for one of them, or a whole source) restores those files byte for byte and removes only its entries; a file
   or entry you changed since stays and is reported. When nothing of yours is left in a settings file, its original
   bytes come back. A built-in OAW skill is removed through migrate: preview, then `--apply`.
 - `list` and the end of `add` print the receipt: skill, source, added by, tasting result (from records only; 未試吃
