@@ -1271,6 +1271,9 @@ def _js_record(text):
         name_at = total - chain_start - len(parts[-1])
         chain = ".".join(parts)
         receiver = None
+        dot = total - found.end("lead")
+        if lead.startswith(".") and code[max(0, dot - 2):dot] == "..":  # ...spread, not a receiver
+            lead = ""
         if lead.startswith("."):
             chain = "?." + chain
             receiver = total - found.end("lead") - 1  # the receiver ends here (whitespace allowed)
@@ -1306,7 +1309,7 @@ def _js_record(text):
         if index is not None:
             if body is None or extra[index][2] is not None:
                 return False
-            defs[index][2:] = [line_of(start), line_of(end)]
+            defs[index][1:] = [kind, line_of(start), line_of(end)]
             extra[index] = (start, end, body)
         else:
             position[qualname] = len(defs)
@@ -2613,12 +2616,14 @@ class Index:
         while True:
             if defs.get((path, current), ("",))[0] not in ("class", "interface"):
                 written = types.get((path, current, head))
-                if written is not None:
-                    instance = self._js_kind(path, current, written, depth + 1) if rest else None
+                if written is not None and rest:
+                    instance = self._js_kind(path, current, written, depth + 1)
                     return self.js_member(instance, rest, depth + 1) if instance else None
                 qualname = f"{current}.{head}" if current else head
                 if (path, qualname) in defs and defs[(path, qualname)][0] != "variable":
                     return self.js_member(("def", path, qualname), rest, depth + 1)
+                if written is not None:
+                    return None
             if not current:
                 break
             current = current.rpartition(".")[0]
@@ -2980,7 +2985,8 @@ def _scope_label(scope):
 
 LIMITS = ("complete means every match in this index, not every real caller: only Python and JavaScript/"
           "TypeScript calls and imports are indexed; dynamic dispatch, string-named calls, reflection, dependency "
-          "injection and values of unknown type are not followed")
+          "injection and values of unknown type are not followed, and in Python a method called on what an "
+          "external call returned (x = frappe.get_doc(...); x.save()) counts as external, not as a caller")
 
 
 def _is_js(index, path):
@@ -3021,6 +3027,14 @@ def _js_dispatch(index, targets):
             if kind[0] == "def" and (kind[1], f"{kind[2]}.{name}") in defs:
                 found.add(("def", kind[1], f"{kind[2]}.{name}"))
     return found
+
+
+def _js_abstract(index, target):
+    """Whether a resolved JS/TS target is an interface member (the receiver's concrete class is not known)."""
+    if target[0] != "def":
+        return False
+    defs = index.tables()["defs"]
+    return defs.get((target[1], target[2].rpartition(".")[0]), ("",))[0] == "interface"
 
 
 def callers(index, symbol, limit=50):
@@ -3068,7 +3082,8 @@ def callers(index, symbol, limit=50):
                 continue
             if target and (target in wanted or target in classes):
                 rows.append((0, file, line, scope))
-            elif target is None or target in dispatch:  # Receiver type unknown (or a name nothing defines).
+            elif target is None or target in dispatch or (script and _js_abstract(index, target)):
+                # Receiver type unknown (or a name nothing defines, or only an interface is known).
                 receiver = chain.rsplit(".", 2)[-2].strip("_#").lower() if "." in chain else ""
                 rows.append((1 if receiver in owners or target in dispatch else 2, file, line, scope))
     rows.sort()

@@ -480,6 +480,28 @@ JS_FIXTURE = {
         module.exports.legacy = legacy;
     """,
     "src/legacy/use.js": "const old = require('./old');\nold.legacy();\nold.other();\n",
+    "src/app/spread.ts": "import * as util from '@lib/util';\nexport const values = [...util.helper(1)];\n",
+    "src/base/service.ts": """
+        export const IService = createDecorator<IService>('service');
+        export interface IService {
+            run(): void;
+        }
+        export class Service implements IService {
+            run(): void { }
+        }
+        export class Plain {
+            run(): void { }
+        }
+    """,
+    "src/app/consumer.ts": """
+        import { IService } from '../base/service';
+        export class Consumer {
+            constructor(@IService private readonly service: IService) {}
+            go() {
+                this.service.run();
+            }
+        }
+    """,
     "web/view.jsx": "export function View() {\n  return <p onClick={() => go()}>Don't stop</p>;\n}\nfunction go() {}\n",
     "bin/cli.js": "#!/usr/bin/env node\nrequire('../src/legacy/use');\n",
     "tools/jsconfig.json": '{"compilerOptions": {"baseUrl": "."}}\n',
@@ -558,7 +580,8 @@ class JavaScriptIndexTests(unittest.TestCase):
         self.assertFalse(any(path == "src/base/event.ts" for path, _line, _resolved in fire))  # strings, comments
         deliver, _ = self.sites("src/base/event.ts::Emitter::deliver")
         self.assertEqual(deliver, {("src/base/event.ts", 9, True), ("src/base/event.ts", 16, True)})
-        self.assertEqual(self.sites("helper")[0], {("src/app/main.ts", 24, True), ("src/legacy/old.js", 3, True)})
+        self.assertEqual(self.sites("helper")[0], {("src/app/main.ts", 24, True), ("src/legacy/old.js", 3, True),
+                                                   ("src/app/spread.ts", 2, True)})  # ...spread is no receiver
         self.assertEqual(self.sites("Strings.trim")[0], {("src/app/main.ts", 25, True)})
         self.assertEqual(self.sites("makeDefault")[0], {("src/app/main.ts", 26, True)})  # a default import alias
         self.assertEqual(self.sites("legacy")[0], {("src/legacy/old.js", 6, True), ("src/legacy/use.js", 2, True)})
@@ -570,15 +593,26 @@ class JavaScriptIndexTests(unittest.TestCase):
         scopes = {row["symbol"] for row in code_index.callers(self.index, "Emitter.fire")["results"]}
         self.assertEqual(scopes, {"App.run"})
 
+    def test_value_and_interface_sharing_a_name_and_interface_typed_receivers(self):
+        kinds = {name: kind for name, kind, *_ in self.index.files["src/base/service.ts"]["js"]["defs"]}
+        self.assertEqual(kinds["IService"], "interface")  # const IService = createDecorator(...) as well
+        implemented = code_index.callers(self.index, "Service.run")
+        self.assertEqual([(row["path"], row["line"], row["resolved"]) for row in implemented["results"]],
+                         [("src/app/consumer.ts", 5, False)])  # through IService, which Service implements
+        structural = code_index.callers(self.index, "Plain.run")  # may implement IService without saying so
+        self.assertEqual([(row["path"], row["resolved"]) for row in structural["results"]],
+                         [("src/app/consumer.ts", False)])
+
     def test_affected_follows_imports_reexports_and_calls_for_two_hops(self):
         module = code_index.affected(self.index, "src/lib/util.ts")
         self.assertEqual([(row["path"], row["hop"]) for row in module["results"]],
-                         [("src/app/main.ts", 1), ("src/legacy/old.js", 1)])
+                         [("src/app/main.ts", 1), ("src/app/spread.ts", 1), ("src/legacy/old.js", 1)])
         two = code_index.affected(self.index, "src/lib/util.ts", hops=2)
         self.assertIn(("src/legacy/use.js", 2), [(row["path"], row["hop"]) for row in two["results"]])
         symbol = code_index.affected(self.index, "src/lib/util.ts::helper", hops=2)
         self.assertEqual([(row["path"], row["hop"]) for row in symbol["results"]],
-                         [("src/app/main.ts", 1), ("src/legacy/old.js", 1), ("src/legacy/use.js", 2)])
+                         [("src/app/main.ts", 1), ("src/app/spread.ts", 1), ("src/legacy/old.js", 1),
+                          ("src/legacy/use.js", 2)])
         self.assertTrue(symbol["complete"])
         process = run_cli("path", "src\\legacy\\use.js", "src/lib/util.ts", "--root", self.root, "--json")
         self.assertEqual(json.loads(process.stdout)["path"][-1], "src/lib/util.ts")
@@ -595,7 +629,7 @@ class JavaScriptIndexTests(unittest.TestCase):
         text = run_cli("affected", "src/lib/util.ts", "--root", self.root).stdout
         self.assertIn("complete within the index", text)
         cut = code_index.affected(self.index, "src/lib/util.ts", hops=2, limit=1)
-        self.assertEqual((cut["complete"], cut["truncated"], cut["hops"]), (False, 2, 2))
+        self.assertEqual((cut["complete"], cut["truncated"], cut["hops"]), (False, 3, 2))
         report = json.loads(run_cli("callers", "Emitter.fire", "--json", "--root", self.root).stdout)
         self.assertEqual((report["complete"], report["truncated"]), (True, 0))
 
@@ -655,7 +689,7 @@ class JavaScriptIndexTests(unittest.TestCase):
         light = code_index.build_index(self.root, cache_dir=cache, need_units=False)
         self.assertEqual(light.info["counts"].get("indexed", 0), 0)
         self.assertNotIn("units", light.files["src/app/main.ts"])
-        self.assertEqual(code_index.callers(light, "helper")["total"], 2)
+        self.assertEqual(code_index.callers(light, "helper")["total"], 3)
         full = code_index.build_index(self.root, cache_dir=cache)
         self.assertEqual(full.files["src/app/main.ts"]["units"], first.files["src/app/main.ts"]["units"])
         os.remove(code_index._units_file(first.info["cache"]))  # a lost units file means a rebuild
