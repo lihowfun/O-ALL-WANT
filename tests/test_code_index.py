@@ -804,6 +804,20 @@ REVIEW_FIXTURE = {  # Codex review round 10 of the JS/TS engine
     "sup/b.ts": ("import { A, Plain } from './a';\nexport class B extends A {\n    constructor() {\n        super();\n"
                  "        super.hello();\n    }\n}\nexport class C extends Plain {\n    constructor() {\n"
                  "        super();\n    }\n}\n"),
+    # Codex review round 15
+    "loop/use.ts": ("import { save } from '../lib/save';\nexport function f(callbacks, x) {\n"
+                    "    for (const save of callbacks) {\n        save();\n    }\n    for (let save in x) save();\n"
+                    "    try {\n        work();\n    } catch (save) {\n        save();\n    }\n"
+                    "    for (const [k, { save: other }] of x) other();\n    save();\n}\n"),
+    "thisfn/service.ts": ("export class Service {\n    run() {}\n    start() {\n        const self = () => this.run();\n"
+                          "        function callback() {\n            this.run();\n        }\n"
+                          "        const plain = function () {\n            this.run();\n        };\n"
+                          "        this.run();\n    }\n}\n"),
+    "jsx/view.tsx": ("import { save } from '../lib/save';\nexport function View() {\n    return (\n"
+                     "        <div title=\"save()\">\n            save()\n            {save()}\n"
+                     "            <b>save()</b>\n            {cond && <i>Don't save()</i>}\n        </div>\n    );\n}\n"
+                     "save();\n"),
+    "jsx/old.js": "import React from 'react';\nimport { save } from '../lib/save';\nexport const A = () => <p>save()</p>;\nsave();\n",
 }
 
 
@@ -918,6 +932,21 @@ class JavaScriptResolutionReviewTests(unittest.TestCase):
         self.assertIn(("sup/b.ts", 4, True), self.rows("sup/a.ts::A"))
         self.assertEqual(self.rows("sup/a.ts::A.hello"), {("sup/b.ts", 5, True)})
         self.assertEqual(self.rows("sup/a.ts::Plain"), {("sup/b.ts", 10, True)})  # no constructor written
+
+    def test_for_and_catch_headers_bind_names_in_their_scope(self):
+        lines = {line for path, line, resolved in self.rows("lib/save.ts::save") if path == "loop/use.ts" and resolved}
+        self.assertEqual(lines, {13})  # for (const save of ...), for (let save in ...), catch (save) shadow the import
+
+    def test_an_ordinary_nested_function_has_its_own_this(self):
+        rows = self.rows("thisfn/service.ts::Service.run")
+        self.assertEqual({line for _path, line, resolved in rows if resolved}, {4, 11})  # method body and arrow
+        self.assertTrue({("thisfn/service.ts", 6, False), ("thisfn/service.ts", 9, False)} <= rows)
+
+    def test_jsx_text_and_tags_are_not_code(self):
+        rows = self.rows("lib/save.ts::save")
+        self.assertEqual({line for path, line, resolved in rows if path == "jsx/view.tsx" and resolved}, {6, 12})
+        self.assertEqual({line for path, line, resolved in rows if path == "jsx/old.js" and resolved}, {4})
+        self.assertIn("View", {name for name, *_ in self.index.files["jsx/view.tsx"]["js"]["defs"]})
 
     def test_extends_may_name_any_local_json_file(self):
         self.assertEqual(self.index.js_module("jcfg/use.ts", "#lib/tool"), "jcfg/lib/tool.ts")

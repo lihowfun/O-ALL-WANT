@@ -811,6 +811,15 @@ JS_SOURCE = (".ts", ".tsx", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs")
 _JS_SOURCE_FOR_JS = (".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx", ".mts", ".cts", ".d.ts")
 _JS_ALTERNATES = {".js": (".ts", ".tsx", ".d.ts"), ".jsx": (".tsx", ".d.ts"), ".mjs": (".mts", ".d.mts"),
                   ".cjs": (".cts", ".d.cts")}
+_JS_TOP_JSX = re.compile(r"""[^'"`/\\<]+|//[^\n]*|/\*.*?(?:\*/|\Z)|'(?:[^'\\\n]|\\.)*'?|"(?:[^"\\\n]|\\.)*"?|.""", re.S)
+_JS_INNER_JSX = re.compile(r"""[^'"`/\\{}<]+|//[^\n]*|/\*.*?(?:\*/|\Z)|'(?:[^'\\\n]|\\.)*'?"""
+                           r"""|"(?:[^"\\\n]|\\.)*"?|.""", re.S)
+_JSX_HINT = re.compile(r"""\bfrom\s+['"](?:react|preact)(?:/[\w/-]*)?['"]|\brequire\(\s*['"](?:react|preact)['"]"""
+                       r"""|@jsx\b""")  # JSX in a .js file
+_JSX_NAME = re.compile(r"[A-Za-z_$][\w$]*(?:[.:-][\w$-]+)*")
+_JSX_ATTRIBUTE = re.compile(r"""[A-Za-z_$][\w$:.-]*(?:\s*=\s*(?:"[^"]*"|'[^']*'|(?=\{)))?""")
+_JSX_TEXT = re.compile(r"[^{<]*")
+_JSX_EXPRESSION = re.compile(r"""[{}'"`<]|//|/\*""")
 _JS_TOP = re.compile(r"""[^'"`/\\]+|//[^\n]*|/\*.*?(?:\*/|\Z)|'(?:[^'\\\n]|\\.)*'?|"(?:[^"\\\n]|\\.)*"?|.""", re.S)
 _JS_INNER = re.compile(r"""[^'"`/\\{}]+|//[^\n]*|/\*.*?(?:\*/|\Z)|'(?:[^'\\\n]|\\.)*'?|"(?:[^"\\\n]|\\.)*"?|.""", re.S)
 _JS_TEMPLATE = re.compile(r"(?:[^`\\$]|\\.|\$(?!\{))*", re.S)
@@ -862,6 +871,9 @@ _JS_EXPORT_DEFAULT = re.compile(r"export\s+default\s+(?!(?:class|function|async|
 _JS_EXPORT_ASSIGN = re.compile(r"(?:export\s*=|module\.exports\s*=)\s*(?:(?P<name>[A-Za-z_$][\w$]*)\s*(?:;|$)"
                                r"|(?P<obj>\{))", re.M)
 _JS_REQUIRE = re.compile(r"require\s*\(\s*(?P<q>\")")
+_JS_FOR_HEAD = re.compile(r"for\s*(?:await\s*)?(?P<open>\()\s*(?P<kind>const|let|var)\s+"
+                          r"(?P<bind>[A-Za-z_$][\w$]*|[{\[])")
+_JS_CATCH_HEAD = re.compile(r"catch\s*(?P<open>\()\s*(?P<bind>[A-Za-z_$][\w$]*|[{\[])")
 _JS_BINDS_MODULE = re.compile(r"\s*(?:await\s+)?(?:require|import)\s*\(")  # const x = require(...): a binding
 _JS_REQUIRE_BIND = re.compile(r"\b(?:const|let|var)\s+([A-Za-z_$][\w$]*|\{[^{}]*\})\s*=\s*$")
 _JS_SPECIFIER = re.compile(r"(?:type\s+)?([\w$]+)(?:\s+as\s+([\w$]+))?")
@@ -926,11 +938,122 @@ def _js_control_paren(out, budget=4000):
     return False
 
 
-def _js_mask(text):
+def _jsx_element(text, pos, blanks, depth=0):
+    """Parse the JSX element at text[pos] ('<'): add the (start, end) ranges of its tags, attribute strings and
+    text to blanks (the {...} expressions are left as code) and return where it ends, or None if it is not JSX."""
+    size, index = len(text), pos + 1
+    if depth > 64 or index >= size:
+        return None
+    if text[index] == ">":  # <>...</>
+        index += 1
+        blanks.append((pos, index))
+    else:
+        name = _JSX_NAME.match(text, index)
+        if not name:
+            return None
+        index, tag_start = name.end(), pos
+        while True:
+            while index < size and text[index] in " \t\r\n":
+                index += 1
+            if index >= size:
+                return None
+            if text.startswith("/>", index):
+                blanks.append((tag_start, index + 2))
+                return index + 2
+            if text[index] == ">":
+                blanks.append((tag_start, index + 1))
+                index += 1
+                break
+            if text[index] == "{":
+                blanks.append((tag_start, index))
+                index = _jsx_expression(text, index, blanks, depth)
+                if index is None:
+                    return None
+                tag_start = index
+                continue
+            attribute = _JSX_ATTRIBUTE.match(text, index)
+            if not attribute or attribute.end() == index:
+                return None
+            index = attribute.end()
+    while True:  # children: text, {expressions}, nested elements, the closing tag
+        start, index = index, _JSX_TEXT.match(text, index).end()
+        blanks.append((start, index))
+        if index >= size:
+            return None
+        if text[index] == "{":
+            index = _jsx_expression(text, index, blanks, depth)
+            if index is None:
+                return None
+        elif text.startswith("</", index):
+            close = text.find(">", index)
+            if close < 0:
+                return None
+            blanks.append((index, close + 1))
+            return close + 1
+        else:
+            index = _jsx_element(text, index, blanks, depth + 1)
+            if index is None:
+                return None
+
+
+def _jsx_expression(text, pos, blanks, depth):
+    """The end of the {...} expression at text[pos], skipping strings, comments and nested JSX elements."""
+    level, index, size = 0, pos, len(text)
+    while index < size:
+        found = _JSX_EXPRESSION.search(text, index)
+        if not found:
+            return None
+        index, token = found.start(), found.group()
+        if token == "{":
+            level += 1
+        elif token == "}":
+            level -= 1
+            if level == 0:
+                return index + 1
+        elif token in ("'", '"'):
+            end = re.compile(r"(?:[^%s\\\n]|\\.)*%s" % (token, token)).match(text, index + 1)
+            index = end.end() - 1 if end else index
+        elif token == "`":
+            end = re.compile(r"(?:[^`\\]|\\.)*`", re.S).match(text, index + 1)
+            index = end.end() - 1 if end else index
+        elif token == "//":
+            end = text.find("\n", index)
+            index = (size if end < 0 else end) - 1
+        elif token == "/*":
+            end = text.find("*/", index + 2)
+            index = (size if end < 0 else end + 2) - 1
+        elif token == "<":
+            before = text[max(pos, index - 40):index].rstrip()
+            if (before[-1:] in tuple("(,=:?&|{[!>") or before.endswith("return")) and \
+                    (text[index + 1:index + 2].isalpha() or text[index + 1:index + 2] in (">", "_", "$")):
+                end = _jsx_element(text, index, blanks, depth + 1)
+                if end is not None:
+                    index = end
+                    continue
+        index += 1
+    return None
+
+
+def _jsx_blank(text, ranges):
+    """text with the given ranges replaced by spaces (line breaks kept)."""
+    pieces, last = [], 0
+    for start, end in sorted(ranges):
+        if end <= start or start < last:
+            continue
+        pieces.append(text[last:start])
+        pieces.append(re.sub(r"[^\n]", " ", text[start:end]))
+        last = end
+    pieces.append(text[last:])
+    return "".join(pieces)
+
+
+def _js_mask(text, jsx=False):
     """(code, strings, comments): comments, strings, template text and regular expressions blanked with
-    line breaks kept, strings as '""' keyed by their offset in code -> (offset in text, contents)."""
+    line breaks kept, strings as '""' keyed by their offset in code -> (offset in text, contents). With jsx,
+    JSX tags, attribute strings and text are blanked as well, their {...} expressions kept."""
     out, strings, comments = [], {}, []
     stack, pos, size, length, template = [], 0, len(text), 0, False
+    top, inner = (_JS_TOP_JSX, _JS_INNER_JSX) if jsx else (_JS_TOP, _JS_INNER)
     if text.startswith("#!"):
         pos = text.find("\n")
         pos = size if pos < 0 else pos
@@ -952,9 +1075,15 @@ def _js_mask(text):
                 length, pos = length + 2, pos + 2
                 stack.append(0)
             continue
-        match = (_JS_INNER if stack else _JS_TOP).match(text, pos)
+        match = (inner if stack else top).match(text, pos)
         piece, end = match.group(), match.end()
         first = piece[0]
+        if first == "<" and jsx and (text[pos + 1:pos + 2].isalpha() or text[pos + 1:pos + 2] in (">", "_", "$")) \
+                and _js_regex_here(out):
+            blanks = []
+            if _jsx_element(text, pos, blanks) is not None:
+                text = _jsx_blank(text, blanks)  # same length: offsets stay valid; the expressions are scanned next
+                continue
         if first == "/":
             if piece.startswith("//"):
                 comments.append((pos, piece))
@@ -1226,7 +1355,7 @@ def _js_value(code, pos, pairs):
         if close is None:
             return None
         body = _js_body(code, close + 1, pairs)
-        return ("function", opening, body, pairs.get(body, close) if body is not None else close)
+        return ("function", opening, body, pairs.get(body, close) if body is not None else close, None, True)
     opening = _js_skip(code, _js_generics(code, match.start("paren")))
     if opening >= len(code) or code[opening] != "(" or opening not in pairs:
         return None
@@ -1308,10 +1437,10 @@ def _js_words(code, word):
     return found
 
 
-def _js_record(text):
+def _js_record(text, jsx=False):
     """Units for find, and definitions, imports, calls, references and written types for callers."""
     text = text.replace("\r\n", "\n").replace("\r", "\n")
-    code, strings, comments = _js_mask(text)
+    code, strings, comments = _js_mask(text, jsx)
     lines = code.split("\n")
     if lines and lines[-1] == "":
         lines.pop()
@@ -1413,9 +1542,11 @@ def _js_record(text):
     def add_value_params(qualname, value):
         if value[1] is not None:
             add_params(qualname, value[1], pairs[value[1]])
-        elif len(value) > 4:
+        elif len(value) > 4 and value[4]:
             params_of.setdefault(qualname, []).append(value[4])
             types.append([qualname, value[4], "?"])
+        if len(value) > 5 and value[5]:  # a function expression (not an arrow) has its own `this`
+            types.append([qualname, "this", "?"])
 
     def add_class(qualname, header_at, start, export_default=False, exported=False):
         body = _js_body(code, header_at, pairs, header=True)
@@ -1435,7 +1566,42 @@ def _js_record(text):
             elif exported:
                 exports.append([qualname, qualname])
 
+    def open_header(opening, end, kind, names):
+        """for (const/let x ...) and catch (x): x is visible in the header and the body, a scope of its own;
+        for (var x ...) binds x in the enclosing function."""
+        parent = parent_at(opening)
+        if kind == "var":
+            owner = next((entry for entry in reversed(stack) if entry[3] != "block" and entry[1] >= opening), None)
+            if owner:
+                types.extend([owner[2], name, "?"] for name in names)
+            return
+        scope = f"{parent[2] + '.' if parent else ''}{{{line_of(opening)}:{kind}}}"
+        spans.append((opening, end, scope))
+        stack.append((opening, end, scope, "block"))
+        types.extend([scope, name, "?"] for name in names)
+
+    headers = []
+    for keyword, pattern in (("for", _JS_FOR_HEAD), ("catch", _JS_CATCH_HEAD)):
+        for found in filter(None, (pattern.match(code, at) for at in _js_words(code, keyword))):
+            opening = found.start("open")
+            close, bind_at = pairs.get(opening), found.start("bind")
+            if close is None:
+                continue
+            if code[bind_at] in "{[":
+                names = _js_pattern_names(code[bind_at:pairs[bind_at] + 1]) if bind_at in pairs else []
+            else:
+                names = [found.group("bind")]
+            body = _js_skip(code, close + 1)
+            braced = body < len(code) and code[body] == "{" and body in pairs
+            end = pairs[body] if braced else _js_end(code, close + 1, pairs)
+            headers.append((opening, end, found.group("kind") if keyword == "for" else "catch", names))
+    headers.sort()
+    pending = 0
+
     for start, number, match in decls:
+        while pending < len(headers) and headers[pending][0] < start:
+            open_header(*headers[pending])
+            pending += 1
         enclosing = around.get(start, -1)
         bracket = code[enclosing] if enclosing >= 0 else ""
         parent = parent_at(start)
@@ -1513,6 +1679,7 @@ def _js_record(text):
             if add(prefix + name, "function", start, pairs.get(body, close) if body is not None else close, body,
                    name_at):
                 add_params(prefix + name, opening, close)
+                types.append([prefix + name, "this", "?"])  # an ordinary function has its own `this`
                 returns = _js_returns(code, close, body)
                 if returns:
                     types.append([prefix + name, "()", returns])
@@ -1633,6 +1800,10 @@ def _js_record(text):
                 stack.pop()
                 if default:
                     exports.append(["default", prefix + name])
+
+    while pending < len(headers):
+        open_header(*headers[pending])
+        pending += 1
 
     # Scopes: the innermost definition around each call, import and reference.
     order = sorted([(extra[index][0], extra[index][1], defs[index][0]) for index in range(len(defs))
@@ -1929,7 +2100,9 @@ def extract(path, data):
             units, python = _python_fallback(lines)
     elif kind == "javascript":
         try:
-            units, script = _js_record(text)
+            jsx = path.endswith((".jsx", ".tsx")) or (
+                path.endswith((".js", ".mjs", ".cjs")) and bool(_JSX_HINT.search(text)))
+            units, script = _js_record(text, jsx)
         except (ValueError, IndexError, KeyError, RecursionError, MemoryError) as exc:  # a scanner bug: keep the file
             error = f"{type(exc).__name__}: {exc}"[:160]
             units = _other_units(kind, lines)
@@ -2742,7 +2915,7 @@ class Index:
             return None
         if head == "this":
             owner = self._class_of(path, scope)
-            if not owner or not rest:
+            if not owner or not rest or self._js_own_this(path, scope):
                 return None
             if len(rest) == 1:
                 return self.js_member(("def", path, owner), rest, depth + 1)
@@ -2788,6 +2961,15 @@ class Index:
         return None
 
     # -------- name resolution
+
+    def _js_own_this(self, path, scope):
+        """Whether an ordinary function between scope and its class rebinds `this` (arrows do not)."""
+        types, defs, current = self.tables()["js_types"], self.tables()["defs"], scope
+        while current and defs.get((path, current), ("",))[0] != "class":
+            if types.get((path, current, "this")) == "?":
+                return True
+            current = current.rpartition(".")[0]
+        return False
 
     def _class_of(self, path, scope):
         defs = self.tables()["defs"]
