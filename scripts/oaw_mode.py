@@ -198,21 +198,27 @@ def head_files(root: Path, paths: list[str]) -> set[str] | None:
     return set(split_z(git(root, "ls-tree", "-r", "-z", "--name-only", "HEAD", "--", *paths))) - {""}
 
 
+def project_relative(root: Path, raw: str) -> str:
+    """One spelling for a project path: relative, forward slashes, no ./ (an absolute path inside the project too)."""
+    value = raw.replace("\\", "/")
+    candidate = Path(value)
+    if candidate.is_absolute() or re.match(r"[A-Za-z]:/", value):
+        try:
+            value = candidate.resolve().relative_to(root).as_posix()
+        except ValueError as exc:
+            raise ModeError(f"path is outside the project: {raw}") from exc
+    value = PurePosixPath(value).as_posix().removeprefix("./")
+    if value in ("", ".") or ".." in value.split("/"):
+        raise ModeError(f"not a project path: {raw}")
+    return value
+
+
 def path_entries(root: Path, paths: list[str]) -> tuple[list[dict], str]:
     """A plain list: a path that does not exist yet, or that HEAD does not have, counts as added (a plan saved a
     moment ago is new); line counts are unknown."""
     entries = {}
     for raw in paths:
-        value = raw.replace("\\", "/")
-        candidate = Path(value)
-        if candidate.is_absolute():
-            try:
-                value = candidate.resolve().relative_to(root).as_posix()
-            except ValueError as exc:
-                raise ModeError(f"path is outside the project: {raw}") from exc
-        value = PurePosixPath(value).as_posix().removeprefix("./")
-        if value in ("", ".") or ".." in value.split("/"):
-            raise ModeError(f"not a project path: {raw}")
+        value = project_relative(root, raw)
         entries[value] = {"path": value, "status": "M" if os.path.lexists(root / value) else "A", "old_path": None,
                           "lines": 0, "lines_known": False}
     tracked = head_files(root, list(entries)) if entries else None
@@ -516,9 +522,7 @@ def already_reviewed(root: Path, target: str, how: str) -> dict | None:
 
 
 def record_review(root: Path, target: str, how: str, report: str | None, status: str, tokens: int | None) -> dict:
-    target = PurePosixPath(target.replace("\\", "/")).as_posix().removeprefix("./")
-    if PurePosixPath(target).is_absolute() or re.match(r"[A-Za-z]:", target) or ".." in target.split("/"):
-        raise ModeError(f"give the reviewed file relative to the project: {target}")
+    target = project_relative(root, target)
     project_file(root, target)
     digest = file_digest(root, target)
     if digest is None:
@@ -557,7 +561,7 @@ def report_dir(root: Path, target: str) -> str:
 
 def add_plan(result: dict, root: Path, plan: str) -> None:
     """A saved plan named with --plan is a design-review target whatever git says (any project, git or not)."""
-    plan = PurePosixPath(plan.replace("\\", "/")).as_posix().removeprefix("./")
+    plan = project_relative(root, plan)
     if not project_file(root, plan).is_file():
         raise ModeError(f"--plan is not a file in the project: {plan}")
     if plan not in result["design_docs"]:
@@ -753,6 +757,13 @@ def render_steps(steps: list[dict]) -> list[str]:
             lines.append(text)
             if step.get("note"):
                 lines.append(f"    note: {step['note']}")
+            for review in step.get("reviews", []):
+                if review["done"]:
+                    lines.append(f"    {review['target']}: reviewed")
+                else:
+                    lines.append(f"    {review['target']}: reports in {review['report_dir']}; when done: python3 "
+                                 f"scripts/oaw_mode.py reviewed {review['target']} --how {step['how']} "
+                                 f"--report {review['report_dir']}")
         else:
             lines.append(f"  {when}: code review by {step['who']}"
                          + (f", up to {step['rounds']} rounds" if step["rounds"] > 1 else ""))

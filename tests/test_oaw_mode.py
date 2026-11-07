@@ -596,6 +596,16 @@ class SwitchAndStepTests(unittest.TestCase):
         self.assertFalse(self.steps()["design-review"]["done"])
         records = json.loads((self.root / ".oaw/reviews/index.json").read_text(encoding="utf-8"))["reviews"]
         self.assertEqual([r["status"] for r in records], ["cut", "done"])
+        # An absolute path inside the project is the same target (codex review round 7).
+        self.write("docs/plans/abs.md", "# Abs\n")
+        self.run_ok("reviewed", str(self.root / "docs/plans/abs.md"), "--how", "egm")
+        self.assertEqual(mode.review_records(self.root)[-1]["target"], "docs/plans/abs.md")
+        abs_plan = self.json("suggest", "--plan", str(self.root / "docs/plans/abs.md"))
+        self.assertIn("docs/plans/abs.md", abs_plan["design_docs"])
+        text = self.run_ok("suggest", "--plan", "docs/plans/cache.md")
+        self.assertIn("docs/plans/abs.md: reviewed", text)
+        self.assertIn("docs/plans/cache.md: reports in .oaw/reviews/", text)
+        self.assertIn("when done: python3 scripts/oaw_mode.py reviewed docs/plans/cache.md --how egm --report", text)
         for bad in ("../x.md", "/etc/passwd", "C:/x.md", "docs/missing.md"):
             with self.subTest(bad=bad):
                 code, _, errors = run("reviewed", bad, "--how", "egm", "--root", str(self.root))
