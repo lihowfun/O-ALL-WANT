@@ -1341,7 +1341,7 @@ def receipt_lines(rows: list) -> list:
         lines.append("| " + " | ".join(str(row[key]).replace("|", "/") for key, _label in RECEIPT_HEADERS) + " |")
     if any(row["tasting"].startswith("未試吃") for row in rows):
         lines.append("未試吃：先 `python3 <OAW>/scripts/catalog.py add <來源> --no-taste --target .` 登記，再 `catalog.py taste <名字>`（免費的靜態檢查），"
-                     f"然後照 docs/SKILL_INTAKE.md 的附錄 A 跑試吃並 record-tasting（{TASTE_COST_ZH}）；結果會出現在這張清單。")
+                     f"然後照 docs/SKILL_INTAKE.md 開頭的一頁版 跑試吃並 record-tasting（{TASTE_COST_ZH}）；結果會出現在這張清單。")
     return lines
 
 
