@@ -624,7 +624,14 @@ def second_opinion_review(settings: dict) -> dict:
 def review_steps(result: dict, root: Path, settings: dict) -> list[dict]:
     """What to do for this mode, and when: steps marked before_code must finish before any code changes."""
     mode, steps = result["mode"], []
+    unsized = result.get("source") == "path list" and result.get("code_files", 0) > 0
     if mode == "light":
+        if unsized:
+            # X3b: a planned path list has no line counts, and agents told "light" before editing skipped the
+            # post-change check that would have found a 300+ line change (standard).
+            steps.append({"step": "recheck", "before_code": False,
+                          "do": "after the change, run python3 scripts/oaw_mode.py suggest on the diff: a path list has "
+                                "no line counts, so a large change can still need review"})
         return steps
     if mode == "deep":
         steps.append({"step": "plan", "before_code": True,
@@ -801,6 +808,8 @@ def render_steps(steps: list[dict]) -> list[str]:
         when = "before code" if step["before_code"] else "after code"
         if step["step"] == "plan":
             lines.append(f"  {when}: plan, then save it under docs/plans/")
+        elif step["step"] == "recheck":
+            lines.append(f"  {when}: run suggest again on the diff (a path list has no line counts)")
         elif step["step"] == "design-review":
             text = f"  {when}: design review by {REVIEW_NAMES.get(step['how'], step['how'])} (EGM switch: {step['switch']})"
             if step.get("estimate"):

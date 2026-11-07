@@ -26,6 +26,7 @@ Run from the project root with Python 3.10+ (`py -3` on Windows if needed).
      If a usage limit or an error stops EGM early, record it with `--status cut`, tell the user, and write no code.
    - `design-review`, `how: fresh-context`: one reviewer with no conversation context reads the plan and the
      files it names; resolve the findings; record it with `--how fresh-context`.
+   - `recheck`: after the change, run `python3 scripts/oaw_mode.py suggest --json` on the diff and follow it.
    - `code-review`: after the change, run the command the step gives for this host and fix what it finds. Deep
      repeats until a round finds nothing new, at most `rounds` times.
 3. Light needs no review.

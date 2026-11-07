@@ -581,6 +581,11 @@ class SwitchAndStepTests(unittest.TestCase):
     def test_light_has_no_steps_and_standard_has_one_code_review(self):
         self.write("a.py", "A = 1\n")
         self.assertEqual(self.json("suggest")["steps"], [])
+        # A planned path list cannot count lines: light from it asks for the post-change check (X3b, S2).
+        planned = self.json("suggest", "--paths", "a.py")
+        self.assertEqual([s["step"] for s in planned["steps"]], ["recheck"])
+        self.assertIn("after code: run suggest again on the diff", self.run_ok("suggest", "--paths", "a.py"))
+        self.assertEqual(self.json("suggest", "--paths", "README.md")["steps"], [], "docs only: nothing to recheck")
         self.write("big.py", "".join(f"X{i} = {i}\n" for i in range(300)))
         steps = self.json("suggest")["steps"]
         self.assertEqual([(s["step"], s["rounds"], s["before_code"]) for s in steps], [("code-review", 1, False)])
