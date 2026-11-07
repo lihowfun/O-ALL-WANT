@@ -73,7 +73,7 @@ TOKEN_LABEL = "estimate: about 0.6-0.9M logical tokens per tool-using agent run"
 TOKEN_LABEL_ZH = "估計：每次會用工具的 agent run 約 0.6–0.9M 邏輯 tokens"
 # Names a food id must never take: `remove egm` and bundled skill names mean the bundled parts.
 RESERVED_FOOD_IDS = ("egm", "egm-bootstrap", "egm-brainstorm", "egm-draft", "egm-drift-report", "egm-resolve", "egm-review",
-                     "egm-review-loop", "oaw-evidence", "oaw-review", "oaw-wiki", "oaw-improve", "oaw")
+                     "egm-review-loop", "oaw-codemap", "oaw-evidence", "oaw-review", "oaw-wiki", "oaw-improve", "oaw")
 SANDBOX_CONDITIONS = ("isolated-venv", "project-copy", "no-api-keys", "no-network", "disposable-vm")
 INSTALL_ALLOWED_SUFFIXES = (".md", ".txt")
 ROUTER_NAMES = ("claude.md", "agents.md", "gemini.md", ".cursorrules", ".windsurfrules", "copilot-instructions.md")

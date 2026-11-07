@@ -168,7 +168,7 @@ class TemplateDefaultsTests(unittest.TestCase):
     def test_only_scoped_native_packages_are_shipped(self):
         packages = validator.find_skill_files(ROOT)
         self.assertEqual({Path(path).parent.name for path in packages},
-                         {"oaw-evidence", "oaw-review", "oaw-wiki", "oaw-improve", "egm-bootstrap",
+                         {"oaw-codemap", "oaw-evidence", "oaw-review", "oaw-wiki", "oaw-improve", "egm-bootstrap",
                           "egm-brainstorm", "egm-draft", "egm-drift-report", "egm-resolve",
                           "egm-review", "egm-review-loop"})
         for path in packages:

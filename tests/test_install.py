@@ -35,13 +35,14 @@ class InstallTests(unittest.TestCase):
             "scripts/context_hub.py": "from oaw_common import VALUE\n",
             "scripts/oaw_common.py": "VALUE = 1\n",
             "scripts/oaw_mode.py": "print('mode helper')\n",
+            "scripts/code_index.py": "print('code index')\n",
             "scripts/wiki_sync.py": "from oaw_common import VALUE\n",
             "scripts/validate_skills.py": "def lint_skill_file(path):\n    return [] if 'description:' in path.read_text(encoding='utf8') else ['missing description']\n",
             "scripts/improvement.py": "print('improvement workflow')\n",
             "templates/docs/knowledge/index.md": "# Knowledge index\n",
             "templates/docs/raw/README.md": "# Source notes\n",
         }
-        for name in ("oaw-evidence", "oaw-review", "oaw-wiki", "oaw-improve"):
+        for name in ("oaw-codemap", "oaw-evidence", "oaw-review", "oaw-wiki", "oaw-improve"):
             files[f"templates/.agents/skills/{name}/SKILL.md"] = f"---\nname: {name}\ndescription: Use this workflow when relevant.\n---\n\n# Workflow\n"
         for relative, text in files.items():
             self.write(self.framework, relative, text.encode())

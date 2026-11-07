@@ -6,6 +6,16 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Built-in code map (plan W2): every recipe installs `scripts/code_index.py` and the `oaw-codemap` skill, explicit
+  invocation only until the X1 A/B decides. The index now tracks JavaScript and TypeScript imports, declarations and
+  calls (relative imports, `index.*`, tsconfig/jsconfig `baseUrl`, `paths` and `extends`; receivers resolved from
+  imports, `this`/`super`, `extends` and written types; the rest listed as unresolved), adds `overview` (one page:
+  entry points, main modules, most-called definitions by PageRank, at most 6,000 characters), says on `callers` and
+  `affected` whether the list is complete within the index or truncated, and caches in the user's cache folder
+  outside the project by default (`--no-cache` to skip). Stage 0 (0 model tokens, `evals/code-map/stage0_v201_*`):
+  callers recall 0.955 on ERPNext and 1.0 on VS Code with no wrong resolved rows; `find` beat the grep baseline on
+  ERPNext top-5 file hits (+0.33 to +0.50) but printed 1.4-1.9x its bytes, and on VS Code by at most +0.04, so D24's
+  rule did not pass on either repository and X1 runs on ERPNext only.
 - Tasting statistics and verdicts follow owner decision D32 (plan W0): `scripts/eval_stats.py` compares 12 questions x
   1 run with a bootstrap over questions, four classes (better, equivalent, undetermined, worse), a zero-spread floor
   from earlier repeated runs, and a cost class from the ratio's interval. `record-tasting` accepts `quality_class`

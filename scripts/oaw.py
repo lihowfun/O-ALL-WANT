@@ -33,7 +33,7 @@ EGM_SKILLS = ("egm-bootstrap", "egm-brainstorm", "egm-draft", "egm-drift-report"
 EGM_ENTRY = re.compile(r"\.(?:agents|claude)/skills/(" + "|".join(EGM_SKILLS) + r")/SKILL\.md")
 # templates/AGENTS.md is the one authored policy source; these lines select its EGM text per recipe.
 POLICY_IF_EGM, POLICY_ELSE, POLICY_END = "<!-- oaw:if egm -->", "<!-- oaw:else -->", "<!-- oaw:end -->"
-BUNDLED_SKILLS = (*EGM_SKILLS, "oaw-evidence", "oaw-review", "oaw-wiki", "oaw-improve")
+BUNDLED_SKILLS = (*EGM_SKILLS, "oaw-codemap", "oaw-evidence", "oaw-review", "oaw-wiki", "oaw-improve")
 ALWAYS_PRESERVE = {"AI_CONTEXT.md", "VERSION.json", "ROADMAP.md", ".agents/memory.md"}
 LEGACY_ADAPTERS = {"GEMINI.md", ".cursorrules", ".windsurfrules", ".github/copilot-instructions.md"}
 
@@ -171,7 +171,7 @@ def read_manifest(target: Path) -> dict | None:
 
 
 def default_skills(profile: str, with_improve: bool) -> list[str]:
-    return [*EGM_SKILLS, "oaw-evidence", "oaw-review", *(["oaw-wiki"] if profile == "knowledge" else []), *(["oaw-improve"] if with_improve else [])]
+    return [*EGM_SKILLS, "oaw-codemap", "oaw-evidence", "oaw-review", *(["oaw-wiki"] if profile == "knowledge" else []), *(["oaw-improve"] if with_improve else [])]
 
 
 def selected_skills(skills: list[str]) -> list[str]:
@@ -276,7 +276,7 @@ def source_files(profile: str, with_improve: bool, hosts: list[str] | None = Non
     source_root = framework_root()
     mappings = {"AGENTS.md": "templates/AGENTS.md", "CLAUDE.md": "templates/CLAUDE.md",
                 "scripts/context_hub.py": "scripts/context_hub.py", "scripts/oaw_common.py": "scripts/oaw_common.py",
-                "scripts/oaw_mode.py": "scripts/oaw_mode.py"}
+                "scripts/oaw_mode.py": "scripts/oaw_mode.py", "scripts/code_index.py": "scripts/code_index.py"}
     trees = [".agents/skills/" + name for name in skills]
     if profile == "knowledge":
         mappings.update({"scripts/wiki_sync.py": "scripts/wiki_sync.py", "scripts/validate_skills.py": "scripts/validate_skills.py"})
