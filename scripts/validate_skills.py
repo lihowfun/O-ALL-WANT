@@ -224,6 +224,24 @@ def _reference_issues(skill_file, body):
     return issues
 
 
+def implicit_invocation_disabled(text):
+    """Whether a Codex agents/openai.yaml sets policy.allow_implicit_invocation to false (block or flow form)."""
+    lines = text.splitlines()
+    for index, line in enumerate(lines):
+        match = re.match(r"policy:[ \t]*(.*?)[ \t]*(?:#.*)?$", line)
+        if not match:
+            continue
+        if match.group(1).startswith("{"):
+            return re.search(r"\ballow_implicit_invocation\s*:\s*false\s*[,}]", match.group(1)) is not None
+        for item in lines[index + 1:]:
+            if item.strip() and not item.startswith((" ", "\t")):
+                break
+            if re.fullmatch(r"[ \t]+allow_implicit_invocation\s*:\s*false\s*(?:#.*)?", item):
+                return True
+        return False
+    return False
+
+
 def lint_skill_file(path):
     """Return diagnostics for one native package; an empty list means valid."""
     skill_file = Path(path)
@@ -256,6 +274,17 @@ def lint_skill_file(path):
     if re.search(r"(?m)^\s*\[TODO:[^\n]*\]\s*$", _without_fences(body)):
         issues.append("skill body contains an unfinished TODO scaffold")
     issues.extend(_reference_issues(skill_file, body))
+    # Codex ignores Claude's frontmatter flag; in a Codex skills folder an explicit-only skill needs Codex's policy.
+    codex_folder = skill_file.parent.parent.name == "skills" and skill_file.parent.parent.parent.name == ".agents"
+    if fields.get("disable-model-invocation") is True and codex_folder:
+        policy = skill_file.parent / "agents" / "openai.yaml"
+        try:
+            disabled = policy.is_file() and implicit_invocation_disabled(policy.read_text(encoding="utf-8-sig"))
+        except (OSError, UnicodeError):
+            disabled = False
+        if not disabled:
+            issues.append("disable-model-invocation reaches only Claude; add agents/openai.yaml with "
+                          "policy: allow_implicit_invocation: false for Codex")
     return issues
 
 

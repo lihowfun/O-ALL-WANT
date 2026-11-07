@@ -37,6 +37,15 @@ class SkillValidationTests(unittest.TestCase):
     def test_native_minimum_needs_no_custom_trigger_or_heading(self):
         self.assertEqual(self.write_skill(), [])
 
+    def test_explicit_only_codex_package_needs_its_invocation_policy(self):
+        frontmatter = "name: sample-skill\ndescription: Preserve project evidence when requested.\ndisable-model-invocation: true"
+        self.assertTrue(any("allow_implicit_invocation" in issue for issue in self.write_skill(frontmatter)))
+        (self.package / "agents").mkdir()
+        (self.package / "agents" / "openai.yaml").write_text("policy:\n  allow_implicit_invocation: true\n", encoding="utf-8")
+        self.assertTrue(any("allow_implicit_invocation" in issue for issue in self.write_skill(frontmatter)))
+        (self.package / "agents" / "openai.yaml").write_text("policy:\n  allow_implicit_invocation: false\n", encoding="utf-8")
+        self.assertEqual(self.write_skill(frontmatter), [])
+
     def test_folded_description_and_metadata_are_supported(self):
         self.assertEqual(self.write_skill(
             "name: sample-skill\ndescription: >-\n  Preserve requested evidence\n  for later project work.\nmetadata:\n  owner: project-team"
