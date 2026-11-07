@@ -606,6 +606,11 @@ class SwitchAndStepTests(unittest.TestCase):
         self.assertIn("docs/plans/abs.md: reviewed", text)
         self.assertIn("docs/plans/cache.md: reports in .oaw/reviews/", text)
         self.assertIn("when done: python3 scripts/oaw_mode.py reviewed docs/plans/cache.md --how egm --report", text)
+        self.write("docs/plans/odd name;x.md", "# Odd\n")
+        text = self.run_ok("suggest", "--plan", "docs/plans/odd name;x.md")
+        self.assertIn("reviewed 'docs/plans/odd name;x.md' --how egm", text)  # codex review round 8
+        self.assertEqual(mode.shell_word("docs/a b.md", platform="nt"), '"docs/a b.md"')
+        self.assertEqual(mode.shell_word("docs/a.md", platform="nt"), "docs/a.md")
         for bad in ("../x.md", "/etc/passwd", "C:/x.md", "docs/missing.md"):
             with self.subTest(bad=bad):
                 code, _, errors = run("reviewed", bad, "--how", "egm", "--root", str(self.root))

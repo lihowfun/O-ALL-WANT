@@ -68,7 +68,12 @@ class CompareTests(unittest.TestCase):
         for call in (lambda: stats.compare({}, NATIVE, 0.1), lambda: stats.compare(food, NATIVE, 0),
                      lambda: stats.compare(food, NATIVE, 0.1, floor_sd=-1),
                      lambda: stats.compare(partial, NATIVE, 0.1), lambda: stats.compare(holed, NATIVE, 0.1),
-                     lambda: stats.cost(partial, NATIVE)):
+                     lambda: stats.cost(partial, NATIVE),
+                     # Non-finite calibration or data never switches the floor off (codex review round 8).
+                     lambda: stats.compare(food, NATIVE, 0.1, floor_sd=float("nan")),
+                     lambda: stats.compare(food, NATIVE, float("inf")),
+                     lambda: stats.compare({**food, "q3": [float("nan")]}, NATIVE, 0.1),
+                     lambda: stats.cost(food, NATIVE, cap=float("nan"))):
             with self.assertRaises(stats.StatsError):
                 call()
 

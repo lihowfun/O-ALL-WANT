@@ -64,6 +64,8 @@ def _per_question(food: dict, native: dict, *, log_ratio: bool) -> dict:
     shared = sorted(food)
     if not shared:
         raise StatsError("no question has values in both arms")
+    if any(not math.isfinite(v) for q in shared for v in (*food[q], *native[q])):
+        raise StatsError("values must be finite numbers")
     if log_ratio:
         unrun = sorted(q for q in shared if any(v <= 0 for v in (*food[q], *native[q])))
         if unrun:
@@ -107,10 +109,10 @@ def _interval(diffs: dict, floor_sd: float | None, draws: int, seed: int) -> dic
 def compare(food: dict, native: dict, margin: float, *, lower_is_better: bool = False, floor_sd: float | None = None,
             draws: int = DRAWS, seed: int = SEED) -> dict:
     """Four-class comparison of one metric (coverage, wrong claims, detections) against native."""
-    if margin <= 0:
-        raise StatsError("margin must be above 0")
-    if floor_sd is not None and floor_sd < 0:
-        raise StatsError("floor_sd must not be negative")
+    if not math.isfinite(margin) or margin <= 0:
+        raise StatsError("margin must be a finite number above 0")
+    if floor_sd is not None and (not math.isfinite(floor_sd) or floor_sd < 0):
+        raise StatsError("floor_sd must be a finite number, 0 or more")
     diffs = _per_question(food, native, log_ratio=False)
     result = _interval(diffs, floor_sd, draws, seed)
     lo95, hi95 = result["ci95"]
@@ -125,6 +127,8 @@ def compare(food: dict, native: dict, margin: float, *, lower_is_better: bool = 
 
 def cost(food: dict, native: dict, *, cap: float = COST_CAP, draws: int = DRAWS, seed: int = SEED) -> dict:
     """Token cost of the food against native as a ratio with a 95% interval, and its class against the cap."""
+    if not math.isfinite(cap) or cap <= 0:
+        raise StatsError("cap must be a finite number above 0")
     logs = _per_question(food, native, log_ratio=True)
     result = _interval(logs, None, draws, seed)
     lo, hi = (math.exp(v) for v in result["ci95"])

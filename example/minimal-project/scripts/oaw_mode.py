@@ -659,6 +659,13 @@ CODEX_PLAN = ("codex --sandbox read-only  (plan in this read-only pass, then imp
               "Codex plan-mode and effort flags are not mapped yet)")
 
 
+def shell_word(value: str, *, platform: str = os.name) -> str:
+    """A file name printed inside a command stays one argument and never shell syntax."""
+    if platform != "nt":
+        return shlex.quote(value)
+    return value if re.fullmatch(r"[\w./:@+~-]+", value) else '"' + value.replace('"', '') + '"'
+
+
 def add_entrypoint(root: PurePath, host: str, *, platform: str = os.name) -> str:
     """The init command that adds a host's entrypoints to this project, with the path quoted for a shell.
 
@@ -762,8 +769,8 @@ def render_steps(steps: list[dict]) -> list[str]:
                     lines.append(f"    {review['target']}: reviewed")
                 else:
                     lines.append(f"    {review['target']}: reports in {review['report_dir']}; when done: python3 "
-                                 f"scripts/oaw_mode.py reviewed {review['target']} --how {step['how']} "
-                                 f"--report {review['report_dir']}")
+                                 f"scripts/oaw_mode.py reviewed {shell_word(review['target'])} --how {step['how']} "
+                                 f"--report {shell_word(review['report_dir'])}")
         else:
             lines.append(f"  {when}: code review by {step['who']}"
                          + (f", up to {step['rounds']} rounds" if step["rounds"] > 1 else ""))
