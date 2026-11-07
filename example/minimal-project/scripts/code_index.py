@@ -871,6 +871,10 @@ _JS_EXPORT_DEFAULT = re.compile(r"export\s+default\s+(?!(?:class|function|async|
 _JS_EXPORT_ASSIGN = re.compile(r"(?:export\s*=|module\.exports\s*=)\s*(?:(?P<name>[A-Za-z_$][\w$]*)\s*(?:;|$)"
                                r"|(?P<obj>\{))", re.M)
 _JS_REQUIRE = re.compile(r"require\s*\(\s*(?P<q>\")")
+_JS_ANONYMOUS = re.compile(r"\{\d+:\d+\}$")  # the scope of an anonymous function: {line:offset}
+_JS_ARROW_PARAMS = re.compile(r"\)\s*(?::[^=;{}()]*)?\s*$")  # (params)[: Type] before =>
+_JS_ARROW_SINGLE = re.compile(r"(?<![\w$.:])\s*([A-Za-z_$][\w$]*)\s*$")  # x before =>
+_JS_FUNCTION_EXPRESSION = re.compile(r"function\s*\*?\s*(?P<own>[A-Za-z_$][\w$]*)?\s*(?:<[^()]*>\s*)?(?P<open>\()")
 _JS_FOR_HEAD = re.compile(r"for\s*(?:await\s*)?(?P<open>\()\s*(?P<kind>const|let|var)\s+"
                           r"(?P<bind>[A-Za-z_$][\w$]*|[{\[])")
 _JS_CATCH_HEAD = re.compile(r"catch\s*(?P<open>\()\s*(?P<bind>[A-Za-z_$][\w$]*|[{\[])")
@@ -1343,19 +1347,23 @@ def _js_value(code, pos, pairs):
         return ("new", re.sub(r"\s+", "", match.group("cls")))
     if match.group("cexp"):
         return ("class", match.group("xname"), match.end())
-    if match.group("single"):  # x => ...: the fifth item names the one parameter
-        end_arrow = match.end()
+    # A function is ('function', params open, body open, end, single parameter, plain function, own name,
+    # offset of the single parameter): x => ... has no parentheses; `function f() {}` names itself f inside.
+    if match.group("single"):
+        end_arrow, single = match.end(), match.group("single")
         body = _js_skip(code, end_arrow)
         if body < len(code) and code[body] == "{" and body in pairs:
-            return ("function", None, body, pairs[body], match.group("single"))
-        return ("function", None, None, _js_end(code, end_arrow, pairs), match.group("single"))
+            return ("function", None, body, pairs[body], single, False, None, match.start("single"))
+        return ("function", None, None, _js_end(code, end_arrow, pairs), single, False, None, match.start("single"))
     if match.group("fn") is not None:
         opening = _js_skip(code, _js_generics(code, match.end()))
         close = pairs.get(opening) if opening < len(code) and code[opening] == "(" else None
         if close is None:
             return None
         body = _js_body(code, close + 1, pairs)
-        return ("function", opening, body, pairs.get(body, close) if body is not None else close, None, True)
+        own = re.match(r"function\s*\*?\s*([A-Za-z_$][\w$]*)", match.group("fn"))
+        return ("function", opening, body, pairs.get(body, close) if body is not None else close, None, True,
+                own.group(1) if own else None, None)
     opening = _js_skip(code, _js_generics(code, match.start("paren")))
     if opening >= len(code) or code[opening] != "(" or opening not in pairs:
         return None
@@ -1365,8 +1373,8 @@ def _js_value(code, pos, pairs):
         return None
     body = arrow.end()
     if body < len(code) and code[body] == "{" and body in pairs:
-        return ("function", opening, body, pairs[body])
-    return ("function", opening, None, _js_end(code, body, pairs))
+        return ("function", opening, body, pairs[body], None, False, None, None)
+    return ("function", opening, None, _js_end(code, body, pairs), None, False, None, None)
 
 
 def _js_returns(code, close, body):
@@ -1508,6 +1516,7 @@ def _js_record(text, jsx=False):
     types, bases, implements, exports = [], {}, {}, []
     class_bodies, interface_bodies, stack, params_of = {}, {}, [], {}
     position, bodies, blocks, spans = {}, set(), {}, []  # spans: (start, end, scope) of let/const blocks
+    consumed = set()  # parameter lists that belong to recorded definitions
 
     def parent_at(at):
         while stack and stack[-1][1] < at:
@@ -1541,12 +1550,16 @@ def _js_record(text, jsx=False):
 
     def add_value_params(qualname, value):
         if value[1] is not None:
+            consumed.add(value[1])
             add_params(qualname, value[1], pairs[value[1]])
-        elif len(value) > 4 and value[4]:
+        elif value[4]:
+            consumed.add(value[7])
             params_of.setdefault(qualname, []).append(value[4])
             types.append([qualname, value[4], "?"])
-        if len(value) > 5 and value[5]:  # a function expression (not an arrow) has its own `this`
+        if value[5]:  # a function expression (not an arrow) has its own `this`
             types.append([qualname, "this", "?"])
+        if value[6]:  # const g = function f() { f(); }: inside, f is g's function
+            types.append([qualname, value[6], "=" + qualname])
 
     def add_class(qualname, header_at, start, export_default=False, exported=False):
         body = _js_body(code, header_at, pairs, header=True)
@@ -1595,13 +1608,70 @@ def _js_record(text, jsx=False):
             braced = body < len(code) and code[body] == "{" and body in pairs
             end = pairs[body] if braced else _js_end(code, close + 1, pairs)
             headers.append((opening, end, found.group("kind") if keyword == "for" else "catch", names))
-    headers.sort()
+    def open_function(start, end, names, body, own, plain):
+        """An anonymous function (callback arrow, function expression, object-literal method): a scope of its
+        own where its parameters (and a function expression's own name) are locals of unknown value."""
+        if start in consumed:  # already a definition (const g = (x) => ..., a method, a declaration)
+            return
+        parent = parent_at(start)
+        scope = f"{parent[2] + '.' if parent else ''}{{{line_of(start)}:{start}}}"
+        spans.append((start, end, scope))
+        stack.append((start, end, scope, "function"))
+        types.extend([scope, name, "?"] for name in names + ([own] if own else []))
+        if plain:
+            types.append([scope, "this", "?"])
+        if body is not None:
+            bodies.add(body)
+
+    anonymous, opens = [], {close: opening for opening, close in pairs.items()}
+    for found in re.finditer(r"=>", code):
+        window_at = max(0, found.start() - 300)
+        window = code[window_at:found.start()]
+        paren, single = _JS_ARROW_PARAMS.search(window), None
+        if paren:
+            opening = opens.get(window_at + paren.start())
+            if opening is None or code[opening] != "(":
+                continue
+            params = _js_params(code[opening + 1:window_at + paren.start()])
+            start, names = opening, [name for name, _kind, _property in params]
+        else:
+            single = _JS_ARROW_SINGLE.search(window)
+            if not single or single.group(1) in _JS_KEYWORDS:
+                continue
+            start, names = window_at + single.start(1), [single.group(1)]
+        after = _js_skip(code, found.end())
+        braced = after < len(code) and code[after] == "{" and after in pairs
+        anonymous.append((start, pairs[after] if braced else _js_end(code, found.end(), pairs), names,
+                          after if braced else None, None, False))
+    for found in filter(None, (_JS_FUNCTION_EXPRESSION.match(code, at) for at in _js_words(code, "function"))):
+        opening = found.start("open")
+        close = pairs.get(opening)
+        if close is not None:
+            body = _js_body(code, close + 1, pairs)
+            anonymous.append((opening, pairs.get(body, close) if body is not None else close,
+                              [name for name, _kind, _property in _js_params(code[opening + 1:close])], body,
+                              found.group("own"), True))
+    for _name_at, at, chain, _receiver in calls:  # object-literal methods: name(args) { ... }
+        close = pairs.get(at)
+        after = _js_skip(code, close + 1) if close is not None else len(code)
+        if not chain.startswith("?.") and after < len(code) and code[after] == "{" and after in pairs:
+            anonymous.append((at, pairs[after], [name for name, _kind, _property in _js_params(code[at + 1:close])],
+                              after, None, True))
+    opened = set()  # one scope per start (function* name(...) is found as an expression and as a method)
+    anonymous = [item for item in anonymous if not (item[0] in opened or opened.add(item[0]))]
+    openers = sorted([(header[0], 0, header) for header in headers] + [(item[0], 1, item) for item in anonymous],
+                     key=lambda entry: entry[:2])
     pending = 0
 
-    for start, number, match in decls:
-        while pending < len(headers) and headers[pending][0] < start:
-            open_header(*headers[pending])
+    def open_until(limit):
+        nonlocal pending
+        while pending < len(openers) and openers[pending][0] < limit:
+            _at, kind, item = openers[pending]
+            (open_header if kind == 0 else open_function)(*item)
             pending += 1
+
+    for start, number, match in decls:
+        open_until(start)
         enclosing = around.get(start, -1)
         bracket = code[enclosing] if enclosing >= 0 else ""
         parent = parent_at(start)
@@ -1635,6 +1705,7 @@ def _js_record(text, jsx=False):
                     continue
                 body = _js_body(code, close + 1, pairs)
                 end = pairs.get(body, close) if body is not None else close
+                consumed.add(opening)
                 if add(qualname, "method", start, end, body, name_at):
                     add_params(qualname, opening, close, name == "constructor", owner)
                     returns = _js_returns(code, close, body)
@@ -1676,6 +1747,7 @@ def _js_record(text, jsx=False):
                 continue
             body = _js_body(code, close + 1, pairs)
             name_at = line_at + match.start("kname") if match.group("kname") else None
+            consumed.add(opening)
             if add(prefix + name, "function", start, pairs.get(body, close) if body is not None else close, body,
                    name_at):
                 add_params(prefix + name, opening, close)
@@ -1801,9 +1873,7 @@ def _js_record(text, jsx=False):
                 if default:
                     exports.append(["default", prefix + name])
 
-    while pending < len(headers):
-        open_header(*headers[pending])
-        pending += 1
+    open_until(len(code) + 1)
 
     # Scopes: the innermost definition around each call, import and reference.
     order = sorted([(extra[index][0], extra[index][1], defs[index][0]) for index in range(len(defs))
@@ -2015,6 +2085,18 @@ def _js_record(text, jsx=False):
         if qualname in unit_of:
             for name in names:
                 _add_ident(units[unit_of[qualname]][6], name, W_PARAM)
+    if anonymous:  # keep a callback's locals only where they can hide something: the rest resolve to None anyway
+        visible = {site[4] for site in import_sites if site[4]} | {row[0].rsplit(".", 1)[-1] for row in defs} \
+            | {name for scope, name, _kind in types if not _JS_ANONYMOUS.search(scope)} | JS_GLOBALS
+        classes = {row[0] for row in defs if row[1] == "class"}
+
+        def needed(scope, name, kind):
+            if kind != "?" or not _JS_ANONYMOUS.search(scope.rsplit(".", 1)[-1]):
+                return True  # written types and aliases always stay
+            if name == "this":
+                return any(".".join(scope.split(".")[:index]) in classes for index in range(1, scope.count(".") + 1))
+            return name in visible
+        types = [row for row in types if needed(*row)]
     js = {"defs": defs, "imports": imports, "calls": calls_out, "refs": refs, "bases": bases,
           "implements": implements, "types": types, "exports": exports}
     if text.startswith("#!") and "node" in text[:text.find("\n") if "\n" in text else len(text)]:
@@ -2107,7 +2189,8 @@ def extract(path, data):
             jsx = path.endswith((".jsx", ".tsx")) or (
                 path.endswith((".js", ".mjs", ".cjs")) and bool(_JSX_HINT.search(text)))
             units, script = _js_record(text, jsx)
-        except (ValueError, IndexError, KeyError, RecursionError, MemoryError) as exc:  # a scanner bug: keep the file
+        except (ValueError, IndexError, KeyError, TypeError, AttributeError, RecursionError, MemoryError) as exc:
+            # a scanner bug: keep the file with a light name pass and report it in stats
             error = f"{type(exc).__name__}: {exc}"[:160]
             units = _other_units(kind, lines)
     else:
@@ -2453,7 +2536,7 @@ class Index:
     def tables(self):
         if self._tables is None:
             defs, by_name, module_names, var_types, classes = {}, {}, {}, {}, {}
-            js_types, js_bases, js_implements, js_exports = {}, {}, {}, {}
+            js_types, js_bases, js_implements, js_exports, js_own_names = {}, {}, {}, {}, {}
             for path, record in self.files.items():
                 script = record.get("js")
                 if script:
@@ -2462,6 +2545,8 @@ class Index:
                         by_name.setdefault(qualname.rsplit(".", 1)[-1], []).append((path, qualname))
                     for scope, name, chain in script["types"]:
                         js_types.setdefault((path, scope, name), chain)
+                        if chain.startswith("="):  # const g = function f() {}: f names g inside its body
+                            js_own_names.setdefault((path, chain[1:]), set()).add(name)
                     for qualname, chains in script["bases"].items():
                         js_bases[(path, qualname)] = chains
                     for qualname, chains in script["implements"].items():
@@ -2498,7 +2583,8 @@ class Index:
                         attr_types.setdefault((path, owner, target), value)
             self._tables = {"defs": defs, "by_name": by_name, "modules": module_names, "classes": classes,
                             "var_types": var_types, "attr_types": attr_types, "js_types": js_types,
-                            "js_bases": js_bases, "js_implements": js_implements, "js_exports": js_exports}
+                            "js_bases": js_bases, "js_implements": js_implements, "js_exports": js_exports,
+                            "js_own_names": js_own_names}
         return self._tables
 
     def user_path(self, text):
@@ -2951,6 +3037,8 @@ class Index:
                 return self.js_member(local, rest, depth + 1)
             if defs.get((path, current), ("",))[0] not in ("class", "interface"):
                 written = types.get((path, current, head))
+                if written is not None and written.startswith("="):  # a function expression's own name
+                    return self.js_member(("def", path, written[1:]), rest, depth + 1)
                 if written is not None and rest:
                     instance = self._js_kind(path, current, written, depth + 1)
                     return self.js_member(instance, rest, depth + 1) if instance else None
@@ -3424,13 +3512,17 @@ def callers(index, symbol, limit=50):
     if not targets and path is None:
         external = symbol.strip().replace("::", ".")
         names = {external.rsplit(".", 1)[-1]}
+    own_names = {}  # a named function expression calls itself by its own name, in its own file only
+    for target in targets:
+        for name in index.tables()["js_own_names"].get((target[1], target[2]), ()):
+            own_names.setdefault(target[1], set()).add(name)
     rows = []
     for file, record in sorted(index.files.items()):
         python, script = record.get("py"), record.get("js")
         if python:
             local, calls, resolve = names | _aliases(index, file, names), python["calls"], index.resolve
         elif script:
-            local = names | _js_aliases(index, file, names, reach, targets)
+            local = names | _js_aliases(index, file, names, reach, targets) | own_names.get(file, set())
             calls, resolve = script["calls"], index.js_resolve
         else:
             continue
@@ -3650,6 +3742,8 @@ def _symbol_sites(index, target):
 
 def _js_sites(index, target, file, script, name, unique, is_class, reach=()):
     local = {name} | _js_aliases(index, file, {name}, reach, {target})
+    if file == target[1]:
+        local |= index.tables()["js_own_names"].get((target[1], target[2]), set())
     for line, scope, chain in script["calls"]:
         if chain.rsplit(".", 1)[-1] not in local:
             continue

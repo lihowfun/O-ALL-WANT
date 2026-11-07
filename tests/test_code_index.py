@@ -832,6 +832,17 @@ REVIEW_FIXTURE = {  # Codex review round 10 of the JS/TS engine
     "pexact/wild/index.ts": "export const wild = 1;\n",
     "pexact/wild/bar.ts": "export const bar = 1;\n",
     "pexact/use.ts": "import { exact } from 'foo';\n",
+    # Codex review round 18
+    "lib/f.ts": "export function f() {}\n",
+    "anonfn/use.ts": ("import { f } from '../lib/f';\nexport function run(items) {\n    items.forEach((f) => {\n"
+                      "        f();\n    });\n    items.map(f => f());\n    items.forEach(function (f) {\n"
+                      "        f();\n    });\n    const o = { m(f) { f(); } };\n    f();\n}\n"),
+    "namedfn/use.ts": ("import { f } from '../lib/f';\nexport const g = function f() {\n    f();\n};\n"
+                       "export function h(items) {\n    items.forEach(function f() {\n        f();\n    });\n"
+                       "    f();\n}\n"),
+    "anonfn/gen.ts": "export function* gen(items) {\n    yield items;\n}\n",
+    "anonfn/typed.ts": ("import { Service } from '../thisfn/service';\nsuite('s', () => {\n    test('t', () => {\n"
+                        "        const service = new Service();\n        service.run();\n    });\n});\n"),
 }
 
 
@@ -953,7 +964,8 @@ class JavaScriptResolutionReviewTests(unittest.TestCase):
 
     def test_an_ordinary_nested_function_has_its_own_this(self):
         rows = self.rows("thisfn/service.ts::Service.run")
-        self.assertEqual({line for _path, line, resolved in rows if resolved}, {4, 11})  # method body and arrow
+        self.assertEqual({line for path, line, resolved in rows if resolved and path == "thisfn/service.ts"},
+                         {4, 11})  # method body and arrow
         self.assertTrue({("thisfn/service.ts", 6, False), ("thisfn/service.ts", 9, False)} <= rows)
 
     def test_jsx_text_and_tags_are_not_code(self):
@@ -969,6 +981,26 @@ class JavaScriptResolutionReviewTests(unittest.TestCase):
     def test_exact_paths_keys_win_over_wildcards(self):
         self.assertEqual(self.index.js_module("pexact/use.ts", "foo"), "pexact/exact.ts")
         self.assertEqual(self.index.js_module("pexact/use.ts", "foobar"), "pexact/wild/bar.ts")
+
+    def test_anonymous_function_parameters_shadow_imports(self):
+        lines = {line for path, line, resolved in self.rows("lib/f.ts::f") if path == "anonfn/use.ts" and resolved}
+        self.assertEqual(lines, {11})  # (f) => f(), f => f(), function (f) {...}, { m(f) {...} } use the parameter
+        edges = code_index.call_graph(self.index)
+        self.assertEqual(edges[(("anonfn/use.ts", "run"), ("lib/f.ts", "f"))], 1)
+
+    def test_a_typed_local_inside_a_callback_still_types_its_calls(self):
+        self.assertIn(("anonfn/typed.ts", 5, True), self.rows("thisfn/service.ts::Service.run"))
+
+    def test_a_generator_declaration_is_one_definition_not_a_scanner_error(self):
+        record = self.index.files["anonfn/gen.ts"]
+        self.assertNotIn("error", record)
+        self.assertEqual([row[:2] for row in record["js"]["defs"]], [["gen", "function"]])
+
+    def test_a_named_function_expression_binds_its_name_inside(self):
+        lines = {line for path, line, resolved in self.rows("lib/f.ts::f") if path == "namedfn/use.ts" and resolved}
+        self.assertEqual(lines, {9})
+        self.assertEqual(self.index.js_resolve("namedfn/use.ts", "g", "f"), ("def", "namedfn/use.ts", "g"))
+        self.assertIn(("namedfn/use.ts", 3, True), self.rows("namedfn/use.ts::g"))
 
     def test_extends_may_name_any_local_json_file(self):
         self.assertEqual(self.index.js_module("jcfg/use.ts", "#lib/tool"), "jcfg/lib/tool.ts")
