@@ -114,6 +114,18 @@ hid its own binding). Every figure in the (b) table is unchanged. One count move
 because callback bodies are block scopes now, so a `const` typed in one test callback no longer types
 the same name in the other callbacks of the file. (a) and (c) were not rerun.
 
+## Callers rerun after codex review round 18
+
+Only (b) was rerun, with the same truth sets, after the fixes of review rounds 13 to 18 (anonymous
+callbacks have their own scope, a named function expression binds its own name, `for`/`catch` and
+destructuring bindings, `super(...)`, JSX blanking, tsconfig option merging). Every figure in the (b)
+table is unchanged except VS Code's file-level wrong files (404 to 406). `KeybindingResolver.resolve`
+now lists 2,796 same-name rows instead of 2,776: callback parameters now hide outer typed locals of the
+same name, so a call such as `(model) => model.resolve()` is an unknown-receiver row instead of being
+typed by an outer `model`. A one-run cost probe on VS Code: cold build 35.3 s and 2,138 MB peak (as
+before), cache 402.5 MB (was 375.2), warm `callers` 6.6 s and 1,509 MB peak (was 1,270), from the stored
+callback scopes and locals. (a) was not rerun.
+
 ## Limits of this measurement
 
 - The truth sets were built by the author of the index, from grep and reading, before

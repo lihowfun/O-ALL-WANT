@@ -2051,5 +2051,63 @@
    },
    "KeybindingResolver.resolve_truncated": 1776
   }
+ },
+ "callers_rerun_round18": {
+  "note": "(b) only, after the codex review rounds 13-18 fixes (anonymous callbacks have their own scope, a named function expression binds its own name, and earlier scoping fixes). Same truth sets. Every summary figure is unchanged except file-level wrong files on VS Code (404 -> 406); KeybindingResolver.resolve lists 2,796 same-name rows instead of 2,776, because callback parameters now hide outer typed locals of the same name, so calls such as (model) => model.resolve() are unknown-receiver rows instead of being typed by an outer model. One-run cost probe on VS Code: cold build 35.3 s, 2,138 MB peak; cache 402.5 MB; warm callers 6.6 s, 1,509 MB peak, from the stored callback scopes and locals.",
+  "code_index_sha256": "579d65ad09ff8aa481844c8f358ef9aac122d00dc1ceafffeab769582c3e4bd9",
+  "ERPNext": {
+   "callers": {
+    "symbols": 20,
+    "true_callers": 110,
+    "recall_all_rows": 0.9545,
+    "recall_resolved_rows": 0.9,
+    "wrong_resolved_rows": 0,
+    "resolved_rows": 99,
+    "wrong_unresolved_rows": 9,
+    "unresolved_rows": 15,
+    "returned_dynamic_rows": 0,
+    "symbols_with_full_recall_all_rows": 17,
+    "file_level": {
+     "true": 75,
+     "S_found": 70,
+     "S_wrong": 8,
+     "R_found": 75,
+     "R_wrong": 80
+    },
+    "meets_0_95_all_rows": true,
+    "meets_0_95_resolved_rows": false
+   }
+  },
+  "VS Code": {
+   "callers": {
+    "symbols": 20,
+    "true_callers": 338,
+    "recall_all_rows": 1.0,
+    "recall_resolved_rows": 1.0,
+    "wrong_resolved_rows": 0,
+    "resolved_rows": 338,
+    "wrong_unresolved_rows": 988,
+    "unresolved_rows": 988,
+    "returned_dynamic_rows": 1,
+    "symbols_with_full_recall_all_rows": 20,
+    "file_level": {
+     "true": 124,
+     "S_found": 124,
+     "S_wrong": 406,
+     "R_found": 124,
+     "R_wrong": 1020
+    },
+    "meets_0_95_all_rows": true,
+    "meets_0_95_resolved_rows": true
+   },
+   "KeybindingResolver.resolve_truncated": 1796,
+   "cost_probe": {
+    "cold_build_seconds": 35.34,
+    "cold_build_peak_mb": 2138,
+    "cache_mb": 402.5,
+    "warm_callers_seconds": 6.59,
+    "warm_callers_peak_mb": 1509
+   }
+  }
  }
 }
