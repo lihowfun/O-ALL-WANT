@@ -288,6 +288,20 @@ class GitDiffTests(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertIn("not a project path", errors)
 
+    def test_planned_folders_trigger_like_files_in_them(self):
+        # X3 (2026-11-07): an agent passed `--paths migrations ...` and got light; a folder now counts as its files.
+        (self.repo / "migrations").mkdir()
+        for paths, rule in ((["migrations"], "migration-or-schema"), (["db/migrations"], "migration-or-schema"),
+                            ([".github/workflows"], "harness"), (["docs/plans"], "new-plan-doc"),
+                            (["docs/designs/"], "new-plan-doc"), (["templates"], "harness")):
+            with self.subTest(paths=paths):
+                result = self.suggest("--paths", *paths)
+                self.assertEqual(result["mode"], "deep", result)
+                self.assertIn(rule, [t["rule"] for t in result["triggers"]])
+        for paths in (["src/migrations.py"], ["src"], ["README.md"]):
+            with self.subTest(paths=paths):
+                self.assertEqual(self.suggest("--paths", *paths)["mode"], "light")
+
     def test_text_output_names_the_mode_reasons_and_next_command(self):
         self.write("a.py", "A = 1\n")
         code, output, _ = run("suggest", "--root", str(self.repo))
@@ -784,5 +798,7 @@ class SwitchAndStepTests(unittest.TestCase):
         self.write(".oaw/settings.json", json.dumps({"review": {"dry_run": True}}))
         self.write("docs/plans/a.md", "# A\n")
         self.assertTrue(self.json("suggest")["dry_run"])
-        self.assertIn("dry run", self.run_ok("suggest"))
+        text = self.run_ok("suggest")
+        self.assertIn("dry run", text)
+        self.assertIn("still plan first", text)  # X3: dry run skips reviews, not the plan
 

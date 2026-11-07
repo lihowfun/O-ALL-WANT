@@ -39,7 +39,7 @@
     ".agents/skills/oaw-codemap/SKILL.md": "3cc13ae80abdf8c861baa034bda34f33511325e5466ca8108706dcbbb49fe2da",
     ".agents/skills/oaw-codemap/agents/openai.yaml": "20e69f0516980348699981f82fee78dbe4d086f7e3263a8d8e742501196b265f",
     ".agents/skills/oaw-evidence/SKILL.md": "e1a0c9f4739f860f8b610e3a900fbb5999fc06c03fc1eeba9e9a1bb8d4ca0b30",
-    ".agents/skills/oaw-review/SKILL.md": "445aa4b002a3a513a42f5992731b0214eb69116e984011d2320617a51aeea817",
+    ".agents/skills/oaw-review/SKILL.md": "ebfecbd751a120875f8b65e4d8352393d6b7439190c6f7a689973d9bc9a1f154",
     ".oaw/integrations/egm/.claude-plugin/agents/bootstrap_orchestrator.md": "b07f80ac2b54b840a48b290221e4a15d97b2e90de5ed3d2760efba4112760930",
     ".oaw/integrations/egm/.claude-plugin/agents/codebase_details.md": "17d4f89bb8786f78eca6d9e01e31493497cf4c2af55fa97342507648e185b78d",
     ".oaw/integrations/egm/.claude-plugin/agents/comprehension.md": "78356e3e5e89c3d4a6b9d51865ad81f1b256cb3289869a4070e149b7b90ae7f2",
@@ -111,7 +111,7 @@
     "scripts/code_index.py": "579d65ad09ff8aa481844c8f358ef9aac122d00dc1ceafffeab769582c3e4bd9",
     "scripts/context_hub.py": "1fcc162e3d94792c3c5d173ceebde079ac3e238f9da5efd66978f821af8a1696",
     "scripts/oaw_common.py": "33063249f7f244778d9caaec70e76d119ce1d4fe117c425db5995c47f48adc2c",
-    "scripts/oaw_mode.py": "79b53bd94ff5cc450e21751302a898cc039e0368c54835a535f9097eb3bf5f04"
+    "scripts/oaw_mode.py": "21b388f367b84148a61a5c58e32fccdf899f8bd3b94ed63170c8f446495d67fd"
   },
   "pending_conflicts": [],
   "profile": "minimal",

@@ -9,7 +9,8 @@ Run from the project root with Python 3.10+ (`py -3` on Windows if needed).
 
 1. Before editing: `python3 scripts/oaw_mode.py suggest --paths <files you plan to change> --json`.
    After editing: `python3 scripts/oaw_mode.py suggest --json` (add `--range BASE..HEAD` for committed work).
-   If `dry_run` is true, report the steps and stop here: run no review and record nothing.
+   If `dry_run` is true, run no review and record nothing, but still follow the order: plan first when a step
+   says so, and stop before changing code where a design review would come.
 2. Do the `steps` in order. Finish every step marked `"before_code": true` before you change any code.
    Skip a step whose `done` is true.
    - `plan`: plan first, save the plan as `docs/plans/<name>.md`, then run

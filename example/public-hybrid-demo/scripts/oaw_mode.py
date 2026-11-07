@@ -213,17 +213,29 @@ def project_relative(root: Path, raw: str) -> str:
     return value
 
 
+def is_trigger_folder(value: str) -> bool:
+    """A folder name that triggers a rule even before it exists (a planned --paths entry without a slash)."""
+    folder = value.lower().rstrip("/") + "/"
+    known = (*PLAN_DIRS, "docs/designs/", ".github/workflows/", "templates/", "alembic/versions/", *HOOK_PREFIXES)
+    return folder in known or folder.split("/")[-2] in ("migrations", "migration")
+
+
 def path_entries(root: Path, paths: list[str]) -> tuple[list[dict], str]:
     """A plain list: a path that does not exist yet, or that HEAD does not have, counts as added (a plan saved a
     moment ago is new); line counts are unknown."""
     entries = {}
     for raw in paths:
         value = project_relative(root, raw)
-        entries[value] = {"path": value, "status": "M" if os.path.lexists(root / value) else "A", "old_path": None,
-                          "lines": 0, "lines_known": False}
-    tracked = head_files(root, list(entries)) if entries else None
+        # A folder (existing, or written with a trailing slash) stands for files planned inside it, so the rules
+        # see it as "folder/": .github/workflows, migrations and docs/plans then trigger like files in them.
+        folder = raw.replace("\\", "/").endswith("/") or (root / value).is_dir() or is_trigger_folder(value)
+        key = value + "/" if folder else value
+        entries[key] = {"path": key, "status": "M" if os.path.lexists(root / value) else "A", "old_path": None,
+                        "lines": 0, "lines_known": False, "folder": folder}
+    tracked = head_files(root, [e["path"].rstrip("/") for e in entries.values()]) if entries else None
     if tracked is not None:
-        for value, item in entries.items():
+        for key, item in entries.items():
+            value = key.rstrip("/")
             if item["status"] == "M" and value not in tracked and not any(t.startswith(value + "/") for t in tracked):
                 item["status"] = "A"
     return sorted(entries.values(), key=lambda entry: entry["path"]), "path list"
@@ -318,8 +330,13 @@ def design_rule(entry: dict) -> bool:
 
 
 def plan_rule(entry: dict) -> bool:
-    """A new plan or decision document that the design rule does not already cover (added in 2.0.1)."""
+    """A new plan or decision document that the design rule does not already cover (added in 2.0.1). A planned
+    folder of design or plan documents (from --paths) counts too: new documents are about to go in it."""
     path, name = entry["path"], PurePosixPath(entry["path"]).name.lower()
+    if entry.get("folder"):
+        lowered = path.lower()
+        return (not path.startswith(NOT_PROJECT_DOCS)
+                and any(lowered == d or lowered.startswith(d) for d in (*PLAN_DIRS, "docs/designs/")))
     return (entry["status"] == "A" and name.endswith(".md") and not design_rule(entry)
             and not path.startswith(NOT_PROJECT_DOCS)
             and (path.lower().startswith(PLAN_DIRS) or bool(PLAN_NAME.search(name))))
@@ -827,7 +844,8 @@ def render_suggest(result: dict) -> str:
         lines.append("steps:")
         lines.extend(render_steps(result["steps"]))
     if result.get("dry_run"):
-        lines.append("dry run (.oaw/settings.json review.dry_run): report the steps; do not run any review")
+        lines.append("dry run (.oaw/settings.json review.dry_run): run no review and record nothing; still plan first "
+                     "when a step says so, and stop before changing code at a design review")
     lines.append(f"how to run it: the oaw-review skill, or python3 scripts/oaw_mode.py show {result['mode']}")
     return "\n".join(lines)
 
