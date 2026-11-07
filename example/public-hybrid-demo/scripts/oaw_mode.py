@@ -659,7 +659,7 @@ def instructions(mode: str, root: Path, settings: dict | None = None) -> dict:
         summary = "standard: higher effort and one fresh-context review"
         claude = ["claude --effort high", claude_review]
         codex = ["codex  (effort flag not mapped yet)", codex_review]
-    elif switch == "off" and any(egm.values()):
+    elif switch == "off":
         summary = "deep: plan first at the highest effort, then code review (the EGM switch is off)"
         claude, codex = [deep_claude, claude_review, DEEP_ROUNDS], [CODEX_PLAN, codex_review, DEEP_ROUNDS]
     elif any(egm.values()):

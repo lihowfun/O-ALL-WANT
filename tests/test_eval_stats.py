@@ -105,8 +105,9 @@ class CombineTests(unittest.TestCase):
         self.assertEqual(stats.quality("equivalent", "equivalent"), "equivalent")
         self.assertEqual(stats.quality("equivalent", "undetermined"), "undetermined")
         self.assertEqual(stats.agree("better", "better"), "better")
-        self.assertEqual(stats.agree("better", "equivalent"), "equivalent")
-        self.assertEqual(stats.agree("worse", "equivalent"), "equivalent")
+        # codex review round 3: one family's -0.5 against the other's 0 is not shown equivalent.
+        self.assertEqual(stats.agree("better", "equivalent"), "undetermined")
+        self.assertEqual(stats.agree("worse", "equivalent"), "undetermined")
         self.assertEqual(stats.agree("better", "worse"), "undetermined")
         self.assertEqual(stats.agree("undetermined", "equivalent"), "undetermined")
         self.assertEqual(stats.lowest("better", "equivalent", "undetermined"), "undetermined")

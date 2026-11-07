@@ -405,8 +405,9 @@ class InstalledPolicyTests(unittest.TestCase):
                 policy = package["AGENTS.md"].decode("utf-8")
                 self.assertEqual(package["AGENTS.md"], oaw.render_policy(template, egm))
                 self.assertIn("Work light by default: no extra review.", policy)
-                self.assertIn("Before starting a change and after finishing it, use the `oaw-review` skill", policy)
-                self.assertIn("`python3 scripts/oaw_mode.py suggest`", policy)
+                self.assertIn("Before a change, use the `oaw-review` skill or run "
+                              "`python3 scripts/oaw_mode.py suggest --paths <files you plan to change>`", policy)
+                self.assertIn("after it, run `python3 scripts/oaw_mode.py suggest`", policy)
                 # Committed work needs its range; a clean tree alone says light (codex review of 08dbe3c, item 1).
                 self.assertIn("(add `--range BASE..HEAD` for committed work or a pull request)", policy)
                 self.assertEqual("EGM" in policy, egm)
@@ -670,6 +671,11 @@ class SwitchAndStepTests(unittest.TestCase):
         self.run_ok("second-opinion", "codex")
         standard = mode.instructions("standard", self.root)["hosts"]
         self.assertTrue(standard["claude"][1].startswith("review: codex review"), standard)
+        self.run_ok("egm", "off")  # off holds without an EGM entrypoint too (codex review round 3)
+        deep = mode.instructions("deep", self.root)
+        self.assertIn("the EGM switch is off", deep["summary"])
+        self.assertNotIn(mode.FRESH_DESIGN_REVIEW, deep["hosts"]["claude"])
+        self.run_ok("egm", "auto")
         self.run_ok("second-opinion", "claude")
         codex = mode.instructions("deep", self.root)["hosts"]["codex"]
         self.assertTrue(any("claude -p" in line and "untracked files included" in line for line in codex), codex)

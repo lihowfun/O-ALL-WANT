@@ -9,6 +9,7 @@ Run from the project root with Python 3.10+ (`py -3` on Windows if needed).
 
 1. Before editing: `python3 scripts/oaw_mode.py suggest --paths <files you plan to change> --json`.
    After editing: `python3 scripts/oaw_mode.py suggest --json` (add `--range BASE..HEAD` for committed work).
+   If `dry_run` is true, report the steps and stop here: run no review and record nothing.
 2. Do the `steps` in order. Finish every step marked `"before_code": true` before you change any code.
    Skip a step whose `done` is true.
    - `plan`: plan first, save the plan as `docs/plans/<name>.md`, then run
@@ -25,7 +26,7 @@ Run from the project root with Python 3.10+ (`py -3` on Windows if needed).
      files it names; resolve the findings; record it with `--how fresh-context`.
    - `code-review`: after the change, run the command the step gives for this host and fix what it finds. Deep
      repeats until a round finds nothing new, at most `rounds` times.
-3. Light needs no review. If `dry_run` is true, report the steps and stop.
+3. Light needs no review.
 4. Switches, when the user asks:
    - EGM: `python3 scripts/oaw_mode.py egm on|auto|off` (no argument shows it). One EGM run without changing
      the switch: the user types `/egm-review`.

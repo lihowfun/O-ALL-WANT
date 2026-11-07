@@ -14,7 +14,7 @@ The default design is 12 questions x 1 run per arm, with questions treated as a 
   cost()      per-question log token ratio; "over" only when the 95% interval's lower end exceeds the cap (1.5x),
               "cheaper" when its upper end is below 1x, "within" when it is at most the cap, else undetermined.
   quality()   one grading: coverage and wrong-claim classes merged by the validation PREREG's rule.
-  agree()     two gradings from different model families: a difference counts only when both find it.
+  agree()     two gradings from different model families: a class counts only when both find it.
   lowest()    several conditions: the lowest decides (D29).
   judgment()  the catalog record fields (quality, quality_class, cost_ratio, cost_ci, cheaper). An undetermined
               quality is never "cheaper": undetermined does not become a default (plan principle 6).
@@ -144,13 +144,10 @@ def quality(coverage_class: str, wrong_class: str) -> str:
 
 
 def agree(first: str, second: str) -> str:
-    """Two gradings from different model families (D32): a difference counts only when both find it."""
+    """Two gradings from different model families (D32): a class counts only when both find it; any
+    disagreement, including one family's difference against the other's equivalence, is undetermined."""
     _check(first, second)
-    if first == second:
-        return first
-    if {first, second} <= {"better", "equivalent"} or {first, second} <= {"worse", "equivalent"}:
-        return "equivalent"
-    return "undetermined"
+    return first if first == second else "undetermined"
 
 
 def lowest(*classes: str) -> str:
