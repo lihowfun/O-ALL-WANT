@@ -1006,5 +1006,264 @@ class JavaScriptResolutionReviewTests(unittest.TestCase):
         self.assertEqual(self.index.js_module("jcfg/use.ts", "#lib/tool"), "jcfg/lib/tool.ts")
 
 
+class DrawnGraphTests(unittest.TestCase):
+    """Exact file relationships, bounded exports and untrusted path labels."""
+
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory(prefix="oaw-drawn-graph-")
+        self.addCleanup(temporary.cleanup)
+        self.root = temporary.name
+        write_tree(self.root, {
+            "pkg/lib.py": "def ping():\n    return 1\n\ndef loop():\n    return ping()\n",
+            "app/main.py": "from pkg.lib import ping, loop\ndef run():\n    ping()\n    ping()\n    loop()\n"
+                           "    unknown.save()\n    print('external')\n",
+            "tests/test_main.py": "from app.main import run\ndef test_run():\n    run()\n",
+            "src/lib.ts": "export function ping() { return 1; }\n",
+            "src/main.ts": 'import {ping as p} from "./lib";\np(); p();\n',
+            "src/nested/orphan.ts": "export const lone = 1;\n",
+            "cycle/a.py": "from .b import b\ndef a():\n    b()\n",
+            "cycle/b.py": "from .a import a\ndef b():\n    a()\n",
+            "docs/guide.md": "# No code node\n",
+        })
+        Path(self.root, "empty").mkdir()
+        self.index = code_index.build_index(self.root)
+
+    def test_exact_file_graph_reuses_index_and_keeps_tests_and_isolates(self):
+        with unittest.mock.patch.object(code_index, "extract", side_effect=AssertionError("second parser")):
+            report = code_index.graph(self.index)
+        self.assertEqual([(e["source"], e["target"], e["imports"], e["calls"], e["weight"])
+                          for e in report["edges"]], [
+            ("app/main.py", "pkg/lib.py", 2, 3, 5),
+            ("cycle/a.py", "cycle/b.py", 1, 1, 2),
+            ("cycle/b.py", "cycle/a.py", 1, 1, 2),
+            ("src/main.ts", "src/lib.ts", 1, 2, 3),
+            ("tests/test_main.py", "app/main.py", 1, 1, 2),
+        ])
+        self.assertEqual(report["total"], {"nodes": 8, "edges": 5})
+        self.assertTrue(report["complete"])
+        self.assertEqual(report["truncated"], {"nodes": 0, "edges": 0})
+        self.assertIn({"id": "src/nested/orphan.ts", "group": "src/nested"}, report["nodes"])
+        # Graph inclusion must not change overview's default test exclusion.
+        self.assertFalse(any(source[0].startswith("tests/") for source, _target in code_index.call_graph(self.index)))
+        self.assertNotIn(self.root, json.dumps(report))
+
+    def test_scope_windows_separators_boundary_empty_and_rejection(self):
+        report = code_index.graph(self.index, "src\\nested")
+        self.assertEqual(report["scope"], "src/nested")
+        self.assertEqual(report["nodes"], [{"id": "src/nested/orphan.ts", "group": "src/nested"}])
+        self.assertEqual(report["edges"], [])
+        self.assertEqual(code_index.graph(self.index, "app")["edges"], [])
+        for scope in ("..", "missing", "app/main.py"):
+            with self.subTest(scope=scope), self.assertRaises(code_index.CodeIndexError):
+                code_index.graph(self.index, scope)
+        empty = code_index.graph(self.index, "empty")
+        self.assertEqual(empty["total"], {"nodes": 0, "edges": 0})
+        self.assertTrue(empty["complete"])
+        self.assertIn('<svg id="map"', code_index.graph_html(empty))
+        self.assertTrue(code_index.graph_mermaid(empty).startswith("flowchart LR\n"))
+
+    def test_caps_have_exact_omissions_valid_endpoints_and_strongest_edges(self):
+        report = code_index.graph(self.index, max_nodes=3, max_edges=1)
+        self.assertEqual([n["id"] for n in report["nodes"]], ["app/main.py", "cycle/a.py", "pkg/lib.py"])
+        self.assertEqual(report["edges"], [{"source": "app/main.py", "target": "pkg/lib.py",
+                                           "imports": 2, "calls": 3, "weight": 5}])
+        self.assertFalse(report["complete"])
+        self.assertEqual(report["truncated"], {"nodes": 5, "edges": 4})
+        strongest = code_index.graph(self.index, max_edges=1)
+        self.assertEqual(strongest["edges"][0]["weight"], 5)
+        for edge in report["edges"]:
+            self.assertTrue({edge["source"], edge["target"]} <= {n["id"] for n in report["nodes"]})
+        self.assertIn("truncated: 5 nodes, 4 edges omitted", code_index.graph_mermaid(report))
+        self.assertIn("truncated: 5 nodes, 4 edges omitted", code_index.graph_html(report))
+        self.index.info["stale"] = ["src/lib.ts"]
+        self.assertEqual(code_index.graph(self.index)["stale_files"], 1)
+
+    def test_large_graph_obeys_default_and_mermaid_caps(self):
+        files = {f"many/f{i:03}.py": "def work():\n    return 1\n" for i in range(205)}
+        files["many/main.py"] = "\n".join(f"from .f{i:03} import work as w{i}\nw{i}()" for i in range(205))
+        write_tree(self.root, files)
+        index = code_index.build_index(self.root)
+        report = code_index.graph(index, "many")
+        self.assertEqual((len(report["nodes"]), report["truncated"]), (200, {"nodes": 6, "edges": 6}))
+        self.assertEqual([node["id"] for node in report["nodes"]],
+                         [f"many/f{i:03}.py" for i in range(199)] + ["many/main.py"])
+        self.assertEqual(len(report["edges"]), 199)
+        self.assertTrue(all(edge["source"] == "many/main.py" for edge in report["edges"]))
+        process = run_cli("graph", "--root", self.root, "--scope", "many", "--format", "mermaid", "--no-cache")
+        self.assertEqual(process.returncode, 0, process.stderr)
+        self.assertEqual(len(re.findall(r'    n\d+\[', process.stdout)), 40)
+        self.assertIn("caps 40 nodes/80 edges", process.stdout)
+        self.assertIn('["many/main.py"]', process.stdout)
+        self.assertEqual(process.stdout.count(' -->|'), 39)
+
+    def test_dense_graph_caps_edges_without_silent_loss(self):
+        write_tree(self.root, {f"dense/f{i:02}.py":
+                              "\n".join(f"from .f{j:02} import work" for j in range(25) if j != i)
+                              + "\ndef work():\n    return 1\n" for i in range(25)})
+        report = code_index.graph(code_index.build_index(self.root), "dense")
+        self.assertEqual(report["total"], {"nodes": 25, "edges": 600})
+        self.assertEqual((len(report["edges"]), report["truncated"]), (500, {"nodes": 0, "edges": 100}))
+        self.assertEqual(report["edges"][0]["source"], "dense/f00.py")
+        self.assertFalse(report["complete"])
+
+    def test_export_bytes_are_stable_across_index_order_and_cache_reuse(self):
+        cache = str(Path(self.root, "cache"))
+        first = code_index.build_index(self.root, cache)
+        second = code_index.build_index(self.root, cache)
+        self.assertGreater(second.info["counts"]["reused"], 0)
+        reversed_index = code_index.Index(self.index.root, dict(reversed(list(self.index.files.items()))), self.index.info)
+        for caps in ({}, {"max_nodes": 3, "max_edges": 1}):
+            expected = code_index.graph(self.index, **caps)
+            for index in (first, second, reversed_index):
+                report = code_index.graph(index, **caps)
+                self.assertEqual(json.dumps(report), json.dumps(expected))
+                self.assertEqual(code_index.graph_mermaid(report), code_index.graph_mermaid(expected))
+                self.assertEqual(code_index.graph_html(report), code_index.graph_html(expected))
+
+    def test_html_has_offline_drawing_controls_safe_labels_and_json(self):
+        from html.parser import HTMLParser
+
+        report = code_index.graph(self.index)
+        hostile = 'x</script><script>alert("x")</script>&\n%%{init: {}}.py'
+        report["nodes"][0]["id"] = hostile
+        report["nodes"][0]["group"] = '<img src="remote">'
+        report["edges"] = [dict(report["edges"][0], source=hostile)]
+        rendered = code_index.graph_html(report)
+        self.assertNotIn(hostile, rendered)
+        self.assertNotIn('<img src="remote">', rendered)
+        self.assertIn('x&lt;/script&gt;', rendered)
+        self.assertIn('<title>x&lt;/script&gt;&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;&amp;\n'
+                      '%%{init: {}}.py -&gt; pkg/lib.py: 2 imports, 3 calls</title>', rendered)
+        payload = re.search(r'<script id="graph-data" type="application/json">(.*?)</script>', rendered, re.S)[1]
+        self.assertEqual(json.loads(payload), report)
+        self.assertNotIn("<", payload)
+
+        class Tags(HTMLParser):
+            def __init__(self):
+                super().__init__()
+                self.tags = []
+
+            def handle_starttag(self, tag, attrs):
+                self.tags.append((tag, dict(attrs)))
+
+        tags = Tags()
+        tags.feed(rendered)
+        self.assertEqual(sum(tag == "svg" for tag, _ in tags.tags), 1)
+        self.assertEqual(sum(tag == "script" for tag, _ in tags.tags), 2)
+        self.assertFalse(any(key in attrs for _tag, attrs in tags.tags for key in ("src", "href", "onload", "onclick")))
+        ids = {attrs.get("id") for _tag, attrs in tags.tags}
+        self.assertTrue({"search", "reset", "legend", "details", "map"} <= ids)
+        self.assertEqual(sum(attrs.get("role") == "button" for _tag, attrs in tags.tags), 8)
+        for needle in ('"keydown"', '"neighbor"', "Top callers / importers", "Top callees / dependencies",
+                       "default-src 'none'", "script-src 'unsafe-inline'"):
+            self.assertIn(needle, rendered)
+        self.assertNotRegex(rendered, r"\b(?:fetch|XMLHttpRequest|WebSocket|EventSource|importScripts)\b")
+        mermaid = code_index.graph_mermaid(report)
+        self.assertNotIn("<script>", mermaid)
+        self.assertNotIn("%%{init", mermaid)
+        self.assertNotIn("\n%%{", mermaid)
+        self.assertIn("#60;", mermaid)
+        self.assertIn('n0["x#60;/script#62;#60;script#62;alert#40;#34;x#34;#41;#60;/script#62;'
+                      '#38;#10;#37;#37;#123;init#58; #123;#125;#125;.py"]', mermaid)
+        self.assertIn('  n0 -->|"I:2 C:3"| n3\n', mermaid)
+
+    def test_cli_rejects_skipped_and_symlink_scopes(self):
+        write_tree(self.root, {"node_modules/nested/lib.py": "def ignored(): pass\n"})
+        for scope in ("node_modules", "node_modules/nested"):
+            with self.subTest(scope=scope):
+                process = run_cli("graph", "--root", self.root, "--no-cache", "--scope", scope)
+                self.assertEqual(process.returncode, 1, process.stderr)
+                self.assertIn("node_modules", process.stderr)
+                self.assertNotIn("Traceback", process.stderr)
+        try:
+            Path(self.root, "linked").symlink_to(Path(self.root, "src"), target_is_directory=True)
+        except (OSError, NotImplementedError):
+            self.skipTest("directory symlinks are unavailable on this platform")
+        for scope in ("linked", "linked/nested"):
+            with self.subTest(scope=scope):
+                process = run_cli("graph", "--root", self.root, "--no-cache", "--scope", scope)
+                self.assertEqual(process.returncode, 1, process.stderr)
+                self.assertIn("symlink", process.stderr)
+                self.assertNotIn("Traceback", process.stderr)
+
+    def test_cli_case_mismatch_names_indexed_scope(self):
+        for scope in ("Src", "SRC/NESTED"):
+            with self.subTest(scope=scope):
+                process = run_cli("graph", "--root", self.root, "--no-cache", "--scope", scope)
+                self.assertEqual(process.returncode, 1, process.stderr)
+                self.assertIn("indexed spelling: " + scope.lower(), process.stderr)
+                self.assertNotIn("Traceback", process.stderr)
+
+    @unittest.skipIf(os.name == "nt", "raw non-UTF-8 filenames require a POSIX filesystem")
+    def test_cli_surrogate_filename_exports_match_stdout(self):
+        name = os.fsdecode(b"caf\xe9.py")
+        if not any(0xDC80 <= ord(char) <= 0xDCFF for char in name):
+            self.skipTest("filesystem encoding does not use surrogate escapes for this filename")
+        Path(self.root, name).write_text("def ping(): return 1\n", encoding="utf-8")
+        for output_format in ("html", "json"):
+            with self.subTest(output_format=output_format):
+                args = ("graph", "--root", self.root, "--no-cache", "--format", output_format)
+                stdout = run_cli(*args)
+                self.assertEqual(stdout.returncode, 0, stdout.stderr)
+                output = Path(self.root, "empty", "surrogate." + output_format)
+                output.write_bytes(b"existing export")
+                process = run_cli(*args, "--out", str(output))
+                self.assertEqual(process.returncode, 0, process.stderr)
+                self.assertEqual(output.read_bytes(), stdout.stdout.encode("utf-8"))
+                self.assertIn(b"caf\\udce9.py", output.read_bytes())
+
+    def test_cli_failed_export_preserves_existing_output_and_cleans_temporary(self):
+        output = Path(self.root, "empty", "existing.html")
+        output.write_bytes(b"existing export")
+        prelude = ("import sys; from unittest.mock import patch; "
+                   f"sys.path.insert(0, {str(ROOT / 'scripts')!r}); import code_index\n"
+                   "original_fdopen = code_index.os.fdopen\n"
+                   "def failing_fdopen(*args, **kwargs):\n"
+                   "    stream = original_fdopen(*args, **kwargs)\n"
+                   "    original_write = stream.write\n"
+                   "    def fail_write(text):\n"
+                   "        original_write(text[:100])\n"
+                   "        stream.flush()\n"
+                   "        raise OSError('injected write failure')\n"
+                   "    stream.write = fail_write\n"
+                   "    return stream\n")
+        for failure, target, effect in (("write", "fdopen", "failing_fdopen"),
+                                        ("replace", "replace", "OSError('injected replace failure')")):
+            with self.subTest(failure=failure):
+                code = (prelude + f"with patch.object(code_index.os, {target!r}, side_effect={effect}):\n"
+                        "    raise SystemExit(code_index.main(sys.argv[1:]))\n")
+                process = subprocess.run([sys.executable, "-c", code, "graph", "--root", self.root, "--no-cache",
+                                          "--out", str(output)], capture_output=True, text=True,
+                                         encoding="utf-8", timeout=120)
+                self.assertEqual(process.returncode, 1, process.stderr)
+                self.assertIn(f"injected {failure} failure", process.stderr)
+                self.assertNotIn("Traceback", process.stderr)
+                self.assertEqual(output.read_bytes(), b"existing export")
+                self.assertEqual(list(output.parent.iterdir()), [output])
+
+    def test_cli_formats_stdout_files_errors_and_windows_output(self):
+        for output_format in ("html", "mermaid", "json"):
+            args = ("graph", "--root", self.root, "--no-cache", "--format", output_format)
+            stdout = run_cli(*args)
+            self.assertEqual(stdout.returncode, 0, stdout.stderr)
+            name = "empty\\map." + output_format
+            process = run_cli(*args, "--out", name, cwd=self.root)
+            self.assertEqual(process.returncode, 0, process.stderr)
+            self.assertEqual(process.stdout, "")
+            output = Path(self.root, "empty", "map." + output_format).read_bytes()
+            self.assertEqual(output, stdout.stdout.encode("utf-8"))
+            if output_format == "json":
+                self.assertEqual(json.loads(output)["schema_version"], 1)
+        alias = run_cli("--json", "graph", "--root", self.root, "--no-cache")
+        self.assertEqual(json.loads(alias.stdout)["total"], {"nodes": 8, "edges": 5})
+        self.assertTrue(run_cli("graph", "--root", self.root, "--no-cache").stdout.startswith("<!doctype html>"))
+        for args, status in ((("--max-nodes", "0"), 2), (("--max-edges", "1001"), 2),
+                             (("--format", "html", "--json"), 2), (("--scope", ".."), 1),
+                             (("--out", "missing/map.html"), 1)):
+            process = run_cli("graph", "--root", self.root, "--no-cache", *args, cwd=self.root)
+            self.assertEqual(process.returncode, status, process.stderr)
+            self.assertNotIn("Traceback", process.stderr)
+
+
 if __name__ == "__main__":
     unittest.main()

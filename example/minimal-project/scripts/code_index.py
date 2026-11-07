@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regenerable, read-only code index: find, callers, import paths, affected files and a one-page overview.
+"""Regenerable code index: find, callers, import paths, affected files, overview and a drawn file graph.
 
 Python files are parsed with ast, never imported or run; a file this Python
 cannot parse gets a regex pass instead. JavaScript and TypeScript files get a
@@ -32,6 +32,7 @@ import builtins
 from collections import Counter, deque
 from functools import lru_cache
 import hashlib
+import html
 import json
 import keyword
 import math
@@ -3766,12 +3767,12 @@ _OVERVIEW_LIMITS = ("pointers only; most-called = PageRank over call sites this 
                     "JavaScript/TypeScript, tests excluded); unresolved calls are not counted")
 
 
-def call_graph(index):
-    """Counter of resolved call edges (caller (path, scope), callee (path, qualname)), test files left out."""
+def call_graph(index, include_tests=False):
+    """Counter of resolved call edges (caller (path, scope), callee (path, qualname))."""
     by_name, edges = index.tables()["by_name"], Counter()
     for path, record in index.files.items():
         python, script = record.get("py"), record.get("js")
-        if _is_test(path) or not (python or script):
+        if (not include_tests and _is_test(path)) or not (python or script):
             continue
         resolve, seen = (index.resolve if python else index.js_resolve), {}
         bound = index.bindings(path) if python else set(index.js_bindings(path)) | {  # import aliases (a as b)
@@ -3783,9 +3784,261 @@ def call_graph(index):
             if key not in seen:
                 seen[key] = resolve(path, scope, chain)
             target = seen[key]
-            if target and target[0] == "def" and not _is_test(target[1]):
+            if target and target[0] == "def" and (include_tests or not _is_test(target[1])):
                 edges[((path, _owner_scope(scope)), (target[1], target[2]))] += 1
     return edges
+
+
+# ---------------------------------------------------------------- drawn file graph
+
+GRAPH_NODES, GRAPH_EDGES = 200, 500
+_GRAPH_LIMITS = (LIMITS + "; graph shows only cross-file local edges in scope, including tests; "
+                 "imports count bindings, calls count resolved sites, weight = imports + calls; "
+                 "nodes capped by total incident weight, then strongest edges first with path tie-breaks; "
+                 "neighbor lists describe displayed edges only; directory groups are not semantic clusters")
+
+
+def _graph_scope(index, scope):
+    raw = scope.replace("\\", os.sep)
+    directory = os.path.abspath(os.path.join(index.root, raw))
+    if (not _inside(directory, index.root)
+            or not _inside(os.path.realpath(directory), os.path.realpath(index.root))):
+        raise CodeIndexError("graph scope must be a directory inside the root")
+    relative = os.path.relpath(directory, index.root).replace(os.sep, "/")
+    current = index.root
+    for part in (() if relative == "." else relative.split("/")):
+        current = os.path.join(current, part)
+        if os.path.normcase(part) in SKIP_DIRS:
+            raise CodeIndexError(f"graph scope contains a skipped directory: {part}")
+        if os.path.lexists(current) and _lstat_link(current):
+            raise CodeIndexError(f"graph scope must not contain a symlink or junction: {relative}")
+    if relative != "." and not any(path.startswith(relative + "/") for path in index.files):
+        prefix = (relative + "/").casefold()
+        matches = sorted({"/".join(path.split("/")[:len(relative.split("/"))])
+                          for path in index.files if path.casefold().startswith(prefix)})
+        if matches:
+            raise CodeIndexError("graph scope has different case; use indexed spelling: " + ", ".join(matches))
+    if not os.path.isdir(directory):
+        raise CodeIndexError("graph scope must be an existing directory")
+    return relative
+
+
+def graph(index, scope=".", max_nodes=GRAPH_NODES, max_edges=GRAPH_EDGES):
+    """Bounded, deterministic file graph; reuse indexed import bindings and resolved call sites."""
+    scope = _graph_scope(index, scope)
+    paths = sorted(path for path, record in index.files.items()
+                   if (record.get("py") is not None or record.get("js") is not None)
+                   and (scope == "." or path.startswith(scope + "/")))
+    allowed, counts = set(paths), {}
+
+    def add(source, target, kind, amount=1):
+        if source != target and source in allowed and target in allowed:
+            row = counts.setdefault((source, target), {"source": source, "target": target, "imports": 0, "calls": 0})
+            row[kind] += amount
+
+    for source, rows in index.import_edges().items():
+        for _line, _scope, target, _label in rows:
+            add(source, target, "imports")
+    for (source, target), weight in call_graph(index, include_tests=True).items():
+        add(source[0], target[0], "calls", weight)
+    incident = Counter()
+    for row in counts.values():
+        row["weight"] = row["imports"] + row["calls"]
+        incident[row["source"]] += row["weight"]
+        incident[row["target"]] += row["weight"]
+    kept = set(sorted(paths, key=lambda path: (-incident[path], path))[:max_nodes])
+    edges = sorted((row for row in counts.values() if row["source"] in kept and row["target"] in kept),
+                   key=lambda row: (-row["weight"], row["source"], row["target"]))[:max_edges]
+    cut = {"nodes": len(paths) - len(kept), "edges": len(counts) - len(edges)}
+    return {"schema_version": SCHEMA_VERSION, "scope": scope,
+            "nodes": [{"id": path, "group": posixpath.dirname(path) or "."} for path in sorted(kept)],
+            "edges": sorted(edges, key=lambda row: (row["source"], row["target"])),
+            "total": {"nodes": len(paths), "edges": len(counts)},
+            "caps": {"nodes": max_nodes, "edges": max_edges}, "complete": not any(cut.values()),
+            "truncated": cut, "limits": _GRAPH_LIMITS, "stale_files": len(index.info.get("stale", []))}
+
+
+def _graph_status(report):
+    total, cut = report["total"], report["truncated"]
+    state = "complete within the index" if report["complete"] else (
+        f"truncated: {cut['nodes']} nodes, {cut['edges']} edges omitted")
+    return (f"{len(report['nodes'])}/{total['nodes']} nodes; {len(report['edges'])}/{total['edges']} edges; "
+            f"{state}; caps {report['caps']['nodes']} nodes/{report['caps']['edges']} edges; "
+            f"stale files: {report['stale_files']}")
+
+
+def _mermaid_label(text):
+    # Numeric entities keep quotes, brackets, directives and markup inside quoted labels.
+    return "".join(char if char.isascii() and (char.isalnum() or char in " /._-")
+                   else f"#{ord(char)};" for char in text)
+
+
+def graph_mermaid(report):
+    """Small text diagram with generated identifiers, never source-controlled Mermaid syntax."""
+    lines = ["flowchart LR", "%% Scope: " + _mermaid_label(report["scope"]), "%% " + _graph_status(report),
+             "%% Legend: source --> dependency; I = import bindings, C = resolved call sites",
+             "%% " + report["limits"]]
+    names = {node["id"]: f"n{number}" for number, node in enumerate(report["nodes"])}
+    groups = sorted({node["group"] for node in report["nodes"]})
+    for number, group in enumerate(groups):
+        lines.append(f'  subgraph g{number}["{_mermaid_label(group)}"]')
+        for node in report["nodes"]:
+            if node["group"] == group:
+                lines.append(f'    {names[node["id"]]}["{_mermaid_label(node["id"])}"]')
+        lines.append("  end")
+    for edge in report["edges"]:
+        lines.append(f'  {names[edge["source"]]} -->|"I:{edge["imports"]} C:{edge["calls"]}"| '
+                     + names[edge["target"]])
+    return "\n".join(lines) + "\n"
+
+
+def graph_html(report):
+    """Standalone SVG drawing plus local interactions; no libraries, resource URLs or source snippets."""
+    groups = sorted({node["group"] for node in report["nodes"]})
+    positions, boxes, bottoms = {}, [], [20, 20, 20]
+    for group in groups:
+        members = [node for node in report["nodes"] if node["group"] == group]
+        column = min(range(3), key=lambda item: (bottoms[item], item))
+        x, y = 20 + column * 340, bottoms[column]
+        height = 50 + len(members) * 38
+        boxes.append(f'<rect class="group" x="{x}" y="{y}" width="320" height="{height}" rx="8"/>'
+                     f'<text x="{x + 12}" y="{y + 24}">{html.escape(group)}</text>')
+        for number, node in enumerate(members):
+            positions[node["id"]] = (x + 16, y + 38 + number * 38)
+        bottoms[column] += height + 20
+    drawing = [f'<svg id="map" xmlns="http://www.w3.org/2000/svg" width="1040" height="{max(bottoms)}" '
+               'aria-label="Directed file dependency graph">',
+               '<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" '
+               'markerWidth="6" markerHeight="6" orient="auto-start-reverse">'
+               '<path d="M 0 0 L 10 5 L 0 10 z" fill="#567083"/></marker></defs>', *boxes]
+    for number, edge in enumerate(report["edges"]):
+        x1, y1 = positions[edge["source"]]
+        x2, y2 = positions[edge["target"]]
+        # Curves run outside node rectangles for same-column dependencies.
+        if x1 == x2:
+            start, end, bend = x1 + 288, x2 + 288, x1 + 312
+        elif x1 < x2:
+            start, end, bend = x1 + 288, x2, (x1 + 288 + x2) / 2
+        else:
+            start, end, bend = x1, x2 + 288, (x1 + x2 + 288) / 2
+        label = html.escape(f"{edge['source']} -> {edge['target']}: "
+                            f"{edge['imports']} imports, {edge['calls']} calls")
+        drawing.append(f'<path class="edge" id="e{number}" d="M {start} {y1 + 14} '
+                       f'C {bend} {y1 + 14}, {bend} {y2 + 14}, {end} {y2 + 14}" '
+                       f'stroke-width="{1 + min(5, math.log2(1 + edge["weight"])):.2f}" '
+                       f'marker-end="url(#arrow)"><title>{label}</title></path>')
+    for number, node in enumerate(report["nodes"]):
+        x, y = positions[node["id"]]
+        label = posixpath.basename(node["id"])
+        drawing.append(f'<g class="node" id="n{number}" tabindex="0" role="button" '
+                       f'aria-label="{html.escape(node["id"], quote=True)}">'
+                       f'<title>{html.escape(node["id"])}</title>'
+                       f'<rect x="{x}" y="{y}" width="288" height="28" rx="4"/>'
+                       f'<text x="{x + 8}" y="{y + 19}">{html.escape(label[:36])}</text></g>')
+    drawing.append('</svg>')
+    payload = json.dumps(report, ensure_ascii=True, separators=(",", ":")).replace("<", "\\u003c").replace(
+        ">", "\\u003e").replace("&", "\\u0026")
+    return '''<!doctype html>
+<html lang="en"><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'">
+<title>OAW file dependency map</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font:14px system-ui,sans-serif;color:#203447;background:#f5f8fa}
+header{padding:12px 20px;border-bottom:1px solid #b8c9d4}h1{font-size:20px;margin:0 0 8px}
+main{display:flex;height:calc(100vh - 150px);min-height:360px}aside{width:330px;flex-shrink:0;padding:16px;overflow:auto}
+#viewport{overflow:auto;flex:1;background:white}button,input{font:inherit;margin:3px 0;padding:6px;max-width:100%}
+input{width:100%}button{cursor:pointer}#matches button,#details button{display:block;text-align:left;overflow-wrap:anywhere}
+text{font:13px system-ui,sans-serif;fill:#203447}.group{fill:#edf3f7;stroke:#b8c9d4}
+.node{cursor:pointer}.node rect{fill:#fff;stroke:#567083}.node:hover rect,.node:focus rect{stroke:#007c91;stroke-width:3}
+.edge{fill:none;stroke:#567083;opacity:.45}.dim{opacity:.10}.edge.active{stroke:#007c91;opacity:1}
+.node.selected rect{fill:#d1f1f2;stroke:#007c91;stroke-width:3}.node.neighbor rect{fill:#fff1cb}
+small{display:block;overflow-wrap:anywhere}h2{font-size:16px}#legend{font-size:13px}#status{margin:0 0 6px}
+</style>
+<header><h1>OAW file dependency map</h1><p id="status">''' + html.escape(_graph_status(report)) + '''</p>
+<small>Scope: ''' + html.escape(report["scope"]) + '''</small></header>
+<main><aside><label for="search">Search relative paths</label><input id="search" type="search" autocomplete="off">
+<button id="reset">Reset selection</button> <button id="zoom-out" aria-label="Zoom out">−</button>
+<button id="zoom-in" aria-label="Zoom in">+</button><div id="matches"></div>
+<div id="details" aria-live="polite">Select a node to inspect its displayed neighbors.</div>
+<h2>Legend</h2><p id="legend">Boxes group files by directory. Arrows point from caller/importer to dependency.
+Thickness = import bindings + resolved call sites. Teal = selection/incident edges; gold = neighbors.
+Search dims nonmatches; selection dims nonneighbors. Top lists rank displayed edges by weight (path breaks ties),
+showing at most 10. Scroll the drawing or use +/− to zoom. Tests are included; external, unknown and intra-file
+links are omitted. Limits and omissions apply to every list.</p><small>''' + html.escape(report["limits"]) + '''</small>
+</aside><div id="viewport">''' + "".join(drawing) + '''</div></main>
+<script id="graph-data" type="application/json">''' + payload + '''</script>
+<script>
+"use strict";
+const data = JSON.parse(document.getElementById("graph-data").textContent);
+const nodes = data.nodes.map((n,i) => ({...n, el:document.getElementById("n"+i)}));
+const edges = data.edges.map((e,i) => ({...e, el:document.getElementById("e"+i)}));
+let selected = null;
+const search = document.getElementById("search"), details = document.getElementById("details");
+function refresh() {
+  const query = search.value.toLowerCase(), near = new Set(selected ? [selected] : []);
+  edges.forEach(e => {if (e.source === selected || e.target === selected) {near.add(e.source);near.add(e.target);}});
+  nodes.forEach(n => {
+    n.el.classList.toggle("dim", selected ? !near.has(n.id) : !n.id.toLowerCase().includes(query));
+    n.el.classList.toggle("selected", n.id === selected);
+    n.el.classList.toggle("neighbor", n.id !== selected && near.has(n.id));
+    n.el.setAttribute("aria-pressed", String(n.id === selected));
+  });
+  edges.forEach(e => {
+    const active = e.source === selected || e.target === selected;
+    e.el.classList.toggle("active", active);
+    e.el.classList.toggle("dim", selected ? !active :
+      query !== "" && ![e.source,e.target].some(p => p.toLowerCase().includes(query)));
+  });
+}
+function pick(id) {
+  selected = id; details.replaceChildren();
+  const title = document.createElement("h2");title.textContent = id;details.appendChild(title);
+  for (const incoming of [true,false]) {
+    const rows = edges.filter(e => (incoming ? e.target : e.source) === id)
+      .sort((a,b) => b.weight-a.weight || compare(incoming ? a.source : a.target, incoming ? b.source : b.target));
+    const heading = document.createElement("h2");
+    heading.textContent = (incoming ? "Top callers / importers" : "Top callees / dependencies") +
+      " ("+Math.min(10,rows.length)+"/"+rows.length+" displayed)";details.appendChild(heading);
+    rows.slice(0,10).forEach(e => {
+      const other = incoming ? e.source : e.target;
+      link(details, other+" — "+e.imports+" imports, "+e.calls+" calls", other);
+    });
+  }
+  refresh();
+}
+function compare(a,b) {return a < b ? -1 : a > b ? 1 : 0;}
+function link(parent,label,id) {
+  const b = document.createElement("button");b.textContent = label;
+  b.addEventListener("click", () => {pick(id);nodes.find(n => n.id === id).el.scrollIntoView({block:"nearest",inline:"nearest"});});
+  parent.appendChild(b);
+}
+nodes.forEach(n => {
+  n.el.addEventListener("click", () => pick(n.id));
+  n.el.addEventListener("keydown", e => {if (e.key === "Enter" || e.key === " ") {e.preventDefault();pick(n.id);}});
+});
+search.addEventListener("input", () => {
+  selected = null; const matches = document.getElementById("matches");matches.replaceChildren();
+  details.textContent = "Select a node to inspect its displayed neighbors.";
+  if (search.value) nodes.filter(n => n.id.toLowerCase().includes(search.value.toLowerCase()))
+    .forEach(n => link(matches,n.id,n.id));
+  refresh();
+});
+document.getElementById("reset").addEventListener("click", () => {
+  selected=null;search.value="";document.getElementById("matches").replaceChildren();
+  details.textContent="Select a node to inspect its displayed neighbors.";refresh();
+});
+const svg = document.getElementById("map"), width = +svg.getAttribute("width"), height = +svg.getAttribute("height");
+svg.setAttribute("viewBox", "0 0 "+width+" "+height);
+let zoom = 1;
+for (const [id,factor] of [["zoom-in",1.25],["zoom-out",0.8]]) {
+  document.getElementById(id).addEventListener("click", () => {
+    zoom=Math.max(0.25,Math.min(3,zoom*factor));svg.setAttribute("width",width*zoom);svg.setAttribute("height",height*zoom);
+  });
+}
+refresh();
+</script></html>
+'''
 
 
 def pagerank(edges, damping=0.85, rounds=60, tolerance=1e-9):
@@ -4052,6 +4305,7 @@ Commands:
   path A B                            Shortest import chain between two local modules
   affected PATH[::Symbol] [--hops 2]  Files that import the module or call the symbol
   overview                            One page: entry points, main directories, most-called code
+  graph [--scope DIR] [--format html|mermaid|json] [--out FILE]  Draw local file dependencies
   stats                               Files, symbols, build time and cache state
 
 Python is parsed with ast; JavaScript and TypeScript with a scanner that
@@ -4079,6 +4333,15 @@ callers and affected say whether a list is complete within the index.
     affected_parser.add_argument("--limit", type=_limit, default=50, help="files to show (default 50)")
     commands.add_parser("overview", parents=[shared],
                         help="one page: entry points, main directories, most-called definitions")
+    graph_parser = commands.add_parser("graph", parents=[shared], help="draw an offline file dependency map")
+    graph_parser.add_argument("--scope", default=".", metavar="DIR", help="directory inside the root (default .)")
+    graph_parser.add_argument("--format", choices=("html", "mermaid", "json"), default=None,
+                              help="output format (default html; --json selects json)")
+    graph_parser.add_argument("--out", metavar="FILE", help="write UTF-8 to FILE instead of stdout")
+    graph_parser.add_argument("--max-nodes", type=_limit, default=None,
+                              help="node cap (default 200; Mermaid 40; maximum 1000)")
+    graph_parser.add_argument("--max-edges", type=_limit, default=None,
+                              help="edge cap (default 500; Mermaid 80; maximum 1000)")
     commands.add_parser("stats", parents=[shared], help="files, symbols, build time and cache state")
     return result
 
@@ -4102,6 +4365,8 @@ def main(argv=None):
     as_json = getattr(args, "json", False)
     if getattr(args, "no_cache", False) and getattr(args, "cache", None):
         command_line.error("--cache and --no-cache cannot be combined")
+    if args.command == "graph" and as_json and args.format not in (None, "json"):
+        command_line.error("--json conflicts with --format " + args.format)
     try:
         root = getattr(args, "root", ".")
         cache, origin = choose_cache(root, getattr(args, "cache", None), getattr(args, "no_cache", False))
@@ -4152,6 +4417,26 @@ def main(argv=None):
                       + ("s" if args.hops > 1 else "") + ")")
                 _print_sites(index, report, "affected")
             _emit(report, as_json, show)
+        elif args.command == "graph":
+            output_format = args.format or ("json" if as_json else "html")
+            nodes = args.max_nodes or (40 if output_format == "mermaid" else GRAPH_NODES)
+            edges = args.max_edges or (80 if output_format == "mermaid" else GRAPH_EDGES)
+            report = graph(index, args.scope, nodes, edges)
+            output = (graph_html(report) if output_format == "html" else graph_mermaid(report)
+                      if output_format == "mermaid" else json.dumps(report, ensure_ascii=False, indent=1) + "\n")
+            if args.out:
+                destination = os.path.abspath(args.out.replace("\\", os.sep))
+                handle, temporary = tempfile.mkstemp(prefix=".code-index-", suffix=".tmp",
+                                                     dir=os.path.dirname(destination))
+                try:
+                    with os.fdopen(handle, "w", encoding="utf-8", errors="backslashreplace", newline="\n") as stream:
+                        stream.write(output)
+                    os.replace(temporary, destination)
+                finally:
+                    if os.path.exists(temporary):
+                        os.unlink(temporary)
+            else:
+                print(output, end="")
         elif args.command == "overview":
             report = overview(index)
             if as_json:

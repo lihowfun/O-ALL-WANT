@@ -312,7 +312,7 @@ python3 scripts/goldfish_review.py check --results RESULTS
 
 ## Code index (prototype)
 
-A regenerable, read-only index for locating code (owner decision D24; W2 of the 2.0.1 plan). Run it from the source checkout; it parses the tree it is pointed at and never imports or runs indexed files. No skill text points agents to it yet: a skill line would be model-facing and waits for a behavior A/B. No effect on agents has been measured.
+A regenerable index for locating code (owner decision D24; W2 of the 2.0.1 plan). Run it from the source checkout; it parses the tree it is pointed at and never imports or runs indexed files. It writes its cache and, with `graph --out FILE`, the requested export. The `oaw-codemap` skill is explicitly invoked. No effect on agent comprehension has been measured.
 
 ```bash
 python3 scripts/code_index.py find "free text" [--limit 5] [--json]
@@ -321,9 +321,40 @@ python3 scripts/code_index.py path A B [--json]
 python3 scripts/code_index.py affected PATH[::Symbol] [--hops 1|2] [--limit N] [--json]
 python3 scripts/code_index.py overview [--json]
 python3 scripts/code_index.py stats [--json]
+python3 scripts/code_index.py graph [--scope DIR] [--format html|mermaid|json] [--out FILE]
 ```
 
 Every command also takes `--root DIR` (default: the current directory), `--cache DIR` or `--no-cache`, `--frozen` and `--include-generated`, before or after the command name.
+
+`graph` draws file dependencies using the existing index, with no second parser or runtime dependency.
+HTML (default) is a self-contained offline SVG view with inline CSS/JS, directory groups, search,
+click/keyboard neighbor selection, top callers/callees, zoom and a legend. Open the exported file locally:
+
+```bash
+python3 scripts/code_index.py graph --scope scripts --out map.html
+python3 scripts/code_index.py graph --scope scripts --format mermaid
+```
+
+Output goes to stdout unless `--out FILE` is supplied (UTF-8, LF, surrogate characters backslash-escaped).
+Exports are written to a temporary file beside the destination, then atomically replace it on success.
+`--json` also selects JSON;
+combining it with an explicit non-JSON format is a usage error. Mermaid is text for small scopes and
+needs a separate renderer to draw it. All formats include totals, caps, `complete`, `truncated`
+(node/edge counts) and `limits`; JSON also exposes `nodes` (`id`, `group`), `edges`
+(`source`, `target`, `imports`, `calls`, `weight`), `scope` and `stale_files`.
+Caps default to 200 nodes/500 edges, or 40/80 for Mermaid. `--max-nodes N` and `--max-edges N`
+accept 1–1000. Nodes are retained by total incoming plus outgoing edge weight, then the strongest edges
+among retained nodes, with relative path tie-breaks. Reduce scope before inferring structure from missing edges.
+
+Nodes are indexed Python/JS/TS files, including tests and isolated files. Arrows point from
+importer/caller to dependency; weight is import bindings plus resolved call sites, shown separately.
+Scopes containing symlinks, junctions or skipped directories are refused; case mismatches name the indexed spelling.
+Only cross-file local edges with both endpoints in `--scope DIR` are included; external, unresolved and
+intra-file links are omitted. Top lists describe only displayed edges (up to 10 per direction).
+Directory groups are deterministic navigation aids, not semantic architecture. Existing index limits,
+skips and frozen-cache warnings apply. Exports contain relative paths/counts, no source snippets or
+cache locations, and make no network requests; filenames and structure can still be private.
+See the [graphify intake](intake/graphify-map.md) for rationale and the predeclared evaluation contract.
 
 What is indexed:
 
