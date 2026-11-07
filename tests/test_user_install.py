@@ -938,6 +938,57 @@ class UserInstallTests(unittest.TestCase):
         self.assertEqual(result["packages"][0]["parts"][0]["status"], "blocked")
         self.assertFalse((self.project / ".agents/skills/x").exists())
 
+    # ------------------------------------------------------------------ review round 16
+
+    def test_a_shared_backup_survives_while_any_record_still_needs_it(self):
+        source = self.sources / "sharepre"
+        self.put(source, ".mcp.json", json.dumps({"mcpServers": {"one": {"command": "python3", "args": ["common.py"]},
+                                                                 "two": {"command": "python3", "args": ["common.py", "--two"]}}}))
+        self.put(source, "common.py", self.runs("common"))
+        mine = self.project / ".claude/oaw-user/sharepre/common.py"
+        self.put(self.project, ".claude/oaw-user/sharepre/common.py", "# the user's own file\n")
+        original = mine.read_bytes()
+        self.cli("add", str(source), "--choice", "only", "--consent", "mcp", "--apply")
+        mine.write_text("# edited after install\n", encoding="utf-8")
+        self.cli("remove", "sharepre", code=3)
+        record = self.record()
+        backups = {f["backup"] for part in record["packages"]["sharepre"]["parts"].values() for f in part["files"] if f.get("backup")}
+        self.assertTrue(backups)
+        self.assertTrue(all((self.project / backup).is_file() for backup in backups))
+        self.cli("remove", "sharepre", "--force")
+        self.assertEqual(mine.read_bytes(), original)
+        self.assert_nothing_ran()
+
+    def test_an_extensionless_script_a_hook_runs_comes_along(self):
+        source = self.sources / "bincheck"
+        self.put(source, "hooks/hooks.json", json.dumps({"hooks": {"PreToolUse": [
+            {"hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/bin/check --fast"}]}]}}))
+        self.put(source, "bin/check", "#!/bin/sh\n" + f"echo ran > {self.markers / 'check'}\n", 0o755)
+        self.cli("add", str(source), "--choice", "only", "--consent", "hooks", "--apply")
+        self.assertTrue((self.project / ".claude/oaw-user/bincheck/bin/check").is_file())
+        command = json.loads((self.project / ".claude/settings.json").read_text(encoding="utf-8"))["hooks"]["PreToolUse"][0]["hooks"][0]["command"]
+        self.assertEqual(command, '"${CLAUDE_PROJECT_DIR:-.}/.claude/oaw-user/bincheck/bin/check" --fast')
+        self.cli("remove", "bincheck")
+        missing = self.sources / "binmissing"
+        self.put(missing, "hooks/hooks.json", json.dumps({"hooks": {"Stop": [
+            {"hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/bin/absent"}]}]}}))
+        self.put(missing, "hooks/readme.txt", "x\n")
+        result = self.cli("add", str(missing), "--choice", "only", "--consent", "hooks", "--apply")
+        part = result["packages"][0]["parts"][0]
+        self.assertEqual(part["status"], "blocked")
+        self.assertIn("bin/absent", part["reason"])
+        self.assertFalse((self.project / ".claude/settings.json").exists())
+        self.assert_nothing_ran()
+
+    def test_an_explicit_consent_stays_in_the_apply_command(self):
+        preview = self.add("hooky", "scripty", choice="only", consent="none")
+        argv = preview["apply_argv"]
+        self.assertEqual(argv[argv.index("--consent") + 1], "none")
+        with redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+            self.assertEqual(oaw.main(argv[2:] + ["--json"]), 0)
+        self.assertTrue((self.project / ".agents/skills/hooky/SKILL.md").is_file())
+        self.assertFalse((self.project / ".claude/settings.json").exists())
+
 
 def write_ledger(catalog: Path, food: str, *, current: str, snapshots: list, tasted_at: str) -> None:
     """A minimal catalog ledger: one GitHub food pinned at `current`, its sealed snapshots, and one tasting."""

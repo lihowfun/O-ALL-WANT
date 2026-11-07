@@ -48,7 +48,7 @@ python3 scripts/oaw.py remove NAME --target PROJECT [--dry-run] [--apply] [--for
   choice (`oaw` = OAW plus these, the default; `only` = only these, OAW just keeps the receipt and can remove and
   restore; `recommended` = from OAW's tasting records), every conflict, and consent for what runs on its own.
   Elsewhere pass the answer as flags with `--apply`; a missing answer returns exit 3 with the question
-  (`question`, `apply_command` and `apply_argv` in `--json`). The command repeats the preview's sources, target
+  (`question`, `apply_command` and `apply_argv` in `--json`; a `--consent` you gave, even `none`, stays in them). The command repeats the preview's sources, target
   and hosts with every value quoted for the shell; on Windows a value with shell characters gets no
   `apply_command`, so use `apply_argv`.
 - Conflicts are structural and free: a same-named skill, agent or MCP server (`rename[:NEW]`, `skip`, `replace`) and
@@ -58,7 +58,9 @@ python3 scripts/oaw.py remove NAME --target PROJECT [--dry-run] [--apply] [--for
 - Consent (owner decision D34): hooks merge into `.claude/settings.json`, MCP servers into `.mcp.json`, and the files
   they run go to `.claude/oaw-user/<source>/` with `${CLAUDE_PLUGIN_ROOT}` and relative paths pointed there
   (every string under `command`, `args`, `cwd` and `env`; a hook command keeps each path one quoted shell word).
-  Each hook set or server carries the files its own commands name, the folder of each such file when it has one
+  Each hook set or server carries the files its own commands name (any source file after
+  `${CLAUDE_PLUGIN_ROOT}/`, whatever its extension, or a path-shaped word; a plugin-root path the source lacks
+  blocks the part), the folder of each such file when it has one
   (modules and data next to it), and their local Python, JavaScript/TypeScript and shell imports; a script at the
   source root brings only its imports. Past 300 files or 10 MB the part is not installed rather than installed
   without what it needs. A file two parts need stays until the last one is removed. A skill's bundled scripts stay in its folder (`scripts`). Without consent those parts are not installed. Fetched

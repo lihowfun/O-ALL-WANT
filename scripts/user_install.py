@@ -468,7 +468,7 @@ def support_root(package: str) -> str:
     return "${CLAUDE_PROJECT_DIR:-.}/" + SUPPORT_DIR + "/" + package
 
 
-_REFERENCE = re.compile(_TOKEN.pattern + "|" + _PLUGIN_ROOT.pattern)
+_REFERENCE = re.compile(r"[\w${}.@%/\\:+~-]+")
 REWRITE_KEYS = ("command", "args", "cwd", "env", "hooks")
 
 
@@ -499,7 +499,8 @@ def _quote_state(command: str, end: int) -> str | None:
     return state
 
 
-def rewrite_command(command: str, root: str, paths, *, shell: bool = False, used: set | None = None) -> str:
+def rewrite_command(command: str, root: str, paths, *, shell: bool = False, used: set | None = None,
+                    missing: set | None = None) -> str:
     """Point a hook or MCP value at the package's installed copy of the files it names. Nothing else changes.
 
     With shell=True (a hook command) a rewritten path stays one shell word even when the project path has
@@ -508,9 +509,24 @@ def rewrite_command(command: str, root: str, paths, *, shell: bool = False, used
     """
     def replace(match):
         text = match.group(0)
-        if _PLUGIN_ROOT.fullmatch(text):
-            new = root
+        plugin = re.match(_PLUGIN_ROOT.pattern, text)
+        if plugin:
+            rest = text[plugin.end():].replace("\\", "/").strip("/")
+            folder = [p for p in paths if p.startswith(rest + "/")] if rest else []
+            if not rest:
+                new = root
+            elif rest in paths or folder:
+                if used is not None:
+                    used.update([rest] if rest in paths else folder)
+                new = f"{root}/{rest}"
+            else:
+                if missing is not None:
+                    missing.add(text)  # the command runs a file the source does not have
+                new = f"{root}/{rest}"
         else:
+            # Without the plugin root, only a path-shaped word (a slash, or a script suffix) can name a source file.
+            if "/" not in text and "\\" not in text and not _TOKEN.fullmatch(text):
+                return text
             hit = _resolve(text, paths)
             if hit is None:
                 return text
@@ -524,14 +540,15 @@ def rewrite_command(command: str, root: str, paths, *, shell: bool = False, used
     return _REFERENCE.sub(replace, command)
 
 
-def _rewrite_value(value, root: str, paths, used: set, *, shell: bool = False, deep: bool = False, key: str | None = None):
+def _rewrite_value(value, root: str, paths, used: set, *, shell: bool = False, deep: bool = False, key: str | None = None,
+                   missing: set | None = None):
     """Rewrite every string under a command, args, cwd, env or hooks key, however deeply nested."""
     if isinstance(value, str):
-        return rewrite_command(value, root, paths, shell=shell and key == "command", used=used) if deep else value
+        return rewrite_command(value, root, paths, shell=shell and key == "command", used=used, missing=missing) if deep else value
     if isinstance(value, list):
-        return [_rewrite_value(item, root, paths, used, shell=shell, deep=deep, key=key) for item in value]
+        return [_rewrite_value(item, root, paths, used, shell=shell, deep=deep, key=key, missing=missing) for item in value]
     if isinstance(value, dict):
-        return {name: _rewrite_value(item, root, paths, used, shell=shell, deep=deep or name in REWRITE_KEYS, key=name)
+        return {name: _rewrite_value(item, root, paths, used, shell=shell, deep=deep or name in REWRITE_KEYS, key=name, missing=missing)
                 for name, item in value.items()}
     return value
 
@@ -602,6 +619,12 @@ def support_closure(used: set, files: dict) -> set:
     return wanted
 
 
+def _missing_problem(missing: set) -> str | None:
+    if missing:
+        return f"它要執行的 {'、'.join(sorted(missing))} 不在來源裡，不裝，免得裝了也跑不起來"
+    return None
+
+
 def _support_problem(members: set, files: dict) -> str | None:
     total = sum(len(files[p]) for p in members)
     if len(members) > SUPPORT_LIMITS["files"] or total > SUPPORT_LIMITS["bytes"]:
@@ -649,27 +672,27 @@ def build_parts(package: str, snapshot: dict, scan: dict) -> tuple[list, list]:
                 left_out.append({"part": component["id"], "kind": kind, "files": component["file_count"], "reason": "hook 設定讀不懂"})
                 continue
             hook_sets += 1
-            used = set()
-            groups = {event: [_rewrite_value(g, root, paths, used, shell=True) for g in entries]
+            used, missing = set(), set()
+            groups = {event: [_rewrite_value(g, root, paths, used, shell=True, missing=missing) for g in entries]
                       for event, entries in hook_configs[config]["groups"].items()}
             # Each part carries the files its own commands name plus what they need; a file two parts need is shared.
             members = support_closure(used, files)
             parts.append({**base, "kind": "hooks", "name": f"{package}-hooks" + (f"-{hook_sets}" if hook_sets > 1 else ""),
                           "config": config, "groups": groups, "ignored_keys": hook_configs[config]["ignored"],
                           "members": {p: p for p in sorted(members)}, "scripts": [], "needs": ["hooks"],
-                          "blocked_reason": _support_problem(members, files)})
+                          "blocked_reason": _missing_problem(missing) or _support_problem(members, files)})
         elif kind == "mcp-server":
             found = mcp_configs.get(component["name"])
             if found is None or not SERVER_NAME.fullmatch(found[1]):
                 left_out.append({"part": component["id"], "kind": kind, "files": component["file_count"], "reason": "MCP 設定讀不懂或名稱不合規則"})
                 continue
             config, server, spec = found
-            used = set()
-            rewritten = _rewrite_value(spec, root, paths, used)
+            used, missing = set(), set()
+            rewritten = _rewrite_value(spec, root, paths, used, missing=missing)
             members = support_closure(used, files)
             parts.append({**base, "kind": "mcp", "name": server, "config": config, "spec": rewritten,
                           "remote": bool(spec.get("url")), "members": {p: p for p in sorted(members)},
-                          "scripts": [], "needs": ["mcp"], "blocked_reason": _support_problem(members, files)})
+                          "scripts": [], "needs": ["mcp"], "blocked_reason": _missing_problem(missing) or _support_problem(members, files)})
         else:
             left_out.append({"part": component["id"], "kind": kind, "files": component["file_count"],
                              "reason": NOT_INSTALLED_ZH.get(kind, "不是可以安裝的部分")})
@@ -1481,8 +1504,10 @@ def suggested_argv(plan: dict) -> list:
             "--target", str(plan["target"]), "--host", host, "--choice", plan["choice"]]
     needs = sorted({n for pk in plan["packages"] for p in pk["parts"] for n in p["needs"]
                     if p["status"] in ("install", "needs-consent", "needs-decision")})
-    if needs:
-        argv += ["--consent", ",".join(needs) if plan["consents"] is None else (",".join(sorted(plan["consents"])) or "none")]
+    if plan["consents"] is not None:
+        argv += ["--consent", ",".join(sorted(plan["consents"])) or "none"]  # what the user answered, even "none"
+    elif needs:
+        argv += ["--consent", ",".join(needs)]
     for conflict in plan["conflicts"]:
         answer = conflict["decision"] or conflict["options"][0]
         if answer == "rename" and conflict.get("new_name"):
@@ -1752,7 +1777,7 @@ def plan_remove(target: Path, record: dict, name: str, *, force: bool = False) -
     matches = _matches(record, name)
     if not matches:
         raise InstallError(f"{core.sanitize_text(name, 80)!r} is not something you added; `oaw.py list` shows what is here.")
-    files, entries, conflicts, shared = [], [], [], []
+    files, entries, conflicts, shared, also = [], [], [], [], []
     removing = {(package, part) for package, parts in matches for part in parts}
     # A support file another remaining part still runs stays; one that several removed parts list is handled once.
     still_used = {item["path"] for package, entry in record["packages"].items() for key, part in entry["parts"].items()
@@ -1763,6 +1788,8 @@ def plan_remove(target: Path, record: dict, name: str, *, force: bool = False) -
             part = record["packages"][package]["parts"][part_name]
             for item in part["files"]:
                 if item["path"] in seen:
+                    for conflict in [c for c in conflicts if c["path"] == item["path"] and (c["package"], c["part"]) != (package, part_name)]:
+                        also.append({**conflict, "package": package, "part": part_name})
                     continue
                 seen.add(item["path"])
                 if item["path"] in still_used:
@@ -1796,7 +1823,7 @@ def plan_remove(target: Path, record: dict, name: str, *, force: bool = False) -
                 if not still:
                     retire_back.append(skill)
     return {"matches": matches, "removing": removing, "files": files, "entries": entries, "conflicts": conflicts,
-            "shared": shared, "restore_oaw": sorted(set(retire_back))}
+            "also_held": also, "shared": shared, "restore_oaw": sorted(set(retire_back))}
 
 
 def remove(target, name: str, *, dry_run: bool = False, apply_builtin: bool = False, force: bool = False,
@@ -1906,7 +1933,7 @@ def remove(target, name: str, *, dry_run: bool = False, apply_builtin: bool = Fa
         # plus its backups and the baseline, unless --keep makes the user's version theirs.
         left = {}
         if not keep:
-            for conflict in plan["conflicts"]:
+            for conflict in plan["conflicts"] + plan["also_held"]:
                 left.setdefault((conflict["package"], conflict["part"]), {"files": set(), "entries": set(), "why": []})
                 left[(conflict["package"], conflict["part"])]["files"].add(conflict["path"])
                 left[(conflict["package"], conflict["part"])]["why"].append(f"{conflict['path']}：{conflict['reason']}")
@@ -1916,6 +1943,7 @@ def remove(target, name: str, *, dry_run: bool = False, apply_builtin: bool = Fa
                 rest["files"] |= {f["path"] for f in record["packages"][conflict["package"]]["parts"][conflict["part"]]["files"]}
                 left[(conflict["package"], conflict["part"])]["why"].append(f"{conflict['path']}：{conflict['reason']}")
         shared_paths = set(plan["shared"])
+        drop_backups = set()
         for package, parts in plan["matches"]:
             entry = record["packages"][package]
             for part_name in parts:
@@ -1924,13 +1952,18 @@ def remove(target, name: str, *, dry_run: bool = False, apply_builtin: bool = Fa
                 for item in part["files"]:
                     protected = shared_paths | (set() if keep else held_paths)
                     if item.get("backup") and item["path"] not in protected and not (rest and item["path"] in rest["files"]):
-                        _delete(target, item["backup"])
+                        drop_backups.add(item["backup"])
                 if rest:
                     entry["parts"][part_name] = {**part, "files": [f for f in part["files"] if f["path"] in rest["files"]],
                                                  "entries": [e for i, e in enumerate(part.get("entries", [])) if i in rest["entries"]],
                                                  "left_in_place": rest["why"]}
             if not entry["parts"]:
                 del record["packages"][package]
+        # A backup goes only when no part left in the record, kept or conflicted, still points at it.
+        still_needed = {f["backup"] for data in record["packages"].values() for part in data["parts"].values()
+                        for f in part["files"] if f.get("backup")}
+        for backup in sorted(drop_backups - still_needed):
+            _delete(target, backup)
         for relative in list(record["shared"]):
             if not any(e["file"] == relative for pe in record["packages"].values() for part in pe["parts"].values() for e in part.get("entries", [])):
                 if record["shared"][relative].get("backup"):

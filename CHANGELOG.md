@@ -25,6 +25,9 @@ All notable changes to this project will be documented in this file.
   project already had is never taken for the project's own; a tasting's version comes from the snapshot sealed
   before it (verdicts.json records it per tasting), not from the food's current pin; and `rename:NEW` survives into
   the printed apply command.
+- A backup stays while any kept or conflicted part still points at it; a hook or MCP command's extensionless
+  plugin-root script comes along (or blocks the part when the source lacks it); an explicit `--consent` stays in the
+  printed apply command.
 - User installs copy what a hook or MCP script needs (its folder and local imports, bounded), skip junctions and VCS
   metadata in local sources, keep hosts added to a manager-only project, rewrite an invalid skill name to its
   installed folder, and keep identical hooks from two sources removable in any order.
