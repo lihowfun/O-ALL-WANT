@@ -51,7 +51,8 @@ python3 scripts/oaw.py remove NAME --target PROJECT [--dry-run] [--apply] [--for
   (`question`, `apply_command` and `apply_argv` in `--json`; a `--consent` you gave, even `none`, stays in them). The command repeats the preview's sources, target
   and hosts with every value quoted for the shell; on Windows a value with shell characters gets no
   `apply_command`, so use `apply_argv`.
-- Conflicts are structural and free: a same-named skill, agent or MCP server (`rename[:NEW]`, `skip`, `replace`) and
+- Conflicts are structural and free: a same-named skill, agent or MCP server (`rename[:NEW]`, `skip`, `replace`;
+  `replace` only when no host's copy belongs to another of your additions) and
   a declared category overlap with an OAW skill, such as a second code map (`keep-both`, `use-theirs` retires OAW's
   skill until you remove theirs, `use-oaw` skips theirs). Several hooks on one event and several MCP servers are
   reported. Semantic overlap is left to the `oaw-add` skill (choice 3 or on request).
@@ -83,7 +84,7 @@ python3 scripts/oaw.py remove NAME --target PROJECT [--dry-run] [--apply] [--for
   is `partial` (exit 3). An added hook equal to one the project already had is recorded with that count, so remove
   never takes the project's own copy for it; when it cannot tell them apart it reports a conflict. Put it back and run
   `remove` again, or finish with `--force` (back to before the install, over your edit) or `--keep` (your version
-  stays and is no longer tracked). A built-in OAW skill is removed through migrate: preview, then `--apply`.
+  stays and is no longer tracked; the files it runs become yours, so removing another part never deletes them). A built-in OAW skill is removed through migrate: preview, then `--apply`.
 - A tasting result counts as the same version only when the tasted commit is established: the one snapshot sealed
   before the tasting was recorded, never the food's current pin; otherwise the receipt says the version is unknown.
 - `list` and the end of `add` print the receipt: skill, source, added by, tasting result (from records only; 未試吃

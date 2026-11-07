@@ -25,6 +25,9 @@ All notable changes to this project will be documented in this file.
   project already had is never taken for the project's own; a tasting's version comes from the snapshot sealed
   before it (verdicts.json records it per tasting), not from the food's current pin; and `rename:NEW` survives into
   the printed apply command.
+- Files a `remove --keep` leaves to the user are never deleted by another part; `replace` checks every host's copy
+  before overwriting; a quoted `allow_implicit_invocation` key (block, flow or JSON form) is set in place; and two
+  identical hooks of one source are removed in one go.
 - A backup stays while any kept or conflicted part still points at it; a hook or MCP command's extensionless
   plugin-root script comes along (or blocks the part when the source lacks it); an explicit `--consent` stays in the
   printed apply command.

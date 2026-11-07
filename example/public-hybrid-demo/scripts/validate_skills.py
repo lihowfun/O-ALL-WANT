@@ -226,19 +226,31 @@ def _reference_issues(skill_file, body):
 
 def implicit_invocation_disabled(text):
     """Whether a Codex agents/openai.yaml sets policy.allow_implicit_invocation to false (block or flow form)."""
+    key = r"""(?:"allow_implicit_invocation"|'allow_implicit_invocation'|\ballow_implicit_invocation\b)"""
+    if text.lstrip().startswith("{"):
+        try:
+            document = json.loads(text)
+        except ValueError:
+            document = None
+        if isinstance(document, dict):
+            policy = document.get("policy")
+            return isinstance(policy, dict) and policy.get("allow_implicit_invocation") is False
     lines = text.splitlines()
     for index, line in enumerate(lines):
-        match = re.match(r"policy:[ \t]*(.*?)[ \t]*(?:#.*)?$", line)
+        match = re.match(r"""(?:"policy"|'policy'|policy)[ \t]*:[ \t]*(.*?)[ \t]*(?:#.*)?$""", line)
         if not match:
             continue
         if match.group(1).startswith("{"):
-            return re.search(r"\ballow_implicit_invocation\s*:\s*false\s*[,}]", match.group(1)) is not None
+            values = re.findall(key + r"\s*:\s*([^,}\s]+)", match.group(1))
+            return values == ["false"]
+        values = []
         for item in lines[index + 1:]:
             if item.strip() and not item.startswith((" ", "\t")):
                 break
-            if re.fullmatch(r"[ \t]+allow_implicit_invocation\s*:\s*false\s*(?:#.*)?", item):
-                return True
-        return False
+            found = re.fullmatch(r"[ \t]+" + key + r"\s*:\s*(\S+)\s*(?:#.*)?", item)
+            if found:
+                values.append(found.group(1))
+        return values == ["false"]
     return False
 
 

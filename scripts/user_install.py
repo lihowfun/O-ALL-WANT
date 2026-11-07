@@ -725,30 +725,42 @@ def force_explicit_policy(data: bytes) -> bytes:
     Codex reads only this file for implicit invocation (default true); Claude's frontmatter flag does not reach it.
     Handles a block or flow `policy:` mapping in the simple YAML these files use, or appends one.
     """
-    lines = data.decode("utf-8", "replace").splitlines()
+    text = data.decode("utf-8", "replace")
+    if text.lstrip().startswith("{"):
+        try:  # a whole file in flow or JSON form
+            document = json.loads(text)
+        except ValueError:
+            document = None
+        if isinstance(document, dict):
+            policy = document.get("policy") if isinstance(document.get("policy"), dict) else {}
+            document["policy"] = {**policy, "allow_implicit_invocation": False}
+            return (json.dumps(document, indent=2, ensure_ascii=False) + "\n").encode("utf-8")
+    key = r"""(?:"allow_implicit_invocation"|'allow_implicit_invocation'|\ballow_implicit_invocation\b)"""
+    lines = text.splitlines()
     for index, line in enumerate(lines):
-        match = re.match(r"policy:[ \t]*(.*?)[ \t]*(#.*)?$", line)
+        match = re.match(r"""((?:"policy"|'policy'|policy)[ \t]*:)[ \t]*(.*?)[ \t]*(#.*)?$""", line)
         if not match:
             continue
-        inline = match.group(1)
+        inline = match.group(2)
         if inline.startswith("{") and inline.endswith("}"):
             body = inline[1:-1].strip()
-            if re.search(r"\ballow_implicit_invocation\s*:", body):
-                body = re.sub(r"(\ballow_implicit_invocation\s*:\s*)[^,}]*", r"\1false", body)
+            if re.search(key + r"\s*:", body):
+                body = re.sub("(" + key + r"\s*:\s*)[^,}]*", r"\1false", body)
             else:
                 body = "allow_implicit_invocation: false" + (", " + body if body else "")
-            lines[index] = "policy: {" + body + "}"
+            lines[index] = match.group(1) + " {" + body + "}"
             break
         if inline:
-            lines[index] = "policy:"
+            lines[index] = match.group(1)
         end = index + 1
         while end < len(lines) and (not lines[end].strip() or lines[end][:1] in " \t"):
             end += 1
         block = lines[index + 1:end]
         indent = next((re.match(r"[ \t]+", item).group(0) for item in block if item.strip() and not item.lstrip().startswith("#")), "  ")
         for offset, item in enumerate(block):
-            if re.match(r"[ \t]+allow_implicit_invocation\s*:", item):
-                lines[index + 1 + offset] = f"{indent}allow_implicit_invocation: false"
+            found = re.match(r"([ \t]+" + key + r"\s*:)", item)
+            if found:
+                lines[index + 1 + offset] = found.group(1) + " false"  # the key keeps its own quoting
                 break
         else:
             lines.insert(index + 1, f"{indent}allow_implicit_invocation: false")
@@ -1123,7 +1135,9 @@ def plan_add(target, sources, *, choice=None, consent=None, on_conflict=(), host
                 who = ("user:" + user if user else "project") if part["name"] in existing_servers else (
                     "batch:" + part["name"] if part["name"] in servers_planned else None)
             else:
-                who = next((w for w in (owner(prefix, is_dir=is_dir) for prefix, is_dir in destinations(part)) if w), None)
+                # Every destination counts: one host's copy may be OAW's and the other's another addition's.
+                owners = [w for w in (owner(prefix, is_dir=is_dir) for prefix, is_dir in destinations(part)) if w]
+                who = next((w for w in owners if w.startswith(("user:", "batch"))), owners[0] if owners else None)
             if who:
                 options = [a for a in SAME_NAME_ACTIONS if a != "replace" or not who.startswith(("user:", "batch"))]
                 chosen = decisions.get(part["name"], {}).get("same-name")
@@ -1715,6 +1729,17 @@ def remove_form(record: dict, package: str, key: str) -> str:
     return f"{package}/{key}"
 
 
+def _one_copy_fewer(record: dict, gone: dict, popped: list) -> None:
+    """Every identical copy recorded after a removed one counted it as a twin; now there is one copy fewer."""
+    for data in record["packages"].values():
+        for part in data["parts"].values():
+            for other in part.get("entries", []):
+                if (not any(other is p for p in popped) and isinstance(other.get("twins"), int)
+                        and (other["file"], other["pointer"], other["op"], other["value"]) == (gone["file"], gone["pointer"], "append", gone["value"])
+                        and other["twins"] > gone.get("twins", 0)):
+                    other["twins"] -= 1
+
+
 def _later_copies(record: dict, entry: dict, skip=()) -> int:
     """How many equal entries other recorded parts appended after this one (they counted ours as a twin)."""
     if entry["op"] != "append" or entry.get("twins") is None:
@@ -1876,7 +1901,8 @@ def remove(target, name: str, *, dry_run: bool = False, apply_builtin: bool = Fa
             baseline = _json_doc(baseline_bytes, relative) if baseline_bytes is not None else {}
             for entry in mine:
                 original = record["packages"][entry["package"]]["parts"][entry["part"]]["entries"][entry["index"]]
-                spot = _locate(doc, entry, _later_copies(record, original, handled))
+                # `original` carries twin counts already lowered for identical copies removed earlier in this run.
+                spot = _locate(doc, original, _later_copies(record, original, handled))
                 handled.add((entry["package"], entry["part"], entry["index"]))
                 if spot is None and force and entry["op"] == "set":
                     *parents, key = entry["pointer"]
@@ -1893,6 +1919,7 @@ def remove(target, name: str, *, dry_run: bool = False, apply_builtin: bool = Fa
                 if entry["op"] == "append":
                     container.pop(key)
                     popped.append(original)
+                    _one_copy_fewer(record, original, popped)
                 elif entry.get("had_previous"):
                     container[key] = copy.deepcopy(entry["previous"])
                 else:
@@ -1907,15 +1934,6 @@ def remove(target, name: str, *, dry_run: bool = False, apply_builtin: bool = Fa
                     _delete(target, relative)
             elif doc != _json_doc(current, relative):
                 _write(target, relative, _json_bytes(doc, current))
-        # Every equal copy recorded after a removed one counted it as a twin; now there is one copy fewer.
-        for gone in popped:
-            for data in record["packages"].values():
-                for part in data["parts"].values():
-                    for other in part.get("entries", []):
-                        if (other is not gone and not any(other is p for p in popped) and isinstance(other.get("twins"), int)
-                                and (other["file"], other["pointer"], other["op"], other["value"]) == (gone["file"], gone["pointer"], "append", gone["value"])
-                                and other["twins"] > gone.get("twins", 0)):
-                            other["twins"] -= 1
         held = {(conflict["package"], conflict["part"]) for conflict in entry_conflicts}
         held_paths = {item["path"] for package, part in held for item in record["packages"][package]["parts"][part]["files"]}
         done_files = []
@@ -1959,6 +1977,14 @@ def remove(target, name: str, *, dry_run: bool = False, apply_builtin: bool = Fa
                                                  "left_in_place": rest["why"]}
             if not entry["parts"]:
                 del record["packages"][package]
+        # With --keep, what the user keeps (and every file it runs) is theirs: no other recorded part may delete it.
+        if keep:
+            owned = held_paths | {c["path"] for c in plan["conflicts"]}
+            for data in record["packages"].values():
+                for part in data["parts"].values():
+                    dropped = [f for f in part["files"] if f["path"] in owned]
+                    part["files"] = [f for f in part["files"] if f["path"] not in owned]
+                    drop_backups.update(f["backup"] for f in dropped if f.get("backup"))
         # A backup goes only when no part left in the record, kept or conflicted, still points at it.
         still_needed = {f["backup"] for data in record["packages"].values() for part in data["parts"].values()
                         for f in part["files"] if f.get("backup")}

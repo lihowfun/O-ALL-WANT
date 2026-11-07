@@ -989,6 +989,65 @@ class UserInstallTests(unittest.TestCase):
         self.assertTrue((self.project / ".agents/skills/hooky/SKILL.md").is_file())
         self.assertFalse((self.project / ".claude/settings.json").exists())
 
+    # ------------------------------------------------------------------ review round 17
+
+    def test_files_kept_by_keep_are_never_deleted_by_another_part(self):
+        source = self.sources / "pairkeep"
+        self.put(source, ".mcp.json", json.dumps({"mcpServers": {"one": {"command": "python3", "args": ["common.py"]},
+                                                                 "two": {"command": "python3", "args": ["common.py", "--two"]}}}))
+        self.put(source, "common.py", self.runs("common"))
+        self.cli("add", str(source), "--choice", "only", "--consent", "mcp", "--apply")
+        mcp = json.loads((self.project / ".mcp.json").read_text(encoding="utf-8"))
+        mcp["mcpServers"]["one"]["args"].append("--mine")
+        (self.project / ".mcp.json").write_text(json.dumps(mcp) + "\n", encoding="utf-8")
+        self.cli("remove", "one", "--keep")
+        common = self.project / ".claude/oaw-user/pairkeep/common.py"
+        self.assertTrue(common.is_file())
+        self.cli("remove", "two")
+        self.assertTrue(common.is_file(), "server one, kept by --keep, still runs it")
+        self.assertEqual(sorted(json.loads((self.project / ".mcp.json").read_text(encoding="utf-8"))["mcpServers"]), ["one"])
+        self.assert_nothing_ran()
+
+    def test_replace_is_refused_when_any_destination_belongs_to_another_addition(self):
+        self.cli("init", "--host", "claude")
+        self.cli("add", self.fixtures["twin"], "--choice", "oaw", "--on-conflict", "oaw-review=replace", "--apply")
+        self.cli("init", "--host", "both")
+        other = self.sources / "twin2"
+        self.put(other, "SKILL.md", "---\nname: oaw-review\ndescription: A third review skill.\n---\n\nReview.\n")
+        claude_copy = (self.project / ".claude/skills/oaw-review/SKILL.md").read_bytes()
+        preview = self.cli("add", str(other), "--choice", "oaw")
+        conflict = [c for c in preview["conflicts"] if c["type"] == "same-name"][0]
+        self.assertEqual(conflict["options"], ["rename", "skip"])
+        out = io.StringIO()
+        with redirect_stdout(out), redirect_stderr(io.StringIO()):
+            code = oaw.main(["add", str(other), "--target", str(self.project), "--choice", "oaw",
+                             "--on-conflict", "oaw-review=replace", "--apply", "--json"])
+        self.assertEqual(code, 2)
+        self.assertEqual((self.project / ".claude/skills/oaw-review/SKILL.md").read_bytes(), claude_copy)
+
+    def test_quoted_policy_keys_are_replaced_in_place(self):
+        cases = {
+            b'policy: {"allow_implicit_invocation": true, "x": 1}\n': b'policy: {"allow_implicit_invocation": false, "x": 1}\n',
+            b"policy: {'allow_implicit_invocation': true}\n": b"policy: {'allow_implicit_invocation': false}\n",
+            b'policy:\n  "allow_implicit_invocation": true\n  k: v\n': b'policy:\n  "allow_implicit_invocation": false\n  k: v\n',
+            b'"policy":\n  allow_implicit_invocation: true\n': b'"policy":\n  allow_implicit_invocation: false\n',
+        }
+        for given, wanted in cases.items():
+            self.assertEqual(user_install.force_explicit_policy(given), wanted, given)
+        merged = json.loads(user_install.force_explicit_policy(b'{"interface": {"a": 1}, "policy": {"allow_implicit_invocation": true}}'))
+        self.assertEqual(merged, {"interface": {"a": 1}, "policy": {"allow_implicit_invocation": False}})
+
+    def test_identical_hooks_removed_in_one_go(self):
+        source = self.sources / "dupes"
+        group = {"hooks": [{"type": "command", "command": "echo twice"}]}
+        self.put(source, "hooks/hooks.json", json.dumps({"hooks": {"PreToolUse": [group, group]}}))
+        self.put(source, "SKILL.md", "---\nname: dupes\ndescription: Dupes.\n---\n\nDupes.\n")
+        self.cli("add", str(source), "--choice", "only", "--consent", "hooks", "--apply")
+        self.assertEqual(json.loads((self.project / ".claude/settings.json").read_text(encoding="utf-8"))["hooks"]["PreToolUse"], [group, group])
+        result = self.cli("remove", "dupes")
+        self.assertEqual(result["conflicts"], [])
+        self.assertFalse((self.project / ".claude/settings.json").exists())
+
 
 def write_ledger(catalog: Path, food: str, *, current: str, snapshots: list, tasted_at: str) -> None:
     """A minimal catalog ledger: one GitHub food pinned at `current`, its sealed snapshots, and one tasting."""
