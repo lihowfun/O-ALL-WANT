@@ -795,7 +795,78 @@ def skill_issues(path: Path) -> list[str]:
     return issues
 
 
-def doctor(target: Path) -> dict:
+def skill_tool_denied(target: Path) -> list[str]:
+    """Project Claude settings that deny the Skill tool (then installed skills never reach the model)."""
+    found = []
+    for name in (".claude/settings.json", ".claude/settings.local.json"):
+        path = joined(target, name)
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        deny = ((data.get("permissions") or {}).get("deny") or []) if isinstance(data, dict) else []
+        if any(isinstance(rule, str) and (rule == "Skill" or rule.startswith("Skill(")) for rule in deny):
+            found.append(name)
+    return found
+
+
+def probe_claude(target: Path, *, command: str = "claude", timeout: float = 60.0) -> dict:
+    """Start Claude Code in the project only until it reports its init event (tools and skills), then stop it.
+
+    The prompt is never answered: the process is ended as soon as init arrives, so it should spend no model
+    tokens. Returns {"tools": [...], "skills": [...]} or {"error": "..."}."""
+    import queue
+    import subprocess
+    import threading
+
+    argv = [command, "-p", "Reply with OK.", "--output-format", "stream-json", "--verbose", "--no-session-persistence"]
+    try:
+        process = subprocess.Popen(argv, cwd=str(target), stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                                   stderr=subprocess.DEVNULL, text=True, encoding="utf-8", errors="replace")
+    except OSError as exc:
+        return {"error": f"cannot start {command}: {exc}"}
+    lines: "queue.Queue[str | None]" = queue.Queue()
+
+    def pump():
+        for line in process.stdout:
+            lines.put(line)
+        lines.put(None)
+
+    threading.Thread(target=pump, daemon=True).start()
+    deadline = datetime.now(timezone.utc).timestamp() + timeout
+    result = {"error": "no init event before the timeout"}
+    try:
+        while True:
+            remaining = deadline - datetime.now(timezone.utc).timestamp()
+            if remaining <= 0:
+                break
+            try:
+                line = lines.get(timeout=remaining)
+            except queue.Empty:
+                break
+            if line is None:
+                result = {"error": "the host exited before reporting init"}
+                break
+            try:
+                event = json.loads(line)
+            except ValueError:
+                continue
+            if isinstance(event, dict) and event.get("type") == "system" and event.get("subtype") == "init":
+                result = {"tools": [str(t) for t in event.get("tools") or []],
+                          "skills": [str(s) for s in event.get("skills") or []],
+                          "version": event.get("claude_code_version")}
+                break
+    finally:
+        if process.poll() is None:
+            process.terminate()
+            try:
+                process.wait(timeout=10)
+            except Exception:
+                process.kill()
+    return result
+
+
+def doctor(target: Path, *, probe: bool = False, probe_command: str = "claude") -> dict:
     target = target_path(target)
     checks = []
     manifest = read_manifest(target)
@@ -895,10 +966,34 @@ def doctor(target: Path) -> dict:
             if path.is_file():
                 for issue in skill_issues(path):
                     checks.append({"status": "FAIL", "path": relative, "detail": str(issue)})
+    claude_skills = {"capability": "Claude @AGENTS.md adapter and native skills", "support": "YES", "enabled": "UNKNOWN",
+                     "reason": "Adapter is packaged; host discovery was not probed (doctor --probe starts Claude Code once to check)."}
+    denied = skill_tool_denied(target)
+    if denied:
+        claude_skills.update(enabled="NO", reason="The Skill tool is denied in " + ", ".join(denied)
+                             + ": installed skills never reach the model.")
+        checks.append({"status": "WARN", "path": denied[0],
+                       "detail": "permissions.deny blocks the Skill tool, so OAW's skills (oaw-review, oaw-evidence) cannot be used."})
+    if probe and manifest and "claude" in manifest.get("hosts", []):
+        seen = probe_claude(target, command=probe_command)
+        if "error" in seen:
+            claude_skills.update(enabled="UNKNOWN", reason="Probe failed: " + seen["error"])
+        else:
+            expected = sorted(name for name in manifest.get("skills", [])
+                              if joined(target, f".claude/skills/{name}/SKILL.md").is_file())
+            missing = [name for name in expected if name not in seen["skills"]]
+            if "Skill" not in seen["tools"]:
+                claude_skills.update(enabled="NO", reason="Claude Code started without the Skill tool: skills are listed "
+                                                          "but never shown to the model.")
+            elif missing:
+                claude_skills.update(enabled="NO", reason="Claude Code did not list: " + ", ".join(missing))
+            else:
+                claude_skills.update(enabled="YES", reason=f"Claude Code {seen.get('version') or ''} listed every installed "
+                                                           "OAW skill and has the Skill tool.".replace("  ", " "))
     capabilities = [
         {"capability": "Third-party skill/plugin validation", "support": "HOST", "enabled": "UNKNOWN", "reason": "Doctor validates OAW's declared packages only; other packages need their host/upstream checks."},
         {"capability": "Codex AGENTS.md and native skills", "support": "YES", "enabled": "UNKNOWN", "reason": "Artifacts are packaged; host discovery/settings were not inspected."},
-        {"capability": "Claude @AGENTS.md adapter and native skills", "support": "YES", "enabled": "UNKNOWN", "reason": "Adapter is packaged; host skill paths/settings were not inspected."},
+        claude_skills,
         {"capability": "Sandbox, approvals, compaction, execution checkpoints", "support": "HOST", "enabled": "UNKNOWN", "reason": "Owned by the host runtime, not configured by OAW."},
     ]
     return {"status": "healthy" if not any(c["status"] == "FAIL" for c in checks) else "unhealthy",
@@ -971,6 +1066,9 @@ def main(argv: list[str] | None = None) -> int:
         sub = commands.add_parser(command)
         sub.add_argument("--target", default=".", help="project directory (default: current directory)")
         sub.add_argument("--json", action="store_true", help="print a machine-readable result")
+        if command == "doctor":
+            sub.add_argument("--probe", action="store_true",
+                             help="start Claude Code once, only until it reports its tools and skills, to check discovery")
         if command != "doctor":
             sub.add_argument("--profile", choices=(*PROFILES, MANAGER_ONLY), default=None,
                              help="minimal (default), knowledge, or manager-only (OAW only manages your own skills)")
@@ -1017,7 +1115,7 @@ def main(argv: list[str] | None = None) -> int:
             raise InstallError("--keep-custom requires --apply; dry-run never acknowledges custom content.")
         target = target_path(args.target)
         if args.command == "doctor":
-            result = doctor(target)
+            result = doctor(target, probe=args.probe)
             code = 0 if result["status"] == "healthy" else 1
         else:
             migrate = args.command == "migrate"
