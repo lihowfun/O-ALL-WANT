@@ -1,0 +1,9 @@
+/egm:egm-review TargetFile: docs/plans/v2.0.1-execution.md
+GoldfishContext: evidence/OWNER_REQUEST.md, evidence/validation-2026-11-07-RESULT.md, evidence/codemap-comparison-2026-11-06.md, evidence/egm-selftest-2026-11-06-RESULT.md, evidence/DECISIONS-D21-D31.md, AGENTS.md, templates/AGENTS.md, docs/plans/v2.0.0-execution.md, scripts/oaw_mode.py
+Step: uninterrupted
+
+Run the official uninterrupted full flow (Consolidated report with all review rubrics) as the skill describes, with real fresh reviewer contexts; do not stop for checkpoints and do not apply fixes to the design.
+
+The design is a Traditional Chinese implementation plan for OAW 2.0.1. The owner's request it must satisfy is evidence/OWNER_REQUEST.md. The evidence/ files are the measured results the plan cites; check the plan's numbers and claims against them. The rest of the repository is the current OAW 2.0.0 code the plan changes. Do not browse the web. Do not change any existing file; only write review files.
+
+When the consolidated report is written, also write one JSON report to review_out/report.json, at most 1500 words, with the fields "completed" (boolean), "findings" (array of objects with "location", "claim", "evidence", "rationale", "severity" one of blocker/major/minor) and "uncertainties" (array). Findings must cite file and line evidence. Put style preferences and conditional issues in uncertainties. Your final message gives only the report path and the completion status.

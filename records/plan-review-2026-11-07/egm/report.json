@@ -1,0 +1,139 @@
+{
+  "completed": true,
+  "findings": [
+    {
+      "location": "docs/plans/v2.0.1-execution.md:89,164,174-176,184,192,284",
+      "claim": "oaw.py add wraps the existing catalog, installs untasted skills at no token cost, installs hooks/MCP/scripts after a consent checkbox, and remove restores byte-for-byte.",
+      "evidence": "scripts/catalog_core.py:1259-1263 holds skill text until a live A/B; catalog_core.py:1268-1270 'OAW never installs hooks or MCP servers'; scripts/catalog.py:1374-1375 builds deny .mcp.json/.claude.json; catalog.py:1391-1404 and catalog_core.py:78 allow only .md/.txt in a skill folder; catalog.py:1869-1870 refuses bundled names; docs/SKILL_INTAKE.md:304,306,319; evidence/DECISIONS-D21-D31.md:21-23,148-150.",
+      "rationale": "The reused engine forbids most of W3 by design, and D21/D29 put runtime code under owner approval. W3 needs an owner decision (new Q4) and either a text-and-agents-only scope or a separately designed installer.",
+      "severity": "blocker"
+    },
+    {
+      "location": "docs/plans/v2.0.1-execution.md:83,108,114-116,121",
+      "claim": "The agent runs oaw-review after making changes, and deep means plan mode, then EGM on the plan, then implementation, following upstream egm-review without the owner.",
+      "evidence": "Line 83 triggers after the change, but line 108 needs a plan before implementation. EGM's gain came from plan-gap detection (evidence/egm-selftest-2026-11-06-RESULT.md:42-45). templates/.agents/skills/egm-review/SKILL.md:5,16 (explicit-only; keep human checkpoints); scripts/oaw_mode.py:318-319,357 (Codex plan mode unmapped; 'the agent cannot start it').",
+      "rationale": "Classification of the finished diff fires deep after the fact. The plan gives no EGM preset, inputs, approver, round cap or report location, so the deep flow cannot run unattended as written. Classify planned paths first (suggest --paths, oaw_mode.py:402-403).",
+      "severity": "blocker"
+    },
+    {
+      "location": "docs/plans/v2.0.1-execution.md:137,139,147-148,233",
+      "claim": "Strengthen TS/JS parsing; callers recall >=0.95 on VS Code; X1 includes VS Code x Opus.",
+      "evidence": "scripts/code_index.py:1525-1528 (callers skips non-Python files), :1594-1596 ('only Python imports and calls are tracked'), :1556-1558; evidence/codemap-comparison-2026-11-06.md:9,56 (callers evidence is ERPNext/Python only).",
+      "rationale": "TS/JS call resolution does not exist yet. Stage 0(b), the overview ranking and X1's VS Code cell depend on an unspecified new engine.",
+      "severity": "blocker"
+    },
+    {
+      "location": "docs/plans/v2.0.1-execution.md:37,12",
+      "claim": "All three maps cut steps: tool calls 0.23-0.65x native. The plan absorbs graphify's measured strengths.",
+      "evidence": "evidence/codemap-comparison-2026-11-06.md:28,32,36,40 (graphify 88/76/100/104%; OAW 104% on Opus 4.8); :6 (graphify won on neither axis); 0.23 is codegraph in V8 (evidence/validation-2026-11-07-RESULT.md:113).",
+      "rationale": "This overstatement is the basis for treating maps as efficiency tools and for absorbing a graphify overview.",
+      "severity": "major"
+    },
+    {
+      "location": "docs/plans/v2.0.1-execution.md:234,276,300",
+      "claim": "X2 compares N, S (standard) and E on 12 cases including orders, for about 11M. The Q3 fallback of 8 new cases stays within 10M.",
+      "evidence": "S is a diff-and-tests reviewer (line 107), but X2 cases are design docs, which always trigger deep (scripts/oaw_mode.py:246-249,283-285). orders is at ceiling (validation:52). E costs 1.07-1.43M per run (validation:87), so 9 cases cost 10.2-12.9M for E alone. The leaked checklist P matched E at 1x cost (validation:28).",
+      "rationale": "The comparison arm is not the thing that ships, the cheap readiness-checklist alternative is untested, a ceiling case breaks the plan's own rule (line 300), and the budget and fallback are understated.",
+      "severity": "major"
+    },
+    {
+      "location": "docs/plans/v2.0.1-execution.md:26,198,229,239-244,252",
+      "claim": "About 23M split across 5 experiments; each experiment capped at 10M; segment 1 costs almost 0 tokens.",
+      "evidence": "Experiments total about 19.8M (lines 233-237). The second X3 run required by W4 (line 198), the deep E2E (line 124), Opus grading (0.63M last round, validation:143) and question writing (validation:144) are unbudgeted. Line 229 omits the X2 exception.",
+      "rationale": "Q3 asks the owner to approve a number that is incomplete and internally inconsistent.",
+      "severity": "major"
+    },
+    {
+      "location": "docs/plans/v2.0.1-execution.md:77,233",
+      "claim": "X1 promotes the map when both graders judge quality 'not worse' and efficiency passes.",
+      "evidence": "Principle 6 (line 77) says undecided is never promoted. D29.2 allows default only for better (cost <= 1.5x) or same-and-cheaper (evidence/DECISIONS-D21-D31.md:142-145).",
+      "rationale": "'Not worse' is undefined and can admit 'undecided'. The 'same quality, efficiency fails' case has no rule.",
+      "severity": "major"
+    },
+    {
+      "location": "docs/plans/v2.0.1-execution.md:198,235",
+      "claim": "X3 compares policy-line+skill with skill-only. W4 runs X3 before and after the AGENTS.md cuts.",
+      "evidence": "The 2.0.0 one-line route was followed 2/2 (evidence/DECISIONS-D21-D31.md:180). X3 is budgeted once (line 235) and runs in segment 2, while W4 is in segment 1 (line 252).",
+      "rationale": "There is no status-quo arm, so X3 cannot show the new skill is needed. The second run is unbudgeted and creates a sequencing loop.",
+      "severity": "major"
+    },
+    {
+      "location": "docs/plans/v2.0.1-execution.md:83,198",
+      "claim": "AGENTS.md stays at 26 lines; the two suggest/show lines become one line 'use oaw-review after changes'.",
+      "evidence": "templates/AGENTS.md:5,10-13 (line 13 also depends on suggest; line 5 'explicit invocation' conflicts with Q2). tests/test_oaw_mode.py:374-380 assert this text. scripts/oaw.py:766-773 (doctor keys on 'oaw_mode.py'). The rendered file is 25 or 23 lines.",
+      "rationale": "The edit is under-specified, leaves contradictory policy, and breaks existing tests and doctor logic without listing them.",
+      "severity": "major"
+    },
+    {
+      "location": "docs/plans/v2.0.1-execution.md:87,112,118",
+      "claim": "Add templates/.claude/agents/oaw-goldfish.md, and use claude -p for zero-context review.",
+      "evidence": "scripts/sync_egm.py:153-158 requires templates/.claude/agents to match the EGM bridges exactly (gate harness_check.py:187). scripts/goldfish_review.py:34-41,349-413 already runs zero-context claude -p review with leak and billing checks.",
+      "rationale": "The new file fails the gate, and the plan ignores the existing review kit (D23).",
+      "severity": "major"
+    },
+    {
+      "location": "docs/plans/v2.0.1-execution.md:3,60,217-218",
+      "claim": "migrate 2.0.0 -> 2.0.1 adds new skills and scripts; update VERSION.",
+      "evidence": "scripts/oaw.py:352-356 keeps explicit skill selections, so new skills are not added. The repository has VERSION.json; harness_check.py:148-158 also needs FRAMEWORK_VERSION (oaw.py:24) and docs/releases/2.0.1-sources.json. Released users are on v1 (docs/UPGRADING.md:7-33), while 2.0.0 was never released (line 3).",
+      "rationale": "The release and migration steps are partly false and skip the main installed base.",
+      "severity": "major"
+    },
+    {
+      "location": "docs/plans/v2.0.1-execution.md:42,55-56,86,108",
+      "claim": "Deep runs full EGM automatically; triggers unchanged; 'watch the deep ratio'.",
+      "evidence": "56% of code commits classify as deep (validation:102). About 1.1M per EGM run; one run was cut by the 5-hour cap (egm-selftest:74-75).",
+      "rationale": "There is no cost cap, pre-run notice, or behavior for a run cut off by usage limits once Q2 enables auto-run.",
+      "severity": "major"
+    },
+    {
+      "location": "docs/plans/v2.0.1-execution.md:10,36,76,107,117",
+      "claim": "Second opinions should come from another model family; use codex review whenever Codex exists.",
+      "evidence": "The kappa values measure grader agreement on fixed answers (validation:17-20,65-72). No reviewer-family comparison exists; D31.5's Codex rounds have no comparison arm (DECISIONS:175-178).",
+      "rationale": "Making this the default is unsupported by measurement, and it silently sends diffs to a second vendor and bills a second subscription.",
+      "severity": "major"
+    },
+    {
+      "location": "docs/plans/v2.0.1-execution.md:22-23,28,44",
+      "claim": "Measurement uses D32's yardstick; 4x3 has poor resolution.",
+      "evidence": "The decision log ends at D31 (DECISIONS:161); the rules are proposals that need owner approval (validation:123). validation:16 'coverage resolution is not poor' (0.10 vs 0.089, :40-42).",
+      "rationale": "The summary presents a pending decision as adopted and misstates why the rule changes.",
+      "severity": "major"
+    },
+    {
+      "location": "docs/plans/v2.0.1-execution.md:88,113,235",
+      "claim": "oaw_mode.py plan outputs JSON steps for the skill to follow; X3 uses a dry-run.",
+      "evidence": "No arguments, schema or dry-run flag are given; show --json already exists (scripts/oaw_mode.py:337-372,404-408).",
+      "rationale": "The skill and X3 depend on an undefined contract.",
+      "severity": "major"
+    },
+    {
+      "location": "docs/plans/v2.0.1-execution.md:170,192",
+      "claim": "Option 2 installs only A B C; remove leaves managed files byte-identical.",
+      "evidence": "Both removal paths leave .oaw/integrations/egm (66 files) and the EGM policy text (evidence/egm-selftest-2026-11-06-RESULT.md:58-63, 'needs a separate fix'). oaw.py:863 already offers --skills none.",
+      "rationale": "This depends on an unscheduled removal fix and duplicates an existing flag.",
+      "severity": "major"
+    },
+    {
+      "location": "docs/plans/v2.0.1-execution.md:236,253",
+      "claim": "X4 runs in segment 2 to check G5 (+600 tokens or fewer).",
+      "evidence": "X1 and X3, which decide which skill descriptions and policy line ship, run later or alongside (lines 233-235, 254).",
+      "rationale": "The G5 gate would measure a configuration that may not ship.",
+      "severity": "minor"
+    },
+    {
+      "location": "docs/plans/v2.0.1-execution.md:182,189,241,311",
+      "claim": "oaw-review about 180 tokens; catalog has 25 subcommands; implementation review is one EGM run; reuse costs about a third.",
+      "evidence": "180 is court-skill's D-arm figure (validation:94); scripts/catalog.py:2519-2600 has 23 top-level commands; lines 219 and 255 call the implementation review cross-family code review; with two arms, reuse saves about half.",
+      "rationale": "Small numeric and labeling inconsistencies.",
+      "severity": "minor"
+    }
+  ],
+  "uncertainties": [
+    "Line 34 'unfounded claims 0': validation:71 shows EGM detection 1 (Opus) / 7 (Codex), but the file does not say which arm those belong to. The claim is wrong only if they include arm E.",
+    "The statistics code and xgrade.py said to live on the records branch (lines 96, 204), and 'VS Code about 90k' (line 309), could not be verified in this workspace.",
+    "Host behavior was not tested: whether an agent can enter plan mode or raise effort without a restart, whether an omitClaudeMd agent fully avoids CLAUDE.md, and how /oaw-add is invoked on Codex.",
+    "Whether the owner needs defaults decided before release. If not, X1 and X2 could follow the release with conservative defaults.",
+    "Whether options 2 and 3 should ship in 2.0.1 at all; the owner described them as what the final version 'may' look like (evidence/OWNER_REQUEST.md:5).",
+    "Style preferences: the plan lacks an alternatives section, an architecture diagram and a glossary (EGM, catalog, the tasting metaphor shown to users). It also uses bold pseudo-headings, <br> bullets in tables, promotional phrases (lines 131, 187, 203) and a relative date (line 30)."
+  ]
+}

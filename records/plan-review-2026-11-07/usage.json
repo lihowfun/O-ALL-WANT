@@ -1,0 +1,72 @@
+{
+ "egm": {
+  "model": "claude-opus-5-5",
+  "apiKeySource": "none",
+  "claude_code_version": "2.1.287",
+  "plugins": [
+   "egm",
+   "cc-plugin-sec-default",
+   "cc-plugin-agents-md",
+   "cc-plugin-telemetry",
+   "cc-plugin-plugin-authoring"
+  ],
+  "modelUsage": {
+   "inputTokens": 376,
+   "outputTokens": 302264,
+   "cacheReadInputTokens": 17134038,
+   "cacheCreationInputTokens": 1043525,
+   "thinkingTokens": 154441
+  },
+  "logical_tokens": 18480203,
+  "tokens_without_cache_reads": 1346165,
+  "subagent_stats": {
+   "spawned": 9,
+   "requested": {
+    "background": 0,
+    "foreground": 3,
+    "unset": 6
+   },
+   "started_in_background": 6,
+   "max_depth": 1,
+   "spawned_by_subagents": 0,
+   "completed": 9,
+   "failed": 0,
+   "killed": {
+    "parent": 0,
+    "user": 0,
+    "system": 0
+   },
+   "refused": {
+    "depth_limit": 0,
+    "concurrency_limit": 0,
+    "budget": 0
+   },
+   "by_type": {
+    "egm:egm-zoom-out": 2,
+    "egm:egm-comprehension": 1,
+    "egm:egm-design": 1,
+    "egm:egm-structural": 1,
+    "egm:egm-style": 2,
+    "egm:egm-implementation-readiness": 1,
+    "egm:egm-codebase-details": 1
+   }
+  },
+  "duration_api_ms_sum": 2974125,
+  "wall_clock_minutes": 31,
+  "started_local": "15:27",
+  "report_written_local": "15:58"
+ },
+ "codex": {
+  "model": "gpt-6.1-sol",
+  "reasoning_effort": "high",
+  "cli": "codex-cli 0.167.0",
+  "usage": {
+   "input_tokens": 1073860,
+   "cached_input_tokens": 946560,
+   "cache_write_input_tokens": 0,
+   "output_tokens": 11404,
+   "reasoning_output_tokens": 6149
+  },
+  "wall_clock_minutes": 5
+ }
+}

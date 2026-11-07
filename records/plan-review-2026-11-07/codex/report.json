@@ -1,0 +1,116 @@
+{
+ "findings": [
+  {
+   "location": "docs/plans/v2.0.1-execution.md:96",
+   "severity": "major",
+   "claim": "The specified statistical method cannot estimate within-question variation from the proposed singleton runs.",
+   "evidence": "The plan specifies within-question paired bootstrap and a pooled within-question variance floor, while X1 and X2 at lines 233–234 run each question once per arm. evidence/validation-2026-11-07-RESULT.md:34–44 describes the existing method using repeated runs and warns about collapsed intervals; line 127 proposes pooling within-question variation, which singleton cells cannot supply.",
+   "fix": "Define a method valid for the proposed sampling design, including the source of the variance floor and the equivalence calculation, before approving the experiments and budget."
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:305",
+   "severity": "major",
+   "claim": "The new judgment rules are not connected to the catalog engine that must enforce and record them.",
+   "evidence": "scripts/catalog_core.py:1847–1849 accepts only better/same/worse and a fixed 1.5 cost threshold. Lines 2062–2111 derive and validate outcomes from a point cost ratio, without confidence intervals or separate equivalent/undetermined states. The plan changes these distinctions but only schedules a statistics module and continues claiming that record-tasting enforces consistent verdicts.",
+   "fix": "Add an explicit mapping from the new statistical results to catalog judgments, update validation where necessary, and preserve compatibility with historical records."
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:83",
+   "severity": "major",
+   "claim": "The proposed policy invokes review after implementation, although deep review must happen before implementation.",
+   "evidence": "The replacement policy says to use oaw-review after making changes. The deep workflow at line 108 instead requires planning and EGM review before implementation. scripts/oaw_mode.py:115–141 normally examines changes already present in the working tree.",
+   "fix": "Specify when planned work is classified before implementation and when completed changes receive code review. Include an E2E case proving that deep implementation does not begin before plan review."
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:108",
+   "severity": "major",
+   "claim": "Keeping the current triggers does not implement the stated trigger for new design documents generally.",
+   "evidence": "scripts/oaw_mode.py:246–249 recognizes added Markdown only under docs/designs/ or with a filename matching design*.md. An added docs/plans/v2.0.1-execution.md is classified as light by the current classifier, despite being a new implementation plan.",
+   "fix": "Either describe the actual restricted trigger or explicitly expand it and add fixtures for the repository's plan paths. Distinguish any expanded trigger from the trigger evaluated in V7."
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:157",
+   "severity": "major",
+   "claim": "The user-facing commands have no specified delivery path into an installed project.",
+   "evidence": "scripts/oaw.py:2 explicitly says this CLI remains in the framework checkout. Its source_files mapping at lines 277–285 installs project helpers, but neither oaw.py nor catalog.py. The payload changes listed in the plan add code_index.py, leaving the advertised project-relative add/list/remove commands and /oaw-add backend unresolved.",
+   "fix": "Specify either an installed management launcher with its dependencies or commands run from the framework checkout with an explicit project target. Test the documented flow from a separately installed project."
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:170",
+   "severity": "major",
+   "claim": "The 'only A B C' choice needs an installation mode that the current installer does not provide.",
+   "evidence": "scripts/oaw.py:277–279 always includes AGENTS.md, CLAUDE.md and OAW helpers, even with an empty bundled-skill selection. doctor at lines 745–778 requires OAW policy and helpers. Wrapping the existing catalog therefore does not provide the promised management-only installation.",
+   "fix": "Add a concrete management-only installation contract, including its manifest, doctor behavior and handling of existing OAW versus project-owned policy. Test this choice in both a clean project and an existing OAW installation."
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:164",
+   "severity": "major",
+   "claim": "The proposed wrapper cannot install ordinary untested or executable skills through the current catalog absorption path.",
+   "evidence": "scripts/catalog_core.py:1242–1267 holds executable skills and even static skill text without a behavior A/B. Lines 1268–1284 prohibit installing hooks/MCP servers and hold agents. scripts/catalog.py:1863–1873 installs only components already approved for absorption and rejects bundled-name collisions. W3 promises installation before tasting, executable-component consent and collision choices without scheduling these engine changes.",
+   "fix": "Define a user-requested installation path separately from promotion into OAW defaults, and explicitly implement the required component and collision handling. Test an untested skill and an ordinary script-bearing skill."
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:175",
+   "severity": "major",
+   "claim": "Existing catalog restore points cannot provide the promised rollback for consented hooks and MCP configuration.",
+   "evidence": "scripts/catalog.py:1407–1420 explicitly excludes host settings and MCP files from build snapshots. Yet W3 permits installing those components and line 192 requires byte-identical restoration after removal.",
+   "fix": "Specify restoration records for every configuration file the new installer changes, including shared-file edits. Verify that removing B preserves A, C and pre-existing project configuration."
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:173",
+   "severity": "major",
+   "claim": "The zero-token installation promise includes semantic conflict detection without a defined mechanism.",
+   "evidence": "Line 163 says only the AI-composition choice consumes agent tokens, but lines 169–173 promise detection of functional overlap and contradictory policy text. scripts/catalog_core.py:1–15 describes a static pattern-matching scanner; the cited evidence does not establish a general semantic conflict detector.",
+   "fix": "Limit the free path to concrete structural conflicts and declared overlap metadata. Make semantic analysis an explicitly optional agent operation rather than an unconditional installation guarantee."
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:234",
+   "severity": "major",
+   "claim": "X2 does not define the standard treatment it tests, and its replacement rule lacks a complete safety condition.",
+   "evidence": "Line 107 defines standard as reviewing a code diff and tests, while X2 supplies design documents. X2 allows S to replace E based on detection equivalence and cost without explicitly requiring S's false-positive safety. The fallback at line 264 also switches deep to S when E fails to generalize, without requiring an acceptable S-versus-N result.",
+   "fix": "Define the exact standard design-review treatment and distinguish it from code review. Give the replacement decision explicit quality and false-positive requirements, plus a deterministic fallback when neither treatment qualifies."
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:176",
+   "severity": "minor",
+   "claim": "The specified add flow contradicts its one-question usability acceptance criterion.",
+   "evidence": "Line 165 requires the composition question, and line 176 then requires another tasting question for untested skills. Line 193 nevertheless requires completing add A B C, choosing option 1 and removing B while answering only one question.",
+   "fix": "Include optional tasting in the initial interaction or defer it without another installation prompt. Make the usability fixture explicitly contain untested skills."
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:138",
+   "severity": "minor",
+   "claim": "The simplified map output omits an existing uncertainty distinction that matters for impact analysis.",
+   "evidence": "scripts/code_index.py:1540–1549 separates resolved callers from same-name calls with unknown receiver types, and lines 1733–1734 print a warning. Its traversal also has language and hop limits at lines 1577–1596. An untruncated result is not necessarily an exhaustive set of actual callers.",
+   "fix": "Preserve resolution warnings and state that 'complete' refers to returned indexed matches, with the applicable language and traversal limits."
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:37",
+   "severity": "minor",
+   "claim": "The statement that all three maps reduced tool calls to 0.23–0.65 of native overstates the measurements.",
+   "evidence": "evidence/codemap-comparison-2026-11-06.md:28–40 reports graphify ratios of 0.88, 0.76, 1.00 and 1.04, and an OAW ratio of 1.04 on Opus 4.8. The 0.23 result is codegraph's separate VS Code experiment in evidence/validation-2026-11-07-RESULT.md:113. It is an overall tool-call ratio, not specifically a symbol-query measurement as attributed at plan line 131.",
+   "fix": "Report the ratios by tool and condition, and avoid attributing aggregate efficiency to an individually unmeasured mechanism."
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:83",
+   "severity": "minor",
+   "claim": "Two current-size claims are inaccurate.",
+   "evidence": "example/minimal-project/AGENTS.md:1–25 and the current rendered installer payload contain 25 lines, not 26. scripts/catalog.py:2512–2601 defines 23 top-level commands and four nested commands, not the 25 repeatedly claimed at plan lines 45 and 189.",
+   "fix": "Correct the counts and specify whether command counts include nested commands. Use the measured rendered policy as the line-count baseline."
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:303",
+   "severity": "minor",
+   "claim": "The claimed TokenEconomizer failure caused by NFS clock skew is unsupported by the supplied evidence.",
+   "evidence": "evidence/codemap-comparison-2026-11-06.md:67 documents slow codegraph indexing on NFS, not clock skew or TokenEconomizer state failure. evidence/validation-2026-11-07-RESULT.md:30 and :54 discuss TokenEconomizer's ceiling results without that incident.",
+   "fix": "Supply the incident evidence or present local-cache placement as a design choice without claiming this measured cause."
+  }
+ ],
+ "questions": [
+  "Which EGM preset and inputs will unattended deep review supply? The pinned workflow prompts when Step is omitted and can prompt for an ambiguous document split; its uninterrupted preset also writes reports, so the transition from plan-mode restrictions needs clarification.",
+  "What effort level and verification status will be reported when the in-session effort spike fails, given the proposed nonblocking fallback?",
+  "Will the new doctor checks inspect actual host discovery and enabled tools through a live probe, and report unknown when that probe is unavailable?",
+  "Does the approximately 23M Claude budget cover only experiments and reviews, or also implementation and repair work described as nearly zero-token?"
+ ],
+ "summary": "The plan addresses the owner's requested review flow, built-in EGM, code map, absorption SOP and three-choice skill interface, and most headline measurements match the evidence. It needs revisions to its statistical design, catalog integration, review timing and installation lifecycle before its acceptance rules and user-facing promises are executable."
+}

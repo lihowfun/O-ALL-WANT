@@ -1,0 +1,15 @@
+You are a zero-context reviewer (a "goldfish"). You have not seen any discussion behind this document.
+
+Review docs/plans/v2.0.1-execution.md, a Traditional Chinese implementation plan for OAW 2.0.1, in this repository.
+- The owner's request it must satisfy is evidence/OWNER_REQUEST.md.
+- The evidence/ files are the measured results the plan cites. Check every number and claim the plan cites against them.
+- The rest of the repository is the current OAW 2.0.0 code that the plan changes. Check that what the plan says about the current code (file names, commands, behaviors, sizes) is true.
+
+Look for, in order of importance:
+1. Defects that would make the plan fail or mislead: wrong numbers, claims not supported by the evidence, steps that cannot work with the current code, acceptance rules that cannot decide, internal contradictions.
+2. Places where it does not satisfy the owner's request (simplicity, smooth running, EGM built in, code map, the best absorption SOP, the user-facing add flow with the three choices, showing users what was absorbed).
+3. Unnecessary complexity: rules, commands or steps that could be cut without losing value.
+4. Missing risks or missing acceptance criteria.
+
+Do not invent requirements beyond the owner's request and the evidence. Separate factual defects from open questions and preferences.
+Answer in English as JSON only: {"findings":[{"location":"file:line","severity":"blocker|major|minor","claim":"...","evidence":"file:line and what it says","fix":"..."}],"questions":["..."],"summary":"two sentences"}
