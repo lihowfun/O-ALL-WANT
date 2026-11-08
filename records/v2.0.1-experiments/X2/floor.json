@@ -1,0 +1,14 @@
+{
+ "opus": {
+  "detection": 0.13176156917368245,
+  "unsupported": 0.18257418583505536,
+  "cells": 9,
+  "reports": 24
+ },
+ "codex": {
+  "detection": 0.13176156917368245,
+  "unsupported": 0.6146362971528591,
+  "cells": 9,
+  "reports": 24
+ }
+}

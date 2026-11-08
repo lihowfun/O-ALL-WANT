@@ -1,0 +1,556 @@
+{
+ "digest": {
+  "kind": "defect",
+  "author": "codex",
+  "role": "primary",
+  "planted": [
+   "C1",
+   "M1",
+   "M2"
+  ],
+  "kept_defects": [
+   "C1",
+   "M1",
+   "M2"
+  ],
+  "traps": [
+   "H1",
+   "H2"
+  ],
+  "kept_traps": [
+   "H1",
+   "H2"
+  ],
+  "other_defects": []
+ },
+ "export": {
+  "kind": "defect",
+  "author": "opus",
+  "role": "primary",
+  "planted": [
+   "C1",
+   "C2",
+   "M1"
+  ],
+  "kept_defects": [
+   "C1",
+   "C2",
+   "M1"
+  ],
+  "traps": [
+   "H1",
+   "H2"
+  ],
+  "kept_traps": [
+   "H1",
+   "H2"
+  ],
+  "other_defects": []
+ },
+ "flags": {
+  "kind": "defect",
+  "author": "codex",
+  "role": "primary",
+  "planted": [
+   "C1",
+   "M1",
+   "M2"
+  ],
+  "kept_defects": [
+   "C1",
+   "M1",
+   "M2"
+  ],
+  "traps": [
+   "H1",
+   "H2"
+  ],
+  "kept_traps": [
+   "H1",
+   "H2"
+  ],
+  "other_defects": []
+ },
+ "invoices": {
+  "kind": "defect",
+  "author": "opus",
+  "role": "primary",
+  "planted": [
+   "C1",
+   "C2",
+   "M1"
+  ],
+  "kept_defects": [
+   "C1",
+   "C2",
+   "M1"
+  ],
+  "traps": [
+   "H1",
+   "H2"
+  ],
+  "kept_traps": [
+   "H1",
+   "H2"
+  ],
+  "other_defects": []
+ },
+ "ratelimit": {
+  "kind": "defect",
+  "author": "codex",
+  "role": "primary",
+  "planted": [
+   "C1",
+   "M1",
+   "M2"
+  ],
+  "kept_defects": [
+   "C1",
+   "M1",
+   "M2"
+  ],
+  "traps": [
+   "H1",
+   "H2"
+  ],
+  "kept_traps": [
+   "H1",
+   "H2"
+  ],
+  "other_defects": []
+ },
+ "registry": {
+  "kind": "clean",
+  "author": "opus",
+  "role": "primary",
+  "planted": [],
+  "kept_defects": [],
+  "traps": [
+   "H1",
+   "H2",
+   "H3",
+   "H4"
+  ],
+  "kept_traps": [
+   "H1",
+   "H2",
+   "H3",
+   "H4"
+  ],
+  "other_defects": []
+ },
+ "search": {
+  "kind": "defect",
+  "author": "opus",
+  "role": "primary",
+  "planted": [
+   "C1",
+   "C2",
+   "M1"
+  ],
+  "kept_defects": [
+   "C1",
+   "C2",
+   "M1"
+  ],
+  "traps": [
+   "H1",
+   "H2"
+  ],
+  "kept_traps": [
+   "H1",
+   "H2"
+  ],
+  "other_defects": []
+ },
+ "sessions": {
+  "kind": "clean",
+  "author": "codex",
+  "role": "primary",
+  "planted": [],
+  "kept_defects": [],
+  "traps": [
+   "H1",
+   "H2",
+   "H3",
+   "H4"
+  ],
+  "kept_traps": [
+   "H1",
+   "H2",
+   "H3",
+   "H4"
+  ],
+  "other_defects": []
+ },
+ "supplier": {
+  "kind": "clean",
+  "author": "codex",
+  "role": "primary",
+  "planted": [],
+  "kept_defects": [],
+  "traps": [
+   "H1",
+   "H2",
+   "H3",
+   "H4"
+  ],
+  "kept_traps": [
+   "H1",
+   "H2",
+   "H3",
+   "H4"
+  ],
+  "other_defects": []
+ },
+ "uploads": {
+  "kind": "defect",
+  "author": "opus",
+  "role": "primary",
+  "planted": [
+   "C1",
+   "C2",
+   "M1"
+  ],
+  "kept_defects": [
+   "C1",
+   "C2",
+   "M1"
+  ],
+  "traps": [
+   "H1",
+   "H2"
+  ],
+  "kept_traps": [
+   "H1",
+   "H2"
+  ],
+  "other_defects": []
+ },
+ "auditlog": {
+  "kind": "defect",
+  "author": "codex",
+  "role": "primary",
+  "planted": [
+   "C1",
+   "C2",
+   "M1"
+  ],
+  "kept_defects": [
+   "C1",
+   "C2",
+   "M1"
+  ],
+  "traps": [
+   "H1",
+   "H2"
+  ],
+  "kept_traps": [
+   "H1",
+   "H2"
+  ],
+  "other_defects": []
+ },
+ "carts": {
+  "kind": "defect",
+  "author": "codex",
+  "role": "primary",
+  "planted": [
+   "C1",
+   "M1",
+   "M2"
+  ],
+  "kept_defects": [
+   "C1",
+   "M1",
+   "M2"
+  ],
+  "traps": [
+   "H1",
+   "H2"
+  ],
+  "kept_traps": [
+   "H1",
+   "H2"
+  ],
+  "other_defects": []
+ },
+ "comments": {
+  "kind": "defect",
+  "author": "codex",
+  "role": "calibration",
+  "planted": [
+   "C1",
+   "M1",
+   "M2"
+  ],
+  "kept_defects": [
+   "C1",
+   "M1",
+   "M2"
+  ],
+  "traps": [
+   "H1",
+   "H2"
+  ],
+  "kept_traps": [
+   "H1",
+   "H2"
+  ],
+  "other_defects": []
+ },
+ "cron": {
+  "kind": "defect",
+  "author": "codex",
+  "role": "primary",
+  "planted": [
+   "C1",
+   "M1",
+   "M2"
+  ],
+  "kept_defects": [
+   "C1",
+   "M1",
+   "M2"
+  ],
+  "traps": [
+   "H1",
+   "H2"
+  ],
+  "kept_traps": [
+   "H1",
+   "H2"
+  ],
+  "other_defects": []
+ },
+ "dashboard": {
+  "kind": "clean",
+  "author": "opus",
+  "role": "primary",
+  "planted": [],
+  "kept_defects": [],
+  "traps": [
+   "H1",
+   "H2",
+   "H3",
+   "H4"
+  ],
+  "kept_traps": [
+   "H1",
+   "H2",
+   "H3",
+   "H4"
+  ],
+  "other_defects": []
+ },
+ "invites": {
+  "kind": "defect",
+  "author": "opus",
+  "role": "primary",
+  "planted": [
+   "C1",
+   "C2",
+   "M1"
+  ],
+  "kept_defects": [
+   "C1",
+   "C2",
+   "M1"
+  ],
+  "traps": [
+   "H1",
+   "H2"
+  ],
+  "kept_traps": [
+   "H1",
+   "H2"
+  ],
+  "other_defects": []
+ },
+ "loyalty": {
+  "kind": "defect",
+  "author": "opus",
+  "role": "calibration",
+  "planted": [
+   "C1",
+   "C2",
+   "M1"
+  ],
+  "kept_defects": [
+   "C1",
+   "C2",
+   "M1"
+  ],
+  "traps": [
+   "H1",
+   "H2"
+  ],
+  "kept_traps": [
+   "H1",
+   "H2"
+  ],
+  "other_defects": [
+   {
+    "severity": "major",
+    "claim": "The member-facing cancel endpoint appends a `redeem_reversal` without checking that the order was not placed, so a member can cancel the redemption on their own completed order and get the points back while keeping the goods; a later refund then skips the reversal because one already exists.",
+    "evidence": "docs/design.md:67-69",
+    "family": "opus"
+   }
+  ],
+  "accepted_extra": "calibration case revised twice; extra defects recorded, not in the rubric"
+ },
+ "metering": {
+  "kind": "defect",
+  "author": "opus",
+  "role": "primary",
+  "planted": [
+   "C1",
+   "C2",
+   "M1"
+  ],
+  "kept_defects": [
+   "C1",
+   "C2",
+   "M1"
+  ],
+  "traps": [
+   "H1",
+   "H2"
+  ],
+  "kept_traps": [
+   "H1",
+   "H2"
+  ],
+  "other_defects": []
+ },
+ "migrations": {
+  "kind": "defect",
+  "author": "opus",
+  "role": "primary",
+  "planted": [
+   "C1",
+   "C2",
+   "M1"
+  ],
+  "kept_defects": [
+   "C1",
+   "C2",
+   "M1"
+  ],
+  "traps": [
+   "H1",
+   "H2"
+  ],
+  "kept_traps": [
+   "H1",
+   "H2"
+  ],
+  "other_defects": []
+ },
+ "payouts": {
+  "kind": "defect",
+  "author": "opus",
+  "role": "primary",
+  "planted": [
+   "C1",
+   "C2",
+   "M1"
+  ],
+  "kept_defects": [
+   "C1",
+   "C2",
+   "M1"
+  ],
+  "traps": [
+   "H1",
+   "H2"
+  ],
+  "kept_traps": [
+   "H1",
+   "H2"
+  ],
+  "other_defects": []
+ },
+ "resets": {
+  "kind": "defect",
+  "author": "codex",
+  "role": "primary",
+  "planted": [
+   "C1",
+   "M1",
+   "M2"
+  ],
+  "kept_defects": [
+   "C1",
+   "M1",
+   "M2"
+  ],
+  "traps": [
+   "H1",
+   "H2"
+  ],
+  "kept_traps": [
+   "H1",
+   "H2"
+  ],
+  "other_defects": []
+ },
+ "shortener": {
+  "kind": "defect",
+  "author": "opus",
+  "role": "calibration",
+  "planted": [
+   "C1",
+   "C2",
+   "M1"
+  ],
+  "kept_defects": [
+   "C1",
+   "C2",
+   "M1"
+  ],
+  "traps": [
+   "H1",
+   "H2"
+  ],
+  "kept_traps": [
+   "H1",
+   "H2"
+  ],
+  "other_defects": []
+ },
+ "webhooks": {
+  "kind": "defect",
+  "author": "codex",
+  "role": "primary",
+  "planted": [
+   "C1",
+   "M1",
+   "M2"
+  ],
+  "kept_defects": [
+   "C1",
+   "M1",
+   "M2"
+  ],
+  "traps": [
+   "H1",
+   "H2"
+  ],
+  "kept_traps": [
+   "H1",
+   "H2"
+  ],
+  "other_defects": []
+ },
+ "events": {
+  "kind": "defect",
+  "role": "descriptive",
+  "source": "evals/egm-local (frozen 2026-10-29)"
+ },
+ "clean": {
+  "kind": "clean",
+  "role": "descriptive",
+  "source": "evals/egm-local (frozen 2026-10-29)"
+ }
+}

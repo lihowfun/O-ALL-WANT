@@ -1,0 +1,409 @@
+{
+ "frozen": "X2 confirmatory set (PREREG.md); built by x2_build_spec.py",
+ "order": [
+  "events",
+  "invoices",
+  "flags",
+  "clean",
+  "uploads",
+  "ratelimit",
+  "registry",
+  "search",
+  "digest",
+  "supplier",
+  "export",
+  "sessions",
+  "payouts",
+  "webhooks",
+  "metering",
+  "carts",
+  "dashboard",
+  "migrations",
+  "resets",
+  "invites",
+  "cron",
+  "auditlog"
+ ],
+ "descriptive": [
+  "events",
+  "clean"
+ ],
+ "calibration": [
+  "comments",
+  "loyalty",
+  "shortener"
+ ],
+ "planned_primary": [
+  "auditlog",
+  "carts",
+  "cron",
+  "dashboard",
+  "digest",
+  "export",
+  "flags",
+  "invites",
+  "invoices",
+  "metering",
+  "migrations",
+  "payouts",
+  "ratelimit",
+  "registry",
+  "resets",
+  "search",
+  "sessions",
+  "supplier",
+  "uploads",
+  "webhooks"
+ ],
+ "planned_calibration": [
+  "comments",
+  "loyalty",
+  "shortener"
+ ],
+ "rubric": {
+  "digest": {
+   "critical": [
+    "Caching complete personalized HTML by locale and date exposes one recipient's private notifications to other recipients."
+   ],
+   "major": [
+    "Two workers capped at 1,000 requests per minute can dispatch only 120,000 of the required 180,000 digests within the one-hour window.",
+    "The design incorrectly describes pending_for_user as returning the complete pending set despite its fixed LIMIT 100."
+   ],
+   "hard_negatives": [
+    "A single 07:00 UTC schedule is intentional; delivery at each recipient's local morning is not required.",
+    "Provider acceptance legitimately completes dispatch, and mailbox bounces do not require digest retries."
+   ]
+  },
+  "export": {
+   "critical": [
+    "Any signed-in customer can export another user's data: user_id and delivery_email come from the request body with no check that the caller is that user or an agent, and the session-free link goes to the caller-chosen email.",
+    "Rollout step 4 drops export_tasks while ~300 open legacy requests with 30-day legal deadlines exist; there is no migration of open tasks into export_requests, and rollback cannot restore them."
+   ],
+   "major": [
+    "4 workers at 6 minutes per export give 4 x 240 = 960 exports/day, below the required 1,200/day, so the backlog grows by about 240/day and the 72-hour R2 target is missed."
+   ],
+   "hard_negatives": [
+    "Omitting risk_scores from the export is an accepted decision (ADR-002 legal exemption) and does not violate R1.",
+    "Session-free pre-signed download URLs with a 72-hour TTL are approved by ADR-001; the bearer link itself is not the defect."
+   ]
+  },
+  "flags": {
+   "critical": [
+    "Override mutation authorization checks the administrator role but never binds the URL tenant to the authenticated tenant, allowing cross-tenant writes."
+   ],
+   "major": [
+    "The design incorrectly claims get_global raises KeyError for unknown flags, so its specified 404 validation cannot work.",
+    "Six mandatory writer slots at 200 commits/s support at most 1,200 changed overrides/s, below the required 1,800/s."
+   ],
+   "hard_negatives": [
+    "Thirty-second SDK polling is compatible with the five-second evaluation API objective because the SDK contract separately permits 35 seconds.",
+    "A true tenant override remaining enabled when the global default is false is the accepted precedence behavior."
+   ]
+  },
+  "invoices": {
+   "critical": [
+    "Late-usage handling modifies an already finalized invoice (adds lines, changes total, re-sends), violating ADR-002's rule that finalized invoices are never modified and corrections go on a new invoice or credit note.",
+    "Invoice PDFs containing name, address and card last-four are public-read at URLs keyed by the sequential, guessable invoice number, so anyone can enumerate and download other customers' invoices."
+   ],
+   "major": [
+    "12 workers at ~150 ms per invoice give ~80 invoices/s, so 2.4M subscriptions take ~8.3 hours, missing the 6-hour requirement R1."
+   ],
+   "hard_negatives": [
+    "Not charging totals under 50 cents and carrying them to the next invoice is the approved policy, not lost revenue or a missed charge.",
+    "The design's claim that prorate_cents() in src/proration.py already works on integer cents with half-even rounding is accurate and matches ADR-001."
+   ]
+  },
+  "ratelimit": {
+   "critical": [
+    "An authenticated client can evade its account quota by changing the untrusted X-Account-ID header."
+   ],
+   "major": [
+    "Per-request PostgreSQL policy reads contradict the accepted requirement to use in-memory policy snapshots.",
+    "Four shards at 4,000 evaluations/sec provide only 16,000 attempts/sec against the required 24,000."
+   ],
+   "hard_negatives": [
+    "Two full allowances immediately across a second boundary comply with the accepted fixed-window quota contract.",
+    "The unauthenticated and unmetered /healthz response is an approved local endpoint exemption."
+   ]
+  },
+  "registry": {
+   "critical": [],
+   "major": [],
+   "hard_negatives": [
+    "Reading artifacts from the models-prod object store bucket is correct; ADR-001 (NFS) is superseded by the accepted ADR-003.",
+    "The rollback latency arithmetic meets R3: 20 s poll plus 30 s request deadline is 50 s, under the 60 s requirement, with no model load on rollback.",
+    "Bucketing is deterministic across nodes and restarts because bucket_for() uses zlib.crc32, not Python's per-process randomized hash(); R4 is met.",
+    "Keeping the cached assignment and blocking transitions during a registry outage is the accepted fail-static policy of ADR-002, not missing failure handling."
+   ]
+  },
+  "search": {
+   "critical": [
+    "Design claims publish_change() emits DELETE events (op d), but the code only publishes INSERT/UPDATE, so hard-deleted (erased) customers are never removed from the index, violating R5/ADR-002's 24 h erasure rule.",
+    "open_balance_cents is maintained with non-idempotent += / -= scripted updates, so at-least-once redelivery (relay republish or indexer crash between bulk and offset commit) double-applies invoice amounts and corrupts the balances agents use for payment reminders."
+   ],
+   "major": [
+    "Full rebuild of 90M customers at 2,400 actions/s takes about 37,500 s (~10.4 h), exceeding R6's 8-hour maintenance window, contrary to the design's claim that it fits."
+   ],
+   "hard_negatives": [
+    "Storing email and phone in clear text in the index is approved by ADR-002 (restricted VPC, support_agent role, only the support console reads it) and is not a privacy defect by itself.",
+    "Steady-state capacity meets R3: 6 instances x 400 actions/s = 2,400 actions/s, which is 33% above the 1,800 events/s peak and satisfies the 25% headroom requirement."
+   ]
+  },
+  "sessions": {
+   "critical": [],
+   "major": [],
+   "hard_negatives": [
+    "Omitting client_secret is correct for the public native clients using system-browser code flow and PKCE S256.",
+    "The 600-second access lifetime follows the accepted policy; the 300-second policy is superseded.",
+    "Rotation and migration correctly retain the original 30-day deadline rather than granting another 30 days.",
+    "Four shards provide 2,240 usable refresh requests/s, enough for the stated 2,200 peak with 550 per shard."
+   ]
+  },
+  "supplier": {
+   "critical": [],
+   "major": [],
+   "hard_negatives": [
+    "The 300-second cadence follows accepted ADR-002; the hourly decision is superseded.",
+    "Publishing a complete zero-row export correctly makes every SKU's known quantity zero.",
+    "Clamping negative supplier quantities to zero preserves the accepted semantics and existing behavior.",
+    "Five-minute polling plus the full 90-second processing budget meets the seven-minute healthy-operation requirement."
+   ]
+  },
+  "uploads": {
+   "critical": [
+    "A redelivered scan job after the incoming object was already deleted hits the 'object does not exist' branch and deletes the row of an already-scanned (clean or infected) upload and tells the tenant it failed.",
+    "The download endpoint only blocks status 'infected', so pending and error uploads get a presigned URL to the unscanned object in the incoming bucket, violating R1."
+   ],
+   "major": [
+    "The fixed 40-worker fleet scans 600 files/minute, half the 1,200/minute peak, so the queue grows and the 60 s verdict requirement R2 cannot be met."
+   ],
+   "hard_negatives": [
+    "Uploads bypassing the API servers do not break the 100 MB limit: the presigned POST carries a content-length-range condition capped at MAX_UPLOAD_BYTES, so S3 enforces R5.",
+    "Report-export rows marked clean without a scan are an approved exception (ADR-002), not an R1 violation or scan bypass; uploaders cannot create report rows."
+   ]
+  },
+  "auditlog": {
+   "critical": [
+    "Purge eligibility is queued before deletion without synchronization with subsequently acknowledged holds.",
+    "An auditor can export another tenant's archive by supplying that tenant_id in the request body."
+   ],
+   "major": [
+    "A supported 240 GiB export takes at least 120 minutes at 2 GiB/min, exceeding the 90-minute requirement."
+   ],
+   "hard_negatives": [
+    "Removing verified hot rows after 30 days is compatible with seven-year retention in the canonical archive.",
+    "Identical event IDs in different tenants are valid and must remain distinct during deduplication."
+   ]
+  },
+  "carts": {
+   "critical": [
+    "Aggregate tax rounding violates the required per-line rounding and produces wrong monetary totals."
+   ],
+   "major": [
+    "The design incorrectly claims discount_cents validates expiry, leaving expired coupons accepted by the new endpoint.",
+    "Returning decimal strings from the v1 endpoint conflicts with the accepted integer-cent response contract."
+   ],
+   "hard_negatives": [
+    "Excluding shipping from tax is intentional and the worked example's 1,190-cent total is correct.",
+    "The coupon still meets its 1,000-cent minimum after reducing merchandise to 900 cents."
+   ]
+  },
+  "comments": {
+   "critical": [
+    "The thread detail route exposes private thread content to authenticated document nonmembers who possess a thread ID."
+   ],
+   "major": [
+    "The writer pool's maximum capacity is 450 replies/s, below the required sustained 600 replies/s.",
+    "The design incorrectly describes list_threads as returning resolved threads, causing the All tab to omit them."
+   ],
+   "hard_negatives": [
+    "Allowing replies on resolved threads without reopening them follows the accepted resolution semantics.",
+    "Keeping reply_count unchanged after deletion is correct because it counts all reply rows, including tombstones."
+   ]
+  },
+  "cron": {
+   "critical": [
+    "A cache hit bypasses tenant authorization and exposes another tenant's private run output."
+   ],
+   "major": [
+    "The sole dispatcher can create only 720 occurrences per minute, below the required sustained 900.",
+    "The design incorrectly says invoke raises on handler failure; it returns Outcome(ok=False), so failures become successes and skip retries."
+   ],
+   "hard_negatives": [
+    "Omitting timezone and daylight-saving behavior is correct for the explicitly scoped elapsed-interval schedules.",
+    "Reinvocation after lease expiry is allowed because stable run IDs and atomic effect receipts prevent repeated committed effects."
+   ]
+  },
+  "dashboard": {
+   "critical": [],
+   "major": [],
+   "hard_negatives": [
+    "Reading from nightly snapshots instead of the orders primary is correct; ADR-001 is superseded by ADR-003, which the design follows.",
+    "The 06:00 UTC publish deadline meets R1: worst-case age is 28 h 59 min, under the 30 h limit from ADR-003.",
+    "Not invalidating the cache on publish is correct because cache_key includes the snapshot schema name, so a new publish yields new keys.",
+    "The API not verifying session tokens is approved by ADR-002; the gateway verifies tokens and sets X-Tenant-Id, and tenant_id is part of every cache key and query."
+   ]
+  },
+  "invites": {
+   "critical": [
+    "Accept never checks that the signed-in user's email matches invitations.email, so anyone holding the link joins with the invited role, violating R2.",
+    "A retried accept re-runs add_member, which increments seats_used and reports +1 to billing unconditionally, so each retry bills an extra seat despite the membership upsert."
+   ],
+   "major": [
+    "R4 requires 500 invite emails sent within 30 s, but ADR-002 caps all mail at 10 msg/s through the shared queue, so a 500-address batch needs at least 50 s."
+   ],
+   "hard_negatives": [
+    "Storing tokens as unsalted SHA-256 is correct here: ADR-001 accepts it because tokens are 256-bit random values, not low-entropy passwords.",
+    "Guest invitations not consuming a seat matches current code and R6; it is not a billing leak."
+   ]
+  },
+  "loyalty": {
+   "critical": [
+    "Earn dedup relies only on Redis event-id keys with a 24h TTL (set after commit), but the bus replays up to 7 days back and ledger_entries has no unique constraint, so replayed or retried order.paid/refunded events credit or claw back points twice, violating R2.",
+    "Redemption/cancel/balance endpoints take member_id or order_id from the request and only check that the JWT is valid; nothing ties the JWT subject to the member, so any logged-in member can spend or view another member's points (violates R5)."
+   ],
+   "major": [
+    "Design claims a member_balances table already exists and that append_entry upserts it, but src/ledger.py's append_entry only inserts into ledger_entries and balance is computed by SUM; the redemption read path and R4 latency plan rest on a nonexistent table, and the design lists no schema change for it."
+   ],
+   "hard_negatives": [
+    "Capacity numbers add up: 36,000 events/min = 600/s <= 4 x 160 = 640 events/s (measured with two entries written per event, covering refunds that write a clawback and a redeem_reversal), and 9,000 redemptions/min = 150/s = 6 pods x 25 req/s.",
+    "Clawbacks driving a balance negative is approved by ADR-002 and does not violate R3, which constrains only redemptions."
+   ]
+  },
+  "metering": {
+   "critical": [
+    "Dedup ids in seen_events are kept only 1 hour, but MeterClient resends the same event_id for up to 24 hours, so late retries are double-counted and double-billed (violates R1).",
+    "Design claims ingest overwrites tenant_id from the API key, but src/ingest_api.py only checks the key is valid and forwards the payload's tenant_id, so any key holder can bill usage to another tenant."
+   ],
+   "major": [
+    "16 partitions x 3,000 events/s per consumer = 48,000 events/s, below the 60,000 events/s peak in R2, so the claim that the design covers R2 is false."
+   ],
+   "hard_negatives": [
+    "Late events routed to usage_adjustments are not lost or unbilled even though the exporter reads only closed usage_hourly rows: per ADR-001 the billing service bills adjustments on the next invoice.",
+    "400-day archive retention satisfies the 13-month dispute requirement: any 13-month span is at most 397 days."
+   ]
+  },
+  "migrations": {
+   "critical": [
+    "Backfill reads the source value, computes amount_cents in Python, then UPDATEs the target by id with no guard that the source is unchanged, so an application dual-write landing between the SELECT and the UPDATE is overwritten with a stale amount_cents (lost update, wrong money) that the NULL-only contract check never detects.",
+    "Contract (DROP of the old column) runs in the same deploy right after backfill, violating ADR-002 (later release, 7 days in production) and R4; dropping orders.amount breaks the current dual-writing release and any rollback to the previous release."
+   ],
+   "major": [
+    "Backfill throughput at the stated defaults (1,000 rows per ~100 ms batch + 500 ms pause ≈ 1,667 rows/s) needs about 67 hours for 400 M orders rows, missing R2's 6-hour target."
+   ],
+   "hard_negatives": [
+    "Running index builds outside the expand transaction is an approved exception (ADR-001) already implemented in src/runner.py, not an atomicity defect.",
+    "Up to 5 expand retries 10 s apart do not break R1 (2 s max wait): the schema_migrations insert runs before the DDL, the DDL is the last statement and its 1500 ms statement_timeout bounds lock wait plus execution, so a queued query waits at most about 1.5 s plus a catalog-only commit per attempt, and attempts do not overlap."
+   ]
+  },
+  "payouts": {
+   "critical": [
+    "Design claims record_refund() inserts negative kind='refund' rows, but the code adds to refunded_cents on the sale row (no kind column), so SUM(amount_cents) ignores refunds and overpays sellers.",
+    "GET /v1/payouts/{payout_id} only checks that the JWT is valid and loads the payout by id with no check that it belongs to the caller (IDOR exposing other sellers' amounts, account digits and orders)."
+   ],
+   "major": [
+    "Payout eligibility depends on a hold window from `HoldPolicy`, which is never defined (no component, interface or window length in any file)."
+   ],
+   "hard_negatives": [
+    "Skipping sellers below $25.00 and carrying their entries forward is correct; ADR-001 defines eligibility as a balance of at least $25 and requires carry-forward, so the 'pay every eligible seller weekly' requirement is met.",
+    "The throughput arithmetic is correct: 90,000 transfers at 15/s is 6,000 s = 100 min, which fits the 2-hour window."
+   ]
+  },
+  "resets": {
+   "critical": [
+    "Redemption does not bind the token purpose to the requested operation, allowing a verification token to reset a password."
+   ],
+   "major": [
+    "The proposed 60-minute verification lifetime conflicts with the accepted requirement of 24 hours.",
+    "Fixed sending capacity of 20 emails per second cannot meet the 60-second sending deadline under 30 requests per second for ten minutes."
+   ],
+   "hard_negatives": [
+    "Incrementing password_version invalidates existing sessions without explicitly deleting session records.",
+    "Deleting an outbox job after provider acceptance is correct because Courier durably assumes delivery responsibility."
+   ]
+  },
+  "shortener": {
+   "critical": [
+    "Aggregator does not deduplicate redelivered events by event_id, so at-least-once delivery double-increments invoiced daily_clicks",
+    "Stats endpoint drops the owner check and authorizes by the public short code, violating R4 and exposing any link's analytics"
+   ],
+   "major": [
+    "Aggregator capacity of 8,000 events/s is below the 12,000 clicks/s one-hour peak, so the 60 s lag requirement R2 cannot be met"
+   ],
+   "hard_negatives": [
+    "The storage estimate is correct: 2,300/s ≈ 200 M/day, x120 B = 24 GB/day, x400 days = 9.6 TB, which fits in 12 TB even with monthly partition granularity",
+    "The 5-minute in-process cache of code-to-target lookups is not a staleness defect: ADR-002 makes targets immutable and approves a 5-minute deletion window"
+   ]
+  },
+  "webhooks": {
+   "critical": [
+    "The delivery-status API leaks other tenants' payloads because its query omits tenant ownership."
+   ],
+   "major": [
+    "The fixed pool can complete at most 720 deliveries/minute under the required two-second workload, below 1,200.",
+    "The proposed ingestion integration indexes create_delivery's integer return value as a row mapping."
+   ],
+   "hard_negatives": [
+    "HTTP sandbox destinations are an accepted isolated-environment exception; they do not violate the production HTTPS requirement.",
+    "Concurrent, unordered event delivery complies with the accepted receiver contract; FIFO is not required."
+   ]
+  },
+  "events": {
+   "critical": [
+    "older/redelivered event can overwrite a newer shipment version",
+    "complete authorization header in logs violates accepted rule"
+   ],
+   "major": [
+    "Flux shim is undefined",
+    "implementation plan lacks actionable scope/done criteria"
+   ],
+   "no_double_credit": "Replay without version checks belongs to the same monotonic-state defect, not a second independent planted issue"
+  },
+  "clean": {
+   "critical": [],
+   "major": [],
+   "hard_negatives": [
+    "Redis is explicitly approved by accepted ADR-012 for this service",
+    "ADR-002 is superseded; historical note cannot overrule ADR-012",
+    "7-day hot retention and 90-day archive satisfy 30-day support lookups",
+    "cache miss and consistency bound are defined",
+    "latency/load/outage/rollout/rollback acceptance criteria are present"
+   ]
+  }
+ },
+ "case_digests": {
+  "digest": "4b0ea2489d0e4d781fa5cdcb8dd005c1ccb5c75f402bc40225154ae2f4c9cd72",
+  "export": "6de8e324d8b5826393e0b377db9d9eb5c3844d8de036d61e3cf1e7fb0bc9af62",
+  "flags": "30534d08dc178ac59287169ffbb3ab920496011c55e968a5a58d56a1ba94e681",
+  "invoices": "3b6b8e18f4958e60e7e9d5d12a5a8a0c58ab01bbcae4a99a4c65399dae39d8bf",
+  "ratelimit": "c1e0eb3509e3e4a624b279aa206d561c8150239ca28b7e338769a04f449646dd",
+  "registry": "4d4c9bf18b4bd0d570389693bd27209d5a394fc265bec6efbfbdd566f73b26cc",
+  "search": "c3a1f6ef79bb77e3a77bd6da4e541dab0a82be2922392d49434cd2c9bd40e665",
+  "sessions": "cbfaa98fcfd450696a590017fa34ab1948170533455cd914aac5a9bc261d8555",
+  "supplier": "d3a24c6d688fd514db04d6ee1bcd9f7b7fa0205a7ce2f3f1db645e63773cbd74",
+  "uploads": "997c169c04df742efc8e466300acf4548e9a68a3cb4b8e4278346889192a7a4f",
+  "auditlog": "5dce190a707a9d0d7c0f60273e3870edbce9b11ae07a629a8cc7f64b4d835599",
+  "carts": "4240dad095355b6dc457c297e25ca4836a62dccf18be7a6962ac6af26aa9f2ba",
+  "comments": "b6bf7234b45dff5c0bc821c3d1beb3293aa81c4ef79e0f2fa52717fb5b770176",
+  "cron": "58a6790533c1be8a75ff9688ec6c8ffc41c45bb3f9f2956a37f619fccd4c55c3",
+  "dashboard": "9a588d9de45a27f29f82ec9e45d7c49db4f70a9791b05ff9caa6057446660b3c",
+  "invites": "3a1bf9c34891f11527605cb00112bec7ccb19b2047bce5da460d7a12d52e5ded",
+  "loyalty": "f051a13987c35c40930f346c4bb7a179a20e58d23e0c4ee81570393bd1e4c0ec",
+  "metering": "6160fb95b2bdcdeb7ca7c0e80688e8107e3760e0520dcfa7db579a98a6d6ef9b",
+  "migrations": "3630b975c64ed9999be704fa00b7f81a6d516d17dafac381f145bbf30c9c690a",
+  "payouts": "b451cb84ee045475852e994194f462420a2cd76ecc3f6e9804f5c8f111885478",
+  "resets": "7759f4ee9d27f11cf552a4730fc140dcd45566033a47a42c9632fe21e600a71c",
+  "shortener": "70eeb13734def8218f146f40dc04c17ae6e791a8e4ca294d1aa091584f3b1371",
+  "webhooks": "0f5ce74a2cdc28aacc5d275c3d86ada1ed7c230d39b76022840c341c6af95e2a",
+  "events": "91b92db6e0c9816d3cb05001212a1dcaea8c53d06a358cf137744ea4a4a67897",
+  "clean": "cef8ea5559ed925bf7809b6a54786d9e4ea0a920d9e53cc1068074247e2d8270"
+ },
+ "inputs": {
+  "categories.json": "a9fc8c5203994e1fe44df716a56b7e8debf9b017c42f04d26a3730f43195f9c2",
+  "categories-2.json": "840b70c5ef5d8ecf5fdaec4fe7a5d48a32908838f19d7d29566f63849e1c3827",
+  "checklist_R.md": "f46cdc5d7713bb81a036ae5e7dfacf8df2d006ab8df761b89276aa1902bf51ec",
+  "x2_case_tools.py": "340f20d2243c6097e763c976bacaf6bdaef1041b152bf9abad1f46e1997db478"
+ },
+ "dropped": [],
+ "dropped_from_order": []
+}
