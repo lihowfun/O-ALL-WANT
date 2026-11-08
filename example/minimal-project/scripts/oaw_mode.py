@@ -14,7 +14,8 @@ deep plans first and gets a design review before any code, chosen by the
 project's EGM switch; standard and deep get a fresh-context code review.
 
 `egm on|auto|off` sets the switch in .oaw/settings.json (auto, the default,
-uses the best-evidenced design review: EGM today). `reviewed` records a
+uses the best-evidenced design review: one fresh-context review until the
+X2 study decides; on runs full EGM). `reviewed` records a
 finished design review so it is not run twice for the same file content.
 `show MODE` prints the host commands for that mode.
 
@@ -60,12 +61,14 @@ PLAN_NAME = re.compile(r"(?:^|[-_.])plan\.md$")
 NOT_PROJECT_DOCS = (".oaw/", ".claude/", ".agents/", ".codex/", "vendor/", "third_party/", "node_modules/")
 
 # The EGM switch (owner decision D33). "auto" uses the design review with the best evidence; update both
-# lines together when new evidence (the 2.0.1 X2 study) ranks another review higher.
+# lines together when new evidence (the 2.0.1 X2 study) ranks another review higher. Owner decision D37
+# (2026-11-09) moved auto from EGM to one fresh-context review until X2 decides.
 SETTINGS_FILE = ".oaw/settings.json"
 EGM_SWITCH = ("on", "auto", "off")
-AUTO_DESIGN_REVIEW = "egm"
-AUTO_BASIS = ("EGM is the only design review with a measured gain so far: 3/3 planted plan defects found versus "
-              "native 1/6, two grader families agreeing (OAW validation, 2026-11-07); the X2 study may change this")
+AUTO_DESIGN_REVIEW = "fresh-context"
+AUTO_BASIS = ("until the X2 study decides (owner decision D37): EGM's measured gain (3/3 planted plan defects "
+              "versus native 1/6, OAW validation 2026-11-07) rests on one selected case and costs about 28x a native "
+              "review; for full EGM, run python3 scripts/oaw_mode.py egm on")
 DEFAULT_EGM_MAX_TOKENS = 25_000_000
 SECOND_OPINIONS = ("same", "codex", "claude")
 DEFAULTS = {"egm": "auto", "egm_max_tokens": DEFAULT_EGM_MAX_TOKENS, "second_opinion": "same", "dry_run": False}
@@ -750,6 +753,7 @@ def instructions(mode: str, root: Path, settings: dict | None = None) -> dict:
     settings = settings or load_settings(root)
     egm = egm_hosts(root)
     switch = settings["egm"]
+    how = {"on": "egm", "off": "none", "auto": AUTO_DESIGN_REVIEW}[switch]
     review = second_opinion_review(settings)
     claude_review, codex_review = "review: " + review["claude"], "review: " + review["codex"]
     deep_claude = "claude --permission-mode plan --effort max"
@@ -760,9 +764,14 @@ def instructions(mode: str, root: Path, settings: dict | None = None) -> dict:
         summary = "standard: higher effort and one fresh-context review"
         claude = ["claude --effort high", claude_review]
         codex = ["codex  (effort flag not mapped yet)", codex_review]
-    elif switch == "off":
+    elif how == "none":
         summary = "deep: plan first at the highest effort, then code review (the EGM switch is off)"
         claude, codex = [deep_claude, claude_review, DEEP_ROUNDS], [CODEX_PLAN, codex_review, DEEP_ROUNDS]
+    elif how == "fresh-context":
+        summary = (f"deep: plan first at the highest effort, then one fresh-context design review (EGM switch: "
+                   f"{switch}; for full EGM: python3 scripts/oaw_mode.py egm on)")
+        claude = [deep_claude, FRESH_DESIGN_REVIEW, claude_review, DEEP_ROUNDS]
+        codex = [CODEX_PLAN, FRESH_DESIGN_REVIEW, codex_review, DEEP_ROUNDS]
     elif any(egm.values()):
         summary = f"deep: plan first at the highest effort, then the EGM design review (EGM switch: {switch})"
         if not all(egm.values()):
@@ -877,7 +886,8 @@ def render_switch(result: dict) -> str:
     if result.get("basis"):
         lines.append(f"  why: {result['basis']}")
     lines.append(f"  asks first when one EGM run may exceed {result['egm_max_tokens']:,} tokens")
-    if not result["egm_installed"]:
+    wants_egm = {"on": "egm", "off": "none", "auto": AUTO_DESIGN_REVIEW}[result["egm"]] == "egm"
+    if wants_egm and not result["egm_installed"]:  # off or a non-EGM auto needs no fallback note (codex review, D37)
         lines.append("  note: EGM is not installed in this project, so deep tasks get a fresh-context review")
     lines.append("  change it: python3 scripts/oaw_mode.py egm on|auto|off   (one EGM run only: type /egm-review)")
     return "\n".join(lines)
@@ -902,7 +912,8 @@ def main(argv: list[str] | None = None) -> int:
     show.add_argument("mode", choices=MODES)
     egm = commands.add_parser("egm", help="show or set the EGM switch (on, auto, off), or estimate one EGM run",
                               description="on: every deep task gets the full EGM design review. auto (default): the "
-                                          "best-evidenced design review, EGM today. off: never EGM. "
+                                          "best-evidenced design review, one fresh-context review until the X2 "
+                                          "study decides. off: never EGM. "
                                           "estimate FILE...: a rough cost for one EGM run reading those files.")
     egm.add_argument("action", nargs="?", choices=(*EGM_SWITCH, "estimate"))
     egm.add_argument("files", nargs="*", metavar="FILE", help="with estimate: the plan and its context files")

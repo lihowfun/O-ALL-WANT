@@ -304,7 +304,7 @@ export const EGM_POSITIONS: EgmPosition[] = ['on', 'auto', 'off']
 export const EGM_LABELS: Record<EgmPosition, string> = { on: '開', auto: '自動', off: '關' }
 export const EGM_MEANING: Record<EgmPosition, string> = {
   on: '每個 deep 任務都跑完整 EGM 設計審查（品質優先，比較貴）',
-  auto: '用目前證據最好的設計審查，現在是 EGM（預設）',
+  auto: '用目前證據最好的設計審查，X2 出結果前是一次全新 context 審查（預設）',
   off: '不跑 EGM：deep 只做計畫和 code review（省 token）',
 }
 

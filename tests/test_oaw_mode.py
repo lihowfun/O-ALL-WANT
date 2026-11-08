@@ -339,6 +339,8 @@ class ShowTests(unittest.TestCase):
         self.assertEqual(self.show("standard").splitlines(), standard, "EGM never changes standard")
 
     def test_deep_without_egm_keeps_the_highest_effort_and_falls_back_on_the_review(self):
+        self.assertIn("then one fresh-context design review (EGM switch: auto", self.show("deep"))  # D37
+        self.assertEqual(run("egm", "on", "--root", str(self.root))[0], 0)
         output = self.show("deep")
         self.assertIn("deep: plan first at the highest effort, then one fresh-context review (EGM is not installed)", output)
         self.assertIn("  claude --permission-mode plan --effort max\n", output)
@@ -351,9 +353,11 @@ class ShowTests(unittest.TestCase):
     def test_deep_with_egm_for_both_hosts(self):
         self.entry(".claude")
         self.entry(".agents")
+        self.assertNotIn("egm-review", self.show("deep"), "D37: auto means a fresh-context review until X2 decides")
+        self.assertEqual(run("egm", "on", "--root", str(self.root))[0], 0)
         lines = self.show("deep").splitlines()
         self.assertEqual(lines, [
-            "deep: plan first at the highest effort, then the EGM design review (EGM switch: auto)",
+            "deep: plan first at the highest effort, then the EGM design review (EGM switch: on)",
             "Claude Code:",
             "  claude --permission-mode plan --effort max",
             "  design review: the agent runs EGM through the oaw-review skill before any code; "
@@ -369,6 +373,7 @@ class ShowTests(unittest.TestCase):
 
     def test_deep_with_egm_for_one_host_names_the_missing_entrypoint(self):
         self.entry(".agents")
+        self.assertEqual(run("egm", "on", "--root", str(self.root))[0], 0)
         code, output, _ = run("show", "deep", "--root", str(self.root), "--json")
         result = json.loads(output)
         self.assertEqual(result["egm"], {"claude": False, "codex": True})
@@ -439,6 +444,8 @@ class InstalledPolicyTests(unittest.TestCase):
                 with contextlib.redirect_stdout(io.StringIO()):
                     self.assertEqual(oaw.main(["init", "--target", str(target), "--skills", skills]), 0)
                     self.assertEqual(oaw.doctor(target)["status"], "healthy")
+                subprocess.run([sys.executable, str(target / "scripts/oaw_mode.py"), "egm", "on", "--root", str(target)],
+                               capture_output=True, text=True, check=True)
                 process = subprocess.run([sys.executable, str(target / "scripts/oaw_mode.py"), "show", "deep",
                                           "--root", str(target)],
                                          capture_output=True, text=True, check=False)
@@ -451,6 +458,8 @@ class InstalledPolicyTests(unittest.TestCase):
             target = Path(temporary) / "project"
             with contextlib.redirect_stdout(io.StringIO()):
                 self.assertEqual(oaw.main(["init", "--target", str(target)]), 0)  # default: Codex entrypoints only
+            subprocess.run([sys.executable, str(target / "scripts/oaw_mode.py"), "egm", "on", "--root", str(target)],
+                           capture_output=True, text=True, check=True)
             # Default root is the project that holds the installed script, whatever the working directory.
             process = subprocess.run([sys.executable, str(target / "scripts/oaw_mode.py"), "show", "deep", "--json"],
                                      capture_output=True, text=True, check=False, cwd=temporary)
@@ -533,19 +542,34 @@ class SwitchAndStepTests(unittest.TestCase):
     def steps(self, *args):
         return {step["step"]: step for step in self.json("suggest", *args)["steps"]}
 
-    def test_default_switch_is_auto_and_auto_means_egm_today(self):
+    def test_default_switch_is_auto_and_auto_means_fresh_context_until_x2(self):
         result = self.json("egm")
         self.assertEqual((result["egm"], result["source"]), ("auto", "default"))
-        self.assertIn("EGM today", result["meaning"])
-        self.assertIn("3/3", result["basis"])
-        self.assertEqual(mode.AUTO_DESIGN_REVIEW, "egm")
+        self.assertIn("one fresh-context reviewer today", result["meaning"])
+        self.assertIn("D37", result["basis"])
+        self.assertIn("egm on", result["basis"])
+        self.assertEqual(mode.AUTO_DESIGN_REVIEW, "fresh-context")
         self.assertFalse((self.root / ".oaw/settings.json").exists(), "showing the switch writes nothing")
 
     def test_switch_positions_change_the_deep_design_review(self):
         self.install_egm_entry()
         self.write("docs/plans/cache.md", "# Cache plan\n")
+        # D37: auto means one fresh-context review until X2 decides, even with EGM installed.
+        auto = self.steps()["design-review"]
+        self.assertEqual((auto["how"], auto["switch"], auto["before_code"], auto["done"]),
+                         ("fresh-context", "auto", True, False))
+        self.assertIn("D37", auto["basis"])
+        self.assertNotIn("estimate", auto)
+        self.assertIn("--how fresh-context", auto["do"])
+        deep = mode.instructions("deep", self.root)
+        self.assertIn("one fresh-context design review", deep["summary"])
+        self.assertNotIn("EGM design review", deep["summary"])
+        self.assertIn(mode.FRESH_DESIGN_REVIEW, deep["hosts"]["claude"])
+        self.assertFalse(any("/egm-review" in line for line in deep["hosts"]["claude"]))
+        self.run_ok("egm", "on")
         design = self.steps()["design-review"]
-        self.assertEqual((design["how"], design["switch"], design["before_code"], design["done"]), ("egm", "auto", True, False))
+        self.assertEqual((design["how"], design["switch"], design["before_code"], design["done"]), ("egm", "on", True, False))
+        self.assertIn("then the EGM design review", mode.instructions("deep", self.root)["summary"])
         self.assertEqual(design["targets"], ["docs/plans/cache.md"])
         first = design["reviews"][0]["report_dir"]
         self.assertRegex(first, r"^\.oaw/reviews/\d{4}-\d{2}-\d{2}-cache-[0-9a-f]{10}/$")
@@ -572,6 +596,11 @@ class SwitchAndStepTests(unittest.TestCase):
         self.assertIn("every deep task gets the full EGM design review", output)
 
     def test_without_egm_installed_deep_falls_back_to_a_fresh_context_review(self):
+        for position in ("off", "auto"):
+            self.run_ok("egm", position)
+            self.assertNotIn("EGM is not installed", self.run_ok("egm"), position)
+        self.run_ok("egm", "on")
+        self.assertIn("EGM is not installed", self.run_ok("egm"))
         self.write("docs/plans/cache.md", "# Cache plan\n")
         design = self.steps()["design-review"]
         self.assertEqual(design["how"], "fresh-context")
@@ -598,12 +627,16 @@ class SwitchAndStepTests(unittest.TestCase):
         self.assertNotIn("estimate", steps["design-review"])
         text = self.run_ok("suggest", "--paths", ".github/workflows/ci.yml")
         self.assertIn("before code: plan, then save it under docs/plans/", text)
-        self.assertIn("before code: design review by EGM (EGM switch: auto)", text)
+        self.assertIn("before code: design review by one fresh-context reviewer (EGM switch: auto)", text)  # D37
+        self.run_ok("egm", "on")
+        text = self.run_ok("suggest", "--paths", ".github/workflows/ci.yml")
+        self.assertIn("before code: design review by EGM (EGM switch: on)", text)
         self.assertIn("before EGM: python3 scripts/oaw_mode.py egm estimate PLAN CONTEXT...", text)
         self.assertIn("after code: code review by a fresh session of the same model family, up to 3 rounds", text)
 
     def test_a_recorded_review_counts_only_for_the_same_file_content(self):
         self.install_egm_entry()
+        self.run_ok("egm", "on")
         self.write("docs/plans/cache.md", "# Cache plan\n")
         self.run_ok("reviewed", "docs/plans/cache.md", "--how", "egm", "--status", "cut")
         self.assertFalse(self.steps()["design-review"]["done"], "a run cut short is not a review")
@@ -641,9 +674,10 @@ class SwitchAndStepTests(unittest.TestCase):
     def test_cap_and_estimate(self):
         self.install_egm_entry()
         self.write("docs/plans/big.md", "x" * 120_000)
+        self.run_ok("egm", "on")
         design = self.steps()["design-review"]
         self.assertTrue(design["ask_first"], design["estimate"])  # 120 KB is above the default 25M at the high end
-        self.run_ok("egm", "auto", "--max-tokens", "900000000")
+        self.run_ok("egm", "on", "--max-tokens", "900000000")
         self.assertFalse(self.steps()["design-review"]["ask_first"])
         small, large = mode.egm_estimate(2_300), mode.egm_estimate(105_000)
         self.assertLess(small["tokens_low"], 1_100_000)
@@ -735,6 +769,8 @@ class SwitchAndStepTests(unittest.TestCase):
         self.install_egm_entry()
         self.write("docs/plans/cache.md", "# Cache plan\n")
         self.run_ok("reviewed", "docs/plans/cache.md", "--how", "fresh-context")
+        self.assertTrue(self.steps()["design-review"]["done"], "D37: auto asks for a fresh-context review")
+        self.run_ok("egm", "on")
         self.assertFalse(self.steps()["design-review"]["done"], "EGM is required (codex review of 78e02e1)")
         self.run_ok("egm", "off")
         self.run_ok("reviewed", "docs/plans/cache.md", "--how", "egm")

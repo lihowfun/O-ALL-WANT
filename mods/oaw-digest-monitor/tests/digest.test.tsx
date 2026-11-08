@@ -360,7 +360,7 @@ test('without a settings file the EGM switch is the default, auto', async ($, on
   const w = world(on)
   await start($)
   const ui = await $.ui.mount({ ...PANE, surface: 'terminal' })
-  expect(await ui.find({ type: 'Text', text: /現在是 EGM（預設）/ })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: /X2 出結果前是一次全新 context 審查（預設）/ })).toBeDefined()
   expect(w.runs.length).toBe(0)
   await ui.unmount()
 })

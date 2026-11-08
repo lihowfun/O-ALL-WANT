@@ -14,7 +14,7 @@ A Claude Code mod that shows OAW's skill-intake process as a digestive tract bes
   - 分流旗標要在你自己的終端輸入確認碼，所以按鈕只會複製 `catalog.py menu` 指令，不會替你確認。
   - 「問 Claude 這個卡點」把這樣食物的事實放進輸入框，你在最後打上問題再送出。
   - 「你點名」：貼 GitHub repo 或 arXiv 網址，可以一次貼很多個，送去免費試吃（`catalog.py add`）。
-- **EGM 審查開關**（D33）：畫面下方有「開／自動／關」三個按鈕，● 是目前的位置，下面一行說明它的意思。按下去會執行 OAW 自己的 `scripts/oaw_mode.py egm on|auto|off`，和指令、對話裡的 `oaw-review` 用同一個設定（專案的 `.oaw/settings.json`）。沒有這個檔就是預設「自動」：用目前證據最好的設計審查，現在是 EGM。只想跑一次 EGM 而不改開關，就打 `/egm-review`。
+- **EGM 審查開關**（D33）：畫面下方有「開／自動／關」三個按鈕，● 是目前的位置，下面一行說明它的意思。按下去會執行 OAW 自己的 `scripts/oaw_mode.py egm on|auto|off`，和指令、對話裡的 `oaw-review` 用同一個設定（專案的 `.oaw/settings.json`）。沒有這個檔就是預設「自動」：用目前證據最好的設計審查，X2 出結果前是一次全新 context 審查（D37）；要完整 EGM 就按「開」。只想跑一次 EGM 而不改開關，就打 `/egm-review`。
 - 終端機沒有 SVG，改成一站一行的文字版，內容相同。
 
 ## 安裝
