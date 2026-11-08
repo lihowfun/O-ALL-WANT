@@ -1,0 +1,108 @@
+{
+ "frozen": "2026-11-09, D36, before any of these cases is written; same categories and author rules as categories.json (frozen 2026-11-08); the authors see this list, never the R checklist or the arms",
+ "categories": {
+  "K1": "concurrency or atomicity: a race, lost update or non-atomic check-then-act",
+  "K2": "retries, duplicates or idempotency: a redelivered or repeated request has a wrong effect",
+  "K3": "ordering, staleness or consistency: out-of-order or stale data overwrites or misleads",
+  "K4": "conflict with an accepted decision record or a stated project constraint",
+  "K5": "a requirement the sources state is not met (numbers, capacity, retention or latency arithmetic)",
+  "K6": "security or privacy: secrets, authorization, personal data",
+  "K7": "the design misstates the current source code, or cites a file, function or table that does not exist",
+  "K8": "a component, interface or term the design depends on is never defined",
+  "K9": "the implementation plan is not executable: no scope, no done criteria, or open design choices",
+  "K10": "failure handling, migration or rollback is missing for a risk the design itself raises"
+ },
+ "cases": [
+  {
+   "id": "payouts",
+   "author": "opus",
+   "kind": "defect",
+   "role": "primary",
+   "domain": "weekly seller payouts for an online marketplace"
+  },
+  {
+   "id": "webhooks",
+   "author": "codex",
+   "kind": "defect",
+   "role": "primary",
+   "domain": "outbound webhook delivery to third-party integrations"
+  },
+  {
+   "id": "metering",
+   "author": "opus",
+   "kind": "defect",
+   "role": "primary",
+   "domain": "a usage metering pipeline for usage-based billing"
+  },
+  {
+   "id": "carts",
+   "author": "codex",
+   "kind": "defect",
+   "role": "primary",
+   "domain": "shopping cart price recalculation with coupons and tax"
+  },
+  {
+   "id": "migrations",
+   "author": "opus",
+   "kind": "defect",
+   "role": "primary",
+   "domain": "database schema migration tooling for zero-downtime deploys"
+  },
+  {
+   "id": "resets",
+   "author": "codex",
+   "kind": "defect",
+   "role": "primary",
+   "domain": "password reset and email verification tokens"
+  },
+  {
+   "id": "invites",
+   "author": "opus",
+   "kind": "defect",
+   "role": "primary",
+   "domain": "team invitations and role assignment in a SaaS workspace"
+  },
+  {
+   "id": "cron",
+   "author": "codex",
+   "kind": "defect",
+   "role": "primary",
+   "domain": "a scheduled job runner for a SaaS backend"
+  },
+  {
+   "id": "auditlog",
+   "author": "codex",
+   "kind": "defect",
+   "role": "primary",
+   "domain": "audit log retention and archival for compliance"
+  },
+  {
+   "id": "dashboard",
+   "author": "opus",
+   "kind": "clean",
+   "role": "primary",
+   "domain": "a read-only analytics dashboard backed by nightly snapshots"
+  },
+  {
+   "id": "shortener",
+   "author": "opus",
+   "kind": "defect",
+   "role": "calibration",
+   "domain": "a URL shortener with click analytics"
+  },
+  {
+   "id": "comments",
+   "author": "codex",
+   "kind": "defect",
+   "role": "calibration",
+   "domain": "comment threads in a document collaboration tool"
+  },
+  {
+   "id": "loyalty",
+   "author": "opus",
+   "kind": "defect",
+   "role": "calibration",
+   "domain": "a loyalty points ledger for a retail app"
+  }
+ ]
+}

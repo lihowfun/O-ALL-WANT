@@ -105,7 +105,9 @@ Verifier findings:
 
 Output only the full corrected JSON object in the same format."""
 
-LIMIT = re.compile(r"hit your (?:\w+ )?limit|usage limit|rate limit|too many requests|\b429\b", re.I)
+# Quota errors only: phrases the CLIs print for a plan limit, never ordinary words a case or grade may contain
+# ("rate limiter", "429 responses"). Claude errors are also caught by the envelope's is_error.
+LIMIT = re.compile(r"hit your (?:\w+ )?limit|usage limit reached|you've reached your usage limit|limit \W* resets \d", re.I)
 
 
 def call(family, prompt, claude, codex, timeout=1800):
