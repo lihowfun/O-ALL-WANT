@@ -294,6 +294,20 @@ python3 scripts/eval_stats.py cost FOOD.json NATIVE.json [--cap 1.5]
 
 Framework tooling, not installed into projects. Each file maps a question id to its per-run values. `compare` prints the question-paired difference with a bootstrap over questions (10,000 draws, seed 20261107), the 95% and 90% intervals, the standard error (never below `--floor-sd` x sqrt(2 / questions)), the MDE and one of better, equivalent, undetermined or worse. `cost` prints the token ratio, its 95% interval and cheaper, within, undetermined or over (over only when the lower end exceeds the cap). The module's `quality()`, `agree()`, `lowest()` and `judgment()` combine metrics, the two grader families and conditions into the catalog's judgment fields. The rules are on one page: [EVAL_PROTOCOL.md](EVAL_PROTOCOL.md). Exit codes: 0 done, 2 unreadable input.
 
+### Offline judge calibration (I18)
+
+```bash
+python3 scripts/judge_calibration.py GOLD.json GRADES.jsonl [GRADES.jsonl ...] [--json]
+```
+
+This framework tool scores judge labels offline with zero model calls; it does not install or approve a judge. A separate script keeps label validation apart from `eval_stats.py`'s experimental statistics, without duplicating them. Neither tool is installed into projects.
+
+Gold uses V3 `expected.json`: `arm|question|positive-rep` maps to `labels` (fact ID → `present`, `absent`, or `contradicted`; `null` means unlabeled). Variants share a question's fact IDs. Optional `wrong`/`wrong_at_least` sets an exact count/lower bound; `wrong_over_e` on f sets the injected increase over matching e. Optional `critical: [fact-id, ...]` marks known cells; without marked cells, critical misses are unavailable (`null`).
+
+Candidate JSONL rows require `key` and `verdict: {"facts": {"fact-id": "label"}, "wrong_claims": 0}`. Every answer/fact ID is required, including e/f. Explicit `unknown` means abstention; other unknown values are invalid. Optional `verdict._grader_tokens` must be positive; missing costs remain unavailable/partial. Optional `status` must be `completed` or `ok`. Errors, incomplete statuses, zero tokens, duplicate IDs/JSON fields, missing/extra IDs and malformed schemas reject the whole candidate without metrics. Archived identity/derived fields are accepted but never trusted as scores. Missing execution metadata cannot prove completion; schema validation cannot verify execution.
+
+Reports include gold-row/prediction-column confusion, abstention/coverage, covered accuracy, false credit (`present` against non-present gold), critical errors/abstentions separately, wrong-claim checks, signed f−e deltas and recorded tokens. Archived accuracy is rounded to three decimals: exact matches/all known cells; abstentions reduce it but are separate from label errors. Full injection detection uses the gold threshold; partial means delta ≥1. e/f consistency averages per-pair fact agreement, not gold accuracy. V3 has four questions, 24 answers and 116 known cells; e/f lack gold labels. Exit 0: scored; 2: rejected input (other valid candidates still receive reports).
+
 ## Goldfish code review (D21)
 
 Run from the OAW source checkout. It packages the one zero-context Goldfish round on a code diff that D21 intake uses (the D15 recipe); the Elephant still resolves the findings.
