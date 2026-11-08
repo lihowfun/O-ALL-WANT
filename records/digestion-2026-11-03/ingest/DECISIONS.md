@@ -394,3 +394,19 @@ Source: `records/digestion-2026-11-07/validation/RESULT.md`. Implemented by plan
 - Records report both logical tokens and tokens without cache reads.
 - The 2026-11-07 plan review (EGM 18.5M) is within this cap; its deviation note stays as history.
 - Applied to the 2.0.1 plan: X1 adds the fourth cell (VS Code × Haiku 5.5), and X2 grows to 12 cases (10 new).
+
+## D36. X2 ceiling 60M (2026-11-09, owner in chat: "給60M"; refines D35 for X2)
+- Asked after the escalation review (`records/escalation-2026-11-08-x2/`): Fable 5.1 and gpt-6-astra both found that the
+  25M design cannot decide, and asked for 16 unseen defect cases + 4 unseen clean cases (33-48M Claude).
+- X2 may spend up to 60M Claude logical tokens (input + output + cache). Other items keep D35's 30M.
+- With the ceiling above both reviewers' estimates, the agent drops Fable's futility stop (astra: adaptive rules add
+  method risk) and keeps Fable's calibration step (measured floors instead of borrowed ones). All 20 cases run in
+  every arm; expected spend about 42M.
+
+## D37. auto means one fresh-context review until X2 decides (2026-11-09, owner in chat: "改"; amends D33)
+- Until X2 reports, the EGM switch's default `auto` runs one fresh-context design review of the plan, not EGM.
+- `on` still runs full EGM for every deep task; a finished EGM review also satisfies `auto`.
+- Why: EGM's measured gain rests on one selected case (V5's `events`), at about 28x native cost; the Codex audit
+  flagged "EGM as deep default" as the verdict most at risk, and both escalation reviewers advised native until X2.
+- Replaces D33's line that auto takes EGM before X2 reports ("預設先調整最好版本").
+- Where catalog or docs describe EGM's default status, it is "not tested", not "declined".
