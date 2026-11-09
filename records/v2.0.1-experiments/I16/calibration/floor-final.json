@@ -1,0 +1,74 @@
+{
+ "spec_sha256": "08c7cefaace9e8253617e441cb57b59e123c837d6b2f659f5ffabb5fc1af8228",
+ "inputs": {
+  "rows.jsonl": "f90565d72102d85b508fb69ee727aa26827d7dcb18727c31ae0c82d8195dd3b4",
+  "cal-grades-opus.jsonl": "3ab00e398f3a69d94d75718f7b3f1135d7128def127081cbbfa3dd6b0bb2aa02",
+  "cal-grades-codex.jsonl": "537603d59cb0f0ce6397529b0e1f2eb1ebd426ca0d0e46dfbb214b7a41098f77"
+ },
+ "borrowed": {
+  "source": "X2/floor.json (2026-11-08): pooled within-question SD from repeated native and EGM design reviews; borrowed as the minimum floor, calibration can only raise it",
+  "opus": {
+   "detection": 0.13176156917368245,
+   "unsupported": 0.18257418583505536
+  },
+  "codex": {
+   "detection": 0.13176156917368245,
+   "unsupported": 0.6146362971528591
+  }
+ },
+ "floors": {
+  "claude": {
+   "opus": {
+    "measured": {
+     "detection": 0.3333333333333333,
+     "unsupported": 1.0540925533894598
+    },
+    "borrowed": {
+     "detection": 0.13176156917368245,
+     "unsupported": 0.18257418583505536
+    },
+    "detection": 0.3333333333333333,
+    "unsupported": 1.0540925533894598
+   },
+   "codex": {
+    "measured": {
+     "detection": 0.3333333333333333,
+     "unsupported": 0.8498365855987975
+    },
+    "borrowed": {
+     "detection": 0.13176156917368245,
+     "unsupported": 0.6146362971528591
+    },
+    "detection": 0.3333333333333333,
+    "unsupported": 0.8498365855987975
+   }
+  },
+  "codex": {
+   "opus": {
+    "measured": {
+     "detection": 0.3333333333333333,
+     "unsupported": 0.5270462766947298
+    },
+    "borrowed": {
+     "detection": 0.13176156917368245,
+     "unsupported": 0.18257418583505536
+    },
+    "detection": 0.3333333333333333,
+    "unsupported": 0.5270462766947298
+   },
+   "codex": {
+    "measured": {
+     "detection": 0.3333333333333333,
+     "unsupported": 0.3333333333333333
+    },
+    "borrowed": {
+     "detection": 0.13176156917368245,
+     "unsupported": 0.6146362971528591
+    },
+    "detection": 0.3333333333333333,
+    "unsupported": 0.6146362971528591
+   }
+  }
+ },
+ "ceiling": []
+}
