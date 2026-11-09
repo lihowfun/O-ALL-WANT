@@ -1,9 +1,11 @@
 {
  "spec_sha256": "08c7cefaace9e8253617e441cb57b59e123c837d6b2f659f5ffabb5fc1af8228",
  "inputs": {
-  "rows.jsonl": "f90565d72102d85b508fb69ee727aa26827d7dcb18727c31ae0c82d8195dd3b4",
-  "cal-grades-opus.jsonl": "3ab00e398f3a69d94d75718f7b3f1135d7128def127081cbbfa3dd6b0bb2aa02",
-  "cal-grades-codex.jsonl": "537603d59cb0f0ce6397529b0e1f2eb1ebd426ca0d0e46dfbb214b7a41098f77"
+  "cal-claude/rows.jsonl": "5a4022a7ce2df1b8416782c96c994c7b06096aff5a930461ae505fc004620db8",
+  "cal-codex/rows.jsonl": "f90565d72102d85b508fb69ee727aa26827d7dcb18727c31ae0c82d8195dd3b4",
+  "runs/cal-grades-opus.jsonl": "3ab00e398f3a69d94d75718f7b3f1135d7128def127081cbbfa3dd6b0bb2aa02",
+  "runs/cal-grades-codex.jsonl": "537603d59cb0f0ce6397529b0e1f2eb1ebd426ca0d0e46dfbb214b7a41098f77",
+  "runs/cal-replay.jsonl": "f8cda1ec36acdbc0fe357a19576dc767ca63ca11abafa7e2030b66e57056f7ee"
  },
  "borrowed": {
   "source": "X2/floor.json (2026-11-08): pooled within-question SD from repeated native and EGM design reviews; borrowed as the minimum floor, calibration can only raise it",

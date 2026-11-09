@@ -36,7 +36,8 @@
 
 - 36 次作答都正常結束，Claude 計費 apiKeySource none，Codex 用 ChatGPT 方案。評分 72 筆全部有效，評分者工具呼叫數都是 0。
 - 黑箱：3 次作答各有 1 個讀原始碼的工具呼叫（Claude 格 manage-only-own-skills 第 2 次；Codex 格 remove-bundled-skill 第 1 次、annotate-project-topic 第 3 次）。校準不進主分析，只記下。
-- 輸入摘要（sha256）：`floor-final.json` 的 `inputs` 欄記了作答列和兩份評分。原始作答、重播和評分事件串留在本機，不推上 records。
+- 輸入摘要（sha256）：`floor-final.json` 的 `inputs` 欄記了兩格的作答列、兩份評分和重播檔。原始作答、重播和評分事件串留在本機，不推上 records。
+- 凍結後的修改（只影響紀錄）：`i16_judge.py` 原本用檔名當 `inputs` 的 key，兩格的 `rows.jsonl` 同名，Claude 格那份被蓋掉，重播檔也沒記。改成「資料夾/檔名」、加上重播和正對照檔，同名就停。`judge` 的輸出也加了同樣的 `inputs`。重算後下限和天花板與第一次完全相同。評分、重播、作答程式都沒動，所以正對照的版本綁定不受影響。
 
 ## 成本和預算重估
 

@@ -104,12 +104,24 @@ def bind(spec, spec_sha, rows, grades, replay_path, whole_spec=True):
     return {(g["family"], g["cell"], g["arm"], g["id"], g.get("rep", 1)): g for g in grades}
 
 
+def inputs(a):
+    """sha256 of every data file read, keyed by parent folder and name (both cells' files are named rows.jsonl)."""
+    paths = a.rows.split(",") + a.grades.split(",") + a.replay.split(",") + ([a.controls] if getattr(a, "controls", None) else [])
+    out = {}
+    for p in paths:
+        key = os.path.join(os.path.basename(os.path.dirname(os.path.abspath(p))), os.path.basename(p))
+        if key in out:
+            raise SystemExit(f"two inputs share the name {key}")
+        out[key] = sha(p)
+    return out
+
+
 def calibrate(a, S, spec, spec_sha):
     rows, grades = read(a.rows), read(a.grades)
     graded = bind(spec, spec_sha, rows, grades, a.replay, whole_spec=False)
     defect = [j for j in spec["order"] if spec["kinds"][j] == "defect"]
     borrowed = json.load(open(a.borrowed, encoding="utf-8"))
-    out = {"spec_sha256": spec_sha, "inputs": {os.path.basename(p): sha(p) for p in a.rows.split(",") + a.grades.split(",")},
+    out = {"spec_sha256": spec_sha, "inputs": inputs(a),
            "borrowed": borrowed, "floors": {}, "ceiling": []}
     for cell in CELLS:
         for fam in FAMILIES:
@@ -159,7 +171,7 @@ def judge(a, S, spec, spec_sha):
     defect = [j for j in journeys if spec["kinds"][j] == "defect"]
     critical = [j for j in defect if spec["truth"][j]["severity"] == "critical"]
     by_row = {(r["cell"], r["arm"], r["id"]): r for r in rows if r.get("rep", 1) == 1}
-    result = {"spec_sha256": spec_sha, "floor_sha256": sha(a.floor), "eval_stats_sha256": sha(a.eval_stats),
+    result = {"spec_sha256": spec_sha, "inputs": inputs(a), "floor_sha256": sha(a.floor), "eval_stats_sha256": sha(a.eval_stats),
               "ceiling_flagged": sorted(set(floor["ceiling"]) & kept), "cells": {}}
     for cell in CELLS:
         missing = [(arm, j, fam) for arm in ("N", "C", "D", "F") for j in journeys for fam in FAMILIES
