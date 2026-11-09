@@ -72,7 +72,7 @@ All notable changes to this project will be documented in this file.
 - One review entry and an EGM switch (owner decisions D31, D33; plan `docs/plans/v2.0.1-execution.md` W1):
   the new default skill `oaw-review` runs `scripts/oaw_mode.py suggest` before a change (planned paths) and after
   it, and follows its new `steps`. Deep plans first and gets a design review before any code; the design review
-  follows `.oaw/settings.json` `review.egm` - `on`, `auto` (default: the best-evidenced review; one fresh-context review until the X2 study decides, owner decision D37) or `off` -
+  follows `.oaw/settings.json` `review.egm` - `on`, `auto` (default: the best-evidenced review; one fresh-context review, owner decision D37, kept by the X2 study) or `off` -
   set with `oaw_mode.py egm on|auto|off`, with a rough cost estimate and an ask-first cap (25M tokens by default).
   `oaw_mode.py reviewed` records a finished review so the same file content is not reviewed twice; a review cut
   short never counts. `second-opinion codex|claude` sends code review to the other model family only on the

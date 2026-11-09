@@ -14,8 +14,8 @@ deep plans first and gets a design review before any code, chosen by the
 project's EGM switch; standard and deep get a fresh-context code review.
 
 `egm on|auto|off` sets the switch in .oaw/settings.json (auto, the default,
-uses the best-evidenced design review: one fresh-context review until the
-X2 study decides; on runs full EGM). `reviewed` records a
+uses the best-evidenced design review: one fresh-context review, which
+the X2 study kept; on runs full EGM). `reviewed` records a
 finished design review so it is not run twice for the same file content.
 `show MODE` prints the host commands for that mode.
 
@@ -61,14 +61,16 @@ PLAN_NAME = re.compile(r"(?:^|[-_.])plan\.md$")
 NOT_PROJECT_DOCS = (".oaw/", ".claude/", ".agents/", ".codex/", "vendor/", "third_party/", "node_modules/")
 
 # The EGM switch (owner decision D33). "auto" uses the design review with the best evidence; update both
-# lines together when new evidence (the 2.0.1 X2 study) ranks another review higher. Owner decision D37
-# (2026-11-09) moved auto from EGM to one fresh-context review until X2 decides.
+# lines together when new evidence ranks another review higher. Owner decision D37 (2026-11-09) moved auto from
+# EGM to one fresh-context review until the 2.0.1 X2 study decided; X2 (2026-11-09) kept it in both host cells.
 SETTINGS_FILE = ".oaw/settings.json"
 EGM_SWITCH = ("on", "auto", "off")
 AUTO_DESIGN_REVIEW = "fresh-context"
-AUTO_BASIS = ("until the X2 study decides (owner decision D37): EGM's measured gain (3/3 planted plan defects "
-              "versus native 1/6, OAW validation 2026-11-07) rests on one selected case and costs about 28x a native "
-              "review; for full EGM, run python3 scripts/oaw_mode.py egm on")
+AUTO_BASIS = ("owner decision D37, kept by the X2 study (2026-11-09, Opus 5.5 and Codex gpt-6.1-sol hosts): one "
+              "native fresh-context review "
+              "found 47 of 48 planted design defects, full EGM found no more at 27-29x the tokens, and every "
+              "alternative raised a false alarm on a defect-free design; tested on small design documents only. "
+              "For full EGM, run python3 scripts/oaw_mode.py egm on")
 DEFAULT_EGM_MAX_TOKENS = 25_000_000
 SECOND_OPINIONS = ("same", "codex", "claude")
 DEFAULTS = {"egm": "auto", "egm_max_tokens": DEFAULT_EGM_MAX_TOKENS, "second_opinion": "same", "dry_run": False}
@@ -912,8 +914,8 @@ def main(argv: list[str] | None = None) -> int:
     show.add_argument("mode", choices=MODES)
     egm = commands.add_parser("egm", help="show or set the EGM switch (on, auto, off), or estimate one EGM run",
                               description="on: every deep task gets the full EGM design review. auto (default): the "
-                                          "best-evidenced design review, one fresh-context review until the X2 "
-                                          "study decides. off: never EGM. "
+                                          "best-evidenced design review, one fresh-context review (the X2 "
+                                          "study's pick). off: never EGM. "
                                           "estimate FILE...: a rough cost for one EGM run reading those files.")
     egm.add_argument("action", nargs="?", choices=(*EGM_SWITCH, "estimate"))
     egm.add_argument("files", nargs="*", metavar="FILE", help="with estimate: the plan and its context files")

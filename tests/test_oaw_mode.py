@@ -353,7 +353,7 @@ class ShowTests(unittest.TestCase):
     def test_deep_with_egm_for_both_hosts(self):
         self.entry(".claude")
         self.entry(".agents")
-        self.assertNotIn("egm-review", self.show("deep"), "D37: auto means a fresh-context review until X2 decides")
+        self.assertNotIn("egm-review", self.show("deep"), "D37 and X2: auto means one fresh-context review")
         self.assertEqual(run("egm", "on", "--root", str(self.root))[0], 0)
         lines = self.show("deep").splitlines()
         self.assertEqual(lines, [
@@ -554,7 +554,7 @@ class SwitchAndStepTests(unittest.TestCase):
     def test_switch_positions_change_the_deep_design_review(self):
         self.install_egm_entry()
         self.write("docs/plans/cache.md", "# Cache plan\n")
-        # D37: auto means one fresh-context review until X2 decides, even with EGM installed.
+        # D37 and X2: auto means one fresh-context review, even with EGM installed.
         auto = self.steps()["design-review"]
         self.assertEqual((auto["how"], auto["switch"], auto["before_code"], auto["done"]),
                          ("fresh-context", "auto", True, False))
