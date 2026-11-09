@@ -1265,5 +1265,61 @@ class DrawnGraphTests(unittest.TestCase):
             self.assertNotIn("Traceback", process.stderr)
 
 
+
+def _usable_cpus():
+    try:
+        return len(os.sched_getaffinity(0))
+    except (AttributeError, OSError):
+        return 0
+
+
+class WorkerCountTests(unittest.TestCase):
+    """Indexing workers follow the CPUs this process may use, not the host's count (taskset, cpuset, pods)."""
+
+    def patched(self, affinity=None, error=None, host=None):
+        mock = unittest.mock
+        getter = mock.Mock(return_value=affinity, side_effect=error)
+        return (mock.patch.object(code_index.os, "sched_getaffinity", getter, create=True),
+                mock.patch.object(code_index.os, "cpu_count", mock.Mock(return_value=host)))
+
+    def count(self, **kwargs):
+        first, second = self.patched(**kwargs)
+        with first, second:
+            return code_index._worker_count()
+
+    def test_affinity_decides_not_the_host(self):
+        self.assertEqual(self.count(affinity={0, 1, 2, 3}, host=224), 4)
+        self.assertEqual(self.count(affinity={5}, host=224), 1)
+        self.assertEqual(self.count(affinity=set(range(63)), host=224), code_index.MAX_JOBS)
+
+    def test_fallback_without_affinity(self):
+        self.assertEqual(self.count(error=AttributeError, host=224), code_index.MAX_JOBS)
+        self.assertEqual(self.count(error=OSError, host=2), 2)
+        self.assertEqual(self.count(error=OSError, host=None), 1)
+
+    def test_literal_fallback_cap_covers_max_jobs(self):
+        # the fallback's literal 8 must not silently lower the cap if MAX_JOBS is raised
+        self.assertLessEqual(code_index.MAX_JOBS, 8, "raise the literal cap in _worker_count with MAX_JOBS")
+
+    @unittest.skipUnless(_usable_cpus() > 1, "needs an affinity call and 2+ usable CPUs")
+    def test_taskset_limits_workers_in_a_real_process(self):
+        script = textwrap.dedent(f"""
+            import os, sys
+            try:
+                os.sched_setaffinity(0, {{sorted(os.sched_getaffinity(0))[0]}})
+            except OSError:
+                print("refused")
+                raise SystemExit(0)
+            sys.path.insert(0, {str(Path(code_index.__file__).parent)!r})
+            import code_index
+            print(code_index._worker_count())
+            """)
+        process = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, timeout=60)
+        self.assertEqual(process.returncode, 0, process.stderr)
+        if process.stdout.strip() == "refused":
+            self.skipTest("setting the CPU affinity was refused")
+        self.assertEqual(process.stdout.strip(), "1")
+
+
 if __name__ == "__main__":
     unittest.main()

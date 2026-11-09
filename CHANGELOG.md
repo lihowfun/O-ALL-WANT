@@ -110,6 +110,14 @@ All notable changes to this project will be documented in this file.
   is blocked; its triage step is optional. 實測 becomes a mixed stage (Claude's tastings) and 核准 a mixed one.
   `view.json` is schema `oaw-catalog-view/3` (the web page, `oaw_status.py`, the menu and the mod read it).
 
+### Fixed
+
+- `code_index.py` starts as many indexing workers as the CPUs the process may run on (`os.sched_getaffinity`,
+  so `taskset` and cpusets are honoured), at most 8, instead of the host's CPU count: under `taskset -c 0-3` it
+  started 8. Without the affinity call (macOS, Windows) it falls back to `min(8, os.cpu_count())`, a form
+  host-scope scanners accept. Reported from a trial install whose pre-commit scanner and test gate rejected the
+  old line. Checked on Linux, Python 3.10.
+
 ### Added
 
 - Working modes (owner, 2026-11-06: light when a task is light, deep only when it needs it, and the agent decides).

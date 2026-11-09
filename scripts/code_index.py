@@ -2422,9 +2422,20 @@ def _extract_item(item):
     return extract(*item)
 
 
+def _worker_count():
+    """Worker processes for indexing: the CPUs this process may run on (taskset, cpuset), at most MAX_JOBS.
+    os.cpu_count() counts the whole host, which on a shared machine or in a pod can be far more than this process has.
+    A CPU-time quota without a cpuset (cgroup cpu.max) is not read; MAX_JOBS bounds that case."""
+    try:
+        usable = len(os.sched_getaffinity(0))
+    except (AttributeError, OSError):  # no affinity call (macOS, Windows)
+        usable = min(8, os.cpu_count() or 1)  # a literal cap: host-scope scanners accept only min(<number>, ...)
+    return max(1, min(MAX_JOBS, usable))
+
+
 def _extract_all(todo):
     """{path: record} for [(path, bytes)]; in worker processes (standard library) when there are many."""
-    jobs = min(MAX_JOBS, os.cpu_count() or 1)
+    jobs = _worker_count()
     if len(todo) >= PARALLEL_MIN_FILES and jobs > 1:
         try:
             import concurrent.futures
