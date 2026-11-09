@@ -1,0 +1,22 @@
+{
+ "id": "page-memory-recall",
+ "goal": "You are returning to a project and want to read its saved observations in small portions. The project has OAW and three dated memory entries; use context_hub.py memory recall with a limit and continue with the returned cursor, then read the text form.",
+ "setup": [
+  "export OAW_CONFIG_HOME=\"$PWD/.state/config\"",
+  "export OAW_LAB_HOME=\"$PWD/.state/lab\"",
+  "export XDG_CACHE_HOME=\"$PWD/.state/cache\"",
+  "export XDG_DATA_HOME=\"$PWD/.state/data\"",
+  "export TMPDIR=\"$PWD/.state/tmp\"",
+  "export PYTHONDONTWRITEBYTECODE=1 PYTHONIOENCODING=utf-8 LC_ALL=C.UTF-8",
+  "export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_ALLOW_PROTOCOL=file GIT_TERMINAL_PROMPT=0",
+  "unset OAW_VERDICTS OAW_CODE_INDEX_CACHE AGENT_MEMORY_BASE_DIR",
+  "mkdir -p \"$TMPDIR\"",
+  "/usr/bin/python3 ./oaw/scripts/oaw.py init --target ./project --json",
+  "/usr/bin/python3 - <<'PY'\nfrom pathlib import Path\nfiles = {'project/.agents/memory.md': '# Memory\\n\\n---\\n\\n## [2026-10-28] [NOTE] needle first\\nFirst project observation.\\n\\n## [2026-10-27] [NOTE] needle second\\nSecond project observation.\\n\\n## [2026-10-26] [NOTE] needle third\\nThird project observation.\\n'}\nfor name, content in files.items():\n    path = Path(name)\n    path.parent.mkdir(parents=True, exist_ok=True)\n    path.write_text(content, encoding='utf-8')\nPY"
+ ],
+ "commands": [
+  "(cd project && /usr/bin/python3 scripts/context_hub.py memory recall needle --limit 1 --max-chars 900 --json) > recall-first.json",
+  "cursor=\"$(/usr/bin/python3 -c 'import json; print(json.load(open(\"recall-first.json\"))[\"continuation\"])')\"\n(cd project && /usr/bin/python3 scripts/context_hub.py memory recall needle --limit 1 --max-chars 900 --cursor \"$cursor\" --json)",
+  "(cd project && /usr/bin/python3 scripts/context_hub.py memory recall needle --max-chars 900)"
+ ]
+}

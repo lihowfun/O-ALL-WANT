@@ -1,0 +1,81 @@
+{
+ "spec_sha256": "08c7cefaace9e8253617e441cb57b59e123c837d6b2f659f5ffabb5fc1af8228",
+ "journeys": {
+  "manage-only-own-skills": {
+   "credited": {
+    "opus": true,
+    "codex": true
+   },
+   "notes": {
+    "opus": "The report's wording copies the planted-defect description verbatim, and its step is an oracle-style check script rather than a hand-written journey, but the replay mechanically confirms the planted behavior. The expected/evidence fields are generic placeholders.",
+    "codex": "The report identifies the planted defect, and the mechanical replay supports it."
+   }
+  },
+  "estimate-review-budget": {
+   "credited": {
+    "opus": true,
+    "codex": true
+   },
+   "notes": {
+    "opus": "The replay confirms the defect, but the report looks oracle-derived rather than written by a tester: the title and observed text copy the planted description word for word, the steps are a script labeled ORACLE, and the expected and evidence fields are generic placeholders.",
+    "codex": "The report identifies the planted defect, supported by the contrasting replay results."
+   }
+  },
+  "review-saved-plan": {
+   "credited": {
+    "opus": true,
+    "codex": true
+   },
+   "notes": {
+    "opus": "The report's title, observed text and checked entry repeat the planted-defect description word for word, and its steps are a single oracle-style script; even so, the replay confirms the behavior. The expected and evidence fields are generic placeholders.",
+    "codex": "The report identifies the planted defect, and the mechanical replay reproduces it."
+   }
+  },
+  "find-project-code": {
+   "credited": {
+    "opus": true,
+    "codex": true
+   },
+   "notes": {
+    "opus": "The defect text copies the planted-defect description word for word, and the steps are a prewritten 'ORACLE' script with boilerplate expected/evidence fields, but the replay does show the wrong behavior on the case build and not on the clean build.",
+    "codex": "The report explicitly reports the planted defect, and the replay confirms it."
+   }
+  },
+  "remove-bundled-skill": {
+   "credited": {
+    "opus": true,
+    "codex": true
+   },
+   "notes": {
+    "opus": "The defect text and steps closely echo the planted-defect description and use an oracle-style script, but the replay clearly shows the wrong behavior only on the case build.",
+    "codex": "The report directly identifies and reproduces the planted defect."
+   }
+  },
+  "annotate-project-topic": {
+   "credited": {
+    "opus": true,
+    "codex": true
+   },
+   "notes": {
+    "opus": "The replay confirms the planted defect. However, the title, observed text and checked entry copy the planted-defect description word for word, the steps are an 'ORACLE' script, and the expected/evidence fields are generic, so the report may come from leaked defect information rather than real exploration.",
+    "codex": "The report reproduces the planted defect; the case replay's outer exit 1 is the oracle detecting the incorrect command status."
+   }
+  }
+ },
+ "pass": true,
+ "versions": {
+  "opus": [
+   "32453a5d7d28dec9daf9c9863c269dfb11f11c27a1821ad9f7ea6917b1cd449f",
+   "481e6f02877b4cdd4e54bea5266b6779f2dc679cef45f843b6da7958870b845c"
+  ],
+  "codex": [
+   "32453a5d7d28dec9daf9c9863c269dfb11f11c27a1821ad9f7ea6917b1cd449f",
+   "481e6f02877b4cdd4e54bea5266b6779f2dc679cef45f843b6da7958870b845c"
+  ]
+ },
+ "inputs": {
+  "control-rows.jsonl": "feb689239b99e1fb17798144b4850a6b17fa97c305f2ed9d4d803e75f50fdc33",
+  "control-grades-opus.jsonl": "ef488035ad719646ce8fb9793d2f50d31791889b430abdf41860a2603802738a",
+  "control-grades-codex.jsonl": "56393ce3f7a72ec4430fe8738f0e5a9b8a942bfd367c019f3a0f2ac895c84dd7"
+ }
+}

@@ -1,0 +1,11 @@
+--- a/scripts/catalog_core.py
++++ b/scripts/catalog_core.py
+@@ -316,7 +316,7 @@
+         parts = urlsplit(raw)
+         if parts.netloc not in ("", "localhost") or parts.query or parts.fragment:
+             raise SourceError("Only local file:// repository or PDF paths are supported.")
+-        path = unquote(parts.path).rstrip("/")
++        path = parts.path.rstrip("/")
+         if not path or ".." in path.split("/"):
+             raise SourceError("Unsafe file:// path.")
+         name = path.rsplit("/", 1)[-1]

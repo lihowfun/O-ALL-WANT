@@ -1,0 +1,170 @@
+{
+ "order": [
+  "manage-only-own-skills",
+  "estimate-review-budget",
+  "page-memory-recall",
+  "choose-code-reviewer",
+  "review-saved-plan",
+  "install-claude",
+  "install-knowledge",
+  "find-project-code",
+  "remove-bundled-skill",
+  "export-dependency-map",
+  "annotate-project-topic",
+  "orient-in-typescript"
+ ],
+ "kinds": {
+  "annotate-project-topic": "defect",
+  "find-project-code": "defect",
+  "remove-bundled-skill": "defect",
+  "estimate-review-budget": "defect",
+  "manage-only-own-skills": "defect",
+  "review-saved-plan": "defect",
+  "orient-in-typescript": "clean",
+  "install-claude": "clean",
+  "page-memory-recall": "clean",
+  "choose-code-reviewer": "clean",
+  "export-dependency-map": "clean",
+  "install-knowledge": "clean"
+ },
+ "truth": {
+  "annotate-project-topic": {
+   "journey": "annotate-project-topic",
+   "category": "B6",
+   "severity": "major",
+   "rubric": "context_hub.py annotate on a topic that does not exist prints \"Topic '<name>' not found. Cannot annotate.\" but exits 0 instead of 1 (get on the same missing topic exits 1).",
+   "trigger": "(cd project && python3 scripts/context_hub.py annotate Topik 'Second observation.'; echo $?) — a misspelled or wrong-case topic name.",
+   "user_impact": "Scripts and agents that check the exit status believe the observation was saved when nothing was written, so notes are silently lost.",
+   "intended_lookalikes": [
+    "The first annotate rewrites the page's existing '## AI Annotations' section into a delimited block (with HTML comment markers) and keeps the team note in it.",
+    "The success line always ends in '...' and shows only the first 60 characters of the note.",
+    "Topic names are case-sensitive file names; 'topic' is a different topic from 'Topic'.",
+    "A note that looks like a credential is refused with exit 1 and nothing is written.",
+    "get prints the raw markdown between '--- CONTENT OF Topic ---' and '--- END OF CONTENT ---' banners."
+   ]
+  },
+  "find-project-code": {
+   "journey": "find-project-code",
+   "category": "B1",
+   "severity": "major",
+   "rubric": "After emoji (or any non-ASCII text) are added to a function's docstring, code_index.py find no longer matches that docstring's English words: 'join path parts safely' stops ranking pkg/util.py helper_func first (score drops from about 21 to under 3 and other files outrank it).",
+   "trigger": "Append 1,000 emoji to the helper_func docstring in project/pkg/util.py (\"\"\"Join path parts safely without escaping the root. 😀😀…\"\"\"), then run (cd project && python3 scripts/code_index.py find 'join path parts safely' --no-cache [--json]).",
+   "user_impact": "Any docstring, comment or string that contains a single emoji, accented letter or CJK character silently drops out of word search, so find points users at unrelated files instead of the code they described.",
+   "intended_lookalikes": [
+    "Emoji themselves are never index terms, so a query made only of emoji finds nothing; only CJK characters are indexed as bigrams.",
+    "The text form shortens a long source line to 110 characters ending in '...'.",
+    "Scores and the lower-ranked results (OAW's own scripts under project/scripts) differ slightly between runs on different trees; only the ranking of the described file matters.",
+    "find 'engine rotation' and makeEngine rank pkg/core.py through identifiers and the synonym list even though the words do not appear literally.",
+    "Files over 1 MB are skipped by design."
+   ]
+  },
+  "remove-bundled-skill": {
+   "journey": "remove-bundled-skill",
+   "category": "B3",
+   "severity": "critical",
+   "rubric": "After an oaw.py remove --apply that fails and is rolled back (for example on a read-only skill folder), .oaw/install.lock is left behind, so the same command (and every later init, migrate, add or remove) fails with 'Another operation or stale lock exists' even after the cause is fixed and no other operation is running.",
+   "trigger": "chmod a-w project/.agents/skills/oaw-codemap; python3 ./oaw/scripts/oaw.py remove oaw-codemap --target ./project --apply --json (fails, exit 2, 'Write failed; recoverable backups are under ...'); chmod u+w project/.agents/skills/oaw-codemap; run the same remove --apply again.",
+   "user_impact": "Any handled write failure inside an install operation leaves the project permanently locked: no OAW install, removal or catalog write can run again until the user finds and deletes .oaw/install.lock by hand.",
+   "intended_lookalikes": [
+    "remove without --apply is only a preview and changes nothing.",
+    "The failed --apply exits 2 with 'Write failed; recoverable backups are under .oaw/backups/<id>' even though the rollback restored the skill files; the backup folder stays.",
+    "A process that is killed (SIGKILL) mid-operation leaves a stale install.lock; docs/UPGRADING.md says it needs inspection before removal.",
+    "The text output of remove mixes English and Traditional Chinese lines.",
+    "A successful remove keeps a backup under .oaw/backups and doctor still passes without the codemap skill."
+   ]
+  },
+  "estimate-review-budget": {
+   "journey": "estimate-review-budget",
+   "category": "B2",
+   "severity": "major",
+   "rubric": "egm estimate succeeds on malformed .oaw/settings.json and silently uses the default token cap instead of refusing the unreadable settings.",
+   "trigger": "Set a project token cap, truncate .oaw/settings.json to malformed JSON, then run egm estimate docs/plans/small.md docs/context.md --json.",
+   "user_impact": "The budget command conceals a broken settings file and uses a different budget limit. A user can proceed under the wrong review spending threshold.",
+   "intended_lookalikes": [
+    "Estimates are rough ranges fitted from file sizes, not actual token usage.",
+    "An absent settings file legitimately uses the default 25,000,000-token cap.",
+    "Setting a cap prints instructions only and does not run a model."
+   ]
+  },
+  "manage-only-own-skills": {
+   "journey": "manage-only-own-skills",
+   "category": "B8",
+   "severity": "critical",
+   "rubric": "Removing an added skill deletes its locally edited SKILL.md and drops the recovery record without --force or any conflict warning.",
+   "trigger": "Add the two local skills with --choice only --consent scripts --apply, edit project/.agents/skills/notes/SKILL.md, then remove notes --apply without --force.",
+   "user_impact": "The user loses custom instructions added after installation. The manager reports successful removal and removes the record rather than preserving the edit for recovery.",
+   "intended_lookalikes": [
+    "Removing an unchanged added skill deletes the files installed for it.",
+    "Normal removal of an edited file should retain it and return partial with exit 3.",
+    "--force explicitly permits replacing or deleting edited files; --keep retains the edits and stops tracking them.",
+    "Manager-only projects do not install the full OAW helper set."
+   ]
+  },
+  "review-saved-plan": {
+   "journey": "review-saved-plan",
+   "category": "B4",
+   "severity": "major",
+   "rubric": "After reviewed records a completed plan review, editing that plan still leaves suggest --plan reporting it as done for this file content.",
+   "trigger": "Run reviewed docs/plans/cache.md --how fresh-context, edit that plan, then run suggest --plan docs/plans/cache.md in JSON or text form.",
+   "user_impact": "The review status no longer matches the saved plan. Substantial new design changes can skip the required review before implementation.",
+   "intended_lookalikes": [
+    "A saved --plan triggers deep mode even without Git.",
+    "The default auto switch selects a fresh-context review rather than full EGM.",
+    "A done review counts again when the file returns to exactly its reviewed bytes; a cut review never counts."
+   ]
+  }
+ },
+ "authors": {
+  "annotate-project-topic": "opus",
+  "find-project-code": "opus",
+  "remove-bundled-skill": "opus",
+  "estimate-review-budget": "codex",
+  "manage-only-own-skills": "codex",
+  "review-saved-plan": "codex",
+  "orient-in-typescript": "opus pool",
+  "install-claude": "opus pool",
+  "page-memory-recall": "opus pool",
+  "choose-code-reviewer": "codex pool",
+  "export-dependency-map": "codex pool",
+  "install-knowledge": "codex pool"
+ },
+ "built_digests": {
+  "annotate-project-topic": "2c9015ecf587c9d33e6bfd9c3b125cd7e9b6b6845527a412d07e5e5bdb7bc1b2",
+  "find-project-code": "49280de827951dd4e370b8156ea7cab9930e7d1cd73fd3af2dc4929255abaeed",
+  "remove-bundled-skill": "e4a3bf07c9189838dcf7e3324211c5aa5d48d5d01592fcd6746e6248d951f05f",
+  "estimate-review-budget": "497fef2ddab7afc95a931bb46218c760cb4321611d204b8c182252b0e0cb4cec",
+  "manage-only-own-skills": "5f4e3a46d39f8ce81a0ff53764d8839fb5d8a766c03351b26fae6f98854084f3",
+  "review-saved-plan": "1fd0662f0d444f9f1fee39c65ea53e5b0db9a82bd6ec544e7d0e7dd2d4c2fa95",
+  "orient-in-typescript": "d0850561f4c646621c95667684a9d1946c3f846fa5f080b0296e0d08accfad92",
+  "install-claude": "d0850561f4c646621c95667684a9d1946c3f846fa5f080b0296e0d08accfad92",
+  "page-memory-recall": "d0850561f4c646621c95667684a9d1946c3f846fa5f080b0296e0d08accfad92",
+  "choose-code-reviewer": "d0850561f4c646621c95667684a9d1946c3f846fa5f080b0296e0d08accfad92",
+  "export-dependency-map": "d0850561f4c646621c95667684a9d1946c3f846fa5f080b0296e0d08accfad92",
+  "install-knowledge": "d0850561f4c646621c95667684a9d1946c3f846fa5f080b0296e0d08accfad92"
+ },
+ "oaw_src_digest": "d0850561f4c646621c95667684a9d1946c3f846fa5f080b0296e0d08accfad92",
+ "skill_sha256": "3c6a37e684b20347aa3feac2055f82cfd7b2817406c48dfa63ff815349e2f90f",
+ "case_digests": {
+  "manage-only-own-skills": "606ab7174d289557a24b833d75977c32107fc1634a4e3058f1aa10ca4e54c175",
+  "estimate-review-budget": "ea0573bae076563267db619288ff1a8e33756ce27c12d3ed3932a06c03dce96b",
+  "page-memory-recall": "64ca130c8ce44e036ae729ccb5e8a1317af599b8270130eecb2d1a09ca146385",
+  "choose-code-reviewer": "c1fd02bef121f7b0d94266036837ec54754733b01e30990278240e40a6b124ca",
+  "review-saved-plan": "e69538c72b02b56d0af59332f31e56f54e710a5d920c3fe7d7d32920d28b5e16",
+  "install-claude": "b5996951b12eb472b55abf582fd4d52cf479a9b0c7ec9752123446e1c849d580",
+  "install-knowledge": "69ac5959d66196486028e2ed3c5a8a363f158e911eafe0829dac9d319155ecad",
+  "find-project-code": "4eb434a7c9fab3debb6f7ea9692dbc48644ff41c9aa17ae8a4fc8927e7165c5d",
+  "remove-bundled-skill": "75fc126c0615fdecc953663a29abce43ca98755a5e70cfa49ebedfb9d7c8ec7d",
+  "export-dependency-map": "5f2f9e9cb0d95b6bc8e4dffd6bfd106bdf468789759311ddaf35f9c1e495a821",
+  "annotate-project-topic": "7ff775985d7ce80acd04e68963c3bd1b5dfd1f353bee133a475104f9a54e962a",
+  "orient-in-typescript": "030c527863410f1868828320892ff506f75e1453a054234e39bea5c055be4d0c"
+ },
+ "inputs": {
+  "inventory.json": "8680fda592caff51481ce359c64956dc566b9368615459baa4606cc45869a6b6",
+  "author_pools.json": "d8258fee99b08c076a21410018c257c4cc4411b2a0ecef8ad572e12b8a59cf8f",
+  "categories.json": "4b4e4e43d65c93ed84d037df86348f5d7378672d7cab896eed9e2f16d957892b",
+  "categories-authors.json": "e18df74d338b628c3802a92858f7027a228176d27db27c39a1c0c4e527fe0a9a",
+  "author_prompt.md": "155b3d6ec8cb593861d90fb7603ed3dd3ec449f75eeff2531868df2030ba97ac"
+ },
+ "ceiling_replaced": {},
+ "ceiling_provenance": null
+}

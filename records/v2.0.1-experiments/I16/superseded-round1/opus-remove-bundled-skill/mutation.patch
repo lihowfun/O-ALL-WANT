@@ -1,0 +1,11 @@
+--- a/scripts/user_install.py
++++ b/scripts/user_install.py
+@@ -2101,7 +2101,7 @@
+         raise InstallError(f"{name} is not in this project's OAW recipe.")
+     lines = [f"remove {name} (built-in OAW skill) through oaw.py migrate; recipe after: {', '.join(change['selection']) or 'no bundled skills'}"]
+     lines += [f"  {a['action']:22} {a['path']}" for a in change["actions"]]
+-    conflicts = [a["path"] for a in change["actions"] if a["action"] in ("conflict", "retire-conflict")]
++    conflicts = [a["path"] for a in change["actions"] if a["action"] == "conflict"]
+     if not apply:
+         lines.append(f"預覽：加 --apply 才移除（會先備份）；裝回來用 oaw.py migrate --skills default --apply")
+         return {"status": "preview", "target": str(target), "remove": name, "actions": change["actions"], "conflicts": conflicts, "lines": lines}

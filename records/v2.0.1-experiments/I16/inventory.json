@@ -1,0 +1,986 @@
+[
+  {
+    "id": "install-minimal",
+    "goal": "You are a developer starting a small project that has no OAW files yet. Use oaw.py init to add the default tools, repeat init, and inspect the installation with doctor and skills.",
+    "setup": [
+      "export OAW_CONFIG_HOME=\"$PWD/.state/config\"",
+      "export OAW_LAB_HOME=\"$PWD/.state/lab\"",
+      "export XDG_CACHE_HOME=\"$PWD/.state/cache\"",
+      "export XDG_DATA_HOME=\"$PWD/.state/data\"",
+      "export TMPDIR=\"$PWD/.state/tmp\"",
+      "export PYTHONDONTWRITEBYTECODE=1 PYTHONIOENCODING=utf-8 LC_ALL=C.UTF-8",
+      "export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_ALLOW_PROTOCOL=file GIT_TERMINAL_PROMPT=0",
+      "unset OAW_VERDICTS OAW_CODE_INDEX_CACHE AGENT_MEMORY_BASE_DIR",
+      "mkdir -p \"$TMPDIR\"",
+      "mkdir project"
+    ],
+    "commands": [
+      "/usr/bin/python3 ./oaw/scripts/oaw.py init --target ./project --json",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py init --target ./project --json",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py doctor --target ./project --json",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py skills --target ./project --json"
+    ],
+    "oracle_tests": [
+      "tests/test_install.py::InstallTests::test_fresh_minimal_install_and_idempotence"
+    ],
+    "can_host": [
+      "B4",
+      "B5",
+      "B6",
+      "B7",
+      "B8"
+    ],
+    "notes": "Offline standard-library commands. Uses only this folder for configuration, cache and temporary files; no host agent is launched."
+  },
+  {
+    "id": "install-knowledge",
+    "goal": "You maintain a project with an existing knowledge index and want OAW's knowledge and improvement tools. Install them with oaw.py init --profile knowledge --with-improve, then inspect the project with doctor.",
+    "setup": [
+      "export OAW_CONFIG_HOME=\"$PWD/.state/config\"",
+      "export OAW_LAB_HOME=\"$PWD/.state/lab\"",
+      "export XDG_CACHE_HOME=\"$PWD/.state/cache\"",
+      "export XDG_DATA_HOME=\"$PWD/.state/data\"",
+      "export TMPDIR=\"$PWD/.state/tmp\"",
+      "export PYTHONDONTWRITEBYTECODE=1 PYTHONIOENCODING=utf-8 LC_ALL=C.UTF-8",
+      "export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_ALLOW_PROTOCOL=file GIT_TERMINAL_PROMPT=0",
+      "unset OAW_VERDICTS OAW_CODE_INDEX_CACHE AGENT_MEMORY_BASE_DIR",
+      "mkdir -p \"$TMPDIR\"",
+      "/usr/bin/python3 - <<'PY'\nfrom pathlib import Path\nfiles = {'project/docs/knowledge/index.md': '# Team knowledge\\n\\nRelease notes live here.\\n'}\nfor name, content in files.items():\n    path = Path(name)\n    path.parent.mkdir(parents=True, exist_ok=True)\n    path.write_text(content, encoding='utf-8')\nPY"
+    ],
+    "commands": [
+      "/usr/bin/python3 ./oaw/scripts/oaw.py init --target ./project --profile knowledge --with-improve --json",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py init --target ./project --json",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py doctor --target ./project --json"
+    ],
+    "oracle_tests": [
+      "tests/test_install.py::InstallTests::test_additive_profiles_preserve_domain_content"
+    ],
+    "can_host": [
+      "B1",
+      "B4",
+      "B5",
+      "B7",
+      "B8"
+    ],
+    "notes": "Offline standard-library commands. Uses only this folder for configuration, cache and temporary files; no host agent is launched."
+  },
+  {
+    "id": "install-claude",
+    "goal": "You use Claude Code and have a new project ready for OAW. Use oaw.py init --host claude, then list the installed skills and inspect the installation with doctor.",
+    "setup": [
+      "export OAW_CONFIG_HOME=\"$PWD/.state/config\"",
+      "export OAW_LAB_HOME=\"$PWD/.state/lab\"",
+      "export XDG_CACHE_HOME=\"$PWD/.state/cache\"",
+      "export XDG_DATA_HOME=\"$PWD/.state/data\"",
+      "export TMPDIR=\"$PWD/.state/tmp\"",
+      "export PYTHONDONTWRITEBYTECODE=1 PYTHONIOENCODING=utf-8 LC_ALL=C.UTF-8",
+      "export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_ALLOW_PROTOCOL=file GIT_TERMINAL_PROMPT=0",
+      "unset OAW_VERDICTS OAW_CODE_INDEX_CACHE AGENT_MEMORY_BASE_DIR",
+      "mkdir -p \"$TMPDIR\"",
+      "mkdir project"
+    ],
+    "commands": [
+      "/usr/bin/python3 ./oaw/scripts/oaw.py init --target ./project --host claude --json",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py skills --target ./project --json",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py doctor --target ./project --json"
+    ],
+    "oracle_tests": [
+      "tests/test_install.py::InstallTests::test_claude_host_uses_native_claude_skill_folder_only"
+    ],
+    "can_host": [
+      "B4",
+      "B5",
+      "B6",
+      "B7"
+    ],
+    "notes": "Checks installed files offline. doctor is used without --probe; Claude Code is neither required nor started."
+  },
+  {
+    "id": "install-both-hosts",
+    "goal": "You share a project between Codex and Claude Code and want the knowledge and improvement tools available to both. Start with an empty project, run oaw.py init --host both --profile knowledge --with-improve, and inspect skills and doctor.",
+    "setup": [
+      "export OAW_CONFIG_HOME=\"$PWD/.state/config\"",
+      "export OAW_LAB_HOME=\"$PWD/.state/lab\"",
+      "export XDG_CACHE_HOME=\"$PWD/.state/cache\"",
+      "export XDG_DATA_HOME=\"$PWD/.state/data\"",
+      "export TMPDIR=\"$PWD/.state/tmp\"",
+      "export PYTHONDONTWRITEBYTECODE=1 PYTHONIOENCODING=utf-8 LC_ALL=C.UTF-8",
+      "export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_ALLOW_PROTOCOL=file GIT_TERMINAL_PROMPT=0",
+      "unset OAW_VERDICTS OAW_CODE_INDEX_CACHE AGENT_MEMORY_BASE_DIR",
+      "mkdir -p \"$TMPDIR\"",
+      "mkdir project"
+    ],
+    "commands": [
+      "/usr/bin/python3 ./oaw/scripts/oaw.py init --target ./project --host both --profile knowledge --with-improve --json",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py skills --target ./project --json",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py doctor --target ./project --json"
+    ],
+    "oracle_tests": [
+      "tests/test_install.py::InstallTests::test_both_hosts_receive_identical_native_skill_packages"
+    ],
+    "can_host": [
+      "B4",
+      "B5",
+      "B6",
+      "B7",
+      "B8"
+    ],
+    "notes": "Inspects native skill packages on disk. Neither Codex nor Claude Code is started; host discovery is outside this journey."
+  },
+  {
+    "id": "add-project-host",
+    "goal": "Your project already has OAW installed for Claude Code and you now also use Codex. Preview and apply oaw.py migrate --host codex, then run init, skills and doctor to inspect the resulting project.",
+    "setup": [
+      "export OAW_CONFIG_HOME=\"$PWD/.state/config\"",
+      "export OAW_LAB_HOME=\"$PWD/.state/lab\"",
+      "export XDG_CACHE_HOME=\"$PWD/.state/cache\"",
+      "export XDG_DATA_HOME=\"$PWD/.state/data\"",
+      "export TMPDIR=\"$PWD/.state/tmp\"",
+      "export PYTHONDONTWRITEBYTECODE=1 PYTHONIOENCODING=utf-8 LC_ALL=C.UTF-8",
+      "export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_ALLOW_PROTOCOL=file GIT_TERMINAL_PROMPT=0",
+      "unset OAW_VERDICTS OAW_CODE_INDEX_CACHE AGENT_MEMORY_BASE_DIR",
+      "mkdir -p \"$TMPDIR\"",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py init --target ./project --host claude --json"
+    ],
+    "commands": [
+      "/usr/bin/python3 ./oaw/scripts/oaw.py migrate --target ./project --host codex --json",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py migrate --target ./project --host codex --apply --json",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py init --target ./project --json",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py skills --target ./project --json",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py doctor --target ./project --json"
+    ],
+    "oracle_tests": [
+      "tests/test_install.py::InstallTests::test_host_selection_is_additive_and_default_source_api_stays_codex"
+    ],
+    "can_host": [
+      "B3",
+      "B4",
+      "B5",
+      "B7",
+      "B8"
+    ],
+    "notes": "Offline standard-library commands. Uses only this folder for configuration, cache and temporary files; no host agent is launched."
+  },
+  {
+    "id": "choose-skill-recipe",
+    "goal": "You maintain a project with the default OAW skills installed for both hosts and want a smaller selection. Preview and apply oaw.py migrate --skills egm-review, then use init, skills and doctor to inspect that selection.",
+    "setup": [
+      "export OAW_CONFIG_HOME=\"$PWD/.state/config\"",
+      "export OAW_LAB_HOME=\"$PWD/.state/lab\"",
+      "export XDG_CACHE_HOME=\"$PWD/.state/cache\"",
+      "export XDG_DATA_HOME=\"$PWD/.state/data\"",
+      "export TMPDIR=\"$PWD/.state/tmp\"",
+      "export PYTHONDONTWRITEBYTECODE=1 PYTHONIOENCODING=utf-8 LC_ALL=C.UTF-8",
+      "export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_ALLOW_PROTOCOL=file GIT_TERMINAL_PROMPT=0",
+      "unset OAW_VERDICTS OAW_CODE_INDEX_CACHE AGENT_MEMORY_BASE_DIR",
+      "mkdir -p \"$TMPDIR\"",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py init --target ./project --host both --json"
+    ],
+    "commands": [
+      "/usr/bin/python3 ./oaw/scripts/oaw.py migrate --target ./project --skills egm-review --json",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py migrate --target ./project --skills egm-review --apply --json",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py init --target ./project --json",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py skills --target ./project --json",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py doctor --target ./project --json"
+    ],
+    "oracle_tests": [
+      "tests/test_egm_integration.py::EgmIntegrationTests::test_subset_migration_previews_without_writes_then_backs_up_owned_bridge_removal",
+      "tests/test_egm_integration.py::EgmIntegrationTests::test_reinit_without_selection_preserves_previous_explicit_selection"
+    ],
+    "can_host": [
+      "B3",
+      "B4",
+      "B5",
+      "B7",
+      "B8"
+    ],
+    "notes": "Offline standard-library commands. Uses only this folder for configuration, cache and temporary files; no host agent is launched."
+  },
+  {
+    "id": "plan-review-effort",
+    "goal": "You are planning a project change and want to see which review steps OAW recommends before you start. In a project with OAW installed and a committed baseline, use oaw_mode.py suggest --paths for a new design document and a workflow folder, then read show light and show standard.",
+    "setup": [
+      "export OAW_CONFIG_HOME=\"$PWD/.state/config\"",
+      "export OAW_LAB_HOME=\"$PWD/.state/lab\"",
+      "export XDG_CACHE_HOME=\"$PWD/.state/cache\"",
+      "export XDG_DATA_HOME=\"$PWD/.state/data\"",
+      "export TMPDIR=\"$PWD/.state/tmp\"",
+      "export PYTHONDONTWRITEBYTECODE=1 PYTHONIOENCODING=utf-8 LC_ALL=C.UTF-8",
+      "export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_ALLOW_PROTOCOL=file GIT_TERMINAL_PROMPT=0",
+      "unset OAW_VERDICTS OAW_CODE_INDEX_CACHE AGENT_MEMORY_BASE_DIR",
+      "mkdir -p \"$TMPDIR\"",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py init --target ./project --json",
+      "git -C project init -q",
+      "git -C project add .",
+      "git -C project -c user.name=Tester -c user.email=tester@example.invalid -c core.hooksPath=/dev/null commit -qm baseline"
+    ],
+    "commands": [
+      "(cd project && /usr/bin/python3 scripts/oaw_mode.py suggest --paths docs/designs/cache.md --json)",
+      "(cd project && /usr/bin/python3 scripts/oaw_mode.py suggest --paths .github/workflows --json)",
+      "(cd project && /usr/bin/python3 scripts/oaw_mode.py show light)",
+      "(cd project && /usr/bin/python3 scripts/oaw_mode.py show standard)"
+    ],
+    "oracle_tests": [
+      "tests/test_oaw_mode.py::GitDiffTests::test_path_list_counts_missing_paths_as_new",
+      "tests/test_oaw_mode.py::GitDiffTests::test_planned_folders_trigger_like_files_in_them",
+      "tests/test_oaw_mode.py::ShowTests::test_light_and_standard_are_fixed"
+    ],
+    "can_host": [
+      "B1",
+      "B2",
+      "B4",
+      "B5",
+      "B6",
+      "B7"
+    ],
+    "notes": "Offline standard-library commands. Uses only this folder for configuration, cache and temporary files; no host agent is launched."
+  },
+  {
+    "id": "set-design-review",
+    "goal": "You are a project maintainer choosing how design reviews should be described for a saved plan. With OAW and its EGM entry point installed, use oaw_mode.py egm to inspect and select auto, on and off, and use suggest --plan to read the steps for each setting.",
+    "setup": [
+      "export OAW_CONFIG_HOME=\"$PWD/.state/config\"",
+      "export OAW_LAB_HOME=\"$PWD/.state/lab\"",
+      "export XDG_CACHE_HOME=\"$PWD/.state/cache\"",
+      "export XDG_DATA_HOME=\"$PWD/.state/data\"",
+      "export TMPDIR=\"$PWD/.state/tmp\"",
+      "export PYTHONDONTWRITEBYTECODE=1 PYTHONIOENCODING=utf-8 LC_ALL=C.UTF-8",
+      "export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_ALLOW_PROTOCOL=file GIT_TERMINAL_PROMPT=0",
+      "unset OAW_VERDICTS OAW_CODE_INDEX_CACHE AGENT_MEMORY_BASE_DIR",
+      "mkdir -p \"$TMPDIR\"",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py init --target ./project --json",
+      "/usr/bin/python3 - <<'PY'\nfrom pathlib import Path\nfiles = {'project/docs/plans/cache.md': '# Cache plan\\n\\nUse a small local cache for reports.\\n'}\nfor name, content in files.items():\n    path = Path(name)\n    path.parent.mkdir(parents=True, exist_ok=True)\n    path.write_text(content, encoding='utf-8')\nPY"
+    ],
+    "commands": [
+      "(cd project && /usr/bin/python3 scripts/oaw_mode.py egm --json)",
+      "(cd project && /usr/bin/python3 scripts/oaw_mode.py suggest --plan docs/plans/cache.md --json)",
+      "(cd project && /usr/bin/python3 scripts/oaw_mode.py egm on --json)",
+      "(cd project && /usr/bin/python3 scripts/oaw_mode.py suggest --plan docs/plans/cache.md --json)",
+      "(cd project && /usr/bin/python3 scripts/oaw_mode.py egm off --json)",
+      "(cd project && /usr/bin/python3 scripts/oaw_mode.py suggest --plan docs/plans/cache.md --json)",
+      "(cd project && /usr/bin/python3 scripts/oaw_mode.py egm auto --json)"
+    ],
+    "oracle_tests": [
+      "tests/test_oaw_mode.py::SwitchAndStepTests::test_default_switch_is_auto_and_auto_means_fresh_context_until_x2",
+      "tests/test_oaw_mode.py::SwitchAndStepTests::test_switch_positions_change_the_deep_design_review"
+    ],
+    "can_host": [
+      "B3",
+      "B4",
+      "B5",
+      "B6",
+      "B7",
+      "B8"
+    ],
+    "notes": "Only settings and review instructions are produced. No review, model session or EGM runtime is executed."
+  },
+  {
+    "id": "estimate-review-budget",
+    "goal": "You have a saved design plan and a context document and want a rough review budget. Use oaw_mode.py egm estimate first for the plan alone and then with context, set a project token cap with egm --max-tokens, and read the estimate again.",
+    "setup": [
+      "export OAW_CONFIG_HOME=\"$PWD/.state/config\"",
+      "export OAW_LAB_HOME=\"$PWD/.state/lab\"",
+      "export XDG_CACHE_HOME=\"$PWD/.state/cache\"",
+      "export XDG_DATA_HOME=\"$PWD/.state/data\"",
+      "export TMPDIR=\"$PWD/.state/tmp\"",
+      "export PYTHONDONTWRITEBYTECODE=1 PYTHONIOENCODING=utf-8 LC_ALL=C.UTF-8",
+      "export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_ALLOW_PROTOCOL=file GIT_TERMINAL_PROMPT=0",
+      "unset OAW_VERDICTS OAW_CODE_INDEX_CACHE AGENT_MEMORY_BASE_DIR",
+      "mkdir -p \"$TMPDIR\"",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py init --target ./project --json",
+      "/usr/bin/python3 - <<'PY'\nfrom pathlib import Path\nfiles = {'project/docs/plans/small.md': 'x' * 2300, 'project/docs/context.md': 'y' * 105000}\nfor name, content in files.items():\n    path = Path(name)\n    path.parent.mkdir(parents=True, exist_ok=True)\n    path.write_text(content, encoding='utf-8')\nPY"
+    ],
+    "commands": [
+      "(cd project && /usr/bin/python3 scripts/oaw_mode.py egm estimate docs/plans/small.md --json)",
+      "(cd project && /usr/bin/python3 scripts/oaw_mode.py egm estimate docs/plans/small.md docs/context.md --json)",
+      "(cd project && /usr/bin/python3 scripts/oaw_mode.py egm on --max-tokens 900000000 --json)",
+      "(cd project && /usr/bin/python3 scripts/oaw_mode.py egm estimate docs/plans/small.md docs/context.md --json)"
+    ],
+    "oracle_tests": [
+      "tests/test_oaw_mode.py::SwitchAndStepTests::test_cap_and_estimate",
+      "tests/test_oaw_mode.py::SwitchAndStepTests::test_estimate_with_context_applies_the_cap"
+    ],
+    "can_host": [
+      "B1",
+      "B2",
+      "B4",
+      "B5",
+      "B6",
+      "B7"
+    ],
+    "notes": "Estimates are computed locally from file sizes. They are rough estimates; this journey does not perform a review or consume model tokens."
+  },
+  {
+    "id": "record-plan-review",
+    "goal": "You are maintaining review records for a saved project plan and want to track a review session's status. With OAW installed and EGM selected for design review, use oaw_mode.py reviewed to record the session as cut and then done, and inspect suggest --plan after each record.",
+    "setup": [
+      "export OAW_CONFIG_HOME=\"$PWD/.state/config\"",
+      "export OAW_LAB_HOME=\"$PWD/.state/lab\"",
+      "export XDG_CACHE_HOME=\"$PWD/.state/cache\"",
+      "export XDG_DATA_HOME=\"$PWD/.state/data\"",
+      "export TMPDIR=\"$PWD/.state/tmp\"",
+      "export PYTHONDONTWRITEBYTECODE=1 PYTHONIOENCODING=utf-8 LC_ALL=C.UTF-8",
+      "export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_ALLOW_PROTOCOL=file GIT_TERMINAL_PROMPT=0",
+      "unset OAW_VERDICTS OAW_CODE_INDEX_CACHE AGENT_MEMORY_BASE_DIR",
+      "mkdir -p \"$TMPDIR\"",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py init --target ./project --json",
+      "/usr/bin/python3 - <<'PY'\nfrom pathlib import Path\nfiles = {'project/docs/plans/cache.md': '# Cache plan\\n\\nUse a small local cache for reports.\\n'}\nfor name, content in files.items():\n    path = Path(name)\n    path.parent.mkdir(parents=True, exist_ok=True)\n    path.write_text(content, encoding='utf-8')\nPY",
+      "(cd project && /usr/bin/python3 scripts/oaw_mode.py egm on --json)"
+    ],
+    "commands": [
+      "(cd project && /usr/bin/python3 scripts/oaw_mode.py reviewed docs/plans/cache.md --how egm --status cut)",
+      "(cd project && /usr/bin/python3 scripts/oaw_mode.py suggest --plan docs/plans/cache.md --json)",
+      "(cd project && /usr/bin/python3 scripts/oaw_mode.py reviewed ./docs/plans/cache.md --how egm --report .oaw/reviews/r1/ --tokens 1200000)",
+      "(cd project && /usr/bin/python3 scripts/oaw_mode.py suggest --plan docs/plans/cache.md --json)"
+    ],
+    "oracle_tests": [
+      "tests/test_oaw_mode.py::SwitchAndStepTests::test_a_recorded_review_counts_only_for_the_same_file_content"
+    ],
+    "can_host": [
+      "B1",
+      "B3",
+      "B4",
+      "B5",
+      "B6",
+      "B7",
+      "B8"
+    ],
+    "notes": "Records synthetic review metadata only; no reviewer is started and no report directory contents are required. Record dates and report suggestions use the local date."
+  },
+  {
+    "id": "review-saved-plan",
+    "goal": "You are drafting a plan in a project folder that does not use Git yet. OAW is already installed and the plan is saved under docs/plans; use oaw_mode.py suggest --plan on its own and alongside a planned workflow path to read the recommended steps.",
+    "setup": [
+      "export OAW_CONFIG_HOME=\"$PWD/.state/config\"",
+      "export OAW_LAB_HOME=\"$PWD/.state/lab\"",
+      "export XDG_CACHE_HOME=\"$PWD/.state/cache\"",
+      "export XDG_DATA_HOME=\"$PWD/.state/data\"",
+      "export TMPDIR=\"$PWD/.state/tmp\"",
+      "export PYTHONDONTWRITEBYTECODE=1 PYTHONIOENCODING=utf-8 LC_ALL=C.UTF-8",
+      "export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_ALLOW_PROTOCOL=file GIT_TERMINAL_PROMPT=0",
+      "unset OAW_VERDICTS OAW_CODE_INDEX_CACHE AGENT_MEMORY_BASE_DIR",
+      "mkdir -p \"$TMPDIR\"",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py init --target ./project --json",
+      "/usr/bin/python3 - <<'PY'\nfrom pathlib import Path\nfiles = {'project/docs/plans/cache.md': '# Cache plan\\n\\nUse a small local cache for reports.\\n'}\nfor name, content in files.items():\n    path = Path(name)\n    path.parent.mkdir(parents=True, exist_ok=True)\n    path.write_text(content, encoding='utf-8')\nPY"
+    ],
+    "commands": [
+      "(cd project && /usr/bin/python3 scripts/oaw_mode.py suggest --plan docs/plans/cache.md --json)",
+      "(cd project && /usr/bin/python3 scripts/oaw_mode.py suggest --paths .github/workflows/ci.yml --plan docs/plans/cache.md --json)"
+    ],
+    "oracle_tests": [
+      "tests/test_oaw_mode.py::SwitchAndStepTests::test_a_named_plan_is_reviewed_with_or_without_git"
+    ],
+    "can_host": [
+      "B1",
+      "B2",
+      "B4",
+      "B5",
+      "B6",
+      "B7"
+    ],
+    "notes": "Intentionally uses a project without a Git repository. --plan supplies the saved document; no agent is started."
+  },
+  {
+    "id": "choose-code-reviewer",
+    "goal": "You maintain an OAW project and want to choose the reviewer family named in its code review instructions. Start with an installed project, use oaw_mode.py second-opinion to select codex and claude in turn, inspect show standard and show deep, then select same.",
+    "setup": [
+      "export OAW_CONFIG_HOME=\"$PWD/.state/config\"",
+      "export OAW_LAB_HOME=\"$PWD/.state/lab\"",
+      "export XDG_CACHE_HOME=\"$PWD/.state/cache\"",
+      "export XDG_DATA_HOME=\"$PWD/.state/data\"",
+      "export TMPDIR=\"$PWD/.state/tmp\"",
+      "export PYTHONDONTWRITEBYTECODE=1 PYTHONIOENCODING=utf-8 LC_ALL=C.UTF-8",
+      "export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_ALLOW_PROTOCOL=file GIT_TERMINAL_PROMPT=0",
+      "unset OAW_VERDICTS OAW_CODE_INDEX_CACHE AGENT_MEMORY_BASE_DIR",
+      "mkdir -p \"$TMPDIR\"",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py init --target ./project --json"
+    ],
+    "commands": [
+      "(cd project && /usr/bin/python3 scripts/oaw_mode.py second-opinion codex --json)",
+      "(cd project && /usr/bin/python3 scripts/oaw_mode.py show standard --json)",
+      "(cd project && /usr/bin/python3 scripts/oaw_mode.py egm off --json)",
+      "(cd project && /usr/bin/python3 scripts/oaw_mode.py show deep --json)",
+      "(cd project && /usr/bin/python3 scripts/oaw_mode.py egm auto --json)",
+      "(cd project && /usr/bin/python3 scripts/oaw_mode.py second-opinion claude --json)",
+      "(cd project && /usr/bin/python3 scripts/oaw_mode.py show deep --json)",
+      "(cd project && /usr/bin/python3 scripts/oaw_mode.py second-opinion same --json)"
+    ],
+    "oracle_tests": [
+      "tests/test_oaw_mode.py::SwitchAndStepTests::test_show_follows_the_second_opinion_setting"
+    ],
+    "can_host": [
+      "B4",
+      "B5",
+      "B6",
+      "B7",
+      "B8"
+    ],
+    "notes": "Saves preferences and prints instructions only. It never executes the printed Codex or Claude commands."
+  },
+  {
+    "id": "annotate-project-topic",
+    "goal": "You are a developer adding a note to an existing project knowledge page. The page already contains a team note; use context_hub.py get, annotate and get again to read the page and add your observation.",
+    "setup": [
+      "export OAW_CONFIG_HOME=\"$PWD/.state/config\"",
+      "export OAW_LAB_HOME=\"$PWD/.state/lab\"",
+      "export XDG_CACHE_HOME=\"$PWD/.state/cache\"",
+      "export XDG_DATA_HOME=\"$PWD/.state/data\"",
+      "export TMPDIR=\"$PWD/.state/tmp\"",
+      "export PYTHONDONTWRITEBYTECODE=1 PYTHONIOENCODING=utf-8 LC_ALL=C.UTF-8",
+      "export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_ALLOW_PROTOCOL=file GIT_TERMINAL_PROMPT=0",
+      "unset OAW_VERDICTS OAW_CODE_INDEX_CACHE AGENT_MEMORY_BASE_DIR",
+      "mkdir -p \"$TMPDIR\"",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py init --target ./project --profile knowledge --json",
+      "/usr/bin/python3 - <<'PY'\nfrom pathlib import Path\nfiles = {'project/docs/knowledge/Topic.md': '# Topic\\n\\nProject cache notes.\\n\\n## AI Annotations\\n\\nTeam note about report caching.\\n'}\nfor name, content in files.items():\n    path = Path(name)\n    path.parent.mkdir(parents=True, exist_ok=True)\n    path.write_text(content, encoding='utf-8')\nPY"
+    ],
+    "commands": [
+      "(cd project && /usr/bin/python3 scripts/context_hub.py get Topic)",
+      "(cd project && /usr/bin/python3 scripts/context_hub.py annotate Topic 'Cache reports after each release.')",
+      "(cd project && /usr/bin/python3 scripts/context_hub.py get Topic)"
+    ],
+    "oracle_tests": [
+      "tests/test_context_hub.py::ContextHubTests::test_annotation_migrates_legacy_notes_and_refuses_meta"
+    ],
+    "can_host": [
+      "B1",
+      "B2",
+      "B4",
+      "B5",
+      "B6",
+      "B7",
+      "B8"
+    ],
+    "notes": "The installed helper creates an annotation timestamp and a writer-lock sidecar. Page text and commands are fixed; timestamps vary with the local date."
+  },
+  {
+    "id": "page-memory-recall",
+    "goal": "You are returning to a project and want to read its saved observations in small portions. The project has OAW and three dated memory entries; use context_hub.py memory recall with a limit and continue with the returned cursor, then read the text form.",
+    "setup": [
+      "export OAW_CONFIG_HOME=\"$PWD/.state/config\"",
+      "export OAW_LAB_HOME=\"$PWD/.state/lab\"",
+      "export XDG_CACHE_HOME=\"$PWD/.state/cache\"",
+      "export XDG_DATA_HOME=\"$PWD/.state/data\"",
+      "export TMPDIR=\"$PWD/.state/tmp\"",
+      "export PYTHONDONTWRITEBYTECODE=1 PYTHONIOENCODING=utf-8 LC_ALL=C.UTF-8",
+      "export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_ALLOW_PROTOCOL=file GIT_TERMINAL_PROMPT=0",
+      "unset OAW_VERDICTS OAW_CODE_INDEX_CACHE AGENT_MEMORY_BASE_DIR",
+      "mkdir -p \"$TMPDIR\"",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py init --target ./project --json",
+      "/usr/bin/python3 - <<'PY'\nfrom pathlib import Path\nfiles = {'project/.agents/memory.md': '# Memory\\n\\n---\\n\\n## [2026-10-28] [NOTE] needle first\\nFirst project observation.\\n\\n## [2026-10-27] [NOTE] needle second\\nSecond project observation.\\n\\n## [2026-10-26] [NOTE] needle third\\nThird project observation.\\n'}\nfor name, content in files.items():\n    path = Path(name)\n    path.parent.mkdir(parents=True, exist_ok=True)\n    path.write_text(content, encoding='utf-8')\nPY"
+    ],
+    "commands": [
+      "(cd project && /usr/bin/python3 scripts/context_hub.py memory recall needle --limit 1 --max-chars 900 --json) > recall-first.json",
+      "cursor=\"$(/usr/bin/python3 -c 'import json; print(json.load(open(\"recall-first.json\"))[\"continuation\"])')\"\n(cd project && /usr/bin/python3 scripts/context_hub.py memory recall needle --limit 1 --max-chars 900 --cursor \"$cursor\" --json)",
+      "(cd project && /usr/bin/python3 scripts/context_hub.py memory recall needle --max-chars 900)"
+    ],
+    "oracle_tests": [
+      "tests/test_context_hub.py::ContextHubTests::test_recall_budgets_json_and_pages_independent_entries",
+      "tests/test_context_hub.py::ContextHubTests::test_recall_default_output_is_byte_identical"
+    ],
+    "can_host": [
+      "B1",
+      "B2",
+      "B4",
+      "B5",
+      "B6",
+      "B7"
+    ],
+    "notes": "Continuation is obtained from the preceding JSON result, never hard-coded. Keep the memory files and recall options unchanged between these commands."
+  },
+  {
+    "id": "locate-memory-evidence",
+    "goal": "You are researching a project decision and want short pointers into memory and knowledge pages. OAW is installed, memory contains dated observations, and three knowledge pages mention the same topic; use context_hub.py memory recall --index in JSON and text forms.",
+    "setup": [
+      "export OAW_CONFIG_HOME=\"$PWD/.state/config\"",
+      "export OAW_LAB_HOME=\"$PWD/.state/lab\"",
+      "export XDG_CACHE_HOME=\"$PWD/.state/cache\"",
+      "export XDG_DATA_HOME=\"$PWD/.state/data\"",
+      "export TMPDIR=\"$PWD/.state/tmp\"",
+      "export PYTHONDONTWRITEBYTECODE=1 PYTHONIOENCODING=utf-8 LC_ALL=C.UTF-8",
+      "export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_ALLOW_PROTOCOL=file GIT_TERMINAL_PROMPT=0",
+      "unset OAW_VERDICTS OAW_CODE_INDEX_CACHE AGENT_MEMORY_BASE_DIR",
+      "mkdir -p \"$TMPDIR\"",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py init --target ./project --profile knowledge --json",
+      "/usr/bin/python3 - <<'PY'\nfrom pathlib import Path\nfiles = {'project/.agents/memory.md': '# Memory\\n\\n---\\n\\n## [2026-10-28] [NOTE] needle first\\nFirst project observation.\\n\\n## [2026-10-27] [NOTE] needle second\\nSecond project observation.\\n\\n## [2026-10-26] [NOTE] needle third\\nThird project observation.\\n', 'project/docs/knowledge/Titled.md': '---\\ntitle: Cache Decisions\\n---\\n# Report cache\\n\\nA needle in the project notes.\\n', 'project/docs/knowledge/Headed.md': '# Cache Notes\\n\\nA needle in another page.\\n', 'project/docs/knowledge/Plain_Page.md': 'Project context\\nneedle\\n'}\nfor name, content in files.items():\n    path = Path(name)\n    path.parent.mkdir(parents=True, exist_ok=True)\n    path.write_text(content, encoding='utf-8')\nPY"
+    ],
+    "commands": [
+      "(cd project && /usr/bin/python3 scripts/context_hub.py memory recall needle --index --limit 5 --max-chars 2000 --json)",
+      "(cd project && /usr/bin/python3 scripts/context_hub.py memory recall needle --index --max-chars 900)"
+    ],
+    "oracle_tests": [
+      "tests/test_context_hub.py::ContextHubTests::test_recall_index_rows_cite_match_line_and_fit_max_chars",
+      "tests/test_context_hub.py::ContextHubTests::test_recall_index_knowledge_page_row_uses_title_and_matched_line"
+    ],
+    "can_host": [
+      "B1",
+      "B2",
+      "B4",
+      "B5",
+      "B6",
+      "B7"
+    ],
+    "notes": "Offline standard-library commands. Uses only this folder for configuration, cache and temporary files; no host agent is launched."
+  },
+  {
+    "id": "find-project-code",
+    "goal": "You are new to a Python project and want to locate the code that joins path parts and starts an engine. OAW is installed alongside a small package and application; use code_index.py find with ordinary descriptions and identifiers, and inspect the JSON form.",
+    "setup": [
+      "export OAW_CONFIG_HOME=\"$PWD/.state/config\"",
+      "export OAW_LAB_HOME=\"$PWD/.state/lab\"",
+      "export XDG_CACHE_HOME=\"$PWD/.state/cache\"",
+      "export XDG_DATA_HOME=\"$PWD/.state/data\"",
+      "export TMPDIR=\"$PWD/.state/tmp\"",
+      "export PYTHONDONTWRITEBYTECODE=1 PYTHONIOENCODING=utf-8 LC_ALL=C.UTF-8",
+      "export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_ALLOW_PROTOCOL=file GIT_TERMINAL_PROMPT=0",
+      "unset OAW_VERDICTS OAW_CODE_INDEX_CACHE AGENT_MEMORY_BASE_DIR",
+      "mkdir -p \"$TMPDIR\"",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py init --target ./project --json",
+      "/usr/bin/python3 - <<'PY'\nfrom pathlib import Path\nfiles = {'project/pkg/__init__.py': 'from .core import Engine\\n', 'project/pkg/util.py': 'RETRY_LIMIT = 3  # attempts before giving up\\n\\n\\ndef helper_func(parts):\\n    \"\"\"Join path parts safely without escaping the root.\"\"\"\\n    return \"/\".join(parts)\\n', 'project/pkg/core.py': 'class Engine:\\n    \"\"\"Drives the rotation of session keys.\"\"\"\\n    def start(self):\\n        # kick off the first rotation\\n        return self.helper()\\n    def helper(self):\\n        return 1\\n\\ndef make_engine():\\n    return Engine()\\n', 'project/pkg/sub/__init__.py': '', 'project/pkg/sub/deep.py': 'from ..util import helper_func as hf\\nfrom .. import core\\n\\ndef go():\\n    hf([\"a\"])\\n    engine = core.Engine()\\n    engine.start()\\n', 'project/app/main.py': 'import pkg.util as u\\nfrom pkg.core import Engine\\n\\ndef run():\\n    u.helper_func([\"b\"])\\n    Engine().start()\\n    return u.RETRY_LIMIT\\n', 'project/tools/runner.py': 'from app.main import run\\n\\ndef cli():\\n    run()\\n'}\nfor name, content in files.items():\n    path = Path(name)\n    path.parent.mkdir(parents=True, exist_ok=True)\n    path.write_text(content, encoding='utf-8')\nPY"
+    ],
+    "commands": [
+      "(cd project && /usr/bin/python3 scripts/code_index.py find 'join path parts safely' --no-cache)",
+      "(cd project && /usr/bin/python3 scripts/code_index.py find 'engine rotation' --limit 2 --no-cache --json)",
+      "(cd project && /usr/bin/python3 scripts/code_index.py find makeEngine --no-cache --json)"
+    ],
+    "oracle_tests": [
+      "tests/test_code_index.py::CodeIndexTests::test_find_ranks_definitions_methods_and_lines",
+      "tests/test_code_index.py::CodeIndexTests::test_identifiers_split_into_stemmed_words_and_rare_words_weigh_more"
+    ],
+    "can_host": [
+      "B1",
+      "B2",
+      "B4",
+      "B5",
+      "B6",
+      "B7"
+    ],
+    "notes": "Indexes text without running the sample application. --no-cache keeps each query independent of host cache state."
+  },
+  {
+    "id": "trace-symbol-callers",
+    "goal": "You are preparing to change a shared helper and an engine method and want to find their callers. The Python project and OAW are already present; use code_index.py callers with a dotted helper name and a method name, then inspect the JSON results.",
+    "setup": [
+      "export OAW_CONFIG_HOME=\"$PWD/.state/config\"",
+      "export OAW_LAB_HOME=\"$PWD/.state/lab\"",
+      "export XDG_CACHE_HOME=\"$PWD/.state/cache\"",
+      "export XDG_DATA_HOME=\"$PWD/.state/data\"",
+      "export TMPDIR=\"$PWD/.state/tmp\"",
+      "export PYTHONDONTWRITEBYTECODE=1 PYTHONIOENCODING=utf-8 LC_ALL=C.UTF-8",
+      "export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_ALLOW_PROTOCOL=file GIT_TERMINAL_PROMPT=0",
+      "unset OAW_VERDICTS OAW_CODE_INDEX_CACHE AGENT_MEMORY_BASE_DIR",
+      "mkdir -p \"$TMPDIR\"",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py init --target ./project --json",
+      "/usr/bin/python3 - <<'PY'\nfrom pathlib import Path\nfiles = {'project/pkg/__init__.py': 'from .core import Engine\\n', 'project/pkg/util.py': 'RETRY_LIMIT = 3  # attempts before giving up\\n\\n\\ndef helper_func(parts):\\n    \"\"\"Join path parts safely without escaping the root.\"\"\"\\n    return \"/\".join(parts)\\n', 'project/pkg/core.py': 'class Engine:\\n    \"\"\"Drives the rotation of session keys.\"\"\"\\n    def start(self):\\n        # kick off the first rotation\\n        return self.helper()\\n    def helper(self):\\n        return 1\\n\\ndef make_engine():\\n    return Engine()\\n', 'project/pkg/sub/__init__.py': '', 'project/pkg/sub/deep.py': 'from ..util import helper_func as hf\\nfrom .. import core\\n\\ndef go():\\n    hf([\"a\"])\\n    engine = core.Engine()\\n    engine.start()\\n', 'project/app/main.py': 'import pkg.util as u\\nfrom pkg.core import Engine\\n\\ndef run():\\n    u.helper_func([\"b\"])\\n    Engine().start()\\n    return u.RETRY_LIMIT\\n', 'project/tools/runner.py': 'from app.main import run\\n\\ndef cli():\\n    run()\\n'}\nfor name, content in files.items():\n    path = Path(name)\n    path.parent.mkdir(parents=True, exist_ok=True)\n    path.write_text(content, encoding='utf-8')\nPY"
+    ],
+    "commands": [
+      "(cd project && /usr/bin/python3 scripts/code_index.py callers pkg.util.helper_func --no-cache --json)",
+      "(cd project && /usr/bin/python3 scripts/code_index.py callers Engine.start --no-cache)",
+      "(cd project && /usr/bin/python3 scripts/code_index.py callers 'pkg/core.py::Engine::helper' --no-cache --json)"
+    ],
+    "oracle_tests": [
+      "tests/test_code_index.py::CodeIndexTests::test_callers_resolve_aliases_methods_and_instances",
+      "tests/test_code_index.py::CodeIndexTests::test_cli_json_shapes_and_exit_codes"
+    ],
+    "can_host": [
+      "B1",
+      "B2",
+      "B4",
+      "B5",
+      "B6",
+      "B7"
+    ],
+    "notes": "Offline standard-library commands. Uses only this folder for configuration, cache and temporary files; no host agent is launched."
+  },
+  {
+    "id": "follow-import-chain",
+    "goal": "You are learning how a Python command runner reaches the project's core package. The project contains an application, a runner and relative package imports; use code_index.py path with file paths and dotted module names to follow those connections.",
+    "setup": [
+      "export OAW_CONFIG_HOME=\"$PWD/.state/config\"",
+      "export OAW_LAB_HOME=\"$PWD/.state/lab\"",
+      "export XDG_CACHE_HOME=\"$PWD/.state/cache\"",
+      "export XDG_DATA_HOME=\"$PWD/.state/data\"",
+      "export TMPDIR=\"$PWD/.state/tmp\"",
+      "export PYTHONDONTWRITEBYTECODE=1 PYTHONIOENCODING=utf-8 LC_ALL=C.UTF-8",
+      "export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_ALLOW_PROTOCOL=file GIT_TERMINAL_PROMPT=0",
+      "unset OAW_VERDICTS OAW_CODE_INDEX_CACHE AGENT_MEMORY_BASE_DIR",
+      "mkdir -p \"$TMPDIR\"",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py init --target ./project --json",
+      "/usr/bin/python3 - <<'PY'\nfrom pathlib import Path\nfiles = {'project/pkg/__init__.py': 'from .core import Engine\\n', 'project/pkg/util.py': 'RETRY_LIMIT = 3  # attempts before giving up\\n\\n\\ndef helper_func(parts):\\n    \"\"\"Join path parts safely without escaping the root.\"\"\"\\n    return \"/\".join(parts)\\n', 'project/pkg/core.py': 'class Engine:\\n    \"\"\"Drives the rotation of session keys.\"\"\"\\n    def start(self):\\n        # kick off the first rotation\\n        return self.helper()\\n    def helper(self):\\n        return 1\\n\\ndef make_engine():\\n    return Engine()\\n', 'project/pkg/sub/__init__.py': '', 'project/pkg/sub/deep.py': 'from ..util import helper_func as hf\\nfrom .. import core\\n\\ndef go():\\n    hf([\"a\"])\\n    engine = core.Engine()\\n    engine.start()\\n', 'project/app/main.py': 'import pkg.util as u\\nfrom pkg.core import Engine\\n\\ndef run():\\n    u.helper_func([\"b\"])\\n    Engine().start()\\n    return u.RETRY_LIMIT\\n', 'project/tools/runner.py': 'from app.main import run\\n\\ndef cli():\\n    run()\\n'}\nfor name, content in files.items():\n    path = Path(name)\n    path.parent.mkdir(parents=True, exist_ok=True)\n    path.write_text(content, encoding='utf-8')\nPY"
+    ],
+    "commands": [
+      "(cd project && /usr/bin/python3 scripts/code_index.py path tools/runner.py pkg/core.py --no-cache --json)",
+      "(cd project && /usr/bin/python3 scripts/code_index.py path pkg.sub.deep pkg.util --no-cache)",
+      "(cd project && /usr/bin/python3 scripts/code_index.py path pkg/util.py pkg/sub/deep.py --no-cache --json)"
+    ],
+    "oracle_tests": [
+      "tests/test_code_index.py::CodeIndexTests::test_relative_imports_resolve_and_import_path_is_shortest"
+    ],
+    "can_host": [
+      "B1",
+      "B2",
+      "B4",
+      "B5",
+      "B6",
+      "B7"
+    ],
+    "notes": "Offline standard-library commands. Uses only this folder for configuration, cache and temporary files; no host agent is launched."
+  },
+  {
+    "id": "inspect-change-reach",
+    "goal": "You are planning a change to a shared Python module and want a list of nearby files to read. Start with OAW installed in the sample application and use code_index.py affected for the module and for its helper, including a two-hop view.",
+    "setup": [
+      "export OAW_CONFIG_HOME=\"$PWD/.state/config\"",
+      "export OAW_LAB_HOME=\"$PWD/.state/lab\"",
+      "export XDG_CACHE_HOME=\"$PWD/.state/cache\"",
+      "export XDG_DATA_HOME=\"$PWD/.state/data\"",
+      "export TMPDIR=\"$PWD/.state/tmp\"",
+      "export PYTHONDONTWRITEBYTECODE=1 PYTHONIOENCODING=utf-8 LC_ALL=C.UTF-8",
+      "export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_ALLOW_PROTOCOL=file GIT_TERMINAL_PROMPT=0",
+      "unset OAW_VERDICTS OAW_CODE_INDEX_CACHE AGENT_MEMORY_BASE_DIR",
+      "mkdir -p \"$TMPDIR\"",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py init --target ./project --json",
+      "/usr/bin/python3 - <<'PY'\nfrom pathlib import Path\nfiles = {'project/pkg/__init__.py': 'from .core import Engine\\n', 'project/pkg/util.py': 'RETRY_LIMIT = 3  # attempts before giving up\\n\\n\\ndef helper_func(parts):\\n    \"\"\"Join path parts safely without escaping the root.\"\"\"\\n    return \"/\".join(parts)\\n', 'project/pkg/core.py': 'class Engine:\\n    \"\"\"Drives the rotation of session keys.\"\"\"\\n    def start(self):\\n        # kick off the first rotation\\n        return self.helper()\\n    def helper(self):\\n        return 1\\n\\ndef make_engine():\\n    return Engine()\\n', 'project/pkg/sub/__init__.py': '', 'project/pkg/sub/deep.py': 'from ..util import helper_func as hf\\nfrom .. import core\\n\\ndef go():\\n    hf([\"a\"])\\n    engine = core.Engine()\\n    engine.start()\\n', 'project/app/main.py': 'import pkg.util as u\\nfrom pkg.core import Engine\\n\\ndef run():\\n    u.helper_func([\"b\"])\\n    Engine().start()\\n    return u.RETRY_LIMIT\\n', 'project/tools/runner.py': 'from app.main import run\\n\\ndef cli():\\n    run()\\n'}\nfor name, content in files.items():\n    path = Path(name)\n    path.parent.mkdir(parents=True, exist_ok=True)\n    path.write_text(content, encoding='utf-8')\nPY"
+    ],
+    "commands": [
+      "(cd project && /usr/bin/python3 scripts/code_index.py affected pkg/util.py --no-cache --json)",
+      "(cd project && /usr/bin/python3 scripts/code_index.py affected 'pkg/util.py::helper_func' --hops 2 --no-cache --json)",
+      "(cd project && /usr/bin/python3 scripts/code_index.py affected 'pkg/util.py::RETRY_LIMIT' --no-cache)"
+    ],
+    "oracle_tests": [
+      "tests/test_code_index.py::CodeIndexTests::test_affected_lists_importers_and_callers_with_two_hops"
+    ],
+    "can_host": [
+      "B1",
+      "B2",
+      "B4",
+      "B5",
+      "B6",
+      "B7"
+    ],
+    "notes": "Offline standard-library commands. Uses only this folder for configuration, cache and temporary files; no host agent is launched."
+  },
+  {
+    "id": "refresh-code-cache",
+    "goal": "You have been using a cached code index and have just added another function to a project module. Use code_index.py stats and find --frozen to inspect the saved index, then run find and stats normally and repeat the query.",
+    "setup": [
+      "export OAW_CONFIG_HOME=\"$PWD/.state/config\"",
+      "export OAW_LAB_HOME=\"$PWD/.state/lab\"",
+      "export XDG_CACHE_HOME=\"$PWD/.state/cache\"",
+      "export XDG_DATA_HOME=\"$PWD/.state/data\"",
+      "export TMPDIR=\"$PWD/.state/tmp\"",
+      "export PYTHONDONTWRITEBYTECODE=1 PYTHONIOENCODING=utf-8 LC_ALL=C.UTF-8",
+      "export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_ALLOW_PROTOCOL=file GIT_TERMINAL_PROMPT=0",
+      "unset OAW_VERDICTS OAW_CODE_INDEX_CACHE AGENT_MEMORY_BASE_DIR",
+      "mkdir -p \"$TMPDIR\"",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py init --target ./project --json",
+      "/usr/bin/python3 - <<'PY'\nfrom pathlib import Path\nfiles = {'project/pkg/__init__.py': 'from .core import Engine\\n', 'project/pkg/util.py': 'RETRY_LIMIT = 3  # attempts before giving up\\n\\n\\ndef helper_func(parts):\\n    \"\"\"Join path parts safely without escaping the root.\"\"\"\\n    return \"/\".join(parts)\\n', 'project/pkg/core.py': 'class Engine:\\n    \"\"\"Drives the rotation of session keys.\"\"\"\\n    def start(self):\\n        # kick off the first rotation\\n        return self.helper()\\n    def helper(self):\\n        return 1\\n\\ndef make_engine():\\n    return Engine()\\n', 'project/pkg/sub/__init__.py': '', 'project/pkg/sub/deep.py': 'from ..util import helper_func as hf\\nfrom .. import core\\n\\ndef go():\\n    hf([\"a\"])\\n    engine = core.Engine()\\n    engine.start()\\n', 'project/app/main.py': 'import pkg.util as u\\nfrom pkg.core import Engine\\n\\ndef run():\\n    u.helper_func([\"b\"])\\n    Engine().start()\\n    return u.RETRY_LIMIT\\n', 'project/tools/runner.py': 'from app.main import run\\n\\ndef cli():\\n    run()\\n'}\nfor name, content in files.items():\n    path = Path(name)\n    path.parent.mkdir(parents=True, exist_ok=True)\n    path.write_text(content, encoding='utf-8')\nPY",
+      "(cd project && /usr/bin/python3 scripts/code_index.py stats --cache ../.state/code-cache --json)",
+      "/usr/bin/python3 - <<'PY'\nfrom pathlib import Path\np = Path('project/pkg/util.py')\np.write_text(p.read_text(encoding='utf-8') + '\\n\\ndef freshly_added_wombat():\\n    pass\\n', encoding='utf-8')\nPY"
+    ],
+    "commands": [
+      "(cd project && /usr/bin/python3 scripts/code_index.py stats --cache ../.state/code-cache --frozen --json)",
+      "(cd project && /usr/bin/python3 scripts/code_index.py find 'freshly added wombat' --cache ../.state/code-cache --frozen --json)",
+      "(cd project && /usr/bin/python3 scripts/code_index.py find 'freshly added wombat' --cache ../.state/code-cache --json)",
+      "(cd project && /usr/bin/python3 scripts/code_index.py stats --cache ../.state/code-cache --json)",
+      "(cd project && /usr/bin/python3 scripts/code_index.py find 'freshly added wombat' --cache ../.state/code-cache --json)"
+    ],
+    "oracle_tests": [
+      "tests/test_code_index.py::CodeIndexTests::test_cache_records_hashes_and_reindexes_stale_files"
+    ],
+    "can_host": [
+      "B3",
+      "B4",
+      "B5",
+      "B6",
+      "B7",
+      "B8"
+    ],
+    "notes": "Setup intentionally creates a cache before adding a function. Frozen commands may print cache-state information on stderr while returning 0. The explicit cache directory stays inside the working folder."
+  },
+  {
+    "id": "orient-in-typescript",
+    "goal": "You are joining a TypeScript project and want a compact starting map before reading individual files. OAW is installed and the project has a package entry point and a command runner; use code_index.py overview in text and JSON forms.",
+    "setup": [
+      "export OAW_CONFIG_HOME=\"$PWD/.state/config\"",
+      "export OAW_LAB_HOME=\"$PWD/.state/lab\"",
+      "export XDG_CACHE_HOME=\"$PWD/.state/cache\"",
+      "export XDG_DATA_HOME=\"$PWD/.state/data\"",
+      "export TMPDIR=\"$PWD/.state/tmp\"",
+      "export PYTHONDONTWRITEBYTECODE=1 PYTHONIOENCODING=utf-8 LC_ALL=C.UTF-8",
+      "export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_ALLOW_PROTOCOL=file GIT_TERMINAL_PROMPT=0",
+      "unset OAW_VERDICTS OAW_CODE_INDEX_CACHE AGENT_MEMORY_BASE_DIR",
+      "mkdir -p \"$TMPDIR\"",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py init --target ./project --json",
+      "/usr/bin/python3 - <<'PY'\nfrom pathlib import Path\nfiles = {'project/package.json': '{\\n  \"name\": \"sample-app\",\\n  \"main\": \"src/main.js\",\\n  \"bin\": {\"sample\": \"bin/cli.js\"}\\n}\\n', 'project/src/lib.ts': 'export class Emitter {\\n    fire(value: number): void {\\n        console.log(value);\\n    }\\n}\\n', 'project/src/main.ts': 'import {Emitter} from \"./lib\";\\nexport function run() {\\n    const emitter = new Emitter();\\n    emitter.fire(1);\\n}\\nrun();\\n', 'project/bin/cli.js': '#!/usr/bin/env node\\nimport {run} from \"../src/main\";\\nrun();\\n'}\nfor name, content in files.items():\n    path = Path(name)\n    path.parent.mkdir(parents=True, exist_ok=True)\n    path.write_text(content, encoding='utf-8')\nPY"
+    ],
+    "commands": [
+      "(cd project && /usr/bin/python3 scripts/code_index.py overview --no-cache)",
+      "(cd project && /usr/bin/python3 scripts/code_index.py overview --no-cache --json)"
+    ],
+    "oracle_tests": [
+      "tests/test_code_index.py::JavaScriptIndexTests::test_overview_is_one_capped_page_of_pointers"
+    ],
+    "can_host": [
+      "B1",
+      "B2",
+      "B4",
+      "B5",
+      "B6",
+      "B7"
+    ],
+    "notes": "Python scans the TypeScript and JavaScript as text. Node, npm and installed dependencies are not needed."
+  },
+  {
+    "id": "export-dependency-map",
+    "goal": "You want to share a local dependency map of a project containing Python and TypeScript. OAW and the sample source files are present, and an export folder is ready; use code_index.py graph to create HTML, Mermaid and JSON files and inspect a scoped map.",
+    "setup": [
+      "export OAW_CONFIG_HOME=\"$PWD/.state/config\"",
+      "export OAW_LAB_HOME=\"$PWD/.state/lab\"",
+      "export XDG_CACHE_HOME=\"$PWD/.state/cache\"",
+      "export XDG_DATA_HOME=\"$PWD/.state/data\"",
+      "export TMPDIR=\"$PWD/.state/tmp\"",
+      "export PYTHONDONTWRITEBYTECODE=1 PYTHONIOENCODING=utf-8 LC_ALL=C.UTF-8",
+      "export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_ALLOW_PROTOCOL=file GIT_TERMINAL_PROMPT=0",
+      "unset OAW_VERDICTS OAW_CODE_INDEX_CACHE AGENT_MEMORY_BASE_DIR",
+      "mkdir -p \"$TMPDIR\"",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py init --target ./project --json",
+      "/usr/bin/python3 - <<'PY'\nfrom pathlib import Path\nfiles = {'project/pkg/lib.py': 'def ping():\\n    return 1\\n\\ndef loop():\\n    return ping()\\n', 'project/app/main.py': 'from pkg.lib import ping, loop\\ndef run():\\n    ping()\\n    ping()\\n    loop()\\n', 'project/tests/test_main.py': 'from app.main import run\\ndef test_run():\\n    run()\\n', 'project/src/lib.ts': 'export function ping() { return 1; }\\n', 'project/src/main.ts': 'import {ping as p} from \"./lib\";\\np(); p();\\n', 'project/src/nested/orphan.ts': 'export const lone = 1;\\n'}\nfor name, content in files.items():\n    path = Path(name)\n    path.parent.mkdir(parents=True, exist_ok=True)\n    path.write_text(content, encoding='utf-8')\nPY",
+      "mkdir project/exports"
+    ],
+    "commands": [
+      "(cd project && /usr/bin/python3 scripts/code_index.py graph --no-cache --format html --out exports/map.html)",
+      "(cd project && /usr/bin/python3 scripts/code_index.py graph --no-cache --format mermaid --out exports/map.mmd)",
+      "(cd project && /usr/bin/python3 scripts/code_index.py graph --no-cache --format json --out exports/map.json)",
+      "(cd project && /usr/bin/python3 scripts/code_index.py graph --no-cache --format json --scope src)"
+    ],
+    "oracle_tests": [
+      "tests/test_code_index.py::DrawnGraphTests::test_exact_file_graph_reuses_index_and_keeps_tests_and_isolates",
+      "tests/test_code_index.py::DrawnGraphTests::test_cli_formats_stdout_files_errors_and_windows_output"
+    ],
+    "can_host": [
+      "B1",
+      "B2",
+      "B4",
+      "B5",
+      "B6",
+      "B7",
+      "B8"
+    ],
+    "notes": "Exports are generated locally and include an offline HTML drawing. A browser is not opened. Exported files live under project/exports."
+  },
+  {
+    "id": "preview-local-skills",
+    "goal": "You have a local folder of skills and want to see what adding them to your OAW project would involve. Start with OAW installed and the local skill files beside the project, then use oaw.py add without --apply and inspect the existing list.",
+    "setup": [
+      "export OAW_CONFIG_HOME=\"$PWD/.state/config\"",
+      "export OAW_LAB_HOME=\"$PWD/.state/lab\"",
+      "export XDG_CACHE_HOME=\"$PWD/.state/cache\"",
+      "export XDG_DATA_HOME=\"$PWD/.state/data\"",
+      "export TMPDIR=\"$PWD/.state/tmp\"",
+      "export PYTHONDONTWRITEBYTECODE=1 PYTHONIOENCODING=utf-8 LC_ALL=C.UTF-8",
+      "export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_ALLOW_PROTOCOL=file GIT_TERMINAL_PROMPT=0",
+      "unset OAW_VERDICTS OAW_CODE_INDEX_CACHE AGENT_MEMORY_BASE_DIR",
+      "mkdir -p \"$TMPDIR\"",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py init --target ./project --json",
+      "/usr/bin/python3 - <<'PY'\nfrom pathlib import Path\nfiles = {'local-skills/notes/SKILL.md': '---\\nname: notes\\ndescription: Organize project notes into a short reading list.\\n---\\n\\nRead the notes and group them by topic.\\n', 'local-skills/scripty/tool/SKILL.md': '---\\nname: scripty\\ndescription: Summarize a local log file.\\n---\\n\\nRun `python3 scripts/run.py LOG`.\\n', 'local-skills/scripty/tool/scripts/run.py': \"print('Local log summary')\\n\"}\nfor name, content in files.items():\n    path = Path(name)\n    path.parent.mkdir(parents=True, exist_ok=True)\n    path.write_text(content, encoding='utf-8')\nPY"
+    ],
+    "commands": [
+      "/usr/bin/python3 ./oaw/scripts/oaw.py add ./local-skills/notes ./local-skills/scripty --target ./project --json",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py list --target ./project --json"
+    ],
+    "oracle_tests": [
+      "tests/test_user_install.py::UserInstallTests::test_preview_writes_nothing_on_clean_and_installed_projects"
+    ],
+    "can_host": [
+      "B1",
+      "B2",
+      "B4",
+      "B5",
+      "B6",
+      "B7",
+      "B8"
+    ],
+    "notes": "The preview is noninteractive and omits --apply. It returns a question in JSON with status preview and exit 0; no skill or bundled script is run."
+  },
+  {
+    "id": "add-and-remove-skills",
+    "goal": "You are adding two locally stored skills to an OAW project, including one with a bundled script. Use oaw.py add --choice oaw --consent scripts --apply, inspect list, then remove each addition and inspect the installation with doctor.",
+    "setup": [
+      "export OAW_CONFIG_HOME=\"$PWD/.state/config\"",
+      "export OAW_LAB_HOME=\"$PWD/.state/lab\"",
+      "export XDG_CACHE_HOME=\"$PWD/.state/cache\"",
+      "export XDG_DATA_HOME=\"$PWD/.state/data\"",
+      "export TMPDIR=\"$PWD/.state/tmp\"",
+      "export PYTHONDONTWRITEBYTECODE=1 PYTHONIOENCODING=utf-8 LC_ALL=C.UTF-8",
+      "export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_ALLOW_PROTOCOL=file GIT_TERMINAL_PROMPT=0",
+      "unset OAW_VERDICTS OAW_CODE_INDEX_CACHE AGENT_MEMORY_BASE_DIR",
+      "mkdir -p \"$TMPDIR\"",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py init --target ./project --json",
+      "/usr/bin/python3 - <<'PY'\nfrom pathlib import Path\nfiles = {'local-skills/notes/SKILL.md': '---\\nname: notes\\ndescription: Organize project notes into a short reading list.\\n---\\n\\nRead the notes and group them by topic.\\n', 'local-skills/scripty/tool/SKILL.md': '---\\nname: scripty\\ndescription: Summarize a local log file.\\n---\\n\\nRun `python3 scripts/run.py LOG`.\\n', 'local-skills/scripty/tool/scripts/run.py': \"print('Local log summary')\\n\"}\nfor name, content in files.items():\n    path = Path(name)\n    path.parent.mkdir(parents=True, exist_ok=True)\n    path.write_text(content, encoding='utf-8')\nPY"
+    ],
+    "commands": [
+      "/usr/bin/python3 ./oaw/scripts/oaw.py add ./local-skills/notes ./local-skills/scripty --target ./project --choice oaw --consent scripts --apply --json",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py list --target ./project --json",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py remove notes --target ./project --apply --json",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py remove scripty --target ./project --apply --json",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py list --target ./project --json",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py doctor --target ./project --json"
+    ],
+    "oracle_tests": [
+      "tests/test_user_install.py::UserInstallTests::test_choice_oaw_on_clean_project_then_remove_one_restores_exactly"
+    ],
+    "can_host": [
+      "B1",
+      "B2",
+      "B3",
+      "B4",
+      "B5",
+      "B6",
+      "B7",
+      "B8"
+    ],
+    "notes": "All additions come from local folders. Consent permits copying the bundled script; the journey never runs it. The cited oracle also exercises a broader mix of skill parts."
+  },
+  {
+    "id": "manage-only-own-skills",
+    "goal": "You want to use OAW as a manager for your own skills in a project that has no OAW installation. Add the two local skills with oaw.py add --choice only --consent scripts --apply, inspect list and doctor, then remove the additions.",
+    "setup": [
+      "export OAW_CONFIG_HOME=\"$PWD/.state/config\"",
+      "export OAW_LAB_HOME=\"$PWD/.state/lab\"",
+      "export XDG_CACHE_HOME=\"$PWD/.state/cache\"",
+      "export XDG_DATA_HOME=\"$PWD/.state/data\"",
+      "export TMPDIR=\"$PWD/.state/tmp\"",
+      "export PYTHONDONTWRITEBYTECODE=1 PYTHONIOENCODING=utf-8 LC_ALL=C.UTF-8",
+      "export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_ALLOW_PROTOCOL=file GIT_TERMINAL_PROMPT=0",
+      "unset OAW_VERDICTS OAW_CODE_INDEX_CACHE AGENT_MEMORY_BASE_DIR",
+      "mkdir -p \"$TMPDIR\"",
+      "mkdir project",
+      "/usr/bin/python3 - <<'PY'\nfrom pathlib import Path\nfiles = {'local-skills/notes/SKILL.md': '---\\nname: notes\\ndescription: Organize project notes into a short reading list.\\n---\\n\\nRead the notes and group them by topic.\\n', 'local-skills/scripty/tool/SKILL.md': '---\\nname: scripty\\ndescription: Summarize a local log file.\\n---\\n\\nRun `python3 scripts/run.py LOG`.\\n', 'local-skills/scripty/tool/scripts/run.py': \"print('Local log summary')\\n\"}\nfor name, content in files.items():\n    path = Path(name)\n    path.parent.mkdir(parents=True, exist_ok=True)\n    path.write_text(content, encoding='utf-8')\nPY"
+    ],
+    "commands": [
+      "/usr/bin/python3 ./oaw/scripts/oaw.py add ./local-skills/notes ./local-skills/scripty --target ./project --choice only --consent scripts --apply --json",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py list --target ./project --json",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py doctor --target ./project --json",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py remove notes --target ./project --apply --json",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py remove scripty --target ./project --apply --json",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py doctor --target ./project --json"
+    ],
+    "oracle_tests": [
+      "tests/test_user_install.py::UserInstallTests::test_choice_only_on_clean_project_is_manager_only"
+    ],
+    "can_host": [
+      "B1",
+      "B2",
+      "B3",
+      "B4",
+      "B5",
+      "B6",
+      "B7",
+      "B8"
+    ],
+    "notes": "The resulting profile manages local additions. Commands use the source checkout's oaw.py; the project does not need installed helper scripts."
+  },
+  {
+    "id": "remove-bundled-skill",
+    "goal": "You maintain an OAW project and want to remove its bundled code map skill from the installed selection. Preview oaw.py remove oaw-codemap, apply it, then inspect list and doctor.",
+    "setup": [
+      "export OAW_CONFIG_HOME=\"$PWD/.state/config\"",
+      "export OAW_LAB_HOME=\"$PWD/.state/lab\"",
+      "export XDG_CACHE_HOME=\"$PWD/.state/cache\"",
+      "export XDG_DATA_HOME=\"$PWD/.state/data\"",
+      "export TMPDIR=\"$PWD/.state/tmp\"",
+      "export PYTHONDONTWRITEBYTECODE=1 PYTHONIOENCODING=utf-8 LC_ALL=C.UTF-8",
+      "export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_ALLOW_PROTOCOL=file GIT_TERMINAL_PROMPT=0",
+      "unset OAW_VERDICTS OAW_CODE_INDEX_CACHE AGENT_MEMORY_BASE_DIR",
+      "mkdir -p \"$TMPDIR\"",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py init --target ./project --json"
+    ],
+    "commands": [
+      "/usr/bin/python3 ./oaw/scripts/oaw.py remove oaw-codemap --target ./project --json",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py remove oaw-codemap --target ./project --apply --json",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py list --target ./project --json",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py doctor --target ./project --json"
+    ],
+    "oracle_tests": [
+      "tests/test_user_install.py::UserInstallTests::test_builtin_skill_removal_previews_then_applies"
+    ],
+    "can_host": [
+      "B3",
+      "B4",
+      "B5",
+      "B6",
+      "B7",
+      "B8"
+    ],
+    "notes": "Offline standard-library commands. Uses only this folder for configuration, cache and temporary files; no host agent is launched."
+  },
+  {
+    "id": "catalog-local-paper",
+    "goal": "You have a locally saved PDF that you want to register in your project's OAW catalog. The project already has OAW installed; use catalog.py add with the local file URL, then read list, show and plan for the paper.",
+    "setup": [
+      "export OAW_CONFIG_HOME=\"$PWD/.state/config\"",
+      "export OAW_LAB_HOME=\"$PWD/.state/lab\"",
+      "export XDG_CACHE_HOME=\"$PWD/.state/cache\"",
+      "export XDG_DATA_HOME=\"$PWD/.state/data\"",
+      "export TMPDIR=\"$PWD/.state/tmp\"",
+      "export PYTHONDONTWRITEBYTECODE=1 PYTHONIOENCODING=utf-8 LC_ALL=C.UTF-8",
+      "export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_ALLOW_PROTOCOL=file GIT_TERMINAL_PROMPT=0",
+      "unset OAW_VERDICTS OAW_CODE_INDEX_CACHE AGENT_MEMORY_BASE_DIR",
+      "mkdir -p \"$TMPDIR\"",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py init --target ./project --json",
+      "/usr/bin/python3 - <<'PY'\nfrom pathlib import Path\nfiles = {'papers/sleep-notes.pdf': '%PDF-1.4\\n% Offline sample paper\\n%%EOF\\n'}\nfor name, content in files.items():\n    path = Path(name)\n    path.parent.mkdir(parents=True, exist_ok=True)\n    path.write_text(content, encoding='utf-8')\nPY",
+      "paper_url=\"$(/usr/bin/python3 -c 'from pathlib import Path; print(Path(\"papers/sleep-notes.pdf\").resolve().as_uri())')\""
+    ],
+    "commands": [
+      "/usr/bin/python3 ./oaw/scripts/catalog.py add \"$paper_url\" --target ./project --json",
+      "/usr/bin/python3 ./oaw/scripts/catalog.py list --target ./project --json",
+      "/usr/bin/python3 ./oaw/scripts/catalog.py show sleep-notes --target ./project --json",
+      "/usr/bin/python3 ./oaw/scripts/catalog.py plan sleep-notes --target ./project --json"
+    ],
+    "oracle_tests": [
+      "tests/test_catalog.py::CatalogCliTests::test_a_local_pdf_is_sealed_with_metadata_from_the_file_only"
+    ],
+    "can_host": [
+      "B1",
+      "B2",
+      "B4",
+      "B5",
+      "B6",
+      "B7"
+    ],
+    "notes": "Uses a minimal PDF-header fixture, sufficient for catalog's byte-level intake; it is never parsed or rendered. OAW_LAB_HOME is a sibling of project inside this folder. No remote source is used."
+  },
+  {
+    "id": "read-project-progress",
+    "goal": "You are checking the work recorded for an OAW project from the terminal. A progress file lists completed and waiting work, plus a task without a measured percentage; use oaw_status.py in text and JSON forms to read the summary.",
+    "setup": [
+      "export OAW_CONFIG_HOME=\"$PWD/.state/config\"",
+      "export OAW_LAB_HOME=\"$PWD/.state/lab\"",
+      "export XDG_CACHE_HOME=\"$PWD/.state/cache\"",
+      "export XDG_DATA_HOME=\"$PWD/.state/data\"",
+      "export TMPDIR=\"$PWD/.state/tmp\"",
+      "export PYTHONDONTWRITEBYTECODE=1 PYTHONIOENCODING=utf-8 LC_ALL=C.UTF-8",
+      "export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_ALLOW_PROTOCOL=file GIT_TERMINAL_PROMPT=0",
+      "unset OAW_VERDICTS OAW_CODE_INDEX_CACHE AGENT_MEMORY_BASE_DIR",
+      "mkdir -p \"$TMPDIR\"",
+      "/usr/bin/python3 ./oaw/scripts/oaw.py init --target ./project --json",
+      "/usr/bin/python3 - <<'PY'\nfrom pathlib import Path\nfiles = {'project/.oaw/progress.json': '{\\n  \"schema_version\": 1,\\n  \"items\": [\\n    {\\n      \"id\": \"docs\",\\n      \"title\": \"Review project notes\",\\n      \"status\": \"done\",\\n      \"percent\": 100,\\n      \"basis\": \"Reviewed three pages\"\\n    },\\n    {\\n      \"id\": \"release\",\\n      \"title\": \"Publish release\",\\n      \"status\": \"waiting\",\\n      \"percent\": 0,\\n      \"basis\": \"Awaiting maintainer\"\\n    },\\n    {\\n      \"id\": \"research\",\\n      \"title\": \"Read design options\",\\n      \"status\": \"in_progress\",\\n      \"percent\": 40,\\n      \"basis\": \"\"\\n    }\\n  ]\\n}\\n'}\nfor name, content in files.items():\n    path = Path(name)\n    path.parent.mkdir(parents=True, exist_ok=True)\n    path.write_text(content, encoding='utf-8')\nPY"
+    ],
+    "commands": [
+      "/usr/bin/python3 ./oaw/scripts/oaw_status.py --project ./project",
+      "/usr/bin/python3 ./oaw/scripts/oaw_status.py --project ./project --json"
+    ],
+    "oracle_tests": [
+      "tests/test_status.py::StatusTests::test_progress_counts_and_unknown_percent"
+    ],
+    "can_host": [
+      "B1",
+      "B2",
+      "B4",
+      "B5",
+      "B6",
+      "B7"
+    ],
+    "notes": "Reads a fixed local progress record. No running task, scheduler or model is needed; status is advisory project data."
+  }
+]

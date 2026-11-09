@@ -1,0 +1,34 @@
+{
+ "opus": [
+  "record-plan-review",
+  "add-and-remove-skills",
+  "remove-bundled-skill",
+  "annotate-project-topic",
+  "page-memory-recall",
+  "plan-review-effort",
+  "set-design-review",
+  "refresh-code-cache",
+  "trace-symbol-callers",
+  "orient-in-typescript",
+  "catalog-local-paper",
+  "install-claude",
+  "choose-skill-recipe",
+  "find-project-code"
+ ],
+ "codex": [
+  "manage-only-own-skills",
+  "install-minimal",
+  "install-knowledge",
+  "install-both-hosts",
+  "add-project-host",
+  "choose-code-reviewer",
+  "export-dependency-map",
+  "preview-local-skills",
+  "estimate-review-budget",
+  "review-saved-plan",
+  "locate-memory-evidence",
+  "follow-import-chain",
+  "inspect-change-reach",
+  "read-project-progress"
+ ]
+}

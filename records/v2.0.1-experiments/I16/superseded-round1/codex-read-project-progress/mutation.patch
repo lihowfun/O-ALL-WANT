@@ -1,0 +1,11 @@
+--- a/scripts/oaw_status.py
++++ b/scripts/oaw_status.py
+@@ -106,7 +106,7 @@
+         if not isinstance(item, dict):
+             continue
+         percent, basis = item.get("percent"), str(item.get("basis") or "").strip()
+-        known = isinstance(percent, int) and not isinstance(percent, bool) and 0 <= percent <= 100 and basis
++        known = percent is not None and 0 <= percent <= 100 and basis
+         status = item.get("status") if item.get("status") in ICONS else "todo"
+         items.append({"id": item.get("id"), "title": str(item.get("title") or item.get("id") or "?"),
+                       "status": status, "percent": percent if known else None, "basis": basis})

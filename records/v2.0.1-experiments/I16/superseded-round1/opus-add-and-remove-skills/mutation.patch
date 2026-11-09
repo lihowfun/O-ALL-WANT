@@ -1,0 +1,11 @@
+--- a/scripts/user_install.py
++++ b/scripts/user_install.py
+@@ -1333,8 +1333,6 @@
+                         undo.append((backup, _read(target, backup), None))
+                         _write(target, backup, before, mode)
+                         undo.append((relative, before, mode))
+-                    else:
+-                        undo.append((relative, None, None))
+                     if relative in part["writes"]:
+                         data, mode = part["writes"][relative]
+                         _write(target, relative, data, mode)

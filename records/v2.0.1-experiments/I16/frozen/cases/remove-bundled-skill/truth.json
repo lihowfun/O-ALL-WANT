@@ -1,0 +1,15 @@
+{
+  "journey": "remove-bundled-skill",
+  "category": "B3",
+  "severity": "critical",
+  "rubric": "After an oaw.py remove --apply that fails and is rolled back (for example on a read-only skill folder), .oaw/install.lock is left behind, so the same command (and every later init, migrate, add or remove) fails with 'Another operation or stale lock exists' even after the cause is fixed and no other operation is running.",
+  "trigger": "chmod a-w project/.agents/skills/oaw-codemap; python3 ./oaw/scripts/oaw.py remove oaw-codemap --target ./project --apply --json (fails, exit 2, 'Write failed; recoverable backups are under ...'); chmod u+w project/.agents/skills/oaw-codemap; run the same remove --apply again.",
+  "user_impact": "Any handled write failure inside an install operation leaves the project permanently locked: no OAW install, removal or catalog write can run again until the user finds and deletes .oaw/install.lock by hand.",
+  "intended_lookalikes": [
+    "remove without --apply is only a preview and changes nothing.",
+    "The failed --apply exits 2 with 'Write failed; recoverable backups are under .oaw/backups/<id>' even though the rollback restored the skill files; the backup folder stays.",
+    "A process that is killed (SIGKILL) mid-operation leaves a stale install.lock; docs/UPGRADING.md says it needs inspection before removal.",
+    "The text output of remove mixes English and Traditional Chinese lines.",
+    "A successful remove keeps a backup under .oaw/backups and doctor still passes without the codemap skill."
+  ]
+}

@@ -1,0 +1,11 @@
+--- a/scripts/user_install.py
++++ b/scripts/user_install.py
+@@ -1877,7 +1877,7 @@
+                 if item.get("backup") and (backup is None or sha(backup) != item["previous_sha256"]):
+                     conflicts.append({**where, "path": item["path"], "reason": "備份不見或被改過，原本的內容沒辦法還原", "backup": item.get("backup")})
+                     continue
+-                if current_sha == item["sha256"] or (current is None and item["sha256"] is not None):
++                if current_sha == item["sha256"] or (current is not None and item["sha256"] is not None):
+                     action = "restore" if item["previous_sha256"] else ("delete" if current is not None else "gone")
+                 elif item["sha256"] is None and current is None:
+                     action = "restore"

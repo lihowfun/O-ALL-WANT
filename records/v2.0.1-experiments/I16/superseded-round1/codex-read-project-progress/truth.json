@@ -1,0 +1,14 @@
+{
+  "journey": "read-project-progress",
+  "category": "B2",
+  "severity": "major",
+  "rubric": "A single progress item whose percent is the JSON string \"40\" crashes both text and JSON oaw_status commands instead of showing that percentage as unknown and displaying the remaining tasks.",
+  "trigger": "In project/.oaw/progress.json set the research item's percent to the string \"40\" and give it a nonempty basis, then run oaw/scripts/oaw_status.py --project ./project with and without --json.",
+  "user_impact": "One malformed percentage prevents users from reading any task counts, valid task progress, or other status information from the terminal. The clean tool tolerates the unexpected type by displaying that percentage as unknown.",
+  "intended_lookalikes": [
+    "A percentage without a nonempty basis is shown as unknown even when its numeric value is valid.",
+    "Out-of-range percentages are shown as unknown rather than clamped to 0 or 100.",
+    "A missing or unreadable progress file is reported as missing or invalid; the status tool does not repair it.",
+    "Unknown task statuses are displayed as todo."
+  ]
+}

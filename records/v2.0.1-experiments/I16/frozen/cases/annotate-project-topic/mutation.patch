@@ -1,0 +1,11 @@
+--- a/scripts/context_hub.py
++++ b/scripts/context_hub.py
+@@ -902,7 +902,7 @@
+     elif args.command == "get":
+         return get(args.topic)
+     elif args.command == "annotate":
+-        return annotate(args.topic, args.note)
++        annotate(args.topic, args.note)
+     elif args.command == "memory":
+         if args.mem_action == "add":
+             memory_add(args.note)

@@ -1,0 +1,19 @@
+--- a/scripts/oaw.py
++++ b/scripts/oaw.py
+@@ -652,12 +652,10 @@
+         descriptor = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+     except FileExistsError as exc:
+         raise InstallError(f"Another operation or stale lock exists: {path}") from exc
+-    try:
+-        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+-            stream.write(f"pid={os.getpid()}\n")
+-        yield
+-    finally:
+-        path.unlink()
++    with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
++        stream.write(f"pid={os.getpid()}\n")
++    yield
++    path.unlink()
+ 
+ 
+ def apply_plan(plan: dict, *, migrate: bool) -> dict:

@@ -1,0 +1,15 @@
+{
+  "journey": "annotate-project-topic",
+  "category": "B6",
+  "severity": "major",
+  "rubric": "context_hub.py annotate on a topic that does not exist prints \"Topic '<name>' not found. Cannot annotate.\" but exits 0 instead of 1 (get on the same missing topic exits 1).",
+  "trigger": "(cd project && python3 scripts/context_hub.py annotate Topik 'Second observation.'; echo $?) — a misspelled or wrong-case topic name.",
+  "user_impact": "Scripts and agents that check the exit status believe the observation was saved when nothing was written, so notes are silently lost.",
+  "intended_lookalikes": [
+    "The first annotate rewrites the page's existing '## AI Annotations' section into a delimited block (with HTML comment markers) and keeps the team note in it.",
+    "The success line always ends in '...' and shows only the first 60 characters of the note.",
+    "Topic names are case-sensitive file names; 'topic' is a different topic from 'Topic'.",
+    "A note that looks like a credential is refused with exit 1 and nothing is written.",
+    "get prints the raw markdown between '--- CONTENT OF Topic ---' and '--- END OF CONTENT ---' banners."
+  ]
+}

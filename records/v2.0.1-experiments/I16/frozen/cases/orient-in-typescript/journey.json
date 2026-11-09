@@ -1,0 +1,21 @@
+{
+ "id": "orient-in-typescript",
+ "goal": "You are joining a TypeScript project and want a compact starting map before reading individual files. OAW is installed and the project has a package entry point and a command runner; use code_index.py overview in text and JSON forms.",
+ "setup": [
+  "export OAW_CONFIG_HOME=\"$PWD/.state/config\"",
+  "export OAW_LAB_HOME=\"$PWD/.state/lab\"",
+  "export XDG_CACHE_HOME=\"$PWD/.state/cache\"",
+  "export XDG_DATA_HOME=\"$PWD/.state/data\"",
+  "export TMPDIR=\"$PWD/.state/tmp\"",
+  "export PYTHONDONTWRITEBYTECODE=1 PYTHONIOENCODING=utf-8 LC_ALL=C.UTF-8",
+  "export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_ALLOW_PROTOCOL=file GIT_TERMINAL_PROMPT=0",
+  "unset OAW_VERDICTS OAW_CODE_INDEX_CACHE AGENT_MEMORY_BASE_DIR",
+  "mkdir -p \"$TMPDIR\"",
+  "/usr/bin/python3 ./oaw/scripts/oaw.py init --target ./project --json",
+  "/usr/bin/python3 - <<'PY'\nfrom pathlib import Path\nfiles = {'project/package.json': '{\\n  \"name\": \"sample-app\",\\n  \"main\": \"src/main.js\",\\n  \"bin\": {\"sample\": \"bin/cli.js\"}\\n}\\n', 'project/src/lib.ts': 'export class Emitter {\\n    fire(value: number): void {\\n        console.log(value);\\n    }\\n}\\n', 'project/src/main.ts': 'import {Emitter} from \"./lib\";\\nexport function run() {\\n    const emitter = new Emitter();\\n    emitter.fire(1);\\n}\\nrun();\\n', 'project/bin/cli.js': '#!/usr/bin/env node\\nimport {run} from \"../src/main\";\\nrun();\\n'}\nfor name, content in files.items():\n    path = Path(name)\n    path.parent.mkdir(parents=True, exist_ok=True)\n    path.write_text(content, encoding='utf-8')\nPY"
+ ],
+ "commands": [
+  "(cd project && /usr/bin/python3 scripts/code_index.py overview --no-cache)",
+  "(cd project && /usr/bin/python3 scripts/code_index.py overview --no-cache --json)"
+ ]
+}

@@ -1,0 +1,22 @@
+{
+ "id": "remove-bundled-skill",
+ "goal": "You maintain an OAW project and want to remove its bundled code map skill from the installed selection. Preview oaw.py remove oaw-codemap, apply it, then inspect list and doctor.",
+ "setup": [
+  "export OAW_CONFIG_HOME=\"$PWD/.state/config\"",
+  "export OAW_LAB_HOME=\"$PWD/.state/lab\"",
+  "export XDG_CACHE_HOME=\"$PWD/.state/cache\"",
+  "export XDG_DATA_HOME=\"$PWD/.state/data\"",
+  "export TMPDIR=\"$PWD/.state/tmp\"",
+  "export PYTHONDONTWRITEBYTECODE=1 PYTHONIOENCODING=utf-8 LC_ALL=C.UTF-8",
+  "export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_ALLOW_PROTOCOL=file GIT_TERMINAL_PROMPT=0",
+  "unset OAW_VERDICTS OAW_CODE_INDEX_CACHE AGENT_MEMORY_BASE_DIR",
+  "mkdir -p \"$TMPDIR\"",
+  "/usr/bin/python3 ./oaw/scripts/oaw.py init --target ./project --json"
+ ],
+ "commands": [
+  "/usr/bin/python3 ./oaw/scripts/oaw.py remove oaw-codemap --target ./project --json",
+  "/usr/bin/python3 ./oaw/scripts/oaw.py remove oaw-codemap --target ./project --apply --json",
+  "/usr/bin/python3 ./oaw/scripts/oaw.py list --target ./project --json",
+  "/usr/bin/python3 ./oaw/scripts/oaw.py doctor --target ./project --json"
+ ]
+}

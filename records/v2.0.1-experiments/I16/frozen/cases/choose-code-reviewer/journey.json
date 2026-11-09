@@ -1,0 +1,26 @@
+{
+ "id": "choose-code-reviewer",
+ "goal": "You maintain an OAW project and want to choose the reviewer family named in its code review instructions. Start with an installed project, use oaw_mode.py second-opinion to select codex and claude in turn, inspect show standard and show deep, then select same.",
+ "setup": [
+  "export OAW_CONFIG_HOME=\"$PWD/.state/config\"",
+  "export OAW_LAB_HOME=\"$PWD/.state/lab\"",
+  "export XDG_CACHE_HOME=\"$PWD/.state/cache\"",
+  "export XDG_DATA_HOME=\"$PWD/.state/data\"",
+  "export TMPDIR=\"$PWD/.state/tmp\"",
+  "export PYTHONDONTWRITEBYTECODE=1 PYTHONIOENCODING=utf-8 LC_ALL=C.UTF-8",
+  "export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_ALLOW_PROTOCOL=file GIT_TERMINAL_PROMPT=0",
+  "unset OAW_VERDICTS OAW_CODE_INDEX_CACHE AGENT_MEMORY_BASE_DIR",
+  "mkdir -p \"$TMPDIR\"",
+  "/usr/bin/python3 ./oaw/scripts/oaw.py init --target ./project --json"
+ ],
+ "commands": [
+  "(cd project && /usr/bin/python3 scripts/oaw_mode.py second-opinion codex --json)",
+  "(cd project && /usr/bin/python3 scripts/oaw_mode.py show standard --json)",
+  "(cd project && /usr/bin/python3 scripts/oaw_mode.py egm off --json)",
+  "(cd project && /usr/bin/python3 scripts/oaw_mode.py show deep --json)",
+  "(cd project && /usr/bin/python3 scripts/oaw_mode.py egm auto --json)",
+  "(cd project && /usr/bin/python3 scripts/oaw_mode.py second-opinion claude --json)",
+  "(cd project && /usr/bin/python3 scripts/oaw_mode.py show deep --json)",
+  "(cd project && /usr/bin/python3 scripts/oaw_mode.py second-opinion same --json)"
+ ]
+}

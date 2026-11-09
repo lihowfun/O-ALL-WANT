@@ -1,0 +1,15 @@
+{
+  "journey": "find-project-code",
+  "category": "B1",
+  "severity": "major",
+  "rubric": "After emoji (or any non-ASCII text) are added to a function's docstring, code_index.py find no longer matches that docstring's English words: 'join path parts safely' stops ranking pkg/util.py helper_func first (score drops from about 21 to under 3 and other files outrank it).",
+  "trigger": "Append 1,000 emoji to the helper_func docstring in project/pkg/util.py (\"\"\"Join path parts safely without escaping the root. 😀😀…\"\"\"), then run (cd project && python3 scripts/code_index.py find 'join path parts safely' --no-cache [--json]).",
+  "user_impact": "Any docstring, comment or string that contains a single emoji, accented letter or CJK character silently drops out of word search, so find points users at unrelated files instead of the code they described.",
+  "intended_lookalikes": [
+    "Emoji themselves are never index terms, so a query made only of emoji finds nothing; only CJK characters are indexed as bigrams.",
+    "The text form shortens a long source line to 110 characters ending in '...'.",
+    "Scores and the lower-ranked results (OAW's own scripts under project/scripts) differ slightly between runs on different trees; only the ranking of the described file matters.",
+    "find 'engine rotation' and makeEngine rank pkg/core.py through identifiers and the synonym list even though the words do not appear literally.",
+    "Files over 1 MB are skipped by design."
+  ]
+}

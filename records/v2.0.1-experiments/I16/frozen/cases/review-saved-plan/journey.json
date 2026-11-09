@@ -1,0 +1,21 @@
+{
+ "id": "review-saved-plan",
+ "goal": "You are drafting a plan in a project folder that does not use Git yet. OAW is already installed and the plan is saved under docs/plans; use oaw_mode.py suggest --plan on its own and alongside a planned workflow path to read the recommended steps.",
+ "setup": [
+  "export OAW_CONFIG_HOME=\"$PWD/.state/config\"",
+  "export OAW_LAB_HOME=\"$PWD/.state/lab\"",
+  "export XDG_CACHE_HOME=\"$PWD/.state/cache\"",
+  "export XDG_DATA_HOME=\"$PWD/.state/data\"",
+  "export TMPDIR=\"$PWD/.state/tmp\"",
+  "export PYTHONDONTWRITEBYTECODE=1 PYTHONIOENCODING=utf-8 LC_ALL=C.UTF-8",
+  "export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_ALLOW_PROTOCOL=file GIT_TERMINAL_PROMPT=0",
+  "unset OAW_VERDICTS OAW_CODE_INDEX_CACHE AGENT_MEMORY_BASE_DIR",
+  "mkdir -p \"$TMPDIR\"",
+  "/usr/bin/python3 ./oaw/scripts/oaw.py init --target ./project --json",
+  "/usr/bin/python3 - <<'PY'\nfrom pathlib import Path\nfiles = {'project/docs/plans/cache.md': '# Cache plan\\n\\nUse a small local cache for reports.\\n'}\nfor name, content in files.items():\n    path = Path(name)\n    path.parent.mkdir(parents=True, exist_ok=True)\n    path.write_text(content, encoding='utf-8')\nPY"
+ ],
+ "commands": [
+  "(cd project && /usr/bin/python3 scripts/oaw_mode.py suggest --plan docs/plans/cache.md --json)",
+  "(cd project && /usr/bin/python3 scripts/oaw_mode.py suggest --paths .github/workflows/ci.yml --plan docs/plans/cache.md --json)"
+ ]
+}

@@ -1,0 +1,22 @@
+{
+ "id": "find-project-code",
+ "goal": "You are new to a Python project and want to locate the code that joins path parts and starts an engine. OAW is installed alongside a small package and application; use code_index.py find with ordinary descriptions and identifiers, and inspect the JSON form.",
+ "setup": [
+  "export OAW_CONFIG_HOME=\"$PWD/.state/config\"",
+  "export OAW_LAB_HOME=\"$PWD/.state/lab\"",
+  "export XDG_CACHE_HOME=\"$PWD/.state/cache\"",
+  "export XDG_DATA_HOME=\"$PWD/.state/data\"",
+  "export TMPDIR=\"$PWD/.state/tmp\"",
+  "export PYTHONDONTWRITEBYTECODE=1 PYTHONIOENCODING=utf-8 LC_ALL=C.UTF-8",
+  "export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_ALLOW_PROTOCOL=file GIT_TERMINAL_PROMPT=0",
+  "unset OAW_VERDICTS OAW_CODE_INDEX_CACHE AGENT_MEMORY_BASE_DIR",
+  "mkdir -p \"$TMPDIR\"",
+  "/usr/bin/python3 ./oaw/scripts/oaw.py init --target ./project --json",
+  "/usr/bin/python3 - <<'PY'\nfrom pathlib import Path\nfiles = {'project/pkg/__init__.py': 'from .core import Engine\\n', 'project/pkg/util.py': 'RETRY_LIMIT = 3  # attempts before giving up\\n\\n\\ndef helper_func(parts):\\n    \"\"\"Join path parts safely without escaping the root.\"\"\"\\n    return \"/\".join(parts)\\n', 'project/pkg/core.py': 'class Engine:\\n    \"\"\"Drives the rotation of session keys.\"\"\"\\n    def start(self):\\n        # kick off the first rotation\\n        return self.helper()\\n    def helper(self):\\n        return 1\\n\\ndef make_engine():\\n    return Engine()\\n', 'project/pkg/sub/__init__.py': '', 'project/pkg/sub/deep.py': 'from ..util import helper_func as hf\\nfrom .. import core\\n\\ndef go():\\n    hf([\"a\"])\\n    engine = core.Engine()\\n    engine.start()\\n', 'project/app/main.py': 'import pkg.util as u\\nfrom pkg.core import Engine\\n\\ndef run():\\n    u.helper_func([\"b\"])\\n    Engine().start()\\n    return u.RETRY_LIMIT\\n', 'project/tools/runner.py': 'from app.main import run\\n\\ndef cli():\\n    run()\\n'}\nfor name, content in files.items():\n    path = Path(name)\n    path.parent.mkdir(parents=True, exist_ok=True)\n    path.write_text(content, encoding='utf-8')\nPY"
+ ],
+ "commands": [
+  "(cd project && /usr/bin/python3 scripts/code_index.py find 'join path parts safely' --no-cache)",
+  "(cd project && /usr/bin/python3 scripts/code_index.py find 'engine rotation' --limit 2 --no-cache --json)",
+  "(cd project && /usr/bin/python3 scripts/code_index.py find makeEngine --no-cache --json)"
+ ]
+}

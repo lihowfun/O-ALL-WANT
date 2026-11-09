@@ -1,0 +1,15 @@
+{
+  "journey": "add-and-remove-skills",
+  "category": "B3",
+  "severity": "critical",
+  "rubric": "When oaw.py add --apply fails midway (e.g. a read-only skill folder for the second source), it reports 'Install failed and was rolled back' but leaves the first skill's new files (e.g. .agents/skills/notes/SKILL.md) in the project with no record, so a retry reports a name conflict with 'the project's own notes' (exit 3) and remove notes says it is not something you added",
+  "trigger": "In the journey setup, mkdir project/.agents/skills/scripty && chmod 555 it; run the journey's add command (fails, exit 2, 'rolled back'); ls project/.agents/skills (notes is still there); chmod 755 and rmdir the folder; run the same add again (exit 3, notes conflict) or oaw.py remove notes --apply (exit 2, not something you added)",
+  "user_impact": "An interrupted install says it was rolled back, but it leaves orphaned skill files the host will load. OAW no longer tracks them, so the user cannot retry the install or remove them with OAW and has to find and delete them by hand.",
+  "intended_lookalikes": [
+    "add without --choice/--consent outside a terminal exits 3 and prints the question with an apply command; nothing is written",
+    "A failed add exits 2 with 'OAW error: Install failed and was rolled back: ...'; the failure itself is expected when a destination is not writable",
+    "A pre-existing empty folder the user created (such as .agents/skills/scripty) is left in place after a rollback",
+    "list shows OAW's built-in skills alongside the user's additions, and the receipt text is in Traditional Chinese",
+    "remove of a skill the user edited since install is 'partial' (exit 3) until --force or --keep"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "journey": "catalog-local-paper",
+  "category": "B1",
+  "severity": "major",
+  "rubric": "catalog.py add of a local PDF whose file name is non-ASCII (e.g. Chinese), given as the percent-encoded file:// URL from Path.as_uri(), fails with 'Cannot read the local PDF: not a file.' (exit 2) and leaves an unsealed entry named from the percent escapes (e.g. e7-9d-a1-..., shown as local/%E7%9D%A1...pdf) in list",
+  "trigger": "Save papers/睡眠筆記.pdf (a %PDF- file), build its URL with Path(...).resolve().as_uri() as the journey does, run catalog.py add \"$url\" --target ./project --json, then catalog.py list",
+  "user_impact": "A user whose papers have Chinese, Japanese, accented or other non-ASCII file names cannot register them from the standard file URL; the catalog keeps a broken, unsealed entry with a mangled name that does not match the file.",
+  "intended_lookalikes": [
+    "A non-ASCII file name gives an ASCII-only food id (the slug keeps only a-z and 0-9, so a Chinese-named paper is named 'food', 'local' or similar); list still shows local/<original name>.pdf",
+    "A local PDF has no title, authors or abstract ('no title: metadata from the file only'); metadata comes from the file only and is not parsed",
+    "The verdict is 'untested' and components are 'none extracted' for a paper in v0",
+    "Sealed bytes live in OAW_LAB_HOME, outside the project",
+    "Adding the same file twice reports it under 'existing' rather than adding a second food"
+  ]
+}

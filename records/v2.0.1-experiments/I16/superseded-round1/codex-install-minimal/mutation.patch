@@ -1,0 +1,11 @@
+--- a/scripts/oaw.py
++++ b/scripts/oaw.py
+@@ -713,7 +713,7 @@
+                 operation, relative = action["action"], action["path"]
+                 destination = joined(target, relative)
+                 check_path(destination, kind="file")
+-                if operation in ("add", "replace"):
++                if operation in ("add", "replace", "preserve-edit"):
+                     atomic_write(destination, plan["package"][relative])
+                     applied.append(action)
+                 elif operation == "retire":

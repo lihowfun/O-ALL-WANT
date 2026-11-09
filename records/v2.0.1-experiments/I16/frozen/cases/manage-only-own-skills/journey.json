@@ -1,0 +1,25 @@
+{
+ "id": "manage-only-own-skills",
+ "goal": "You want to use OAW as a manager for your own skills in a project that has no OAW installation. Add the two local skills with oaw.py add --choice only --consent scripts --apply, inspect list and doctor, then remove the additions.",
+ "setup": [
+  "export OAW_CONFIG_HOME=\"$PWD/.state/config\"",
+  "export OAW_LAB_HOME=\"$PWD/.state/lab\"",
+  "export XDG_CACHE_HOME=\"$PWD/.state/cache\"",
+  "export XDG_DATA_HOME=\"$PWD/.state/data\"",
+  "export TMPDIR=\"$PWD/.state/tmp\"",
+  "export PYTHONDONTWRITEBYTECODE=1 PYTHONIOENCODING=utf-8 LC_ALL=C.UTF-8",
+  "export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_ALLOW_PROTOCOL=file GIT_TERMINAL_PROMPT=0",
+  "unset OAW_VERDICTS OAW_CODE_INDEX_CACHE AGENT_MEMORY_BASE_DIR",
+  "mkdir -p \"$TMPDIR\"",
+  "mkdir project",
+  "/usr/bin/python3 - <<'PY'\nfrom pathlib import Path\nfiles = {'local-skills/notes/SKILL.md': '---\\nname: notes\\ndescription: Organize project notes into a short reading list.\\n---\\n\\nRead the notes and group them by topic.\\n', 'local-skills/scripty/tool/SKILL.md': '---\\nname: scripty\\ndescription: Summarize a local log file.\\n---\\n\\nRun `python3 scripts/run.py LOG`.\\n', 'local-skills/scripty/tool/scripts/run.py': \"print('Local log summary')\\n\"}\nfor name, content in files.items():\n    path = Path(name)\n    path.parent.mkdir(parents=True, exist_ok=True)\n    path.write_text(content, encoding='utf-8')\nPY"
+ ],
+ "commands": [
+  "/usr/bin/python3 ./oaw/scripts/oaw.py add ./local-skills/notes ./local-skills/scripty --target ./project --choice only --consent scripts --apply --json",
+  "/usr/bin/python3 ./oaw/scripts/oaw.py list --target ./project --json",
+  "/usr/bin/python3 ./oaw/scripts/oaw.py doctor --target ./project --json",
+  "/usr/bin/python3 ./oaw/scripts/oaw.py remove notes --target ./project --apply --json",
+  "/usr/bin/python3 ./oaw/scripts/oaw.py remove scripty --target ./project --apply --json",
+  "/usr/bin/python3 ./oaw/scripts/oaw.py doctor --target ./project --json"
+ ]
+}

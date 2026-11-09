@@ -1,0 +1,21 @@
+{
+ "id": "install-knowledge",
+ "goal": "You maintain a project with an existing knowledge index and want OAW's knowledge and improvement tools. Install them with oaw.py init --profile knowledge --with-improve, then inspect the project with doctor.",
+ "setup": [
+  "export OAW_CONFIG_HOME=\"$PWD/.state/config\"",
+  "export OAW_LAB_HOME=\"$PWD/.state/lab\"",
+  "export XDG_CACHE_HOME=\"$PWD/.state/cache\"",
+  "export XDG_DATA_HOME=\"$PWD/.state/data\"",
+  "export TMPDIR=\"$PWD/.state/tmp\"",
+  "export PYTHONDONTWRITEBYTECODE=1 PYTHONIOENCODING=utf-8 LC_ALL=C.UTF-8",
+  "export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_ALLOW_PROTOCOL=file GIT_TERMINAL_PROMPT=0",
+  "unset OAW_VERDICTS OAW_CODE_INDEX_CACHE AGENT_MEMORY_BASE_DIR",
+  "mkdir -p \"$TMPDIR\"",
+  "/usr/bin/python3 - <<'PY'\nfrom pathlib import Path\nfiles = {'project/docs/knowledge/index.md': '# Team knowledge\\n\\nRelease notes live here.\\n'}\nfor name, content in files.items():\n    path = Path(name)\n    path.parent.mkdir(parents=True, exist_ok=True)\n    path.write_text(content, encoding='utf-8')\nPY"
+ ],
+ "commands": [
+  "/usr/bin/python3 ./oaw/scripts/oaw.py init --target ./project --profile knowledge --with-improve --json",
+  "/usr/bin/python3 ./oaw/scripts/oaw.py init --target ./project --json",
+  "/usr/bin/python3 ./oaw/scripts/oaw.py doctor --target ./project --json"
+ ]
+}

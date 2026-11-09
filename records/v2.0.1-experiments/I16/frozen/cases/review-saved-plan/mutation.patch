@@ -1,0 +1,55 @@
+--- a/example/minimal-project/.oaw/install.json
++++ b/example/minimal-project/.oaw/install.json
+@@ -111,7 +111,7 @@
+     "scripts/code_index.py": "3e61e28b70d7dec399ff43e85db0ca4ba665ff7e7710d32b3cc14153e7cb4d29",
+     "scripts/context_hub.py": "1fcc162e3d94792c3c5d173ceebde079ac3e238f9da5efd66978f821af8a1696",
+     "scripts/oaw_common.py": "33063249f7f244778d9caaec70e76d119ce1d4fe117c425db5995c47f48adc2c",
+-    "scripts/oaw_mode.py": "a15747c60736a55cd627c89ae64b1f875daab88bf17b1fb1dc57c80996be8ccb"
++    "scripts/oaw_mode.py": "e2a28c4e4f93c55c8966c24b1c9922bf6c7e1ad1085f9005854e9657c0babdd6"
+   },
+   "pending_conflicts": [],
+   "profile": "minimal",
+--- a/example/minimal-project/scripts/oaw_mode.py
++++ b/example/minimal-project/scripts/oaw_mode.py
+@@ -539,7 +539,7 @@
+     if digest is None:
+         return None
+     return next((r for r in reversed(review_records(root))
+-                 if r.get("target") == target and r.get("sha256") == digest and r.get("status") == "done"
++                 if r.get("target") == target and r.get("status") == "done"
+                  and r.get("how") in (how, "egm")), None)
+ 
+ 
+--- a/example/public-hybrid-demo/.oaw/install.json
++++ b/example/public-hybrid-demo/.oaw/install.json
+@@ -114,7 +114,7 @@
+     "scripts/context_hub.py": "1fcc162e3d94792c3c5d173ceebde079ac3e238f9da5efd66978f821af8a1696",
+     "scripts/improvement.py": "7ec437240dbd621d421413f79c994e754db7b4879af1b98584d5a4149e275420",
+     "scripts/oaw_common.py": "33063249f7f244778d9caaec70e76d119ce1d4fe117c425db5995c47f48adc2c",
+-    "scripts/oaw_mode.py": "a15747c60736a55cd627c89ae64b1f875daab88bf17b1fb1dc57c80996be8ccb",
++    "scripts/oaw_mode.py": "e2a28c4e4f93c55c8966c24b1c9922bf6c7e1ad1085f9005854e9657c0babdd6",
+     "scripts/validate_skills.py": "45f2178aaa962ad789c23590dfda621fcff776d5893040513f33ccb04eaf8e38",
+     "scripts/wiki_sync.py": "0c7aa732c80b7df2d7e8e4839d4a289bec8bb456193536babbcfe7d8fdb0a96d"
+   },
+--- a/example/public-hybrid-demo/scripts/oaw_mode.py
++++ b/example/public-hybrid-demo/scripts/oaw_mode.py
+@@ -539,7 +539,7 @@
+     if digest is None:
+         return None
+     return next((r for r in reversed(review_records(root))
+-                 if r.get("target") == target and r.get("sha256") == digest and r.get("status") == "done"
++                 if r.get("target") == target and r.get("status") == "done"
+                  and r.get("how") in (how, "egm")), None)
+ 
+ 
+--- a/scripts/oaw_mode.py
++++ b/scripts/oaw_mode.py
+@@ -539,7 +539,7 @@
+     if digest is None:
+         return None
+     return next((r for r in reversed(review_records(root))
+-                 if r.get("target") == target and r.get("sha256") == digest and r.get("status") == "done"
++                 if r.get("target") == target and r.get("status") == "done"
+                  and r.get("how") in (how, "egm")), None)
+ 
+ 

@@ -1,0 +1,68 @@
+{
+ "annotate-project-topic": {
+  "author": "opus",
+  "oracle_patched_exit": 1,
+  "oracle_clean_exit": 0,
+  "patched_tail": "Topic 'Topik' not found. Cannot annotate.\nexit status: 0\n",
+  "clean_tail": "Topic 'Topik' not found. Cannot annotate.\nexit status: 1\n"
+ },
+ "find-project-code": {
+  "author": "opus",
+  "oracle_patched_exit": 1,
+  "oracle_clean_exit": 0,
+  "patched_tail": "after emoji: scripts/oaw_common.py 1\n",
+  "clean_tail": "after emoji: pkg/util.py 1\n"
+ },
+ "remove-bundled-skill": {
+  "author": "opus",
+  "oracle_patched_exit": 1,
+  "oracle_clean_exit": 0,
+  "patched_tail": "ed: '/tmp/i16spec-48fwgj8z/tmpzj3xyjj8/.state/tmp/oracle-b3.8nuB9z/project/.agents/skills/oaw-codemap/SKILL.md'\"\n}\nsecond run: exit 2\n{\n  \"status\": \"error\",\n  \"error\": \"Another operation or stale lock exists: /tmp/i16spec-48fwgj8z/tmpzj3xyjj8/.state/tmp/oracle-b3.8nuB9z/project/.oaw/install.lock\"\n}\n",
+  "clean_tail": "3a495\",\n      \"after\": null\n    },\n    {\n      \"path\": \".agents/skills/oaw-codemap/agents/openai.yaml\",\n      \"action\": \"retire\",\n      \"before\": \"20e69f0516980348699981f82fee78dbe4d086f7e3263a8d8e742501196b265f\",\n      \"after\": null\n    }\n  ],\n  \"backup\": \".oaw/backups/20261109T023957Z-57b40cef\"\n}\n"
+ },
+ "estimate-review-budget": {
+  "author": "codex",
+  "oracle_patched_exit": 1,
+  "oracle_clean_exit": 0,
+  "patched_tail": "DEFECT: malformed settings silently replaced by the default budget\n",
+  "clean_tail": "PASS: malformed settings refused; project bytes unchanged\n"
+ },
+ "manage-only-own-skills": {
+  "author": "codex",
+  "oracle_patched_exit": 1,
+  "oracle_clean_exit": 0,
+  "patched_tail": "DEFECT: edited skill deleted without force; its recovery record removed\n",
+  "clean_tail": "PASS: edited skill retained with a partial result and recovery record\n"
+ },
+ "review-saved-plan": {
+  "author": "codex",
+  "oracle_patched_exit": 1,
+  "oracle_clean_exit": 0,
+  "patched_tail": "DEFECT: changed plan reported as reviewed using its old content record\n",
+  "clean_tail": "PASS: changed plan needs review; stored review and plan bytes unchanged\n"
+ },
+ "orient-in-typescript": {
+  "author": "opus pool",
+  "setup": "ok"
+ },
+ "install-claude": {
+  "author": "opus pool",
+  "setup": "ok"
+ },
+ "page-memory-recall": {
+  "author": "opus pool",
+  "setup": "ok"
+ },
+ "choose-code-reviewer": {
+  "author": "codex pool",
+  "setup": "ok"
+ },
+ "export-dependency-map": {
+  "author": "codex pool",
+  "setup": "ok"
+ },
+ "install-knowledge": {
+  "author": "codex pool",
+  "setup": "ok"
+ }
+}

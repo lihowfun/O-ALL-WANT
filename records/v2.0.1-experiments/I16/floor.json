@@ -1,0 +1,11 @@
+{
+ "source": "X2/floor.json (2026-11-08): pooled within-question SD from repeated native and EGM design reviews; borrowed as the minimum floor, calibration can only raise it",
+ "opus": {
+  "detection": 0.13176156917368245,
+  "unsupported": 0.18257418583505536
+ },
+ "codex": {
+  "detection": 0.13176156917368245,
+  "unsupported": 0.6146362971528591
+ }
+}

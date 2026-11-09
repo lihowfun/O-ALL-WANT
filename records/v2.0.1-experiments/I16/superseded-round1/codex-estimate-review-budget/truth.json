@@ -1,0 +1,14 @@
+{
+  "journey": "estimate-review-budget",
+  "category": "B4",
+  "severity": "major",
+  "rubric": "After egm on --max-tokens 1000000, switching egm off and on resets the saved cap to 25000000; egm estimate then incorrectly says the small plan needs no ask-first confirmation.",
+  "trigger": "In project, run egm on --max-tokens 1000000 --json; egm estimate docs/plans/small.md --json; egm off --json; egm on --json; egm estimate docs/plans/small.md --json using scripts/oaw_mode.py.",
+  "user_impact": "Changing the review switch silently discards an independently saved token budget. Later estimates stop flagging reviews that exceed the user's chosen cap.",
+  "intended_lookalikes": [
+    "Estimates are approximate and have a token floor; an empty or small plan can still have a large estimate.",
+    "egm estimate only computes a local estimate and never starts a review or spends model tokens.",
+    "egm off disables EGM execution; it does not prevent inspecting a rough estimate.",
+    "Without an explicitly saved cap, the default is 25000000 tokens."
+  ]
+}

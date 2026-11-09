@@ -1,0 +1,13 @@
+{
+  "journey": "review-saved-plan",
+  "category": "B4",
+  "severity": "major",
+  "rubric": "After reviewed records a completed plan review, editing that plan still leaves suggest --plan reporting it as done for this file content.",
+  "trigger": "Run reviewed docs/plans/cache.md --how fresh-context, edit that plan, then run suggest --plan docs/plans/cache.md in JSON or text form.",
+  "user_impact": "The review status no longer matches the saved plan. Substantial new design changes can skip the required review before implementation.",
+  "intended_lookalikes": [
+    "A saved --plan triggers deep mode even without Git.",
+    "The default auto switch selects a fresh-context review rather than full EGM.",
+    "A done review counts again when the file returns to exactly its reviewed bytes; a cut review never counts."
+  ]
+}

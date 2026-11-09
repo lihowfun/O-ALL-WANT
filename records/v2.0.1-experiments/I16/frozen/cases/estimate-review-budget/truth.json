@@ -1,0 +1,13 @@
+{
+  "journey": "estimate-review-budget",
+  "category": "B2",
+  "severity": "major",
+  "rubric": "egm estimate succeeds on malformed .oaw/settings.json and silently uses the default token cap instead of refusing the unreadable settings.",
+  "trigger": "Set a project token cap, truncate .oaw/settings.json to malformed JSON, then run egm estimate docs/plans/small.md docs/context.md --json.",
+  "user_impact": "The budget command conceals a broken settings file and uses a different budget limit. A user can proceed under the wrong review spending threshold.",
+  "intended_lookalikes": [
+    "Estimates are rough ranges fitted from file sizes, not actual token usage.",
+    "An absent settings file legitimately uses the default 25,000,000-token cap.",
+    "Setting a cap prints instructions only and does not run a model."
+  ]
+}

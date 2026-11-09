@@ -1,0 +1,14 @@
+{
+  "journey": "install-minimal",
+  "category": "B8",
+  "severity": "critical",
+  "rubric": "Repeating init after adding project-specific content to the installed AGENTS.md silently overwrites that content with the framework policy while reporting preserve-edit, with no backup of the lost content.",
+  "trigger": "Run init --target ./project --json, append a unique project policy to project/AGENTS.md, then repeat the same init command and inspect AGENTS.md and .oaw/backups.",
+  "user_impact": "A routine repeat installation permanently removes the user's project-specific policy edits without consent. The successful result claims the edit was preserved, and init creates no recovery backup.",
+  "intended_lookalikes": [
+    "A normal repeat init with no local edits succeeds without changing installed content.",
+    "Doctor may warn about edited managed content while still exiting successfully.",
+    "A pre-existing conflicting policy in a project that OAW has never managed makes init refuse without writing.",
+    "migrate is a preview unless --apply is supplied; acknowledged custom files are project-owned."
+  ]
+}

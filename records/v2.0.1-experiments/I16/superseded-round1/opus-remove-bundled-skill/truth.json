@@ -1,0 +1,16 @@
+{
+  "journey": "remove-bundled-skill",
+  "category": "B6",
+  "severity": "major",
+  "rubric": "oaw.py remove oaw-codemap --apply reports status 'removed' / '完成' with exit 0 even when the user edited its SKILL.md, though the skill is still installed and doctor then reports 'OAW unhealthy ... Migration has unresolved conflicts'. The preview lists no conflicts either",
+  "trigger": "After the journey setup, append a line to project/.agents/skills/oaw-codemap/SKILL.md, then run oaw.py remove oaw-codemap --target ./project --json (conflicts: []) and the same with --apply (exit 0, status removed); ls project/.agents/skills/oaw-codemap still shows SKILL.md; oaw.py doctor fails",
+  "user_impact": "The user is told the built-in skill was removed when it was not. The edited skill keeps loading, the project is left in an unhealthy pending-conflict state, and scripts that trust the exit code carry on as if it worked.",
+  "intended_lookalikes": [
+    "remove without --apply is only a preview (exit 0) and changes nothing",
+    "Removing a built-in skill goes through migrate and writes a backup under .oaw/backups/",
+    "After a successful removal, list no longer shows oaw-codemap and doctor stays healthy; other built-in skills remain",
+    "Running remove oaw-codemap --apply again after it was removed exits 2 with 'is not in this project's OAW recipe'",
+    "remove output lines mix English and Traditional Chinese",
+    "--force/--keep with a built-in skill are refused with exit 2"
+  ]
+}

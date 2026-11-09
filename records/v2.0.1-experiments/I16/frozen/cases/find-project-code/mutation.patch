@@ -1,0 +1,16 @@
+--- a/scripts/code_index.py
++++ b/scripts/code_index.py
+@@ -160,9 +160,10 @@
+ def words(text):
+     """Index terms of free text: identifier parts and CJK character bigrams."""
+     terms = []
+-    for ident in _IDENT.findall(text):
+-        terms.extend(_ident_terms(ident))
+-    if not text.isascii():
++    if text.isascii():
++        for ident in _IDENT.findall(text):
++            terms.extend(_ident_terms(ident))
++    else:
+         for run in _CJK.findall(text):
+             terms.extend([run] if len(run) == 1 else [run[i:i + 2] for i in range(len(run) - 1)])
+     return terms

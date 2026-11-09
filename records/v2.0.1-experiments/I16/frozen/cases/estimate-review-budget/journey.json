@@ -1,0 +1,23 @@
+{
+ "id": "estimate-review-budget",
+ "goal": "You have a saved design plan and a context document and want a rough review budget. Use oaw_mode.py egm estimate first for the plan alone and then with context, set a project token cap with egm --max-tokens, and read the estimate again.",
+ "setup": [
+  "export OAW_CONFIG_HOME=\"$PWD/.state/config\"",
+  "export OAW_LAB_HOME=\"$PWD/.state/lab\"",
+  "export XDG_CACHE_HOME=\"$PWD/.state/cache\"",
+  "export XDG_DATA_HOME=\"$PWD/.state/data\"",
+  "export TMPDIR=\"$PWD/.state/tmp\"",
+  "export PYTHONDONTWRITEBYTECODE=1 PYTHONIOENCODING=utf-8 LC_ALL=C.UTF-8",
+  "export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_ALLOW_PROTOCOL=file GIT_TERMINAL_PROMPT=0",
+  "unset OAW_VERDICTS OAW_CODE_INDEX_CACHE AGENT_MEMORY_BASE_DIR",
+  "mkdir -p \"$TMPDIR\"",
+  "/usr/bin/python3 ./oaw/scripts/oaw.py init --target ./project --json",
+  "/usr/bin/python3 - <<'PY'\nfrom pathlib import Path\nfiles = {'project/docs/plans/small.md': 'x' * 2300, 'project/docs/context.md': 'y' * 105000}\nfor name, content in files.items():\n    path = Path(name)\n    path.parent.mkdir(parents=True, exist_ok=True)\n    path.write_text(content, encoding='utf-8')\nPY"
+ ],
+ "commands": [
+  "(cd project && /usr/bin/python3 scripts/oaw_mode.py egm estimate docs/plans/small.md --json)",
+  "(cd project && /usr/bin/python3 scripts/oaw_mode.py egm estimate docs/plans/small.md docs/context.md --json)",
+  "(cd project && /usr/bin/python3 scripts/oaw_mode.py egm on --max-tokens 900000000 --json)",
+  "(cd project && /usr/bin/python3 scripts/oaw_mode.py egm estimate docs/plans/small.md docs/context.md --json)"
+ ]
+}

@@ -1,0 +1,14 @@
+{
+  "journey": "manage-only-own-skills",
+  "category": "B8",
+  "severity": "critical",
+  "rubric": "Removing an added skill deletes its locally edited SKILL.md and drops the recovery record without --force or any conflict warning.",
+  "trigger": "Add the two local skills with --choice only --consent scripts --apply, edit project/.agents/skills/notes/SKILL.md, then remove notes --apply without --force.",
+  "user_impact": "The user loses custom instructions added after installation. The manager reports successful removal and removes the record rather than preserving the edit for recovery.",
+  "intended_lookalikes": [
+    "Removing an unchanged added skill deletes the files installed for it.",
+    "Normal removal of an edited file should retain it and return partial with exit 3.",
+    "--force explicitly permits replacing or deleting edited files; --keep retains the edits and stops tracking them.",
+    "Manager-only projects do not install the full OAW helper set."
+  ]
+}
