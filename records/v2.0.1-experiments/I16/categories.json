@@ -1,0 +1,23 @@
+{
+ "frozen": "2026-11-09, before any journey inventory, mutation or recipe text exists; Figma PM OS intake unit I16, frozen BASH test from SCREEN_codex.md section 3 pick 2 (Codex's pick stands, MERGE.md)",
+ "target": "OAW's own command-line tools at claude/oaw-2 80bb3fa (scripts/oaw.py and the helper scripts it installs into a project), exercised offline as a user would: no network, no model calls",
+ "bash_test": "12 black-box journeys: 6 with one seeded defect each, 6 clean controls. Arms N (native), D (the recipe's description line only), F (full recipe), same tools and limits, in two cells (Opus 5.5 via claude -p, Codex gpt-6.1-sol via codex exec). Pass only if both grader families find detection better, unsupported findings not worse, zero missed seeded critical defects, and cost upper CI <= 1.5x native",
+ "categories": {
+  "B1": "non-ASCII input: emoji (up to 1,000 of them), CJK, combining marks or right-to-left text in a name, path, title or file content",
+  "B2": "very long, empty or malformed input: a huge argument or file, a blank value, broken JSON or YAML, an unexpected type",
+  "B3": "interrupted or partial operation, then recovery: a step stops midway (a missing file, a killed run, a read-only file) and the next run must recover or report clearly",
+  "B4": "state consistency across commands: what one command writes, another reads differently (list after add or remove, status after a change, a record that disagrees with the files)",
+  "B5": "repeated runs: running the same command twice duplicates, corrupts or wrongly refuses",
+  "B6": "error reporting: a wrong exit code, a silent failure, a success message for a failed step, or a misleading message",
+  "B7": "paths: spaces, relative paths, a different working directory, a symlink, or a file where a folder is expected",
+  "B8": "user data: a user's own file overwritten, deleted or lost without consent"
+ },
+ "seeded_defect_rules": [
+  "one defect per defect journey, critical or major, from a different category where possible; at least four of B1, B2, B3, B4 among the six (the frozen test names emoji, long or malformed input, recovery and state consistency)",
+  "a defect is a small source change to OAW (a patch), observable through the command line on the journey's path or an input variation a careful tester could try",
+  "each defect has a mechanical oracle: an existing OAW regression test, or a new deterministic check, that fails with the patch and passes without it",
+  "no comment, name or message in the patch may hint at the defect",
+  "half the defects are written by an Opus 5.5 session and half by a Codex gpt-6.1-sol session; authors never see the recipe or the arms"
+ ],
+ "report_schema": "bugbash_out/report.json: {\"completed\": bool, \"defects\": [{\"title\": str, \"severity\": \"critical|major|minor\", \"steps\": [shell command, ...], \"expected\": str, \"observed\": str, \"evidence\": str}], \"checked\": [str, ...], \"notes\": str}. The same schema and words are given to every arm; steps must be exact commands a replayer can run from the workspace root"
+}
