@@ -11,6 +11,7 @@ are opt-in. Bundling is distinct from triggering a workflow on an unrelated task
 | oaw-evidence | minimal | Selectively recall or record durable project evidence with source references |
 | oaw-wiki | knowledge profile | Explicit raw-to-wiki rendering and verification |
 | oaw-improve | --with-improve | Propose and evaluate a reusable improvement without automatically applying it |
+| oaw-bugbash | --skills oaw-bugbash (on trial; not default) | Bounded CLI scenarios and reproducible defect evidence; explicit selection keeps it available pending the frozen D29 trial |
 
 Each package uses `<name>/SKILL.md` with name and description frontmatter. The host chooses relevant skills from metadata and reads instructions/resources on demand. OAW has no custom trigger-scanning runtime.
 

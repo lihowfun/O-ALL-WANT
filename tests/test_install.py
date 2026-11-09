@@ -42,7 +42,7 @@ class InstallTests(unittest.TestCase):
             "templates/docs/knowledge/index.md": "# Knowledge index\n",
             "templates/docs/raw/README.md": "# Source notes\n",
         }
-        for name in ("oaw-add", "oaw-codemap", "oaw-evidence", "oaw-review", "oaw-wiki", "oaw-improve"):
+        for name in ("oaw-add", "oaw-bugbash", "oaw-codemap", "oaw-evidence", "oaw-review", "oaw-wiki", "oaw-improve"):
             files[f"templates/.agents/skills/{name}/SKILL.md"] = f"---\nname: {name}\ndescription: Use this workflow when relevant.\n---\n\n# Workflow\n"
         for relative, text in files.items():
             self.write(self.framework, relative, text.encode())
@@ -117,6 +117,26 @@ class InstallTests(unittest.TestCase):
         code, health = self.invoke("doctor")
         self.assertEqual(code, 0, health)
         self.assertTrue(all(c["enabled"] == "UNKNOWN" for c in health["capabilities"]))
+
+    def test_bugbash_is_selectable_for_both_hosts_but_never_a_profile_default(self):
+        for profile in oaw.PROFILES:
+            for with_improve in (False, True):
+                with self.subTest(profile=profile, with_improve=with_improve):
+                    payload = oaw.source_files(profile, with_improve, list(oaw.HOSTS))
+                    self.assertNotIn("oaw-bugbash", oaw.default_skills(profile, with_improve))
+                    self.assertFalse(any("/oaw-bugbash/" in path for path in payload))
+        code, inventory = self.invoke("skills")
+        self.assertEqual(code, 0, inventory)
+        self.assertIn("oaw-bugbash", {row["name"] for row in inventory["available_skills"]})
+        code, result = self.invoke("init", "--host", "both", "--skills", "oaw-bugbash")
+        self.assertEqual(code, 0, result)
+        source = (self.framework / "templates/.agents/skills/oaw-bugbash/SKILL.md").read_bytes()
+        for folder in (".agents", ".claude"):
+            self.assertEqual((self.target / folder / "skills/oaw-bugbash/SKILL.md").read_bytes(), source)
+        manifest = json.loads((self.target / ".oaw/install.json").read_text())
+        self.assertEqual(manifest["skills"], ["oaw-bugbash"])
+        self.assertTrue(manifest["skills_explicit"])
+        self.assertEqual(self.invoke("doctor")[0], 0)
 
     def test_additive_profiles_preserve_domain_content(self):
         self.write(self.target, "docs/knowledge/index.md", b"# My knowledge\n")

@@ -42,7 +42,7 @@ EGM_SKILLS = ("egm-bootstrap", "egm-brainstorm", "egm-draft", "egm-drift-report"
 EGM_ENTRY = re.compile(r"\.(?:agents|claude)/skills/(" + "|".join(EGM_SKILLS) + r")/SKILL\.md")
 # templates/AGENTS.md is the one authored policy source; these lines select its EGM text per recipe.
 POLICY_IF_EGM, POLICY_ELSE, POLICY_END = "<!-- oaw:if egm -->", "<!-- oaw:else -->", "<!-- oaw:end -->"
-BUNDLED_SKILLS = (*EGM_SKILLS, "oaw-add", "oaw-codemap", "oaw-evidence", "oaw-review", "oaw-wiki", "oaw-improve")
+BUNDLED_SKILLS = (*EGM_SKILLS, "oaw-add", "oaw-bugbash", "oaw-codemap", "oaw-evidence", "oaw-review", "oaw-wiki", "oaw-improve")
 ALWAYS_PRESERVE = {"AI_CONTEXT.md", "VERSION.json", "ROADMAP.md", ".agents/memory.md"}
 LEGACY_ADAPTERS = {"GEMINI.md", ".cursorrules", ".windsurfrules", ".github/copilot-instructions.md"}
 
