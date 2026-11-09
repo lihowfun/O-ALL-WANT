@@ -410,3 +410,7 @@ Source: `records/digestion-2026-11-07/validation/RESULT.md`. Implemented by plan
   flagged "EGM as deep default" as the verdict most at risk, and both escalation reviewers advised native until X2.
 - Replaces D33's line that auto takes EGM before X2 reports ("預設先調整最好版本").
 - Where catalog or docs describe EGM's default status, it is "not tested", not "declined".
+- Outcome (2026-11-09, X2 RESULT): both cells keep N; the Codex judge applied the frozen rule and the sensitivity
+  run agrees. Per the X2 PREREG this interim rule becomes the standing rule. Native review already found 47 of 48
+  planted defects (ceiling), every alternative had a clean-case false alarm both graders found, and E cost 27-29x
+  native tokens. This is not a finding about large design documents. EGM stays available through `on`.

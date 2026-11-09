@@ -1,0 +1,1269 @@
+{
+ "primary_cases": 20,
+ "defect_cases": 16,
+ "arms": {
+  "claude:N": {
+   "runs": 20,
+   "tokens_total": {
+    "median": 60598.5,
+    "total": 1235529
+   },
+   "tokens_noncache": {
+    "median": 19184.5,
+    "total": 409437
+   },
+   "seconds": {
+    "median": 64.30000000000001,
+    "total": 1463.1999999999998
+   },
+   "agents": {
+    "median": 0.0,
+    "total": 0
+   },
+   "opus": {
+    "graded_defect": 16,
+    "detection": 0.979,
+    "mention": 1.0,
+    "by_author": {
+     "opus": 0.958,
+     "codex": 1.0
+    },
+    "unsupported_per_report": 0.2,
+    "clean_hard_negatives_violated": 1,
+    "per_case": {
+     "auditlog": 3,
+     "carts": 3,
+     "cron": 3,
+     "digest": 3,
+     "export": 3,
+     "flags": 3,
+     "invites": 3,
+     "invoices": 3,
+     "metering": 3,
+     "migrations": 3,
+     "payouts": 2,
+     "ratelimit": 3,
+     "resets": 3,
+     "search": 3,
+     "uploads": 3,
+     "webhooks": 3
+    }
+   },
+   "codex": {
+    "graded_defect": 16,
+    "detection": 0.979,
+    "mention": 1.0,
+    "by_author": {
+     "opus": 0.958,
+     "codex": 1.0
+    },
+    "unsupported_per_report": 0.2,
+    "clean_hard_negatives_violated": 1,
+    "per_case": {
+     "auditlog": 3,
+     "carts": 3,
+     "cron": 3,
+     "digest": 3,
+     "export": 3,
+     "flags": 3,
+     "invites": 3,
+     "invoices": 3,
+     "metering": 3,
+     "migrations": 3,
+     "payouts": 2,
+     "ratelimit": 3,
+     "resets": 3,
+     "search": 3,
+     "uploads": 3,
+     "webhooks": 3
+    }
+   },
+   "luna": {
+    "graded_defect": 16,
+    "detection": 0.979,
+    "mention": 1.0,
+    "by_author": {
+     "opus": 0.958,
+     "codex": 1.0
+    },
+    "unsupported_per_report": 0.6,
+    "clean_hard_negatives_violated": 0,
+    "per_case": {
+     "auditlog": 3,
+     "carts": 3,
+     "cron": 3,
+     "digest": 3,
+     "export": 3,
+     "flags": 3,
+     "invites": 3,
+     "invoices": 3,
+     "metering": 3,
+     "migrations": 3,
+     "payouts": 2,
+     "ratelimit": 3,
+     "resets": 3,
+     "search": 3,
+     "uploads": 3,
+     "webhooks": 3
+    }
+   },
+   "haiku": {
+    "graded_defect": 16,
+    "detection": 0.979,
+    "mention": 1.0,
+    "by_author": {
+     "opus": 0.958,
+     "codex": 1.0
+    },
+    "unsupported_per_report": 0.25,
+    "clean_hard_negatives_violated": 1,
+    "per_case": {
+     "auditlog": 3,
+     "carts": 3,
+     "cron": 3,
+     "digest": 3,
+     "export": 3,
+     "flags": 3,
+     "invites": 3,
+     "invoices": 3,
+     "metering": 3,
+     "migrations": 3,
+     "payouts": 2,
+     "ratelimit": 3,
+     "resets": 3,
+     "search": 3,
+     "uploads": 3,
+     "webhooks": 3
+    }
+   }
+  },
+  "claude:R": {
+   "runs": 20,
+   "tokens_total": {
+    "median": 62722.5,
+    "total": 1312131
+   },
+   "tokens_noncache": {
+    "median": 20235.5,
+    "total": 460087
+   },
+   "seconds": {
+    "median": 73.5,
+    "total": 1704.6000000000001
+   },
+   "agents": {
+    "median": 0.0,
+    "total": 0
+   },
+   "opus": {
+    "graded_defect": 16,
+    "detection": 1.0,
+    "mention": 1.0,
+    "by_author": {
+     "opus": 1.0,
+     "codex": 1.0
+    },
+    "unsupported_per_report": 0.55,
+    "clean_hard_negatives_violated": 3,
+    "per_case": {
+     "auditlog": 3,
+     "carts": 3,
+     "cron": 3,
+     "digest": 3,
+     "export": 3,
+     "flags": 3,
+     "invites": 3,
+     "invoices": 3,
+     "metering": 3,
+     "migrations": 3,
+     "payouts": 3,
+     "ratelimit": 3,
+     "resets": 3,
+     "search": 3,
+     "uploads": 3,
+     "webhooks": 3
+    }
+   },
+   "codex": {
+    "graded_defect": 16,
+    "detection": 1.0,
+    "mention": 1.0,
+    "by_author": {
+     "opus": 1.0,
+     "codex": 1.0
+    },
+    "unsupported_per_report": 1.7,
+    "clean_hard_negatives_violated": 3,
+    "per_case": {
+     "auditlog": 3,
+     "carts": 3,
+     "cron": 3,
+     "digest": 3,
+     "export": 3,
+     "flags": 3,
+     "invites": 3,
+     "invoices": 3,
+     "metering": 3,
+     "migrations": 3,
+     "payouts": 3,
+     "ratelimit": 3,
+     "resets": 3,
+     "search": 3,
+     "uploads": 3,
+     "webhooks": 3
+    }
+   },
+   "luna": {
+    "graded_defect": 16,
+    "detection": 1.0,
+    "mention": 1.0,
+    "by_author": {
+     "opus": 1.0,
+     "codex": 1.0
+    },
+    "unsupported_per_report": 1.75,
+    "clean_hard_negatives_violated": 1,
+    "per_case": {
+     "auditlog": 3,
+     "carts": 3,
+     "cron": 3,
+     "digest": 3,
+     "export": 3,
+     "flags": 3,
+     "invites": 3,
+     "invoices": 3,
+     "metering": 3,
+     "migrations": 3,
+     "payouts": 3,
+     "ratelimit": 3,
+     "resets": 3,
+     "search": 3,
+     "uploads": 3,
+     "webhooks": 3
+    }
+   },
+   "haiku": {
+    "graded_defect": 16,
+    "detection": 1.0,
+    "mention": 1.0,
+    "by_author": {
+     "opus": 1.0,
+     "codex": 1.0
+    },
+    "unsupported_per_report": 0.45,
+    "clean_hard_negatives_violated": 4,
+    "per_case": {
+     "auditlog": 3,
+     "carts": 3,
+     "cron": 3,
+     "digest": 3,
+     "export": 3,
+     "flags": 3,
+     "invites": 3,
+     "invoices": 3,
+     "metering": 3,
+     "migrations": 3,
+     "payouts": 3,
+     "ratelimit": 3,
+     "resets": 3,
+     "search": 3,
+     "uploads": 3,
+     "webhooks": 3
+    }
+   }
+  },
+  "claude:E": {
+   "runs": 20,
+   "tokens_total": {
+    "median": 1661316.0,
+    "total": 33413778
+   },
+   "tokens_noncache": {
+    "median": 305166.0,
+    "total": 6090170
+   },
+   "seconds": {
+    "median": 751.85,
+    "total": 15629.6
+   },
+   "agents": {
+    "median": 9.0,
+    "total": 182
+   },
+   "e_compliant": 20,
+   "agent_paths": {
+    "claude": 1,
+    "egm-codebase-details": 20,
+    "egm-comprehension": 20,
+    "egm-design": 20,
+    "egm-implementation-readiness": 20,
+    "egm-structural": 20,
+    "egm-style": 40,
+    "egm-zoom-out": 40,
+    "statusline-setup": 1
+   },
+   "opus": {
+    "graded_defect": 16,
+    "detection": 1.0,
+    "mention": 1.0,
+    "by_author": {
+     "opus": 1.0,
+     "codex": 1.0
+    },
+    "unsupported_per_report": 0.45,
+    "clean_hard_negatives_violated": 2,
+    "per_case": {
+     "auditlog": 3,
+     "carts": 3,
+     "cron": 3,
+     "digest": 3,
+     "export": 3,
+     "flags": 3,
+     "invites": 3,
+     "invoices": 3,
+     "metering": 3,
+     "migrations": 3,
+     "payouts": 3,
+     "ratelimit": 3,
+     "resets": 3,
+     "search": 3,
+     "uploads": 3,
+     "webhooks": 3
+    }
+   },
+   "codex": {
+    "graded_defect": 16,
+    "detection": 1.0,
+    "mention": 1.0,
+    "by_author": {
+     "opus": 1.0,
+     "codex": 1.0
+    },
+    "unsupported_per_report": 1.65,
+    "clean_hard_negatives_violated": 2,
+    "per_case": {
+     "auditlog": 3,
+     "carts": 3,
+     "cron": 3,
+     "digest": 3,
+     "export": 3,
+     "flags": 3,
+     "invites": 3,
+     "invoices": 3,
+     "metering": 3,
+     "migrations": 3,
+     "payouts": 3,
+     "ratelimit": 3,
+     "resets": 3,
+     "search": 3,
+     "uploads": 3,
+     "webhooks": 3
+    }
+   },
+   "luna": {
+    "graded_defect": 16,
+    "detection": 1.0,
+    "mention": 1.0,
+    "by_author": {
+     "opus": 1.0,
+     "codex": 1.0
+    },
+    "unsupported_per_report": 0.8,
+    "clean_hard_negatives_violated": 1,
+    "per_case": {
+     "auditlog": 3,
+     "carts": 3,
+     "cron": 3,
+     "digest": 3,
+     "export": 3,
+     "flags": 3,
+     "invites": 3,
+     "invoices": 3,
+     "metering": 3,
+     "migrations": 3,
+     "payouts": 3,
+     "ratelimit": 3,
+     "resets": 3,
+     "search": 3,
+     "uploads": 3,
+     "webhooks": 3
+    }
+   },
+   "haiku": {
+    "graded_defect": 16,
+    "detection": 1.0,
+    "mention": 1.0,
+    "by_author": {
+     "opus": 1.0,
+     "codex": 1.0
+    },
+    "unsupported_per_report": 0.15,
+    "clean_hard_negatives_violated": 1,
+    "per_case": {
+     "auditlog": 3,
+     "carts": 3,
+     "cron": 3,
+     "digest": 3,
+     "export": 3,
+     "flags": 3,
+     "invites": 3,
+     "invoices": 3,
+     "metering": 3,
+     "migrations": 3,
+     "payouts": 3,
+     "ratelimit": 3,
+     "resets": 3,
+     "search": 3,
+     "uploads": 3,
+     "webhooks": 3
+    }
+   }
+  },
+  "codex:N": {
+   "runs": 20,
+   "tokens_total": {
+    "median": 100407.5,
+    "total": 2209117
+   },
+   "tokens_noncache": {
+    "median": 13690.0,
+    "total": 294749
+   },
+   "seconds": {
+    "median": 75.2,
+    "total": 1530.9000000000005
+   },
+   "agents": {
+    "median": 0.0,
+    "total": 0
+   },
+   "opus": {
+    "graded_defect": 16,
+    "detection": 0.979,
+    "mention": 1.0,
+    "by_author": {
+     "opus": 0.958,
+     "codex": 1.0
+    },
+    "unsupported_per_report": 0.05,
+    "clean_hard_negatives_violated": 1,
+    "per_case": {
+     "auditlog": 3,
+     "carts": 3,
+     "cron": 3,
+     "digest": 3,
+     "export": 3,
+     "flags": 3,
+     "invites": 3,
+     "invoices": 3,
+     "metering": 3,
+     "migrations": 3,
+     "payouts": 2,
+     "ratelimit": 3,
+     "resets": 3,
+     "search": 3,
+     "uploads": 3,
+     "webhooks": 3
+    }
+   },
+   "codex": {
+    "graded_defect": 16,
+    "detection": 0.979,
+    "mention": 1.0,
+    "by_author": {
+     "opus": 0.958,
+     "codex": 1.0
+    },
+    "unsupported_per_report": 0.05,
+    "clean_hard_negatives_violated": 1,
+    "per_case": {
+     "auditlog": 3,
+     "carts": 3,
+     "cron": 3,
+     "digest": 3,
+     "export": 3,
+     "flags": 3,
+     "invites": 3,
+     "invoices": 3,
+     "metering": 3,
+     "migrations": 3,
+     "payouts": 2,
+     "ratelimit": 3,
+     "resets": 3,
+     "search": 3,
+     "uploads": 3,
+     "webhooks": 3
+    }
+   },
+   "luna": {
+    "graded_defect": 16,
+    "detection": 0.979,
+    "mention": 1.0,
+    "by_author": {
+     "opus": 0.958,
+     "codex": 1.0
+    },
+    "unsupported_per_report": 0.1,
+    "clean_hard_negatives_violated": 0,
+    "per_case": {
+     "auditlog": 3,
+     "carts": 3,
+     "cron": 3,
+     "digest": 3,
+     "export": 3,
+     "flags": 3,
+     "invites": 3,
+     "invoices": 3,
+     "metering": 3,
+     "migrations": 3,
+     "payouts": 2,
+     "ratelimit": 3,
+     "resets": 3,
+     "search": 3,
+     "uploads": 3,
+     "webhooks": 3
+    }
+   },
+   "haiku": {
+    "graded_defect": 16,
+    "detection": 0.979,
+    "mention": 1.0,
+    "by_author": {
+     "opus": 0.958,
+     "codex": 1.0
+    },
+    "unsupported_per_report": 0.0,
+    "clean_hard_negatives_violated": 0,
+    "per_case": {
+     "auditlog": 3,
+     "carts": 3,
+     "cron": 3,
+     "digest": 3,
+     "export": 3,
+     "flags": 3,
+     "invites": 3,
+     "invoices": 3,
+     "metering": 3,
+     "migrations": 3,
+     "payouts": 2,
+     "ratelimit": 3,
+     "resets": 3,
+     "search": 3,
+     "uploads": 3,
+     "webhooks": 3
+    }
+   }
+  },
+  "codex:R": {
+   "runs": 20,
+   "tokens_total": {
+    "median": 126247.0,
+    "total": 2528195
+   },
+   "tokens_noncache": {
+    "median": 16327.5,
+    "total": 344515
+   },
+   "seconds": {
+    "median": 101.0,
+    "total": 2094.6
+   },
+   "agents": {
+    "median": 0.0,
+    "total": 0
+   },
+   "opus": {
+    "graded_defect": 16,
+    "detection": 1.0,
+    "mention": 1.0,
+    "by_author": {
+     "opus": 1.0,
+     "codex": 1.0
+    },
+    "unsupported_per_report": 0.35,
+    "clean_hard_negatives_violated": 2,
+    "per_case": {
+     "auditlog": 3,
+     "carts": 3,
+     "cron": 3,
+     "digest": 3,
+     "export": 3,
+     "flags": 3,
+     "invites": 3,
+     "invoices": 3,
+     "metering": 3,
+     "migrations": 3,
+     "payouts": 3,
+     "ratelimit": 3,
+     "resets": 3,
+     "search": 3,
+     "uploads": 3,
+     "webhooks": 3
+    }
+   },
+   "codex": {
+    "graded_defect": 16,
+    "detection": 1.0,
+    "mention": 1.0,
+    "by_author": {
+     "opus": 1.0,
+     "codex": 1.0
+    },
+    "unsupported_per_report": 0.3,
+    "clean_hard_negatives_violated": 2,
+    "per_case": {
+     "auditlog": 3,
+     "carts": 3,
+     "cron": 3,
+     "digest": 3,
+     "export": 3,
+     "flags": 3,
+     "invites": 3,
+     "invoices": 3,
+     "metering": 3,
+     "migrations": 3,
+     "payouts": 3,
+     "ratelimit": 3,
+     "resets": 3,
+     "search": 3,
+     "uploads": 3,
+     "webhooks": 3
+    }
+   },
+   "luna": {
+    "graded_defect": 16,
+    "detection": 1.0,
+    "mention": 1.0,
+    "by_author": {
+     "opus": 1.0,
+     "codex": 1.0
+    },
+    "unsupported_per_report": 0.4,
+    "clean_hard_negatives_violated": 0,
+    "per_case": {
+     "auditlog": 3,
+     "carts": 3,
+     "cron": 3,
+     "digest": 3,
+     "export": 3,
+     "flags": 3,
+     "invites": 3,
+     "invoices": 3,
+     "metering": 3,
+     "migrations": 3,
+     "payouts": 3,
+     "ratelimit": 3,
+     "resets": 3,
+     "search": 3,
+     "uploads": 3,
+     "webhooks": 3
+    }
+   },
+   "haiku": {
+    "graded_defect": 16,
+    "detection": 1.0,
+    "mention": 1.0,
+    "by_author": {
+     "opus": 1.0,
+     "codex": 1.0
+    },
+    "unsupported_per_report": 0.1,
+    "clean_hard_negatives_violated": 2,
+    "per_case": {
+     "auditlog": 3,
+     "carts": 3,
+     "cron": 3,
+     "digest": 3,
+     "export": 3,
+     "flags": 3,
+     "invites": 3,
+     "invoices": 3,
+     "metering": 3,
+     "migrations": 3,
+     "payouts": 3,
+     "ratelimit": 3,
+     "resets": 3,
+     "search": 3,
+     "uploads": 3,
+     "webhooks": 3
+    }
+   }
+  },
+  "codex:E": {
+   "runs": 20,
+   "tokens_total": {
+    "median": 2934812.0,
+    "total": 58994320
+   },
+   "tokens_noncache": {
+    "median": 177815.0,
+    "total": 3560080
+   },
+   "seconds": {
+    "median": 536.95,
+    "total": 10757.600000000002
+   },
+   "agents": {
+    "median": 9.0,
+    "total": 182
+   },
+   "e_compliant": 20,
+   "agent_paths": {
+    "/root/codebase": 3,
+    "/root/codebase_details": 11,
+    "/root/comprehension": 20,
+    "/root/critic_design": 13,
+    "/root/critic_structural": 11,
+    "/root/critic_structure": 2,
+    "/root/critic_style": 13,
+    "/root/critic_synthesis": 1,
+    "/root/critic_synthesis/design_critic": 1,
+    "/root/critic_synthesis/structural": 1,
+    "/root/critic_synthesis/style": 1,
+    "/root/design_critic": 5,
+    "/root/design_critique": 1,
+    "/root/feature_style": 6,
+    "/root/implementation": 2,
+    "/root/implementation_codebase": 1,
+    "/root/implementation_readiness": 5,
+    "/root/implementation_style": 9,
+    "/root/initial_zoom": 16,
+    "/root/initial_zoom_out": 4,
+    "/root/intermediate_zoom": 16,
+    "/root/intermediate_zoom_out": 4,
+    "/root/readiness": 10,
+    "/root/readiness_code": 1,
+    "/root/readiness_codebase": 3,
+    "/root/readiness_plan": 2,
+    "/root/readiness_style": 10,
+    "/root/readiness_synthesis": 1,
+    "/root/readiness_synthesis/codebase": 1,
+    "/root/readiness_synthesis/implementation": 1,
+    "/root/readiness_synthesis/style": 1,
+    "/root/structural": 5,
+    "/root/structural_critique": 1
+   },
+   "opus": {
+    "graded_defect": 16,
+    "detection": 0.979,
+    "mention": 1.0,
+    "by_author": {
+     "opus": 0.958,
+     "codex": 1.0
+    },
+    "unsupported_per_report": 0.05,
+    "clean_hard_negatives_violated": 1,
+    "per_case": {
+     "auditlog": 3,
+     "carts": 3,
+     "cron": 3,
+     "digest": 3,
+     "export": 3,
+     "flags": 3,
+     "invites": 3,
+     "invoices": 3,
+     "metering": 3,
+     "migrations": 3,
+     "payouts": 2,
+     "ratelimit": 3,
+     "resets": 3,
+     "search": 3,
+     "uploads": 3,
+     "webhooks": 3
+    }
+   },
+   "codex": {
+    "graded_defect": 16,
+    "detection": 0.979,
+    "mention": 1.0,
+    "by_author": {
+     "opus": 0.958,
+     "codex": 1.0
+    },
+    "unsupported_per_report": 0.05,
+    "clean_hard_negatives_violated": 1,
+    "per_case": {
+     "auditlog": 3,
+     "carts": 3,
+     "cron": 3,
+     "digest": 3,
+     "export": 3,
+     "flags": 3,
+     "invites": 3,
+     "invoices": 3,
+     "metering": 3,
+     "migrations": 3,
+     "payouts": 2,
+     "ratelimit": 3,
+     "resets": 3,
+     "search": 3,
+     "uploads": 3,
+     "webhooks": 3
+    }
+   },
+   "luna": {
+    "graded_defect": 16,
+    "detection": 0.979,
+    "mention": 1.0,
+    "by_author": {
+     "opus": 0.958,
+     "codex": 1.0
+    },
+    "unsupported_per_report": 0.05,
+    "clean_hard_negatives_violated": 0,
+    "per_case": {
+     "auditlog": 3,
+     "carts": 3,
+     "cron": 3,
+     "digest": 3,
+     "export": 3,
+     "flags": 3,
+     "invites": 3,
+     "invoices": 3,
+     "metering": 3,
+     "migrations": 3,
+     "payouts": 2,
+     "ratelimit": 3,
+     "resets": 3,
+     "search": 3,
+     "uploads": 3,
+     "webhooks": 3
+    }
+   },
+   "haiku": {
+    "graded_defect": 16,
+    "detection": 0.979,
+    "mention": 1.0,
+    "by_author": {
+     "opus": 0.958,
+     "codex": 1.0
+    },
+    "unsupported_per_report": 0.0,
+    "clean_hard_negatives_violated": 0,
+    "per_case": {
+     "auditlog": 3,
+     "carts": 3,
+     "cron": 3,
+     "digest": 3,
+     "export": 3,
+     "flags": 3,
+     "invites": 3,
+     "invoices": 3,
+     "metering": 3,
+     "migrations": 3,
+     "payouts": 2,
+     "ratelimit": 3,
+     "resets": 3,
+     "search": 3,
+     "uploads": 3,
+     "webhooks": 3
+    }
+   }
+  }
+ },
+ "descriptive_cases": {
+  "claude:N:events": {
+   "tokens": 50198,
+   "agents": 0,
+   "opus": {
+    "detected": "2/4",
+    "mentioned_only": 2,
+    "unsupported": 0,
+    "hard_negatives_violated": 0
+   },
+   "codex": {
+    "detected": "2/4",
+    "mentioned_only": 2,
+    "unsupported": 0,
+    "hard_negatives_violated": 0
+   },
+   "luna": {
+    "detected": "2/4",
+    "mentioned_only": 2,
+    "unsupported": 0,
+    "hard_negatives_violated": 0
+   },
+   "haiku": {
+    "detected": "2/4",
+    "mentioned_only": 2,
+    "unsupported": 0,
+    "hard_negatives_violated": 0
+   }
+  },
+  "claude:R:events": {
+   "tokens": 52252,
+   "agents": 0,
+   "opus": {
+    "detected": "4/4",
+    "mentioned_only": 0,
+    "unsupported": 0,
+    "hard_negatives_violated": 0
+   },
+   "codex": {
+    "detected": "4/4",
+    "mentioned_only": 0,
+    "unsupported": 0,
+    "hard_negatives_violated": 0
+   },
+   "luna": {
+    "detected": "4/4",
+    "mentioned_only": 0,
+    "unsupported": 4,
+    "hard_negatives_violated": 0
+   },
+   "haiku": {
+    "detected": "4/4",
+    "mentioned_only": 0,
+    "unsupported": 0,
+    "hard_negatives_violated": 0
+   }
+  },
+  "claude:E:events": {
+   "tokens": 1261826,
+   "agents": 9,
+   "opus": {
+    "detected": "4/4",
+    "mentioned_only": 0,
+    "unsupported": 0,
+    "hard_negatives_violated": 0
+   },
+   "codex": {
+    "detected": "4/4",
+    "mentioned_only": 0,
+    "unsupported": 1,
+    "hard_negatives_violated": 0
+   },
+   "luna": {
+    "detected": "4/4",
+    "mentioned_only": 0,
+    "unsupported": 0,
+    "hard_negatives_violated": 0
+   },
+   "haiku": {
+    "detected": "4/4",
+    "mentioned_only": 0,
+    "unsupported": 0,
+    "hard_negatives_violated": 0
+   }
+  },
+  "claude:N:clean": {
+   "tokens": 49256,
+   "agents": 0,
+   "opus": {
+    "detected": "0/0",
+    "mentioned_only": 0,
+    "unsupported": 0,
+    "hard_negatives_violated": 0
+   },
+   "codex": {
+    "detected": "0/0",
+    "mentioned_only": 0,
+    "unsupported": 0,
+    "hard_negatives_violated": 0
+   },
+   "luna": {
+    "detected": "0/0",
+    "mentioned_only": 0,
+    "unsupported": 0,
+    "hard_negatives_violated": 0
+   },
+   "haiku": {
+    "detected": "0/0",
+    "mentioned_only": 0,
+    "unsupported": 0,
+    "hard_negatives_violated": 0
+   }
+  },
+  "claude:R:clean": {
+   "tokens": 54470,
+   "agents": 0,
+   "opus": {
+    "detected": "0/0",
+    "mentioned_only": 0,
+    "unsupported": 0,
+    "hard_negatives_violated": 0
+   },
+   "codex": {
+    "detected": "0/0",
+    "mentioned_only": 0,
+    "unsupported": 1,
+    "hard_negatives_violated": 0
+   },
+   "luna": {
+    "detected": "0/0",
+    "mentioned_only": 0,
+    "unsupported": 2,
+    "hard_negatives_violated": 0
+   },
+   "haiku": {
+    "detected": "0/0",
+    "mentioned_only": 0,
+    "unsupported": 0,
+    "hard_negatives_violated": 0
+   }
+  },
+  "claude:E:clean": {
+   "tokens": 1392303,
+   "agents": 9,
+   "opus": {
+    "detected": "0/0",
+    "mentioned_only": 0,
+    "unsupported": 0,
+    "hard_negatives_violated": 0
+   },
+   "codex": {
+    "detected": "0/0",
+    "mentioned_only": 0,
+    "unsupported": 0,
+    "hard_negatives_violated": 0
+   },
+   "luna": {
+    "detected": "0/0",
+    "mentioned_only": 0,
+    "unsupported": 0,
+    "hard_negatives_violated": 0
+   },
+   "haiku": {
+    "detected": "0/0",
+    "mentioned_only": 0,
+    "unsupported": 0,
+    "hard_negatives_violated": 0
+   }
+  },
+  "codex:N:events": {
+   "tokens": 92150,
+   "agents": 0,
+   "opus": {
+    "detected": "2/4",
+    "mentioned_only": 2,
+    "unsupported": 0,
+    "hard_negatives_violated": 0
+   },
+   "codex": {
+    "detected": "2/4",
+    "mentioned_only": 2,
+    "unsupported": 0,
+    "hard_negatives_violated": 0
+   },
+   "luna": {
+    "detected": "2/4",
+    "mentioned_only": 2,
+    "unsupported": 0,
+    "hard_negatives_violated": 0
+   },
+   "haiku": {
+    "detected": "2/4",
+    "mentioned_only": 2,
+    "unsupported": 0,
+    "hard_negatives_violated": 0
+   }
+  },
+  "codex:R:events": {
+   "tokens": 116272,
+   "agents": 0,
+   "opus": {
+    "detected": "4/4",
+    "mentioned_only": 0,
+    "unsupported": 0,
+    "hard_negatives_violated": 0
+   },
+   "codex": {
+    "detected": "4/4",
+    "mentioned_only": 0,
+    "unsupported": 0,
+    "hard_negatives_violated": 0
+   },
+   "luna": {
+    "detected": "4/4",
+    "mentioned_only": 0,
+    "unsupported": 0,
+    "hard_negatives_violated": 0
+   },
+   "haiku": {
+    "detected": "4/4",
+    "mentioned_only": 0,
+    "unsupported": 0,
+    "hard_negatives_violated": 0
+   }
+  },
+  "codex:E:events": {
+   "tokens": 2375051,
+   "agents": 9,
+   "opus": {
+    "detected": "4/4",
+    "mentioned_only": 0,
+    "unsupported": 0,
+    "hard_negatives_violated": 0
+   },
+   "codex": {
+    "detected": "4/4",
+    "mentioned_only": 0,
+    "unsupported": 0,
+    "hard_negatives_violated": 0
+   },
+   "luna": {
+    "detected": "4/4",
+    "mentioned_only": 0,
+    "unsupported": 0,
+    "hard_negatives_violated": 0
+   },
+   "haiku": {
+    "detected": "4/4",
+    "mentioned_only": 0,
+    "unsupported": 0,
+    "hard_negatives_violated": 0
+   }
+  },
+  "codex:N:clean": {
+   "tokens": 92416,
+   "agents": 0,
+   "opus": {
+    "detected": "0/0",
+    "mentioned_only": 0,
+    "unsupported": 0,
+    "hard_negatives_violated": 0
+   },
+   "codex": {
+    "detected": "0/0",
+    "mentioned_only": 0,
+    "unsupported": 0,
+    "hard_negatives_violated": 0
+   },
+   "luna": {
+    "detected": "0/0",
+    "mentioned_only": 0,
+    "unsupported": 0,
+    "hard_negatives_violated": 0
+   },
+   "haiku": {
+    "detected": "0/0",
+    "mentioned_only": 0,
+    "unsupported": 0,
+    "hard_negatives_violated": 0
+   }
+  },
+  "codex:R:clean": {
+   "tokens": 109609,
+   "agents": 0,
+   "opus": {
+    "detected": "0/0",
+    "mentioned_only": 0,
+    "unsupported": 1,
+    "hard_negatives_violated": 0
+   },
+   "codex": {
+    "detected": "0/0",
+    "mentioned_only": 0,
+    "unsupported": 1,
+    "hard_negatives_violated": 0
+   },
+   "luna": {
+    "detected": "0/0",
+    "mentioned_only": 0,
+    "unsupported": 0,
+    "hard_negatives_violated": 0
+   },
+   "haiku": {
+    "detected": "0/0",
+    "mentioned_only": 0,
+    "unsupported": 0,
+    "hard_negatives_violated": 0
+   }
+  },
+  "codex:E:clean": {
+   "tokens": 2391941,
+   "agents": 9,
+   "opus": {
+    "detected": "0/0",
+    "mentioned_only": 0,
+    "unsupported": 0,
+    "hard_negatives_violated": 0
+   },
+   "codex": {
+    "detected": "0/0",
+    "mentioned_only": 0,
+    "unsupported": 0,
+    "hard_negatives_violated": 0
+   },
+   "luna": {
+    "detected": "0/0",
+    "mentioned_only": 0,
+    "unsupported": 0,
+    "hard_negatives_violated": 0
+   },
+   "haiku": {
+    "detected": "0/0",
+    "mentioned_only": 0,
+    "unsupported": 0,
+    "hard_negatives_violated": 0
+   }
+  }
+ },
+ "agreement": {
+  "opus~codex": {
+   "items": 288,
+   "agreement": 1.0,
+   "kappa": 1.0,
+   "reports": 132,
+   "unsupported_exact": 0.75,
+   "unsupported_mean_abs_diff": 0.379,
+   "unsupported_any_agree": 0.826
+  },
+  "luna~opus": {
+   "items": 288,
+   "agreement": 1.0,
+   "kappa": 1.0,
+   "reports": 132,
+   "unsupported_exact": 0.72,
+   "unsupported_mean_abs_diff": 0.545,
+   "unsupported_any_agree": 0.795
+  },
+  "luna~codex": {
+   "items": 288,
+   "agreement": 1.0,
+   "kappa": 1.0,
+   "reports": 132,
+   "unsupported_exact": 0.621,
+   "unsupported_mean_abs_diff": 0.636,
+   "unsupported_any_agree": 0.727
+  },
+  "haiku~opus": {
+   "items": 288,
+   "agreement": 1.0,
+   "kappa": 1.0,
+   "reports": 132,
+   "unsupported_exact": 0.818,
+   "unsupported_mean_abs_diff": 0.22,
+   "unsupported_any_agree": 0.864
+  },
+  "haiku~codex": {
+   "items": 288,
+   "agreement": 1.0,
+   "kappa": 1.0,
+   "reports": 132,
+   "unsupported_exact": 0.659,
+   "unsupported_mean_abs_diff": 0.538,
+   "unsupported_any_agree": 0.75
+  }
+ },
+ "spend": {
+  "claude": {
+   "at_freeze": 2533567,
+   "calibration": 522781,
+   "main": 38821743,
+   "not_run_deviations": 1702598,
+   "grading_opus": 1282243,
+   "grading_haiku": 2374298,
+   "total": 47237230,
+   "cap": 60000000
+  },
+  "codex": {
+   "calibration": 944117,
+   "main": 68909071,
+   "not_run_deviations": 0,
+   "grading_codex": 2968832,
+   "grading_luna": 2794367,
+   "total": 75616387
+  }
+ }
+}

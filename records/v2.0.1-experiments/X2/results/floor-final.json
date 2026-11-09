@@ -1,0 +1,71 @@
+{
+ "rule": "floor = max(measured pooled within-case SD of N on the calibration cases, borrowed value)",
+ "calibration_cases": [
+  "comments",
+  "loyalty",
+  "shortener"
+ ],
+ "spec_sha256": "0935fd3764e098727d9004df4784940d6b8caa998a52b88c217b286fab761b22",
+ "inputs": {
+  "<runs>/cal-claude/rows.jsonl": "955cf05087c0713b354077e925f37183deedf804fbf58a407c986b3dc19ed3c2",
+  "<runs>/cal-codex/rows.jsonl": "6dd64ee4933290953a250d388ae14c6c6cae67627a066b19a4356656dfbd19d6",
+  "<runs>/grades/cal-grades-opus.jsonl": "c45354d59a93ae023742e08d4334034f31c00733da48235221a73f3b92cbef11",
+  "<runs>/grades/cal-grades-codex.jsonl": "b4fbe5ddcb2910038fc4f52a2b899f3f9a5a9ec46f1f9e7408259a9a9d276b07"
+ },
+ "claude": {
+  "opus": {
+   "detection": 0.13176156917368245,
+   "unsupported": 0.18257418583505536,
+   "measured": {
+    "detection": 0.0,
+    "unsupported": 0.0
+   },
+   "borrowed": {
+    "detection": 0.13176156917368245,
+    "unsupported": 0.18257418583505536
+   },
+   "runs": 9
+  },
+  "codex": {
+   "detection": 0.13176156917368245,
+   "unsupported": 0.6146362971528591,
+   "measured": {
+    "detection": 0.0,
+    "unsupported": 0.4714045207910317
+   },
+   "borrowed": {
+    "detection": 0.13176156917368245,
+    "unsupported": 0.6146362971528591
+   },
+   "runs": 9
+  }
+ },
+ "codex": {
+  "opus": {
+   "detection": 0.13176156917368245,
+   "unsupported": 0.18257418583505536,
+   "measured": {
+    "detection": 0.0,
+    "unsupported": 0.0
+   },
+   "borrowed": {
+    "detection": 0.13176156917368245,
+    "unsupported": 0.18257418583505536
+   },
+   "runs": 9
+  },
+  "codex": {
+   "detection": 0.13176156917368245,
+   "unsupported": 0.6146362971528591,
+   "measured": {
+    "detection": 0.0,
+    "unsupported": 0.0
+   },
+   "borrowed": {
+    "detection": 0.13176156917368245,
+    "unsupported": 0.6146362971528591
+   },
+   "runs": 9
+  }
+ }
+}

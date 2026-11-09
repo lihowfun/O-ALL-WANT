@@ -1,0 +1,267 @@
+{
+ "rule": "Frozen sensitivity: detection floor x1.5; unsupported floor max(1.5 * measured, borrowed); equivalence uses original floors. Full x1.5 unsupported is descriptive only.",
+ "cells": {
+  "claude": {
+   "pick_from_frozen_judge": "N",
+   "arms": {
+    "R": {
+     "opus": {
+      "detection_floor": 0.1976423537605237,
+      "unsupported_floor": 0.18257418583505536,
+      "detection_vs_N": {
+       "point": 0.020833333333333336,
+       "lo": -0.14645109070277693,
+       "hi": 0.1881177573694436,
+       "se": 0.06987712429686843,
+       "floor_applied": true
+      },
+      "unsupported_vs_N": {
+       "point": 0.35,
+       "lo": -0.15,
+       "hi": 0.9,
+       "se": 0.2484392479058009,
+       "floor_applied": false
+      },
+      "superior": false,
+      "noninferior": false
+     },
+     "codex": {
+      "detection_floor": 0.1976423537605237,
+      "unsupported_floor": 0.7071067811865475,
+      "detection_vs_N": {
+       "point": 0.020833333333333336,
+       "lo": -0.14645109070277693,
+       "hi": 0.1881177573694436,
+       "se": 0.06987712429686843,
+       "floor_applied": true
+      },
+      "unsupported_vs_N": {
+       "point": 1.5,
+       "lo": 0.85,
+       "hi": 2.2,
+       "se": 0.31540289278159767,
+       "floor_applied": false
+      },
+      "superior": false,
+      "noninferior": false
+     }
+    },
+    "X": {
+     "opus": {
+      "detection_floor": 0.1976423537605237,
+      "unsupported_floor": 0.18257418583505536,
+      "detection_vs_N": {
+       "point": 0.0,
+       "lo": -0.16728442403611027,
+       "hi": 0.16728442403611027,
+       "se": 0.06987712429686843,
+       "floor_applied": true
+      },
+      "unsupported_vs_N": {
+       "point": -0.15,
+       "lo": -0.45,
+       "hi": 0.1,
+       "se": 0.12904547405856587,
+       "floor_applied": false
+      },
+      "superior": false,
+      "noninferior": true
+     },
+     "codex": {
+      "detection_floor": 0.1976423537605237,
+      "unsupported_floor": 0.7071067811865475,
+      "detection_vs_N": {
+       "point": 0.0,
+       "lo": -0.16728442403611027,
+       "hi": 0.16728442403611027,
+       "se": 0.06987712429686843,
+       "floor_applied": true
+      },
+      "unsupported_vs_N": {
+       "point": -0.15,
+       "lo": -0.6258453802832084,
+       "hi": 0.3258453802832083,
+       "se": 0.22360679774997896,
+       "floor_applied": true
+      },
+      "superior": false,
+      "noninferior": true
+     }
+    },
+    "E": {
+     "opus": {
+      "detection_floor": 0.1976423537605237,
+      "unsupported_floor": 0.18257418583505536,
+      "detection_vs_N": {
+       "point": 0.020833333333333336,
+       "lo": -0.14645109070277693,
+       "hi": 0.1881177573694436,
+       "se": 0.06987712429686843,
+       "floor_applied": true
+      },
+      "unsupported_vs_N": {
+       "point": 0.25,
+       "lo": -0.05,
+       "hi": 0.65,
+       "se": 0.17099677628540252,
+       "floor_applied": false
+      },
+      "superior": false,
+      "noninferior": false
+     },
+     "codex": {
+      "detection_floor": 0.1976423537605237,
+      "unsupported_floor": 0.7071067811865475,
+      "detection_vs_N": {
+       "point": 0.020833333333333336,
+       "lo": -0.14645109070277693,
+       "hi": 0.1881177573694436,
+       "se": 0.06987712429686843,
+       "floor_applied": true
+      },
+      "unsupported_vs_N": {
+       "point": 1.45,
+       "lo": 0.9,
+       "hi": 2.05,
+       "se": 0.2777074619091104,
+       "floor_applied": false
+      },
+      "superior": false,
+      "noninferior": false
+     }
+    }
+   }
+  },
+  "codex": {
+   "pick_from_frozen_judge": "N",
+   "arms": {
+    "R": {
+     "opus": {
+      "detection_floor": 0.1976423537605237,
+      "unsupported_floor": 0.18257418583505536,
+      "detection_vs_N": {
+       "point": 0.020833333333333336,
+       "lo": -0.14645109070277693,
+       "hi": 0.1881177573694436,
+       "se": 0.06987712429686843,
+       "floor_applied": true
+      },
+      "unsupported_vs_N": {
+       "point": 0.3,
+       "lo": 0.05,
+       "hi": 0.6,
+       "se": 0.1254582638768766,
+       "floor_applied": false
+      },
+      "superior": false,
+      "noninferior": false
+     },
+     "codex": {
+      "detection_floor": 0.1976423537605237,
+      "unsupported_floor": 0.6146362971528591,
+      "detection_vs_N": {
+       "point": 0.020833333333333336,
+       "lo": -0.14645109070277693,
+       "hi": 0.1881177573694436,
+       "se": 0.06987712429686843,
+       "floor_applied": true
+      },
+      "unsupported_vs_N": {
+       "point": 0.25,
+       "lo": -0.1636176463529147,
+       "hi": 0.6636176463529146,
+       "se": 0.19436506316150998,
+       "floor_applied": true
+      },
+      "superior": false,
+      "noninferior": false
+     }
+    },
+    "X": {
+     "opus": {
+      "detection_floor": 0.1976423537605237,
+      "unsupported_floor": 0.18257418583505536,
+      "detection_vs_N": {
+       "point": 0.0,
+       "lo": -0.16728442403611027,
+       "hi": 0.16728442403611027,
+       "se": 0.06987712429686843,
+       "floor_applied": true
+      },
+      "unsupported_vs_N": {
+       "point": 0.15,
+       "lo": -0.1,
+       "hi": 0.45,
+       "se": 0.12904547405856587,
+       "floor_applied": false
+      },
+      "superior": false,
+      "noninferior": true
+     },
+     "codex": {
+      "detection_floor": 0.1976423537605237,
+      "unsupported_floor": 0.7071067811865475,
+      "detection_vs_N": {
+       "point": 0.0,
+       "lo": -0.16728442403611027,
+       "hi": 0.16728442403611027,
+       "se": 0.06987712429686843,
+       "floor_applied": true
+      },
+      "unsupported_vs_N": {
+       "point": 0.15,
+       "lo": -0.3258453802832083,
+       "hi": 0.6258453802832084,
+       "se": 0.22360679774997896,
+       "floor_applied": true
+      },
+      "superior": false,
+      "noninferior": false
+     }
+    },
+    "E": {
+     "opus": {
+      "detection_floor": 0.1976423537605237,
+      "unsupported_floor": 0.18257418583505536,
+      "detection_vs_N": {
+       "point": 0.0,
+       "lo": -0.16728442403611027,
+       "hi": 0.16728442403611027,
+       "se": 0.06987712429686843,
+       "floor_applied": true
+      },
+      "unsupported_vs_N": {
+       "point": 0.0,
+       "lo": -0.15,
+       "hi": 0.15,
+       "se": 0.07013800681513555,
+       "floor_applied": false
+      },
+      "superior": false,
+      "noninferior": true
+     },
+     "codex": {
+      "detection_floor": 0.1976423537605237,
+      "unsupported_floor": 0.6146362971528591,
+      "detection_vs_N": {
+       "point": 0.0,
+       "lo": -0.16728442403611027,
+       "hi": 0.16728442403611027,
+       "se": 0.06987712429686843,
+       "floor_applied": true
+      },
+      "unsupported_vs_N": {
+       "point": 0.0,
+       "lo": -0.4136176463529147,
+       "hi": 0.4136176463529147,
+       "se": 0.19436506316150998,
+       "floor_applied": true
+      },
+      "superior": false,
+      "noninferior": true
+     }
+    }
+   }
+  }
+ }
+}

@@ -1,0 +1,89 @@
+{
+ "runs_scanned": 152,
+ "tool_calls": 5760,
+ "names_found": [],
+ "absolute_paths_outside_workspace": [],
+ "ancestor_agents_md_probes": {
+  "runs": 42,
+  "cells": [
+   "cal",
+   "codex"
+  ],
+  "files_present": 0
+ },
+ "parent_directory_commands": [
+  {
+   "run": "codex N-registry",
+   "command": "/bin/bash -lc \"find .. -name AGENTS.md -print; rg --files --hidden -g '\"'!.git/**'\"' -g '\"'!.aws/**'\"' -g '\"'!.codex/**'\"' -g '\"'!.agents/**'\"'; git status --short\"",
+   "sibling_files_listed": [
+    "../E-events/AGENTS.md",
+    "../E-flags/AGENTS.md",
+    "../E-uploads/AGENTS.md"
+   ],
+   "sibling_content_read": false
+  },
+  {
+   "run": "codex R-dashboard",
+   "command": "/bin/bash -lc \"rg --files --hidden -g '\"'!.git/**'\"' && git status --short && for d in .. ../.. ../../..; do if [ -f \\\"\"'$d/AGENTS.md\" ]; then printf '\"'\\\\n%s\\\\n' \\\"\"'$d/AGENTS.md\"; cat \"$d/AGENTS.md\"; fi; done'",
+   "sibling_files_listed": [],
+   "sibling_content_read": false
+  },
+  {
+   "run": "codex R-dashboard",
+   "command": "/bin/bash -lc 'for d in .. ../.. ../../..; do if [ -f \"$d/AGENTS.md\" ]; then printf '\"'\\\\n%s\\\\n' \\\"\"'$d/AGENTS.md\"; cat \"$d/AGENTS.md\"; fi; done'",
+   "sibling_files_listed": [],
+   "sibling_content_read": false
+  },
+  {
+   "run": "codex R-resets",
+   "command": "/bin/bash -lc \"rg --files --hidden -g '\"'!.git/**'\"' -g '\"'!review_out/**'\"' && git status --short && for p in .. ../.. ../../.. ../../../.. ../../../../.. ../../../../../..; do if [ -f \\\"\"'$p/AGENTS.md\" ]; then printf '\"'\\\\n%s/AGENTS.md\\\\n' \\\"\"'$p\"; cat \"$p/AGENTS.md\"; fi; done'",
+   "sibling_files_listed": [],
+   "sibling_content_read": false
+  },
+  {
+   "run": "codex N-sessions",
+   "command": "/bin/bash -lc \"rg --files --hidden -g '\"'!.git/**'\"' -g '\"'!.aws/**'\"' -g '\"'!.codex/**'\"' -g '\"'!.agents/**'\"'; for d in .. ../.. ../../.. ../../../.. ../../../../..; do if [ -f \\\"\"'$d/AGENTS.md\" ]; then printf '\"'\\\\n%s\\\\n' \\\"\"'$d/AGENTS.md\"; cat \"$d/AGENTS.md\"; fi; done'",
+   "sibling_files_listed": [],
+   "sibling_content_read": false
+  },
+  {
+   "run": "codex R-invites",
+   "command": "/bin/bash -lc \"rg --files --hidden -g '\"'!.git/**'\"' -g '\"'!__pycache__/**'\"' && find .. -name AGENTS.md -print\"",
+   "sibling_files_listed": [
+    "../E-carts/AGENTS.md",
+    "../E-clean/AGENTS.md",
+    "../E-invoices/AGENTS.md",
+    "../E-migrations/AGENTS.md",
+    "../E-ratelimit/AGENTS.md",
+    "../E-search/AGENTS.md",
+    "../E-sessions/AGENTS.md",
+    "../E-supplier/AGENTS.md",
+    "../E-webhooks/AGENTS.md"
+   ],
+   "sibling_content_read": false
+  },
+  {
+   "run": "codex N-invites",
+   "command": "/bin/bash -lc 'for p in /AGENTS.md /tmp/AGENTS.md <local>; do if [ -f \"$p\" ]; then printf '\"'%s\\\\n' \\\"\"'$p\"; cat \"$p\"; fi; done\nrg --files -g '\"'AGENTS.md' -g '\"'!node_modules'\"' -g '\"'!vendor'\"' . ..\nnl -ba README.md\nnl -ba docs/design.md\nnl -ba docs/adr-001-invite-token-hashing.md\nnl -ba docs/adr-002-transactional-email-queue.md\nnl -ba src/membership.py\nnl -ba src/roles.py\"",
+   "sibling_files_listed": [
+    "../E-carts/AGENTS.md",
+    "../E-clean/AGENTS.md",
+    "../E-invites/AGENTS.md",
+    "../E-invoices/AGENTS.md",
+    "../E-migrations/AGENTS.md",
+    "../E-ratelimit/AGENTS.md",
+    "../E-search/AGENTS.md",
+    "../E-sessions/AGENTS.md",
+    "../E-supplier/AGENTS.md",
+    "../E-webhooks/AGENTS.md"
+   ],
+   "sibling_content_read": false
+  },
+  {
+   "run": "cal N-loyalty r1",
+   "command": "/bin/bash -lc 'for p in /AGENTS.md /tmp/AGENTS.md <local>; do if [ -f \"$p\" ]; then printf '\"'\\\\n%s\\\\n' \\\"\"'$p\"; cat \"$p\"; fi; done; ls -la; find .. -name AGENTS.md -print; for p in README.md docs/design.md docs/adr-*.md src/*.py; do printf '\"'\\\\n%s\\\\n' \\\"\"'$p\"; nl -ba \"$p\"; done'",
+   "sibling_files_listed": [],
+   "sibling_content_read": false
+  }
+ ]
+}

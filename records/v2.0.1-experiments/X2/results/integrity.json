@@ -1,0 +1,218 @@
+{
+ "problems": [],
+ "commit_checks": {
+  "frozen/spec.json": {
+   "sha256": "0935fd3764e098727d9004df4784940d6b8caa998a52b88c217b286fab761b22",
+   "matches_4d7becb": true
+  },
+  "x2_judge.py": {
+   "sha256": "d3d8edadcd50950311a7c00227a12c7a9f0658892be9a7ed1013e37cc4f5eb72",
+   "matches_4d7becb": true
+  },
+  "x2_calibrate.py": {
+   "sha256": "760d156293b0ac3c855aba3566e26f8333c477eb0e7977c23706933ce33c5be1",
+   "matches_4d7becb": true
+  },
+  "floor.json": {
+   "sha256": "9ef84ead5e258f6d79e1a03b5ed4396f905675a2bb49ed6f6ee3018d4e49d9a5",
+   "matches_4d7becb": true
+  },
+  "PREREG.md": {
+   "sha256": "1618eba0ec37a5e138d4c8dc16e6d0c26aaeeb36ecae53d977fe2cf4fde7cf14",
+   "matches_4d7becb": true
+  },
+  "x2_run.py": {
+   "sha256": "81ba3cfe2c0fa060052ebf77f89679902a4cb5a9e152420b287924ca694c64d2",
+   "matches_4d7becb": true
+  },
+  "x2_grade.py": {
+   "sha256": "d6c5c4856eb47f5f8322b57a9d1817438ce5d56979fa28dfc4be9a1669c2d0f4",
+   "matches_4d7becb": true
+  }
+ },
+ "eval_stats_sha256": "6ad7a60f4f744775cc32c43f95e488a30c46aab22fd1adcb7051e44854659948",
+ "case_checks": {
+  "digest": {
+   "sha256": "4b0ea2489d0e4d781fa5cdcb8dd005c1ccb5c75f402bc40225154ae2f4c9cd72",
+   "matches_spec": true
+  },
+  "export": {
+   "sha256": "6de8e324d8b5826393e0b377db9d9eb5c3844d8de036d61e3cf1e7fb0bc9af62",
+   "matches_spec": true
+  },
+  "flags": {
+   "sha256": "30534d08dc178ac59287169ffbb3ab920496011c55e968a5a58d56a1ba94e681",
+   "matches_spec": true
+  },
+  "invoices": {
+   "sha256": "3b6b8e18f4958e60e7e9d5d12a5a8a0c58ab01bbcae4a99a4c65399dae39d8bf",
+   "matches_spec": true
+  },
+  "ratelimit": {
+   "sha256": "c1e0eb3509e3e4a624b279aa206d561c8150239ca28b7e338769a04f449646dd",
+   "matches_spec": true
+  },
+  "registry": {
+   "sha256": "4d4c9bf18b4bd0d570389693bd27209d5a394fc265bec6efbfbdd566f73b26cc",
+   "matches_spec": true
+  },
+  "search": {
+   "sha256": "c3a1f6ef79bb77e3a77bd6da4e541dab0a82be2922392d49434cd2c9bd40e665",
+   "matches_spec": true
+  },
+  "sessions": {
+   "sha256": "cbfaa98fcfd450696a590017fa34ab1948170533455cd914aac5a9bc261d8555",
+   "matches_spec": true
+  },
+  "supplier": {
+   "sha256": "d3a24c6d688fd514db04d6ee1bcd9f7b7fa0205a7ce2f3f1db645e63773cbd74",
+   "matches_spec": true
+  },
+  "uploads": {
+   "sha256": "997c169c04df742efc8e466300acf4548e9a68a3cb4b8e4278346889192a7a4f",
+   "matches_spec": true
+  },
+  "auditlog": {
+   "sha256": "5dce190a707a9d0d7c0f60273e3870edbce9b11ae07a629a8cc7f64b4d835599",
+   "matches_spec": true
+  },
+  "carts": {
+   "sha256": "4240dad095355b6dc457c297e25ca4836a62dccf18be7a6962ac6af26aa9f2ba",
+   "matches_spec": true
+  },
+  "comments": {
+   "sha256": "b6bf7234b45dff5c0bc821c3d1beb3293aa81c4ef79e0f2fa52717fb5b770176",
+   "matches_spec": true
+  },
+  "cron": {
+   "sha256": "58a6790533c1be8a75ff9688ec6c8ffc41c45bb3f9f2956a37f619fccd4c55c3",
+   "matches_spec": true
+  },
+  "dashboard": {
+   "sha256": "9a588d9de45a27f29f82ec9e45d7c49db4f70a9791b05ff9caa6057446660b3c",
+   "matches_spec": true
+  },
+  "invites": {
+   "sha256": "3a1bf9c34891f11527605cb00112bec7ccb19b2047bce5da460d7a12d52e5ded",
+   "matches_spec": true
+  },
+  "loyalty": {
+   "sha256": "f051a13987c35c40930f346c4bb7a179a20e58d23e0c4ee81570393bd1e4c0ec",
+   "matches_spec": true
+  },
+  "metering": {
+   "sha256": "6160fb95b2bdcdeb7ca7c0e80688e8107e3760e0520dcfa7db579a98a6d6ef9b",
+   "matches_spec": true
+  },
+  "migrations": {
+   "sha256": "3630b975c64ed9999be704fa00b7f81a6d516d17dafac381f145bbf30c9c690a",
+   "matches_spec": true
+  },
+  "payouts": {
+   "sha256": "b451cb84ee045475852e994194f462420a2cd76ecc3f6e9804f5c8f111885478",
+   "matches_spec": true
+  },
+  "resets": {
+   "sha256": "7759f4ee9d27f11cf552a4730fc140dcd45566033a47a42c9632fe21e600a71c",
+   "matches_spec": true
+  },
+  "shortener": {
+   "sha256": "70eeb13734def8218f146f40dc04c17ae6e791a8e4ca294d1aa091584f3b1371",
+   "matches_spec": true
+  },
+  "webhooks": {
+   "sha256": "0f5ce74a2cdc28aacc5d275c3d86ada1ed7c230d39b76022840c341c6af95e2a",
+   "matches_spec": true
+  },
+  "events": {
+   "sha256": "91b92db6e0c9816d3cb05001212a1dcaea8c53d06a358cf137744ea4a4a67897",
+   "matches_spec": true
+  },
+  "clean": {
+   "sha256": "cef8ea5559ed925bf7809b6a54786d9e4ea0a920d9e53cc1068074247e2d8270",
+   "matches_spec": true
+  }
+ },
+ "expected_prompt_sha256": {
+  "N": "8b046ac3cca6bf8399c94584bd2466a5e5e7bf3853e3040dc97a3b3ab9ea20e9",
+  "R": "5691b8fd366f9cb34b48ae6c39ca81306d48b08b1c1399aaccac69b65aeaca7c",
+  "E": "1439332073ffd80ce96b59424d2105e67cb02b1913ee2ea0dce232702d89270b"
+ },
+ "input_files": {
+  "claude-rows.jsonl": {
+   "sha256": "18b2cd5de4f885a8ce2207757e02efb9891970f408b4a34ad45d8e51afeea695",
+   "count": 66,
+   "unique_keys": 66,
+   "complete": true
+  },
+  "codex-rows.jsonl": {
+   "sha256": "1750ff7f5fe3e6dee210703a8078fe63ea7d7f0ccc547b9512dc1791c8fab50a",
+   "count": 66,
+   "unique_keys": 66,
+   "complete": true
+  },
+  "grades/main-grades-opus.jsonl": {
+   "sha256": "47decb86733a81d3cd67651715c0b35e9ef54bced31014975bf41d5b5777c509",
+   "count": 132,
+   "unique_keys": 132,
+   "complete": true
+  },
+  "grades/main-grades-codex.jsonl": {
+   "sha256": "102c37f893db56f5b3769299b0dd027a12944d28789519f0bd5c00499db88777",
+   "count": 132,
+   "unique_keys": 132,
+   "complete": true
+  },
+  "grades/main-grades-luna.jsonl": {
+   "sha256": "1c2208436f8e16341b3b0b2cb6fb91d6a885b1444f3194e1deb9c40353dcac32",
+   "count": 132,
+   "unique_keys": 132,
+   "complete": true
+  },
+  "grades/main-grades-haiku.jsonl": {
+   "sha256": "9a64ba05caa2e05431127778af8101abeac6f34e81ae33827747e4c7f6eeaea3",
+   "count": 132,
+   "unique_keys": 132,
+   "complete": true
+  },
+  "cal-claude/rows.jsonl": {
+   "sha256": "955cf05087c0713b354077e925f37183deedf804fbf58a407c986b3dc19ed3c2",
+   "count": 9,
+   "unique_keys": 9,
+   "complete": true
+  },
+  "cal-codex/rows.jsonl": {
+   "sha256": "6dd64ee4933290953a250d388ae14c6c6cae67627a066b19a4356656dfbd19d6",
+   "count": 9,
+   "unique_keys": 9,
+   "complete": true
+  },
+  "grades/cal-grades-opus.jsonl": {
+   "sha256": "c45354d59a93ae023742e08d4334034f31c00733da48235221a73f3b92cbef11",
+   "count": 18,
+   "unique_keys": 18,
+   "complete": true
+  },
+  "grades/cal-grades-codex.jsonl": {
+   "sha256": "b4fbe5ddcb2910038fc4f52a2b899f3f9a5a9ec46f1f9e7408259a9a9d276b07",
+   "count": 18,
+   "unique_keys": 18,
+   "complete": true
+  }
+ },
+ "main_oaw_hashes": [
+  "0f54ee1cee5a9634d00183d8303697a74618202eeb4830db10556b1f26e592f8"
+ ],
+ "cal_oaw_hashes": [
+  "0f54ee1cee5a9634d00183d8303697a74618202eeb4830db10556b1f26e592f8"
+ ],
+ "status": "passed",
+ "grader_composite": {
+  "expected": "e06a97ae59e355be0bb1978defe787e536377ccb63d0b650b9500bfb1a35eac7",
+  "actual": [
+   "e06a97ae59e355be0bb1978defe787e536377ccb63d0b650b9500bfb1a35eac7"
+  ],
+  "grades_checked": 564,
+  "schema_and_summary_verified": true
+ }
+}

@@ -1,0 +1,9431 @@
+{
+ "scope": "Descriptive only; no effect on judge.json. X is the other cell N; these tables store the directly run arms N/R/E.",
+ "case_scores": [
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "events",
+   "role": "descriptive",
+   "by_family": {
+    "opus": {
+     "planted": 4,
+     "detected": [
+      "C1",
+      "C2"
+     ],
+     "mentioned_only": [
+      "M1",
+      "M2"
+     ],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 4,
+     "detected": [
+      "C1",
+      "C2"
+     ],
+     "mentioned_only": [
+      "M1",
+      "M2"
+     ],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "invoices",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "flags",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "clean",
+   "role": "descriptive",
+   "by_family": {
+    "opus": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "uploads",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "ratelimit",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "registry",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 1,
+     "hard_negatives_violated": [
+      "H2"
+     ],
+     "valid": true
+    },
+    "codex": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 1,
+     "hard_negatives_violated": [
+      "H2"
+     ],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "search",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "digest",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "supplier",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "export",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "sessions",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "payouts",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2"
+     ],
+     "mentioned_only": [
+      "M1"
+     ],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2"
+     ],
+     "mentioned_only": [
+      "M1"
+     ],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "webhooks",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 1,
+     "hard_negatives_violated": [
+      "H1"
+     ],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 1,
+     "hard_negatives_violated": [
+      "H1"
+     ],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "metering",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 2,
+     "hard_negatives_violated": [
+      "H1"
+     ],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 2,
+     "hard_negatives_violated": [
+      "H1"
+     ],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "carts",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "dashboard",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "migrations",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "resets",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "invites",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "cron",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "auditlog",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "events",
+   "role": "descriptive",
+   "by_family": {
+    "opus": {
+     "planted": 4,
+     "detected": [
+      "C1",
+      "C2",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 4,
+     "detected": [
+      "C1",
+      "C2",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "invoices",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 2,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "flags",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 1,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "clean",
+   "role": "descriptive",
+   "by_family": {
+    "opus": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 1,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "uploads",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 1,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 2,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "ratelimit",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 3,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "registry",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 3,
+     "hard_negatives_violated": [
+      "H2",
+      "H4"
+     ],
+     "valid": true
+    },
+    "codex": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 6,
+     "hard_negatives_violated": [
+      "H2",
+      "H4"
+     ],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "search",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 1,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "digest",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "supplier",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 1,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "export",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 1,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 2,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "sessions",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 4,
+     "hard_negatives_violated": [
+      "H4"
+     ],
+     "valid": true
+    },
+    "codex": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 4,
+     "hard_negatives_violated": [
+      "H4"
+     ],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "payouts",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 1,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "webhooks",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 1,
+     "hard_negatives_violated": [
+      "H1"
+     ],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 1,
+     "hard_negatives_violated": [
+      "H1"
+     ],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "metering",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 2,
+     "hard_negatives_violated": [
+      "H1"
+     ],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "carts",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 1,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "dashboard",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 1,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 2,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "migrations",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "resets",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 3,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "invites",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "cron",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 2,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "auditlog",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "events",
+   "role": "descriptive",
+   "by_family": {
+    "opus": {
+     "planted": 4,
+     "detected": [
+      "C1",
+      "C2",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 4,
+     "detected": [
+      "C1",
+      "C2",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 1,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "invoices",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 1,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "flags",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 1,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "clean",
+   "role": "descriptive",
+   "by_family": {
+    "opus": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "uploads",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "ratelimit",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "registry",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 2,
+     "hard_negatives_violated": [
+      "H2",
+      "H4"
+     ],
+     "valid": true
+    },
+    "codex": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 4,
+     "hard_negatives_violated": [
+      "H2",
+      "H4"
+     ],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "search",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "digest",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 1,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "supplier",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 1,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 3,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "export",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 1,
+     "hard_negatives_violated": [
+      "H1"
+     ],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 3,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "sessions",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 3,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 4,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "payouts",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "webhooks",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 1,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 2,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "metering",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 1,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 2,
+     "hard_negatives_violated": [
+      "H1"
+     ],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "carts",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 3,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "dashboard",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 3,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "migrations",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 1,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "resets",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 2,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "invites",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 1,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "cron",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 1,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "auditlog",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 1,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "events",
+   "role": "descriptive",
+   "by_family": {
+    "opus": {
+     "planted": 4,
+     "detected": [
+      "C1",
+      "C2"
+     ],
+     "mentioned_only": [
+      "M1",
+      "M2"
+     ],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 4,
+     "detected": [
+      "C1",
+      "C2"
+     ],
+     "mentioned_only": [
+      "M1",
+      "M2"
+     ],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "invoices",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "flags",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "clean",
+   "role": "descriptive",
+   "by_family": {
+    "opus": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "uploads",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "ratelimit",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "registry",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "search",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "digest",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "supplier",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "export",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "sessions",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 1,
+     "hard_negatives_violated": [
+      "H4"
+     ],
+     "valid": true
+    },
+    "codex": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 1,
+     "hard_negatives_violated": [
+      "H4"
+     ],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "payouts",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2"
+     ],
+     "mentioned_only": [
+      "M1"
+     ],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2"
+     ],
+     "mentioned_only": [
+      "M1"
+     ],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "webhooks",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "metering",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "carts",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "dashboard",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "migrations",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "resets",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "invites",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "cron",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "auditlog",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "events",
+   "role": "descriptive",
+   "by_family": {
+    "opus": {
+     "planted": 4,
+     "detected": [
+      "C1",
+      "C2",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 4,
+     "detected": [
+      "C1",
+      "C2",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "invoices",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 1,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 1,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "flags",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "clean",
+   "role": "descriptive",
+   "by_family": {
+    "opus": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 1,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 1,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "uploads",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "ratelimit",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "registry",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 2,
+     "hard_negatives_violated": [
+      "H2"
+     ],
+     "valid": true
+    },
+    "codex": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 2,
+     "hard_negatives_violated": [
+      "H2"
+     ],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "search",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "digest",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "supplier",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 1,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "export",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "sessions",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 2,
+     "hard_negatives_violated": [
+      "H4"
+     ],
+     "valid": true
+    },
+    "codex": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 2,
+     "hard_negatives_violated": [
+      "H4"
+     ],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "payouts",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "webhooks",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "metering",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "carts",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "dashboard",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 1,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 1,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "migrations",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "resets",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "invites",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "cron",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "auditlog",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "events",
+   "role": "descriptive",
+   "by_family": {
+    "opus": {
+     "planted": 4,
+     "detected": [
+      "C1",
+      "C2",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 4,
+     "detected": [
+      "C1",
+      "C2",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "invoices",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "flags",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "clean",
+   "role": "descriptive",
+   "by_family": {
+    "opus": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "uploads",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "ratelimit",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "registry",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 1,
+     "hard_negatives_violated": [
+      "H4"
+     ],
+     "valid": true
+    },
+    "codex": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 1,
+     "hard_negatives_violated": [
+      "H4"
+     ],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "search",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "digest",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "supplier",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "export",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "sessions",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "payouts",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2"
+     ],
+     "mentioned_only": [
+      "M1"
+     ],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2"
+     ],
+     "mentioned_only": [
+      "M1"
+     ],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "webhooks",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "metering",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "carts",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "dashboard",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 0,
+     "detected": [],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "migrations",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "resets",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "invites",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "cron",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "M1",
+      "M2"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "auditlog",
+   "role": "primary",
+   "by_family": {
+    "opus": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    },
+    "codex": {
+     "planted": 3,
+     "detected": [
+      "C1",
+      "C2",
+      "M1"
+     ],
+     "mentioned_only": [],
+     "unsupported": 0,
+     "hard_negatives_violated": [],
+     "valid": true
+    }
+   }
+  }
+ ],
+ "primary_author_summary": [
+  {
+   "cell": "claude",
+   "arm": "N",
+   "family": "opus",
+   "author": "opus",
+   "cases": 8,
+   "planted": 24,
+   "detected": 23,
+   "seen": 24
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "family": "opus",
+   "author": "codex",
+   "cases": 8,
+   "planted": 24,
+   "detected": 24,
+   "seen": 24
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "family": "opus",
+   "author": "all",
+   "cases": 16,
+   "planted": 48,
+   "detected": 47,
+   "seen": 48
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "family": "codex",
+   "author": "opus",
+   "cases": 8,
+   "planted": 24,
+   "detected": 23,
+   "seen": 24
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "family": "codex",
+   "author": "codex",
+   "cases": 8,
+   "planted": 24,
+   "detected": 24,
+   "seen": 24
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "family": "codex",
+   "author": "all",
+   "cases": 16,
+   "planted": 48,
+   "detected": 47,
+   "seen": 48
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "family": "opus",
+   "author": "opus",
+   "cases": 8,
+   "planted": 24,
+   "detected": 24,
+   "seen": 24
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "family": "opus",
+   "author": "codex",
+   "cases": 8,
+   "planted": 24,
+   "detected": 24,
+   "seen": 24
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "family": "opus",
+   "author": "all",
+   "cases": 16,
+   "planted": 48,
+   "detected": 48,
+   "seen": 48
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "family": "codex",
+   "author": "opus",
+   "cases": 8,
+   "planted": 24,
+   "detected": 24,
+   "seen": 24
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "family": "codex",
+   "author": "codex",
+   "cases": 8,
+   "planted": 24,
+   "detected": 24,
+   "seen": 24
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "family": "codex",
+   "author": "all",
+   "cases": 16,
+   "planted": 48,
+   "detected": 48,
+   "seen": 48
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "family": "opus",
+   "author": "opus",
+   "cases": 8,
+   "planted": 24,
+   "detected": 24,
+   "seen": 24
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "family": "opus",
+   "author": "codex",
+   "cases": 8,
+   "planted": 24,
+   "detected": 24,
+   "seen": 24
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "family": "opus",
+   "author": "all",
+   "cases": 16,
+   "planted": 48,
+   "detected": 48,
+   "seen": 48
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "family": "codex",
+   "author": "opus",
+   "cases": 8,
+   "planted": 24,
+   "detected": 24,
+   "seen": 24
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "family": "codex",
+   "author": "codex",
+   "cases": 8,
+   "planted": 24,
+   "detected": 24,
+   "seen": 24
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "family": "codex",
+   "author": "all",
+   "cases": 16,
+   "planted": 48,
+   "detected": 48,
+   "seen": 48
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "family": "opus",
+   "author": "opus",
+   "cases": 8,
+   "planted": 24,
+   "detected": 23,
+   "seen": 24
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "family": "opus",
+   "author": "codex",
+   "cases": 8,
+   "planted": 24,
+   "detected": 24,
+   "seen": 24
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "family": "opus",
+   "author": "all",
+   "cases": 16,
+   "planted": 48,
+   "detected": 47,
+   "seen": 48
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "family": "codex",
+   "author": "opus",
+   "cases": 8,
+   "planted": 24,
+   "detected": 23,
+   "seen": 24
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "family": "codex",
+   "author": "codex",
+   "cases": 8,
+   "planted": 24,
+   "detected": 24,
+   "seen": 24
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "family": "codex",
+   "author": "all",
+   "cases": 16,
+   "planted": 48,
+   "detected": 47,
+   "seen": 48
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "family": "opus",
+   "author": "opus",
+   "cases": 8,
+   "planted": 24,
+   "detected": 24,
+   "seen": 24
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "family": "opus",
+   "author": "codex",
+   "cases": 8,
+   "planted": 24,
+   "detected": 24,
+   "seen": 24
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "family": "opus",
+   "author": "all",
+   "cases": 16,
+   "planted": 48,
+   "detected": 48,
+   "seen": 48
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "family": "codex",
+   "author": "opus",
+   "cases": 8,
+   "planted": 24,
+   "detected": 24,
+   "seen": 24
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "family": "codex",
+   "author": "codex",
+   "cases": 8,
+   "planted": 24,
+   "detected": 24,
+   "seen": 24
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "family": "codex",
+   "author": "all",
+   "cases": 16,
+   "planted": 48,
+   "detected": 48,
+   "seen": 48
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "family": "opus",
+   "author": "opus",
+   "cases": 8,
+   "planted": 24,
+   "detected": 23,
+   "seen": 24
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "family": "opus",
+   "author": "codex",
+   "cases": 8,
+   "planted": 24,
+   "detected": 24,
+   "seen": 24
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "family": "opus",
+   "author": "all",
+   "cases": 16,
+   "planted": 48,
+   "detected": 47,
+   "seen": 48
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "family": "codex",
+   "author": "opus",
+   "cases": 8,
+   "planted": 24,
+   "detected": 23,
+   "seen": 24
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "family": "codex",
+   "author": "codex",
+   "cases": 8,
+   "planted": 24,
+   "detected": 24,
+   "seen": 24
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "family": "codex",
+   "author": "all",
+   "cases": 16,
+   "planted": 48,
+   "detected": 47,
+   "seen": 48
+  }
+ ],
+ "run_summary": [
+  {
+   "cell": "claude",
+   "arm": "N",
+   "primary_runs": 20,
+   "median_logical_tokens": 60598.5,
+   "median_noncache_tokens": 19184.5,
+   "median_seconds": 64.30000000000001
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "primary_runs": 20,
+   "median_logical_tokens": 62722.5,
+   "median_noncache_tokens": 20235.5,
+   "median_seconds": 73.5
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "primary_runs": 20,
+   "median_logical_tokens": 1661316.0,
+   "median_noncache_tokens": 305166.0,
+   "median_seconds": 751.85
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "primary_runs": 20,
+   "median_logical_tokens": 100407.5,
+   "median_noncache_tokens": 13690.0,
+   "median_seconds": 75.2
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "primary_runs": 20,
+   "median_logical_tokens": 126247.0,
+   "median_noncache_tokens": 16327.5,
+   "median_seconds": 101.0
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "primary_runs": 20,
+   "median_logical_tokens": 2934812.0,
+   "median_noncache_tokens": 177815.0,
+   "median_seconds": 536.95
+  }
+ ],
+ "e_launches": [
+  {
+   "cell": "claude",
+   "id": "events",
+   "role": "descriptive",
+   "agents": 9,
+   "agent_paths": [
+    "egm-zoom-out",
+    "egm-comprehension",
+    "egm-design",
+    "egm-structural",
+    "egm-style",
+    "egm-zoom-out",
+    "egm-implementation-readiness",
+    "egm-codebase-details",
+    "egm-style"
+   ],
+   "e_compliant": true,
+   "seconds": 428.2
+  },
+  {
+   "cell": "claude",
+   "id": "invoices",
+   "role": "primary",
+   "agents": 9,
+   "agent_paths": [
+    "egm-zoom-out",
+    "egm-comprehension",
+    "egm-design",
+    "egm-structural",
+    "egm-style",
+    "egm-zoom-out",
+    "egm-implementation-readiness",
+    "egm-codebase-details",
+    "egm-style"
+   ],
+   "e_compliant": true,
+   "seconds": 836.2
+  },
+  {
+   "cell": "claude",
+   "id": "flags",
+   "role": "primary",
+   "agents": 9,
+   "agent_paths": [
+    "egm-zoom-out",
+    "egm-comprehension",
+    "egm-design",
+    "egm-structural",
+    "egm-style",
+    "egm-zoom-out",
+    "egm-implementation-readiness",
+    "egm-codebase-details",
+    "egm-style"
+   ],
+   "e_compliant": true,
+   "seconds": 596.4
+  },
+  {
+   "cell": "claude",
+   "id": "clean",
+   "role": "descriptive",
+   "agents": 9,
+   "agent_paths": [
+    "egm-zoom-out",
+    "egm-comprehension",
+    "egm-design",
+    "egm-structural",
+    "egm-style",
+    "egm-zoom-out",
+    "egm-implementation-readiness",
+    "egm-codebase-details",
+    "egm-style"
+   ],
+   "e_compliant": true,
+   "seconds": 492.0
+  },
+  {
+   "cell": "claude",
+   "id": "uploads",
+   "role": "primary",
+   "agents": 9,
+   "agent_paths": [
+    "egm-zoom-out",
+    "egm-comprehension",
+    "egm-design",
+    "egm-structural",
+    "egm-style",
+    "egm-zoom-out",
+    "egm-implementation-readiness",
+    "egm-codebase-details",
+    "egm-style"
+   ],
+   "e_compliant": true,
+   "seconds": 823.2
+  },
+  {
+   "cell": "claude",
+   "id": "ratelimit",
+   "role": "primary",
+   "agents": 9,
+   "agent_paths": [
+    "egm-zoom-out",
+    "egm-comprehension",
+    "egm-design",
+    "egm-structural",
+    "egm-style",
+    "egm-zoom-out",
+    "egm-implementation-readiness",
+    "egm-codebase-details",
+    "egm-style"
+   ],
+   "e_compliant": true,
+   "seconds": 658.6
+  },
+  {
+   "cell": "claude",
+   "id": "registry",
+   "role": "primary",
+   "agents": 9,
+   "agent_paths": [
+    "egm-zoom-out",
+    "egm-comprehension",
+    "egm-design",
+    "egm-structural",
+    "egm-style",
+    "egm-zoom-out",
+    "egm-implementation-readiness",
+    "egm-codebase-details",
+    "egm-style"
+   ],
+   "e_compliant": true,
+   "seconds": 796.4
+  },
+  {
+   "cell": "claude",
+   "id": "search",
+   "role": "primary",
+   "agents": 9,
+   "agent_paths": [
+    "egm-zoom-out",
+    "egm-comprehension",
+    "egm-design",
+    "egm-structural",
+    "egm-style",
+    "egm-zoom-out",
+    "egm-implementation-readiness",
+    "egm-codebase-details",
+    "egm-style"
+   ],
+   "e_compliant": true,
+   "seconds": 725.0
+  },
+  {
+   "cell": "claude",
+   "id": "digest",
+   "role": "primary",
+   "agents": 9,
+   "agent_paths": [
+    "egm-zoom-out",
+    "egm-comprehension",
+    "egm-design",
+    "egm-structural",
+    "egm-style",
+    "egm-zoom-out",
+    "egm-implementation-readiness",
+    "egm-codebase-details",
+    "egm-style"
+   ],
+   "e_compliant": true,
+   "seconds": 707.7
+  },
+  {
+   "cell": "claude",
+   "id": "supplier",
+   "role": "primary",
+   "agents": 9,
+   "agent_paths": [
+    "egm-zoom-out",
+    "egm-comprehension",
+    "egm-design",
+    "egm-structural",
+    "egm-style",
+    "egm-zoom-out",
+    "egm-implementation-readiness",
+    "egm-codebase-details",
+    "egm-style"
+   ],
+   "e_compliant": true,
+   "seconds": 952.5
+  },
+  {
+   "cell": "claude",
+   "id": "export",
+   "role": "primary",
+   "agents": 10,
+   "agent_paths": [
+    "egm-zoom-out",
+    "egm-comprehension",
+    "egm-design",
+    "egm-structural",
+    "egm-style",
+    "claude",
+    "egm-zoom-out",
+    "egm-implementation-readiness",
+    "egm-codebase-details",
+    "egm-style"
+   ],
+   "e_compliant": true,
+   "seconds": 732.6
+  },
+  {
+   "cell": "claude",
+   "id": "sessions",
+   "role": "primary",
+   "agents": 9,
+   "agent_paths": [
+    "egm-zoom-out",
+    "egm-comprehension",
+    "egm-design",
+    "egm-structural",
+    "egm-style",
+    "egm-zoom-out",
+    "egm-implementation-readiness",
+    "egm-codebase-details",
+    "egm-style"
+   ],
+   "e_compliant": true,
+   "seconds": 986.6
+  },
+  {
+   "cell": "claude",
+   "id": "payouts",
+   "role": "primary",
+   "agents": 9,
+   "agent_paths": [
+    "egm-zoom-out",
+    "egm-comprehension",
+    "egm-design",
+    "egm-structural",
+    "egm-style",
+    "egm-zoom-out",
+    "egm-implementation-readiness",
+    "egm-codebase-details",
+    "egm-style"
+   ],
+   "e_compliant": true,
+   "seconds": 771.1
+  },
+  {
+   "cell": "claude",
+   "id": "webhooks",
+   "role": "primary",
+   "agents": 9,
+   "agent_paths": [
+    "egm-zoom-out",
+    "egm-comprehension",
+    "egm-design",
+    "egm-structural",
+    "egm-style",
+    "egm-zoom-out",
+    "egm-implementation-readiness",
+    "egm-codebase-details",
+    "egm-style"
+   ],
+   "e_compliant": true,
+   "seconds": 686.4
+  },
+  {
+   "cell": "claude",
+   "id": "metering",
+   "role": "primary",
+   "agents": 9,
+   "agent_paths": [
+    "egm-zoom-out",
+    "egm-comprehension",
+    "egm-design",
+    "egm-structural",
+    "egm-style",
+    "egm-zoom-out",
+    "egm-implementation-readiness",
+    "egm-codebase-details",
+    "egm-style"
+   ],
+   "e_compliant": true,
+   "seconds": 909.1
+  },
+  {
+   "cell": "claude",
+   "id": "carts",
+   "role": "primary",
+   "agents": 9,
+   "agent_paths": [
+    "egm-zoom-out",
+    "egm-comprehension",
+    "egm-design",
+    "egm-structural",
+    "egm-style",
+    "egm-zoom-out",
+    "egm-implementation-readiness",
+    "egm-codebase-details",
+    "egm-style"
+   ],
+   "e_compliant": true,
+   "seconds": 701.4
+  },
+  {
+   "cell": "claude",
+   "id": "dashboard",
+   "role": "primary",
+   "agents": 9,
+   "agent_paths": [
+    "egm-zoom-out",
+    "egm-comprehension",
+    "egm-design",
+    "egm-structural",
+    "egm-style",
+    "egm-zoom-out",
+    "egm-implementation-readiness",
+    "egm-codebase-details",
+    "egm-style"
+   ],
+   "e_compliant": true,
+   "seconds": 1017.8
+  },
+  {
+   "cell": "claude",
+   "id": "migrations",
+   "role": "primary",
+   "agents": 9,
+   "agent_paths": [
+    "egm-zoom-out",
+    "egm-comprehension",
+    "egm-design",
+    "egm-structural",
+    "egm-style",
+    "egm-zoom-out",
+    "egm-implementation-readiness",
+    "egm-codebase-details",
+    "egm-style"
+   ],
+   "e_compliant": true,
+   "seconds": 893.9
+  },
+  {
+   "cell": "claude",
+   "id": "resets",
+   "role": "primary",
+   "agents": 9,
+   "agent_paths": [
+    "egm-zoom-out",
+    "egm-comprehension",
+    "egm-design",
+    "egm-structural",
+    "egm-style",
+    "egm-zoom-out",
+    "egm-implementation-readiness",
+    "egm-codebase-details",
+    "egm-style"
+   ],
+   "e_compliant": true,
+   "seconds": 709.5
+  },
+  {
+   "cell": "claude",
+   "id": "invites",
+   "role": "primary",
+   "agents": 10,
+   "agent_paths": [
+    "egm-zoom-out",
+    "egm-comprehension",
+    "egm-design",
+    "egm-structural",
+    "egm-style",
+    "statusline-setup",
+    "egm-zoom-out",
+    "egm-implementation-readiness",
+    "egm-codebase-details",
+    "egm-style"
+   ],
+   "e_compliant": true,
+   "seconds": 700.2
+  },
+  {
+   "cell": "claude",
+   "id": "cron",
+   "role": "primary",
+   "agents": 9,
+   "agent_paths": [
+    "egm-zoom-out",
+    "egm-comprehension",
+    "egm-design",
+    "egm-structural",
+    "egm-style",
+    "egm-zoom-out",
+    "egm-implementation-readiness",
+    "egm-codebase-details",
+    "egm-style"
+   ],
+   "e_compliant": true,
+   "seconds": 626.7
+  },
+  {
+   "cell": "claude",
+   "id": "auditlog",
+   "role": "primary",
+   "agents": 9,
+   "agent_paths": [
+    "egm-zoom-out",
+    "egm-comprehension",
+    "egm-design",
+    "egm-structural",
+    "egm-style",
+    "egm-zoom-out",
+    "egm-implementation-readiness",
+    "egm-codebase-details",
+    "egm-style"
+   ],
+   "e_compliant": true,
+   "seconds": 798.3
+  },
+  {
+   "cell": "codex",
+   "id": "events",
+   "role": "descriptive",
+   "agents": 9,
+   "agent_paths": [
+    "/root/codebase_details",
+    "/root/comprehension",
+    "/root/design_critic",
+    "/root/feature_style",
+    "/root/implementation_readiness",
+    "/root/implementation_style",
+    "/root/initial_zoom",
+    "/root/intermediate_zoom",
+    "/root/structural_critic"
+   ],
+   "e_compliant": true,
+   "seconds": 381.4
+  },
+  {
+   "cell": "codex",
+   "id": "invoices",
+   "role": "primary",
+   "agents": 9,
+   "agent_paths": [
+    "/root/codebase_details",
+    "/root/comprehension",
+    "/root/critic_design",
+    "/root/critic_structural",
+    "/root/critic_style",
+    "/root/initial_zoom_out",
+    "/root/intermediate_zoom_out",
+    "/root/readiness",
+    "/root/readiness_style"
+   ],
+   "e_compliant": true,
+   "seconds": 558.0
+  },
+  {
+   "cell": "codex",
+   "id": "flags",
+   "role": "primary",
+   "agents": 11,
+   "agent_paths": [
+    "/root/comprehension",
+    "/root/critic_synthesis",
+    "/root/critic_synthesis/design_critic",
+    "/root/critic_synthesis/structural",
+    "/root/critic_synthesis/style",
+    "/root/initial_zoom",
+    "/root/intermediate_zoom",
+    "/root/readiness_synthesis",
+    "/root/readiness_synthesis/codebase",
+    "/root/readiness_synthesis/implementation",
+    "/root/readiness_synthesis/style"
+   ],
+   "e_compliant": true,
+   "seconds": 641.9
+  },
+  {
+   "cell": "codex",
+   "id": "clean",
+   "role": "descriptive",
+   "agents": 9,
+   "agent_paths": [
+    "/root/codebase",
+    "/root/comprehension",
+    "/root/critic_design",
+    "/root/critic_structural",
+    "/root/critic_style",
+    "/root/implementation_style",
+    "/root/initial_zoom",
+    "/root/intermediate_zoom",
+    "/root/readiness"
+   ],
+   "e_compliant": true,
+   "seconds": 312.2
+  },
+  {
+   "cell": "codex",
+   "id": "uploads",
+   "role": "primary",
+   "agents": 9,
+   "agent_paths": [
+    "/root/comprehension",
+    "/root/critic_design",
+    "/root/critic_structural",
+    "/root/critic_style",
+    "/root/initial_zoom",
+    "/root/intermediate_zoom",
+    "/root/readiness_code",
+    "/root/readiness_plan",
+    "/root/readiness_style"
+   ],
+   "e_compliant": true,
+   "seconds": 610.0
+  },
+  {
+   "cell": "codex",
+   "id": "ratelimit",
+   "role": "primary",
+   "agents": 9,
+   "agent_paths": [
+    "/root/comprehension",
+    "/root/critic_design",
+    "/root/critic_structural",
+    "/root/critic_style",
+    "/root/initial_zoom",
+    "/root/intermediate_zoom",
+    "/root/readiness",
+    "/root/readiness_codebase",
+    "/root/readiness_style"
+   ],
+   "e_compliant": true,
+   "seconds": 538.4
+  },
+  {
+   "cell": "codex",
+   "id": "registry",
+   "role": "primary",
+   "agents": 9,
+   "agent_paths": [
+    "/root/comprehension",
+    "/root/critic_design",
+    "/root/critic_structural",
+    "/root/critic_style",
+    "/root/initial_zoom",
+    "/root/intermediate_zoom",
+    "/root/readiness_codebase",
+    "/root/readiness_plan",
+    "/root/readiness_style"
+   ],
+   "e_compliant": true,
+   "seconds": 507.6
+  },
+  {
+   "cell": "codex",
+   "id": "search",
+   "role": "primary",
+   "agents": 9,
+   "agent_paths": [
+    "/root/codebase_details",
+    "/root/comprehension",
+    "/root/design_critique",
+    "/root/feature_style",
+    "/root/implementation_readiness",
+    "/root/implementation_style",
+    "/root/initial_zoom",
+    "/root/intermediate_zoom",
+    "/root/structural_critique"
+   ],
+   "e_compliant": true,
+   "seconds": 575.4
+  },
+  {
+   "cell": "codex",
+   "id": "digest",
+   "role": "primary",
+   "agents": 9,
+   "agent_paths": [
+    "/root/comprehension",
+    "/root/critic_design",
+    "/root/critic_structural",
+    "/root/critic_style",
+    "/root/implementation_codebase",
+    "/root/implementation_readiness",
+    "/root/implementation_style",
+    "/root/initial_zoom_out",
+    "/root/intermediate_zoom_out"
+   ],
+   "e_compliant": true,
+   "seconds": 490.5
+  },
+  {
+   "cell": "codex",
+   "id": "supplier",
+   "role": "primary",
+   "agents": 9,
+   "agent_paths": [
+    "/root/codebase_details",
+    "/root/comprehension",
+    "/root/critic_design",
+    "/root/critic_structural",
+    "/root/critic_style",
+    "/root/implementation",
+    "/root/implementation_style",
+    "/root/initial_zoom",
+    "/root/intermediate_zoom"
+   ],
+   "e_compliant": true,
+   "seconds": 444.5
+  },
+  {
+   "cell": "codex",
+   "id": "export",
+   "role": "primary",
+   "agents": 9,
+   "agent_paths": [
+    "/root/codebase_details",
+    "/root/comprehension",
+    "/root/design_critic",
+    "/root/feature_style",
+    "/root/implementation_readiness",
+    "/root/implementation_style",
+    "/root/initial_zoom_out",
+    "/root/intermediate_zoom_out",
+    "/root/structural"
+   ],
+   "e_compliant": true,
+   "seconds": 594.4
+  },
+  {
+   "cell": "codex",
+   "id": "sessions",
+   "role": "primary",
+   "agents": 9,
+   "agent_paths": [
+    "/root/codebase",
+    "/root/comprehension",
+    "/root/design_critic",
+    "/root/feature_style",
+    "/root/implementation",
+    "/root/implementation_style",
+    "/root/initial_zoom",
+    "/root/intermediate_zoom",
+    "/root/structural"
+   ],
+   "e_compliant": true,
+   "seconds": 521.5
+  },
+  {
+   "cell": "codex",
+   "id": "payouts",
+   "role": "primary",
+   "agents": 9,
+   "agent_paths": [
+    "/root/comprehension",
+    "/root/critic_design",
+    "/root/critic_structural",
+    "/root/critic_style",
+    "/root/initial_zoom",
+    "/root/intermediate_zoom",
+    "/root/readiness",
+    "/root/readiness_codebase",
+    "/root/readiness_style"
+   ],
+   "e_compliant": true,
+   "seconds": 522.1
+  },
+  {
+   "cell": "codex",
+   "id": "webhooks",
+   "role": "primary",
+   "agents": 9,
+   "agent_paths": [
+    "/root/codebase",
+    "/root/comprehension",
+    "/root/critic_design",
+    "/root/critic_structural",
+    "/root/critic_style",
+    "/root/initial_zoom",
+    "/root/intermediate_zoom",
+    "/root/readiness",
+    "/root/readiness_style"
+   ],
+   "e_compliant": true,
+   "seconds": 500.6
+  },
+  {
+   "cell": "codex",
+   "id": "metering",
+   "role": "primary",
+   "agents": 9,
+   "agent_paths": [
+    "/root/codebase_details",
+    "/root/comprehension",
+    "/root/design_critic",
+    "/root/feature_style",
+    "/root/implementation_style",
+    "/root/initial_zoom",
+    "/root/intermediate_zoom",
+    "/root/readiness",
+    "/root/structural"
+   ],
+   "e_compliant": true,
+   "seconds": 650.5
+  },
+  {
+   "cell": "codex",
+   "id": "carts",
+   "role": "primary",
+   "agents": 9,
+   "agent_paths": [
+    "/root/codebase_details",
+    "/root/comprehension",
+    "/root/critic_design",
+    "/root/critic_structural",
+    "/root/critic_style",
+    "/root/implementation_style",
+    "/root/initial_zoom_out",
+    "/root/intermediate_zoom_out",
+    "/root/readiness"
+   ],
+   "e_compliant": true,
+   "seconds": 486.6
+  },
+  {
+   "cell": "codex",
+   "id": "dashboard",
+   "role": "primary",
+   "agents": 9,
+   "agent_paths": [
+    "/root/codebase_details",
+    "/root/comprehension",
+    "/root/design_critic",
+    "/root/feature_style",
+    "/root/implementation_readiness",
+    "/root/implementation_style",
+    "/root/initial_zoom",
+    "/root/intermediate_zoom",
+    "/root/structural"
+   ],
+   "e_compliant": true,
+   "seconds": 630.9
+  },
+  {
+   "cell": "codex",
+   "id": "migrations",
+   "role": "primary",
+   "agents": 9,
+   "agent_paths": [
+    "/root/codebase_details",
+    "/root/comprehension",
+    "/root/critic_design",
+    "/root/critic_structural",
+    "/root/critic_style",
+    "/root/initial_zoom",
+    "/root/intermediate_zoom",
+    "/root/readiness",
+    "/root/readiness_style"
+   ],
+   "e_compliant": true,
+   "seconds": 563.8
+  },
+  {
+   "cell": "codex",
+   "id": "resets",
+   "role": "primary",
+   "agents": 9,
+   "agent_paths": [
+    "/root/codebase_details",
+    "/root/comprehension",
+    "/root/design_critic",
+    "/root/feature_style",
+    "/root/implementation_readiness",
+    "/root/implementation_style",
+    "/root/initial_zoom",
+    "/root/intermediate_zoom",
+    "/root/structural"
+   ],
+   "e_compliant": true,
+   "seconds": 475.6
+  },
+  {
+   "cell": "codex",
+   "id": "invites",
+   "role": "primary",
+   "agents": 9,
+   "agent_paths": [
+    "/root/codebase_details",
+    "/root/comprehension",
+    "/root/critic_design",
+    "/root/critic_structure",
+    "/root/critic_style",
+    "/root/initial_zoom",
+    "/root/intermediate_zoom",
+    "/root/readiness",
+    "/root/readiness_style"
+   ],
+   "e_compliant": true,
+   "seconds": 540.4
+  },
+  {
+   "cell": "codex",
+   "id": "cron",
+   "role": "primary",
+   "agents": 9,
+   "agent_paths": [
+    "/root/codebase_details",
+    "/root/comprehension",
+    "/root/critic_design",
+    "/root/critic_structural",
+    "/root/critic_style",
+    "/root/initial_zoom",
+    "/root/intermediate_zoom",
+    "/root/readiness",
+    "/root/readiness_style"
+   ],
+   "e_compliant": true,
+   "seconds": 535.5
+  },
+  {
+   "cell": "codex",
+   "id": "auditlog",
+   "role": "primary",
+   "agents": 9,
+   "agent_paths": [
+    "/root/codebase",
+    "/root/comprehension",
+    "/root/critic_design",
+    "/root/critic_structure",
+    "/root/critic_style",
+    "/root/initial_zoom",
+    "/root/intermediate_zoom",
+    "/root/readiness",
+    "/root/readiness_style"
+   ],
+   "e_compliant": true,
+   "seconds": 369.4
+  }
+ ],
+ "defect_decisions": [
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "events",
+   "defect_id": "C1",
+   "role": "descriptive",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "events",
+   "defect_id": "C2",
+   "role": "descriptive",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "events",
+   "defect_id": "M1",
+   "role": "descriptive",
+   "detected": {
+    "opus": false,
+    "codex": false,
+    "luna": false,
+    "haiku": false
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "events",
+   "defect_id": "M2",
+   "role": "descriptive",
+   "detected": {
+    "opus": false,
+    "codex": false,
+    "luna": false,
+    "haiku": false
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "invoices",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "invoices",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "invoices",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "flags",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "flags",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "flags",
+   "defect_id": "M2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "uploads",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "uploads",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "uploads",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "ratelimit",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "ratelimit",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "ratelimit",
+   "defect_id": "M2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "search",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "search",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "search",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "digest",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "digest",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "digest",
+   "defect_id": "M2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "export",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "export",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "export",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "payouts",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "payouts",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "payouts",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": false,
+    "codex": false,
+    "luna": false,
+    "haiku": false
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "webhooks",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "webhooks",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "webhooks",
+   "defect_id": "M2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "metering",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "metering",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "metering",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "carts",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "carts",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "carts",
+   "defect_id": "M2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "migrations",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "migrations",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "migrations",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "resets",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "resets",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "resets",
+   "defect_id": "M2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "invites",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "invites",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "invites",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "cron",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "cron",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "cron",
+   "defect_id": "M2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "auditlog",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "auditlog",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "N",
+   "id": "auditlog",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "events",
+   "defect_id": "C1",
+   "role": "descriptive",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "events",
+   "defect_id": "C2",
+   "role": "descriptive",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "events",
+   "defect_id": "M1",
+   "role": "descriptive",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "events",
+   "defect_id": "M2",
+   "role": "descriptive",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "invoices",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "invoices",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "invoices",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "flags",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "flags",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "flags",
+   "defect_id": "M2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "uploads",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "uploads",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "uploads",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "ratelimit",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "ratelimit",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "ratelimit",
+   "defect_id": "M2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "search",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "search",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "search",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "digest",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "digest",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "digest",
+   "defect_id": "M2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "export",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "export",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "export",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "payouts",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "payouts",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "payouts",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "webhooks",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "webhooks",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "webhooks",
+   "defect_id": "M2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "metering",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "metering",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "metering",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "carts",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "carts",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "carts",
+   "defect_id": "M2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "migrations",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "migrations",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "migrations",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "resets",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "resets",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "resets",
+   "defect_id": "M2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "invites",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "invites",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "invites",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "cron",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "cron",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "cron",
+   "defect_id": "M2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "auditlog",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "auditlog",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "R",
+   "id": "auditlog",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "events",
+   "defect_id": "C1",
+   "role": "descriptive",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "events",
+   "defect_id": "C2",
+   "role": "descriptive",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "events",
+   "defect_id": "M1",
+   "role": "descriptive",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "events",
+   "defect_id": "M2",
+   "role": "descriptive",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "invoices",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "invoices",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "invoices",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "flags",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "flags",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "flags",
+   "defect_id": "M2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "uploads",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "uploads",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "uploads",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "ratelimit",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "ratelimit",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "ratelimit",
+   "defect_id": "M2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "search",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "search",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "search",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "digest",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "digest",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "digest",
+   "defect_id": "M2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "export",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "export",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "export",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "payouts",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "payouts",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "payouts",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "webhooks",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "webhooks",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "webhooks",
+   "defect_id": "M2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "metering",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "metering",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "metering",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "carts",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "carts",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "carts",
+   "defect_id": "M2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "migrations",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "migrations",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "migrations",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "resets",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "resets",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "resets",
+   "defect_id": "M2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "invites",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "invites",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "invites",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "cron",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "cron",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "cron",
+   "defect_id": "M2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "auditlog",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "auditlog",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "claude",
+   "arm": "E",
+   "id": "auditlog",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "events",
+   "defect_id": "C1",
+   "role": "descriptive",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "events",
+   "defect_id": "C2",
+   "role": "descriptive",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "events",
+   "defect_id": "M1",
+   "role": "descriptive",
+   "detected": {
+    "opus": false,
+    "codex": false,
+    "luna": false,
+    "haiku": false
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "events",
+   "defect_id": "M2",
+   "role": "descriptive",
+   "detected": {
+    "opus": false,
+    "codex": false,
+    "luna": false,
+    "haiku": false
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "invoices",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "invoices",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "invoices",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "flags",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "flags",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "flags",
+   "defect_id": "M2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "uploads",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "uploads",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "uploads",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "ratelimit",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "ratelimit",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "ratelimit",
+   "defect_id": "M2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "search",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "search",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "search",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "digest",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "digest",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "digest",
+   "defect_id": "M2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "export",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "export",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "export",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "payouts",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "payouts",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "payouts",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": false,
+    "codex": false,
+    "luna": false,
+    "haiku": false
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "webhooks",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "webhooks",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "webhooks",
+   "defect_id": "M2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "metering",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "metering",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "metering",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "carts",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "carts",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "carts",
+   "defect_id": "M2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "migrations",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "migrations",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "migrations",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "resets",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "resets",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "resets",
+   "defect_id": "M2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "invites",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "invites",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "invites",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "cron",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "cron",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "cron",
+   "defect_id": "M2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "auditlog",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "auditlog",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "N",
+   "id": "auditlog",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "events",
+   "defect_id": "C1",
+   "role": "descriptive",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "events",
+   "defect_id": "C2",
+   "role": "descriptive",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "events",
+   "defect_id": "M1",
+   "role": "descriptive",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "events",
+   "defect_id": "M2",
+   "role": "descriptive",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "invoices",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "invoices",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "invoices",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "flags",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "flags",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "flags",
+   "defect_id": "M2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "uploads",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "uploads",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "uploads",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "ratelimit",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "ratelimit",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "ratelimit",
+   "defect_id": "M2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "search",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "search",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "search",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "digest",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "digest",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "digest",
+   "defect_id": "M2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "export",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "export",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "export",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "payouts",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "payouts",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "payouts",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "webhooks",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "webhooks",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "webhooks",
+   "defect_id": "M2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "metering",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "metering",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "metering",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "carts",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "carts",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "carts",
+   "defect_id": "M2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "migrations",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "migrations",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "migrations",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "resets",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "resets",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "resets",
+   "defect_id": "M2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "invites",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "invites",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "invites",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "cron",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "cron",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "cron",
+   "defect_id": "M2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "auditlog",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "auditlog",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "R",
+   "id": "auditlog",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "events",
+   "defect_id": "C1",
+   "role": "descriptive",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "events",
+   "defect_id": "C2",
+   "role": "descriptive",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "events",
+   "defect_id": "M1",
+   "role": "descriptive",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "events",
+   "defect_id": "M2",
+   "role": "descriptive",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "invoices",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "invoices",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "invoices",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "flags",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "flags",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "flags",
+   "defect_id": "M2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "uploads",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "uploads",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "uploads",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "ratelimit",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "ratelimit",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "ratelimit",
+   "defect_id": "M2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "search",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "search",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "search",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "digest",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "digest",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "digest",
+   "defect_id": "M2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "export",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "export",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "export",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "payouts",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "payouts",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "payouts",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": false,
+    "codex": false,
+    "luna": false,
+    "haiku": false
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "webhooks",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "webhooks",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "webhooks",
+   "defect_id": "M2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "metering",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "metering",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "metering",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "carts",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "carts",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "carts",
+   "defect_id": "M2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "migrations",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "migrations",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "migrations",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "resets",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "resets",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "resets",
+   "defect_id": "M2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "invites",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "invites",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "invites",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "cron",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "cron",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "cron",
+   "defect_id": "M2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "auditlog",
+   "defect_id": "C1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "auditlog",
+   "defect_id": "C2",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  },
+  {
+   "cell": "codex",
+   "arm": "E",
+   "id": "auditlog",
+   "defect_id": "M1",
+   "role": "primary",
+   "detected": {
+    "opus": true,
+    "codex": true,
+    "luna": true,
+    "haiku": true
+   }
+  }
+ ],
+ "cheap_grader_agreement": {
+  "primary": {
+   "luna": {
+    "opus": {
+     "agreements": 288,
+     "total": 288,
+     "rate": 1.0
+    },
+    "codex": {
+     "agreements": 288,
+     "total": 288,
+     "rate": 1.0
+    }
+   },
+   "haiku": {
+    "opus": {
+     "agreements": 288,
+     "total": 288,
+     "rate": 1.0
+    },
+    "codex": {
+     "agreements": 288,
+     "total": 288,
+     "rate": 1.0
+    }
+   }
+  },
+  "all_22": {
+   "luna": {
+    "opus": {
+     "agreements": 312,
+     "total": 312,
+     "rate": 1.0
+    },
+    "codex": {
+     "agreements": 312,
+     "total": 312,
+     "rate": 1.0
+    }
+   },
+   "haiku": {
+    "opus": {
+     "agreements": 312,
+     "total": 312,
+     "rate": 1.0
+    },
+    "codex": {
+     "agreements": 312,
+     "total": 312,
+     "rate": 1.0
+    }
+   }
+  }
+ }
+}
