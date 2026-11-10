@@ -55,3 +55,9 @@
 2. 這台機器現在沒有 ffmpeg 和 Godot（Node、Chrome、Docker 有）。試吃影片類要先裝 ffmpeg，遊戲類要先裝 Godot 的 headless 版，都裝在使用者目錄、不動系統。照 D28 前置條件是 owner 的事：可以裝嗎？
 
 判定方式照 D38 的草案（`claude/oaw-2` 的 `docs/plans/v2.0.1-value-check.md` 第 4 節）：跟「同樣的底層工具裝好、但沒有這個 skill」的原生比，看成品過不過機械檢查；結果只有「可選用」或「排掉」，不進預設；裝了沒用到的時候，啟動 token 不能多超過 2%。
+
+## owner 的選擇（D41，2026-11-10）
+
+owner 的話：「能力型候選要試哪幾個 先擬自行測試 首選harness 再來PPT Skill or 影片製作能力的新增都可以測」。
+- harness（H1、I16）先用 Claude 訂閱；之後試 PPT skill 和影片製作。遊戲不試。
+- PPT 不在上面的清單，另外找了候選。自測計畫和候選都在 `PLAN.md`（草案，凍結前給 Codex 審）。
