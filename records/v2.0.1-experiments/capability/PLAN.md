@@ -1,7 +1,7 @@
 # 能力型試吃：PPT 和影片（草案第 5 版，2026-11-10）
 
 依據：D38（能力型怎麼判，agent 的草案）、D41（owner 選了：先做 harness，再試 PPT skill 和影片製作；遊戲不試）。
-這是 agent 擬的自測計畫，**還沒凍結**。Codex 三輪都判「先改再做」（`review-1.md` 12 點、`review-2.md` 16 點、`review-3.md` 10 點），第 4 版逐點改了。三輪用完，照 owner 的規則由 gpt-6-astra 和 Fable 5.1 各自判斷第 4 版：astra「先改再做」（1 點阻擋、1 點應修，`escalation-astra.md`），Fable「可以照這份做」（4 點應修，`escalation-fable.md`）。第 5 版六點全改，對照表在最後。
+這是 agent 擬的自測計畫。**第 5 版審查收斂**：Fable 5.1 判「可以照這份做」，gpt-6-astra 核對第 5 版後也判「可以照這份做」。接下來照第 12 節實作和驗收，題目、門檻、版本照第 8 節凍結後才正式 run。Codex 三輪都判「先改再做」（`review-1.md` 12 點、`review-2.md` 16 點、`review-3.md` 10 點），第 4 版逐點改了。三輪用完，照 owner 的規則由 gpt-6-astra 和 Fable 5.1 各自判斷第 4 版：astra「先改再做」（1 點阻擋、1 點應修，`escalation-astra.md`），Fable「可以照這份做」（4 點應修，`escalation-fable.md`）。第 5 版六點全改，對照表在最後。
 
 ## 1. 順序
 

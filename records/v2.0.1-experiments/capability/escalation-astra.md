@@ -21,3 +21,12 @@ Codex gpt-6.1-sol 三輪用完後，照 owner 的規則由 gpt-6-astra 和 Fable
    **最小修法：**基準墨跡須來自解除裁切、保留原排版的獨立算繪，並涵蓋頁面外區域；明確加入「基準與成品同時被裁切」反例。
 
 讀過檔案：`CLAUDE.md`、`AI_CONTEXT.md`、`VERSION.json`（指定兩欄）、`docs/knowledge/CURRENT_STATE.md`、`.agents/skills/{read-discipline,harness-evaluator}.md`、`scripts/memory_nudge.py`、`OAW-records/{AGENTS,CLAUDE}.md`、`OAW-records/records/v2.0.1-experiments/capability/{PLAN,review-1,review-2,review-3,CANDIDATES}.md`、`OAW-records/records/v2.0.1-experiments/H1/PREREG.md`、`OAW-records/records/digestion-2026-11-03/ingest/DECISIONS.md`（D21、D26、D28、D35、D38、D41）；另核對指定的 `a2aed61..ea791fc` diff。
+---
+
+## 核對第 5 版（2026-11-10）
+
+astra 核對第 5 版（records ba4c7f4）是否修好它的阻擋、其他五點改得夠不夠、有沒有新的阻擋。原文照錄。用量：輸入 215,071（其中快取 166,912）、輸出 1,376 token。
+
+可以照這份做
+
+讀過檔案：`CLAUDE.md`、`AI_CONTEXT.md`、`VERSION.json`（指定兩欄）、`docs/knowledge/CURRENT_STATE.md`、`.agents/skills/*.md`（triggers，其中完整讀取 `read-discipline.md`、`harness-evaluator.md`）、`scripts/memory_nudge.py`、`OAW-records/{AGENTS,CLAUDE}.md`、`OAW-records/records/v2.0.1-experiments/capability/{PLAN,escalation-astra,escalation-fable}.md`；已核對 `ea791fc..ba4c7f4` 指定 diff。
