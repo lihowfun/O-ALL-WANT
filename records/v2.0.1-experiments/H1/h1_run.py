@@ -745,6 +745,15 @@ def suite_on_base(out_dir):
     return number(os.path.join(io, "suite.code")), junit(os.path.join(io, "suite.xml"))
 
 
+def design_note(unit):
+    """The one design note a design unit's prompt names (docs/designs/<name>.md), or None."""
+    sessions = unit.get("sessions") or []
+    if unit.get("type") != "design" or not sessions:
+        return None
+    named = sorted(set(re.findall(r"docs/designs/[\w.-]+\.md", sessions[0])))
+    return named[0] if len(named) == 1 else None
+
+
 def grade(unit, work, out_dir, patch=None, ref=None, suite=True):
     """Grade the src/ folder of a working copy on a fresh copy of the base: the hidden test alone, then the existing
     suite. Nothing else of the candidate's reaches the graded tree. With `patch` (unit verification) the patch is
@@ -784,6 +793,12 @@ def grade(unit, work, out_dir, patch=None, ref=None, suite=True):
     candidate = os.path.join(source, "src")
     if os.path.isdir(candidate) and not os.path.islink(candidate):
         shutil.copytree(candidate, os.path.join(fresh, "src"), symlinks=True, ignore=only_plain)
+    note = design_note(unit)  # a design unit's prompt asks for this one note; it is the only other file graded
+    held = os.path.join(source, note) if note else ""
+    inside = held and os.path.realpath(held).startswith(os.path.realpath(source) + os.sep)
+    if inside and os.path.isfile(held) and not os.path.islink(held):
+        os.makedirs(os.path.dirname(os.path.join(fresh, note)), exist_ok=True)
+        shutil.copyfile(os.path.join(source, note), os.path.join(fresh, note))
     if patch is not None:
         remove_tree(source)
     with open(os.path.join(io, "hidden.py"), "w", encoding="utf-8") as handle:
@@ -1436,7 +1451,8 @@ def verify_unit(unit, klass, root):
     sessions, patch, kind = unit.get("sessions") or [], unit.get("reference_patch") or "", unit.get("type")
     paths, added, files = patch_files(patch)
     lines = code_lines(files)
-    note = sorted(set(re.findall(r"docs/designs/[\w.-]+\.md", sessions[0]))) if kind == "design" and sessions else []
+    note = [design_note(unit)] if design_note(unit) else (
+        sorted(set(re.findall(r"docs/designs/[\w.-]+\.md", sessions[0]))) if kind == "design" and sessions else [])
     checks["patch_paths_allowed"] = bool(paths) and all(
         p.startswith("src/") or (len(note) == 1 and p == note[0]) for p in paths)
     where = os.path.join(root, safe_id(unit))
