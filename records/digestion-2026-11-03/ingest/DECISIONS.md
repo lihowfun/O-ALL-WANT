@@ -431,3 +431,29 @@ Source: `records/digestion-2026-11-07/validation/RESULT.md`. Implemented by plan
   有比沒有更慘? 效果依樣 記憶沒變 但token變多的話 也許會變蠻雞肋" and the go-ahead "先整合相關內容寫 md 然後就開始執行".
   OAW itself is held to the gate external foods pass: installed against not installed, on real work
   (`records/v2.0.1-experiments/H1/`). Budget is D35's 30M.
+
+## D39. I16 ceiling 65M (2026-11-10, owner in chat: "請你從 30M 加到 65M dk3u3" (dk3u3 is 可以 typed on the Zhuyin layout), then "可以65M"; refines D35 for I16)
+- Asked after I16 calibration (records dff4be0): the frozen design needs about 63M Claude in total; the alternatives
+  offered were 45M (Claude cell N and F only) or 30M (no Claude verdict).
+- I16 may spend up to 65M Claude logical tokens (input + output + cache). The full frozen design runs unchanged.
+- Claude-cell runs go one process at a time across experiments (two parallel Claude processes hit the subscription
+  session limit in X2). Order: H1's Claude cell, then I16's.
+
+## D40. The agent decides at release whether H1 trims the 2.0.1 defaults (2026-11-10, owner in chat: "依 H1 結論決定 2.0.1 的預設要不要再減：發佈時由你決定 你決定 你不能決定的話讓我開fable5.2"; amends `docs/plans/v2.0.1-value-check.md` section 6 on `claude/oaw-2`, which left this to the owner)
+- At release the agent applies the uses fixed before H1 ran (value-check section 6, "H1 的結果會怎麼用") and decides
+  whether any part leaves the defaults.
+- When those uses do not point to one action, the agent does not pick a side: it says so and the owner opens a
+  Fable 5.2 session to decide. Cases named in advance: the two cells point in opposite directions; a worse class
+  cannot be traced to one part; H1 ends without a verdict for a cell.
+- This covers the defaults decision only. Other release steps stay with the owner (D21).
+
+## D41. Capability entry: the harness first, then PPT or video (2026-11-10, owner in chat: "能力型候選要試哪幾個 先擬自行測試 首選harness 再來PPT Skill or 影片製作能力的新增都可以測"; applies D38)
+- The agent reads 首選harness as D38's purpose 1, work on the OAW harness itself: H1, then I16's Claude cell, keep
+  the Claude subscription first.
+- Picked for the capability track: PPT skills (not on the 2026-11-10 list, so a scout runs first) and video making.
+  Game making is not picked.
+- 先擬自行測試: the agent drafts its own tests first (finished-artifact tasks, mechanical checks, against native with
+  the same underlying tools installed), per D38's draft rules, then tastes without further sign-off (D28).
+- The agent reads 都可以測 as consent to the user-directory installs the tests need (ffmpeg, asked in
+  `records/v2.0.1-experiments/capability/CANDIDATES.md`). Nothing is installed system-wide.
+- Budget: D35's 30M per food.
