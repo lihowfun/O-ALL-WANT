@@ -414,3 +414,20 @@ Source: `records/digestion-2026-11-07/validation/RESULT.md`. Implemented by plan
   run agrees. Per the X2 PREREG this interim rule becomes the standing rule. Native review already found 47 of 48
   planted defects (ceiling), every alternative had a clean-case false alarm both graders found, and E cost 27-29x
   native tokens. This is not a finding about large design documents. EGM stays available through `on`.
+
+## D38. Two purposes of intake; capability foods get their own track (2026-11-10, owner in chat: "至今 skill 吸收 有兩種目的 1. 對整體 OWA harness or 使用者 repo 有所幫助 2. 整體使用者的repo 可以新增一些過往沒有得能力，我們整理後打造起來，譬如可以是影片剪輯，可以是遊戲製作的相關skills"; refines D4)
+- Purpose 1, benefit: the food makes work the agent already does better or cheaper (memory, review, code map,
+  token saving). Judged against native, as before (D29, D32).
+- Purpose 2, capability: the food gives the user's repository an ability it did not have (the owner's examples:
+  video editing, game making).
+- D4 item 1 changes: the scout's relevance filter no longer drops foods unrelated to coding-agent skills. They go on
+  a separate capability list. Entry is unchanged: nothing is tasted until the owner picks it.
+- The owner stated the two purposes only. The capability track's judging rules are the agent's draft in
+  `docs/plans/v2.0.1-value-check.md` section 4 on `claude/oaw-2`, open to the owner's change:
+  - compared against native with the same underlying tools installed, on finished-artifact tasks with mechanical checks;
+  - outcome is optional or excrete, never default;
+  - an idle condition: installed but unused, it must not raise startup tokens by more than 2% or make ordinary tasks worse.
+- Same message, the owner's question that starts H1: "所以我們至今 OWA 2.0.1 有調整到最好嗎? 還是這harness 讓opus5.5跟codex 6.1 sol
+  有比沒有更慘? 效果依樣 記憶沒變 但token變多的話 也許會變蠻雞肋" and the go-ahead "先整合相關內容寫 md 然後就開始執行".
+  OAW itself is held to the gate external foods pass: installed against not installed, on real work
+  (`records/v2.0.1-experiments/H1/`). Budget is D35's 30M.
