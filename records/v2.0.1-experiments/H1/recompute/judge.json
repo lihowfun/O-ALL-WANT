@@ -1,0 +1,678 @@
+{
+ "rule": {
+  "margin": 0.1,
+  "floor_min": 0.1318,
+  "step": 0.1,
+  "more": 1.1,
+  "per_class": 4,
+  "word_order": [
+   "更慘",
+   "未定",
+   "雞肋",
+   "沒差",
+   "有幫助"
+  ],
+  "outcome_order": [
+   "提案移出預設",
+   "該改成選配",
+   "能力未定",
+   "留在預設站得住"
+  ]
+ },
+ "inputs": {
+  "freeze_sha256": "4943bf2ce02c9c9383828d201f59198f951c0446e263a5b05ba381095fa3a4d8",
+  "units": {
+   "A": "38a5d55c34b2ce65262c46da6d6746cc0d342be0ee1ac152a2f3bc9ce263e933",
+   "B": "25c437cbf7e3555c42f58bd58f4ef59778849691726ee1116b72ef4fc103fe87",
+   "C": "98c4ff2aaa37b0fc692e9e37119db967a670cda55fae03ab2d068be0621f7630"
+  },
+  "eval_stats_sha256": "6ad7a60f4f744775cc32c43f95e488a30c46aab22fd1adcb7051e44854659948"
+ },
+ "cells": {
+  "claude": {
+   "status": "complete",
+   "why": [],
+   "classes_done": [
+    "A",
+    "B",
+    "C"
+   ],
+   "attempts_not_counted": {},
+   "quality": {
+    "floor": 0.1318,
+    "own_spread": 0.1241638702145945,
+    "by_class": {
+     "A": {
+      "class": "undetermined",
+      "point": 0.0,
+      "ci95": [
+       -0.18266212549010308,
+       0.18266212549010308
+      ],
+      "ci90": [
+       -0.15329492162146754,
+       0.15329492162146754
+      ],
+      "se": 0.09319667376038697,
+      "mde": 0.2609506865290835,
+      "floor_applied": true,
+      "questions": 4
+     },
+     "B": {
+      "class": "undetermined",
+      "point": -0.26249999999999996,
+      "ci95": [
+       -0.5625,
+       0.0
+      ],
+      "ci90": [
+       -0.5249999999999999,
+       0.0
+      ],
+      "se": 0.1534154504727278,
+      "mde": 0.42956326132363787,
+      "floor_applied": false,
+      "questions": 4
+     },
+     "C": {
+      "class": "undetermined",
+      "point": -0.012499999999999983,
+      "ci95": [
+       -0.19516212549010306,
+       0.1701621254901031
+      ],
+      "ci90": [
+       -0.16579492162146753,
+       0.14079492162146756
+      ],
+      "se": 0.09319667376038697,
+      "mde": 0.2609506865290835,
+      "floor_applied": true,
+      "questions": 4
+     }
+    },
+    "Q": "undetermined",
+    "why": "類別不一致：class B is 0.1 or more below native",
+    "composite": {
+     "class": "undetermined",
+     "point": -0.09166666666666666,
+     "ci95": [
+      -0.22916666666666663,
+      0.0
+     ],
+     "ci90": [
+      -0.2125,
+      -0.004166666666666661
+     ],
+     "se": 0.06239103258660031,
+     "mde": 0.17469489124248086,
+     "floor_applied": false,
+     "questions": 12
+    },
+    "sensitivity_own_spread_only": {
+     "class": "undetermined",
+     "point": -0.09166666666666666,
+     "ci95": [
+      -0.22916666666666663,
+      0.0
+     ],
+     "ci90": [
+      -0.2125,
+      -0.004166666666666661
+     ],
+     "se": 0.06239103258660031,
+     "mde": 0.17469489124248086,
+     "floor_applied": false,
+     "questions": 12
+    }
+   },
+   "cost": {
+    "by_class": {
+     "A": {
+      "O": 674002,
+      "N1": 658886,
+      "N2": 795720,
+      "ratio": 0.9267141755224438,
+      "band": 1.2076747722671297
+     },
+     "B": {
+      "O": 1149219,
+      "N1": 973853,
+      "N2": 1151820,
+      "ratio": 1.0812754360618966,
+      "band": 1.1827452397846492
+     },
+     "C": {
+      "O": 10931953,
+      "N1": 3462547,
+      "N2": 2861206,
+      "ratio": 3.457425677441861,
+      "band": 1.2101704665794772
+     }
+    },
+    "noncache_by_class": {
+     "A": {
+      "O": 72814,
+      "N1": 58148,
+      "N2": 60482,
+      "ratio": 1.2275815560987946,
+      "band": 1.0401389557680403
+     },
+     "B": {
+      "O": 120706,
+      "N1": 97081,
+      "N2": 105295,
+      "ratio": 1.1928884848005692,
+      "band": 1.0846097588611572
+     },
+     "C": {
+      "O": 1033976,
+      "N1": 272061,
+      "N2": 276864,
+      "ratio": 3.7672760395318123,
+      "band": 1.017654129037238
+     }
+    },
+    "attempts_not_counted": {},
+    "batch": {
+     "O": 12755174,
+     "N1": 5095286,
+     "N2": 4808746,
+     "ratio": 2.5757537940103585,
+     "band": 1.0595872603793173
+    },
+    "noncache_batch": {
+     "O": 1227496,
+     "N1": 427290,
+     "N2": 442641,
+     "ratio": 2.8220537031097868,
+     "band": 1.0359264199957874
+    },
+    "sentence": "token 變多",
+    "protocol": {
+     "class": "undetermined",
+     "ratio": 1.453332285100346,
+     "ci95": [
+      1.0214877386781993,
+      2.2344599349652476
+     ],
+     "cap": 1.5
+    }
+   },
+   "direction": {
+    "A": {
+     "wins": 0,
+     "losses": 0,
+     "direction": "看不出差別，未證等價",
+     "at_ceiling": [
+      "t01",
+      "t04",
+      "t09",
+      "t12"
+     ],
+     "ceiling_note": "頂到天花板，只看得出變差"
+    },
+    "B": {
+     "wins": 0,
+     "losses": 2,
+     "direction": "方向：較差",
+     "at_ceiling": [
+      "explicit-1-b1",
+      "passing-1-b1"
+     ],
+     "ceiling_note": "頂到天花板，只看得出變差"
+    },
+    "C": {
+     "wins": 0,
+     "losses": 0,
+     "direction": "看不出差別，未證等價",
+     "at_ceiling": [
+      "design-3-c1",
+      "large-2-c1"
+     ],
+     "ceiling_note": "頂到天花板，只看得出變差"
+    }
+   },
+   "memory": {
+    "word": "未定",
+    "remembered": {
+     "N1": 2,
+     "N2": 3,
+     "O": 1
+    },
+    "of": 4,
+    "floor": 0.3535533905932738,
+    "class": "undetermined",
+    "point": -0.375,
+    "ci95": [
+     -0.8649910000000001,
+     0.11499100000000012
+    ],
+    "ci90": [
+     -0.7862135000000001,
+     0.03621350000000012
+    ],
+    "se": 0.25000000000000006,
+    "mde": 0.7000000000000001,
+    "floor_applied": true,
+    "questions": 4
+   },
+   "word": "未定",
+   "token_sentence": "token 變多",
+   "outcome": "能力未定",
+   "undetermined_detail": {
+    "point": -0.09166666666666666,
+    "ci95": [
+     -0.22916666666666663,
+     0.0
+    ],
+    "mde": 0.17469489124248086
+   },
+   "usage": {
+    "N1": {
+     "units": 12,
+     "touched_oaw": 0,
+     "used_skill": 0,
+     "listed_oaw_skills": 0,
+     "blocked_writes": 0,
+     "used_subagent": 0,
+     "touched_notes": 0,
+     "touched_memory": 4,
+     "memory_files": 1,
+     "cut_by_limit": 0
+    },
+    "N2": {
+     "units": 12,
+     "touched_oaw": 0,
+     "used_skill": 0,
+     "listed_oaw_skills": 0,
+     "blocked_writes": 0,
+     "used_subagent": 0,
+     "touched_notes": 0,
+     "touched_memory": 4,
+     "memory_files": 1,
+     "cut_by_limit": 0
+    },
+    "O": {
+     "units": 12,
+     "touched_oaw": 12,
+     "used_skill": 5,
+     "listed_oaw_skills": 12,
+     "blocked_writes": 0,
+     "used_subagent": 4,
+     "touched_notes": 0,
+     "touched_memory": 4,
+     "memory_files": 0,
+     "cut_by_limit": 0
+    }
+   }
+  },
+  "codex": {
+   "status": "complete",
+   "why": [],
+   "classes_done": [
+    "A",
+    "B",
+    "C"
+   ],
+   "attempts_not_counted": {},
+   "quality": {
+    "floor": 0.1318,
+    "own_spread": 0.0170103454359943,
+    "by_class": {
+     "A": {
+      "class": "undetermined",
+      "point": 0.0,
+      "ci95": [
+       -0.18266212549010308,
+       0.18266212549010308
+      ],
+      "ci90": [
+       -0.15329492162146754,
+       0.15329492162146754
+      ],
+      "se": 0.09319667376038697,
+      "mde": 0.2609506865290835,
+      "floor_applied": true,
+      "questions": 4
+     },
+     "B": {
+      "class": "undetermined",
+      "point": 0.275,
+      "ci95": [
+       0.0,
+       0.55
+      ],
+      "ci90": [
+       0.0,
+       0.525
+      ],
+      "se": 0.13940392926223422,
+      "mde": 0.3903310019342558,
+      "floor_applied": false,
+      "questions": 4
+     },
+     "C": {
+      "class": "undetermined",
+      "point": 0.03541666666666668,
+      "ci95": [
+       -0.1472454588234364,
+       0.21807879215676976
+      ],
+      "ci90": [
+       -0.11787825495480087,
+       0.18871158828813422
+      ],
+      "se": 0.09319667376038697,
+      "mde": 0.2609506865290835,
+      "floor_applied": true,
+      "questions": 4
+     }
+    },
+    "Q": "better",
+    "why": "the composite class",
+    "composite": {
+     "class": "better",
+     "point": 0.10347222222222223,
+     "ci95": [
+      0.006944444444444457,
+      0.23194444444444443
+     ],
+     "ci90": [
+      0.01180555555555556,
+      0.2034722222222222
+     ],
+     "se": 0.057962683509187415,
+     "mde": 0.16229551382572474,
+     "floor_applied": false,
+     "questions": 12
+    },
+    "sensitivity_own_spread_only": {
+     "class": "better",
+     "point": 0.10347222222222223,
+     "ci95": [
+      0.006944444444444457,
+      0.23194444444444443
+     ],
+     "ci90": [
+      0.01180555555555556,
+      0.2034722222222222
+     ],
+     "se": 0.057962683509187415,
+     "mde": 0.16229551382572474,
+     "floor_applied": false,
+     "questions": 12
+    }
+   },
+   "cost": {
+    "by_class": {
+     "A": {
+      "O": 745200,
+      "N1": 815469,
+      "N2": 761629,
+      "ratio": 0.9450268784818698,
+      "band": 1.070690585573816
+     },
+     "B": {
+      "O": 1806069,
+      "N1": 1428634,
+      "N2": 1686163,
+      "ratio": 1.15967043759192,
+      "band": 1.1802624045066825
+     },
+     "C": {
+      "O": 5508441,
+      "N1": 1684190,
+      "N2": 2009523,
+      "ratio": 2.9826036836105025,
+      "band": 1.1931688229950304
+     }
+    },
+    "noncache_by_class": {
+     "A": {
+      "O": 121712,
+      "N1": 108013,
+      "N2": 104477,
+      "ratio": 1.145578615464257,
+      "band": 1.0338447696622224
+     },
+     "B": {
+      "O": 276981,
+      "N1": 188058,
+      "N2": 240147,
+      "ratio": 1.293684099905419,
+      "band": 1.276983696519159
+     },
+     "C": {
+      "O": 445657,
+      "N1": 154718,
+      "N2": 193971,
+      "ratio": 2.556186171631454,
+      "band": 1.2537067438824183
+     }
+    },
+    "attempts_not_counted": {},
+    "batch": {
+     "O": 8059710,
+     "N1": 3928293,
+     "N2": 4457315,
+     "ratio": 1.9222720642319555,
+     "band": 1.134669689862747
+    },
+    "noncache_batch": {
+     "O": 844350,
+     "N1": 450789,
+     "N2": 538595,
+     "ratio": 1.706819596840054,
+     "band": 1.1947829250491915
+    },
+    "sentence": "token 變多",
+    "protocol": {
+     "class": "undetermined",
+     "ratio": 1.4811586282602156,
+     "ci95": [
+      1.089791153048209,
+      2.052067806700727
+     ],
+     "cap": 1.5
+    }
+   },
+   "direction": {
+    "A": {
+     "wins": 0,
+     "losses": 0,
+     "direction": "看不出差別，未證等價",
+     "at_ceiling": [
+      "t01",
+      "t04",
+      "t09",
+      "t12"
+     ],
+     "ceiling_note": "頂到天花板，只看得出變差"
+    },
+    "B": {
+     "wins": 2,
+     "losses": 0,
+     "direction": "方向：較好",
+     "at_ceiling": [],
+     "ceiling_note": ""
+    },
+    "C": {
+     "wins": 1,
+     "losses": 0,
+     "direction": "差一題，不下結論",
+     "at_ceiling": [
+      "design-3-c1",
+      "large-2-c1"
+     ],
+     "ceiling_note": "頂到天花板，只看得出變差"
+    }
+   },
+   "memory": {
+    "word": "未定",
+    "remembered": {
+     "N1": 0,
+     "N2": 0,
+     "O": 2
+    },
+    "of": 4,
+    "floor": 0.1318,
+    "class": "undetermined",
+    "point": 0.5,
+    "ci95": [
+     0.0,
+     1.0
+    ],
+    "ci90": [
+     0.0,
+     1.0
+    ],
+    "se": 0.25170601775682677,
+    "mde": 0.7047768497191149,
+    "floor_applied": false,
+    "questions": 4
+   },
+   "word": "有幫助",
+   "token_sentence": "token 變多",
+   "outcome": "留在預設站得住",
+   "L_control": {
+    "units": 8,
+    "O_vs_L": {
+     "class": "undetermined",
+     "point": -0.14375,
+     "ci95": [
+      -0.3625,
+      0.024999999999999994
+     ]
+    },
+    "L_vs_N": {
+     "class": "better",
+     "point": 0.2989583333333333,
+     "ci95": [
+      0.09062500000000002,
+      0.5
+     ]
+    }
+   },
+   "usage": {
+    "L": {
+     "units": 8,
+     "touched_oaw": 0,
+     "used_skill": 0,
+     "listed_oaw_skills": 0,
+     "blocked_writes": 0,
+     "used_subagent": 4,
+     "touched_notes": 8,
+     "touched_memory": 0,
+     "memory_files": 0,
+     "cut_by_limit": 0
+    },
+    "N1": {
+     "units": 12,
+     "touched_oaw": 0,
+     "used_skill": 0,
+     "listed_oaw_skills": 0,
+     "blocked_writes": 0,
+     "used_subagent": 0,
+     "touched_notes": 0,
+     "touched_memory": 0,
+     "memory_files": 0,
+     "cut_by_limit": 0
+    },
+    "N2": {
+     "units": 12,
+     "touched_oaw": 0,
+     "used_skill": 0,
+     "listed_oaw_skills": 0,
+     "blocked_writes": 0,
+     "used_subagent": 0,
+     "touched_notes": 0,
+     "touched_memory": 0,
+     "memory_files": 0,
+     "cut_by_limit": 0
+    },
+    "O": {
+     "units": 12,
+     "touched_oaw": 12,
+     "used_skill": 12,
+     "listed_oaw_skills": 12,
+     "blocked_writes": 5,
+     "used_subagent": 4,
+     "touched_notes": 0,
+     "touched_memory": 0,
+     "memory_files": 0,
+     "cut_by_limit": 0
+    }
+   }
+  }
+ },
+ "merged": {
+  "word": "未定",
+  "outcome": "能力未定",
+  "words": {
+   "claude": "未定",
+   "codex": "有幫助"
+  },
+  "outcomes": {
+   "claude": "能力未定",
+   "codex": "留在預設站得住"
+  },
+  "cells_agree": false
+ },
+ "across_cells": {
+  "units": {
+   "design-1-c1": {
+    "claude": "0",
+    "codex": "+"
+   },
+   "design-3-c1": {
+    "claude": "0",
+    "codex": "0"
+   },
+   "explicit-1-b1": {
+    "claude": "0",
+    "codex": "+"
+   },
+   "handoff-1-b1": {
+    "claude": "0",
+    "codex": "0"
+   },
+   "large-2-c1": {
+    "claude": "0",
+    "codex": "0"
+   },
+   "large-3-c2": {
+    "claude": "0",
+    "codex": "0"
+   },
+   "passing-1-b1": {
+    "claude": "-",
+    "codex": "0"
+   },
+   "superseded-2-b1": {
+    "claude": "-",
+    "codex": "+"
+   },
+   "t01": {
+    "claude": "0",
+    "codex": "0"
+   },
+   "t04": {
+    "claude": "0",
+    "codex": "0"
+   },
+   "t09": {
+    "claude": "0",
+    "codex": "0"
+   },
+   "t12": {
+    "claude": "0",
+    "codex": "0"
+   }
+  },
+  "same_direction": 0,
+  "no_difference_in_both": 8,
+  "opposite": 1,
+  "difference_in_one_cell": 3
+ }
+}
