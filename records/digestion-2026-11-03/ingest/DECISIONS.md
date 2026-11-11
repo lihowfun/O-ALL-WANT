@@ -469,3 +469,18 @@ Source: `records/digestion-2026-11-07/validation/RESULT.md`. Implemented by plan
   may be weaker at showing "better"; only where N1 and N2 both score 1.0 in the main runs can they show just equal
   or worse. Results list the filled units.
 - Records made before the freeze by the previous runner stay valid (PREREG 凍結前的修正 2); nothing is re-drawn.
+
+## D43. Tracking: GitHub Issues and milestones on D22's four branches (2026-11-11, owner in chat: "就用推薦的git flow"; settles the 2026-11-05 request "後續工作要用 git flow 之類方法好好記錄與追蹤")
+- The agent's recommendation of 2026-11-05, now adopted. Branches stay as D22: main, codex/oaw-2-native-upgrade,
+  claude/oaw-2, records. No per-feature or per-round branches.
+- Work items are GitHub Issues, one milestone per stage (v2.0.1; capability tasting; after 2.0.1). Each issue states
+  its done condition. Commits and records refer to it as `Refs #N`; it is closed with the commit or record that
+  shows the condition met.
+- Commits follow Conventional Commits, `type(scope): subject` (feat, fix, docs, test, refactor, chore; `!` for a
+  breaking change). Records commits use `docs(<experiment or area>): ...`.
+- Releases are SemVer tags on main (`vMAJOR.MINOR.PATCH`) with a GitHub release. 2.0.0 was never released, so the
+  next tag is v2.0.1 (W6).
+- Integration shows as pull requests: claude/oaw-2 gets a draft PR (base codex/oaw-2-native-upgrade until PR #4
+  merges, then main).
+- A Project board needs the `project` token scope, which the current GitHub logins lack. The owner adds it
+  (`gh auth refresh -s project`) if a board is wanted; milestones show progress meanwhile.
