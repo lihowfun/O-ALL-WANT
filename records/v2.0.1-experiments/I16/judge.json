@@ -1,0 +1,533 @@
+{
+ "spec_sha256": "08c7cefaace9e8253617e441cb57b59e123c837d6b2f659f5ffabb5fc1af8228",
+ "inputs": {
+  "main-claude/rows.jsonl": "a3ed4e11769b11e30818a33dd51c4274a52fa0327a1b96d5dd105e27cbe23a17",
+  "main-codex/rows.jsonl": "f642ec7e69ebf36e073103e76f762aacb57bf473cf97f3196dd42562156180d5",
+  "runs/main-grades-opus.jsonl": "66dc6ee810a6308755b3945d5dd160a8af1525fcb76f3951dbb6de074f49e6fb",
+  "runs/main-grades-codex.jsonl": "6881fc13853d874b740f588a2019a900c687fc6b9807047b5e5d71796fd12488",
+  "runs/main-replay.jsonl": "cac736deabdba780c98b9ad6cbb603732274121814a036a62d216ec873b7aa43",
+  "I16/controls.json": "3367c64e231efeccb827184da055420a339377e7f2cdfe35fbc8d1f6cd5c1d90"
+ },
+ "floor_sha256": "989f1e56ce1c3a71896ec9b74be6015a4f1a014e458f1dfa0aa64d086938932b",
+ "eval_stats_sha256": "6ad7a60f4f744775cc32c43f95e488a30c46aab22fd1adcb7051e44854659948",
+ "ceiling_flagged": [],
+ "cells": {
+  "claude": {
+   "comparisons": {
+    "F": {
+     "opus": {
+      "detection": {
+       "point": 0.3333333333333333,
+       "ci95": [
+        0.0,
+        0.6666666666666666
+       ],
+       "ci90": [
+        0.0,
+        0.6666666666666666
+       ],
+       "class": "undetermined",
+       "floor_applied": false
+      },
+      "unsupported": {
+       "point": -1.0833333333333333,
+       "ci95": [
+        -1.9267675479073416,
+        -0.23989911875932501
+       ],
+       "ci90": [
+        -1.7911657943269614,
+        -0.37550087233970497
+       ],
+       "class": "better",
+       "floor_applied": true
+      },
+      "quality": "undetermined",
+      "detected": 5,
+      "native_detected": 3
+     },
+     "codex": {
+      "detection": {
+       "point": 0.3333333333333333,
+       "ci95": [
+        0.0,
+        0.6666666666666666
+       ],
+       "ci90": [
+        0.0,
+        0.6666666666666666
+       ],
+       "class": "undetermined",
+       "floor_applied": false
+      },
+      "unsupported": {
+       "point": -1.0833333333333333,
+       "ci95": [
+        -1.7633317364962733,
+        -0.40333493017039335
+       ],
+       "ci90": [
+        -1.6540061076476444,
+        -0.5126605590190222
+       ],
+       "class": "better",
+       "floor_applied": true
+      },
+      "quality": "undetermined",
+      "detected": 5,
+      "native_detected": 3
+     },
+     "quality": "undetermined",
+     "missed_critical": [
+      "remove-bundled-skill"
+     ],
+     "cost": {
+      "ratio": 0.9344118246096117,
+      "ci95": [
+       0.7572600788217941,
+       1.148085522996195
+      ],
+      "class": "within",
+      "cap": 1.5,
+      "questions": 12
+     },
+     "bash_pass": false,
+     "outcome": "optional"
+    },
+    "C": {
+     "opus": {
+      "detection": {
+       "point": 0.3333333333333333,
+       "ci95": [
+        0.0,
+        0.6666666666666666
+       ],
+       "ci90": [
+        0.0,
+        0.6666666666666666
+       ],
+       "class": "undetermined",
+       "floor_applied": false
+      },
+      "unsupported": {
+       "point": 0.8333333333333334,
+       "ci95": [
+        -0.4166666666666667,
+        2.0833333333333335
+       ],
+       "ci90": [
+        -0.25,
+        1.8333333333333333
+       ],
+       "class": "undetermined",
+       "floor_applied": false
+      },
+      "quality": "undetermined",
+      "detected": 5,
+      "native_detected": 3
+     },
+     "codex": {
+      "detection": {
+       "point": 0.3333333333333333,
+       "ci95": [
+        0.0,
+        0.6666666666666666
+       ],
+       "ci90": [
+        0.0,
+        0.6666666666666666
+       ],
+       "class": "undetermined",
+       "floor_applied": false
+      },
+      "unsupported": {
+       "point": 1.0,
+       "ci95": [
+        0.16666666666666666,
+        1.75
+       ],
+       "ci90": [
+        0.3333333333333333,
+        1.6666666666666667
+       ],
+       "class": "worse",
+       "floor_applied": false
+      },
+      "quality": "worse",
+      "detected": 5,
+      "native_detected": 3
+     },
+     "quality": "undetermined",
+     "missed_critical": [
+      "remove-bundled-skill"
+     ],
+     "cost": {
+      "ratio": 1.6320782406181875,
+      "ci95": [
+       1.3394599209704445,
+       1.9741032210160974
+      ],
+      "class": "undetermined",
+      "cap": 1.5,
+      "questions": 12
+     },
+     "bash_pass": false,
+     "outcome": "optional"
+    },
+    "D": {
+     "opus": {
+      "detection": {
+       "point": 0.16666666666666666,
+       "ci95": [
+        -0.21052858100065855,
+        0.5438619143339919
+       ],
+       "ci90": [
+        -0.14988563322587753,
+        0.4832189665592108
+       ],
+       "class": "undetermined",
+       "floor_applied": true
+      },
+      "unsupported": {
+       "point": -0.3333333333333333,
+       "ci95": [
+        -1.1767675479073416,
+        0.5101008812406749
+       ],
+       "ci90": [
+        -1.0411657943269617,
+        0.374499127660295
+       ],
+       "class": "undetermined",
+       "floor_applied": true
+      },
+      "quality": "undetermined",
+      "detected": 4,
+      "native_detected": 3
+     },
+     "codex": {
+      "detection": {
+       "point": 0.16666666666666666,
+       "ci95": [
+        -0.21052858100065855,
+        0.5438619143339919
+       ],
+       "ci90": [
+        -0.14988563322587753,
+        0.4832189665592108
+       ],
+       "class": "undetermined",
+       "floor_applied": true
+      },
+      "unsupported": {
+       "point": -0.25,
+       "ci95": [
+        -0.9299984031629399,
+        0.4299984031629399
+       ],
+       "ci90": [
+        -0.8206727743143111,
+        0.32067277431431107
+       ],
+       "class": "undetermined",
+       "floor_applied": true
+      },
+      "quality": "undetermined",
+      "detected": 4,
+      "native_detected": 3
+     },
+     "quality": "undetermined",
+     "missed_critical": [
+      "remove-bundled-skill"
+     ],
+     "cost": {
+      "ratio": 1.2264392405489994,
+      "ci95": [
+       0.9770235257634934,
+       1.5572031468480816
+      ],
+      "class": "undetermined",
+      "cap": 1.5,
+      "questions": 12
+     },
+     "bash_pass": false,
+     "outcome": "optional"
+    }
+   },
+   "outcome": "optional",
+   "tokens_median": {
+    "N": 666149.5,
+    "C": 1187991.5,
+    "D": 741486.0,
+    "F": 636300.5
+   },
+   "F_vs_C_detection": {
+    "opus": "undetermined",
+    "codex": "undetermined"
+   },
+   "hint_suffices": false
+  },
+  "codex": {
+   "comparisons": {
+    "F": {
+     "opus": {
+      "detection": {
+       "point": 0.3333333333333333,
+       "ci95": [
+        -0.04386191433399189,
+        0.7105285810006585
+       ],
+       "ci90": [
+        0.016781033440789128,
+        0.6498856332258776
+       ],
+       "class": "undetermined",
+       "floor_applied": true
+      },
+      "unsupported": {
+       "point": -0.08333333333333333,
+       "ci95": [
+        -0.5050504406203373,
+        0.3383837739536707
+       ],
+       "ci90": [
+        -0.4372495638301474,
+        0.2705828971634808
+       ],
+       "class": "equivalent",
+       "floor_applied": true
+      },
+      "quality": "undetermined",
+      "detected": 2,
+      "native_detected": 0
+     },
+     "codex": {
+      "detection": {
+       "point": 0.3333333333333333,
+       "ci95": [
+        -0.04386191433399189,
+        0.7105285810006585
+       ],
+       "ci90": [
+        0.016781033440789128,
+        0.6498856332258776
+       ],
+       "class": "undetermined",
+       "floor_applied": true
+      },
+      "unsupported": {
+       "point": 0.0,
+       "ci95": [
+        -0.491802433164767,
+        0.491802433164767
+       ],
+       "ci90": [
+        -0.41273370296638084,
+        0.41273370296638084
+       ],
+       "class": "equivalent",
+       "floor_applied": true
+      },
+      "quality": "undetermined",
+      "detected": 2,
+      "native_detected": 0
+     },
+     "quality": "undetermined",
+     "missed_critical": [
+      "remove-bundled-skill"
+     ],
+     "cost": {
+      "ratio": 1.3940643186977995,
+      "ci95": [
+       1.1155365667575545,
+       1.7153936121983395
+      ],
+      "class": "undetermined",
+      "cap": 1.5,
+      "questions": 12
+     },
+     "bash_pass": false,
+     "outcome": "optional"
+    },
+    "C": {
+     "opus": {
+      "detection": {
+       "point": 0.6666666666666666,
+       "ci95": [
+        0.3333333333333333,
+        1.0
+       ],
+       "ci90": [
+        0.3333333333333333,
+        1.0
+       ],
+       "class": "better",
+       "floor_applied": false
+      },
+      "unsupported": {
+       "point": 0.16666666666666666,
+       "ci95": [
+        -0.25,
+        0.6666666666666666
+       ],
+       "ci90": [
+        -0.16666666666666666,
+        0.5833333333333334
+       ],
+       "class": "undetermined",
+       "floor_applied": false
+      },
+      "quality": "better",
+      "detected": 4,
+      "native_detected": 0
+     },
+     "codex": {
+      "detection": {
+       "point": 0.6666666666666666,
+       "ci95": [
+        0.3333333333333333,
+        1.0
+       ],
+       "ci90": [
+        0.3333333333333333,
+        1.0
+       ],
+       "class": "better",
+       "floor_applied": false
+      },
+      "unsupported": {
+       "point": 0.16666666666666666,
+       "ci95": [
+        -0.3251357664981004,
+        0.6584690998314336
+       ],
+       "ci90": [
+        -0.2460670362997142,
+        0.5794003696330475
+       ],
+       "class": "undetermined",
+       "floor_applied": true
+      },
+      "quality": "better",
+      "detected": 4,
+      "native_detected": 0
+     },
+     "quality": "undetermined",
+     "missed_critical": [
+      "remove-bundled-skill"
+     ],
+     "downgraded": "missed a planted critical defect (BASH rule)",
+     "cost": {
+      "ratio": 1.7546414056996273,
+      "ci95": [
+       1.4520453847280776,
+       2.1384300365149507
+      ],
+      "class": "undetermined",
+      "cap": 1.5,
+      "questions": 12
+     },
+     "bash_pass": false,
+     "outcome": "optional"
+    },
+    "D": {
+     "opus": {
+      "detection": {
+       "point": 0.5,
+       "ci95": [
+        0.16666666666666666,
+        0.8333333333333334
+       ],
+       "ci90": [
+        0.16666666666666666,
+        0.8333333333333334
+       ],
+       "class": "better",
+       "floor_applied": false
+      },
+      "unsupported": {
+       "point": 0.08333333333333333,
+       "ci95": [
+        -0.3383837739536707,
+        0.5050504406203373
+       ],
+       "ci90": [
+        -0.2705828971634808,
+        0.4372495638301474
+       ],
+       "class": "equivalent",
+       "floor_applied": true
+      },
+      "quality": "better",
+      "detected": 3,
+      "native_detected": 0
+     },
+     "codex": {
+      "detection": {
+       "point": 0.5,
+       "ci95": [
+        0.16666666666666666,
+        0.8333333333333334
+       ],
+       "ci90": [
+        0.16666666666666666,
+        0.8333333333333334
+       ],
+       "class": "better",
+       "floor_applied": false
+      },
+      "unsupported": {
+       "point": 0.0,
+       "ci95": [
+        -0.491802433164767,
+        0.491802433164767
+       ],
+       "ci90": [
+        -0.41273370296638084,
+        0.41273370296638084
+       ],
+       "class": "equivalent",
+       "floor_applied": true
+      },
+      "quality": "better",
+      "detected": 3,
+      "native_detected": 0
+     },
+     "quality": "undetermined",
+     "missed_critical": [
+      "remove-bundled-skill"
+     ],
+     "downgraded": "missed a planted critical defect (BASH rule)",
+     "cost": {
+      "ratio": 1.2081438296257807,
+      "ci95": [
+       0.9422041583478327,
+       1.5246390316766611
+      ],
+      "class": "undetermined",
+      "cap": 1.5,
+      "questions": 12
+     },
+     "bash_pass": false,
+     "outcome": "optional"
+    }
+   },
+   "outcome": "optional",
+   "tokens_median": {
+    "N": 285039.5,
+    "C": 551446.0,
+    "D": 423072.0,
+    "F": 401134.5
+   },
+   "F_vs_C_detection": {
+    "opus": "undetermined",
+    "codex": "undetermined"
+   },
+   "hint_suffices": false
+  }
+ },
+ "outcome": "optional",
+ "bash_pass": false,
+ "quality_lowest": "undetermined"
+}
