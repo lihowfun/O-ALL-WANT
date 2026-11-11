@@ -75,6 +75,10 @@ CAP = 30_000_000         # logical tokens the claude cell may spend, every attem
 CAP_DECISION = "D35"
 RESERVE = 1.25           # the class C projection is multiplied by this before it is held against the cap
 MAX_AUTHORS = 3          # counted author runs per class: the first and at most two supplements for missing types
+# Amendment 2 (2026-11-11, before FREEZE.json): runner versions whose pre-freeze records (verification reports,
+# solver rows, audit entries, calibration runs) stay valid. Nothing an earlier version checked is run again, so no
+# check gets a second draw. Main runs and FREEZE.json bind the current runner only.
+PRIOR_RUNNERS = frozenset({"706700a17af591b4d5a8f4e84ba745ea46488a29e40c71ec8796e70252fe20ad"})
 FROZEN = ("PREREG.md", "AUTHOR_BRIEF_B.md", "AUTHOR_BRIEF_C.md", "h1_run.py", "h1_judge.py")
 EDGE = r"(?<![A-Za-z0-9_])%s(?![A-Za-z0-9_])"  # a fact counts where it stands as a whole token
 # Codex reports a usage limit only as text in its error events and on stderr; Claude's limit is read from the
@@ -1257,7 +1261,7 @@ def cmd_run(args):
     attempts_path = os.path.join(STATE, f"attempts-{args.tag}-{args.cell}.jsonl")
     runner = digest(os.path.abspath(__file__))
     earlier_runs = read_rows(rows_path) + read_rows(attempts_path) + read_rows(starts_path(args.tag, args.cell))
-    if any(r.get("runner_sha256") != runner for r in earlier_runs):
+    if any(not known_runner(r.get("runner_sha256"), main=main_run) for r in earlier_runs):
         raise SystemExit(f"runs of another runner version exist under tag {args.tag}; use a new state folder")
     entries = {u["id"]: unit_digest(u) for u in units}
     for r in earlier_runs:
@@ -1566,6 +1570,11 @@ def runner_digest():
     return digest(os.path.abspath(__file__))
 
 
+def known_runner(value, main=False):
+    """This runner, or for records made before the freeze an earlier version listed in PRIOR_RUNNERS."""
+    return value == runner_digest() or (not main and value in PRIOR_RUNNERS)
+
+
 def authors_path():
     return os.path.join(STATE, "authors.jsonl")
 
@@ -1624,10 +1633,11 @@ def checked(candidates, verified):
     """The verification report of a candidates file, refused when it was made from another file, by another runner,
     on another suite baseline or with another oaw_mode.py."""
     report = json.load(open(verified, encoding="utf-8"))
-    now = {"candidates_sha256": digest(candidates), "runner_sha256": runner_digest(),
-           "baseline_sha256": digest(baseline_path()),
+    now = {"candidates_sha256": digest(candidates), "baseline_sha256": digest(baseline_path()),
            "oaw_mode_sha256": digest(os.path.join(OAW, "scripts", "oaw_mode.py"))}
     differ = [key for key, value in now.items() if report.get(key) != value]
+    if not known_runner(report.get("runner_sha256")):
+        differ.append("runner_sha256")
     if differ:
         raise SystemExit(f"{os.path.basename(verified)} does not match the current {', '.join(differ)}")
     return report
@@ -1730,7 +1740,8 @@ def bound_to(report, verified):
 
 
 def refuse_other(found, bound, what):
-    differ = [key for key, value in bound.items() if found.get(key) != value]
+    differ = [key for key, value in bound.items()
+              if not (known_runner(found.get(key)) if key == "runner_sha256" else found.get(key) == value)]
     if differ:
         raise SystemExit(f"{what} exists for another {', '.join(differ)}; use a new state folder")
 
@@ -1940,7 +1951,8 @@ def cmd_freeze(args):
     the author ledger in authoring order, each author's candidates and report checked against the ledger and the
     frozen brief. B: per type the first candidate that passed verification and the full-memory solver. C: a unit
     with any function the audit struck, or whose audit replies stayed invalid, is dropped whole; per type the first
-    two that were not at ceiling in their one calibration run. A short type is written to missing-<class>.json for
+    two that were not at ceiling in their one calibration run; after the last supplement a short type is filled up
+    to two with its units at ceiling, in authoring order (D42). A short type is written to missing-<class>.json for
     a supplement author. `--stage calibration` writes every class C candidate usable so far."""
     final = args.stage == "final"
     out = os.path.join(STATE, f"units_{args.klass}.json" if final else f"units_{args.klass}_calibration.json")
@@ -2056,15 +2068,21 @@ def cmd_freeze(args):
                 if row is None:
                     raise SystemExit(f"{unit['id']} has no calibration run")
                 if row["unit_sha256"] != unit_digest(frozen_entry(unit, reports[unit["id"]], "C")) \
-                        or row["runner_sha256"] != runner_digest():
+                        or not known_runner(row["runner_sha256"]):
                     raise SystemExit(f"the calibration run of {unit['id']} is of another unit entry or runner")
                 scores[unit["id"]] = row.get("score")
             below = [u for u in pool if scores[u["id"]] != 1.0][:2]
+            fill = []
+            if len(below) < 2 and len(counted) >= MAX_AUTHORS:
+                # D42 (owner, 2026-11-11): once the supplements are used up, a short type is filled with its units at
+                # ceiling, in authoring order. They may be weaker at showing that O is better (limits in PREREG.md).
+                fill = [u for u in pool if scores[u["id"]] == 1.0][:2 - len(below)]
             for unit in pool:
                 notes[unit["id"]] = f"calibration {scores[unit['id']]}, " + (
-                    "chosen" if unit in below else "dropped: at ceiling" if scores[unit["id"]] == 1.0 else "spare")
-            chosen += below
-            if len(below) < 2:
+                    "chosen" if unit in below else "chosen: at ceiling, filled after the last supplement (D42)"
+                    if unit in fill else "dropped: at ceiling" if scores[unit["id"]] == 1.0 else "spare")
+            chosen += below + fill
+            if len(below) + len(fill) < 2:
                 missing.append(kind)
     if missing:
         names = [name for name, _start, _end in counted]

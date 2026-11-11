@@ -457,3 +457,15 @@ Source: `records/digestion-2026-11-07/validation/RESULT.md`. Implemented by plan
 - The agent reads 都可以測 as consent to the user-directory installs the tests need (ffmpeg, asked in
   `records/v2.0.1-experiments/capability/CANDIDATES.md`). Nothing is installed system-wide.
 - Budget: D35's 30M per food.
+
+## D42. H1 class C is filled with ceiling units after the last supplement (2026-11-11, owner in chat: "1 補滿天花板題"; amends PREREG 驗題 6 of `records/v2.0.1-experiments/H1`)
+- After three class C authors only two units were below ceiling in the codex-cell calibration (one large, one design).
+  The agent offered three options with the cost of each: fill with ceiling units (named in advance: large-2-c1,
+  design-3-c1), run with the two, or rewrite the brief for new authors. The owner chose the first.
+- Rule: once the supplements are used up, a type with fewer than two units below ceiling is filled to two with its
+  units at ceiling, in authoring order. Units that failed verification or the audit never fill; too few usable
+  units still stops for the owner. Class B is unchanged.
+- Cost, stated before the runs: N already scored these two units 1.0 once in calibration, so in the codex cell they
+  may be weaker at showing "better"; only where N1 and N2 both score 1.0 in the main runs can they show just equal
+  or worse. Results list the filled units.
+- Records made before the freeze by the previous runner stay valid (PREREG 凍結前的修正 2); nothing is re-drawn.

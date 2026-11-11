@@ -181,6 +181,21 @@ check("solver: every valid unit already has its bound result, so nothing runs", 
 open(rows_path, "w").write(saved.replace(first["runner_sha256"], "1" * 64, 1))
 check("solver: a stored result of another runner stops the solver before any session (#3)",
       refused(R.cmd_solver, argparse.Namespace(author="a1"), contains="another runner_sha256") is True)
+R.PRIOR_RUNNERS = frozenset({"1" * 64})
+check("amendment 2: a stored solver result of a listed earlier runner is kept, so nothing runs",
+      R.cmd_solver(argparse.Namespace(author="a1")) == 0)
+check("amendment 2: a main run never accepts an earlier runner",
+      R.known_runner("1" * 64) is True and R.known_runner("1" * 64, main=True) is False)
+vf = R.verified_path("a1", "B")
+rep = json.load(open(vf))
+rep["runner_sha256"] = "1" * 64
+json.dump(rep, open(vf + ".prior", "w"))
+check("amendment 2: a verification report of a listed earlier runner is accepted",
+      R.checked(R.candidates_path("a1", "B"), vf + ".prior")["runner_sha256"] == "1" * 64)
+R.PRIOR_RUNNERS = frozenset()
+check("amendment 2: a verification report of an unlisted runner is refused",
+      refused(R.checked, R.candidates_path("a1", "B"), vf + ".prior", contains="runner_sha256") is True)
+os.remove(vf + ".prior")
 open(rows_path, "w").write(saved)
 
 # a third counted author is the last; a fourth is refused
@@ -252,6 +267,53 @@ check("C final: per type the first two below ceiling in authoring order, no ceil
 check("C final: ceiling units dropped", out["notes"].get("large-2-c1") == "calibration 1.0, dropped: at ceiling"
       and out["notes"].get("design-1-c2") == "calibration 1.0, dropped: at ceiling")
 check("C final: inputs carry audit and calibration digests", sorted(out.get("inputs", {})) == ["audit_sha256", "calibration_sha256"])
+calp = os.path.join(state, "rows-calibration-codex.jsonl")
+cal_saved = open(calp).read()
+open(calp, "w").write(cal_saved.replace(runner, "1" * 64))
+R.PRIOR_RUNNERS = frozenset({"1" * 64})
+code, err = freeze(klass="C")
+check("amendment 2: calibration runs of a listed earlier runner are kept, same units",
+      code == 0 and [u["id"] for u in frozen("units_C.json")["units"]] == ["large-3-c1", "large-4-c1", "design-1-c1", "design-2-c2"],
+      (code, err))
+R.PRIOR_RUNNERS = frozenset()
+code, err = freeze(klass="C")
+check("amendment 2: calibration runs of an unlisted runner are refused", code is None and "another unit entry or runner" in err, err)
+open(calp, "w").write(cal_saved)
+code, err = freeze(klass="C")
+# D42: ceiling fill only after the last supplement
+reset("rows-calibration-codex.jsonl", "attempts-calibration-codex.jsonl")
+for uid, score in (("large-2-c1", 1.0), ("large-3-c1", 0.5), ("large-4-c1", 0.75), ("design-1-c1", 0.25),
+                   ("design-1-c2", 1.0), ("design-2-c2", 1.0)):
+    counted_row("calibration", uid, score, {"unit_sha256": entries[uid], "runner_sha256": runner})
+code, err = freeze(klass="C")
+check("D42: before the last supplement a short type is not filled", code == 7
+      and json.load(open(R.missing_path("C")))["types"] == ["design"], (code, err))
+cu3 = [unit("design-1-c3", "design")]
+author("C", "c3", cu3, supplies=["design"])
+verify("C", "c3", cu3, invalid={"design-1-c3"})
+code, err = freeze(klass="C")
+out = frozen("units_C.json") if code == 0 else {"units": [], "notes": {}}
+check("D42: after the last supplement the short type is filled with ceiling units in authoring order",
+      code == 0 and [u["id"] for u in out["units"]] == ["large-3-c1", "large-4-c1", "design-1-c1", "design-1-c2"],
+      (code, err))
+check("D42: the filled unit is noted, the next ceiling unit stays dropped",
+      out["notes"].get("design-1-c2") == "calibration 1.0, chosen: at ceiling, filled after the last supplement (D42)"
+      and out["notes"].get("design-2-c2") == "calibration 1.0, dropped: at ceiling"
+      and out["notes"].get("large-2-c1") == "calibration 1.0, dropped: at ceiling", out["notes"])
+check("D42: the missing file is removed once the class freezes", not os.path.exists(R.missing_path("C")))
+saved_audit = json.dumps(audit)
+for uid in ("design-1-c2", "design-2-c2"):
+    audit[uid]["result"] = {"struck": ["test_a"], "answer": {}}
+json.dump(audit, open(os.path.join(state, "audit-C.json"), "w"))
+reset("units_C.json")
+code, err = freeze(klass="C")
+check("D42: struck units never fill; too few usable units still stops for the owner and writes nothing", code == 7
+      and json.load(open(R.missing_path("C")))["types"] == ["design"]
+      and not os.path.exists(os.path.join(state, "units_C.json")), (code, err))
+audit = json.loads(saved_audit)
+json.dump(audit, open(os.path.join(state, "audit-C.json"), "w"))
+reset("rows-calibration-codex.jsonl", "attempts-calibration-codex.jsonl")
+open(calp, "w").write(cal_saved)
 check("audit: every valid unit already has its bound audit, so nothing runs", R.cmd_audit(argparse.Namespace(author="c1")) == 0)
 audit["large-3-c1"]["candidate_sha256"] = "2" * 64
 json.dump(audit, open(os.path.join(state, "audit-C.json"), "w"))
