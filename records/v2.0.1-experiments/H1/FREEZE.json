@@ -1,0 +1,395 @@
+{
+ "arms": {
+  "L": {
+   "commit": "90c4452042b73f409add62a34daae3e5b8599f83",
+   "content_sha256": "70c4030736d3de3a02089b42dd322d712784924e8d999fca9b05d6b45d64d3c0",
+   "tree": "15219fe4d757bfc1829c0fda5f7d625acb4e8ffa",
+   "uncommitted": 0
+  },
+  "N": {
+   "commit": "49943b5a94413a530761350f04e896f76e8d620e",
+   "content_sha256": "e6122a43de6c95fc970870739835c85dc333111107e6e38f333620a7590114cf",
+   "tree": "6751ab7eae06e6f97a157860470fd588920a734b",
+   "uncommitted": 0
+  },
+  "O": {
+   "commit": "a7ec2dbe0e782322619e00dcd5a93b6884e6ecaa",
+   "content_sha256": "bf60df9116d016ddc010f23910089bf1232128b919f3327df7e00de7b585444e",
+   "tree": "c322c01067ced9d701e8c2c5778fcfd70e95cb4f",
+   "uncommitted": 0
+  }
+ },
+ "base_commit": "49943b5a94413a530761350f04e896f76e8d620e",
+ "budget": {
+  "cap": 30000000,
+  "decision": "D35",
+  "spent_before": 1397352
+ },
+ "eval_stats_sha256": "6ad7a60f4f744775cc32c43f95e488a30c46aab22fd1adcb7051e44854659948",
+ "files": {
+  "AUTHOR_BRIEF_B.md": "80f88795dd7f366222317c740f3db5066a8ea5066e3eb47fceea6e07ba61b9da",
+  "AUTHOR_BRIEF_C.md": "698bd2f549abbafcbc9c065951a5db09f57855981455e77f431efeede5bf953d",
+  "PREREG.md": "ae009ea4cf4c0213192185c194ca92e6d4b1faf6deda4346d2a3a4ab24088f1b",
+  "h1_judge.py": "037aed8bb882a7df210e9ae6d830f04d64104cf2f7a7b3ed0ef68b61af7609f6",
+  "h1_run.py": "64dd42efeb24530cef93283d51eabda49223de8702be0f78c9792ab2dae9cbd7"
+ },
+ "launch": {
+  "arms": {
+   "claude": {
+    "A": [
+     "N1",
+     "O",
+     "N2"
+    ],
+    "B": [
+     "N1",
+     "O",
+     "N2"
+    ],
+    "C": [
+     "N1",
+     "O",
+     "N2"
+    ]
+   },
+   "codex": {
+    "A": [
+     "N1",
+     "O",
+     "N2"
+    ],
+    "B": [
+     "N1",
+     "O",
+     "L",
+     "N2"
+    ],
+    "C": [
+     "N1",
+     "O",
+     "L",
+     "N2"
+    ]
+   }
+  },
+  "audit_argv": [
+   "$H1_BIN/codex",
+   "exec",
+   "--json",
+   "--model",
+   "gpt-6.1-sol",
+   "-c",
+   "model_reasoning_effort=\"high\"",
+   "--sandbox",
+   "read-only",
+   "--skip-git-repo-check",
+   "--ignore-user-config",
+   "--cd",
+   "/home/dev/proj",
+   "-"
+  ],
+  "audit_prompt": "The repository in the current directory is pallets/flask. Do not change any file.\n\nBelow are a task description that was given to an engineer and a pytest file that is used afterwards to check the\nresult. For every test function, decide whether what it checks was stated in the task description. A function\ncounts as stated only when every name, signature, config key, default value, message text and behaviour that it\nrelies on is given in the description, or is already true of this repository before the task. A function that needs\na choice the description leaves open (a name, a wording, an order, an edge case it does not mention) is not stated.\n\nReply with JSON only, no other text:\n{\"functions\": [{\"name\": \"<test function>\", \"stated\": true or false, \"sentence\": \"<the sentence of the description it checks, or empty>\", \"reason\": \"<one short sentence>\"}]}\n\n## Task description\n<<<\n%s\n>>>\n\n## Test file\n<<<\n%s\n>>>\n",
+  "bwrap_version": "bubblewrap 0.6.1",
+  "cells": {
+   "claude": {
+    "argv": [
+     "$H1_BIN/claude",
+     "-p",
+     "<prompt>",
+     "--output-format",
+     "stream-json",
+     "--verbose",
+     "--model",
+     "claude-opus-5-5",
+     "--effort",
+     "high",
+     "--permission-mode",
+     "bypassPermissions",
+     "--setting-sources",
+     "project",
+     "--strict-mcp-config",
+     "--disallowedTools",
+     "WebSearch,WebFetch,RemoteTrigger,PushNotification,ShareOnboardingGuide,CronCreate,CronDelete,CronList,ScheduleWakeup,SendMessage,ListAgents,EnterWorktree,ExitWorktree,Workflow"
+    ],
+    "billing_source_required": "none",
+    "cli_file": {
+     "relative": "bin/claude",
+     "resolved": "lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe",
+     "ro_index": 0,
+     "sha256": "bfb3703ad5380242328459bc62ada4bde8ae7ba57c6e1eeadb9c00e08874c478"
+    },
+    "cli_version": "2.1.322 (Claude Code)",
+    "model": "claude-opus-5-5",
+    "prompt_on": "argv",
+    "sandbox": [
+     "bwrap",
+     "--ro-bind",
+     "/",
+     "/",
+     "--dev",
+     "/dev",
+     "--proc",
+     "/proc",
+     "--tmpfs",
+     "/tmp",
+     "--tmpfs",
+     "/home",
+     "--tmpfs",
+     "$H1_HIDE[0]",
+     "--ro-bind",
+     "$H1_STATE/tools/0",
+     "$H1_RO[0]",
+     "--ro-bind",
+     "$H1_STATE/tools/1",
+     "$H1_RO[1]",
+     "--bind",
+     "$H1_STATE/runs/<run>/home",
+     "/home/dev",
+     "--bind",
+     "$H1_STATE/runs/<run>/work/proj",
+     "/home/dev/proj",
+     "--bind",
+     "~/.claude/.credentials.json",
+     "/home/dev/.claude/.credentials.json",
+     "--chdir",
+     "/home/dev/proj",
+     "--die-with-parent",
+     "--unshare-ipc",
+     "--unshare-pid",
+     "<argv>"
+    ]
+   },
+   "codex": {
+    "argv": [
+     "$H1_BIN/codex",
+     "exec",
+     "--json",
+     "--model",
+     "gpt-6.1-sol",
+     "-c",
+     "model_reasoning_effort=\"high\"",
+     "--sandbox",
+     "workspace-write",
+     "--skip-git-repo-check",
+     "--ignore-user-config",
+     "--cd",
+     "/home/dev/proj",
+     "-"
+    ],
+    "billing_source_required": "chatgpt",
+    "cli_file": {
+     "relative": "bin/codex",
+     "resolved": "lib/node_modules/@openai/codex/bin/codex.js",
+     "ro_index": 0,
+     "sha256": "e14fc83739c13c1074b12bd1acce4010c893c7f6fbfc1593b4a31d74cabb57af"
+    },
+    "cli_version": "codex-cli 0.167.0",
+    "model": "gpt-6.1-sol",
+    "prompt_on": "stdin",
+    "sandbox": [
+     "bwrap",
+     "--ro-bind",
+     "/",
+     "/",
+     "--dev",
+     "/dev",
+     "--proc",
+     "/proc",
+     "--tmpfs",
+     "/tmp",
+     "--tmpfs",
+     "/home",
+     "--tmpfs",
+     "$H1_HIDE[0]",
+     "--ro-bind",
+     "$H1_STATE/tools/0",
+     "$H1_RO[0]",
+     "--ro-bind",
+     "$H1_STATE/tools/1",
+     "$H1_RO[1]",
+     "--bind",
+     "$H1_STATE/runs/<run>/home",
+     "/home/dev",
+     "--bind",
+     "$H1_STATE/runs/<run>/work/proj",
+     "/home/dev/proj",
+     "--bind",
+     "~/.codex/auth.json",
+     "/home/dev/.codex/auth.json",
+     "--chdir",
+     "/home/dev/proj",
+     "--die-with-parent",
+     "--unshare-ipc",
+     "--unshare-pid",
+     "<argv>"
+    ]
+   }
+  },
+  "disallowed_tools": [
+   "WebSearch",
+   "WebFetch",
+   "RemoteTrigger",
+   "PushNotification",
+   "ShareOnboardingGuide",
+   "CronCreate",
+   "CronDelete",
+   "CronList",
+   "ScheduleWakeup",
+   "SendMessage",
+   "ListAgents",
+   "EnterWorktree",
+   "ExitWorktree",
+   "Workflow"
+  ],
+  "grading": {
+   "environment": {
+    "DISABLE_AUTOUPDATER": "1",
+    "GIT_AUTHOR_EMAIL": "dev@example.invalid",
+    "GIT_AUTHOR_NAME": "dev",
+    "GIT_COMMITTER_EMAIL": "dev@example.invalid",
+    "GIT_COMMITTER_NAME": "dev",
+    "GIT_CONFIG_NOSYSTEM": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "HOME": "/home/dev",
+    "LANG": "C.UTF-8",
+    "LC_ALL": "C.UTF-8",
+    "PATH": "/home/dev/proj/.venv/bin:/usr/bin:/bin",
+    "TERM": "dumb",
+    "VIRTUAL_ENV": "/home/dev/proj/.venv"
+   },
+   "pytest": ".venv/bin/python -m pytest -q -p no:cacheprovider --no-header -rf",
+   "sandbox": [
+    "bwrap",
+    "--ro-bind",
+    "/",
+    "/",
+    "--dev",
+    "/dev",
+    "--proc",
+    "/proc",
+    "--tmpfs",
+    "/tmp",
+    "--tmpfs",
+    "/home",
+    "--tmpfs",
+    "$H1_HIDE[0]",
+    "--ro-bind",
+    "$H1_STATE/tools/0",
+    "$H1_RO[0]",
+    "--ro-bind",
+    "$H1_STATE/tools/1",
+    "$H1_RO[1]",
+    "--dir",
+    "/home/dev",
+    "--bind",
+    "$H1_STATE/runs/<run>/grade/proj",
+    "/home/dev/proj",
+    "--bind",
+    "$H1_STATE/runs/<run>/grade/io",
+    "/home/dev/grade",
+    "--unshare-net",
+    "--chdir",
+    "/home/dev/proj",
+    "--die-with-parent",
+    "--unshare-ipc",
+    "--unshare-pid",
+    "/bin/bash",
+    "-c",
+    "<script>"
+   ]
+  },
+  "l_policy": "# Project guidance\n\n- Write decisions and facts that later work will need in NOTES.md at the repository root. If NOTES.md exists, read it before starting work.\n- For a large or risky change, have one fresh-context reviewer (a subagent with no view of this conversation) check the plan before you start and the diff and test results when you finish, and resolve the justified findings.\n",
+  "limits": {
+   "first_estimates": {
+    "A": {
+     "L": 350000,
+     "N": 350000,
+     "O": 450000
+    },
+    "B": {
+     "L": 350000,
+     "N": 350000,
+     "O": 450000
+    },
+    "C": {
+     "L": 2500000,
+     "N": 2500000,
+     "O": 3500000
+    }
+   },
+   "max_attempts": 3,
+   "max_authors": 3,
+   "reserve": 1.25,
+   "session_seconds": 7200,
+   "token_ceiling": 8000000
+  },
+  "local_settings_sha256": "b03e599b58478a2b1e3268d43cd2b392db285bce11ebf00aa8488671b65c7384",
+  "order_offset": {
+   "A": 0,
+   "B": 4,
+   "C": 8
+  },
+  "prompt": "You are working in the repository in the current directory.\n\n{task}\n\nMake the change in the source code and verify it with the project's tests. Do not commit.",
+  "session_environment": {
+   "DISABLE_AUTOUPDATER": "1",
+   "GIT_AUTHOR_EMAIL": "dev@example.invalid",
+   "GIT_AUTHOR_NAME": "dev",
+   "GIT_COMMITTER_EMAIL": "dev@example.invalid",
+   "GIT_COMMITTER_NAME": "dev",
+   "GIT_CONFIG_NOSYSTEM": "1",
+   "GIT_TERMINAL_PROMPT": "0",
+   "HOME": "/home/dev",
+   "LANG": "C.UTF-8",
+   "LC_ALL": "C.UTF-8",
+   "PATH": "/home/dev/proj/.venv/bin:/usr/bin:/bin:$H1_BIN",
+   "TERM": "dumb",
+   "VIRTUAL_ENV": "/home/dev/proj/.venv"
+  },
+  "solver_prompt": "You are working in the repository in the current directory.\n\nThe maintainer sent the following requests one after another. Carry out all of them, in order.\n\n{requests}\n\nMake the changes in the source code and verify them with the project's tests. Do not commit."
+ },
+ "oaw_commit": "8f25a81065e449c3b1b108bebc0aaf25eff5692c",
+ "oaw_mode_sha256": "a15747c60736a55cd627c89ae64b1f875daab88bf17b1fb1dc57c80996be8ccb",
+ "suite_baseline_sha256": "e2c7f48bf50b4cbe341e9953f15ed3869bcbabe3d541a0032ca5c76ec08d883c",
+ "system_tools": {
+  "bash": {
+   "path": "/usr/bin/bash",
+   "sha256": "59474588a312b6b6e73e5a42a59bf71e62b55416b6c9d5e4a6e1c630c2a9ecd4",
+   "version": "GNU bash, version 5.1.16(1)-release (x86_64-pc-linux-gnu)"
+  },
+  "bwrap": {
+   "path": "/usr/bin/bwrap",
+   "sha256": "bf6cf3d4456665f5d80c14eb79a76e0ce87b39a0883e614a161658b4ec33492c",
+   "version": "bubblewrap 0.6.1"
+  },
+  "git": {
+   "path": "/usr/bin/git",
+   "sha256": "07997209f4513fdee3e1eb151b1c37d56cfe37f9915d331ec37d688c6b9d3ce9",
+   "version": "git version 2.34.1"
+  },
+  "python3": {
+   "path": "/usr/bin/python3.10",
+   "sha256": "a2f33a6e006989270f4340528eb61f8f97366e00a5d1b602ac8672ea44fc56ae",
+   "version": "Python 3.10.12"
+  },
+  "timeout": {
+   "path": "/usr/bin/timeout",
+   "sha256": "2e3f2616d64647f6c30250f258ae350e2d21e4e413bd2c1e4f7c2d9f9c17f984",
+   "version": "timeout (GNU coreutils) 8.32"
+  }
+ },
+ "tools": [
+  {
+   "content_sha256": "63169bb67bbc7a5bf543b6978077bada52e856f2a9c2c3785bb2b99beb1ad606",
+   "index": 0
+  },
+  {
+   "content_sha256": "355415a56fa36dad2d3995d1c703f0407f32e88b2044916692c1ee4ecaebbe1b",
+   "index": 1
+  }
+ ],
+ "units": {
+  "A": "38a5d55c34b2ce65262c46da6d6746cc0d342be0ee1ac152a2f3bc9ce263e933",
+  "B": "25c437cbf7e3555c42f58bd58f4ef59778849691726ee1116b72ef4fc103fe87",
+  "C": "98c4ff2aaa37b0fc692e9e37119db967a670cda55fae03ab2d068be0621f7630"
+ }
+}
