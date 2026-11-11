@@ -484,3 +484,13 @@ Source: `records/digestion-2026-11-07/validation/RESULT.md`. Implemented by plan
   merges, then main).
 - A Project board needs the `project` token scope, which the current GitHub logins lack. The owner adds it
   (`gh auth refresh -s project`) if a board is wanted; milestones show progress meanwhile.
+
+## D44. I16 ceiling 85M (2026-11-11, owner in chat: "加到 85M 跑完"; refines D39)
+- Asked after the I16 Claude cell was paused between runs at 3 of 48 main runs (spent about 27.4M): runs cost
+  0.82–1.71M each against the calibration estimate of 0.8M, so the full cell plus grading projected to 68–80M,
+  over D39's 65M. An incomplete cell gets no verdict (I16 PREREG, 「資料不完整」), so running into the guard would
+  have spent the tokens without a Claude result.
+- Options put to the owner: raise to 85M and run the frozen design unchanged (chosen); stop at 65M with a Codex-only
+  result; run only N and F in the Claude cell as a deviation (about 50M).
+- I16 may spend up to 85M Claude logical tokens. The runner's guard is set at 83M so about 2M stays for grading.
+  Nothing in the frozen design changes; the run resumes from its ledger.
