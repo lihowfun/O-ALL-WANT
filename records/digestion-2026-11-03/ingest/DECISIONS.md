@@ -494,3 +494,75 @@ Source: `records/digestion-2026-11-07/validation/RESULT.md`. Implemented by plan
   result; run only N and F in the Claude cell as a deviation (about 50M).
 - I16 may spend up to 85M Claude logical tokens. The runner's guard is set at 83M so about 2M stays for grading.
   Nothing in the frozen design changes; the run resumes from its ledger.
+
+## D45. D40 settled: nothing leaves the default, five traced defects are fixed first, release is the only open line (2026-11-12, owner in chat after switching this session to Fable 5.2: "很棒 請統整一下 制定接下來的 執行計畫與調整 roadmap 讓發散的問題收斂 最佳化調整"; settles D40, proposes a change to D43's PR base)
+- How the request was read: D40 leaves H1's case (one cell without a verdict, cells opposite on memory) to the
+  owner's Fable 5.2. On 2026-11-10 the owner had said the agent may reopen on Fable 5.2 itself when needed
+  ("需要的話 你這邊重開就好"); on 2026-11-12 the owner switched this session's model and asked for a converged plan.
+  The agent took that as the D40 hand-over and decided. The owner did not pick an option and can overturn any item.
+- Evidence added before deciding: `records/v2.0.1-experiments/H1/AUDIT-D40.md` (command-level audit of the O runs).
+- Defaults:
+  1. No part leaves the default recipe. The merged word is undetermined, not worse and not 雞肋; the Codex cell is
+     helpful. The post-hoc audit supports fixing rules and two Codex-side defects first; it is descriptive, not a
+     registered test, so keeping the default is this decision's call and the package's effect stays undetermined.
+  2. Fixed before release (each traced in the audit):
+     - M1: the save rule becomes unconditional (decisions and facts later work needs are saved before the session
+       ends), after the L arm's two-line rule. The `oaw-evidence` skill's "explicitly requested" limit changes
+       with it. It still asks for no note after unrelated tasks.
+     - M2: an empty project recall says so and the agent continues with the host's own memory and history.
+     - M3: `memory add` succeeds under Codex's `workspace-write` sandbox, which keeps `.agents/` read-only. Existing
+       files are not moved in 2.0.1. The design (ordering across the two sources, superseded entries, the cursor;
+       fallback only on an explicit read-only or permission error; confinement, credential refusal and the locked
+       atomic update kept) gets one fresh-context review before coding.
+     - R1: on Codex the review step is a fresh subagent, not `codex review --uncommitted` (it cannot start inside a
+       sandboxed Codex session; 4 of 4 failed).
+     - R2: deep's code review is one round by default. "Until a round finds nothing new (at most 3)" was a plan
+       choice with no measurement; H1 measured whole-unit cost (design units 3.3–8.7x native) and X2 supports one
+       fresh-context review of a design, not a number of code-review rounds. One round is therefore a cost-saving
+       hypothesis for the fix check. Its risk: defects introduced while fixing round-one findings get no
+       independent review.
+  3. One fix check, written down and reviewed once before it runs: the O arm only, on H1's frozen units, both
+     cells, same runner and mechanical grader.
+     - It has its own manifest (the fixed OAW commit, digests of H1's unit bank and grader, digests of H1's O and
+       N rows). H1's freeze, ledger and verdict stay untouched. It produces no new owner verdict word.
+     - It has its own ledger as a new experiment under D35, not H1's remaining 5.94M. H1's O arm cost 12.76M in
+       the Claude cell; with R2 working the estimate is about 8M; the stop is 17M (12.76M × 1.3, stop rule 2).
+     - Each fix needs its own observed event. A mechanism that was not triggered is recorded as not observed, not
+       as passed.
+     - Its conclusion is limited to "these runs met the preset regression thresholds". One run per unit, and the
+       same units were used to find the defects, so it is neither proof of no regression nor new evidence of
+       benefit. The README headline stays H1's frozen result.
+     - If it fails: memory thresholds → M1 and M2 are reverted; a design-unit score drop → R2 is reverted; M3 or
+       R1 still failing → release blocker, fixed against their model-free reproduction, not another full check;
+       incomplete data → no pass is declared (a usage interruption resumes from the ledger; the budget stop goes
+       to the owner). Any revert means the final commit passes the gate and CI again. No second iteration.
+  4. Not taken: brief option B as written (the fresh-context review stays; R2 trims only the extra rounds) and
+     option D (no enlarged retest before release).
+- Convergence:
+  - The v2.0.1 release is the only open line until it ships. No new experiment starts before that.
+  - Proposed, waiting for the owner: PR #16's base moves to `main` now instead of D43's "after PR #4 merges".
+    CI runs only for pull requests into `main`; PR #4's last run (2026-10-30) failed on Windows and macOS;
+    `claude/oaw-2`, which contains PR #4's head, had never been run by CI. The agent's own attempt to change the
+    base was stopped by the session's permission check and was not worked around, so D43's base stands until the
+    owner approves the change or makes it on the pull request page. With the new base the owner would merge one
+    pull request (#16, merge commit) and PR #4 would then show as merged.
+  - After the release: PPT tasting (#13), with the tasting kit (#9) built as its runner. G5 (#15) starts as an
+    independent re-application of the yardstick to the existing data by Codex; new runs only for a food someone
+    wants to use (D31 item 4 still holds for those).
+  - Parked with written restart conditions: video (#14, needs ffmpeg), G6, G7, X5, and moving the memory store
+    out of `.agents/`. X5's per-commit log, which the 2.0.1 plan asked for from the start of work, was never
+    kept. Path-based triggers can be recomputed from git history at analysis time; the context-based one
+    (plan-given) cannot and is out of X5's scope.
+- Stop rules for the agent's own work (the owner can lift any of them per case):
+  1. A "better" claim is tested only where calibration shows room. If fewer than half the units are below ceiling,
+     the run is cut to a no-worse-and-cost check or not run, and recorded as "not measured: ceiling". Intake of
+     outside foods is the exception: a comparison already used for comparable foods is not cut by arm or cell to
+     save tokens (D31 item 4).
+  2. A budget request uses the pilot's real cost per run × runs × 1.3 (I16: 0.8M guessed, 0.82–1.71M measured).
+  3. A fix gets one check. Failing it means revert, not another iteration. A product defect with a model-free
+     reproduction is the exception: it is fixed until that reproduction passes.
+  4. Reviews stop at 3 rounds (unchanged).
+- Review: one independent Codex (gpt-6.1-sol) round on the plan and this entry said "先改再做": 2 blocking, 5
+  should-fix, 1 note. All eight were accepted and are in the text above
+  (`records/v2.0.1-experiments/H1/D45-review.md`). The fix check's own write-up gets its review before it runs.
+- The plan is `docs/plans/v2.0.1-release-path.md` on `claude/oaw-2`; `ROADMAP.md` points to it.
