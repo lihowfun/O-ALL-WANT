@@ -566,3 +566,6 @@ Source: `records/digestion-2026-11-07/validation/RESULT.md`. Implemented by plan
   should-fix, 1 note. All eight were accepted and are in the text above
   (`records/v2.0.1-experiments/H1/D45-review.md`). The fix check's own write-up gets its review before it runs.
 - The plan is `docs/plans/v2.0.1-release-path.md` on `claude/oaw-2`; `ROADMAP.md` points to it.
+- Addendum (2026-11-12, same day): the PPT tasting (#13) was already running in its own session, started by the
+  owner, when this entry was committed. It continues there, does not gate the release, and is the one existing
+  exception to "no new experiment before the release". Its model runs and the fix check do not overlap (D39).
