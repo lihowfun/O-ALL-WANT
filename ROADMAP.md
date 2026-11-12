@@ -9,7 +9,8 @@ work items are GitHub issues grouped by milestone.
 2.0.0 was never released, so v2.0.1 is the first released V2. No new experiment
 starts before it ships.
 
-1. Cross-platform CI on the release pull request (Linux, macOS, Windows). #18
+1. Cross-platform CI on the release pull request (Linux, macOS, Windows). It
+   needs the pull request's base changed to `main`, which waits for the owner. #18
 2. Fix the five defects traced by the installed-versus-native trial (H1):
    when notes are saved, what happens when recall is empty, memory writes in the
    Codex sandbox, the Codex review step, and the number of deep review rounds. #17
