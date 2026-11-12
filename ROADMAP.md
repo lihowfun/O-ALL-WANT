@@ -7,7 +7,9 @@ work items are GitHub issues grouped by milestone.
 ## Now: release v2.0.1 (the only open line)
 
 2.0.0 was never released, so v2.0.1 is the first released V2. No new experiment
-starts before it ships.
+starts before it ships. One trial was already under way when this plan was
+written and continues in its own session without gating the release: the
+capability tasting of presentation skills (#13, #9).
 
 1. Cross-platform CI on the release pull request (Linux, macOS, Windows). It
    needs the pull request's base changed to `main`, which waits for the owner. #18
@@ -22,8 +24,8 @@ starts before it ships.
 
 ## Next: after the release
 
-1. Capability tasting of presentation skills, with the reusable tasting kit
-   built as its runner. #13, #9
+1. Finish the capability tasting of presentation skills if it is still
+   running, with the reusable tasting kit built as its runner. #13, #9
 2. Independent re-judging of three earlier intake verdicts on the existing
    data. #15
 3. 2.0.2, driven by feedback from real use.
