@@ -150,3 +150,18 @@ OAW 已有配對 bootstrap、品質等價區間、成本區間、評審家族一
 已做：讀取固定 SHA 的上游 core／docs／tests，核對 selector、ledger、judge、resume 的邊界；閱讀論文 v1；對照 OAW 現有 intake、eval protocol、self-improvement、CLI 與 branch review。檔案身分與本地連結檢查及獨立文件 review 結果另記 [VALIDATION](VALIDATION.md)。
 
 **Not verified**：Harness² runtime 執行、官方 benchmark 重現、在 OAW 上的品質／token 改善、新欄位端到端管理、PPT／遊戲／影片候選效果。來源研究不能產生 absorb／decline 判詞；產品原始碼、catalog runtime 狀態、frozen 實驗與發佈狀態未因本文件改變。
+
+
+## 9. 後續執行提供的 U1 驗收案例：不可把截斷帳目當成省 token
+
+2026-11-13 的 OAW FIXCHECK 發生磁碟滿：一題模型已完成，但 rollout 尾端截斷、評分前中止。完整 parent stream 比最後完整 rollout usage 多 **30,642 logical tokens**。保留同一答案，以完整 stream 恢復兩個 session 的 **428,278 tokens**，原始檔案 hash、機械評分與一次寫入經獨立 review 核對。這是 OAW 實際事故，**不是 Harness² 已有的修復能力，也不是任何 harness 的效益證據**。[恢復紀錄](../v2.0.1-experiments/FIXCHECK/RECOVERY.md)、[獨立 review](../v2.0.1-experiments/FIXCHECK/RECOVERY_REVIEW.json)。
+
+U1 的離線驗收應加入這個具體案例：
+
+- 非零 usage 不代表完整。必須知道 stream／rollout 是否完整、是否包含子 agent，對照相同 session 身分；不在不完整來源中挑最省的數字。
+- 已完成答案的評分／寫帳失敗，先保存答案、來源與帳目，再恢復同一答案；不得以基礎設施失敗為由暗中重抽作答。
+- 帳目恢復要綁定受審版本與原始輸入，在鎖內重驗檔案集合及原帳本，能拒絕衝突且重入不重複計入。
+- 無法恢復的 exit、時間或中間 snapshots 保留缺值。截斷 trace 中的事件計數只能作觀察下限；沒有看到事件不能直接當作事件不存在。
+- 每個成本來源、修正差額與 protocol 例外另留紀錄。完整成本或身分無法建立時保留 incomplete，不填零或宣告通過。
+
+這些要求放進 #9／U1 的資料契約、fixture 和恢復工具；不增加所有 agent 啟動時必讀的規則。U1 仍待發佈後設計／驗收，沒有因本案例提前吸收。
