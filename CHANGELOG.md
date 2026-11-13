@@ -4,21 +4,47 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-### Release fixes in progress (D45)
+### Release fixes after FIXCHECK (D45)
 
-- Save durable decisions/facts needed later and not reconstructable from code without requiring an explicit request; empty recall directs the caller to the host's available memory/history.
-- On an explicit memory permission error, write pending notes under `.oaw/`; recall and other memory views read both sources in entry-time order. Preserve credentials/path checks, atomic writes, historical entries and cursor invalidation.
-- Codex's default code review uses a native fresh-context subagent. Standard/deep use one code-review round, preserving explicit cross-family selection and the separate design review. Token savings remain unmeasured pending FIXCHECK.
-- Fix visible cohort-path auditing for aliases and workspace-prefix collisions. This is trace auditing, not OS isolation.
-- Add a model-free native Codex sandbox probe; final CI and FIXCHECK remain release requirements.
+M1 (session-end saving), M2 (empty-recall host guidance) and R2 (one deep
+code-review round) were implemented, failed the preregistered regression
+thresholds in the one FIXCHECK check, and were reverted. M3 (permission-only
+pending memory), R1 (native same-family Codex review with explicit cross-family
+commands) and the #18 literal-path audit fix ship.
 
+FIXCHECK uses frozen H1 diagnostic tasks, the O arm and one counted answer per
+task; tokens are logical totals including cache reads. All 24 rows are counted
+and the frozen calculator reports `fail`:
 
-### Release polish in preparation (#10, #12)
+- `codex/t01`: small-change tokens 196,707 > 174,382 (native N1/N2 mean × 1.2).
+- `claude/t12`: small-change tokens 211,064 > 209,564 (the same threshold).
+- `codex` memory: M1 observed in 1/4 tasks (3 required); remembered tasks 2 → 1;
+  `superseded-2-b1` changed from remembered to forgotten.
+- `claude` memory: M1 observed in 2/4 tasks (3 required); remembered tasks 1 → 3,
+  none forgotten.
+
+M3 and R1 were observed with no absent event, and no large-change score fell.
+The same answers also differ from the earlier O arm in the other direction
+(design-task tokens lower in three of four task-cells, 12-task totals lower in
+both cells). With one answer per task, neither the failures nor those
+differences can be separated from run-to-run variation or assigned to one fix.
+This is a regression gate on diagnostic tasks, not an independent effectiveness
+test; no effectiveness verdict follows either way.
+[Result record](https://github.com/lihowfun/O-ALL-WANT/blob/e05c4d5a9238fe3ef4529552a27ce9095ead6a3b/records/v2.0.1-experiments/FIXCHECK/RESULT.md) ·
+[Disposition and validation](docs/validation/v2.0.1-final.md).
+
+- Permission-only pending writes retain dual-source ordering, credential/path
+  checks, atomic writes, historical entries and cursor invalidation. Deep code
+  review again repeats until no new findings, at most three rounds.
+- The model-free native Codex sandbox probe remains available; final six-job platform/
+  Python CI checks and cross-family release review remain pending.
+
+### Release polish integrated (#10, #12)
 
 - External checkout locators now require `--remember-checkout` on init/migrate/add; previews describe the destination without writing. The existing add question includes this independent opt-in, and write failures remain visible.
 - Doctor summarizes healthy checks by default while retaining every warning/failure and discovery state. `--verbose` and `--json` expose full checks with unchanged health and exit behavior.
 - Link the bundled upstream EGM guides and distinguish benefit/capability evaluation from maintainer/user installation. README reports H1's combined inconclusive result and measured token overhead.
-- This work remains separate from the fixed D45 FIXCHECK candidate until its keep/revert disposition and final release checks.
+- Integrated with the FIXCHECK disposition; FIXCHECK remains pinned to `c2d9852`. Final release checks remain required.
 
 ### Added
 

@@ -30,8 +30,7 @@ Run from the project root with Python 3.10+ (`py -3` on Windows if needed).
    - `code-review`: after the change, follow the instruction for this host and its selected reviewer family.
      For a same-family Codex review, start a native fresh-context subagent; for an explicitly selected
      cross-family review, use the command the step gives. Wait for the review and resolve its findings.
-     Standard and deep each use one code-review round; run affected tests after fixes. Further independent
-     review is explicit.
+     Deep repeats until a round finds nothing new, at most `rounds` times.
 3. Light needs no review.
 4. Switches, when the user asks:
    - EGM: `python3 scripts/oaw_mode.py egm on|auto|off` (no argument shows it). One EGM run without changing

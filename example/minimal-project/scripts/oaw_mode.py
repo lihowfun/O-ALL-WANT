@@ -694,9 +694,10 @@ def review_steps(result: dict, root: Path, settings: dict) -> list[dict]:
                              "findings; then run python3 scripts/oaw_mode.py reviewed PLAN --how fresh-context"
             steps.append(step)
     review = second_opinion_review(settings)
-    steps.append({"step": "code-review", "before_code": False, "rounds": 1,
+    steps.append({"step": "code-review", "before_code": False, "rounds": 3 if mode == "deep" else 1,
                   "who": review["who"], "claude": review["claude"], "codex": review["codex"],
-                  "do": "after the change, review the diff and tests once; resolve findings and run affected tests"})
+                  "do": "after the change, review the diff and tests" + (
+                      "; repeat until a round finds nothing new" if mode == "deep" else "")})
     return steps
 
 
@@ -712,7 +713,7 @@ CODEX_CROSS_REVIEW = ("review: codex review --uncommitted  (a fresh-context revi
 CODEX_REVIEW = ("review: start one native subagent with no conversation context; give it the diff "
                 "(git diff HEAD or the commit range), new files and the test command; wait for its review "
                 "and resolve the findings")
-DEEP_ROUNDS = "one code-review round; resolve findings and run affected tests; further independent review is explicit"
+DEEP_ROUNDS = "after fixes, review again until a round finds nothing new (at most 3 rounds)"
 FRESH_DESIGN_REVIEW = ("design review: before any code, one reviewer with no conversation context reads the plan and "
                        "the files it names")
 CODEX_PLAN = ("codex --sandbox read-only  (plan in this read-only pass, then implement in a normal session; "

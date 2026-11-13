@@ -703,15 +703,18 @@ class ContextHubTests(unittest.TestCase):
         for lane in ("operational", "debug"):
             self.assertIn("pending visibility", self.quiet(hub.context_lane, lane)[1])
 
-    def test_empty_recall_directs_to_host_only_when_no_hits(self):
+    def test_empty_recall_has_plain_output_without_host_guidance(self):
         for index in (False, True):
             for json_out in (False, True):
                 _, output = self.quiet(hub.memory_recall, "missing", max_chars=512, index=index, json_out=json_out)
                 self.assertLessEqual(len(output), 512)
-                self.assertIn("No matching project record", output)
-                self.assertIn("available and permitted memory", output)
                 if json_out:
-                    self.assertEqual(json.loads(output)["results"], [])
+                    packet = json.loads(output)
+                    self.assertEqual(packet["results"], [])
+                    self.assertNotIn("message", packet)
+                    self.assertNotIn("next_action", packet)
+                else:
+                    self.assertEqual(output, "No matches found.\n")
         self.quiet(hub.memory_add, "[NOTE] missing word now exists")
         _, output = self.quiet(hub.memory_recall, "missing", json_out=True)
         self.assertNotIn("next_action", json.loads(output))

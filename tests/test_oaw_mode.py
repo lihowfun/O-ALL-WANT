@@ -588,7 +588,7 @@ class SwitchAndStepTests(unittest.TestCase):
         self.run_ok("egm", "off")
         steps = self.steps()
         self.assertEqual(list(steps), ["plan", "code-review"])
-        self.assertEqual(steps["code-review"]["rounds"], 1)
+        self.assertEqual(steps["code-review"]["rounds"], 3)
         self.run_ok("egm", "on")
         self.assertEqual(self.steps()["design-review"]["how"], "egm")
         self.assertNotIn("basis", self.steps()["design-review"], "on is the user's choice, not evidence")
@@ -633,8 +633,7 @@ class SwitchAndStepTests(unittest.TestCase):
         text = self.run_ok("suggest", "--paths", ".github/workflows/ci.yml")
         self.assertIn("before code: design review by EGM (EGM switch: on)", text)
         self.assertIn("before EGM: python3 scripts/oaw_mode.py egm estimate PLAN CONTEXT...", text)
-        self.assertIn("after code: code review by a fresh session of the same model family", text)
-        self.assertNotIn("up to 3 rounds", text)
+        self.assertIn("after code: code review by a fresh session of the same model family, up to 3 rounds", text)
 
     def test_a_recorded_review_counts_only_for_the_same_file_content(self):
         self.install_egm_entry()
@@ -805,13 +804,13 @@ class SwitchAndStepTests(unittest.TestCase):
         self.assertEqual(both["egm_max_tokens"], mode.DEFAULT_EGM_MAX_TOKENS)
         self.assertIn("ask the user first", self.run_ok("egm", "estimate", "docs/plans/small.md", "docs/context.md"))
 
-    def test_native_review_is_one_round_and_cross_family_remains_explicit(self):
+    def test_native_review_preserves_deep_rounds_and_explicit_cross_family(self):
         for choice in ("same", "codex", "claude"):
             self.run_ok("second-opinion", choice)
             steps = self.json("suggest", "--paths", "scripts/context_hub.py")["steps"]
             review = next(step for step in steps if step["step"] == "code-review")
-            self.assertEqual(review["rounds"], 1)
-            self.assertNotIn("repeat", review["do"])
+            self.assertEqual(review["rounds"], 3)
+            self.assertEqual(review["do"], "after the change, review the diff and tests; repeat until a round finds nothing new")
             if choice != "claude":
                 self.assertIn("native subagent", review["codex"])
                 self.assertIn("wait for its review", review["codex"])
@@ -825,7 +824,10 @@ class SwitchAndStepTests(unittest.TestCase):
             output = self.run_ok("show", level)
             self.assertIn("native subagent", output)
             self.assertNotIn("codex review --uncommitted", output)
-            self.assertNotIn("at most 3 rounds", output)
+            if level == "deep":
+                self.assertIn("after fixes, review again until a round finds nothing new (at most 3 rounds)", output)
+            else:
+                self.assertNotIn("at most 3 rounds", output)
 
     def test_show_follows_the_second_opinion_setting(self):
         self.run_ok("second-opinion", "codex")

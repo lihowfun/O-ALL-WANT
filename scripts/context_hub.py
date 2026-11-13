@@ -459,9 +459,7 @@ def _render_recall(packet, json_out):
             lines.append("[Excerpt truncated; read the cited source for the complete entry.]")
         lines.append("")
     if not lines:
-        lines.append(packet.get("message", "No matches found."))
-        if packet.get("next_action"):
-            lines.append(packet["next_action"])
+        lines.append("No matches found.")
     if packet["continuation"]:
         lines.append("Next cursor: " + packet["continuation"])
     return "\n".join(lines).rstrip()
@@ -602,9 +600,6 @@ def memory_recall(query, limit=8, cursor=None, max_chars=12000, json_out=False, 
     if position < len(hits):
         packet["continuation"] = _recall_cursor(position, query_hash, snapshot)
         packet["truncated"] = True
-    if not hits:
-        packet["message"] = "No matching project record found."
-        packet["next_action"] = "Continue with the host\'s available and permitted memory or session history."
     output = _render_recall(packet, json_out)
     if len(output) + 1 > max_chars:
         raise ValueError("--max-chars is too small for the recall response.")

@@ -13,28 +13,35 @@ capability tasting of presentation skills (#13, #9).
 
 1. Cross-platform CI on the release pull request (Linux, macOS, Windows). It
    needs the pull request's base changed to `main`, which waits for the owner. #18
-2. Fix the five defects traced by the installed-versus-native trial (H1):
-   when notes are saved, what happens when recall is empty, memory writes in the
-   Codex sandbox, the Codex review step, and the number of deep review rounds. #17
-3. One check of those fixes on the frozen H1 tasks. #17
+2. Apply the preregistered FIXCHECK disposition: revert M1/M2/R2; retain M3/R1
+   and the #18 path fix, together with release polish. #17
+3. The one FIXCHECK check on the frozen H1 tasks is complete: [result](https://github.com/lihowfun/O-ALL-WANT/blob/e05c4d5a9238fe3ef4529552a27ce9095ead6a3b/records/v2.0.1-experiments/FIXCHECK/RESULT.md). #17
 4. Documentation: measured claims in the README, version files, upgrade notes,
    the skill-intake SOP. #10, #12
 5. One full cross-family review, at most three rounds. #11
 6. The owner merges the release pull request and tags `v2.0.1`. #11
 
-Implementation update (2026-11-13): the five fixes and the visible path-audit repair
-are implemented on `codex/v2.0.1-release-fixes`. Linux offline gate: 9/9,
-677 tests, 0 skips; native Codex sandbox pending-memory probe passed.
-[Validation and remaining gates](docs/validation/v2.0.1-release-fixes.md).
-FIXCHECK, cross-platform CI, final release review and owner merge are still pending.
+Disposition update (2026-11-13): M1 (session-end saving), M2 (empty-recall host guidance) and R2 (one deep
+code-review round) were implemented, failed the preregistered regression
+thresholds in the one FIXCHECK check, and were reverted. M3 (permission-only
+pending memory), R1 (native same-family Codex review with explicit cross-family
+commands) and the #18 literal-path audit fix ship.
 
-Release polish is being prepared separately on `codex/v2.0.1-release-polish`:
-explicit external-locator consent, concise doctor output, upstream EGM guide links
-and the benefit/capability intake SOP (#10, #12). FIXCHECK remains pinned to
-`c2d9852`; integrate this work only after its disposition, then validate the final
-release commit. Linux validation: 9/9 gate, 685 tests, 0 skips; independent code
-review findings closed. [Validation](docs/validation/v2.0.1-release-polish.md).
-The version has not been bumped.
+FIXCHECK uses frozen H1 diagnostic tasks, the O arm and one counted answer per
+task. All 24 rows are counted and the frozen calculator reports `fail`: two
+small-change token limits (`codex/t01`, `claude/t12`) and both cells' memory
+thresholds. With one answer per task, neither these failures nor the
+differences measured in the other direction can be separated from run-to-run
+variation; this is a regression gate, not an effectiveness verdict.
+[Result record](https://github.com/lihowfun/O-ALL-WANT/blob/e05c4d5a9238fe3ef4529552a27ce9095ead6a3b/records/v2.0.1-experiments/FIXCHECK/RESULT.md) ·
+[Disposition and validation](docs/validation/v2.0.1-final.md).
+
+Release polish is integrated: explicit external-locator consent, concise doctor
+output, upstream EGM guide links and the benefit/capability intake SOP (#10,
+#12). Its historical Linux gate was 9/9, 685 tests, 0 skips;
+[validation](docs/validation/v2.0.1-release-polish.md). FIXCHECK remains pinned
+to `c2d9852`. Final six-job platform/Python CI, cross-family release review and owner
+merge remain pending. The version stays 2.0.0 proposed.
 
 ## Next: after the release
 
