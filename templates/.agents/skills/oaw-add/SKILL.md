@@ -6,20 +6,22 @@ disable-model-invocation: true
 
 # Add skills with OAW
 
-1. Find the OAW checkout: the `path` in `checkout.json` inside `$OAW_CONFIG_HOME`, or else `~/.config/oaw/`
-   (Linux), `~/Library/Application Support/oaw/` (macOS), `%APPDATA%\oaw\` (Windows). `oaw.py init` writes
-   it. If it is missing, ask the user where OAW is checked out and tell them that one
-   `python3 <OAW>/scripts/oaw.py init --target .` records it; do not search the disk.
+1. Find the OAW checkout from the optional `checkout.json` locator: `$OAW_CONFIG_HOME` if set;
+   otherwise `$XDG_CONFIG_HOME/oaw/` or `~/.config/oaw/` on Linux,
+   `~/Library/Application Support/oaw/` on macOS, or `%APPDATA%/oaw/` on Windows.
+   Only explicit `--remember-checkout` consent writes it. If missing, use the checkout path the user
+   provides; do not search the disk. Registration is optional, not required for adding skills.
 2. Preview, which is free and writes nothing:
    `python3 <OAW>/scripts/oaw.py add SOURCE... --target . --json`. A SOURCE is a GitHub URL (optionally
    `URL@ref`), a local folder, or a name from OAW's tasting results.
 3. Ask the user one question built from the preview's `question`: the choice (1 OAW plus these, 2 only these,
    3 recommended), every listed conflict, and consent for each hook, MCP server and bundled script. Never
-   give consent on their behalf.
+   give consent on their behalf. Include the optional external checkout locator and its destination in
+   this same question; leave it unselected unless the user agrees.
 4. Only for choice 3, or when the user asks: read the new SKILL.md files next to the installed ones and say in
    one line each where they contradict or duplicate each other. Read text only; never run fetched code.
 5. Apply with their answer: the preview's `apply_command`, edited to match it (`--choice`, `--consent`,
-   `--on-conflict NAME=ACTION`, `--apply`). Show the receipt it prints; do not ask a follow-up question.
+   `--on-conflict NAME=ACTION`, `--remember-checkout` only if agreed, `--apply`). Show the receipt it prints; do not ask a follow-up question.
 
 - `python3 <OAW>/scripts/oaw.py list --target .` prints the receipt again.
 - `python3 <OAW>/scripts/oaw.py remove NAME --target .` undoes one addition exactly.

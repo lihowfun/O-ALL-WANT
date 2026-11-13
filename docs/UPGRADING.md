@@ -14,7 +14,11 @@ v2.0.0 is a proposed breaking upgrade. Review and merge happen separately; no ta
 | Framework metadata in project VERSION.json | Framework ownership lives in `.oaw/install.json`; project version stays yours |
 | Frozen evidence tiers/do-not-rerun rules | Scope, source and reproducible validation; no permanent runtime freeze |
 
-Python 3.10+ is now required. The runtime still has no pip dependencies. Current host capabilities must be checked separately from whether they are enabled. OAW does not modify host settings, run another agent loop, or guarantee native skill discovery just because files pass schema checks.
+Python 3.10+ is now required. The runtime still has no pip dependencies. Current host capabilities must be checked separately from whether they are enabled. Framework init/migrate do not configure host runtimes or guarantee native discovery just because files pass schema checks. User-selected packages may add project hooks/MCP settings only through the separate add consent flow.
+
+## Checkout locator and doctor output
+
+Default init, migrate and add leave the optional user-level locator unchanged. Use `--remember-checkout` only if you want OAW to record its checkout outside this project; the [CLI reference](CLI_Reference.md#optional-checkout-locator) lists exact destinations and preview/apply behavior. The add terminal includes this choice in its existing question. An existing locator is not deleted when you decline. Doctor now summarizes checks by default while showing every warning/failure and native discovery state; `--verbose` and `--json` retain full details.
 
 ## Preview and apply
 
@@ -55,7 +59,7 @@ Before manual recovery, stop installation/writers, inspect the receipt and prese
 
 V2 includes EGM 0.1.0 at commit
 `f0ba151b252c9abf1318d9fe857a43265d06de89`, installed under
-`.oaw/integrations/egm/` whenever the recipe selects an EGM skill. Seven EGM entrypoints and `oaw-evidence` are the default
+`.oaw/integrations/egm/` whenever the recipe selects an EGM skill. Seven EGM entrypoints plus `oaw-add`, `oaw-codemap`, `oaw-evidence` and `oaw-review` are the default
 recipe. Upstream manual invocation is preserved; inclusion does not force a
 nine-stage review after ordinary tasks. Claude installs also receive the nine
 upstream native agent adapters with their original tool/context restrictions.
@@ -70,7 +74,9 @@ omitted flag preserves a prior custom recipe. Project memory remains installed.
 A recipe without any EGM skill also retires the pinned runtime, the Claude
 native agents and the EGM sentences of an unedited `AGENTS.md`, with the same
 backups; an edited policy or runtime file stays a conflict. Selecting an EGM
-skill again reinstalls them. This does not implement the future external skill catalog.
+skill again reinstalls them. This recipe selection manages bundled skills. Use `oaw.py add / list / remove`
+for external packages; their receipt, consent and removal behavior are described in the
+[CLI reference](CLI_Reference.md#your-own-skills-add-list-remove).
 
 Codex's project path is `.agents/skills`; Claude Code's native project skills path is `.claude/skills`. The Claude policy import does not register skills. Use `--host` to generate the selected native packages, then verify the actual listing in each host. See [Skill Guide](Skill_Guide.md).
 
@@ -85,3 +91,7 @@ Customized v1 flat workflows are preserved as files, but their format is not nat
 The complete read-modify-write locking fix was adapted into a shared, stable-sidecar/atomic-write helper and tested. The branch was not merged wholesale. Mandatory nudges, manually reported usage counters and step-count skill review are not part of v2. Bounded recall is implemented independently with source positions and continuation.
 
 Historical experiment results remain available in Git history/docs/archive. v2 has no verified native-model quality or cost improvement claim until representative matched A/B runs are captured.
+
+## EGM upstream guides
+
+The source checkout bundles [getting started](../vendor/egm/docs/getting_started.md), [Codex](../vendor/egm/docs/codex.md), [Claude](../vendor/egm/docs/claude.md) and [supported environments](../vendor/egm/docs/harnesses.md) at the EGM revision recorded above. After installation, use the corresponding files in `.oaw/integrations/egm/docs/`. Native entrypoints resolve to the bundled runtime; upstream relative references resolve from their own document directory.

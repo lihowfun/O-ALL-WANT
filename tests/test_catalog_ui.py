@@ -375,10 +375,23 @@ class PipelinePageTests(unittest.TestCase):
             self.assertIsNone(self.GAME.search((UI / name).read_text(encoding="utf-8")), name)
         for script in ("catalog.py", "catalog_core.py", "catalog_ui_server.py", "oaw_status.py"):
             self.assertIsNone(self.GAME.search((ROOT / "scripts" / script).read_text(encoding="utf-8")), script)
+        # D19 governs command/page/document naming. D38 permits game-making as a capability
+        # discussed in the SOP; a blanket ban over every document body contradicts that purpose.
         for doc in ("docs/SKILL_INTAKE.md", "docs/CLI_Reference.md", "CHANGELOG.md", "README.md", "README.zh.md"):
-            self.assertIsNone(self.GAME.search((ROOT / doc).read_text(encoding="utf-8")), doc)
+            self.assertIsNone(self.GAME.search(Path(doc).stem), doc)
+            self.assertIsNone(self.doc_branding((ROOT / doc).read_text(encoding="utf-8")), doc)
         self.assertIsNone(self.GAME.search("display: grid; replay; playbook; 關口"))  # unrelated words are not caught
         self.assertIsNotNone(self.GAME.search("固定關卡"))  # a game "level" is caught
+
+    @classmethod
+    def doc_branding(cls, text):
+        title = re.search(r"^#\s+(.+)$", text, re.MULTILINE)
+        return cls.GAME.search(title.group(1)) if title else None
+
+    def test_game_making_capability_is_not_catalog_branding(self):
+        self.assertIsNone(self.doc_branding("# OAW skill intake\n能力型可選用遊戲製作 skill。\n"))
+        self.assertIsNotNone(self.doc_branding("# OAW Game\nSkill intake.\n"))
+        self.assertIsNotNone(self.doc_branding("# OAW 遊戲\n技能管理。\n"))
 
     def test_the_tract_is_the_main_screen_with_two_inlets(self):
         """D23: one digestive tract across the top, the food picker, then the selected food beside the two inlets."""

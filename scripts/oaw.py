@@ -571,25 +571,14 @@ def config_home() -> Path:
     return Path(os.path.abspath(base)) / "oaw"
 
 
-def _in_temp(path: Path) -> bool:
-    try:
-        temp = os.path.realpath(tempfile.gettempdir())
-        return os.path.commonpath([os.path.normcase(os.path.realpath(path)), os.path.normcase(temp)]) == os.path.normcase(temp)
-    except ValueError:
-        return False
-
-
 def remember_checkout(target: Path | None = None) -> str | None:
     """Record this OAW checkout in the user's settings so the oaw-add skill can find it.
 
-    The path stays out of every project. A checkout without scripts/oaw.py (a test fixture) is never
-    recorded, nor is an install into a throwaway project under the system temp folder unless
-    OAW_CONFIG_HOME names the settings folder; a folder that cannot be written only loses the convenience.
+    Call only after explicit --remember-checkout consent. The path stays out of every project.
+    A checkout without scripts/oaw.py (a test fixture) is never recorded. Failure only loses the locator.
     """
     root = framework_root()
     if not (root / "scripts" / "oaw.py").is_file():
-        return None
-    if target is not None and _in_temp(target) and not os.environ.get("OAW_CONFIG_HOME"):
         return None
     path = config_home() / CHECKOUT_SETTING
     data = {"schema": "oaw-checkout/1", "path": str(root), "version": FRAMEWORK_VERSION}
@@ -604,6 +593,19 @@ def remember_checkout(target: Path | None = None) -> str | None:
     except (OSError, ValueError):
         return None
     return str(path)
+
+
+def checkout_registration(target: Path, *, selected: bool, apply: bool = False) -> dict:
+    """Describe the optional external locator; write only for explicit selected apply."""
+    result = {"requested": bool(selected), "path": str(config_home() / CHECKOUT_SETTING),
+              "content": {"schema": "oaw-checkout/1", "path": str(framework_root()), "version": FRAMEWORK_VERSION},
+              "status": "not-selected" if not selected else "planned"}
+    if selected and apply:
+        written = remember_checkout(target)
+        result["status"] = "written" if written else "failed"
+        if not written:
+            result["warning"] = "Project installation completed, but the optional OAW checkout locator was not written."
+    return result
 
 
 def atomic_write(path: Path, content: bytes) -> None:
@@ -1001,7 +1003,7 @@ def doctor(target: Path, *, probe: bool = False, probe_command: str = "claude") 
             "checks": checks, "capabilities": capabilities}
 
 
-def print_result(result: dict, *, as_json: bool) -> None:
+def print_result(result: dict, *, as_json: bool, verbose: bool = False) -> None:
     if as_json:
         print(json.dumps(result, indent=2, ensure_ascii=False))
         return
@@ -1011,12 +1013,24 @@ def print_result(result: dict, *, as_json: bool) -> None:
         print(f"  {skill['name']:24} {skill['origin']:6} {enabled}")
     for item in result.get("actions", []):
         print(f"  {item['action']:10} {item['path']}")
-    for item in result.get("checks", []):
-        print(f"  {item['status']:4} {item['path']}: {item['detail']}")
+    checks = result.get("checks", [])
+    if checks and not verbose:
+        counts = {status: sum(c["status"] == status for c in checks) for status in ("PASS", "WARN", "FAIL")}
+        print(f"  Checks: {counts['PASS']} PASS, {counts['WARN']} WARN, {counts['FAIL']} FAIL")
+    for item in checks:
+        if verbose or item["status"] != "PASS":
+            print(f"  {item['status']:4} {item['path']}: {item['detail']}")
+    if checks and not verbose:
+        print("  Full details: doctor --verbose (text) or doctor --json (structured)")
     for item in result.get("capabilities", []):
         print(f"  {item['capability']}: SUPPORT={item['support']} ENABLED={item['enabled']}")
     if result.get("backup"):
         print(f"  Backup/receipt: {result['backup']}")
+    registration = result.get("checkout_registration", {})
+    if registration.get("status") == "planned":
+        print(f"  Optional external checkout locator (on apply): {registration['path']}")
+    if registration.get("warning"):
+        print(f"  WARN: {registration['warning']} Destination: {registration['path']}")
     if result.get("checkout_setting"):
         print(f"  OAW checkout recorded for the oaw-add skill (outside the project): {result['checkout_setting']}")
     for proposal in result.get("proposals", []):
@@ -1067,9 +1081,12 @@ def main(argv: list[str] | None = None) -> int:
         sub.add_argument("--target", default=".", help="project directory (default: current directory)")
         sub.add_argument("--json", action="store_true", help="print a machine-readable result")
         if command == "doctor":
+            sub.add_argument("--verbose", action="store_true", help="show every check, including PASS details")
             sub.add_argument("--probe", action="store_true",
                              help="start Claude Code once, only until it reports its tools and skills, to check discovery")
         if command != "doctor":
+            sub.add_argument("--remember-checkout", action="store_true",
+                             help="also write the optional checkout.json locator outside the project (OAW_CONFIG_HOME or the OS user config folder)")
             sub.add_argument("--profile", choices=(*PROFILES, MANAGER_ONLY), default=None,
                              help="minimal (default), knowledge, or manager-only (OAW only manages your own skills)")
             sub.add_argument("--host", choices=(*HOSTS, "both"), default="codex",
@@ -1085,6 +1102,8 @@ def main(argv: list[str] | None = None) -> int:
                      help="what to add; without one, only the --choice (for example switching to manager-only) is applied")
     add.add_argument("--choice", choices=("oaw", "only", "recommended"),
                      help="oaw: OAW plus these (default); only: only these, OAW just manages them; recommended: from OAW's tasting records")
+    add.add_argument("--remember-checkout", action="store_true",
+                     help="also write the optional checkout.json locator outside the project; separate from component consent")
     add.add_argument("--consent", help="what may run on its own: comma-separated hooks, mcp, scripts; or all, none")
     add.add_argument("--on-conflict", action="append", default=[], metavar="NAME=ACTION",
                      help="rename[:NEW], skip or replace for a same name; keep-both, use-theirs or use-oaw for an overlap (repeatable)")
@@ -1143,10 +1162,12 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 result = apply_plan(plan, migrate=migrate)
                 code = 3 if result["pending_conflicts"] else 0
-                setting = remember_checkout(target)
-                if setting:
-                    result["checkout_setting"] = setting
-        print_result(result, as_json=args.json)
+            registration = checkout_registration(target, selected=args.remember_checkout,
+                                                 apply=not migrate or args.apply)
+            result["checkout_registration"] = registration
+            if registration["status"] == "written":
+                result["checkout_setting"] = registration["path"]
+        print_result(result, as_json=args.json, verbose=getattr(args, "verbose", False))
         return code
     except (InstallError, OSError, UnicodeError) as exc:
         if args.json:

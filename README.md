@@ -30,7 +30,7 @@
 > **v2.0.0 is proposed in a pull request; it is not a published release.** [Upgrade guide](docs/UPGRADING.md) · [CLI reference](docs/CLI_Reference.md) · [Execution plan](docs/plans/v2.0.0-execution.md)
 
 **OAW v2 includes EGM**, project evidence, optional wiki and improvement gates.
-The default recipe exposes the seven pinned EGM skills and `oaw-evidence`;
+The default recipe exposes the seven pinned EGM skills plus `oaw-add`, `oaw-codemap`, `oaw-evidence` and `oaw-review`;
 users can select their own recipe. EGM remains explicitly invoked, as upstream
 specifies. Bundling a workflow does not prove a quality or token advantage.
 [Codex results and limitations](docs/validation/egm-oaw-codex-2026-10-30.md) ·
@@ -82,7 +82,7 @@ The goal is still simple: **spend expensive tokens on real reasoning and real ou
 |---|---|---|---|
 | 🧭 | **Native-first core** | A short `AGENTS.md` for non-obvious constraints and real verification commands; `CLAUDE.md` only imports it. No router, no mandatory startup reads | default |
 | 🧾 | **Evidence recall (Context Hub)** | `context_hub.py memory recall` returns bounded JSON or text with source locations, truncation and a continuation cursor. Notes are evidence to check against current code, never instructions that override you | default |
-| 🧩 | **Native skills** | Seven EGM and three OAW `SKILL.md` packages, with an explicitly selectable active recipe. `--host codex\|claude\|both` installs `.agents/skills` and/or `.claude/skills` from one authored source | seven EGM skills + `oaw-evidence` by default; wiki/improve below |
+| 🧩 | **Native skills** | Seven EGM and seven OAW `SKILL.md` packages, with an explicitly selectable active recipe. `--host codex\|claude\|both` installs `.agents/skills` and/or `.claude/skills` from one authored source | seven EGM + four OAW entrypoints by default; bugbash/wiki/improve optional |
 | 📚 | **LLM Wiki** | `wiki_sync.py` deterministically renders `docs/raw/` into `docs/knowledge/` and lints links, metadata and freshness. It is a renderer, not an LLM summarizer | `--profile knowledge` |
 | 🔬 | **Evidence-driven self-improvement** | Hypothesis + concrete diff → fixed cases on matched baseline/candidate runs → your explicit accept or reject. Regressions, missing or changed evidence block acceptance; nothing is ever applied automatically | `--with-improve` |
 | 🛟 | **Safe lifecycle** | `init` protects existing content; `migrate` previews by default and `--apply` keeps backups, receipts, rollback and conflict proposals; `doctor` reports health | always |
@@ -162,7 +162,9 @@ v1 was built when coding agents forgot everything between sessions. Today Claude
 | The same skills in both hosts | A separate folder and copy per host | One authored source installs `.agents/skills` and `.claude/skills`; `doctor` checks them |
 | A new rule or skill | Added whenever someone writes it | Optional `oaw-improve`: a diff, matched A/B evidence and your explicit accept |
 
-> No v2 token-savings number is claimed. A [fixed-suite manual Codex workflow comparison](docs/validation/egm-codex-2026-10-29.md) is complete. Claude CLI model runs, named-model revision validation and native automatic skill discovery remain unverified.
+> OAW's frozen H1 comparison used 12 tasks in one Python repository with Claude Code + Opus 5.5 and Codex CLI + gpt-6.1-sol. The combined verdict was inconclusive: the Codex condition met H1's benefit criteria; the Claude condition did not establish a benefit. Total logical tokens, including cache reads and subagents, were 2.58× the native mean for Claude and 1.92× for Codex, mostly from large changes. These are H1 measurements, not a general token-savings claim. [H1 results](https://github.com/lihowfun/O-ALL-WANT/blob/268429d/records/v2.0.1-experiments/H1/RESULT.md).
+>
+> D45 retains the defaults as a product decision while repairing the observed memory and review defects. FIXCHECK reuses the diagnostic tasks to check those repairs once; it cannot establish an independent effectiveness benefit. Native discovery and permissions remain host/version dependent. [Repair plan](docs/plans/v2.0.1-release-path.md).
 
 ---
 
@@ -176,7 +178,9 @@ python3 scripts/oaw.py init --target /path/to/project --host both
 python3 scripts/oaw.py doctor --target /path/to/project
 ```
 
-The default installs a short `AGENTS.md`, the Claude compatibility import, the complete pinned EGM runtime with seven native skill entrypoints, the evidence skill, and Context Hub with its shared helper. It creates no memory log, placeholder architecture or mandatory session workflow. Existing different content is protected.
+The default installs a short `AGENTS.md`, the Claude compatibility import, the complete pinned EGM runtime with seven native entrypoints, the four OAW entrypoints listed above, and Context Hub with its shared helper. It creates no memory log, placeholder architecture or mandatory session workflow. Existing different content is protected.
+
+The optional checkout locator outside the project is written only with `--remember-checkout`. Its destination and consent are described in the [CLI reference](docs/CLI_Reference.md#optional-checkout-locator). Default installs leave it unchanged.
 
 Optional capabilities are additive on an existing installation:
 
@@ -270,6 +274,8 @@ is bundled in V2 and installed to `.oaw/integrations/egm/` when the recipe selec
 retain exact bytes, Apache-2.0 licensing and individual hashes. Native entrypoint
 adapters are documented separately in the source ledger.
 See the [review and replacement decisions](docs/reviews/2026-10-29-pr4-egm.md).
+
+EGM guides bundled with the pinned source: [getting started](vendor/egm/docs/getting_started.md), [Codex](vendor/egm/docs/codex.md), [Claude](vendor/egm/docs/claude.md), and [supported environments](vendor/egm/docs/harnesses.md). An installed project keeps these under `.oaw/integrations/egm/docs/`; resolve upstream guide links from that directory.
 
 **Historical conceptual influences retained in v2** (upstream versions were not
 recorded; these links are reading pointers, not pinned runtime dependencies)

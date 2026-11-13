@@ -13,6 +13,13 @@ All notable changes to this project will be documented in this file.
 - Add a model-free native Codex sandbox probe; final CI and FIXCHECK remain release requirements.
 
 
+### Release polish in preparation (#10, #12)
+
+- External checkout locators now require `--remember-checkout` on init/migrate/add; previews describe the destination without writing. The existing add question includes this independent opt-in, and write failures remain visible.
+- Doctor summarizes healthy checks by default while retaining every warning/failure and discovery state. `--verbose` and `--json` expose full checks with unchanged health and exit behavior.
+- Link the bundled upstream EGM guides and distinguish benefit/capability evaluation from maintainer/user installation. README reports H1's combined inconclusive result and measured token overhead.
+- This work remains separate from the fixed D45 FIXCHECK candidate until its keep/revert disposition and final release checks.
+
 ### Added
 
 - `oaw.py doctor` checks whether Claude can use the installed skills (plan W4): a project `.claude/settings*.json`
@@ -28,8 +35,8 @@ All notable changes to this project will be documented in this file.
   cost and what runs on its own. Fetched code is never executed. OAW's own absorb keeps its blocks.
 - `catalog/verdicts.json` ships OAW's tasting results (outcome, conditions, evidence commit, category), generated
   from the maintainer's ledger by `scripts/build_verdicts.py`.
-- The explicit-invocation `oaw-add` skill is the chat entry for the same three verbs; `init` records the OAW
-  checkout in the user's settings (outside the project) so the skill can find it.
+- The explicit-invocation `oaw-add` skill is the chat entry for the same three verbs; optional
+  `--remember-checkout` registration records the OAW checkout outside the project so the skill can find it.
 - `oaw.py remove` keeps the record, backups and settings baseline of anything you changed since the install and
   reports it as `partial` (exit 3), so the earlier content can still be restored: rerun after putting it back, or
   finish with `--force` or `--keep`. The receipt prints a remove name that means exactly one part

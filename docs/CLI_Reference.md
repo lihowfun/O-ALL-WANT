@@ -7,13 +7,15 @@ Requires Python 3.10+. All runtime tools use the Python standard library. Replac
 Run these from the OAW source checkout; `oaw.py` is not copied into target projects.
 
 ```bash
-python3 scripts/oaw.py init --target PROJECT [--profile minimal|knowledge|manager-only] [--host codex|claude|both] [--with-improve] [--skills LIST|none|default] [--json]
-python3 scripts/oaw.py migrate --target PROJECT [--profile minimal|knowledge|manager-only] [--host codex|claude|both] [--with-improve] [--skills LIST|none|default] [--apply] [--keep-custom PATH] [--json]
-python3 scripts/oaw.py doctor --target PROJECT [--probe] [--json]
+python3 scripts/oaw.py init --target PROJECT [--profile minimal|knowledge|manager-only] [--host codex|claude|both] [--with-improve] [--skills LIST|none|default] [--remember-checkout] [--json]
+python3 scripts/oaw.py migrate --target PROJECT [--profile minimal|knowledge|manager-only] [--host codex|claude|both] [--with-improve] [--skills LIST|none|default] [--apply] [--keep-custom PATH] [--remember-checkout] [--json]
+python3 scripts/oaw.py doctor --target PROJECT [--probe] [--verbose] [--json]
 python3 scripts/oaw.py skills [--target PROJECT] [--json]
 ```
 
 Init protects different existing content; edits to a managed file are kept while its framework copy is unchanged. Profile/host additions are cumulative; codex is the default host. Migrate without `--apply` only previews. Applied migration backs up known changes and stages custom conflicts under `.oaw/proposals/`; unresolved conflicts return exit 3. Use repeatable `--keep-custom PATH` with `--apply` only after reviewing a relevant conflict to retain it as project-owned. Preflight errors/init conflicts return 2. Doctor returns 1 for an unhealthy install and 2 for invalid paths/manifests; WARN checks (edited managed files, a CLAUDE.md without `@AGENTS.md`, a project `.claude/settings*.json` whose `permissions.deny` blocks the `Skill` tool) keep exit 0. Support does not imply host features are enabled: without `--probe` Claude skill discovery is UNKNOWN (NO when the Skill tool is denied). `--probe` starts Claude Code once in the project and stops it as soon as it reports its init event (tools and skills), without waiting for an answer; YES means every installed OAW Claude skill was listed and the Skill tool was present, NO names what was missing, and a probe that cannot start or sees no init stays UNKNOWN. Whether the stopped request spends any model tokens was not measured. Codex discovery is not probed.
+
+Doctor's default text shows status counts, every WARN/FAIL and host discovery state. Use `--verbose` for every PASS detail; `--json` always retains the complete checks. These output choices do not alter checks or exit codes.
 
 The Bash wrapper invokes init on the current directory. Set `OAW_PYTHON` to select an explicit Python executable.
 
@@ -34,6 +36,20 @@ remain project-owned. A recipe without any EGM entrypoint also retires the
 pinned EGM runtime and the policy's EGM line; this is selection, not a new
 product named after a combination.
 `skills` lists installed files, not proven host discovery or successful activation.
+
+### Optional checkout locator
+
+Default `init`, `migrate` and `add` do not create or refresh a user-level checkout locator. Add `--remember-checkout` to explicitly permit writing `checkout.json`, which records only the OAW checkout path, schema and framework version so the oaw-add skill can find it later. Explicit checkout paths work without registration.
+
+| Setting | Destination |
+|---|---|
+| `OAW_CONFIG_HOME` is set | `$OAW_CONFIG_HOME/checkout.json` |
+| Windows default | `%APPDATA%/oaw/checkout.json` (AppData/Roaming fallback) |
+| macOS default | `~/Library/Application Support/oaw/checkout.json` |
+| Linux default | `$XDG_CONFIG_HOME/oaw/checkout.json`, or `~/.config/oaw/checkout.json` |
+
+A migrate/add preview reports the selected destination and proposed content but writes nothing; `--apply` is still required. The add terminal asks about registration in its existing single question: include `remember-checkout` to opt in, or `no-remember-checkout` to decline a previously supplied flag. This choice is separate from `--consent hooks,mcp,scripts`; `--consent all` does not permit locator writes. Existing locators stay unchanged when not selected. A selected write failure is reported separately from successful project installation.
+
 
 ## Your own skills: add, list, remove
 

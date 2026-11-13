@@ -28,6 +28,14 @@ are implemented on `codex/v2.0.1-release-fixes`. Linux offline gate: 9/9,
 [Validation and remaining gates](docs/validation/v2.0.1-release-fixes.md).
 FIXCHECK, cross-platform CI, final release review and owner merge are still pending.
 
+Release polish is being prepared separately on `codex/v2.0.1-release-polish`:
+explicit external-locator consent, concise doctor output, upstream EGM guide links
+and the benefit/capability intake SOP (#10, #12). FIXCHECK remains pinned to
+`c2d9852`; integrate this work only after its disposition, then validate the final
+release commit. Linux validation: 9/9 gate, 685 tests, 0 skips; independent code
+review findings closed. [Validation](docs/validation/v2.0.1-release-polish.md).
+The version has not been bumped.
+
 ## Next: after the release
 
 1. Finish the capability tasting of presentation skills if it is still

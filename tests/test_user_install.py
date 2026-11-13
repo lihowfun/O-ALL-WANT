@@ -555,11 +555,99 @@ class UserInstallTests(unittest.TestCase):
             user_install._dest(self.project, ".claude/skills/../../x")
 
     def test_init_records_the_checkout_outside_the_project(self):
-        result = self.init()
+        result = self.cli("init", "--remember-checkout")
         setting = self.config / "checkout.json"
         self.assertEqual(result["checkout_setting"], str(setting))
         self.assertEqual(json.loads(setting.read_text(encoding="utf-8"))["path"], str(ROOT.resolve()))
         self.assertFalse(any("checkout.json" in p.name for p in self.project.rglob("*")))
+
+    def test_default_install_routes_never_refresh_external_locator(self):
+        self.init()
+        setting = self.config / "checkout.json"
+        self.assertFalse(self.config.exists())
+        self.config.mkdir()
+        setting.write_text('{"path":"/existing-choice"}')
+        before = setting.read_bytes()
+        self.cli("migrate", "--apply")
+        self.add("mapper", choice="oaw", on_conflict=["mapper=keep-both"], apply=True)
+        self.init()
+        self.assertEqual(setting.read_bytes(), before)
+
+    def test_external_locator_preview_and_explicit_apply(self):
+        self.init()
+        preview = self.cli("migrate", "--remember-checkout")
+        self.assertEqual(preview["checkout_registration"]["status"], "planned")
+        self.assertEqual(preview["checkout_registration"]["path"], str(self.config / "checkout.json"))
+        self.assertFalse(self.config.exists())
+        applied = self.cli("migrate", "--remember-checkout", "--apply")
+        self.assertEqual(applied["checkout_registration"]["status"], "written")
+        self.assertEqual(json.loads((self.config / "checkout.json").read_text())["path"], str(ROOT.resolve()))
+
+    def test_add_locator_preview_preserves_explicit_consent_in_argv(self):
+        preview = self.add("mapper", choice="only", remember_checkout=True)
+        self.assertIn("--remember-checkout", preview["apply_argv"])
+        self.assertEqual(preview["checkout_registration"]["status"], "planned")
+        self.assertFalse(self.config.exists())
+        default = self.add("mapper", choice="only")
+        self.assertNotIn("--remember-checkout", default["apply_argv"])
+        self.add("mapper", choice="only", remember_checkout=True, apply=True)
+        self.assertTrue((self.config / "checkout.json").is_file())
+
+    def test_terminal_locator_choice_is_separate_from_component_consent(self):
+        asked = []
+        def ask(prompt):
+            asked.append(prompt)
+            return "2 remember-checkout"
+        result, code = user_install.add(self.project, [self.fixtures["scripty"]], ask=ask)
+        self.assertEqual((code, len(asked)), (0, 1))
+        self.assertIn(str(self.config / "checkout.json"), asked[0])
+        self.assertTrue((self.config / "checkout.json").is_file())
+        self.assertFalse((self.project / ".agents/skills/scripty").exists())
+        self.assert_nothing_ran()
+
+    def test_terminal_can_decline_selected_locator(self):
+        result, code = user_install.add(self.project, [self.fixtures["mapper"]], remember_checkout=True,
+                                        ask=lambda _: "2 no-remember-checkout")
+        self.assertEqual(code, 0)
+        self.assertEqual(result["checkout_registration"]["status"], "not-selected")
+        self.assertFalse(self.config.exists())
+
+    def test_locator_write_failure_is_visible(self):
+        with patch.object(oaw, "remember_checkout", return_value=None):
+            result = self.cli("init", "--remember-checkout")
+        self.assertEqual(result["checkout_registration"]["status"], "failed")
+        self.assertIn("not written", result["checkout_registration"]["warning"])
+        self.assertNotIn("checkout_setting", result)
+        self.assertTrue((self.project / "AGENTS.md").is_file())
+
+    def test_doctor_summary_verbose_json_and_failure(self):
+        self.init()
+        def text_doctor(*flags):
+            output = io.StringIO()
+            with redirect_stdout(output):
+                code = oaw.main(["doctor", "--target", str(self.project), *flags])
+            return code, output.getvalue()
+        code, concise = text_doctor()
+        verbose_code, verbose = text_doctor("--verbose")
+        data = self.cli("doctor")
+        self.assertEqual((code, verbose_code), (0, 0))
+        self.assertIn("Checks:", concise)
+        self.assertIn("ENABLED=UNKNOWN", concise)
+        self.assertNotIn("Managed hash matches.", concise)
+        self.assertIn("Managed hash matches.", verbose)
+        self.assertLess(len(concise.splitlines()), 15)
+        self.assertGreater(len(verbose.splitlines()), 100)
+        detail_rows = [line for line in verbose.splitlines() if line.startswith(("  PASS", "  WARN", "  FAIL"))]
+        self.assertEqual(len(detail_rows), len(data["checks"]))
+        (self.project / "scripts/context_hub.py").unlink()
+        code, failed = text_doctor()
+        self.assertEqual(code, 1)
+        self.assertIn("FAIL", failed)
+        self.assertIn("scripts/context_hub.py", failed)
+        (self.project / "AGENTS.md").write_text("Custom policy")
+        _code, warned = text_doctor()
+        self.assertIn("WARN", warned)
+        self.assertIn("Modified managed file", warned)
 
     # ------------------------------------------------------------------ review round 12
 

@@ -988,7 +988,7 @@ def recommend(tasting: dict) -> tuple[str, str]:
 
 
 def plan_add(target, sources, *, choice=None, consent=None, on_conflict=(), host=None, interactive_defaults=False,
-             verdicts=None, snapshots=None, retire_hint=None) -> dict:
+             verdicts=None, snapshots=None, retire_hint=None, remember_checkout=False) -> dict:
     """Everything `add` would do, computed without writing. `snapshots` caches fetched sources by key."""
     target = oaw.target_path(target)
     manifest = oaw.read_manifest(target)
@@ -1257,6 +1257,8 @@ def plan_add(target, sources, *, choice=None, consent=None, on_conflict=(), host
                     consent_needed.setdefault(need, []).append(part)
     return {"target": target, "manifest": manifest, "record": record, "state": state, "choice": choice,
             "default_choice": default_choice, "hosts": hosts, "packages": packages, "conflicts": conflicts,
+            "remember_checkout": bool(remember_checkout),
+            "checkout_registration": oaw.checkout_registration(target, selected=remember_checkout),
             "open_conflicts": open_conflicts, "consent_needed": consent_needed, "consents": consents,
             "notes": notes, "oaw_step": step, "retire": sorted(retire), "snapshots": snapshots, "verdicts": verdicts}
 
@@ -1451,11 +1453,12 @@ def apply_add(plan_args: dict, *, plan: dict | None = None) -> dict:
             raise
         backup = f"; its backups are in {oaw_result['backup']}" if oaw_result and oaw_result.get("backup") else ""
         raise InstallError(f"{exc}. OAW's own change ({step['kind']}) was already applied and stays{backup}.") from exc
-    setting = oaw.remember_checkout(again["target"])
+    registration = oaw.checkout_registration(again["target"], selected=again["remember_checkout"], apply=True)
+    setting = registration["path"] if registration["status"] == "written" else None
     rows = receipt_rows(again["target"], oaw.read_manifest(again["target"]), record, again["verdicts"])
     return {"status": "installed", "target": str(again["target"]), "choice": again["choice"], "oaw_step": _step_view(step, oaw_result),
             "packages": [_package_view(p) for p in again["packages"]], "notes": again["notes"], "receipt": rows,
-            "checkout_setting": setting}
+            "checkout_setting": setting, "checkout_registration": registration}
 
 
 class NeedsChoice(InstallError):
@@ -1514,6 +1517,9 @@ def question_text(plan: dict) -> str:
             if parts:
                 detail = "、".join(_runs_text(p) for p in parts)
                 lines.append(f"  {need}：{detail}")
+    registration = plan["checkout_registration"]
+    selected = "已由 --remember-checkout 選擇；可寫 no-remember-checkout 取消" if plan["remember_checkout"] else "預設不寫；同意才加 remember-checkout"
+    lines.append(f"專案外設定（{selected}）：{registration['path']}，只記錄 OAW checkout 位置")
     needs = [n for n in CONSENTS if any(n in p["needs"] for pk in plan["packages"] for p in pk["parts"]
                                         if p["status"] in ("install", "needs-consent", "needs-decision"))]
     example = " ".join(["1", *([",".join(needs)] if needs else []),
@@ -1558,6 +1564,8 @@ def suggested_argv(plan: dict) -> list:
         if answer == "rename" and conflict.get("new_name"):
             answer += ":" + conflict["new_name"]  # the name the user chose, not an automatic one
         argv += ["--on-conflict", f"{conflict['subject']}={answer}"]
+    if plan["remember_checkout"]:
+        argv.append("--remember-checkout")
     return argv + ["--apply"]
 
 
@@ -1621,6 +1629,9 @@ def preview_lines(plan: dict, sources) -> list:
         if package["left_out"]:
             lines.append("    不裝的部分：" + "；".join(f"{item['part']}（{item['reason']}）" for item in package["left_out"][:4])
                          + (f"…還有 {len(package['left_out']) - 4} 個" if len(package["left_out"]) > 4 else ""))
+    registration = plan["checkout_registration"]
+    if registration["requested"]:
+        lines.append(f"  套用時另寫專案外 locator：{registration['path']}")
     for note in plan["notes"]:
         lines.append(f"  注意：{note}")
     return lines
@@ -2157,13 +2168,16 @@ def _interactive(args) -> bool:
 
 def parse_answer(text: str, plan: dict) -> dict | None:
     """One answer to the question: choice, consents and NAME=ACTION decisions. None cancels."""
-    answer = {"choice": plan["default_choice"], "consent": set(), "decisions": {}}
+    answer = {"choice": plan["default_choice"], "consent": set(), "decisions": {},
+              "remember_checkout": plan["remember_checkout"]}
     for token in str(text or "").replace("，", " ").replace("、", ",").split():
         lowered = token.casefold()
         if lowered in ("0", "q", "cancel", "取消"):
             return None
         if lowered in CHOICE_ALIASES or lowered in CHOICES:
             answer["choice"] = CHOICE_ALIASES.get(lowered, lowered)
+        elif lowered in ("remember-checkout", "no-remember-checkout"):
+            answer["remember_checkout"] = lowered == "remember-checkout"
         elif "=" in token:
             answer["decisions"].update({k: {**answer["decisions"].get(k, {}), **v} for k, v in _decisions([token]).items()})
         else:
@@ -2171,10 +2185,12 @@ def parse_answer(text: str, plan: dict) -> dict | None:
     return answer
 
 
-def add(target, sources, *, choice=None, consent=None, on_conflict=(), host=None, apply=False, ask=None, verdicts=None) -> tuple:
+def add(target, sources, *, choice=None, consent=None, on_conflict=(), host=None, apply=False, ask=None, verdicts=None,
+        remember_checkout=False) -> tuple:
     """`oaw.py add`: (result, exit code). `ask(question) -> answer` makes it interactive (one question)."""
     plan_args = {"target": target, "sources": list(sources), "choice": choice, "consent": consent,
-                 "on_conflict": on_conflict, "host": host, "verdicts": verdicts}
+                 "on_conflict": on_conflict, "host": host, "verdicts": verdicts,
+                 "remember_checkout": remember_checkout}
     plan = plan_add(**plan_args)
     if ask is not None:
         prompt = "\n".join(preview_lines(plan, sources)) + "\n\n" + question_text(plan) + "\n> "
@@ -2192,7 +2208,8 @@ def add(target, sources, *, choice=None, consent=None, on_conflict=(), host=None
         for name, value in answer["decisions"].items():
             decisions.setdefault(name, {}).update(value)
         plan_args.update(choice=answer["choice"], consent=answer["consent"] | (_consents(consent) or set()),
-                         on_conflict=decisions, interactive_defaults=True, verdicts=plan["verdicts"], snapshots=plan["snapshots"])
+                         on_conflict=decisions, interactive_defaults=True, verdicts=plan["verdicts"], snapshots=plan["snapshots"],
+                         remember_checkout=answer["remember_checkout"])
         plan = plan_add(**plan_args)
         apply = True
     if not apply:
@@ -2201,7 +2218,7 @@ def add(target, sources, *, choice=None, consent=None, on_conflict=(), host=None
                   "packages": [_package_view(p) for p in plan["packages"]], "conflicts": plan["conflicts"],
                   "consent_needed": {k: [p["name"] for p in v] for k, v in plan["consent_needed"].items()},
                   "notes": plan["notes"], "question": question_text(plan), "apply_command": suggested_command(plan),
-                  "apply_argv": suggested_argv(plan)}
+                  "apply_argv": suggested_argv(plan), "checkout_registration": plan["checkout_registration"]}
         result["lines"] = preview_lines(plan, sources) + ["", "預覽：沒有寫任何檔案。要裝請回答下面這一題（或直接用最後一行的指令）：",
                                                           question_text(plan), "", _command_text(result["apply_command"])]
         return result, 0
@@ -2224,6 +2241,11 @@ def add(target, sources, *, choice=None, consent=None, on_conflict=(), host=None
         skipped = [f"{p['name']}（{p['reason']}）" for p in package["parts"] if p["status"] != "install"]
         result["lines"].append(f"  {package['name']}：裝了 {'、'.join(installed) or '無'}" + (f"；沒裝 {'；'.join(skipped)}" if skipped else "")
                                + (f"；{package['reason']}" if package["status"] != "install" and not package["parts"] else ""))
+    registration = result["checkout_registration"]
+    if registration["status"] == "written":
+        result["lines"].append(f"  已同意寫入專案外 locator：{registration['path']}")
+    elif registration.get("warning"):
+        result["lines"].append(f"  WARN: {registration['warning']} Destination: {registration['path']}")
     result["lines"] += [f"  注意：{note}" for note in result["notes"]]
     result["lines"] += ["", *receipt_lines(result["receipt"])]
     return result, 0
@@ -2249,7 +2271,7 @@ def run(args) -> int:
                 raise InstallError("Name at least one SOURCE, or a --choice to apply on its own.")
             ask = (lambda prompt: input(prompt)) if _interactive(args) else None
             result, code = add(args.target, args.sources, choice=args.choice, consent=args.consent, on_conflict=args.on_conflict,
-                               host=args.host, apply=args.apply, ask=ask)
+                               host=args.host, apply=args.apply, ask=ask, remember_checkout=args.remember_checkout)
         elif args.command == "list":
             result, code = list_receipt(args.target), 0
         else:
