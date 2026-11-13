@@ -1,0 +1,162 @@
+{
+  "schema": 1,
+  "checked_date": "2026-11-13",
+  "status": "calibration_stopped_unjudged",
+  "scope": "Existing calibration only; no regrading, new task answers, freeze, installation or candidate verdict.",
+  "private_source_sha256": {
+    "rows-calibration-codex.jsonl": "db000975690776f8459d3a49aaf8dffa4969c35ccc13e5632a5780b2b3d1d4be",
+    "attempts-calibration-codex.jsonl": "db000975690776f8459d3a49aaf8dffa4969c35ccc13e5632a5780b2b3d1d4be",
+    "authors.jsonl": "0e2dc4a86294f37fdc67422c503254782558253966b806ed68d2eb185d1b3726",
+    "units_ppt.json": "b0270491dda570dec7108b4b28a2397b15c970221e6172012280697fb901fc46",
+    "candidates.json": "458e2a93bea788ac4a833d7bb4f38f31e6cf462e588fb756af7ec66783159d27",
+    "budget.json": "e29802c8cac2305ffcad45b212f91e4678005f9158e9c1955f1e4efe11a6a224",
+    "ledger-claude.jsonl": "6311f888cd9c3cb0b1598bf66cd9532b2a1c947205da7c573843956e8612f7fb"
+  },
+  "source_documents_sha256": {
+    "PLAN.md": "ca6a24a70a86531c36a8e03984adaadba4aa3df84b1e92aa70547bfa012f3577",
+    "AMENDMENTS.md": "6f73d214be47bde63f928ce2b4ca62d0d8c7ebd2c9a21ccc8f4fd4d8f6f42425",
+    "AUTHOR_BRIEF_PPT.md": "9fe7517a1a9071b6dcead6e459e9c87895dacfcdf5ecc8840b25e3bdb2ef5ea5",
+    "ppt_check.py": "caaf3a541f0b2c0d5f6f343a124942f8cc4ad5ed88f1c0ddd3dbca83898d545e",
+    "CALIBRATION.md": "d37a8597a033b239ae8e99b3aedd75b1186825d945be575a7a7d25a4ccf5e4e2"
+  },
+  "freeze_present": false,
+  "main_starts_present": false,
+  "main_rows_present": false,
+  "selected_units": [
+    "p2-t2",
+    "p2-t5",
+    "p3-t1",
+    "p3-t2"
+  ],
+  "authors_used": [
+    "p1",
+    "p2",
+    "p3"
+  ],
+  "void_authors": [
+    "p1"
+  ],
+  "calibration_rows": [
+    {
+      "unit": "p2-t1",
+      "passed": true,
+      "tokens_total": 330645,
+      "failure_category": "passed",
+      "grade_sha256": "94a32a3591a2e864317d7c76319da3096d22639314864fe670c933a3f3fb088f"
+    },
+    {
+      "unit": "p2-t2",
+      "passed": false,
+      "tokens_total": 442541,
+      "failure_category": "chart_subtype",
+      "grade_sha256": "2e19f5bd3cfcc18e03f3baa17bd9479fd7576cad10e5caaea112cc0b394b1cde"
+    },
+    {
+      "unit": "p2-t3",
+      "passed": true,
+      "tokens_total": 596272,
+      "failure_category": "passed",
+      "grade_sha256": "2892de584e48578dea36f6ec4b9c67fe810f251778afcc8b7e7a97681fbd42ea"
+    },
+    {
+      "unit": "p2-t4",
+      "passed": true,
+      "tokens_total": 343384,
+      "failure_category": "passed",
+      "grade_sha256": "1c267386a5e0418112ce1ea1d5f55b7256c9c8f1627951264f4500c99c485c34"
+    },
+    {
+      "unit": "p2-t5",
+      "passed": false,
+      "tokens_total": 460763,
+      "failure_category": "chart_subtype",
+      "grade_sha256": "109dd752e4eb8eba40b2a5e508db8bb4e49c69397a49138314f7c3d596e0407a"
+    },
+    {
+      "unit": "p2-t6",
+      "passed": true,
+      "tokens_total": 399122,
+      "failure_category": "passed",
+      "grade_sha256": "e8d305b0cbcd19d08a2fc78dd45bc2c2ea9a1cd206bb91061f911b68460a1f12"
+    },
+    {
+      "unit": "p3-t1",
+      "passed": false,
+      "tokens_total": 418244,
+      "failure_category": "word_line_box",
+      "grade_sha256": "4e49fce95cc887c4c31844d1ccd5533ff0439f5da79dca98ac581c238ab4bbb2"
+    },
+    {
+      "unit": "p3-t2",
+      "passed": false,
+      "tokens_total": 328959,
+      "failure_category": "chart_subtype",
+      "grade_sha256": "f298edacd20c2ceaa31b05ae0299227c352310282fa6cb63890b280ebbbcc9b1"
+    },
+    {
+      "unit": "p3-t3",
+      "passed": false,
+      "tokens_total": 511025,
+      "failure_category": "word_line_box",
+      "grade_sha256": "ca797b43c1ef31a7b7580650fd25e2dea1003063635b36ea6d17cdf970b44689"
+    },
+    {
+      "unit": "p3-t4",
+      "passed": true,
+      "tokens_total": 357462,
+      "failure_category": "passed",
+      "grade_sha256": "e03979307781267c3094c49ee80235bea2876960bd6eab2db2c7f6659c53d97b"
+    },
+    {
+      "unit": "p3-t5",
+      "passed": false,
+      "tokens_total": 365439,
+      "failure_category": "chart_subtype",
+      "grade_sha256": "026f87b2e2e8b926ac4ffa22fc25ab5f29bc037d3758abaa107162638b1c959d"
+    },
+    {
+      "unit": "p3-t6",
+      "passed": true,
+      "tokens_total": 466035,
+      "failure_category": "passed",
+      "grade_sha256": "09eba711aff98e146692125959de234d8e2631f42aa5cdd34230dc950ea74f97"
+    }
+  ],
+  "cost": {
+    "codex_calibration_tokens": 5019891,
+    "codex_authoring_tokens": 2303470,
+    "claude_probe_warmup_tokens_including_carry": 712093,
+    "previous_fable_code_review_tokens_reported_in_calibration_doc": 1195171,
+    "new_task_answer_calls_for_closure": 0,
+    "scope_note": "Stage values are not a full-study total. Controller engineering and closure-review usage are not separately metered."
+  },
+  "independent_review": {
+    "reviewer": "ppt_closure_review",
+    "context": "fresh",
+    "verdict": "PASS",
+    "criteria": [
+      {
+        "id": 1,
+        "verdict": "PASS",
+        "scope": "Original calibration rows, selection, failure categories and all source/grade hashes independently recomputed."
+      },
+      {
+        "id": 2,
+        "verdict": "PASS",
+        "scope": "No freeze/main runs; candidates remain unjudged; no capability claim."
+      },
+      {
+        "id": 3,
+        "verdict": "PASS",
+        "scope": "Stage costs separated; no full-study cost or measured saving claim."
+      },
+      {
+        "id": 4,
+        "verdict": "PASS",
+        "scope": "Restart limits and release priority retained; five original files byte-identical to HEAD."
+      }
+    ],
+    "excluded": "FIXCHECK progress updates and final release assessment.",
+    "cost": "Reviewer/controller usage not separately metered in the experiment ledger."
+  }
+}

@@ -37,11 +37,11 @@
 
 | 項目 | 現況與下一個可驗證交付 |
 |---|---|
-| #17 FIXCHECK | 離線準備與 fresh review 完成；28 tests、最終 4/4 PASS。獨立 state／17M 預算／候選與 H1 來源均已綁定。Codex A/B 共 8 題已完成，C 執行中；最新快照見 [RUN_STATUS](../v2.0.1-experiments/FIXCHECK/RUN_STATUS.md)；尚無回歸結論 |
+| #17 FIXCHECK | 離線準備與 fresh review 完成；28 tests、最終 4/4 PASS。獨立 state／17M 預算／候選與 H1 來源均已綁定。Codex A/B/C 共 12 題已完成；Claude 第一題因每週 quota 停止，服務回報 18:00 台北時間重置；最新快照見 [RUN_STATUS](../v2.0.1-experiments/FIXCHECK/RUN_STATUS.md)；尚無回歸結論 |
 | #18 CI | PR #16 的 base 仍為 codex/oaw-2-native-upgrade；六格 CI 尚未驗證。已向 owner 提出具體選項：新修復 branch 對 main 的 draft PR，或沿用 PR #16。等待安排確認 |
 | #10／#12 文件與修整 | 在 codex/v2.0.1-release-polish 獨立工作樹已實作並驗證、待整合：locator opt-in、doctor 摘要、EGM 文件、評估雙軌 SOP。97 installer tests、最終 full gate 9/9／685 tests；code review finding closed，4/4 PASS。已推送 5af21f6；FIXCHECK 候選 c2d9852 未改 |
 | #11 發佈 | VERSION 仍 2.0.0 proposed；待 FIXCHECK／CI、完整發佈 review、owner merge／tag |
-| PPT 收尾 | 原校準結果與本次修復分開；沒有改題、凍結或重跑 |
+| PPT 收尾 | 已依本次 review 收在「校準停止／候選未判定」；[CLOSURE](../v2.0.1-experiments/capability/CLOSURE.md) 保留逐題摘要及成本，獨立核對 4/4 PASS。沒有改題、凍結、重跑或 candidate verdict |
 | G5 舊判定 | 發佈後用原資料重判；尚未執行 |
 | Harness² U1／U2／U3 | 依評估規劃排在發佈後；尚未重建、試吃或宣告收益 |
 
@@ -76,10 +76,13 @@ FIXCHECK 的 Claude 預估約 8M、上限 17M，使用獨立帳本；不使用 H
 
 ## FIXCHECK 執行補充
 
-Codex A/B 已完成，8/24 題共 2,489,756 logical tokens；C 執行中，Claude
-尚未開始。期間磁碟滿截斷一份 rollout，但完整 parent stream 與答案保留；
+Codex A/B/C 已完成，12/24 題共 6,802,657 logical tokens。Claude 第一題
+因每週 usage limit 停止，沒有有效答案，帳本記錄 0 tokens；服務回報
+2026-11-13 18:00（台北時間）重置，須屆時重新 preflight 後接同一 state。期間磁碟滿截斷一份 rollout，但完整 parent stream 與答案保留；
 經獨立 4/4 review 用同一答案恢復機械評分與完整帳目，沒有重抽。
 [恢復紀錄](../v2.0.1-experiments/FIXCHECK/RECOVERY.md) 保留缺失 metadata、
 30,642 token 差額、完整性檢查與初審失敗；records gate 9/9、167 tests。
 這個實例也補進 Harness² 評估的 U1 離線驗收案例，未增加常駐規則。
 數值門檻與保留／還原處置仍等兩格完成後統一核對。
+
+Codex 12 列的事件稽核與 90 筆證據引用雜湊已核對；完整 FIXCHECK runtime check 通過。Claude 缺 12 列，未執行數值判定，未改動候選或宣告可發佈。
