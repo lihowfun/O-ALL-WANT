@@ -27,7 +27,7 @@
   <img src="docs/assets/oboi_meme.png" width="400" alt="Harness engineering: I want it all">
 </p>
 
-> **v2.0.1 is proposed: the release candidate is in pull request #16. It becomes the release when the owner merges and tags `v2.0.1`; 2.0.0 was never released.** [Upgrade guide](docs/UPGRADING.md) · [CLI reference](docs/CLI_Reference.md) · [Execution plan](docs/plans/v2.0.1-release-path.md)
+> **v2.0.1 is the first release of the V2 line; 2.0.0 was never released.** [Upgrade guide](docs/UPGRADING.md) · [CLI reference](docs/CLI_Reference.md) · [Execution plan](docs/plans/v2.0.1-release-path.md)
 
 **OAW v2 includes EGM**, project evidence, optional wiki and improvement gates.
 The default recipe exposes the seven pinned EGM skills plus `oaw-add`, `oaw-codemap`, `oaw-evidence` and `oaw-review`;

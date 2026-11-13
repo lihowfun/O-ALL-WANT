@@ -2,6 +2,6 @@
   "version": "2.0.1",
   "project": "O-ALL-WANT",
   "last_updated": "2026-11-14",
-  "release_status": "proposed",
-  "notes": "Release candidate in pull request #16; no tag or release yet. 2.0.0 was never released."
+  "release_status": "released",
+  "notes": "OAW 2.0.1 is the first release of the V2 line; 2.0.0 was a proposal that was never released."
 }

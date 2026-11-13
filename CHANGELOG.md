@@ -4,11 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-## [2.0.1] — Proposed, updated 2026-11-14
+## [2.0.1] — 2026-11-14
 
-2.0.0 was the unreleased proposal below; 2.0.1 contains that proposal and the
-changes listed here. The release candidate is in pull request #16, pending
-the owner's merge and `v2.0.1` tag.
+2.0.1 is the first release of the V2 line: it contains the unreleased 2.0.0
+proposal below and the changes listed here.
 
 ### Release fixes after FIXCHECK (D45)
 
@@ -52,15 +51,22 @@ test; no effectiveness verdict follows either way.
 - Permission-only pending writes retain dual-source ordering, credential/path
   checks, atomic writes, historical entries and cursor invalidation. Deep code
   review again repeats until no new findings, at most three rounds.
-- The model-free native Codex sandbox probe remains available; final six-job platform/
-  Python CI checks and cross-family release review remain pending.
+- The model-free native Codex sandbox probe remains available. At `7504eca`,
+  the parent of the release documentation commit, the Linux gate passed 9/9
+  checks with 718 tests and 0 skips on Python 3.10.12; all six CI jobs
+  (Ubuntu, macOS, Windows × Python 3.10, 3.13) were green in run `43510582580`.
+- Cross-family release review completed three rounds, closing two data-loss
+  defects in user install and catalog restore, a wiki parser regression, memory
+  ordering, Windows host lookup, the project boundary check and documentation
+  defects. The final review at `7504eca` reported no blocker; follow-ups are
+  tracked in #21, #22 and #23. [Final validation](docs/validation/v2.0.1-final.md).
 
 ### Release polish integrated (#10, #12)
 
 - External checkout locators now require `--remember-checkout` on init/migrate/add; previews describe the destination without writing. The existing add question includes this independent opt-in, and write failures remain visible.
 - Doctor summarizes healthy checks by default while retaining every warning/failure and discovery state. `--verbose` and `--json` expose full checks with unchanged health and exit behavior.
 - Link the bundled upstream EGM guides and distinguish benefit/capability evaluation from maintainer/user installation. README reports H1's combined inconclusive result and measured token overhead.
-- Integrated with the FIXCHECK disposition; FIXCHECK remains pinned to `c2d9852`. Final release checks remain required.
+- Integrated with the FIXCHECK disposition; FIXCHECK remains pinned to `c2d9852`. Final gate, CI and review results are recorded above.
 
 ### Added
 

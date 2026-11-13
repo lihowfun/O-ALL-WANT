@@ -1,6 +1,6 @@
 # Upgrade to OAW v2.0.1
 
-v2.0.1 is a proposed breaking upgrade from v1 and also supports existing 2.0.0-proposal installs through the normal migration preview and `--apply` path, preserving project records and customized policy. The release candidate is in pull request #16; no tag or release yet. 2.0.0 was never released.
+v2.0.1 is the first release of the V2 line and a breaking upgrade from v1. It also supports existing 2.0.0-proposal installs through the normal migration preview and `--apply` path, preserving project records and customized policy. 2.0.0 was a proposal that was never released.
 
 ## What changes
 

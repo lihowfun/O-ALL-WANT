@@ -48,12 +48,24 @@ class GateTests(unittest.TestCase):
             for fact in facts:
                 with self.subTest(relative=relative, fact=fact):
                     self.assertIn(fact, text)
+            banner = next(line for line in text.splitlines() if line.startswith("> **v2.0.1"))
+            release_claim = ("v2.0.1 is the first release of the V2 line; 2.0.0 was never released."
+                             if relative == "README.md" else
+                             "v2.0.1 是 V2 系列的首個正式發布版本；2.0.0 從未發布。")
+            self.assertIn(release_claim, banner)
+            for stale in ("proposed", "release candidate", "pending", "候選版本", "待 owner"):
+                self.assertNotIn(stale, banner)
+            for link in ("docs/UPGRADING.md", "docs/CLI_Reference.md", "docs/plans/v2.0.1-release-path.md"):
+                self.assertIn(link, banner)
         chinese = (harness_check.ROOT / "README.zh.md").read_text(encoding="utf-8")
         self.assertNotIn("Claude CLI 模型測試", chinese)
         self.assertNotIn("三個 OAW", chinese)
 
     def test_source_ledger_rejects_version_and_immutable_pin_drift(self):
         original = json.loads((harness_check.ROOT / "docs/releases/2.0.1-sources.json").read_text(encoding="utf-8"))
+        version = json.loads((harness_check.ROOT / "VERSION.json").read_text(encoding="utf-8"))
+        self.assertEqual(version["release_status"], "released")
+        self.assertEqual(original["release_status"], version["release_status"])
         with tempfile.TemporaryDirectory(prefix="oaw-citations-") as temporary:
             root = Path(temporary)
             (root / "docs/releases").mkdir(parents=True)
@@ -64,10 +76,12 @@ class GateTests(unittest.TestCase):
             with patch.object(harness_check, "ROOT", root):
                 path.write_text(json.dumps(original), encoding="utf-8")
                 self.assertTrue(harness_check.version_check().passed)
-                for mutation in ("version", "mutable-source", "ci-drift", "unbundled-egm", "egm-lock", "comment-only"):
+                for mutation in ("version", "release-status", "mutable-source", "ci-drift", "unbundled-egm", "egm-lock", "comment-only"):
                     value = json.loads(json.dumps(original))
                     if mutation == "version":
                         value["oaw_version"] = "999.0.0"
+                    elif mutation == "release-status":
+                        value["release_status"] = "proposed"
                     elif mutation == "mutable-source":
                         value["sources"][0]["commit"] = "main"
                     elif mutation == "ci-drift":

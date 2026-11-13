@@ -27,7 +27,7 @@
   <img src="docs/assets/oboi_meme.png" width="400" alt="Harness engineering：我全都要">
 </p>
 
-> **v2.0.1 維持 proposed：候選版本在 PR #16，待 owner 合併並打上 `v2.0.1` tag 才成為 release；2.0.0 從未發布。** [升級指南](docs/UPGRADING.md) · [CLI](docs/CLI_Reference.md) · [執行計畫](docs/plans/v2.0.1-release-path.md)
+> **v2.0.1 是 V2 系列的首個正式發布版本；2.0.0 從未發布。** [升級指南](docs/UPGRADING.md) · [CLI](docs/CLI_Reference.md) · [執行計畫](docs/plans/v2.0.1-release-path.md)
 
 **OAW v2 就是整套 OAW，包含已整合的 EGM**。預設提供七個固定版本的 EGM
 skills 與 `oaw-add`、`oaw-codemap`、`oaw-evidence`、`oaw-review`；可自行選擇 recipe，wiki 和 improve 為選配。
