@@ -588,3 +588,26 @@ evaluation-method absorption now; U1 no longer waits for the release.
 - No new model experiment, increased quota/budget, pending CI routing change,
   rejected cache relocation, merge, tag or release is authorized by this entry.
   Claude FIXCHECK still waits for 18:00 and continues independently in CC.
+
+## D47. Carry the release on and move the absorption lines forward beside it, by delegation (2026-11-13)
+
+Owner in chat, to the Claude Code session that took over from the Codex handoff: 「目前 fable 跟 codex
+針對 OAW repo branch 有很多大更新 請你確認一下進度 並且follow 下去 尤其是 harness2 的專業評估harness
+好壞的地方直的我們吸收 另外EGM 或其他的skill 最佳化吸收也要推進下去 你這邊也可以隨時指派codex 研究或是
+讓其他opus 5.5 往下」.
+
+- Reading (Claude's): finish the release line, and beside it move the absorption work that D45 had placed
+  after the release: the Harness2 method (after U1), EGM, and the earlier skill verdicts. Work may be
+  handed to Codex and to Opus 5.5 agents. This relaxes D45's "one line at a time" for offline work only.
+- Done under it the same day, with no experiment model answers beyond the FIXCHECK already authorized:
+  a cross-family review and fix of U1; the U2 card candidate with a draft preregistration; a plan (not a
+  run) for tasting the official Harness2 runtime; G5, the re-judgement of three intake verdicts on
+  existing data (#15); an EGM cost anatomy from existing traces with a study design for large documents.
+- Not authorized by this entry: any new model experiment, a budget above D35's 30M per experiment, API or
+  Vertex billing, a pull-request base change, merge, tag or release. Three questions were put to the
+  owner and are open: whether to deviate from FIXCHECK's preregistered disposition, the base of PR #16,
+  and whether to fund the Harness2 runtime tasting.
+- Operations, same day: the local system disk was full. Owner: 「請你用正確的 /mnt/drugs」, 「如果我們的
+  一些內容可以清 或超過兩個月都沒動 也可以清」, 「已經沒再用或達成目的的也可以刪」, 「不要你去做這件事
+  請你指派opus 5.5 去做」. Project data goes to the shared storage; only an experiment's state root stays
+  local while it runs; cleanup is delegated to an Opus 5.5 agent.

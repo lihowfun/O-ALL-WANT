@@ -86,3 +86,21 @@ Codex A/B/C 已完成，12/24 題共 6,802,657 logical tokens。Claude 第一題
 數值門檻與保留／還原處置仍等兩格完成後統一核對。
 
 Codex 12 列的事件稽核與 90 筆證據引用雜湊已核對；完整 FIXCHECK runtime check 通過。Claude 缺 12 列，未執行數值判定，未改動候選或宣告可發佈。
+
+
+## 2026-11-13 晚：Claude Code 接手後
+
+依 [D47](../digestion-2026-11-03/ingest/DECISIONS.md) 接續。以下每一項的數字和限制都在連結的紀錄裡，這裡只列狀態。
+
+| 項目 | 狀態 |
+|---|---|
+| #17 FIXCHECK | **完成。** 24/24 計分列；凍結計算器 exit 1（fail）；照預先登記的處置是還原 M1、M2、R2，保留 M3、R1，沒有擋發佈的項目。事件稽核兩格都由 Codex 做；獨立結果審查第一版判 FAIL（敘述四處），已改正並確認關閉。[RESULT](../v2.0.1-experiments/FIXCHECK/RESULT.md) |
+| 處置的落實 | 還原已在本機的最終整合工作樹做好（Codex 實作、Claude 審 diff、自行重跑 Linux 閘門 9/9、685 tests），**尚未 commit**：同一批資料也量到相反方向的差異，已請 owner 決定是否偏離預先登記；沒有新決定就照登記執行 |
+| #18 CI | 仍等 owner 決定 PR #16 的 base。還原後必須的三件事（最終 commit 的閘門、六格 CI、文件同步）都還沒完成 |
+| Harness² U1 | 跨家族審查完成；三個設計缺口已修（`codex/harness2-evaluation-u1` adf2033，閘門 9/9、718 tests）。已用它匯出 FIXCHECK 的完整帳目 |
+| Harness² U2 | 候選做好（卡片、唯讀檢查、測試；閘門 9/9、730 tests），只在本機、未推；模型會讀的文字，A/B 前不進發佈。[預先登記草稿](../v2.0.1-experiments/U2/PREREG.draft.md) |
+| Harness² 官方 runtime | 只有試吃計畫，未安裝、未執行。兩道關卡等 owner：官方走 API／Vertex 計費；沒有官方的 Claude Code 執行器。[計畫草稿](../intake-2026-11-13-harness2/tasting-plan/TASTING_PLAN.draft.md) |
+| #15 G5 | **完成第一步。** 三項都重判為「沒有結論」。[REJUDGE](../v2.0.1-experiments/G5/REJUDGE.md)。產品隨附的 verdict 清單尚未跟著改 |
+| EGM | 既有 trace 的成本拆解與大型文件的研究設計草稿完成，未跑模型。[ANATOMY](../v2.0.1-experiments/EGM-anatomy/ANATOMY.md) |
+
+沒有做的：版本定稿、六格 CI、完整發佈審查、merge、tag。這些都還在原來的順序上。
