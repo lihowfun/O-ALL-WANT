@@ -611,3 +611,26 @@ Owner in chat, to the Claude Code session that took over from the Codex handoff:
   一些內容可以清 或超過兩個月都沒動 也可以清」, 「已經沒再用或達成目的的也可以刪」, 「不要你去做這件事
   請你指派opus 5.5 去做」. Project data goes to the shared storage; only an experiment's state root stays
   local while it runs; cleanup is delegated to an Opus 5.5 agent.
+
+## D48. Follow the preregistered FIXCHECK disposition; start the release steps and the two follow-up lines (2026-11-14)
+
+Owner in chat, answering the 2026-11-13 report (three open questions, then next steps listed as P0, P1,
+P2 with a recommendation on each): 「P0 -P2都照妳建議直接動工」.
+
+- FIXCHECK disposition: the preregistered one stands. M1, M2 and R2 are reverted; M3, R1 and the #18
+  path fix ship. No deviation, so the README carries no owner-override note.
+- PR #16: base changed from `codex/oaw-2-native-upgrade` to `main` (done 2026-11-14 through the API),
+  so the six-job CI runs on every push. `claude/oaw-2` was fast-forwarded to the final integration
+  `5c4e53b`; no new remote branch.
+- Release steps authorized to proceed without further questions: version 2.0.1, six-job CI, one
+  cross-family release review of at most three rounds. Merge, tag and release stay with the owner.
+- P1, authorized inside D35's 30M per experiment, one Claude experiment process at a time:
+  the EGM native-only calibration on real large documents (#20; estimate Claude 2.7–3.6M, Codex
+  3.7–4.6M), and the preparation and A/B of the U2 minimal-change card (estimate 27.7M, unit price not
+  yet piloted). The full EGM comparison (about 27M) is asked again only if calibration shows room.
+  This lifts the "no new experiment before the release" rule of D45 for these two lines.
+- P2: the finished H1 and FIXCHECK state roots on the local disk (about 19 GB) move to the shared
+  storage, byte-identical with a hash manifest, by an Opus 5.5 agent.
+- Not covered by this answer, so unchanged: the official Harness2 runtime is not tasted (the
+  recommendation was not to); closing #15 and the branch that should hold the U2 candidate were asked
+  separately and are still open.
