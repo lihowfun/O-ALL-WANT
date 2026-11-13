@@ -37,3 +37,23 @@ The first offline check was denied by the outer read-only tool sandbox's
 network-namespace restriction (`bwrap` / NETLINK_ROUTE). Running that same
 read-only check with approved namespace access passed; no product change or
 model invocation was needed.
+
+## Storage follow-up before resume
+
+At the subsequent 13:50 Asia/Taipei check, local free space had fallen to
+approximately 1.07 GB, while no experiment runner was alive. The completed
+Codex sessions contain about 1.10 GB in 26 experiment-local `cache` / `plugins`
+directories. An attempt to archive only these directories to the existing
+private storage area, verify their bytes/modes, preserve their original paths
+with symlinks and remove the duplicate local copies was **rejected by automatic
+approval review before execution**. The stated concern was unapproved data
+relocation/cleanup and potentially sensitive derived cache contents.
+
+The owner has been asked about that precise operation; no answer has been
+received. No copy, symlink or cleanup occurred, and no archive/report was
+created. Do not infer approval from an automatic goal continuation. The
+previous tools-only relocation remains the only completed relocation. Recheck
+local space before resuming Claude; cache archival remains optional and requires
+that approval. Original H1, credentials, answers, workspaces and ledgers remain
+unchanged. This storage preparation is not an additional experiment or a
+regression result.
