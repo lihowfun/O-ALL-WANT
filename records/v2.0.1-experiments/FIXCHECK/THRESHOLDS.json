@@ -1,0 +1,864 @@
+{
+  "numeric_outcome": "fail",
+  "counted_rows": 24,
+  "expected_rows": 24,
+  "pending": [],
+  "failures": [
+    "claude/t12: small-change threshold",
+    "codex/t01: small-change threshold",
+    "codex: memory threshold",
+    "claude: memory threshold"
+  ],
+  "actions": [
+    "retain R2; report no measured token saving for each affected design unit",
+    "revert M1+M2",
+    "revert M1+M2+R2"
+  ],
+  "memory": [
+    {
+      "cell": "codex",
+      "complete": true,
+      "old_remembered": 2,
+      "new_remembered": 1,
+      "M1_observed": 1,
+      "forgotten": [
+        "superseded-2-b1"
+      ],
+      "passed": false
+    },
+    {
+      "cell": "claude",
+      "complete": true,
+      "old_remembered": 1,
+      "new_remembered": 3,
+      "M1_observed": 2,
+      "forgotten": [],
+      "passed": false
+    }
+  ],
+  "comparisons": [
+    {
+      "cell": "claude",
+      "unit": "design-1-c1",
+      "klass": "C",
+      "type": "design",
+      "new_score": 1.0,
+      "old_score": 0.9,
+      "native_mean_score": 0.95,
+      "new_tokens": 1050621,
+      "old_tokens": 1440634,
+      "native_mean_tokens": 389034.5,
+      "new_recall": null,
+      "old_recall": null,
+      "native_recall_count": 0,
+      "score_delta": 0.1,
+      "lost_hidden": {
+        "functions": [],
+        "items": []
+      },
+      "forgot": false,
+      "score_ok": true,
+      "tokens_lower": true
+    },
+    {
+      "cell": "claude",
+      "unit": "design-3-c1",
+      "klass": "C",
+      "type": "design",
+      "new_score": 1.0,
+      "old_score": 1.0,
+      "native_mean_score": 1.0,
+      "new_tokens": 1617047,
+      "old_tokens": 6279376,
+      "native_mean_tokens": 723050.0,
+      "new_recall": null,
+      "old_recall": null,
+      "native_recall_count": 0,
+      "score_delta": 0.0,
+      "lost_hidden": {
+        "functions": [],
+        "items": []
+      },
+      "forgot": false,
+      "score_ok": true,
+      "tokens_lower": true
+    },
+    {
+      "cell": "claude",
+      "unit": "explicit-1-b1",
+      "klass": "B",
+      "type": "explicit",
+      "new_score": 1.0,
+      "old_score": 1.0,
+      "native_mean_score": 1.0,
+      "new_tokens": 276568,
+      "old_tokens": 288016,
+      "native_mean_tokens": 216794.5,
+      "new_recall": true,
+      "old_recall": true,
+      "native_recall_count": 2,
+      "score_delta": 0.0,
+      "lost_hidden": {
+        "functions": [],
+        "items": []
+      },
+      "forgot": false
+    },
+    {
+      "cell": "claude",
+      "unit": "handoff-1-b1",
+      "klass": "B",
+      "type": "handoff",
+      "new_score": 0.5,
+      "old_score": 0.5,
+      "native_mean_score": 0.5,
+      "new_tokens": 324241,
+      "old_tokens": 239538,
+      "native_mean_tokens": 240341.0,
+      "new_recall": false,
+      "old_recall": false,
+      "native_recall_count": 0,
+      "score_delta": 0.0,
+      "lost_hidden": {
+        "functions": [],
+        "items": []
+      },
+      "forgot": false
+    },
+    {
+      "cell": "claude",
+      "unit": "large-2-c1",
+      "klass": "C",
+      "type": "large",
+      "new_score": 1.0,
+      "old_score": 1.0,
+      "native_mean_score": 1.0,
+      "new_tokens": 1252054,
+      "old_tokens": 1433197,
+      "native_mean_tokens": 803801.0,
+      "new_recall": null,
+      "old_recall": null,
+      "native_recall_count": 0,
+      "score_delta": 0.0,
+      "lost_hidden": {
+        "functions": [],
+        "items": []
+      },
+      "forgot": false,
+      "score_ok": true
+    },
+    {
+      "cell": "claude",
+      "unit": "large-3-c2",
+      "klass": "C",
+      "type": "large",
+      "new_score": 1.0,
+      "old_score": 0.9166666666666666,
+      "native_mean_score": 0.9166666666666666,
+      "new_tokens": 2172342,
+      "old_tokens": 1778746,
+      "native_mean_tokens": 1245991.0,
+      "new_recall": null,
+      "old_recall": null,
+      "native_recall_count": 0,
+      "score_delta": 0.08333333333333333,
+      "lost_hidden": {
+        "functions": [],
+        "items": []
+      },
+      "forgot": false,
+      "score_ok": true
+    },
+    {
+      "cell": "claude",
+      "unit": "passing-1-b1",
+      "klass": "B",
+      "type": "passing",
+      "new_score": 1.0,
+      "old_score": 0.25,
+      "native_mean_score": 1.0,
+      "new_tokens": 357540,
+      "old_tokens": 269135,
+      "native_mean_tokens": 292271.5,
+      "new_recall": true,
+      "old_recall": false,
+      "native_recall_count": 2,
+      "score_delta": 0.75,
+      "lost_hidden": {
+        "functions": [],
+        "items": []
+      },
+      "forgot": false
+    },
+    {
+      "cell": "claude",
+      "unit": "superseded-2-b1",
+      "klass": "B",
+      "type": "superseded",
+      "new_score": 1.0,
+      "old_score": 0.4,
+      "native_mean_score": 0.7,
+      "new_tokens": 447691,
+      "old_tokens": 352530,
+      "native_mean_tokens": 313429.5,
+      "new_recall": true,
+      "old_recall": false,
+      "native_recall_count": 1,
+      "score_delta": 0.6,
+      "lost_hidden": {
+        "functions": [],
+        "items": []
+      },
+      "forgot": false
+    },
+    {
+      "cell": "claude",
+      "unit": "t01",
+      "klass": "A",
+      "type": null,
+      "new_score": 1.0,
+      "old_score": 1.0,
+      "native_mean_score": 1.0,
+      "new_tokens": 122858,
+      "old_tokens": 154652,
+      "native_mean_tokens": 137509.5,
+      "new_recall": null,
+      "old_recall": null,
+      "native_recall_count": 0,
+      "score_delta": 0.0,
+      "lost_hidden": {
+        "functions": [],
+        "items": []
+      },
+      "forgot": false,
+      "score_ok": true,
+      "tokens_ok": true
+    },
+    {
+      "cell": "claude",
+      "unit": "t04",
+      "klass": "A",
+      "type": null,
+      "new_score": 1.0,
+      "old_score": 1.0,
+      "native_mean_score": 1.0,
+      "new_tokens": 133336,
+      "old_tokens": 203453,
+      "native_mean_tokens": 154953.5,
+      "new_recall": null,
+      "old_recall": null,
+      "native_recall_count": 0,
+      "score_delta": 0.0,
+      "lost_hidden": {
+        "functions": [],
+        "items": []
+      },
+      "forgot": false,
+      "score_ok": true,
+      "tokens_ok": true
+    },
+    {
+      "cell": "claude",
+      "unit": "t09",
+      "klass": "A",
+      "type": null,
+      "new_score": 1.0,
+      "old_score": 1.0,
+      "native_mean_score": 1.0,
+      "new_tokens": 159937,
+      "old_tokens": 133292,
+      "native_mean_tokens": 260203.5,
+      "new_recall": null,
+      "old_recall": null,
+      "native_recall_count": 0,
+      "score_delta": 0.0,
+      "lost_hidden": {
+        "functions": [],
+        "items": []
+      },
+      "forgot": false,
+      "score_ok": true,
+      "tokens_ok": true
+    },
+    {
+      "cell": "claude",
+      "unit": "t12",
+      "klass": "A",
+      "type": null,
+      "new_score": 1.0,
+      "old_score": 1.0,
+      "native_mean_score": 1.0,
+      "new_tokens": 211064,
+      "old_tokens": 182605,
+      "native_mean_tokens": 174636.5,
+      "new_recall": null,
+      "old_recall": null,
+      "native_recall_count": 0,
+      "score_delta": 0.0,
+      "lost_hidden": {
+        "functions": [],
+        "items": []
+      },
+      "forgot": false,
+      "score_ok": true,
+      "tokens_ok": false
+    },
+    {
+      "cell": "codex",
+      "unit": "design-1-c1",
+      "klass": "C",
+      "type": "design",
+      "new_score": 1.0,
+      "old_score": 1.0,
+      "native_mean_score": 0.9,
+      "new_tokens": 1121239,
+      "old_tokens": 917116,
+      "native_mean_tokens": 279604.5,
+      "new_recall": null,
+      "old_recall": null,
+      "native_recall_count": 0,
+      "score_delta": 0.0,
+      "lost_hidden": {
+        "functions": [],
+        "items": []
+      },
+      "forgot": false,
+      "score_ok": true,
+      "tokens_lower": false
+    },
+    {
+      "cell": "codex",
+      "unit": "design-3-c1",
+      "klass": "C",
+      "type": "design",
+      "new_score": 1.0,
+      "old_score": 1.0,
+      "native_mean_score": 1.0,
+      "new_tokens": 889732,
+      "old_tokens": 1903178,
+      "native_mean_tokens": 433216.5,
+      "new_recall": null,
+      "old_recall": null,
+      "native_recall_count": 0,
+      "score_delta": 0.0,
+      "lost_hidden": {
+        "functions": [],
+        "items": []
+      },
+      "forgot": false,
+      "score_ok": true,
+      "tokens_lower": true
+    },
+    {
+      "cell": "codex",
+      "unit": "explicit-1-b1",
+      "klass": "B",
+      "type": "explicit",
+      "new_score": 1.0,
+      "old_score": 1.0,
+      "native_mean_score": 0.5,
+      "new_tokens": 373236,
+      "old_tokens": 331492,
+      "native_mean_tokens": 404313.0,
+      "new_recall": true,
+      "old_recall": true,
+      "native_recall_count": 0,
+      "score_delta": 0.0,
+      "lost_hidden": {
+        "functions": [],
+        "items": []
+      },
+      "forgot": false
+    },
+    {
+      "cell": "codex",
+      "unit": "handoff-1-b1",
+      "klass": "B",
+      "type": "handoff",
+      "new_score": 0.5,
+      "old_score": 0.5,
+      "native_mean_score": 0.5,
+      "new_tokens": 410563,
+      "old_tokens": 384788,
+      "native_mean_tokens": 309745.0,
+      "new_recall": false,
+      "old_recall": false,
+      "native_recall_count": 0,
+      "score_delta": 0.0,
+      "lost_hidden": {
+        "functions": [],
+        "items": []
+      },
+      "forgot": false
+    },
+    {
+      "cell": "codex",
+      "unit": "large-2-c1",
+      "klass": "C",
+      "type": "large",
+      "new_score": 1.0,
+      "old_score": 1.0,
+      "native_mean_score": 1.0,
+      "new_tokens": 1278518,
+      "old_tokens": 1468400,
+      "native_mean_tokens": 537148.5,
+      "new_recall": null,
+      "old_recall": null,
+      "native_recall_count": 0,
+      "score_delta": 0.0,
+      "lost_hidden": {
+        "functions": [],
+        "items": []
+      },
+      "forgot": false,
+      "score_ok": true
+    },
+    {
+      "cell": "codex",
+      "unit": "large-3-c2",
+      "klass": "C",
+      "type": "large",
+      "new_score": 1.0,
+      "old_score": 1.0,
+      "native_mean_score": 0.9583333333333334,
+      "new_tokens": 1023412,
+      "old_tokens": 1219747,
+      "native_mean_tokens": 596887.0,
+      "new_recall": null,
+      "old_recall": null,
+      "native_recall_count": 0,
+      "score_delta": 0.0,
+      "lost_hidden": {
+        "functions": [],
+        "items": []
+      },
+      "forgot": false,
+      "score_ok": true
+    },
+    {
+      "cell": "codex",
+      "unit": "passing-1-b1",
+      "klass": "B",
+      "type": "passing",
+      "new_score": 0.25,
+      "old_score": 0.25,
+      "native_mean_score": 0.25,
+      "new_tokens": 428278,
+      "old_tokens": 448125,
+      "native_mean_tokens": 378152.5,
+      "new_recall": false,
+      "old_recall": false,
+      "native_recall_count": 0,
+      "score_delta": 0.0,
+      "lost_hidden": {
+        "functions": [],
+        "items": []
+      },
+      "forgot": false
+    },
+    {
+      "cell": "codex",
+      "unit": "superseded-2-b1",
+      "klass": "B",
+      "type": "superseded",
+      "new_score": 0.8,
+      "old_score": 1.0,
+      "native_mean_score": 0.4,
+      "new_tokens": 534115,
+      "old_tokens": 641664,
+      "native_mean_tokens": 465188.0,
+      "new_recall": false,
+      "old_recall": true,
+      "native_recall_count": 0,
+      "score_delta": -0.2,
+      "lost_hidden": {
+        "functions": [
+          "test_recall_maintenance_body"
+        ],
+        "items": [
+          "test_recall_maintenance_body"
+        ]
+      },
+      "forgot": true
+    },
+    {
+      "cell": "codex",
+      "unit": "t01",
+      "klass": "A",
+      "type": null,
+      "new_score": 1.0,
+      "old_score": 1.0,
+      "native_mean_score": 1.0,
+      "new_tokens": 196707,
+      "old_tokens": 166133,
+      "native_mean_tokens": 145318.0,
+      "new_recall": null,
+      "old_recall": null,
+      "native_recall_count": 0,
+      "score_delta": 0.0,
+      "lost_hidden": {
+        "functions": [],
+        "items": []
+      },
+      "forgot": false,
+      "score_ok": true,
+      "tokens_ok": false
+    },
+    {
+      "cell": "codex",
+      "unit": "t04",
+      "klass": "A",
+      "type": null,
+      "new_score": 1.0,
+      "old_score": 1.0,
+      "native_mean_score": 1.0,
+      "new_tokens": 150956,
+      "old_tokens": 152685,
+      "native_mean_tokens": 267919.0,
+      "new_recall": null,
+      "old_recall": null,
+      "native_recall_count": 0,
+      "score_delta": 0.0,
+      "lost_hidden": {
+        "functions": [],
+        "items": []
+      },
+      "forgot": false,
+      "score_ok": true,
+      "tokens_ok": true
+    },
+    {
+      "cell": "codex",
+      "unit": "t09",
+      "klass": "A",
+      "type": null,
+      "new_score": 1.0,
+      "old_score": 1.0,
+      "native_mean_score": 1.0,
+      "new_tokens": 220854,
+      "old_tokens": 235417,
+      "native_mean_tokens": 189800.5,
+      "new_recall": null,
+      "old_recall": null,
+      "native_recall_count": 0,
+      "score_delta": 0.0,
+      "lost_hidden": {
+        "functions": [],
+        "items": []
+      },
+      "forgot": false,
+      "score_ok": true,
+      "tokens_ok": true
+    },
+    {
+      "cell": "codex",
+      "unit": "t12",
+      "klass": "A",
+      "type": null,
+      "new_score": 1.0,
+      "old_score": 1.0,
+      "native_mean_score": 1.0,
+      "new_tokens": 175047,
+      "old_tokens": 190965,
+      "native_mean_tokens": 185511.5,
+      "new_recall": null,
+      "old_recall": null,
+      "native_recall_count": 0,
+      "score_delta": 0.0,
+      "lost_hidden": {
+        "functions": [],
+        "items": []
+      },
+      "forgot": false,
+      "score_ok": true,
+      "tokens_ok": true
+    }
+  ],
+  "drops": [
+    {
+      "cell": "codex",
+      "unit": "superseded-2-b1",
+      "klass": "B",
+      "type": "superseded",
+      "new_score": 0.8,
+      "old_score": 1.0,
+      "native_mean_score": 0.4,
+      "new_tokens": 534115,
+      "old_tokens": 641664,
+      "native_mean_tokens": 465188.0,
+      "new_recall": false,
+      "old_recall": true,
+      "native_recall_count": 0,
+      "score_delta": -0.2,
+      "lost_hidden": {
+        "functions": [
+          "test_recall_maintenance_body"
+        ],
+        "items": [
+          "test_recall_maintenance_body"
+        ]
+      },
+      "forgot": true
+    }
+  ],
+  "mechanisms": [
+    {
+      "cell": "claude",
+      "unit": "design-1-c1",
+      "fix": "R2",
+      "status": "observed"
+    },
+    {
+      "cell": "claude",
+      "unit": "design-3-c1",
+      "fix": "R2",
+      "status": "observed"
+    },
+    {
+      "cell": "claude",
+      "unit": "explicit-1-b1",
+      "fix": "M1",
+      "status": "observed"
+    },
+    {
+      "cell": "claude",
+      "unit": "explicit-1-b1",
+      "fix": "M2",
+      "status": "absent"
+    },
+    {
+      "cell": "claude",
+      "unit": "handoff-1-b1",
+      "fix": "M1",
+      "status": "absent"
+    },
+    {
+      "cell": "claude",
+      "unit": "handoff-1-b1",
+      "fix": "M2",
+      "status": "unverified"
+    },
+    {
+      "cell": "claude",
+      "unit": "passing-1-b1",
+      "fix": "M1",
+      "status": "observed"
+    },
+    {
+      "cell": "claude",
+      "unit": "passing-1-b1",
+      "fix": "M2",
+      "status": "unverified"
+    },
+    {
+      "cell": "claude",
+      "unit": "superseded-2-b1",
+      "fix": "M1",
+      "status": "absent"
+    },
+    {
+      "cell": "claude",
+      "unit": "superseded-2-b1",
+      "fix": "M2",
+      "status": "unverified"
+    },
+    {
+      "cell": "codex",
+      "unit": "design-1-c1",
+      "fix": "R1",
+      "status": "observed"
+    },
+    {
+      "cell": "codex",
+      "unit": "design-1-c1",
+      "fix": "R2",
+      "status": "observed"
+    },
+    {
+      "cell": "codex",
+      "unit": "design-3-c1",
+      "fix": "R1",
+      "status": "observed"
+    },
+    {
+      "cell": "codex",
+      "unit": "design-3-c1",
+      "fix": "R2",
+      "status": "observed"
+    },
+    {
+      "cell": "codex",
+      "unit": "explicit-1-b1",
+      "fix": "M1",
+      "status": "observed"
+    },
+    {
+      "cell": "codex",
+      "unit": "explicit-1-b1",
+      "fix": "M2",
+      "status": "unverified"
+    },
+    {
+      "cell": "codex",
+      "unit": "explicit-1-b1",
+      "fix": "M3",
+      "status": "observed"
+    },
+    {
+      "cell": "codex",
+      "unit": "handoff-1-b1",
+      "fix": "M1",
+      "status": "absent"
+    },
+    {
+      "cell": "codex",
+      "unit": "handoff-1-b1",
+      "fix": "M2",
+      "status": "absent"
+    },
+    {
+      "cell": "codex",
+      "unit": "handoff-1-b1",
+      "fix": "M3",
+      "status": "unverified"
+    },
+    {
+      "cell": "codex",
+      "unit": "large-2-c1",
+      "fix": "R1",
+      "status": "observed"
+    },
+    {
+      "cell": "codex",
+      "unit": "large-3-c2",
+      "fix": "R1",
+      "status": "observed"
+    },
+    {
+      "cell": "codex",
+      "unit": "passing-1-b1",
+      "fix": "M1",
+      "status": "absent"
+    },
+    {
+      "cell": "codex",
+      "unit": "passing-1-b1",
+      "fix": "M2",
+      "status": "observed"
+    },
+    {
+      "cell": "codex",
+      "unit": "passing-1-b1",
+      "fix": "M3",
+      "status": "unverified"
+    },
+    {
+      "cell": "codex",
+      "unit": "superseded-2-b1",
+      "fix": "M1",
+      "status": "absent"
+    },
+    {
+      "cell": "codex",
+      "unit": "superseded-2-b1",
+      "fix": "M2",
+      "status": "unverified"
+    },
+    {
+      "cell": "codex",
+      "unit": "superseded-2-b1",
+      "fix": "M3",
+      "status": "observed"
+    }
+  ],
+  "mechanisms_unverified": [
+    {
+      "cell": "claude",
+      "unit": "handoff-1-b1",
+      "fix": "M2",
+      "status": "unverified"
+    },
+    {
+      "cell": "claude",
+      "unit": "passing-1-b1",
+      "fix": "M2",
+      "status": "unverified"
+    },
+    {
+      "cell": "claude",
+      "unit": "superseded-2-b1",
+      "fix": "M2",
+      "status": "unverified"
+    },
+    {
+      "cell": "codex",
+      "unit": "explicit-1-b1",
+      "fix": "M2",
+      "status": "unverified"
+    },
+    {
+      "cell": "codex",
+      "unit": "handoff-1-b1",
+      "fix": "M3",
+      "status": "unverified"
+    },
+    {
+      "cell": "codex",
+      "unit": "passing-1-b1",
+      "fix": "M3",
+      "status": "unverified"
+    },
+    {
+      "cell": "codex",
+      "unit": "superseded-2-b1",
+      "fix": "M2",
+      "status": "unverified"
+    }
+  ],
+  "mechanisms_absent": [
+    {
+      "cell": "claude",
+      "unit": "explicit-1-b1",
+      "fix": "M2",
+      "status": "absent"
+    },
+    {
+      "cell": "claude",
+      "unit": "handoff-1-b1",
+      "fix": "M1",
+      "status": "absent"
+    },
+    {
+      "cell": "claude",
+      "unit": "superseded-2-b1",
+      "fix": "M1",
+      "status": "absent"
+    },
+    {
+      "cell": "codex",
+      "unit": "handoff-1-b1",
+      "fix": "M1",
+      "status": "absent"
+    },
+    {
+      "cell": "codex",
+      "unit": "handoff-1-b1",
+      "fix": "M2",
+      "status": "absent"
+    },
+    {
+      "cell": "codex",
+      "unit": "passing-1-b1",
+      "fix": "M1",
+      "status": "absent"
+    },
+    {
+      "cell": "codex",
+      "unit": "superseded-2-b1",
+      "fix": "M1",
+      "status": "absent"
+    }
+  ],
+  "claim": null,
+  "limitation": "Same diagnostic tasks, one counted answer each; not independent effectiveness evidence. Numeric pass does not replace mechanism audit, offline probes, CI or release review."
+}

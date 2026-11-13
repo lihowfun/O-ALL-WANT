@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "scope": "closure of F1-F4 only",
+  "findings": [
+    {
+      "id": "F1",
+      "status": "closed",
+      "evidence": [
+        "RESULT.md:42-45 distinguishes task-level M1 (Claude 2/4, Codex 1/4) from five learning sessions per cell. Claude has two OAW saves, two host saves and one unsaved session; Codex has two successful OAW/pending saves and three unsaved sessions. Line 44 explicitly identifies the missing final period in the first Claude host save.",
+        "These corrections match review:RESULT_REVIEW.json findings[F1], verification.learning_sessions and verification.mechanism_sample, and preserve the task-level definition in FIXCHECK.md:52."
+      ]
+    },
+    {
+      "id": "F2",
+      "status": "closed",
+      "evidence": [
+        "RESULT.md:32-35 keeps the post-hoc section separate from the disposition and explicitly says that answer variation and fix effects cannot be separated or assigned to an individual fix.",
+        "RESULT.md:38-55 reports measured differences only: old O and new O each exceed the small-change token threshold on 2/8 different units; recall counts change from 1 to 3 for Claude and 2 to 1 for Codex; three design-unit token counts decrease and one increases. These measurements match verification.small_change_counterfactual, verification.learning_sessions, verification.design_tokens, verification.batch_ratios and verification.post_hoc_claims in the original review.",
+        "RESULT.md:57-60 says the numbers cannot establish outcomes after a revert or attribution to a fix, makes no prediction that reverting removes benefits, and leaves the preregistered disposition in force.",
+        "RESULT.md:25 explicitly states that the per-unit design-cost condition was not met on Codex design-1-c1 (917,116 to 1,121,239), and records no measured token saving. This explicit statement is in the conclusion; the post-hoc section at lines 50-51 reports the +22% increase and states that aggregate decreases do not cancel it. This satisfies the original F2 fix and agrees with FIXCHECK.md:42,69-70."
+      ]
+    },
+    {
+      "id": "F3",
+      "status": "closed",
+      "evidence": [
+        "RESULT.md:16-17 explicitly requires rerunning the full gate on the final commit, running six-cell CI and synchronizing documentation with shipped behavior. It marks all three as unfinished and says release readiness cannot be claimed before completion.",
+        "RESULT.md:13-14 retains the resolved disposition: revert M1/M2/R2, retain M3/R1, with no experiment-outcome release blocker. Together these agree with FIXCHECK.md:66-73 and the original review verification.disposition; they do not claim the reverts or follow-up checks have been completed."
+      ]
+    },
+    {
+      "id": "F4",
+      "status": "closed",
+      "evidence": [
+        "RESULT.md:50-51 adds design-only old-to-new totals: Claude 7,720,010 to 2,667,668; Codex 2,820,294 to 2,010,971; combined 10,540,304 to 4,678,639. These exactly match the original review verification.design_tokens and verification.design_aggregates.",
+        "RESULT.md:50-51 preserves Codex design-1-c1 at +22% and explicitly says aggregate decreases do not cancel this individual increase, satisfying FIXCHECK.md:42."
+      ]
+    }
+  ],
+  "new_errors_in_changed_passages": [
+    {
+      "evidence": "RESULT.md:216 says all four original problems were in narrative, not numbers or disposition (「四個問題都出在敘述，不在數字或處置」).",
+      "error": "This mischaracterizes the original review: F1 identifies incorrect session/save numbers in prose, and F3 identifies missing mandatory disposition follow-through. The original review explicitly fails its Numbers criterion because prose numbers were wrong and identifies the final-commit gate, six-cell CI and documentation synchronization as omitted. Correct comparison tables and a correct resolved revert list do not make the broader claim true.",
+      "source": "review:RESULT_REVIEW.json: criteria[id=1], criteria[id=3], findings[F1], findings[F3].",
+      "fix": "State that the comparison tables and resolved revert/retain list were correct, while the four findings concerned narrative counts, unsupported interpretation, omitted disposition follow-through and missing design-only aggregates."
+    }
+  ],
+  "verdict": "open items remain"
+}

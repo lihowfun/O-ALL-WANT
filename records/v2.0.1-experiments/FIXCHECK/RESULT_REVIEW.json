@@ -1,0 +1,2182 @@
+{
+  "schema": 1,
+  "reviewer": "Codex (GPT-6), independent fresh-context, read-only review",
+  "criteria": [
+    {
+      "id": 1,
+      "name": "Numbers",
+      "verdict": "FAIL",
+      "finding_ids": [
+        "F1"
+      ],
+      "evidence": [
+        "One calculator invocation exited 1, empty stderr, stdout byte-identical to THRESHOLDS.json.",
+        "All 24 comparison rows, per-class and total token sums, displayed ratios/percentages, memory task counts, failed-attempt costs, and Claude ledger amount agree with the source data at displayed rounding precision.",
+        "The requirement that every number in prose be correct fails on the learning-session/save counts at RESULT.md:37-39."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Completeness of bad news",
+      "verdict": "FAIL",
+      "finding_ids": [
+        "F2"
+      ],
+      "evidence": [
+        "Enumerated adverse measurements are complete: one score drop, one recall true-to-false, one hidden function/item true-to-false, four numeric threshold failures, all seven recorded absent mechanisms, and the individual design token increase.",
+        "FAIL is for softening, not for an omitted grade drop: post-hoc wording calls the failures mainly noise, says R2 had no failed condition, and treats observed favorable differences as benefits a revert would remove."
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Disposition and post-hoc observations",
+      "verdict": "FAIL",
+      "finding_ids": [
+        "F1",
+        "F2",
+        "F3",
+        "F4"
+      ],
+      "evidence": [
+        "The core concurrent-action resolution is correct: revert M1+M2+R2, retain M3/R1, no experiment-outcome release blocker.",
+        "The post-hoc section is visibly separate and disclaims a verdict, but its false session counts and unsupported causal/counterfactual assertions fail the factual and no-new-verdict requirements.",
+        "The final-commit gate/six-cell CI/document synchronization action and design-only aggregates are missing."
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Mechanism audit sample",
+      "verdict": "PASS",
+      "finding_ids": [],
+      "evidence": [
+        "Independently selected 13 entries: both cells; five absent and eight observed; two R2 entries and one R1 entry.",
+        "Paired actual calls/results, session boundaries, save contents, subsequent reads/recall, distinct design/code review completions, and actual reviewer test activity support all sampled statuses under the frozen wording.",
+        "All 169 evidence references, including scope references, have correct file hashes and valid cited line ranges; sampled statuses were assessed semantically rather than from hashes alone."
+      ]
+    }
+  ],
+  "verdict": "FAIL",
+  "findings": [
+    {
+      "id": "F1",
+      "severity": "medium",
+      "summary": "The post-hoc account confuses four memory tasks with five learning sessions and understates Codex saves.",
+      "evidence": [
+        {
+          "summary": "RESULT calls these four learning sessions per cell, with Claude 2 OAW / 1 host / 1 unsaved and Codex only 1 saved. There are five: explicit s1, passing s1, superseded s1 and s2, handoff s1. Claude has 2 OAW saves, 2 host saves, 1 unsaved; Codex has 2 successful OAW/pending saves and 3 unsaved.",
+          "sources": [
+            "RESULT.md:37-41",
+            "FIXCHECK.md:52",
+            "verification.learning_sessions",
+            "verification.mechanism_sample"
+          ]
+        },
+        {
+          "summary": "Codex superseded s2 item_16 successfully executes memory add, exit 0, with both replacement facts; s1 has no add. Thus M1 is correctly absent at the task level, but this is a real second save at the session level. Claude superseded has successful host-note writes in both s1 and s2; its old-body save also omits the required trailing period.",
+          "sources": [
+            "state:runs/fixcheck/codex/superseded-2-b1/O/a1/raw/s2.jsonl:31-32",
+            "state:runs/fixcheck/claude/superseded-2-b1/O/a1/raw/s1.jsonl:43-46",
+            "state:runs/fixcheck/claude/superseded-2-b1/O/a1/raw/s2.jsonl:31-34"
+          ]
+        }
+      ],
+      "fix": "Distinguish task-level M1 (Claude 2/4, Codex 1/4) from five learning sessions per cell. Report the session counts above and describe the first Claude host save as incomplete for the exact old body."
+    },
+    {
+      "id": "F2",
+      "severity": "high",
+      "summary": "Post-hoc interpretation softens failures and makes unsupported claims about noise, causation, and benefits that reverting would remove.",
+      "evidence": [
+        {
+          "summary": "The old-O and new-O small-change failure counts are both 2/8, on different units, and their totals are correctly reported. This does not establish that the threshold cannot distinguish effects, or that it mainly measures single-answer variation. There is only one old-O and one new-O counted answer per unit, across time, with several changes bundled.",
+          "sources": [
+            "RESULT.md:33-36",
+            "RESULT.md:204-206",
+            "verification.small_change_counterfactual"
+          ]
+        },
+        {
+          "summary": "The heading attributes a saving direction to R2, and the closing paragraph states that reverting R2 will remove savings and reverting M1+M2 will remove Claude gains. The data establish observed token/score differences, not their cause or outcomes after a revert. Native superseded recall differing across N1/N2 supports only the possibility of variation. The report itself concedes that changes cannot be assigned to one fix.",
+          "sources": [
+            "RESULT.md:40-50",
+            "FIXCHECK.md:8-10",
+            "verification.design_tokens",
+            "verification.batch_ratios"
+          ]
+        },
+        {
+          "summary": "All adverse measurements are listed, but the phrase that R2 itself had no failed condition downplays the design-cost condition missed by Codex design-1-c1 (917116 to 1121239, +22.257%). This miss is report-only for disposition; it still is not evidence of a saving on that unit.",
+          "sources": [
+            "RESULT.md:22",
+            "RESULT.md:74",
+            "FIXCHECK.md:42",
+            "FIXCHECK.md:69"
+          ]
+        }
+      ],
+      "fix": "Keep the explicit post-hoc separation, but describe measured associations only: 2/8 failures in each version, three design-unit decreases and one increase, and changed recall counts. Say noise and fix effects cannot be separated. Remove predictions that reverting will remove benefits, and explicitly call the individual design-cost condition unmet without changing the preregistered disposition."
+    },
+    {
+      "id": "F3",
+      "severity": "medium",
+      "summary": "The stated disposition omits the mandatory final-commit gate, six-cell CI, and synchronized documentation after reverts.",
+      "evidence": [
+        {
+          "summary": "Both B memory thresholds and two A thresholds fail. Applying the concurrent rows correctly yields reverting M1+M2+R2, retaining M3/R1, and no M3/R1 or non-design-C blocker from these data. The per-design no-saving report remains applicable despite the eventual R2 revert.",
+          "sources": [
+            "RESULT.md:13-24",
+            "RESULT.md:58-60",
+            "FIXCHECK.md:66-72",
+            "verification.disposition"
+          ]
+        },
+        {
+          "summary": "The applicable final disposition row requires the final commit to rerun the gate and six-cell CI with documents synchronized. RESULT gives only a generic statement that numeric thresholds do not replace CI/release review; it does not state this concrete required follow-through. This is an omission, not evidence that CI was run or failed.",
+          "sources": [
+            "FIXCHECK.md:73",
+            "RESULT.md:208"
+          ]
+        }
+      ],
+      "fix": "Append the mandatory final-commit gate, six-cell CI, and documentation synchronization to the disposition; distinguish required follow-up from completed work."
+    },
+    {
+      "id": "F4",
+      "severity": "low",
+      "summary": "The preregistered design-only token aggregates are not reported.",
+      "evidence": [
+        {
+          "summary": "The design-cost rule requires both individual comparisons and an aggregate. RESULT supplies four individual design comparisons, C-class totals (including non-design large tasks), and whole-batch totals, but no design-only aggregate.",
+          "sources": [
+            "FIXCHECK.md:42",
+            "RESULT.md:42-47",
+            "RESULT.md:74-89",
+            "RESULT.md:154-161"
+          ]
+        },
+        {
+          "summary": "Recomputed design totals: Claude old 7720010 to new 2667668; Codex old 2820294 to new 2010971; combined old 10540304 to new 4678639. These totals do not negate the Codex design-1-c1 increase.",
+          "sources": [
+            "verification.design_tokens"
+          ]
+        }
+      ],
+      "fix": "Add the design-only old/new subtotals for both cells, preserving the individual +22% counterexample."
+    }
+  ],
+  "verification": {
+    "calculator": {
+      "command": "PYTHONDONTWRITEBYTECODE=1 /usr/bin/python3 thresholds.py --manifest MANIFEST.json --baselines BASELINES.json --state state: --events state:EVENTS.json",
+      "exit_status": 1,
+      "stderr": "",
+      "byte_match_saved_output": true,
+      "json_match_saved_output": true,
+      "stdout_sha256": "d606bbc305c3b7784e3097b992523a46d4439d5f0551a8201c6b54dff7d32420",
+      "output": {
+        "numeric_outcome": "fail",
+        "counted_rows": 24,
+        "expected_rows": 24,
+        "pending": [],
+        "failures": [
+          "claude/t12: small-change threshold",
+          "codex/t01: small-change threshold",
+          "codex: memory threshold",
+          "claude: memory threshold"
+        ],
+        "actions": [
+          "retain R2; report no measured token saving for each affected design unit",
+          "revert M1+M2",
+          "revert M1+M2+R2"
+        ],
+        "memory": [
+          {
+            "cell": "codex",
+            "complete": true,
+            "old_remembered": 2,
+            "new_remembered": 1,
+            "M1_observed": 1,
+            "forgotten": [
+              "superseded-2-b1"
+            ],
+            "passed": false
+          },
+          {
+            "cell": "claude",
+            "complete": true,
+            "old_remembered": 1,
+            "new_remembered": 3,
+            "M1_observed": 2,
+            "forgotten": [],
+            "passed": false
+          }
+        ],
+        "comparisons": [
+          {
+            "cell": "claude",
+            "unit": "design-1-c1",
+            "klass": "C",
+            "type": "design",
+            "new_score": 1.0,
+            "old_score": 0.9,
+            "native_mean_score": 0.95,
+            "new_tokens": 1050621,
+            "old_tokens": 1440634,
+            "native_mean_tokens": 389034.5,
+            "new_recall": null,
+            "old_recall": null,
+            "native_recall_count": 0,
+            "score_delta": 0.1,
+            "lost_hidden": {
+              "functions": [],
+              "items": []
+            },
+            "forgot": false,
+            "score_ok": true,
+            "tokens_lower": true
+          },
+          {
+            "cell": "claude",
+            "unit": "design-3-c1",
+            "klass": "C",
+            "type": "design",
+            "new_score": 1.0,
+            "old_score": 1.0,
+            "native_mean_score": 1.0,
+            "new_tokens": 1617047,
+            "old_tokens": 6279376,
+            "native_mean_tokens": 723050.0,
+            "new_recall": null,
+            "old_recall": null,
+            "native_recall_count": 0,
+            "score_delta": 0.0,
+            "lost_hidden": {
+              "functions": [],
+              "items": []
+            },
+            "forgot": false,
+            "score_ok": true,
+            "tokens_lower": true
+          },
+          {
+            "cell": "claude",
+            "unit": "explicit-1-b1",
+            "klass": "B",
+            "type": "explicit",
+            "new_score": 1.0,
+            "old_score": 1.0,
+            "native_mean_score": 1.0,
+            "new_tokens": 276568,
+            "old_tokens": 288016,
+            "native_mean_tokens": 216794.5,
+            "new_recall": true,
+            "old_recall": true,
+            "native_recall_count": 2,
+            "score_delta": 0.0,
+            "lost_hidden": {
+              "functions": [],
+              "items": []
+            },
+            "forgot": false
+          },
+          {
+            "cell": "claude",
+            "unit": "handoff-1-b1",
+            "klass": "B",
+            "type": "handoff",
+            "new_score": 0.5,
+            "old_score": 0.5,
+            "native_mean_score": 0.5,
+            "new_tokens": 324241,
+            "old_tokens": 239538,
+            "native_mean_tokens": 240341.0,
+            "new_recall": false,
+            "old_recall": false,
+            "native_recall_count": 0,
+            "score_delta": 0.0,
+            "lost_hidden": {
+              "functions": [],
+              "items": []
+            },
+            "forgot": false
+          },
+          {
+            "cell": "claude",
+            "unit": "large-2-c1",
+            "klass": "C",
+            "type": "large",
+            "new_score": 1.0,
+            "old_score": 1.0,
+            "native_mean_score": 1.0,
+            "new_tokens": 1252054,
+            "old_tokens": 1433197,
+            "native_mean_tokens": 803801.0,
+            "new_recall": null,
+            "old_recall": null,
+            "native_recall_count": 0,
+            "score_delta": 0.0,
+            "lost_hidden": {
+              "functions": [],
+              "items": []
+            },
+            "forgot": false,
+            "score_ok": true
+          },
+          {
+            "cell": "claude",
+            "unit": "large-3-c2",
+            "klass": "C",
+            "type": "large",
+            "new_score": 1.0,
+            "old_score": 0.9166666666666666,
+            "native_mean_score": 0.9166666666666666,
+            "new_tokens": 2172342,
+            "old_tokens": 1778746,
+            "native_mean_tokens": 1245991.0,
+            "new_recall": null,
+            "old_recall": null,
+            "native_recall_count": 0,
+            "score_delta": 0.08333333333333333,
+            "lost_hidden": {
+              "functions": [],
+              "items": []
+            },
+            "forgot": false,
+            "score_ok": true
+          },
+          {
+            "cell": "claude",
+            "unit": "passing-1-b1",
+            "klass": "B",
+            "type": "passing",
+            "new_score": 1.0,
+            "old_score": 0.25,
+            "native_mean_score": 1.0,
+            "new_tokens": 357540,
+            "old_tokens": 269135,
+            "native_mean_tokens": 292271.5,
+            "new_recall": true,
+            "old_recall": false,
+            "native_recall_count": 2,
+            "score_delta": 0.75,
+            "lost_hidden": {
+              "functions": [],
+              "items": []
+            },
+            "forgot": false
+          },
+          {
+            "cell": "claude",
+            "unit": "superseded-2-b1",
+            "klass": "B",
+            "type": "superseded",
+            "new_score": 1.0,
+            "old_score": 0.4,
+            "native_mean_score": 0.7,
+            "new_tokens": 447691,
+            "old_tokens": 352530,
+            "native_mean_tokens": 313429.5,
+            "new_recall": true,
+            "old_recall": false,
+            "native_recall_count": 1,
+            "score_delta": 0.6,
+            "lost_hidden": {
+              "functions": [],
+              "items": []
+            },
+            "forgot": false
+          },
+          {
+            "cell": "claude",
+            "unit": "t01",
+            "klass": "A",
+            "type": null,
+            "new_score": 1.0,
+            "old_score": 1.0,
+            "native_mean_score": 1.0,
+            "new_tokens": 122858,
+            "old_tokens": 154652,
+            "native_mean_tokens": 137509.5,
+            "new_recall": null,
+            "old_recall": null,
+            "native_recall_count": 0,
+            "score_delta": 0.0,
+            "lost_hidden": {
+              "functions": [],
+              "items": []
+            },
+            "forgot": false,
+            "score_ok": true,
+            "tokens_ok": true
+          },
+          {
+            "cell": "claude",
+            "unit": "t04",
+            "klass": "A",
+            "type": null,
+            "new_score": 1.0,
+            "old_score": 1.0,
+            "native_mean_score": 1.0,
+            "new_tokens": 133336,
+            "old_tokens": 203453,
+            "native_mean_tokens": 154953.5,
+            "new_recall": null,
+            "old_recall": null,
+            "native_recall_count": 0,
+            "score_delta": 0.0,
+            "lost_hidden": {
+              "functions": [],
+              "items": []
+            },
+            "forgot": false,
+            "score_ok": true,
+            "tokens_ok": true
+          },
+          {
+            "cell": "claude",
+            "unit": "t09",
+            "klass": "A",
+            "type": null,
+            "new_score": 1.0,
+            "old_score": 1.0,
+            "native_mean_score": 1.0,
+            "new_tokens": 159937,
+            "old_tokens": 133292,
+            "native_mean_tokens": 260203.5,
+            "new_recall": null,
+            "old_recall": null,
+            "native_recall_count": 0,
+            "score_delta": 0.0,
+            "lost_hidden": {
+              "functions": [],
+              "items": []
+            },
+            "forgot": false,
+            "score_ok": true,
+            "tokens_ok": true
+          },
+          {
+            "cell": "claude",
+            "unit": "t12",
+            "klass": "A",
+            "type": null,
+            "new_score": 1.0,
+            "old_score": 1.0,
+            "native_mean_score": 1.0,
+            "new_tokens": 211064,
+            "old_tokens": 182605,
+            "native_mean_tokens": 174636.5,
+            "new_recall": null,
+            "old_recall": null,
+            "native_recall_count": 0,
+            "score_delta": 0.0,
+            "lost_hidden": {
+              "functions": [],
+              "items": []
+            },
+            "forgot": false,
+            "score_ok": true,
+            "tokens_ok": false
+          },
+          {
+            "cell": "codex",
+            "unit": "design-1-c1",
+            "klass": "C",
+            "type": "design",
+            "new_score": 1.0,
+            "old_score": 1.0,
+            "native_mean_score": 0.9,
+            "new_tokens": 1121239,
+            "old_tokens": 917116,
+            "native_mean_tokens": 279604.5,
+            "new_recall": null,
+            "old_recall": null,
+            "native_recall_count": 0,
+            "score_delta": 0.0,
+            "lost_hidden": {
+              "functions": [],
+              "items": []
+            },
+            "forgot": false,
+            "score_ok": true,
+            "tokens_lower": false
+          },
+          {
+            "cell": "codex",
+            "unit": "design-3-c1",
+            "klass": "C",
+            "type": "design",
+            "new_score": 1.0,
+            "old_score": 1.0,
+            "native_mean_score": 1.0,
+            "new_tokens": 889732,
+            "old_tokens": 1903178,
+            "native_mean_tokens": 433216.5,
+            "new_recall": null,
+            "old_recall": null,
+            "native_recall_count": 0,
+            "score_delta": 0.0,
+            "lost_hidden": {
+              "functions": [],
+              "items": []
+            },
+            "forgot": false,
+            "score_ok": true,
+            "tokens_lower": true
+          },
+          {
+            "cell": "codex",
+            "unit": "explicit-1-b1",
+            "klass": "B",
+            "type": "explicit",
+            "new_score": 1.0,
+            "old_score": 1.0,
+            "native_mean_score": 0.5,
+            "new_tokens": 373236,
+            "old_tokens": 331492,
+            "native_mean_tokens": 404313.0,
+            "new_recall": true,
+            "old_recall": true,
+            "native_recall_count": 0,
+            "score_delta": 0.0,
+            "lost_hidden": {
+              "functions": [],
+              "items": []
+            },
+            "forgot": false
+          },
+          {
+            "cell": "codex",
+            "unit": "handoff-1-b1",
+            "klass": "B",
+            "type": "handoff",
+            "new_score": 0.5,
+            "old_score": 0.5,
+            "native_mean_score": 0.5,
+            "new_tokens": 410563,
+            "old_tokens": 384788,
+            "native_mean_tokens": 309745.0,
+            "new_recall": false,
+            "old_recall": false,
+            "native_recall_count": 0,
+            "score_delta": 0.0,
+            "lost_hidden": {
+              "functions": [],
+              "items": []
+            },
+            "forgot": false
+          },
+          {
+            "cell": "codex",
+            "unit": "large-2-c1",
+            "klass": "C",
+            "type": "large",
+            "new_score": 1.0,
+            "old_score": 1.0,
+            "native_mean_score": 1.0,
+            "new_tokens": 1278518,
+            "old_tokens": 1468400,
+            "native_mean_tokens": 537148.5,
+            "new_recall": null,
+            "old_recall": null,
+            "native_recall_count": 0,
+            "score_delta": 0.0,
+            "lost_hidden": {
+              "functions": [],
+              "items": []
+            },
+            "forgot": false,
+            "score_ok": true
+          },
+          {
+            "cell": "codex",
+            "unit": "large-3-c2",
+            "klass": "C",
+            "type": "large",
+            "new_score": 1.0,
+            "old_score": 1.0,
+            "native_mean_score": 0.9583333333333334,
+            "new_tokens": 1023412,
+            "old_tokens": 1219747,
+            "native_mean_tokens": 596887.0,
+            "new_recall": null,
+            "old_recall": null,
+            "native_recall_count": 0,
+            "score_delta": 0.0,
+            "lost_hidden": {
+              "functions": [],
+              "items": []
+            },
+            "forgot": false,
+            "score_ok": true
+          },
+          {
+            "cell": "codex",
+            "unit": "passing-1-b1",
+            "klass": "B",
+            "type": "passing",
+            "new_score": 0.25,
+            "old_score": 0.25,
+            "native_mean_score": 0.25,
+            "new_tokens": 428278,
+            "old_tokens": 448125,
+            "native_mean_tokens": 378152.5,
+            "new_recall": false,
+            "old_recall": false,
+            "native_recall_count": 0,
+            "score_delta": 0.0,
+            "lost_hidden": {
+              "functions": [],
+              "items": []
+            },
+            "forgot": false
+          },
+          {
+            "cell": "codex",
+            "unit": "superseded-2-b1",
+            "klass": "B",
+            "type": "superseded",
+            "new_score": 0.8,
+            "old_score": 1.0,
+            "native_mean_score": 0.4,
+            "new_tokens": 534115,
+            "old_tokens": 641664,
+            "native_mean_tokens": 465188.0,
+            "new_recall": false,
+            "old_recall": true,
+            "native_recall_count": 0,
+            "score_delta": -0.2,
+            "lost_hidden": {
+              "functions": [
+                "test_recall_maintenance_body"
+              ],
+              "items": [
+                "test_recall_maintenance_body"
+              ]
+            },
+            "forgot": true
+          },
+          {
+            "cell": "codex",
+            "unit": "t01",
+            "klass": "A",
+            "type": null,
+            "new_score": 1.0,
+            "old_score": 1.0,
+            "native_mean_score": 1.0,
+            "new_tokens": 196707,
+            "old_tokens": 166133,
+            "native_mean_tokens": 145318.0,
+            "new_recall": null,
+            "old_recall": null,
+            "native_recall_count": 0,
+            "score_delta": 0.0,
+            "lost_hidden": {
+              "functions": [],
+              "items": []
+            },
+            "forgot": false,
+            "score_ok": true,
+            "tokens_ok": false
+          },
+          {
+            "cell": "codex",
+            "unit": "t04",
+            "klass": "A",
+            "type": null,
+            "new_score": 1.0,
+            "old_score": 1.0,
+            "native_mean_score": 1.0,
+            "new_tokens": 150956,
+            "old_tokens": 152685,
+            "native_mean_tokens": 267919.0,
+            "new_recall": null,
+            "old_recall": null,
+            "native_recall_count": 0,
+            "score_delta": 0.0,
+            "lost_hidden": {
+              "functions": [],
+              "items": []
+            },
+            "forgot": false,
+            "score_ok": true,
+            "tokens_ok": true
+          },
+          {
+            "cell": "codex",
+            "unit": "t09",
+            "klass": "A",
+            "type": null,
+            "new_score": 1.0,
+            "old_score": 1.0,
+            "native_mean_score": 1.0,
+            "new_tokens": 220854,
+            "old_tokens": 235417,
+            "native_mean_tokens": 189800.5,
+            "new_recall": null,
+            "old_recall": null,
+            "native_recall_count": 0,
+            "score_delta": 0.0,
+            "lost_hidden": {
+              "functions": [],
+              "items": []
+            },
+            "forgot": false,
+            "score_ok": true,
+            "tokens_ok": true
+          },
+          {
+            "cell": "codex",
+            "unit": "t12",
+            "klass": "A",
+            "type": null,
+            "new_score": 1.0,
+            "old_score": 1.0,
+            "native_mean_score": 1.0,
+            "new_tokens": 175047,
+            "old_tokens": 190965,
+            "native_mean_tokens": 185511.5,
+            "new_recall": null,
+            "old_recall": null,
+            "native_recall_count": 0,
+            "score_delta": 0.0,
+            "lost_hidden": {
+              "functions": [],
+              "items": []
+            },
+            "forgot": false,
+            "score_ok": true,
+            "tokens_ok": true
+          }
+        ],
+        "drops": [
+          {
+            "cell": "codex",
+            "unit": "superseded-2-b1",
+            "klass": "B",
+            "type": "superseded",
+            "new_score": 0.8,
+            "old_score": 1.0,
+            "native_mean_score": 0.4,
+            "new_tokens": 534115,
+            "old_tokens": 641664,
+            "native_mean_tokens": 465188.0,
+            "new_recall": false,
+            "old_recall": true,
+            "native_recall_count": 0,
+            "score_delta": -0.2,
+            "lost_hidden": {
+              "functions": [
+                "test_recall_maintenance_body"
+              ],
+              "items": [
+                "test_recall_maintenance_body"
+              ]
+            },
+            "forgot": true
+          }
+        ],
+        "mechanisms": [
+          {
+            "cell": "claude",
+            "unit": "design-1-c1",
+            "fix": "R2",
+            "status": "observed"
+          },
+          {
+            "cell": "claude",
+            "unit": "design-3-c1",
+            "fix": "R2",
+            "status": "observed"
+          },
+          {
+            "cell": "claude",
+            "unit": "explicit-1-b1",
+            "fix": "M1",
+            "status": "observed"
+          },
+          {
+            "cell": "claude",
+            "unit": "explicit-1-b1",
+            "fix": "M2",
+            "status": "absent"
+          },
+          {
+            "cell": "claude",
+            "unit": "handoff-1-b1",
+            "fix": "M1",
+            "status": "absent"
+          },
+          {
+            "cell": "claude",
+            "unit": "handoff-1-b1",
+            "fix": "M2",
+            "status": "unverified"
+          },
+          {
+            "cell": "claude",
+            "unit": "passing-1-b1",
+            "fix": "M1",
+            "status": "observed"
+          },
+          {
+            "cell": "claude",
+            "unit": "passing-1-b1",
+            "fix": "M2",
+            "status": "unverified"
+          },
+          {
+            "cell": "claude",
+            "unit": "superseded-2-b1",
+            "fix": "M1",
+            "status": "absent"
+          },
+          {
+            "cell": "claude",
+            "unit": "superseded-2-b1",
+            "fix": "M2",
+            "status": "unverified"
+          },
+          {
+            "cell": "codex",
+            "unit": "design-1-c1",
+            "fix": "R1",
+            "status": "observed"
+          },
+          {
+            "cell": "codex",
+            "unit": "design-1-c1",
+            "fix": "R2",
+            "status": "observed"
+          },
+          {
+            "cell": "codex",
+            "unit": "design-3-c1",
+            "fix": "R1",
+            "status": "observed"
+          },
+          {
+            "cell": "codex",
+            "unit": "design-3-c1",
+            "fix": "R2",
+            "status": "observed"
+          },
+          {
+            "cell": "codex",
+            "unit": "explicit-1-b1",
+            "fix": "M1",
+            "status": "observed"
+          },
+          {
+            "cell": "codex",
+            "unit": "explicit-1-b1",
+            "fix": "M2",
+            "status": "unverified"
+          },
+          {
+            "cell": "codex",
+            "unit": "explicit-1-b1",
+            "fix": "M3",
+            "status": "observed"
+          },
+          {
+            "cell": "codex",
+            "unit": "handoff-1-b1",
+            "fix": "M1",
+            "status": "absent"
+          },
+          {
+            "cell": "codex",
+            "unit": "handoff-1-b1",
+            "fix": "M2",
+            "status": "absent"
+          },
+          {
+            "cell": "codex",
+            "unit": "handoff-1-b1",
+            "fix": "M3",
+            "status": "unverified"
+          },
+          {
+            "cell": "codex",
+            "unit": "large-2-c1",
+            "fix": "R1",
+            "status": "observed"
+          },
+          {
+            "cell": "codex",
+            "unit": "large-3-c2",
+            "fix": "R1",
+            "status": "observed"
+          },
+          {
+            "cell": "codex",
+            "unit": "passing-1-b1",
+            "fix": "M1",
+            "status": "absent"
+          },
+          {
+            "cell": "codex",
+            "unit": "passing-1-b1",
+            "fix": "M2",
+            "status": "observed"
+          },
+          {
+            "cell": "codex",
+            "unit": "passing-1-b1",
+            "fix": "M3",
+            "status": "unverified"
+          },
+          {
+            "cell": "codex",
+            "unit": "superseded-2-b1",
+            "fix": "M1",
+            "status": "absent"
+          },
+          {
+            "cell": "codex",
+            "unit": "superseded-2-b1",
+            "fix": "M2",
+            "status": "unverified"
+          },
+          {
+            "cell": "codex",
+            "unit": "superseded-2-b1",
+            "fix": "M3",
+            "status": "observed"
+          }
+        ],
+        "mechanisms_unverified": [
+          {
+            "cell": "claude",
+            "unit": "handoff-1-b1",
+            "fix": "M2",
+            "status": "unverified"
+          },
+          {
+            "cell": "claude",
+            "unit": "passing-1-b1",
+            "fix": "M2",
+            "status": "unverified"
+          },
+          {
+            "cell": "claude",
+            "unit": "superseded-2-b1",
+            "fix": "M2",
+            "status": "unverified"
+          },
+          {
+            "cell": "codex",
+            "unit": "explicit-1-b1",
+            "fix": "M2",
+            "status": "unverified"
+          },
+          {
+            "cell": "codex",
+            "unit": "handoff-1-b1",
+            "fix": "M3",
+            "status": "unverified"
+          },
+          {
+            "cell": "codex",
+            "unit": "passing-1-b1",
+            "fix": "M3",
+            "status": "unverified"
+          },
+          {
+            "cell": "codex",
+            "unit": "superseded-2-b1",
+            "fix": "M2",
+            "status": "unverified"
+          }
+        ],
+        "mechanisms_absent": [
+          {
+            "cell": "claude",
+            "unit": "explicit-1-b1",
+            "fix": "M2",
+            "status": "absent"
+          },
+          {
+            "cell": "claude",
+            "unit": "handoff-1-b1",
+            "fix": "M1",
+            "status": "absent"
+          },
+          {
+            "cell": "claude",
+            "unit": "superseded-2-b1",
+            "fix": "M1",
+            "status": "absent"
+          },
+          {
+            "cell": "codex",
+            "unit": "handoff-1-b1",
+            "fix": "M1",
+            "status": "absent"
+          },
+          {
+            "cell": "codex",
+            "unit": "handoff-1-b1",
+            "fix": "M2",
+            "status": "absent"
+          },
+          {
+            "cell": "codex",
+            "unit": "passing-1-b1",
+            "fix": "M1",
+            "status": "absent"
+          },
+          {
+            "cell": "codex",
+            "unit": "superseded-2-b1",
+            "fix": "M1",
+            "status": "absent"
+          }
+        ],
+        "claim": null,
+        "limitation": "Same diagnostic tasks, one counted answer each; not independent effectiveness evidence. Numeric pass does not replace mechanism audit, offline probes, CI or release review."
+      }
+    },
+    "date": "2026-11-13",
+    "source_roots": {
+      "records": ".",
+      "state": "state:",
+      "output": "review:RESULT_REVIEW.json"
+    },
+    "constraints": {
+      "calculator_invocations": 1,
+      "model_experiments_run": 0,
+      "agents_spawned": 0,
+      "git_operations": 0,
+      "only_file_written": "review:RESULT_REVIEW.json",
+      "source_files_written": false
+    },
+    "source_hashes": {
+      "RESULT.md": "dea9897d67910c6829b7e9b05bf69af7cc5d759b91ee7f56bfd9747f6a6e4e9f",
+      "FIXCHECK.md": "0e09094942186146bf54fce1e3461009571b5fe627cfed3e3d29de7a25d7a58b",
+      "thresholds.py": "b985e1e339408da82ce392d2cc09c51b7aea9a5ae05e858072d7dc05194d37e3",
+      "THRESHOLDS.json": "d606bbc305c3b7784e3097b992523a46d4439d5f0551a8201c6b54dff7d32420",
+      "BASELINES.json": "5a3b9161ca763d695083f8d547b3f9f60b1051e37edc656c32c8be62574fa59b",
+      "MANIFEST.json": "d1bec84b95004f7d27f9adf6a1acc07ae53be41f45fcbb50943c334f1ea5b80e",
+      "state:EVENTS.json": "478fcc2bbd551c575061d5092953bf2178b6b4c4e1ddc76ba9e3ed049bced66d",
+      "state:BINDING.json": "340bb5ca54bdb00efdf3e83537e4a9303f094f690f37a590e16eb5a3e4370ddc",
+      "state:rows-fixcheck-codex.jsonl": "721ca47fdf6d2fee3bdd2dce91e6abdade307549459bd800befc46d50f725d59",
+      "state:rows-fixcheck-claude.jsonl": "07b8e5f88bff1c69d62c10dd4fd82f4bb9db7cf844c59b600ce438de63d14ff6",
+      "state:attempts-fixcheck-codex.jsonl": "721ca47fdf6d2fee3bdd2dce91e6abdade307549459bd800befc46d50f725d59",
+      "state:attempts-fixcheck-claude.jsonl": "c838182cd59b1333a90abe6f54f0f57c5d45fdaf78a0f83c1914a45e50f23f92",
+      "state:ledger-claude.jsonl": "3c30878f89975a6459650ffd14e1e7403cee3a1dae7cd61d0daaec3a64ed5e74",
+      "state:budget.json": "f39a65c901751c1b4b30bfe4d39d71b2595d0699330d4900e288a5652d43016b",
+      "state:units_B.json": "25c437cbf7e3555c42f58bd58f4ef59778849691726ee1116b72ef4fc103fe87"
+    },
+    "frozen_files_match_manifest": {
+      "FIXCHECK.md": true,
+      "fixcheck.py": true,
+      "test_fixcheck.py": true,
+      "thresholds.py": true
+    },
+    "comparison_table": {
+      "rows_checked": 24,
+      "all_numeric_fields_match": true,
+      "precision": "Scores and ratios rounded to two decimals; native token means rounded to whole tokens (ties to even, as displayed).",
+      "checks": [
+        {
+          "line": 66,
+          "cell": "codex",
+          "unit": "t01",
+          "numeric_fields_match": true
+        },
+        {
+          "line": 67,
+          "cell": "codex",
+          "unit": "t04",
+          "numeric_fields_match": true
+        },
+        {
+          "line": 68,
+          "cell": "codex",
+          "unit": "t09",
+          "numeric_fields_match": true
+        },
+        {
+          "line": 69,
+          "cell": "codex",
+          "unit": "t12",
+          "numeric_fields_match": true
+        },
+        {
+          "line": 70,
+          "cell": "codex",
+          "unit": "explicit-1-b1",
+          "numeric_fields_match": true
+        },
+        {
+          "line": 71,
+          "cell": "codex",
+          "unit": "handoff-1-b1",
+          "numeric_fields_match": true
+        },
+        {
+          "line": 72,
+          "cell": "codex",
+          "unit": "passing-1-b1",
+          "numeric_fields_match": true
+        },
+        {
+          "line": 73,
+          "cell": "codex",
+          "unit": "superseded-2-b1",
+          "numeric_fields_match": true
+        },
+        {
+          "line": 74,
+          "cell": "codex",
+          "unit": "design-1-c1",
+          "numeric_fields_match": true
+        },
+        {
+          "line": 75,
+          "cell": "codex",
+          "unit": "design-3-c1",
+          "numeric_fields_match": true
+        },
+        {
+          "line": 76,
+          "cell": "codex",
+          "unit": "large-2-c1",
+          "numeric_fields_match": true
+        },
+        {
+          "line": 77,
+          "cell": "codex",
+          "unit": "large-3-c2",
+          "numeric_fields_match": true
+        },
+        {
+          "line": 78,
+          "cell": "claude",
+          "unit": "t01",
+          "numeric_fields_match": true
+        },
+        {
+          "line": 79,
+          "cell": "claude",
+          "unit": "t04",
+          "numeric_fields_match": true
+        },
+        {
+          "line": 80,
+          "cell": "claude",
+          "unit": "t09",
+          "numeric_fields_match": true
+        },
+        {
+          "line": 81,
+          "cell": "claude",
+          "unit": "t12",
+          "numeric_fields_match": true
+        },
+        {
+          "line": 82,
+          "cell": "claude",
+          "unit": "explicit-1-b1",
+          "numeric_fields_match": true
+        },
+        {
+          "line": 83,
+          "cell": "claude",
+          "unit": "handoff-1-b1",
+          "numeric_fields_match": true
+        },
+        {
+          "line": 84,
+          "cell": "claude",
+          "unit": "passing-1-b1",
+          "numeric_fields_match": true
+        },
+        {
+          "line": 85,
+          "cell": "claude",
+          "unit": "superseded-2-b1",
+          "numeric_fields_match": true
+        },
+        {
+          "line": 86,
+          "cell": "claude",
+          "unit": "design-1-c1",
+          "numeric_fields_match": true
+        },
+        {
+          "line": 87,
+          "cell": "claude",
+          "unit": "design-3-c1",
+          "numeric_fields_match": true
+        },
+        {
+          "line": 88,
+          "cell": "claude",
+          "unit": "large-2-c1",
+          "numeric_fields_match": true
+        },
+        {
+          "line": 89,
+          "cell": "claude",
+          "unit": "large-3-c2",
+          "numeric_fields_match": true
+        }
+      ]
+    },
+    "token_totals": [
+      {
+        "cell": "codex",
+        "klass": "A",
+        "count": 4,
+        "logical": 743564,
+        "noncache": 81676
+      },
+      {
+        "cell": "codex",
+        "klass": "B",
+        "count": 4,
+        "logical": 1746192,
+        "noncache": 169872
+      },
+      {
+        "cell": "codex",
+        "klass": "C",
+        "count": 4,
+        "logical": 4312901,
+        "noncache": 344901
+      },
+      {
+        "cell": "codex",
+        "klass": "all",
+        "count": 12,
+        "logical": 6802657,
+        "noncache": 596449
+      },
+      {
+        "cell": "claude",
+        "klass": "A",
+        "count": 4,
+        "logical": 627195,
+        "noncache": 67248
+      },
+      {
+        "cell": "claude",
+        "klass": "B",
+        "count": 4,
+        "logical": 1406040,
+        "noncache": 140806
+      },
+      {
+        "cell": "claude",
+        "klass": "C",
+        "count": 4,
+        "logical": 6092064,
+        "noncache": 627032
+      },
+      {
+        "cell": "claude",
+        "klass": "all",
+        "count": 12,
+        "logical": 8125299,
+        "noncache": 835086
+      }
+    ],
+    "batch_ratios": [
+      {
+        "cell": "codex",
+        "new": 6802657,
+        "old_O": 8059710,
+        "native_mean": 4192804.0,
+        "new_over_old_O": 0.8440324775953477,
+        "new_over_native": 1.622460052986021,
+        "old_O_over_native": 1.9222720642319555
+      },
+      {
+        "cell": "claude",
+        "new": 8125299,
+        "old_O": 12755174,
+        "native_mean": 4952016.0,
+        "new_over_old_O": 0.6370198477888267,
+        "new_over_native": 1.6408062898019715,
+        "old_O_over_native": 2.5757537940103585
+      }
+    ],
+    "small_change_counterfactual": [
+      {
+        "cell": "codex",
+        "unit": "t01",
+        "native_mean": 145318.0,
+        "exact_limit": 174381.6,
+        "old_tokens": 166133,
+        "new_tokens": 196707,
+        "old_fails_token_rule": false,
+        "new_fails_token_rule": true,
+        "new_excess_percent": 12.80261220220482
+      },
+      {
+        "cell": "codex",
+        "unit": "t04",
+        "native_mean": 267919.0,
+        "exact_limit": 321502.8,
+        "old_tokens": 152685,
+        "new_tokens": 150956,
+        "old_fails_token_rule": false,
+        "new_fails_token_rule": false,
+        "new_excess_percent": -53.04675418067899
+      },
+      {
+        "cell": "codex",
+        "unit": "t09",
+        "native_mean": 189800.5,
+        "exact_limit": 227760.6,
+        "old_tokens": 235417,
+        "new_tokens": 220854,
+        "old_fails_token_rule": true,
+        "new_fails_token_rule": false,
+        "new_excess_percent": -3.032394540583402
+      },
+      {
+        "cell": "codex",
+        "unit": "t12",
+        "native_mean": 185511.5,
+        "exact_limit": 222613.8,
+        "old_tokens": 190965,
+        "new_tokens": 175047,
+        "old_fails_token_rule": false,
+        "new_fails_token_rule": false,
+        "new_excess_percent": -21.36740848950065
+      },
+      {
+        "cell": "claude",
+        "unit": "t01",
+        "native_mean": 137509.5,
+        "exact_limit": 165011.4,
+        "old_tokens": 154652,
+        "new_tokens": 122858,
+        "old_fails_token_rule": false,
+        "new_fails_token_rule": false,
+        "new_excess_percent": -25.54575017241233
+      },
+      {
+        "cell": "claude",
+        "unit": "t04",
+        "native_mean": 154953.5,
+        "exact_limit": 185944.2,
+        "old_tokens": 203453,
+        "new_tokens": 133336,
+        "old_fails_token_rule": true,
+        "new_fails_token_rule": false,
+        "new_excess_percent": -28.292466234494004
+      },
+      {
+        "cell": "claude",
+        "unit": "t09",
+        "native_mean": 260203.5,
+        "exact_limit": 312244.2,
+        "old_tokens": 133292,
+        "new_tokens": 159937,
+        "old_fails_token_rule": false,
+        "new_fails_token_rule": false,
+        "new_excess_percent": -48.77823190951185
+      },
+      {
+        "cell": "claude",
+        "unit": "t12",
+        "native_mean": 174636.5,
+        "exact_limit": 209563.8,
+        "old_tokens": 182605,
+        "new_tokens": 211064,
+        "old_fails_token_rule": false,
+        "new_fails_token_rule": true,
+        "new_excess_percent": 0.7158679123016475
+      }
+    ],
+    "design_tokens": [
+      {
+        "cell": "codex",
+        "unit": "design-1-c1",
+        "old": 917116,
+        "new": 1121239,
+        "percent_change": 22.257053633346267,
+        "old_score": 1.0,
+        "new_score": 1.0
+      },
+      {
+        "cell": "codex",
+        "unit": "design-3-c1",
+        "old": 1903178,
+        "new": 889732,
+        "percent_change": -53.25019519981841,
+        "old_score": 1.0,
+        "new_score": 1.0
+      },
+      {
+        "cell": "claude",
+        "unit": "design-1-c1",
+        "old": 1440634,
+        "new": 1050621,
+        "percent_change": -27.0723167716436,
+        "old_score": 0.9,
+        "new_score": 1.0
+      },
+      {
+        "cell": "claude",
+        "unit": "design-3-c1",
+        "old": 6279376,
+        "new": 1617047,
+        "percent_change": -74.24828517992871,
+        "old_score": 1.0,
+        "new_score": 1.0
+      }
+    ],
+    "learning_sessions": [
+      {
+        "cell": "codex",
+        "unit": "explicit-1-b1",
+        "session": 1,
+        "raw": "state:runs/fixcheck/codex/explicit-1-b1/O/a1/raw/s1.jsonl",
+        "save": "OAW memory add",
+        "calls": [
+          {
+            "call_line": 26,
+            "call_id": "item_12"
+          }
+        ],
+        "note": null
+      },
+      {
+        "cell": "codex",
+        "unit": "passing-1-b1",
+        "session": 1,
+        "raw": "state:runs/fixcheck/codex/passing-1-b1/O/a1/raw/s1.jsonl",
+        "save": "none",
+        "calls": [],
+        "note": null
+      },
+      {
+        "cell": "codex",
+        "unit": "superseded-2-b1",
+        "session": 1,
+        "raw": "state:runs/fixcheck/codex/superseded-2-b1/O/a1/raw/s1.jsonl",
+        "save": "none",
+        "calls": [],
+        "note": null
+      },
+      {
+        "cell": "codex",
+        "unit": "superseded-2-b1",
+        "session": 2,
+        "raw": "state:runs/fixcheck/codex/superseded-2-b1/O/a1/raw/s2.jsonl",
+        "save": "OAW memory add",
+        "calls": [
+          {
+            "call_line": 31,
+            "call_id": "item_16"
+          }
+        ],
+        "note": null
+      },
+      {
+        "cell": "codex",
+        "unit": "handoff-1-b1",
+        "session": 1,
+        "raw": "state:runs/fixcheck/codex/handoff-1-b1/O/a1/raw/s1.jsonl",
+        "save": "none",
+        "calls": [],
+        "note": null
+      },
+      {
+        "cell": "claude",
+        "unit": "explicit-1-b1",
+        "session": 1,
+        "raw": "state:runs/fixcheck/claude/explicit-1-b1/O/a1/raw/s1.jsonl",
+        "save": "OAW memory add",
+        "calls": [
+          {
+            "call_line": 24,
+            "call_id": "toolu_016LhVZ5AFFWuhh2sC7vakwV"
+          }
+        ],
+        "note": null
+      },
+      {
+        "cell": "claude",
+        "unit": "passing-1-b1",
+        "session": 1,
+        "raw": "state:runs/fixcheck/claude/passing-1-b1/O/a2/raw/s1.jsonl",
+        "save": "OAW memory add",
+        "calls": [
+          {
+            "call_line": 34,
+            "call_id": "toolu_01WNgqbecHkPUp3Us53Ve318"
+          }
+        ],
+        "note": null
+      },
+      {
+        "cell": "claude",
+        "unit": "superseded-2-b1",
+        "session": 1,
+        "raw": "state:runs/fixcheck/claude/superseded-2-b1/O/a1/raw/s1.jsonl",
+        "save": "host note Write",
+        "calls": [
+          {
+            "call_line": 43,
+            "call_id": "toolu_01Q6XBgbVvMicq6YRanhpZ9M"
+          }
+        ],
+        "note": "First host note omits the required old-body final period."
+      },
+      {
+        "cell": "claude",
+        "unit": "superseded-2-b1",
+        "session": 2,
+        "raw": "state:runs/fixcheck/claude/superseded-2-b1/O/a1/raw/s2.jsonl",
+        "save": "host note Write",
+        "calls": [
+          {
+            "call_line": 31,
+            "call_id": "toolu_01TE7HAi93ayrxovSobKYNHS"
+          }
+        ],
+        "note": null
+      },
+      {
+        "cell": "claude",
+        "unit": "handoff-1-b1",
+        "session": 1,
+        "raw": "state:runs/fixcheck/claude/handoff-1-b1/O/a1/raw/s1.jsonl",
+        "save": "none",
+        "calls": [],
+        "note": null
+      }
+    ],
+    "design_aggregates": [
+      {
+        "cell": "codex",
+        "new": 2010971,
+        "old": 2820294
+      },
+      {
+        "cell": "claude",
+        "new": 2667668,
+        "old": 7720010
+      }
+    ],
+    "adverse_measurements": {
+      "drops": [
+        {
+          "cell": "codex",
+          "unit": "superseded-2-b1",
+          "score_delta": -0.2,
+          "forgot": true,
+          "lost_hidden": {
+            "functions": [
+              "test_recall_maintenance_body"
+            ],
+            "items": [
+              "test_recall_maintenance_body"
+            ]
+          }
+        }
+      ],
+      "threshold_failures": [
+        "claude/t12: small-change threshold",
+        "codex/t01: small-change threshold",
+        "codex: memory threshold",
+        "claude: memory threshold"
+      ],
+      "absent": [
+        {
+          "cell": "claude",
+          "unit": "explicit-1-b1",
+          "fix": "M2",
+          "status": "absent"
+        },
+        {
+          "cell": "claude",
+          "unit": "handoff-1-b1",
+          "fix": "M1",
+          "status": "absent"
+        },
+        {
+          "cell": "claude",
+          "unit": "superseded-2-b1",
+          "fix": "M1",
+          "status": "absent"
+        },
+        {
+          "cell": "codex",
+          "unit": "handoff-1-b1",
+          "fix": "M1",
+          "status": "absent"
+        },
+        {
+          "cell": "codex",
+          "unit": "handoff-1-b1",
+          "fix": "M2",
+          "status": "absent"
+        },
+        {
+          "cell": "codex",
+          "unit": "passing-1-b1",
+          "fix": "M1",
+          "status": "absent"
+        },
+        {
+          "cell": "codex",
+          "unit": "superseded-2-b1",
+          "fix": "M1",
+          "status": "absent"
+        }
+      ],
+      "individual_design_no_saving": [
+        {
+          "cell": "codex",
+          "unit": "design-1-c1",
+          "old": 917116,
+          "new": 1121239
+        }
+      ],
+      "all_enumerated_in_RESULT": true
+    },
+    "ledger": {
+      "spent": 8154700,
+      "cap": 17000000,
+      "decision": "D45",
+      "open_reserve_count": 0,
+      "session_start_end_pairs": 19,
+      "claude_counted": 8125299,
+      "claude_uncounted": 29401,
+      "uncounted_attempts": [
+        {
+          "cell": "claude",
+          "unit": "t01",
+          "attempt": 1,
+          "tokens": 0,
+          "reason": "s1: usage limit",
+          "api_error_status": 429
+        },
+        {
+          "cell": "claude",
+          "unit": "passing-1-b1",
+          "attempt": 1,
+          "tokens": 29401,
+          "reason": "s1: error (exit 1, subtype success)",
+          "api_error_status": 403
+        }
+      ],
+      "all_counted_session_tokens_match_rows": true,
+      "all_row_session_sums_match": true
+    },
+    "evidence_bindings": {
+      "all_references_checked": 169,
+      "unique_files": 50,
+      "hash_mismatches": 0,
+      "invalid_line_ranges": 0,
+      "codex_total_references_including_scope": 90,
+      "claude_mechanism_references": 33,
+      "claude_total_including_scope": 79,
+      "all_24_event_row_hashes_bound_by_calculator": true
+    },
+    "mechanism_sample": [
+      {
+        "cell": "codex",
+        "unit": "explicit-1-b1",
+        "fix": "M1",
+        "recorded_status": "observed",
+        "reviewed_status": "observed",
+        "verdict": "PASS",
+        "paired_call_identifiers": "item_12; item_15",
+        "reason": "s1 item_12 call/result 26-27 returns exit 0 and pending fallback; item_15 31-32 reads both exact frozen facts.",
+        "evidence": [
+          {
+            "locator": "runs/fixcheck/codex/explicit-1-b1/O/a1/raw/s1.jsonl:26-27",
+            "sha256": "6fd5979e163aa88188c1de6cfb506aa8b0414716043344b92134c64eccf06a57",
+            "summary": "item_12: memory add succeeded into pending on primary permission failure; command contains both frozen future facts."
+          },
+          {
+            "locator": "runs/fixcheck/codex/explicit-1-b1/O/a1/raw/s1.jsonl:31-32",
+            "sha256": "6fd5979e163aa88188c1de6cfb506aa8b0414716043344b92134c64eccf06a57",
+            "summary": "item_15: Successful rg of saved pending content confirms both facts persisted."
+          }
+        ]
+      },
+      {
+        "cell": "codex",
+        "unit": "explicit-1-b1",
+        "fix": "M3",
+        "recorded_status": "observed",
+        "reviewed_status": "observed",
+        "verdict": "PASS",
+        "paired_call_identifiers": "item_12; item_6",
+        "reason": "Same pending write succeeds after primary permission failure; s2 item_6 14-15 returns the pending record containing both required facts.",
+        "evidence": [
+          {
+            "locator": "runs/fixcheck/codex/explicit-1-b1/O/a1/raw/s1.jsonl:26-27",
+            "sha256": "6fd5979e163aa88188c1de6cfb506aa8b0414716043344b92134c64eccf06a57",
+            "summary": "item_12: memory add succeeded into pending on primary permission failure; command contains both frozen future facts."
+          },
+          {
+            "locator": "runs/fixcheck/codex/explicit-1-b1/O/a1/raw/s1.jsonl:31-32",
+            "sha256": "6fd5979e163aa88188c1de6cfb506aa8b0414716043344b92134c64eccf06a57",
+            "summary": "item_15: Successful rg of saved pending content confirms both facts persisted."
+          },
+          {
+            "locator": "runs/fixcheck/codex/explicit-1-b1/O/a1/raw/s2.jsonl:14-15",
+            "sha256": "a03f06fd02b51df1631b2cd9fe04fe0784610b3807531ecf172b04a3e6ebc905",
+            "summary": "item_6: Later session recall succeeds and returns pending source with both frozen facts; result is not empty."
+          }
+        ]
+      },
+      {
+        "cell": "codex",
+        "unit": "superseded-2-b1",
+        "fix": "M1",
+        "recorded_status": "absent",
+        "reviewed_status": "absent",
+        "verdict": "PASS",
+        "paired_call_identifiers": "no s1 add; s2 item_16",
+        "reason": "All 24 lines of s1 have no memory-add call. s2 item_16 31-32 successfully saves the replacement facts, but M1 requires both learning sessions.",
+        "evidence": [
+          {
+            "locator": "runs/fixcheck/codex/superseded-2-b1/O/a1/raw/s1.jsonl:1-24",
+            "sha256": "1a77b83ff70705959d06abc744ec3e60876b31100be77acd1e20d2b71fca2757",
+            "summary": "Complete first learning session has no memory add. Superseded unit requires both old and replacement learning sessions to save; first requirement absent."
+          },
+          {
+            "locator": "runs/fixcheck/codex/superseded-2-b1/O/a1/raw/s2.jsonl:31-32",
+            "sha256": "7523f833c062fd55bfaf1e50970d9936a4e99ef6dc1bb974ffb5d9bc1e08186d",
+            "summary": "item_16: Actual memory add (separate from earlier --help) exits 0 into pending; command contains replacement header and body plus explicit supersession."
+          }
+        ]
+      },
+      {
+        "cell": "codex",
+        "unit": "passing-1-b1",
+        "fix": "M2",
+        "recorded_status": "observed",
+        "reviewed_status": "observed",
+        "verdict": "PASS",
+        "paired_call_identifiers": "item_5; item_9; item_13",
+        "reason": "s2 item_5 12-13 and item_9 19-20 return empty recall; item_13 27-28 then queries native SQLite thread history read-only and exits 0, in the same session. Recovering the facts is not required by M2.",
+        "evidence": [
+          {
+            "locator": "runs/fixcheck/codex/passing-1-b1/O/a1/raw/s2.jsonl:12-13",
+            "sha256": "76da7f4097e45f3b7eb4260bc9e70a3c2c83062d37df04e1645f197dd17b35d2",
+            "summary": "item_5: Recall returned empty results with host memory/history next_action."
+          },
+          {
+            "locator": "runs/fixcheck/codex/passing-1-b1/O/a1/raw/s2.jsonl:19-20",
+            "sha256": "76da7f4097e45f3b7eb4260bc9e70a3c2c83062d37df04e1645f197dd17b35d2",
+            "summary": "item_9: Second recall also returned empty results."
+          },
+          {
+            "locator": "runs/fixcheck/codex/passing-1-b1/O/a1/raw/s2.jsonl:27-28",
+            "sha256": "76da7f4097e45f3b7eb4260bc9e70a3c2c83062d37df04e1645f197dd17b35d2",
+            "summary": "item_13: Later in the same session, successful read-only SQLite query of native thread history; this verifies the fallback action, not recovery of the earlier facts."
+          }
+        ]
+      },
+      {
+        "cell": "codex",
+        "unit": "handoff-1-b1",
+        "fix": "M2",
+        "recorded_status": "absent",
+        "reviewed_status": "absent",
+        "verdict": "PASS",
+        "paired_call_identifiers": "item_6; complete subsequent calls through item_13",
+        "reason": "s2 item_6 14-15 returns empty recall with host-history guidance. The complete 30-line session thereafter has project searches/listings and tests, but no host-memory/history-content query. Project .codex/.claude file listings are insufficient.",
+        "evidence": [
+          {
+            "locator": "runs/fixcheck/codex/handoff-1-b1/O/a1/raw/s2.jsonl:14-15",
+            "sha256": "96fd11486138089816defbfa03353453b379a1d962b6742e28d95571023a3bad",
+            "summary": "item_6: Recall returned empty results and explicit host memory/history next_action."
+          },
+          {
+            "locator": "runs/fixcheck/codex/handoff-1-b1/O/a1/raw/s2.jsonl:1-30",
+            "sha256": "96fd11486138089816defbfa03353453b379a1d962b6742e28d95571023a3bad",
+            "summary": "All completed commands after empty recall inspected. Only project files/git listings and tests followed; no native host memory/history content query. Listing project .codex/.claude paths is not a host-history lookup."
+          }
+        ]
+      },
+      {
+        "cell": "claude",
+        "unit": "explicit-1-b1",
+        "fix": "M1",
+        "recorded_status": "observed",
+        "reviewed_status": "observed",
+        "verdict": "PASS",
+        "paired_call_identifiers": "toolu_016LhVZ5AFFWuhh2sC7vakwV; toolu_01UwRRCiJth2FeZFvia69R5F",
+        "reason": "s1 Bash add call/result 24-25 contains both exact frozen facts; non-error, non-interrupted success and file diff/read at 27-28 support successful add. Claude does not expose a standalone numeric zero exit here.",
+        "evidence": [
+          {
+            "locator": "runs/fixcheck/claude/explicit-1-b1/O/a1/raw/s1.jsonl:24-25",
+            "sha256": "4f052305148ff33add8a7161bb0bc42fe400ae89bd45e0d66ca673445d8fd052",
+            "summary": "Matched Bash call/result: memory add contains both frozen future facts; successful non-error completion and saved-file diff confirm OAW primary memory write."
+          },
+          {
+            "locator": "runs/fixcheck/claude/explicit-1-b1/O/a1/raw/s1.jsonl:27-28",
+            "sha256": "4f052305148ff33add8a7161bb0bc42fe400ae89bd45e0d66ca673445d8fd052",
+            "summary": "Matched tail call/result reads the saved OAW memory entry with both required facts."
+          },
+          {
+            "locator": "runs/fixcheck/claude/explicit-1-b1/O/a1/raw/s2.jsonl:5-7",
+            "sha256": "8f7398c869e08e478d31abe94bfdcbc53bc612e2eca1a5593e7a579bbc97803d",
+            "summary": "Later-session actual read of OAW memory returns both saved facts; a separate host-directory query is also attempted."
+          }
+        ]
+      },
+      {
+        "cell": "claude",
+        "unit": "explicit-1-b1",
+        "fix": "M2",
+        "recorded_status": "absent",
+        "reviewed_status": "absent",
+        "verdict": "PASS",
+        "paired_call_identifiers": "toolu_016LhVZ5AFFWuhh2sC7vakwV; toolu_01UwRRCiJth2FeZFvia69R5F",
+        "reason": "s1 24-25 returns empty recall; remaining calls through termination only tail OAW memory/status. Host lookup in s2 is a different session and cannot satisfy s1.",
+        "evidence": [
+          {
+            "locator": "runs/fixcheck/claude/explicit-1-b1/O/a1/raw/s1.jsonl:24-25",
+            "sha256": "4f052305148ff33add8a7161bb0bc42fe400ae89bd45e0d66ca673445d8fd052",
+            "summary": "Actual recall returns results=[] before the successful OAW memory add."
+          },
+          {
+            "locator": "runs/fixcheck/claude/explicit-1-b1/O/a1/raw/s1.jsonl:26-33",
+            "sha256": "4f052305148ff33add8a7161bb0bc42fe400ae89bd45e0d66ca673445d8fd052",
+            "summary": "Remaining s1 events contain only an OAW memory tail/status call and its result before termination; no host memory/history query follows the empty recall."
+          }
+        ]
+      },
+      {
+        "cell": "claude",
+        "unit": "passing-1-b1",
+        "fix": "M1",
+        "recorded_status": "observed",
+        "reviewed_status": "observed",
+        "verdict": "PASS",
+        "paired_call_identifiers": "toolu_01WNgqbecHkPUp3Us53Ve318; toolu_01T53FgR7bnRjLbgG6oasP7R",
+        "reason": "Only counted a2 is used. s1 34-35 adds both exact frozen facts; the && status runs, and the paired read 37-38 returns the saved entry. Successful non-error completion supports exit 0.",
+        "evidence": [
+          {
+            "locator": "runs/fixcheck/claude/passing-1-b1/O/a2/raw/s1.jsonl:34-35",
+            "sha256": "0b0a46e7a01c1e734cb5e254d03802ebe9c7235d44f30e46a74cb2fe773b814a",
+            "summary": "Matched Bash call/result: memory add includes both required future facts; successful add and saved-file diff, then the && status command, confirm the write."
+          },
+          {
+            "locator": "runs/fixcheck/claude/passing-1-b1/O/a2/raw/s1.jsonl:37-38",
+            "sha256": "0b0a46e7a01c1e734cb5e254d03802ebe9c7235d44f30e46a74cb2fe773b814a",
+            "summary": "Matched cat call/result reads both exact future facts from the saved OAW memory entry."
+          },
+          {
+            "locator": "runs/fixcheck/claude/passing-1-b1/O/a2/raw/s2.jsonl:3-5",
+            "sha256": "2dc54f2088c5ddfee745d7297b3b4bd39f34c0341e5a1b4f844772a5b78599cb",
+            "summary": "Later-session direct read returns the saved facts; exit 1 belongs to the combined command ending with a host-directory lookup, not the earlier learning-session add."
+          }
+        ]
+      },
+      {
+        "cell": "claude",
+        "unit": "superseded-2-b1",
+        "fix": "M1",
+        "recorded_status": "absent",
+        "reviewed_status": "absent",
+        "verdict": "PASS",
+        "paired_call_identifiers": "toolu_01Q6XBgbVvMicq6YRanhpZ9M; toolu_01TE7HAi93ayrxovSobKYNHS",
+        "reason": "Complete s1/s2 calls have no OAW add. Host Write/result 43-44 in s1 and 31-32 in s2 are real saves elsewhere; host reads in later sessions confirm them. The frozen M1 wording specifically requires successful memory add in both sessions.",
+        "evidence": [
+          {
+            "locator": "runs/fixcheck/claude/superseded-2-b1/O/a1/raw/s1.jsonl:1-49",
+            "sha256": "39d9ebee7b7008d12d4adfad5a49724091e0353f957104159289c7e13326d49f",
+            "summary": "Complete first learning session has no OAW memory add; successful host-note Write and index append appear at lines 43-46. Saved old body lacks its required trailing period."
+          },
+          {
+            "locator": "runs/fixcheck/claude/superseded-2-b1/O/a1/raw/s2.jsonl:5-7",
+            "sha256": "4b945dc63e99843c38196ad976d59d76d0fd80d9aa6f47a66b73865bc5dbb417",
+            "summary": "Actual next-session host-note read confirms the old agreement was saved there, including the missing final period."
+          },
+          {
+            "locator": "runs/fixcheck/claude/superseded-2-b1/O/a1/raw/s2.jsonl:1-40",
+            "sha256": "4b945dc63e99843c38196ad976d59d76d0fd80d9aa6f47a66b73865bc5dbb417",
+            "summary": "Complete second learning session has no OAW memory add; successful host-note replacement and index update appear at lines 31-34, with both new facts and explicit supersession."
+          },
+          {
+            "locator": "runs/fixcheck/claude/superseded-2-b1/O/a1/raw/s3.jsonl:3-5",
+            "sha256": "7aef19293f0884fc9151ccab333e80d5befe71904777f379c9c1633cd5f26755",
+            "summary": "Actual final-session host-note read returns the replacement agreement, including the new body with its trailing period."
+          }
+        ]
+      },
+      {
+        "cell": "claude",
+        "unit": "handoff-1-b1",
+        "fix": "M1",
+        "recorded_status": "absent",
+        "reviewed_status": "absent",
+        "verdict": "PASS",
+        "paired_call_identifiers": "complete s1:1-27",
+        "reason": "The complete 27-line s1 contains implementation/tests/changelog/mode calls, and no memory add or other future-fact save. Later no-note/empty searches corroborate absence but are not used as substitutes for the inspected learning session.",
+        "evidence": [
+          {
+            "locator": "runs/fixcheck/claude/handoff-1-b1/O/a1/raw/s1.jsonl:1-27",
+            "sha256": "8739e400542168e50c3831b0f61aeb0b39573efacd8498c8c00def8e7e19c63b",
+            "summary": "Complete learning-session trace: source/test/changelog work and mode checks, but no memory-add call or other future-fact save."
+          },
+          {
+            "locator": "runs/fixcheck/claude/handoff-1-b1/O/a1/raw/s2.jsonl:11-14",
+            "sha256": "444cf64e77ce5253e02b294b2a363d07138416a38c2bc9a2511a2e02dc431bf5",
+            "summary": "Later-session host lookup returns no host note; OAW searches and memory show return no matching records or entries. These results corroborate the missing save but are not recall calls."
+          }
+        ]
+      },
+      {
+        "cell": "codex",
+        "unit": "design-1-c1",
+        "fix": "R1",
+        "recorded_status": "observed",
+        "reviewed_status": "observed",
+        "verdict": "PASS",
+        "paired_call_identifiers": "call_7a9874c075df4aae914277f6d71baeae; call_ee97d566e0ac43d39f4e58ba486af5a2; call_dd1f50a634854025b4d5ca1357bd4a2a",
+        "reason": "Parent native code-review spawn/result 147-150 uses fork_turns=none and matches the child parent identity. Child actually reads the diff and runs pytest (session 64974, paired completion exit 0 / 520 passed at 28-38); completion reaches the parent at 183. All child tool calls inspected: no nested codex exec/review command; no actionable findings to fix.",
+        "evidence": [
+          {
+            "locator": "runs/fixcheck/codex/design-1-c1/O/a1/raw/s1-rollouts/rollout-2026-11-13T13-11-07-01a1d351-0bb3-7081-9ca1-39a0a2aac4a8.jsonl:147-150",
+            "sha256": "2ac8bf1055d4454006faf485a36bfc6b31880b3f9e9f9f6f9841b11c4d4fc2da",
+            "summary": "call_7a9874c075df4aae914277f6d71baeae: native code_review spawn and returned task name paired; fork_turns=none."
+          },
+          {
+            "locator": "runs/fixcheck/codex/design-1-c1/O/a1/raw/s1-rollouts/rollout-2026-11-13T13-11-07-01a1d351-0bb3-7081-9ca1-39a0a2aac4a8.jsonl:183",
+            "sha256": "2ac8bf1055d4454006faf485a36bfc6b31880b3f9e9f9f6f9841b11c4d4fc2da",
+            "summary": "Main thread received completed code-review result: no actionable findings and independent full-suite validation."
+          },
+          {
+            "locator": "runs/fixcheck/codex/design-1-c1/O/a1/raw/s1-rollouts/rollout-2026-11-13T13-15-13-01a1d354-d189-7112-9b7c-9aba1dbb2db7.jsonl:1-58",
+            "sha256": "b6e5402433f06e4956d692ab310fdeb6408cc759279ac839c1b5eabd14275bb9",
+            "summary": "Child identity links to the parent; completed one code-review session with no actionable findings. Whole saved tool calls contain no nested codex exec/review invocation."
+          },
+          {
+            "locator": "runs/fixcheck/codex/design-1-c1/O/a1/work/proj/.oaw/reviews/config-override-code-review.md:1-23",
+            "sha256": "f205e4c157f0bbbe758d5c444191bcb765073e191170f90da520670ade5f7109",
+            "summary": "Persisted review covers source/tests diff, no actionable findings, independent 520-test suite; no review-time source changes reported."
+          },
+          {
+            "locator": "runs/fixcheck/codex/design-1-c1/O/a1/raw/s1-rollouts/rollout-2026-11-13T13-15-13-01a1d354-d189-7112-9b7c-9aba1dbb2db7.jsonl:28-38",
+            "sha256": "b6e5402433f06e4956d692ab310fdeb6408cc759279ac839c1b5eabd14275bb9",
+            "summary": "Reviewer actually ran pytest; start returned session64974, matching wait completed exit0 with520 passed. This is tool evidence beyond report self-description."
+          }
+        ]
+      },
+      {
+        "cell": "codex",
+        "unit": "design-1-c1",
+        "fix": "R2",
+        "recorded_status": "observed",
+        "reviewed_status": "observed",
+        "verdict": "PASS",
+        "paired_call_identifiers": "call_7da8271f841c4473959a2fc8de759b3d; call_7a9874c075df4aae914277f6d71baeae",
+        "reason": "Exactly one distinct design-review spawn/result 49-52 and completion at 89 precede the implementation; exactly one code-review spawn/result 147-150 and completion at 183 follow it. Linked child traces and actual tool results distinguish design review from the single code-review round.",
+        "evidence": [
+          {
+            "locator": "runs/fixcheck/codex/design-1-c1/O/a1/raw/s1-rollouts/rollout-2026-11-13T13-11-07-01a1d351-0bb3-7081-9ca1-39a0a2aac4a8.jsonl:49-52",
+            "sha256": "2ac8bf1055d4454006faf485a36bfc6b31880b3f9e9f9f6f9841b11c4d4fc2da",
+            "summary": "call_7da8271f841c4473959a2fc8de759b3d: distinct native design_review spawn and returned task name paired; fork_turns=none."
+          },
+          {
+            "locator": "runs/fixcheck/codex/design-1-c1/O/a1/raw/s1-rollouts/rollout-2026-11-13T13-11-07-01a1d351-0bb3-7081-9ca1-39a0a2aac4a8.jsonl:147-150",
+            "sha256": "2ac8bf1055d4454006faf485a36bfc6b31880b3f9e9f9f6f9841b11c4d4fc2da",
+            "summary": "call_7a9874c075df4aae914277f6d71baeae: native code_review spawn and returned task name paired; fork_turns=none."
+          },
+          {
+            "locator": "runs/fixcheck/codex/design-1-c1/O/a1/raw/s1-rollouts/rollout-2026-11-13T13-11-07-01a1d351-0bb3-7081-9ca1-39a0a2aac4a8.jsonl:183",
+            "sha256": "2ac8bf1055d4454006faf485a36bfc6b31880b3f9e9f9f6f9841b11c4d4fc2da",
+            "summary": "Main thread received completed code-review result: no actionable findings and independent full-suite validation."
+          },
+          {
+            "locator": "runs/fixcheck/codex/design-1-c1/O/a1/raw/s1-rollouts/rollout-2026-11-13T13-15-13-01a1d354-d189-7112-9b7c-9aba1dbb2db7.jsonl:1-58",
+            "sha256": "b6e5402433f06e4956d692ab310fdeb6408cc759279ac839c1b5eabd14275bb9",
+            "summary": "Child identity links to the parent; completed one code-review session with no actionable findings. Whole saved tool calls contain no nested codex exec/review invocation."
+          },
+          {
+            "locator": "runs/fixcheck/codex/design-1-c1/O/a1/work/proj/.oaw/reviews/config-override-code-review.md:1-23",
+            "sha256": "f205e4c157f0bbbe758d5c444191bcb765073e191170f90da520670ade5f7109",
+            "summary": "Persisted review covers source/tests diff, no actionable findings, independent 520-test suite; no review-time source changes reported."
+          },
+          {
+            "locator": "runs/fixcheck/codex/design-1-c1/O/a1/raw/s1-rollouts/rollout-2026-11-13T13-11-07-01a1d351-0bb3-7081-9ca1-39a0a2aac4a8.jsonl:89",
+            "sha256": "2ac8bf1055d4454006faf485a36bfc6b31880b3f9e9f9f6f9841b11c4d4fc2da",
+            "summary": "Parent received design reviewer final reply before implementation; no actionable findings, named verification cases."
+          },
+          {
+            "locator": "runs/fixcheck/codex/design-1-c1/O/a1/raw/s1-rollouts/rollout-2026-11-13T13-11-58-01a1d351-d574-7f20-a9b5-1e88995b9176.jsonl:1-37",
+            "sha256": "37767cc43ce85100f63131ac719e1224714910089cf7fa05b01eb7549dac01a6",
+            "summary": "Design reviewer identity and completed task are separate from code reviewer; two target reports are one design-review session."
+          },
+          {
+            "locator": "runs/fixcheck/codex/design-1-c1/O/a1/work/proj/.oaw/reviews/2026-11-13-config-override-7a0cd41923/review.md:1-23",
+            "sha256": "030623d7e0840e02e923191915a8157b34f2fb1cf0c1dd5ab8c170ee22023a70",
+            "summary": "Saved design/plan review report; no actionable findings, targeted lifecycle verification suggestions."
+          },
+          {
+            "locator": "runs/fixcheck/codex/design-1-c1/O/a1/work/proj/.oaw/reviews/2026-11-13-config-override-e1f4992695/review.md:1-16",
+            "sha256": "eaeb79bb8dde61897c3f54bbab1b33100b8287a0f478021cad5233d0005ee707",
+            "summary": "Saved design/plan review report; no actionable findings, targeted lifecycle verification suggestions."
+          },
+          {
+            "locator": "runs/fixcheck/codex/design-1-c1/O/a1/raw/s1-rollouts/rollout-2026-11-13T13-15-13-01a1d354-d189-7112-9b7c-9aba1dbb2db7.jsonl:28-38",
+            "sha256": "b6e5402433f06e4956d692ab310fdeb6408cc759279ac839c1b5eabd14275bb9",
+            "summary": "Reviewer actually ran pytest; start returned session64974, matching wait completed exit0 with520 passed. This is tool evidence beyond report self-description."
+          }
+        ]
+      },
+      {
+        "cell": "claude",
+        "unit": "design-3-c1",
+        "fix": "R2",
+        "recorded_status": "observed",
+        "reviewed_status": "observed",
+        "verdict": "PASS",
+        "paired_call_identifiers": "toolu_016UhbaogAVtGEqcJqiHyKZE; toolu_01HaoFykXpVuT2KvsZZodGiy; toolu_01NWPgB3ZmA63crwynZvGcXm",
+        "reason": "Design Agent call 96 pairs with completed result 122; linked tool activity reads plans/source and probes behavior; plan resolution/registration precedes source implementation. Separate code Agent 193 pairs with completed result 227; its child reads diff and runs tests/probes. Fixes/tests 256-257 initially fail; final paired 262-264 reports 589 passed. These are repairs/retests after one code-review round, not a second review.",
+        "evidence": [
+          {
+            "locator": "runs/fixcheck/claude/design-3-c1/O/a1/raw/s1.jsonl:86-96",
+            "sha256": "fd32dbef2291f8674950063669916fdfaf7b900f8d31dd383ccc89d1ed3399c4",
+            "summary": "DESIGN: successful design/plan writes precede a self-contained native Agent design-review call."
+          },
+          {
+            "locator": "runs/fixcheck/claude/design-3-c1/O/a1/raw/s1.jsonl:100-122",
+            "sha256": "fd32dbef2291f8674950063669916fdfaf7b900f8d31dd383ccc89d1ed3399c4",
+            "summary": "DESIGN: linked reviewer reads design/plan and referenced source, runs authority probes, then returns a matching completed Agent result with host-error and normalization findings."
+          },
+          {
+            "locator": "runs/fixcheck/claude/design-3-c1/O/a1/raw/s1.jsonl:129-139",
+            "sha256": "fd32dbef2291f8674950063669916fdfaf7b900f8d31dd383ccc89d1ed3399c4",
+            "summary": "DESIGN RESOLUTION: matched design/plan revisions and review registrations finish before the first source implementation call/result."
+          },
+          {
+            "locator": "runs/fixcheck/claude/design-3-c1/O/a1/raw/s1.jsonl:193",
+            "sha256": "fd32dbef2291f8674950063669916fdfaf7b900f8d31dd383ccc89d1ed3399c4",
+            "summary": "CODE: separate native Agent code-review call requests diff, source/test assessment and real test commands."
+          },
+          {
+            "locator": "runs/fixcheck/claude/design-3-c1/O/a1/raw/s1.jsonl:197-224",
+            "sha256": "fd32dbef2291f8674950063669916fdfaf7b900f8d31dd383ccc89d1ed3399c4",
+            "summary": "CODE: linked child reads the diff and runs tests/probes; results show 93 targeted passes, malformed-label failures, vacuous assertions and 587 full-suite passes."
+          },
+          {
+            "locator": "runs/fixcheck/claude/design-3-c1/O/a1/raw/s1.jsonl:227",
+            "sha256": "fd32dbef2291f8674950063669916fdfaf7b900f8d31dd383ccc89d1ed3399c4",
+            "summary": "CODE COMPLETION: matching Agent result has status completed with concrete malformed-authority and test findings; distinct from the design review."
+          },
+          {
+            "locator": "runs/fixcheck/claude/design-3-c1/O/a1/raw/s1.jsonl:256-257",
+            "sha256": "fd32dbef2291f8674950063669916fdfaf7b900f8d31dd383ccc89d1ed3399c4",
+            "summary": "CODE RESOLUTION: matched source/test write adds IDNA failure handling and stronger assertions/regressions; tool output reveals one newly added encoded-path test failure, not a successful suite."
+          },
+          {
+            "locator": "runs/fixcheck/claude/design-3-c1/O/a1/raw/s1.jsonl:262-264",
+            "sha256": "fd32dbef2291f8674950063669916fdfaf7b900f8d31dd383ccc89d1ed3399c4",
+            "summary": "FINAL FIX/TEST: encoded-path regression is corrected; matched result reports 589 passing tests and deep mode."
+          }
+        ]
+      }
+    ],
+    "mechanism_sample_coverage": {
+      "entries": 13,
+      "cells": [
+        "codex",
+        "claude"
+      ],
+      "status_counts": {
+        "observed": 8,
+        "absent": 5
+      },
+      "R2_entries": 2,
+      "status_disagreements": 0
+    },
+    "small_change_scope": {
+      "units": 8,
+      "actual_suggest_results": "Both cells t01/t04/t09/t12 have paired light-mode results; no actual review invocation found in their parent streams.",
+      "limitation": "Claude t09 has a later type-ignore edit/test without a further suggest; only the observed light suggestions are confirmed, not a nonexistent final suggest."
+    },
+    "disposition": {
+      "concurrent_triggered_rows": [
+        "B memory failure, both cells",
+        "A token failure, claude/t12 and codex/t01",
+        "Design token not reduced, codex/design-1-c1",
+        "Any revert: final commit gate, six-cell CI, documentation synchronization"
+      ],
+      "resolved_revert": [
+        "M1",
+        "M2",
+        "R2"
+      ],
+      "retain": [
+        "M3",
+        "R1"
+      ],
+      "outcome_specific_release_blockers": [],
+      "required_no_saving_report": [
+        "codex/design-1-c1"
+      ],
+      "post_revert_requirements": [
+        "rerun gate on final commit",
+        "six-cell CI",
+        "synchronize documents"
+      ],
+      "not_a_release_approval": true
+    },
+    "post_hoc_claims": [
+      {
+        "claim": "Old O fails the same small-change token rule on two of eight units",
+        "assessment": "Verified: claude/t04 and codex/t09; new failures are claude/t12 and codex/t01."
+      },
+      {
+        "claim": "Small-change totals are lower than old O",
+        "assessment": "Verified: Claude 627195 vs 674002; Codex 743564 vs 745200."
+      },
+      {
+        "claim": "The threshold mainly measures single-answer variation",
+        "assessment": "Not established; possible variation is not an estimated causal contribution."
+      },
+      {
+        "claim": "Four learning sessions and one Codex save",
+        "assessment": "False; five learning sessions per cell, two Codex saves. Task-level M1 remains 1/4."
+      },
+      {
+        "claim": "Claude native superseded recall is 1/2",
+        "assessment": "Verified; only illustrates possible variability, not the cause of new-versus-old changes."
+      },
+      {
+        "claim": "Four design changes and all new scores 1.00",
+        "assessment": "Verified; three token decreases, one +22.257% increase. Old Claude design-1 score is 0.90."
+      },
+      {
+        "claim": "Old Claude 6.28M may be unusually high",
+        "assessment": "Explicit conjecture; no repeated old-O sample establishes whether it is an outlier."
+      },
+      {
+        "claim": "Whole-batch totals and old/native ratios",
+        "assessment": "Verified at displayed rounding precision; attribution to particular fixes or path changes is not identified."
+      },
+      {
+        "claim": "Only one score drop, other 23 unchanged or improved",
+        "assessment": "Verified: 19 unchanged, 4 improved, 1 declined."
+      },
+      {
+        "claim": "Reverting removes the observed savings and Claude gains",
+        "assessment": "Unsupported counterfactual; no reverted-candidate results or component ablation are available."
+      }
+    ],
+    "not_verified": [
+      "Causal effects of individual fixes or path changes, amount of run-to-run variation, and outcomes after any revert; the single-counted-answer comparison cannot identify these.",
+      "Native hosts internal context isolation or effective effort, beyond observable calls and configured settings.",
+      "Historical claims about other concurrent processes, disk cleanup, audit authorship/merge-script execution, and every pre/post-run fixcheck check; supplied counted rows and mechanism traces do not independently establish that complete operational history.",
+      "Original H1 baseline raw transcripts/meters or assertion-level pytest traces; this review uses the frozen BASELINES.json and MANIFEST.json as requested, validates their bindings, and compares function/item outcomes.",
+      "Final post-revert gate and six-cell CI, actual implementation of reverts, and complete study overhead costs; no such work or model runs were performed in this read-only review."
+    ]
+  }
+}
