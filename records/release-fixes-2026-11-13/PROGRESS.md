@@ -104,3 +104,25 @@ Codex 12 列的事件稽核與 90 筆證據引用雜湊已核對；完整 FIXCHE
 | EGM | 既有 trace 的成本拆解與大型文件的研究設計草稿完成，未跑模型。[ANATOMY](../v2.0.1-experiments/EGM-anatomy/ANATOMY.md) |
 
 沒有做的：版本定稿、六格 CI、完整發佈審查、merge、tag。這些都還在原來的順序上。
+
+
+## 2026-11-14：owner 回覆後動工（D48）
+
+依 [D48](../digestion-2026-11-03/ingest/DECISIONS.md)。數字的來源和限制在連結的紀錄裡。
+
+| 項目 | 狀態 |
+|---|---|
+| FIXCHECK 的處置 | **定案，照預先登記。** 還原 M1、M2、R2，保留 M3、R1。`claude/oaw-2` 快轉到最終整合 `5c4e53b`，沒有新開遠端分支 |
+| #18 CI | **完成條件達成。** PR #16 的 base 改成 `main`；六輪之後在 `7504eca` 六格全過（run 43510582580）。過程修掉三個 Windows 上的產品缺陷。[紀錄](../release-review-2026-11-14/README.md) |
+| 版本 | `06ed481` 定為 2.0.1。2.0.0 提案版的安裝與 build 名稱可照常升級、還原，有回歸測試 |
+| #11 發佈審查 | **三輪做完，最後一輪沒有擋發佈的問題。** 共修 15 個審查發現，其中 2 個會丟使用者資料。留下的開成 #21、#22、#23。[紀錄](../release-review-2026-11-14/README.md) |
+| 還原後必須的三件事 | 都完成：最終 commit 的 Linux 閘門 9/9、718 tests、0 skips；六格 CI；文件同步在發佈 commit |
+| 合併、tag | owner |
+| 本機實驗 state | H1 與 FIXCHECK 的 state（254,542 與 49,437 個檔案，約 18.3 GB）由 Opus 5.5 搬到共用儲存區，逐檔 SHA-256 核對零差異，原位置是 symlink。空的憑證佔位檔（167 個，都是 0 bytes）沒有搬。封存後 `fixcheck.py check` 不能在共用儲存區原地跑（Git 拒絕擁有者不同的 repo）；複製回本機後通過 |
+| #20 EGM 原生校準 | 預先登記凍結並經一次盲審（5 個阻擋，修正後確認關閉）。key：30 項、阻擋級 9 項（獨立核對後由 16 降為 9）。**尚無正式作答。** 三次 Codex preflight 都沒過，各暴露 runner 的一個啟動或隔離問題；runner 修正中。[凍結紀錄](../v2.0.1-experiments/EGM-calibration/KEY_FREEZE.md) |
+| Harness² U2 A/B | 規格、runner、觸發偵測、前兩題（開發用，由不受測且沒看過卡片的模型出題）完成。**尚無正式作答。** Codex preflight：隔離、計量、原生 skill 發現通過，一項待判；runner 修正中 |
+
+兩個 preflight 的共同發現：Codex CLI 0.167.2 的 hosted 工具（`codex_apps`）在本機網路被擋時仍能連外，原本的 runner 沒有關掉它。
+已封存的 H1（254 份）與 FIXCHECK（46 份）Codex rollout 全部掃過：工具清單裡都有這組工具，沒有任何一次呼叫。
+
+Claude 的花費（logical tokens，含快取讀取）：EGM 校準的 key 核對 3,398,755。發佈審查的兩位 Opus 審查者與搬移用的 Opus agent 是工程用量，沒有逐筆計入實驗帳。

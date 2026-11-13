@@ -1,0 +1,15 @@
+- **R1-01 — blocker — verified:** [scripts/user_install.py:1333](scripts/user_install.py:1333). Incremental additions can destroy the original backup. Reproduced with a source whose hook and MCP server both use `common.py`, and pre-existing project bytes at `.claude/oaw-user/<source>/common.py`: add with `--consent hooks --apply`, then add the same source with `--consent all --apply`. The second addition replaces the original backup with the installed script. `remove` subsequently returns `partial`; the original project bytes are gone. **Smallest fix:** reuse an existing tracked file’s original receipt and backup across additions, checking for intervening edits before rewriting it.
+
+- **R1-02 — blocker — verified by deterministic interleaving:** [scripts/catalog.py:1675](scripts/catalog.py:1675). Restore calculates ownership and file changes before acquiring the install lock, then applies them without checking its recorded `before` hashes. Reproduced by completing `migrate --apply --keep-custom AGENTS.md` with newly edited policy between restore’s snapshot and lock acquisition. Restore overwrote that custom policy and returned `restored`; no recovery snapshot contained the later edit. **Smallest fix:** under the lock, verify the manifest and affected file hashes still match the captured state; abort before mutation when they differ.
+
+- **R1-03 — blocker — verified:** [docs/CLI_Reference.md:116](docs/CLI_Reference.md:116) still says “`init` records the checkout” and registration is skipped for temporary projects unless `OAW_CONFIG_HOME` is set. Both statements contradict the shipped consent implementation: registration requires `--remember-checkout`, and the temporary-project exemption was removed. **Smallest fix:** replace this obsolete paragraph with a link to the reference’s correct “Optional checkout locator” section.
+
+- **R1-04 — blocker — verified:** [README.md:101](README.md:101) and [README.zh.md:86](README.zh.md:86) claim the gate requires “zero skips.” [scripts/harness_check.py:29](scripts/harness_check.py:29) explicitly permits named skips on macOS and Windows. **Smallest fix:** say “zero unexpected skips” and link the documented platform exceptions. Preserve the separately recorded Linux zero-skip measurement.
+
+- **R1-05 — blocker — verified:** [README.zh.md:160](README.zh.md:160) says Claude CLI model testing remains unverified. The pinned H1 record at `268429d:records/v2.0.1-experiments/H1/RESULT.md` contains the completed Claude Code + Opus 5.5 condition, including 2.58× logical-token overhead and an inconclusive benefit verdict. The English README reports it; the Chinese release introduction retains the earlier testing status. **Smallest fix:** replace that paragraph with the bounded H1 result, protocol, costs and pinned record link, and include the final FIXCHECK disposition.
+
+V1 LF/CRLF and 2.0.0-proposal upgrade preservation, migration preview immutability, and inspected path/symlink guards: no finding.
+
+Retained M3/R1 behavior, M1/M2/R2 reverts, and shipped model-facing instructions: no finding.
+
+RELEASE: blocked
