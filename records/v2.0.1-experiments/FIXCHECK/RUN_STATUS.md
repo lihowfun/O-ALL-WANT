@@ -14,3 +14,5 @@
 CI PR routing still awaits owner choice. The authorized FIXCHECK uses its already-pushed preregistration and D45 budget independently of that PR choice. Final release still requires both the regression disposition and actual six-job CI.
 
 Release polish is separate: `codex/v2.0.1-release-polish@5af21f6`, Linux gate 9/9, 685 tests. It has not been folded into the fixed study candidate. Integrate it after FIXCHECK's keep/revert disposition, then validate the final release commit.
+
+Cost scope: counted-row tokens cover task answers and their native subagents. Controller engineering and independent experiment/recovery review usage are not separately metered here, so these numbers are not the entire study cost.

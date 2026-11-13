@@ -108,5 +108,13 @@ checkout; it is separate from the product's 685-test release-polish gate.
 Execution: approved append completed under the original locks. Both ledgers now
 hold six distinct roots and 1,545,078 logical Codex tokens; the recovered task is
 still original attempt 1, with 428,278 tokens. Earlier five rows remain byte-
-identical prefixes. No additional model calls or source changes occurred during
-recovery. The run can resume remaining B tasks through the unchanged adapter.
+identical prefixes. No additional task-answer model calls or source changes occurred during
+offline recovery. The run can resume remaining B tasks through the unchanged adapter.
+
+Cost scope: the zero-model-call statements for the recovery utility mean **zero
+new task-answer calls**. Independent design/implementation reviewers were model
+sessions, and this controller also performed engineering/audit work. Their usage
+was not separately measured in the FIXCHECK answer ledger. The reported answer
+usage includes its native subagents, but is not the total cost of designing,
+reviewing and operating the study. Keep this unmeasured overhead explicit; the
+future U1 complete-experiment ledger must cover these stages too.

@@ -17,5 +17,6 @@
     "Design: lock alone insufficient; explicit duplicate/conflict guard added",
     "Implementation: append input revalidation missing; hashes/file sets/ledger prefixes now rechecked"
   ],
-  "models_called_for_recovery": 0
+  "task_answer_model_calls_for_recovery": 0,
+  "review_model_cost": "Independent reviewer sessions did occur. Their model usage and operator/engineering usage were not measured separately in the fixed answer ledger."
 }
