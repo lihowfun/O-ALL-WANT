@@ -333,8 +333,8 @@ class ShowTests(unittest.TestCase):
         standard = self.show("standard").splitlines()
         self.assertEqual(standard[:3], ["standard: higher effort and one fresh-context review", "Claude Code:",
                                         "  claude --effort high"])
-        self.assertIn("  review: codex review --uncommitted  (a fresh-context review; --base BRANCH or --commit SHA for committed work)",
-                      standard)
+        self.assertIn("  " + mode.CODEX_REVIEW, standard)
+        self.assertNotIn("codex review --uncommitted", "\n".join(standard))
         self.entry(".claude")
         self.assertEqual(self.show("standard").splitlines(), standard, "EGM never changes standard")
 
@@ -346,7 +346,8 @@ class ShowTests(unittest.TestCase):
         self.assertIn("  claude --permission-mode plan --effort max\n", output)
         self.assertIn("  " + mode.CLAUDE_REVIEW + "\n", output)
         self.assertIn("  codex --sandbox read-only", output)
-        self.assertIn("  review: codex review --uncommitted", output)
+        self.assertIn("  " + mode.CODEX_REVIEW, output)
+        self.assertNotIn("codex review --uncommitted", output)
         self.assertNotIn("egm-review", output)
         self.assertNotIn("--effort high", output)
 
@@ -587,7 +588,7 @@ class SwitchAndStepTests(unittest.TestCase):
         self.run_ok("egm", "off")
         steps = self.steps()
         self.assertEqual(list(steps), ["plan", "code-review"])
-        self.assertEqual(steps["code-review"]["rounds"], 3)
+        self.assertEqual(steps["code-review"]["rounds"], 1)
         self.run_ok("egm", "on")
         self.assertEqual(self.steps()["design-review"]["how"], "egm")
         self.assertNotIn("basis", self.steps()["design-review"], "on is the user's choice, not evidence")
@@ -632,7 +633,8 @@ class SwitchAndStepTests(unittest.TestCase):
         text = self.run_ok("suggest", "--paths", ".github/workflows/ci.yml")
         self.assertIn("before code: design review by EGM (EGM switch: on)", text)
         self.assertIn("before EGM: python3 scripts/oaw_mode.py egm estimate PLAN CONTEXT...", text)
-        self.assertIn("after code: code review by a fresh session of the same model family, up to 3 rounds", text)
+        self.assertIn("after code: code review by a fresh session of the same model family", text)
+        self.assertNotIn("up to 3 rounds", text)
 
     def test_a_recorded_review_counts_only_for_the_same_file_content(self):
         self.install_egm_entry()
@@ -802,6 +804,28 @@ class SwitchAndStepTests(unittest.TestCase):
         self.assertTrue(both["ask_first"], both)
         self.assertEqual(both["egm_max_tokens"], mode.DEFAULT_EGM_MAX_TOKENS)
         self.assertIn("ask the user first", self.run_ok("egm", "estimate", "docs/plans/small.md", "docs/context.md"))
+
+    def test_native_review_is_one_round_and_cross_family_remains_explicit(self):
+        for choice in ("same", "codex", "claude"):
+            self.run_ok("second-opinion", choice)
+            steps = self.json("suggest", "--paths", "scripts/context_hub.py")["steps"]
+            review = next(step for step in steps if step["step"] == "code-review")
+            self.assertEqual(review["rounds"], 1)
+            self.assertNotIn("repeat", review["do"])
+            if choice != "claude":
+                self.assertIn("native subagent", review["codex"])
+                self.assertIn("wait for its review", review["codex"])
+                self.assertNotIn("codex review", review["codex"])
+            else:
+                self.assertIn("claude -p", review["codex"])
+            if choice == "codex":
+                self.assertIn("codex review --uncommitted", review["claude"])
+        self.run_ok("second-opinion", "same")
+        for level in ("standard", "deep"):
+            output = self.run_ok("show", level)
+            self.assertIn("native subagent", output)
+            self.assertNotIn("codex review --uncommitted", output)
+            self.assertNotIn("at most 3 rounds", output)
 
     def test_show_follows_the_second_opinion_setting(self):
         self.run_ok("second-opinion", "codex")

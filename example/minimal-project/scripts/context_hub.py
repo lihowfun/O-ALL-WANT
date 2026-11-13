@@ -11,11 +11,12 @@ https://github.com/lihowfun/O-ALL-WANT
 """
 import argparse
 import base64
+import errno
 import hashlib
 import json
 import os
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from oaw_common import (
     append_annotation, atomic_write, confined_path, evidence_write_refusal,
     locked_update, validate_topic_id,
@@ -183,7 +184,7 @@ def search(query, compact=False, include_memory=False):
     """Search knowledge base topics by keyword, optionally including memory entries."""
     if not compact:
         print(f"Searching for '{query}' in {DOCS_DIR}...")
-    if not os.path.exists(DOCS_DIR):
+    if not os.path.exists(DOCS_DIR) and not include_memory:
         print("0 topics" if compact else "Knowledge directory not found.")
         return
 
@@ -220,11 +221,8 @@ def search(query, compact=False, include_memory=False):
             print(f"  {topic:<30} | {ann_str:>5} | {title}")
         print()
 
-    if include_memory and os.path.exists(MEMORY_FILE):
-        with open(confined_path(BASE_DIR, MEMORY_FILE), "r", encoding="utf-8") as f:
-            mem_content = f.read()
-        entries = re.split(r"(?=^## \[)", mem_content, flags=re.MULTILINE)
-        entries = [e for e in entries if e.startswith("## [")]
+    if include_memory:
+        entries = [item["entry"] for item in _memory_entries()]
         mem_hits = [e for e in entries if not query or query.lower() in e.lower()]
         if mem_hits:
             if compact:
@@ -295,61 +293,96 @@ def annotate(topic, note):
 
 # ─── Memory ───────────────────────────────────────────────────────────────────
 
+def _memory_sources():
+    """Read both confined sources once; only an absent file is an empty source."""
+    sources = []
+    for label, path in (
+        (".agents/memory.md", MEMORY_FILE),
+        (".oaw/memory-pending.md", os.path.join(BASE_DIR, ".oaw", "memory-pending.md")),
+    ):
+        path = confined_path(BASE_DIR, path)
+        try:
+            with open(path, "r", encoding="utf-8") as handle:
+                content = handle.read()
+        except FileNotFoundError:
+            content = None
+        sources.append({"source": label, "content": content})
+    return sources
+
+
+def _memory_entries(sources=None):
+    """Merge individual entries, retaining their original source offsets."""
+    entries = []
+    for priority, source in enumerate(_memory_sources() if sources is None else sources):
+        content = source["content"]
+        if content is None:
+            continue
+        starts = list(re.finditer(r"^## \[", content, re.MULTILINE))
+        for number, match in enumerate(starts):
+            start = match.start()
+            end = starts[number + 1].start() if number + 1 < len(starts) else len(content)
+            entry = content[start:end].rstrip()
+            header = re.match(r"## \[([^\]\n]*)\]", entry)
+            try:
+                stamp = datetime.fromisoformat(header[1]) if header else None
+                if stamp is None:
+                    raise ValueError("Missing entry date")
+                stamp = stamp.replace(tzinfo=timezone.utc) if stamp.tzinfo is None else stamp.astimezone(timezone.utc)
+            except (ValueError, OverflowError):
+                stamp = datetime.min.replace(tzinfo=timezone.utc)
+            entries.append({"source": source["source"], "content": content, "start": start,
+                            "entry": entry, "order": (stamp, priority, -start)})
+    return sorted(entries, key=lambda entry: entry["order"], reverse=True)
+
+
 def memory_add(note):
-    """Add a structured entry to the rolling memory (lesson writes through here too).
-
-    Raises ValueError before any file is opened when the note holds a credential;
-    the CLI reports it and exits 1. No other in-repo caller imports this function.
-    """
+    """Append evidence, using pending memory only after an explicit permission error."""
     _refuse_unsafe_note(note)
-    timestamp = datetime.now().strftime("%Y-%m-%d")
-
-    # Auto-detect tag
     tag_match = re.match(r'^\[(\w+)\]', note)
     tag = tag_match.group(1) if tag_match else "NOTE"
-
     note_body = _strip_tag_prefix(note) if tag_match else note
-    # Strip a duplicate leading date if the user already included today's date
-    note_body = re.sub(r'^\d{4}-\d{2}-\d{2}\s+', '', note_body)
-
-    entry = f"\n## [{timestamp}] [{tag}] {note_body}\n"
 
     def mutate(content):
+        # Timestamp each entry while its destination lock is held. File mtime
+        # cannot order entries after primary and pending writes alternate.
+        now = datetime.now(timezone.utc)
+        body = re.sub(r'^' + re.escape(now.date().isoformat()) + r'\s+', '', note_body)
+        entry = f"\n## [{now.isoformat(timespec='microseconds')}] [{tag}] {body}\n"
         separator = re.search(r"^---[ \t]*$", content, re.MULTILINE)
         if separator:
             insert_pos = separator.end()
             return content[:insert_pos] + "\n" + entry + content[insert_pos:]
         return content.rstrip() + "\n" + entry
 
-    locked_update(
-        confined_path(BASE_DIR, MEMORY_FILE), mutate,
-        default="# Agent Memory — Decision & Finding Log\n\n---\n", root=BASE_DIR,
-    )
-    print(f"✅ Memory entry added: [{tag}] {note[:60]}...")
+    target = confined_path(BASE_DIR, MEMORY_FILE)
+    default = "# Agent Memory — Decision & Finding Log\n\n---\n"
+    fallback = False
+    try:
+        locked_update(target, mutate, default=default, root=BASE_DIR)
+    except OSError as exc:
+        if exc.errno not in {errno.EACCES, errno.EPERM, errno.EROFS}:
+            raise
+        target = confined_path(BASE_DIR, ".oaw", "memory-pending.md")
+        locked_update(target, mutate, default=default, root=BASE_DIR)
+        fallback = True
+    label = os.path.relpath(target, BASE_DIR).replace("\\", "/")
+    suffix = " (pending: primary memory is read-only or permission denied)" if fallback else ""
+    print(f"✅ Memory entry added to {label}{suffix}: [{tag}] {note[:60]}...")
 
 
 def memory_show(count=10):
-    """Show recent memory entries."""
-    if not os.path.exists(MEMORY_FILE):
-        print("No memory file found.")
-        return
-
-    with open(confined_path(BASE_DIR, MEMORY_FILE), "r", encoding="utf-8") as f:
-        content = f.read()
-
-    entries = re.split(r'(?=^## \[)', content, flags=re.MULTILINE)
-    entries = [e for e in entries if e.startswith("## [")]
-
+    """Show recent entries from both sources, preserving historical records."""
+    entries = _memory_entries()
     if not entries:
         print("No memory entries found.")
         return
-
     print(f"\n{'='*70}")
     print(f"  RECENT MEMORY ({min(count, len(entries))} of {len(entries)} entries)")
     print(f"{'='*70}\n")
-
-    for entry in entries[:count]:
-        print(entry.strip())
+    for item in entries[:count]:
+        line = item["content"].count("\n", 0, item["start"]) + 1
+        print(f'{item["source"]}:{line}')
+        print(item["entry"])
         print()
 
 
@@ -426,7 +459,9 @@ def _render_recall(packet, json_out):
             lines.append("[Excerpt truncated; read the cited source for the complete entry.]")
         lines.append("")
     if not lines:
-        lines.append("No matches found.")
+        lines.append(packet.get("message", "No matches found."))
+        if packet.get("next_action"):
+            lines.append(packet["next_action"])
     if packet["continuation"]:
         lines.append("Next cursor: " + packet["continuation"])
     return "\n".join(lines).rstrip()
@@ -456,41 +491,43 @@ def memory_recall(query, limit=8, cursor=None, max_chars=12000, json_out=False, 
     hits = []
     digest = hashlib.sha256()
 
-    def scan(path, label, memory=False):
-        path = confined_path(BASE_DIR, path)
-        if not os.path.isfile(path):
+    def scan_entry(content, label, start, entry, memory=False, title=None):
+        match = pattern.search(entry)
+        if match is None:
             return
+        if index:
+            hits.append(_index_row(label, "memory" if memory else "knowledge", content, start, entry, match,
+                                   title, max(120, len(query) + 40)))
+            return
+        excerpt_start = max(0, match.start() - 200)
+        text = entry[excerpt_start:]
+        line = content.count("\n", 0, start + excerpt_start) + 1
+        hits.append({"source": label, "line": line, "text": text,
+                     "match_start": match.start() - excerpt_start,
+                     "match_end": match.end() - excerpt_start,
+                     "prefix_omitted": excerpt_start > 0, "kind": "memory" if memory else "knowledge"})
+
+    sources = _memory_sources()
+    # Bind ordering semantics and missing/present state, including empty files.
+    digest.update(b"memory-sources-v2\0")
+    for source in sources:
+        content = source["content"]
+        digest.update(source["source"].encode("utf-8") + b"\0")
+        digest.update(b"absent\0" if content is None else b"present\0" + content.encode("utf-8") + b"\0")
+    for entry in _memory_entries(sources):
+        scan_entry(entry["content"], entry["source"], entry["start"], entry["entry"], memory=True)
+
+    def scan(path, label):
+        path = confined_path(BASE_DIR, path)
         with open(path, "r", encoding="utf-8") as handle:
             content = handle.read()
         digest.update(label.encode("utf-8") + b"\0" + content.encode("utf-8") + b"\0")
-        if memory:
-            starts = list(re.finditer(r"^## \[", content, re.MULTILINE))
-            chunks = [(match.start(), starts[i + 1].start() if i + 1 < len(starts) else len(content)) for i, match in enumerate(starts)]
-        else:
-            chunks = [(0, len(content))]
         title = None
-        if index and not memory:
+        if index:
             metadata, body = _parse_frontmatter(content)
             title = _page_title(os.path.basename(path), body, metadata)
-        for start, end in chunks:
-            entry = content[start:end].rstrip()
-            match = pattern.search(entry)
-            if match is None:
-                continue
-            if index:
-                hits.append(_index_row(label, "memory" if memory else "knowledge", content, start, entry, match,
-                                       title, max(120, len(query) + 40)))
-                continue
-            # Keep each entry independent even when adjacent lines all match.
-            excerpt_start = max(0, match.start() - 200)
-            text = entry[excerpt_start:]
-            line = content.count("\n", 0, start + excerpt_start) + 1
-            hits.append({"source": label, "line": line, "text": text,
-                         "match_start": match.start() - excerpt_start,
-                         "match_end": match.end() - excerpt_start,
-                         "prefix_omitted": excerpt_start > 0, "kind": "memory" if memory else "knowledge"})
+        scan_entry(content, label, 0, content.rstrip(), title=title)
 
-    scan(MEMORY_FILE, ".agents/memory.md", memory=True)
     docs = confined_path(BASE_DIR, DOCS_DIR)
     if os.path.isdir(docs):
         for filename in sorted(os.listdir(docs)):
@@ -565,6 +602,9 @@ def memory_recall(query, limit=8, cursor=None, max_chars=12000, json_out=False, 
     if position < len(hits):
         packet["continuation"] = _recall_cursor(position, query_hash, snapshot)
         packet["truncated"] = True
+    if not hits:
+        packet["message"] = "No matching project record found."
+        packet["next_action"] = "Continue with the host\'s available and permitted memory or session history."
     output = _render_recall(packet, json_out)
     if len(output) + 1 > max_chars:
         raise ValueError("--max-chars is too small for the recall response.")
@@ -589,17 +629,7 @@ def status(compact=False):
 
     if compact:
         pages = _knowledge_pages()
-        mem_count = 0
-        if os.path.exists(MEMORY_FILE):
-            with open(confined_path(BASE_DIR, MEMORY_FILE), "r", encoding="utf-8") as f:
-                content = f.read()
-            mem_count = len(
-                [
-                    entry
-                    for entry in re.split(r"(?=^## \[)", content, flags=re.MULTILINE)
-                    if entry.startswith("## [")
-                ]
-            )
+        mem_count = len(_memory_entries())
         raw_count = _raw_source_count()
         parts = [f"v{version_str}", f"{len(pages)} topics", f"{mem_count} memories", f"{dnr_count} locked"]
         if phase_str:
@@ -627,14 +657,8 @@ def status(compact=False):
     # 2. Recent memory
     print("  🧠 RECENT DECISIONS (last 3)")
     print(f"  {'-'*40}")
-    if os.path.exists(MEMORY_FILE):
-        with open(confined_path(BASE_DIR, MEMORY_FILE), "r", encoding="utf-8") as f:
-            content = f.read()
-        entries = re.split(r'(?=^## \[)', content, flags=re.MULTILINE)
-        entries = [e for e in entries if e.startswith("## [")]
-        for entry in entries[:3]:
-            header = entry.strip().split("\n")[0]
-            print(f"    {header}")
+    for item in _memory_entries()[:3]:
+        print(f'    {item["entry"].splitlines()[0]}')
     print()
 
     # 3. Knowledge topics
@@ -656,15 +680,11 @@ def bootstrap(compact=False):
     if compact:
         status(compact=True)
         print()
-        if os.path.exists(MEMORY_FILE):
-            with open(confined_path(BASE_DIR, MEMORY_FILE), "r", encoding="utf-8") as f:
-                content = f.read()
-            entries = re.split(r"(?=^## \[)", content, flags=re.MULTILINE)
-            entries = [entry for entry in entries if entry.startswith("## [")]
-            if entries:
-                print("Recent:")
-                for entry in entries[:3]:
-                    print(f"  {entry.strip().split(chr(10))[0]}")
+        entries = _memory_entries()
+        if entries:
+            print("Recent:")
+            for item in entries[:3]:
+                print(f'  {item["entry"].splitlines()[0]}')
         search("", compact=True)
         return
 
@@ -756,9 +776,9 @@ def context_lane(lane):
         _print_file(os.path.join(BASE_DIR, "ROADMAP.md"), max_lines=60,
                     label="ROADMAP.md (first 60 lines)")
         _print_file(os.path.join(BASE_DIR, "VERSION.json"))
-        if os.path.exists(MEMORY_FILE):
+        if _memory_entries():
             print(f"\n{'─'*60}")
-            print("  .agents/memory.md (last 5 entries)")
+            print("  Project memory, primary and pending (last 5 entries)")
             print(f"{'─'*60}")
             memory_show(5)
 
@@ -796,9 +816,9 @@ def context_lane(lane):
 
     elif lane == "debug":
         _print_file(os.path.join(DOCS_DIR, "Known_Limitations.md"))
-        if os.path.exists(MEMORY_FILE):
+        if _memory_entries():
             print(f"\n{'─'*60}")
-            print("  .agents/memory.md (last 5 entries)")
+            print("  Project memory, primary and pending (last 5 entries)")
             print(f"{'─'*60}")
             memory_show(5)
 
@@ -812,7 +832,7 @@ def _main():
         epilog="""
 Commands:
   %(prog)s search "query"                   Search knowledge topics
-  %(prog)s search --include-memory          Also search .agents/memory.md
+  %(prog)s search --include-memory          Also search primary and pending project memory
   %(prog)s search --compact                 One-line topic list (saves tokens)
   %(prog)s get Topic_Name                   Fetch a topic's full content
   %(prog)s annotate Topic "note"            Annotate a topic with a finding
@@ -835,7 +855,7 @@ Commands:
     p_search.add_argument("query", nargs="?", default="", help="Query to search for.")
     p_search.add_argument("--compact", action="store_true", help="One-line output (saves tokens).")
     p_search.add_argument("--include-memory", action="store_true",
-                          help="Also search .agents/memory.md entries.")
+                          help="Also search primary and pending project memory entries.")
 
     # Get
     p_get = subparsers.add_parser("get", help="Get full content of a topic.")
@@ -895,7 +915,6 @@ Commands:
     args = parser.parse_args()
     for filepath in (DOCS_DIR, RAW_DIR, MEMORY_FILE, AI_CONTEXT_FILE):
         confined_path(BASE_DIR, filepath)
-    os.makedirs(DOCS_DIR, exist_ok=True)
 
     if args.command == "search":
         search(args.query, compact=args.compact, include_memory=args.include_memory)

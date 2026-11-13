@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Release fixes in progress (D45)
+
+- Save durable decisions/facts needed later and not reconstructable from code without requiring an explicit request; empty recall directs the caller to the host's available memory/history.
+- On an explicit memory permission error, write pending notes under `.oaw/`; recall and other memory views read both sources in entry-time order. Preserve credentials/path checks, atomic writes, historical entries and cursor invalidation.
+- Codex's default code review uses a native fresh-context subagent. Standard/deep use one code-review round, preserving explicit cross-family selection and the separate design review. Token savings remain unmeasured pending FIXCHECK.
+- Fix visible cohort-path auditing for aliases and workspace-prefix collisions. This is trace auditing, not OS isolation.
+- Add a model-free native Codex sandbox probe; final CI and FIXCHECK remain release requirements.
+
+
 ### Added
 
 - `oaw.py doctor` checks whether Claude can use the installed skills (plan W4): a project `.claude/settings*.json`

@@ -36,6 +36,11 @@ specifies. Bundling a workflow does not prove a quality or token advantage.
 [Codex results and limitations](docs/validation/egm-oaw-codex-2026-10-30.md) ·
 [Shared Codex/Claude acceptance protocol](docs/SHARED_ACCEPTANCE_PROTOCOL.md).
 
+The release-fix branch adds permission-only pending memory under `.oaw/` and one
+native fresh-context Codex code review. These are D45 fixes under verification;
+they do not establish a quality or token advantage.
+[Implementation and acceptance](docs/plans/v2.0.1-release-fixes.md).
+
 ## 20-second pitch
 
 OAW adds what your coding agent cannot reconstruct from code alone, and leaves everything else to the agent:

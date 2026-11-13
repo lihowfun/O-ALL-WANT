@@ -1,6 +1,6 @@
 # OAW roadmap
 
-Updated 2026-11-12. The working plan is
+Updated 2026-11-13. The working plan is
 [docs/plans/v2.0.1-release-path.md](docs/plans/v2.0.1-release-path.md);
 work items are GitHub issues grouped by milestone.
 
@@ -21,6 +21,12 @@ capability tasting of presentation skills (#13, #9).
    the skill-intake SOP. #10, #12
 5. One full cross-family review, at most three rounds. #11
 6. The owner merges the release pull request and tags `v2.0.1`. #11
+
+Implementation update (2026-11-13): the five fixes and the visible path-audit repair
+are implemented on `codex/v2.0.1-release-fixes`. Linux offline gate: 9/9,
+677 tests, 0 skips; native Codex sandbox pending-memory probe passed.
+[Validation and remaining gates](docs/validation/v2.0.1-release-fixes.md).
+FIXCHECK, cross-platform CI, final release review and owner merge are still pending.
 
 ## Next: after the release
 

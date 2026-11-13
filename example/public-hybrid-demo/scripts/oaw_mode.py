@@ -618,7 +618,7 @@ def slug(path: str) -> str:
 def second_opinion_review(settings: dict) -> dict:
     """Who reviews code: a fresh session of the same family, or the other family once the user agreed to it."""
     choice = settings["second_opinion"]
-    claude = {"same": CLAUDE_REVIEW.removeprefix("review: "), "codex": CODEX_REVIEW.removeprefix("review: "),
+    claude = {"same": CLAUDE_REVIEW.removeprefix("review: "), "codex": CODEX_CROSS_REVIEW.removeprefix("review: "),
               "claude": CLAUDE_REVIEW.removeprefix("review: ")}[choice]
     codex = {"same": CODEX_REVIEW.removeprefix("review: "), "codex": CODEX_REVIEW.removeprefix("review: "),
              "claude": CLAUDE_CROSS_REVIEW}[choice]
@@ -694,10 +694,9 @@ def review_steps(result: dict, root: Path, settings: dict) -> list[dict]:
                              "findings; then run python3 scripts/oaw_mode.py reviewed PLAN --how fresh-context"
             steps.append(step)
     review = second_opinion_review(settings)
-    steps.append({"step": "code-review", "before_code": False, "rounds": 3 if mode == "deep" else 1,
+    steps.append({"step": "code-review", "before_code": False, "rounds": 1,
                   "who": review["who"], "claude": review["claude"], "codex": review["codex"],
-                  "do": "after the change, review the diff and tests" + (
-                      "; repeat until a round finds nothing new" if mode == "deep" else "")})
+                  "do": "after the change, review the diff and tests once; resolve findings and run affected tests"})
     return steps
 
 
@@ -708,9 +707,12 @@ CLAUDE_CROSS_REVIEW = ("claude -p \"Review the uncommitted changes in this repos
                        "ask for git diff BASE..HEAD instead)")
 CLAUDE_REVIEW = ("review: before finishing, start one new subagent with no conversation context; give it only "
                  "the diff (git diff HEAD, or the commit range) and the test command, and have it review both")
-CODEX_REVIEW = ("review: codex review --uncommitted  (a fresh-context review; "
+CODEX_CROSS_REVIEW = ("review: codex review --uncommitted  (a fresh-context review; "
                 "--base BRANCH or --commit SHA for committed work)")
-DEEP_ROUNDS = "after fixes, review again until a round finds nothing new (at most 3 rounds)"
+CODEX_REVIEW = ("review: start one native subagent with no conversation context; give it the diff "
+                "(git diff HEAD or the commit range), new files and the test command; wait for its review "
+                "and resolve the findings")
+DEEP_ROUNDS = "one code-review round; resolve findings and run affected tests; further independent review is explicit"
 FRESH_DESIGN_REVIEW = ("design review: before any code, one reviewer with no conversation context reads the plan and "
                        "the files it names")
 CODEX_PLAN = ("codex --sandbox read-only  (plan in this read-only pass, then implement in a normal session; "

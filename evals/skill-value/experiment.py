@@ -212,18 +212,53 @@ def snapshot(source, destination):
 
 
 def boundary_issues(commands, workspace, cohort):
-    """Audit visible literal accesses; not a claim of OS-level read isolation."""
-    workspace, cohort = Path(workspace).resolve(), Path(cohort).resolve()
+    """Audit visible literal accesses; not shell parsing or OS-level isolation."""
+    def key(path):
+        # lower preserves the historical case-insensitive spelling comparison;
+        # casefold would additionally merge distinct names such as Straße/strasse.
+        return Path(path).resolve().as_posix().lower().rstrip("/")
+
+    workspace_key, cohort_key = key(workspace), key(cohort)
+    workspace_names = {Path(workspace).as_posix().rstrip("/"), workspace_key}
+    cohort_names = {Path(cohort).as_posix().rstrip("/"), cohort_key}
     problems = []
     for item in commands:
         command = str(item.get("command", "")).replace("\\", "/")
-        visible = re.sub(re.escape(workspace.as_posix()), "<CURRENT_WORKSPACE>", command, flags=re.IGNORECASE)
-        if cohort.as_posix().lower() in visible.lower():
-            problems.append("Visible access to another cohort path")
-        # Match explicit shell read/list paths, not Markdown link data being
-        # written into a page (../../ops is a valid relocated page link).
-        for relative in re.findall(r"(?i)(?:Get-Content|Get-ChildItem|\bcat|\bls)\s+['\"]?(\.\.(?:/[\w./-]+)*)", command):
-            if not (workspace / relative).resolve().is_relative_to(workspace):
+        allowed_spans = []
+        # Resolve quoted absolute literals as a whole (including spaces).
+        # A cohort-local alias of this workspace must be exempted before the
+        # remaining lexical cohort check; its spelling alone is not an escape.
+        for token in re.finditer(r"""'([^']*)'|"([^"]*)"|([^\s'";|<>()]+)""", command):
+            literal = next(group for group in token.groups() if group is not None)
+            if not (literal.startswith("/") or re.match(r"^[A-Za-z]:/", literal)):
+                continue
+            resolved = key(literal)
+            inside_workspace = resolved == workspace_key or resolved.startswith(workspace_key + "/")
+            inside_cohort = resolved == cohort_key or resolved.startswith(cohort_key + "/")
+            if inside_workspace:
+                allowed_spans.append(token.span())
+            elif inside_cohort:
+                problems.append("Visible access to another cohort path")
+
+        visible = command
+        for start, end in reversed(allowed_spans):
+            visible = visible[:start] + "<CURRENT_WORKSPACE>" + visible[end:]
+        for name in sorted(workspace_names, key=len, reverse=True):
+            visible = re.sub(re.escape(name) + r"(?=$|[/\s'\";)\]])",
+                             "<CURRENT_WORKSPACE>", visible, flags=re.IGNORECASE)
+        for name in cohort_names:
+            if re.search(re.escape(name) + r"(?=$|[/\s'\";)\]])", visible, re.IGNORECASE):
+                problems.append("Visible access to another cohort path")
+                break
+
+        # Relative read/list arguments, not Markdown link data written to a page.
+        for match in re.finditer(
+            r"""(?i)(?:Get-Content|Get-ChildItem|\bcat|\bls)\s+(?:'(\.\.[^']*)'|"(\.\.[^"]*)"|(\.\.(?:/[^\s;|<>()'"]+)*))""",
+            command,
+        ):
+            relative = next(group for group in match.groups() if group is not None)
+            resolved = key(Path(workspace) / relative)
+            if resolved != workspace_key and not resolved.startswith(workspace_key + "/"):
                 problems.append("Visible relative ancestor access")
     return sorted(set(problems))
 

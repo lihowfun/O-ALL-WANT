@@ -1,6 +1,7 @@
 """Behavioral regressions for the portable Context Hub CLI (stdlib only)."""
 
 import contextlib
+import errno
 import importlib
 import io
 import json
@@ -29,6 +30,23 @@ def _memory_worker(base, start, number):
     with contextlib.redirect_stdout(io.StringIO()):
         for entry in range(3):
             hub.memory_add(f"[NOTE] writer_{number}_entry_{entry}")
+
+
+def _mixed_memory_worker(base, start, number):
+    hub.BASE_DIR = base
+    hub.MEMORY_FILE = str(Path(base) / ".agents/memory.md")
+    original = hub.locked_update
+
+    def route(path, *args, **kwargs):
+        if number % 2 and Path(path) == Path(hub.MEMORY_FILE):
+            raise PermissionError(errno.EACCES, "fixture primary lock denied")
+        return original(path, *args, **kwargs)
+
+    hub.locked_update = route
+    start.wait(timeout=20)
+    with contextlib.redirect_stdout(io.StringIO()):
+        for entry in range(3):
+            hub.memory_add(f"[NOTE] mixed-writer-{number}-entry-{entry}")
 
 
 class ContextHubTests(unittest.TestCase):
@@ -368,7 +386,7 @@ class ContextHubTests(unittest.TestCase):
         self.assertIn("NEEDLE", packet["results"][0]["excerpt"])
         self.assertIsNotNone(packet["continuation"])
 
-    def test_recall_default_output_is_byte_identical(self):
+    def test_recall_legacy_excerpts_unchanged_with_new_snapshot_cursor(self):
         # Byte-golden of the default mode, recorded before --index existed. A deliberate
         # change to default recall output must update these strings on purpose.
         # Provenance: this test passes unchanged against scripts/context_hub.py and
@@ -394,7 +412,7 @@ class ContextHubTests(unittest.TestCase):
                      '"kind":"knowledge","excerpt":"---\\ntitle: Recall Topic\\n---\\n# Recall Topic\\n\\nBackground '
                      'paragraph.\\nA Needle in the knowledge page.","truncated":false,"continuation":null}],'
                      '"truncated":false,"continuation":null}\n'),
-            "paged": first + "Next cursor: WzEsMSwiMDk4ODFmNmVkOTMzNjBhMmY2YWQ4MWY0IiwiMTA3YTE5NDNlMzU4ZDIzODI5MmZlNzRiIl0\n",
+            "paged": first + "Next cursor: WzEsMSwiMDk4ODFmNmVkOTMzNjBhMmY2YWQ4MWY0IiwiYzk0OTY0NDBiMjhkYTgxZmFhNzM4Yjk1Il0\n",
         }
         for name, kwargs in (("text", {}), ("json", {"json_out": True}), ("paged", {"limit": 1})):
             with self.subTest(output=name):
@@ -418,7 +436,7 @@ class ContextHubTests(unittest.TestCase):
             if not cursor:
                 break
         self.assertEqual(len(rows), 12)
-        for number, row in enumerate(rows):
+        for number, row in zip(reversed(range(12)), rows):
             self.assertEqual((row["kind"], row["date"], row["tag"], row["title"]),
                              ("memory", f"2026-10-{number + 10}", "NOTE", f"entry {number}"))
             self.assertTrue(row["match"].startswith(f"The NEEDLE line {number} "))
@@ -429,13 +447,13 @@ class ContextHubTests(unittest.TestCase):
         _, text = self.quiet(hub.memory_recall, "needle", max_chars=600, index=True)
         self.assertLessEqual(len(text), 600)
         header, quote = text.splitlines()[:2]
-        self.assertEqual(header, f".agents/memory.md:{rows[0]['line']}  2026-10-10 [NOTE] entry 0  "
+        self.assertEqual(header, f".agents/memory.md:{rows[0]['line']}  2026-10-21 [NOTE] entry 11  "
                                  f"({rows[0]['entry_chars']} chars)")
         self.assertEqual(quote, "  > " + rows[0]["match"])
         self.assertIn("Next cursor: ", text)
         completed = self.cli("memory", "recall", "needle", "--index", "--limit", "1")
         self.assertEqual(completed.returncode, 0, completed.stdout)
-        self.assertIn("  > The NEEDLE line 0 ", completed.stdout)
+        self.assertIn("  > The NEEDLE line 11 ", completed.stdout)
 
     def test_recall_index_cursor_is_refused_by_default_mode(self):
         self.memory.parent.mkdir()
@@ -535,6 +553,194 @@ class ContextHubTests(unittest.TestCase):
             self.assertLess(sizes[("index", form)], sizes[("default", form)])
         self.assertEqual(sizes, {("default", "text"): 31079, ("default", "json"): 32810,
                                  ("index", "text"): 3350, ("index", "json"): 6054})
+
+    def pending(self):
+        return self.base / ".oaw/memory-pending.md"
+
+    def deny_primary(self, err=errno.EACCES):
+        original = hub.locked_update
+
+        def update(path, *args, **kwargs):
+            if Path(path) == self.memory:
+                raise OSError(err, "fixture primary failure")
+            return original(path, *args, **kwargs)
+        return patch.object(hub, "locked_update", side_effect=update)
+
+    def test_memory_fallback_only_for_permission_errors_and_reports_path(self):
+        for code in (errno.EACCES, errno.EPERM, errno.EROFS):
+            with self.subTest(code=code), self.deny_primary(code):
+                _, output = self.quiet(hub.memory_add, f"[NOTE] pending-{code}")
+                self.assertIn(".oaw/memory-pending.md", output)
+                self.assertIn("permission denied", output)
+                self.assertFalse(self.memory.exists())
+                self.assertIn(f"pending-{code}", self.pending().read_text())
+        before = self.pending().read_bytes()
+        for code in (errno.EIO, errno.ENOSPC, errno.ENOENT, errno.ENOTDIR, errno.ETIMEDOUT):
+            with self.subTest(code=code), self.deny_primary(code), self.assertRaises(OSError):
+                self.quiet(hub.memory_add, "[NOTE] must not be saved")
+            self.assertEqual(self.pending().read_bytes(), before)
+        with self.deny_primary():
+            # A directory at the fallback filename is a real write failure.
+            self.pending().unlink()
+            self.pending().mkdir()
+            with self.assertRaises(OSError):
+                self.quiet(hub.memory_add, "[NOTE] cannot save anywhere")
+
+    def test_primary_lock_permission_failure_uses_pending_and_later_recall(self):
+        self.memory.parent.mkdir()
+        self.memory.write_text("# Memory\n---\n## [2026-10-01] [NOTE] old record\n")
+        original = self.memory.read_bytes()
+        # POSIX non-root: real directory denial; Windows/root: inject the same
+        # lock failure, since chmod cannot enforce directory writes there.
+        actual_denial = os.name != "nt" and getattr(os, "geteuid", lambda: 0)() != 0
+        if actual_denial:
+            self.memory.parent.chmod(0o555)
+        try:
+            if actual_denial:
+                completed = self.cli("memory", "add", "[DECISION] sandbox needle")
+                self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+                output = completed.stdout
+            else:
+                with self.deny_primary():
+                    _, output = self.quiet(hub.memory_add, "[DECISION] sandbox needle")
+            self.assertIn(".oaw/memory-pending.md", output)
+            self.assertEqual(self.memory.read_bytes(), original)
+            self.assertFalse((self.memory.parent / ".memory.md.oaw.lock").exists())
+            self.assertIn("sandbox needle", self.pending().read_text())
+            recall = self.cli("memory", "recall", "sandbox needle", "--json")
+            self.assertEqual(recall.returncode, 0, recall.stdout)
+            self.assertEqual(json.loads(recall.stdout)["results"][0]["source"], ".oaw/memory-pending.md")
+        finally:
+            self.memory.parent.chmod(0o755)
+
+    def test_fallback_preserves_confinement_and_rejects_secrets_before_any_write(self):
+        with self.deny_primary(), self.assertRaises(ValueError):
+            self.quiet(hub.memory_add, "ghp_" + "A" * 36)
+        self.assertFalse(self.memory.exists())
+        self.assertFalse(self.pending().exists())
+        outside = self.top / "outside"
+        outside.mkdir()
+        try:
+            (self.base / ".oaw").symlink_to(outside, target_is_directory=True)
+        except OSError as exc:
+            self.skipTest(f"Symlink creation unavailable: {exc}")
+        with self.deny_primary(), self.assertRaises(ValueError):
+            self.quiet(hub.memory_add, "[NOTE] no escape")
+        self.assertEqual(list(outside.iterdir()), [])
+        (self.base / ".oaw").unlink()
+        self.memory.parent.symlink_to(outside, target_is_directory=True)
+        with self.assertRaises(ValueError):
+            self.quiet(hub.memory_add, "[NOTE] primary escape is not a permission fallback")
+        self.assertFalse(self.pending().exists())
+        self.assertEqual(list(outside.iterdir()), [])
+
+    def test_both_sources_recover_and_alternate_without_promoting_old_file_contents(self):
+        self.memory.parent.mkdir()
+        self.memory.write_text("# Memory\n---\n## [2026-10-01] [DECISION] needle old\n")
+        self.quiet(hub.memory_add, "[DECISION] needle primary-first")
+        with self.deny_primary():
+            self.quiet(hub.memory_add, "[DECISION] needle pending; supersedes needle old")
+        self.quiet(hub.memory_add, "[DECISION] needle primary-restored")
+        with self.deny_primary():
+            self.quiet(hub.memory_add, "[DECISION] needle pending-latest")
+        for index in (False, True):
+            _, output = self.quiet(hub.memory_recall, "needle", json_out=True, index=index)
+            rows = json.loads(output)["results"]
+            self.assertEqual([r["source"] for r in rows], [
+                ".oaw/memory-pending.md", ".agents/memory.md", ".oaw/memory-pending.md",
+                ".agents/memory.md", ".agents/memory.md",
+            ])
+            rendered = [r["title"] if index else r["excerpt"] for r in rows]
+            for row, expected in zip(rendered, ["pending-latest", "primary-restored", "supersedes", "primary-first", "needle old"]):
+                self.assertIn(expected, row)
+        self.assertIn("needle old", self.memory.read_text(), "superseded evidence is retained")
+        shown = self.quiet(hub.memory_show, 2)[1]
+        self.assertLess(shown.index("pending-latest"), shown.index("primary-restored"))
+
+    def test_legacy_ties_and_invalid_dates_have_deterministic_order(self):
+        self.memory.parent.mkdir()
+        self.pending().parent.mkdir()
+        self.memory.write_text("# Memory\n---\n## [2026-10-02] [NOTE] needle main\n"
+                               "## [unknown] [NOTE] needle undated\n")
+        self.pending().write_text("# Memory\n---\n## [2026-10-02] [NOTE] needle pending first\n"
+                                  "## [2026-10-02] [NOTE] needle pending second\n")
+        _, output = self.quiet(hub.memory_recall, "needle", json_out=True, index=True)
+        self.assertEqual([r["title"] for r in json.loads(output)["results"]],
+                         ["needle pending first", "needle pending second", "needle main", "needle undated"])
+
+    def test_cursor_invalidated_by_either_source_presence_or_content(self):
+        self.memory.parent.mkdir()
+        original = "# Memory\n---\n## [2026-10-02] [NOTE] needle one\n## [2026-10-01] [NOTE] needle two\n"
+        self.memory.write_text(original)
+        for index in (False, True):
+            for action in ("primary-edit", "pending-create", "pending-edit", "pending-delete"):
+                with self.subTest(index=index, action=action):
+                    self.memory.write_text(original)
+                    self.pending().parent.mkdir(exist_ok=True)
+                    if action in ("pending-edit", "pending-delete"):
+                        self.pending().write_text("# no matching entries\n")
+                    elif self.pending().exists():
+                        self.pending().unlink()
+                    _, output = self.quiet(hub.memory_recall, "needle", limit=1, json_out=True, index=index)
+                    cursor = json.loads(output)["continuation"]
+                    self.assertIsNotNone(cursor)
+                    if action == "primary-edit":
+                        self.memory.write_text(original + "changed")
+                    elif action == "pending-delete":
+                        self.pending().unlink()
+                    else:
+                        self.pending().write_text("" if action == "pending-create" else "nonmatching edit")
+                    with self.assertRaisesRegex(ValueError, "sources changed"):
+                        self.quiet(hub.memory_recall, "needle", cursor=cursor, index=index)
+
+    def test_pending_only_visible_to_search_status_bootstrap_and_context_lanes(self):
+        with self.deny_primary():
+            self.quiet(hub.memory_add, "[NOTE] pending visibility")
+        self.assertIn("pending visibility", self.quiet(hub.search, "visibility", include_memory=True)[1])
+        self.assertIn("1 memories", self.quiet(hub.status, compact=True)[1])
+        self.assertIn("pending visibility", self.quiet(hub.status)[1])
+        self.assertIn("pending visibility", self.quiet(hub.bootstrap, compact=True)[1])
+        for lane in ("operational", "debug"):
+            self.assertIn("pending visibility", self.quiet(hub.context_lane, lane)[1])
+
+    def test_empty_recall_directs_to_host_only_when_no_hits(self):
+        for index in (False, True):
+            for json_out in (False, True):
+                _, output = self.quiet(hub.memory_recall, "missing", max_chars=512, index=index, json_out=json_out)
+                self.assertLessEqual(len(output), 512)
+                self.assertIn("No matching project record", output)
+                self.assertIn("available and permitted memory", output)
+                if json_out:
+                    self.assertEqual(json.loads(output)["results"], [])
+        self.quiet(hub.memory_add, "[NOTE] missing word now exists")
+        _, output = self.quiet(hub.memory_recall, "missing", json_out=True)
+        self.assertNotIn("next_action", json.loads(output))
+
+    def test_concurrent_primary_and_pending_writers_retain_all_entries(self):
+        context = multiprocessing.get_context("spawn")
+        start = context.Barrier(6)
+        workers = [context.Process(target=_mixed_memory_worker, args=(str(self.base), start, number))
+                   for number in range(6)]
+        for worker in workers:
+            worker.start()
+        try:
+            for worker in workers:
+                worker.join(40)
+                self.assertEqual(worker.exitcode, 0)
+        finally:
+            for worker in workers:
+                if worker.is_alive():
+                    worker.terminate()
+                    worker.join()
+        _, output = self.quiet(hub.memory_recall, "mixed-writer", limit=100, max_chars=100000, json_out=True)
+        entries = json.loads(output)["results"]
+        self.assertEqual(len(entries), 18)
+        content = self.memory.read_text() + self.pending().read_text()
+        for number in range(6):
+            for entry in range(3):
+                self.assertEqual(content.count(f"mixed-writer-{number}-entry-{entry}"), 1)
+        self.assertEqual({entry["source"] for entry in entries},
+                         {".agents/memory.md", ".oaw/memory-pending.md"})
 
 
 if __name__ == "__main__":

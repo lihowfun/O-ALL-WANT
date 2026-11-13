@@ -134,6 +134,68 @@ class ExperimentTests(unittest.TestCase):
             self.assertTrue(experiment.boundary_issues([{"command": "Get-Content ../other/gold.json"}], workspace, cohort))
             self.assertTrue(experiment.boundary_issues([{"command": "Get-Content '" + (cohort / "definitions/gold.json").as_posix() + "'"}], workspace, cohort))
 
+    def test_cohort_aliases_and_sibling_prefixes_are_not_workspace_exemptions(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            top = Path(tmp)
+            cohort = top / "real cohort"
+            workspace = cohort / "work/T001"
+            workspace.mkdir(parents=True)
+            alias = top / "alias cohort"
+            try:
+                alias.symlink_to(cohort, target_is_directory=True)
+            except OSError as exc:
+                self.skipTest(f"Symlink creation unavailable: {exc}")
+            for root in (cohort, alias):
+                for supplied in ((workspace, cohort), (alias / "work/T001", alias)):
+                    with self.subTest(root=root, supplied=supplied):
+                        for external in ("definitions/gold.json", "work/T001-other/gold.json"):
+                            command = "Get-Content '" + (root / external).as_posix() + "'"
+                            self.assertIn("Visible access to another cohort path",
+                                          experiment.boundary_issues([{"command": command}], *supplied))
+                        command = "cat '" + (root / "work/T001/README.md").as_posix() + "'"
+                        self.assertEqual(experiment.boundary_issues([{"command": command}], *supplied), [])
+            for command in ("cat '../other folder/gold.json'", 'Get-Content "../other folder/gold.json"'):
+                self.assertIn("Visible relative ancestor access",
+                              experiment.boundary_issues([{"command": command}], workspace, cohort))
+            self.assertEqual(experiment.boundary_issues(
+                [{"command": "write('[runbook](../../ops/book.md)')"}], workspace, cohort), [])
+
+    def test_same_prefix_workspace_sibling_is_detected_without_symlinks(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            cohort = Path(tmp)
+            workspace = cohort / "work/T001"
+            workspace.mkdir(parents=True)
+            for spelling in (str, lambda path: str(path).upper(), lambda path: str(path).replace("/", "\\")):
+                command = "Get-Content '" + spelling(workspace.parent / "T001-other/gold.json") + "'"
+                self.assertTrue(experiment.boundary_issues([{"command": command}], workspace, cohort))
+            command = "Get-Content '" + str(workspace / "README.md").upper() + "'"
+            self.assertEqual(experiment.boundary_issues([{"command": command}], workspace, cohort), [])
+
+    def test_unicode_expansion_does_not_merge_distinct_workspace_names(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            cohort = Path(tmp)
+            workspace = cohort / "Straße"
+            workspace.mkdir()
+            command = "cat '" + (cohort / "strasse/gold.json").as_posix() + "'"
+            self.assertIn("Visible access to another cohort path",
+                          experiment.boundary_issues([{"command": command}], workspace, cohort))
+
+    def test_cohort_local_alias_of_workspace_is_allowed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            cohort = Path(tmp)
+            workspace = cohort / "work/T001"
+            workspace.mkdir(parents=True)
+            (workspace / "README.md").write_text("fixture", encoding="utf-8")
+            alias = cohort / "workspace link"
+            try:
+                alias.symlink_to(workspace, target_is_directory=True)
+            except OSError as exc:
+                self.skipTest(f"Symlink creation unavailable: {exc}")
+            self.assertTrue((alias / "README.md").samefile(workspace / "README.md"))
+            for name in (workspace, alias):
+                command = "cat '" + (name / "README.md").as_posix() + "'"
+                self.assertEqual(experiment.boundary_issues([{"command": command}], workspace, cohort), [])
+
 
 if __name__ == "__main__":
     unittest.main()

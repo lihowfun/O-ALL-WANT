@@ -27,8 +27,11 @@ Run from the project root with Python 3.10+ (`py -3` on Windows if needed).
    - `design-review`, `how: fresh-context`: one reviewer with no conversation context reads the plan and the
      files it names; resolve the findings; record it with `--how fresh-context`.
    - `recheck`: after the change, run `python3 scripts/oaw_mode.py suggest --json` on the diff and follow it.
-   - `code-review`: after the change, run the command the step gives for this host and fix what it finds. Deep
-     repeats until a round finds nothing new, at most `rounds` times.
+   - `code-review`: after the change, follow the instruction for this host and its selected reviewer family.
+     For a same-family Codex review, start a native fresh-context subagent; for an explicitly selected
+     cross-family review, use the command the step gives. Wait for the review and resolve its findings.
+     Standard and deep each use one code-review round; run affected tests after fixes. Further independent
+     review is explicit.
 3. Light needs no review.
 4. Switches, when the user asks:
    - EGM: `python3 scripts/oaw_mode.py egm on|auto|off` (no argument shows it). One EGM run without changing
