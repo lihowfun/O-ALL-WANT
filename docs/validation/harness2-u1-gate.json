@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-13",
+  "platform": "Linux",
+  "python": "3.10.20",
+  "base_commit": "5af21f61d1d30d844ead3169081532842d3fe375",
+  "all_passed": true,
+  "passed_count": 9,
+  "total": 9,
+  "checks": [
+    {
+      "name": "syntax",
+      "passed": true,
+      "detail": "48 Python files compiled"
+    },
+    {
+      "name": "cli-contracts",
+      "passed": true,
+      "detail": "8 entry points expose expected operations"
+    },
+    {
+      "name": "native-skills",
+      "passed": true,
+      "detail": "exit 0"
+    },
+    {
+      "name": "egm-integration",
+      "passed": true,
+      "detail": "exit 0"
+    },
+    {
+      "name": "behavior-regressions",
+      "passed": true,
+      "detail": "714 tests, 0 skipped"
+    },
+    {
+      "name": "installed-lifecycle",
+      "passed": true,
+      "detail": "minimal -> knowledge+improvement+both hosts; doctor and installed helpers; dry-run migration"
+    },
+    {
+      "name": "example-content",
+      "passed": true,
+      "detail": "exit 0"
+    },
+    {
+      "name": "repo-wiki",
+      "passed": true,
+      "detail": "exit 0"
+    },
+    {
+      "name": "version",
+      "passed": true,
+      "detail": "2.0.0 (proposed); source ledger and CI pins agree"
+    }
+  ],
+  "regressions": {
+    "run": 714,
+    "skipped": 0,
+    "successful": true,
+    "modules": [
+      "test_catalog",
+      "test_catalog_core",
+      "test_catalog_ui",
+      "test_cli_resolve",
+      "test_code_index",
+      "test_codemap_eval",
+      "test_context_hub",
+      "test_digest_mod",
+      "test_doctor_probe",
+      "test_egm_integration",
+      "test_egm_local",
+      "test_egm_local_measure",
+      "test_egm_pilot",
+      "test_eval_ledger",
+      "test_eval_ledger_fixcheck",
+      "test_eval_stats",
+      "test_gate",
+      "test_goldfish_review",
+      "test_improvement",
+      "test_install",
+      "test_judge_calibration",
+      "test_oaw_mode",
+      "test_skills",
+      "test_status",
+      "test_user_install",
+      "test_wiki_sync"
+    ]
+  },
+  "focused_tests": 29,
+  "raw_gate_sha256": "63cee6f8efe9c39731e7ebef30a744043b15839f046152da06007a1007480e98",
+  "source_sha256": {
+    "scripts/eval_ledger.py": "e0cde8f3d6af6ceb19cac012ce9cf1f359e41a7652d388897945e746bb42f439",
+    "scripts/eval_ledger_fixcheck.py": "f8fb2f4c0f7b86bfdff6af5f42feec6c240fc4ee7eaa0d61bf3d05e6ad92cddc",
+    "scripts/eval_stats.py": "6ad7a60f4f744775cc32c43f95e488a30c46aab22fd1adcb7051e44854659948",
+    "scripts/harness_check.py": "fd36fbc2cf4c6b52e7ae78ce225523b47ddb525d3ee0a295fbdd3851f69a48c9",
+    "tests/test_eval_ledger.py": "71626fc6b0bcc5f0f3129e0b655b34668ec0bccd458fcfafd64145e0c1d5b849",
+    "tests/test_eval_ledger_fixcheck.py": "c5e6a28be6f920982f6c9b99458bdf6c178df6258f5592657a23977c9c8ba957",
+    "README.md": "b2a2dfde77971e2dbadb5fae22ba4de89c88488e92f9c9bba1d7945a8e9ac8f6",
+    "ROADMAP.md": "149ee3926dfa276a4f1cea9c8772bad42421c8ea30343929e033952c6bd60813",
+    "docs/EVAL_LEDGER.md": "3330c9ef98b02cd5263ea7923e894a332fcdd16c85b156bb7f3ebd49a53157d0",
+    "docs/plans/harness2-u1.md": "07da502f67584971b5ce7ca9efd62443a29a4e43cd1e849a47e93c74c61656ad"
+  },
+  "fixcheck_report_sha256": "d06dd78f559beccfef2a80ac93b96823681f92813b1469ff296ec7e8aebf2275",
+  "limits": "Offline synthetic behavior and read-only historical import; no model-benefit test or cross-platform CI. Grader/meter independence and coverage remain declared provenance."
+}

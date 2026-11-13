@@ -4,7 +4,7 @@ Updated 2026-11-13. The working plan is
 [docs/plans/v2.0.1-release-path.md](docs/plans/v2.0.1-release-path.md);
 work items are GitHub issues grouped by milestone.
 
-## Now: release v2.0.1 (the only open line)
+## Now: release v2.0.1
 
 2.0.0 was never released, so v2.0.1 is the first released V2. No new experiment
 starts before it ships. One trial was already under way when this plan was
@@ -35,6 +35,16 @@ and the benefit/capability intake SOP (#10, #12). FIXCHECK remains pinned to
 release commit. Linux validation: 9/9 gate, 685 tests, 0 skips; independent code
 review findings closed. [Validation](docs/validation/v2.0.1-release-polish.md).
 The version has not been bumped.
+
+## Evaluation accounting: owner-authorized U1 work
+
+On 2026-11-13 the owner explicitly moved Harness2 U1 accounting work forward
+(D46), on `codex/harness2-evaluation-u1`, based on release-polish 5af21f6.
+It adds an optional read-only ledger/report/comparator bridge, not a model
+experiment or a change to the frozen FIXCHECK candidate. Review and validation
+are tracked in [U1 validation](docs/validation/harness2-u1.md); usage and evidence
+limits are in [evaluation accounting](docs/EVAL_LEDGER.md). U2/U3 model-facing
+changes still need separate behavior evidence. Release integration is pending.
 
 ## Next: after the release
 
