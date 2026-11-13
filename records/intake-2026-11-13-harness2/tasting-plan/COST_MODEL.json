@@ -1,0 +1,779 @@
+{
+  "schema": "oaw-harness2-tasting-cost-draft/1",
+  "prepared_on": "2026-11-13",
+  "status": "static_planning_only_no_runtime_or_model_runs",
+  "upstream": {
+    "repository": "https://github.com/google-research/harness2",
+    "commit": "6868817518876de8fd170c6a8354daca273b6191",
+    "paper": "https://arxiv.org/html/2610.14224v1"
+  },
+  "units": {
+    "tokens": "logical native-provider tokens, summed per actual call including repeated cached inputs and non-duplicated reasoning outputs",
+    "M": 1000000,
+    "money": "USD, unknown until authorized route and tariff are frozen"
+  },
+  "evidence_policy": {
+    "all_token_estimates_are_guesses": true,
+    "measured_upstream_usage": false,
+    "ranges_are_confidence_intervals": false,
+    "high_is_a_worst_case_bound": false,
+    "zero_selector_tokens_k1_is_source_fact": true,
+    "source_limits_are_not_expected_usage": true,
+    "paper_use": "Structure, 200-turn/3600-second setting, three shuffled streams, and pre-delivery execution+improvement compute scope; no per-stage token measurements for these OAW cells. Post-delivery reflection and external judging must be added."
+  },
+  "funding_gates": {
+    "authorized_by_this_document": false,
+    "subscription_only_policy": "OAW docs/EVAL_PROTOCOL.md: Design; apiKeySource none. Official Responses/Vertex/API path requires an explicit exception or a separately validated subscription adapter.",
+    "exact_model_access": "Unknown; string configuration is not proof of alias availability, account entitlement, effort support or old-CLI compatibility.",
+    "claude_code_executor": "Not present in upstream public executor CLI. claude_cli is editor-only, Vertex-oriented, and not selected by standard benchmark CLI.",
+    "codex_executor": "cx uses pinned Codex CLI 0.144.6 and a configured Responses API provider; existing subscription login is not the documented configuration.",
+    "independent_baseline_driver_and_blind_grading_sidecar": "Required before paid launch; specification in plan, not implemented in this planning task.",
+    "prices_and_vm_quote_required_before_api_spend": true
+  },
+  "model_allocation": {
+    "home_executor": "gpt-6.1-sol high, Codex CLI cx; five rollouts per paired unit",
+    "home_editor": "anthropic/claude-opus-5-5 high via OpenCode; NOT a Claude Code cell",
+    "official_lab_judge": "claude-opus-5-5 is mapped to vertex/ by upstream config; ADC and exact Vertex access unresolved",
+    "second_blind_judge": "gpt-6.1-sol high in independent Codex CLI grading wrapper",
+    "shared_allocation": "Conservatively assign all placeholder model shared work to Claude pool",
+    "claude_pool_is_actual_claude_model_usage_not_host_claim": true,
+    "unsupported_full_claude_cell": "Only a hypothetical adapter-after-validation envelope; do not count it as an executed or supported official cell"
+  },
+  "source_facts": {
+    "official_rollouts_per_task": 4,
+    "improvement_stages_per_task": 3,
+    "reflection_sessions_per_successful_task": 1,
+    "selector_model_calls_k1": 0,
+    "editor_steps_default": 120,
+    "editor_timeout_seconds_default": 3600,
+    "stage_validation_attempts": 2,
+    "transport_attempts": 2,
+    "maximum_combined_editor_calls_per_stage": 4,
+    "paper_rollout_turn_setting": 200,
+    "paper_rollout_seconds_setting": 3600,
+    "lab_cx_has_generic_200_turn_flag": false,
+    "citations": [
+      {
+        "path": "harness2/core/ledger.py",
+        "lines": [
+          15,
+          33
+        ],
+        "commit": "6868817518876de8fd170c6a8354daca273b6191",
+        "url": "https://github.com/google-research/harness2/blob/6868817518876de8fd170c6a8354daca273b6191/harness2/core/ledger.py#L15-L33"
+      },
+      {
+        "path": "harness2/core/spec.py",
+        "lines": [
+          33,
+          86
+        ],
+        "commit": "6868817518876de8fd170c6a8354daca273b6191",
+        "url": "https://github.com/google-research/harness2/blob/6868817518876de8fd170c6a8354daca273b6191/harness2/core/spec.py#L33-L86"
+      },
+      {
+        "path": "harness2/core/recursion.py",
+        "lines": [
+          150,
+          261
+        ],
+        "commit": "6868817518876de8fd170c6a8354daca273b6191",
+        "url": "https://github.com/google-research/harness2/blob/6868817518876de8fd170c6a8354daca273b6191/harness2/core/recursion.py#L150-L261"
+      },
+      {
+        "path": "harness2/core/selection.py",
+        "lines": [
+          360,
+          486
+        ],
+        "commit": "6868817518876de8fd170c6a8354daca273b6191",
+        "url": "https://github.com/google-research/harness2/blob/6868817518876de8fd170c6a8354daca273b6191/harness2/core/selection.py#L360-L486"
+      },
+      {
+        "path": "third_party/lab_runner/adapt_runs_cx/run_codex_lab.py",
+        "lines": [
+          292,
+          305
+        ],
+        "commit": "6868817518876de8fd170c6a8354daca273b6191",
+        "url": "https://github.com/google-research/harness2/blob/6868817518876de8fd170c6a8354daca273b6191/third_party/lab_runner/adapt_runs_cx/run_codex_lab.py#L292-L305"
+      },
+      {
+        "path": "harness2/config.py",
+        "lines": [
+          100,
+          178
+        ],
+        "commit": "6868817518876de8fd170c6a8354daca273b6191",
+        "url": "https://github.com/google-research/harness2/blob/6868817518876de8fd170c6a8354daca273b6191/harness2/config.py#L100-L178"
+      }
+    ]
+  },
+  "home_unit": {
+    "definition": "One task: independent native N plus official food F (base+INV probe+DOM probe+composed final), 2 proposal sessions, 1 compose editor, 1 reflection; grade N, internal F base, F final with both families. Internal F base is diagnostic, not the independent native output.",
+    "formula_before_retry": "5*rollout + 2*proposal + compose_editor + reflection + 6*grading_artifact_family",
+    "stages": {
+      "rollout": {
+        "count_per_unit": 5,
+        "estimate_status": "guess_not_measured",
+        "turns_guess": {
+          "low": 20,
+          "expected": 40,
+          "high": 100
+        },
+        "mean_input_tokens_per_turn_guess": {
+          "low": 12000,
+          "expected": 24000,
+          "high": 48000
+        },
+        "mean_output_including_reasoning_tokens_per_turn_guess": {
+          "low": 2000,
+          "expected": 3000,
+          "high": 4000
+        },
+        "tokens_per_invocation_guess": {
+          "low": 280000,
+          "expected": 1080000,
+          "high": 5200000
+        },
+        "basis": "Guessed turns and average call lengths for closed-document tasks. Docs provide timeout, paper provides turn ceiling; neither supplies these means."
+      },
+      "proposal": {
+        "count_per_unit": 2,
+        "estimate_status": "guess_not_measured",
+        "turns_guess": {
+          "low": 8,
+          "expected": 16,
+          "high": 40
+        },
+        "mean_input_tokens_per_turn_guess": {
+          "low": 16000,
+          "expected": 32000,
+          "high": 64000
+        },
+        "mean_output_including_reasoning_tokens_per_turn_guess": {
+          "low": 2000,
+          "expected": 3000,
+          "high": 4000
+        },
+        "tokens_per_invocation_guess": {
+          "low": 144000,
+          "expected": 560000,
+          "high": 2720000
+        },
+        "basis": "One reference trace, source documents and earlier library. ChannelSpec allows 120 steps; guessed actual 8/16/40."
+      },
+      "compose_editor": {
+        "count_per_unit": 1,
+        "estimate_status": "guess_not_measured",
+        "turns_guess": {
+          "low": 10,
+          "expected": 20,
+          "high": 50
+        },
+        "mean_input_tokens_per_turn_guess": {
+          "low": 24000,
+          "expected": 48000,
+          "high": 96000
+        },
+        "mean_output_including_reasoning_tokens_per_turn_guess": {
+          "low": 2000,
+          "expected": 3000,
+          "high": 4000
+        },
+        "tokens_per_invocation_guess": {
+          "low": 260000,
+          "expected": 1020000,
+          "high": 5000000
+        },
+        "basis": "Multiple candidate harnesses and full task-local execution evidence. Guessed usage grows with evidence; not a measured multiplier."
+      },
+      "reflection": {
+        "count_per_unit": 1,
+        "estimate_status": "guess_not_measured",
+        "turns_guess": {
+          "low": 6,
+          "expected": 12,
+          "high": 30
+        },
+        "mean_input_tokens_per_turn_guess": {
+          "low": 24000,
+          "expected": 48000,
+          "high": 96000
+        },
+        "mean_output_including_reasoning_tokens_per_turn_guess": {
+          "low": 2000,
+          "expected": 3000,
+          "high": 4000
+        },
+        "tokens_per_invocation_guess": {
+          "low": 156000,
+          "expected": 612000,
+          "high": 3000000
+        },
+        "basis": "Post-delivery distillation reads task-local evidence. NO_ENTRY can still consume a full session."
+      },
+      "selection": {
+        "count_per_unit": 0,
+        "logical_tokens": 0,
+        "estimate_status": "source_fact_for_k1_only",
+        "nonmodel_controller_time": "meter independently"
+      },
+      "grading_artifact_family": {
+        "count_per_unit": 6,
+        "estimate_status": "guess_not_measured",
+        "criteria_count_guess": {
+          "low": 6,
+          "expected": 12,
+          "high": 24
+        },
+        "mean_input_per_criterion_guess": {
+          "low": 4000,
+          "expected": 8000,
+          "high": 16000
+        },
+        "mean_output_per_criterion_guess": {
+          "low": 1000,
+          "expected": 1000,
+          "high": 2000
+        },
+        "tokens_per_artifact_family_guess": {
+          "low": 30000,
+          "expected": 108000,
+          "high": 432000
+        },
+        "basis": "LAB source fixture says per-criterion grading; judge has 16384 output cap. Counts and average context/output lengths are guesses. Second-family wrapper uses the same frozen rubric; matching helper/SDK retries must be separately metered."
+      }
+    },
+    "retry_allowance_fraction_guess": {
+      "low": 0,
+      "expected": 0.1,
+      "high": 0.5
+    },
+    "retry_allowance_formula": "sum(all model stage tokens) * retry_fraction; shared placeholder excluded",
+    "retry_note": "Not a failure probability or upper bound. Includes approximate filename-matching/helper uncertainty pending meter. All actual retries retained; reserve is separate.",
+    "shared_model_tokens_per_task_guess": {
+      "low": 50000,
+      "expected": 150000,
+      "high": 500000
+    },
+    "shared_components_guess": {
+      "authoring": {
+        "low": 20000,
+        "expected": 60000,
+        "high": 200000
+      },
+      "review": {
+        "low": 20000,
+        "expected": 60000,
+        "high": 200000
+      },
+      "controller": {
+        "low": 10000,
+        "expected": 30000,
+        "high": 100000
+      }
+    },
+    "claude_model_pool_tokens": {
+      "low": 844000,
+      "expected": 3533600,
+      "high": 22604000
+    },
+    "codex_pool_tokens_separately": {
+      "low": 1490000,
+      "expected": 6296400,
+      "high": 40944000
+    },
+    "whole_study_unit_tokens": {
+      "low": 2334000,
+      "expected": 9830000,
+      "high": 63548000
+    },
+    "unit_estimate_status": "guess_not_measured"
+  },
+  "home_designs": {
+    "recommended_operational_2_tasks": {
+      "unit": "one_native_plus_one_official_k1_loop_for_one_task",
+      "runs": 2,
+      "reserve_multiplier": 1.3,
+      "formula": "pilot_unit_cost * runs * 1.3",
+      "estimate_status": "guess_not_measured",
+      "claude_model_pool_tokens": {
+        "low": 2194400,
+        "expected": 9187360,
+        "high": 58770400
+      },
+      "codex_pool_tokens_separately": {
+        "low": 3874000,
+        "expected": 16370640,
+        "high": 106454400
+      },
+      "whole_study_tokens": {
+        "low": 6068400,
+        "expected": 25558000,
+        "high": 165224800
+      },
+      "claude_expected_fits_30m": true,
+      "claude_high_fits_30m": false
+    },
+    "default_intake_12_tasks": {
+      "unit": "one_native_plus_one_official_k1_loop_for_one_task",
+      "runs": 12,
+      "reserve_multiplier": 1.3,
+      "formula": "pilot_unit_cost * runs * 1.3",
+      "estimate_status": "guess_not_measured",
+      "claude_model_pool_tokens": {
+        "low": 13166400,
+        "expected": 55124160,
+        "high": 352622400
+      },
+      "codex_pool_tokens_separately": {
+        "low": 23244000,
+        "expected": 98223840,
+        "high": 638726400
+      },
+      "whole_study_tokens": {
+        "low": 36410400,
+        "expected": 153348000,
+        "high": 991348800
+      },
+      "claude_expected_fits_30m": false,
+      "claude_high_fits_30m": false
+    },
+    "paper_style_12_tasks_3_streams": {
+      "unit": "one_native_plus_one_official_k1_loop_for_one_task",
+      "runs": 36,
+      "reserve_multiplier": 1.3,
+      "formula": "pilot_unit_cost * runs * 1.3",
+      "estimate_status": "guess_not_measured",
+      "claude_model_pool_tokens": {
+        "low": 39499200,
+        "expected": 165372480,
+        "high": 1057867200
+      },
+      "codex_pool_tokens_separately": {
+        "low": 69732000,
+        "expected": 294671520,
+        "high": 1916179200
+      },
+      "whole_study_tokens": {
+        "low": 109231200,
+        "expected": 460044000,
+        "high": 2974046400
+      },
+      "claude_expected_fits_30m": false,
+      "claude_high_fits_30m": false
+    },
+    "cheapest_one_task_smoke": {
+      "unit": "one_native_plus_one_official_k1_loop_for_one_task",
+      "runs": 1,
+      "reserve_multiplier": 1.3,
+      "formula": "pilot_unit_cost * runs * 1.3",
+      "estimate_status": "guess_not_measured",
+      "claude_model_pool_tokens": {
+        "low": 1097200,
+        "expected": 4593680,
+        "high": 29385200
+      },
+      "codex_pool_tokens_separately": {
+        "low": 1937000,
+        "expected": 8185320,
+        "high": 53227200
+      },
+      "whole_study_tokens": {
+        "low": 3034200,
+        "expected": 12779000,
+        "high": 82612400
+      },
+      "claude_expected_fits_30m": true,
+      "claude_high_fits_30m": true,
+      "claim_limit": "One-task smoke only: complete loop, artifact and metering feasibility; no cross-task library evidence or runtime benefit/adoption conclusion."
+    }
+  },
+  "oaw_pilot": {
+    "estimate_status": "all token figures are independent guesses for small stdlib development tasks; not extrapolated measured performance",
+    "workload": "D1 evidence-identity adapter toy repo, D2 routing/context simplification toy repo; new V1 handoff and V2 installer customization cases, three repeats each. No H1/FIXCHECK tasks, traces or mutation.",
+    "adapter_status": "Not implemented. Claude Code executor and native host/permission mappings require separate engineering and free fixtures.",
+    "smaller_stage_assumptions": {
+      "rollout": {
+        "tokens_guess": {
+          "low": 100000,
+          "expected": 400000,
+          "high": 1800000
+        },
+        "turns_guess": {
+          "low": 10,
+          "expected": 20,
+          "high": 50
+        },
+        "mean_input_guess": {
+          "low": 8000,
+          "expected": 16000,
+          "high": 32000
+        },
+        "mean_output_guess": {
+          "low": 2000,
+          "expected": 4000,
+          "high": 4000
+        }
+      },
+      "proposal_or_review": {
+        "tokens_guess": {
+          "low": 60000,
+          "expected": 200000,
+          "high": 900000
+        },
+        "turns_guess": {
+          "low": 5,
+          "expected": 10,
+          "high": 25
+        },
+        "mean_input_guess": {
+          "low": 10000,
+          "expected": 16000,
+          "high": 32000
+        },
+        "mean_output_guess": {
+          "low": 2000,
+          "expected": 4000,
+          "high": 4000
+        }
+      },
+      "compose_editor": {
+        "tokens_guess": {
+          "low": 100000,
+          "expected": 400000,
+          "high": 1800000
+        },
+        "turns_guess": {
+          "low": 5,
+          "expected": 10,
+          "high": 30
+        },
+        "mean_input_guess": {
+          "low": 18000,
+          "expected": 36000,
+          "high": 56000
+        },
+        "mean_output_guess": {
+          "low": 2000,
+          "expected": 4000,
+          "high": 4000
+        }
+      },
+      "reflection_or_bestof_selector": {
+        "tokens_guess": {
+          "low": 60000,
+          "expected": 200000,
+          "high": 900000
+        },
+        "turns_guess": {
+          "low": 3,
+          "expected": 5,
+          "high": 15
+        },
+        "mean_input_guess": {
+          "low": 18000,
+          "expected": 36000,
+          "high": 56000
+        },
+        "mean_output_guess": {
+          "low": 2000,
+          "expected": 4000,
+          "high": 4000
+        }
+      },
+      "one_artifact_one_judge": {
+        "tokens_guess": {
+          "low": 12000,
+          "expected": 40000,
+          "high": 180000
+        },
+        "criterion_calls_guess": {
+          "low": 4,
+          "expected": 8,
+          "high": 12
+        },
+        "mean_input_guess": {
+          "low": 2000,
+          "expected": 4000,
+          "high": 13000
+        },
+        "mean_output_guess": {
+          "low": 1000,
+          "expected": 1000,
+          "high": 2000
+        }
+      }
+    },
+    "search_per_development_task": {
+      "H": {
+        "formula": "(4R+2P+C+F+2G)*(1+retry_fraction)",
+        "tokens_guess": {
+          "low": 704000,
+          "expected": 2948000,
+          "high": 18090000
+        }
+      },
+      "O": {
+        "formula": "(2R+2P+4G)*(1+retry_fraction)",
+        "tokens_guess": {
+          "low": 368000,
+          "expected": 1496000,
+          "high": 9180000
+        },
+        "note": "One focused author and fresh review session; one base and one candidate probe, both graded. Cost includes rejected proposals."
+      },
+      "B": {
+        "formula": "(4R+selector+2G)*(1+retry_fraction)",
+        "tokens_guess": {
+          "low": 484000,
+          "expected": 2068000,
+          "high": 12690000
+        },
+        "note": "Unchanged OAW best-of-4, selector uses reflection envelope; equal rollout count and common total ceiling, not an improved persistent harness."
+      }
+    },
+    "product_one_answer_with_two_family_grading": {
+      "formula": "(R+2G)*(1+retry_fraction)",
+      "tokens_guess": {
+        "low": 124000,
+        "expected": 528000,
+        "high": 3240000
+      }
+    },
+    "episode_shared_model_tokens_guess": {
+      "low": 200000,
+      "expected": 600000,
+      "high": 2000000
+    },
+    "episode_shared_components_guess": {
+      "authoring": {
+        "low": 80000,
+        "expected": 240000,
+        "high": 800000
+      },
+      "review": {
+        "low": 80000,
+        "expected": 240000,
+        "high": 800000
+      },
+      "controller": {
+        "low": 40000,
+        "expected": 120000,
+        "high": 400000
+      }
+    },
+    "full_exploratory": {
+      "estimate_status": "guess_not_measured",
+      "unit": "one_search_and_validation_episode",
+      "episode_unit_tokens": {
+        "low": 6288000,
+        "expected": 26296000,
+        "high": 159680000
+      },
+      "runs": 1,
+      "reserve_multiplier": 1.3,
+      "formula": "pilot_unit_cost * runs * 1.3",
+      "tokens_including_reserve": {
+        "low": 8174400,
+        "expected": 34184800,
+        "high": 207584000
+      },
+      "all_claude_expected_fits_30m": false,
+      "codex_cell": "Same-design planning envelope reported separately; no Claude/Codex pair mixing. Native availability and adapter support unverified.",
+      "development_tasks": 2,
+      "search_methods": [
+        "H",
+        "O",
+        "B"
+      ],
+      "validation_cases": 2,
+      "repeats": 3,
+      "validation_arms": [
+        "current_OAW",
+        "H_candidate",
+        "O_candidate",
+        "native_no_OAW"
+      ],
+      "validation_answers": 24,
+      "unit_formula": "2*(H+O+B)+24*product_answer+shared",
+      "claim_limit": "One discovery episode is descriptive only; cannot establish cheaper process."
+    },
+    "full_three_discovery_episodes": {
+      "estimate_status": "guess_not_measured",
+      "unit": "one_search_and_validation_episode",
+      "episode_unit_tokens": {
+        "low": 6288000,
+        "expected": 26296000,
+        "high": 159680000
+      },
+      "runs": 3,
+      "reserve_multiplier": 1.3,
+      "formula": "pilot_unit_cost * runs * 1.3",
+      "tokens_including_reserve": {
+        "low": 24523200,
+        "expected": 102554400,
+        "high": 622752000
+      },
+      "all_claude_expected_fits_30m": false,
+      "codex_cell": "Same-design planning envelope reported separately; no Claude/Codex pair mixing. Native availability and adapter support unverified.",
+      "claim_limit": "Independent histories and new matched validation bundles per episode; still exploratory power, not a guaranteed proof."
+    },
+    "cheapest_product_only": {
+      "estimate_status": "guess_not_measured",
+      "unit": "one_search_and_validation_episode",
+      "episode_unit_tokens": {
+        "low": 3096000,
+        "expected": 12832000,
+        "high": 77060000
+      },
+      "runs": 1,
+      "reserve_multiplier": 1.3,
+      "formula": "pilot_unit_cost * runs * 1.3",
+      "tokens_including_reserve": {
+        "low": 4024800,
+        "expected": 16681600,
+        "high": 100178000
+      },
+      "all_claude_expected_fits_30m": true,
+      "codex_cell": "Same-design planning envelope reported separately; no Claude/Codex pair mixing. Native availability and adapter support unverified.",
+      "development_tasks": 2,
+      "search_methods": [
+        "H"
+      ],
+      "validation_cases": 2,
+      "repeats": 3,
+      "validation_arms": [
+        "current_OAW",
+        "H_candidate"
+      ],
+      "validation_answers": 12,
+      "unit_formula": "2*H+12*product_answer+shared",
+      "cannot_answer": [
+        "Cheaper than oaw-improve",
+        "Better than unchanged best-of-4",
+        "Generalization to H1",
+        "Unit attribution or U2/U3 absorption"
+      ]
+    },
+    "shared_budget_limit": "Placeholder is a guessed envelope, not free engineering. Independently meter adapter authoring/review/controller; if exceeded, stop or seek new funding before model calls."
+  },
+  "budget_controls": {
+    "claude_experiment_hard_cap_logical_tokens": 30000000,
+    "claude_stop_new_work_observed_plus_outstanding": 24000000,
+    "claude_reconciliation_headroom": 6000000,
+    "codex_recommended_operational_pilot_hard_cap": 20000000,
+    "codex_cap_is_separate": true,
+    "per_call_reservation_required": true,
+    "reservation_formula": "actual input upper bound plus configured maximum output, including child/background calls; refuse launch if total observed+outstanding would exceed pool cap",
+    "first_completed_home_unit_stop_if_claude_above": 5000000,
+    "first_completed_home_unit_stop_if_codex_above": 8000000,
+    "reserve_multiplier": 1.3,
+    "reserve_is_not_spending_authorization": true,
+    "incomplete_usage_or_overspend": "Stop paid work; preserve planned/failed/censored denominators and unknown costs; no benefit verdict."
+  },
+  "money_and_time": {
+    "cost_usd": null,
+    "elapsed_seconds": null,
+    "noncache_tokens": null,
+    "reason": "No run, no authorized endpoint tariff, no observed cache or timing distribution. Fill from independent meter; do not infer USD from logical tokens or treat subscription as free.",
+    "tariff_required_fields": [
+      "provider_and_route",
+      "quote_date",
+      "currency",
+      "input_rate",
+      "output_rate",
+      "cache_read_rate",
+      "cache_write_rate",
+      "reasoning_billing_semantics"
+    ],
+    "external_costs_to_meter": [
+      "VM CPU and wall time",
+      "storage and artifact retention",
+      "network egress",
+      "Docker image build/pull",
+      "tool APIs",
+      "human authoring/review hours",
+      "adapter development and independent review model calls",
+      "broker/controller and judge helper/subagent calls"
+    ]
+  },
+  "ledger_mapping": {
+    "answer": [
+      "native N",
+      "food base1"
+    ],
+    "proposal": [
+      "INV editor",
+      "DOM editor"
+    ],
+    "probe": [
+      "INV rollout",
+      "DOM rollout"
+    ],
+    "compose": [
+      "composition editor",
+      "final rollout, separate charge scope"
+    ],
+    "selection": [
+      "k1 trivial controller selection; model tokens zero"
+    ],
+    "reflection": [
+      "distillation and library update"
+    ],
+    "retry": [
+      "validation",
+      "transport",
+      "provider SDK",
+      "interruption/resume attempts"
+    ],
+    "grading": [
+      "official judge",
+      "second-family judge",
+      "matching helpers",
+      "mechanical checks"
+    ],
+    "authoring": [
+      "questions",
+      "rubrics",
+      "checker",
+      "adapter",
+      "protocol"
+    ],
+    "review": [
+      "fresh review",
+      "grading calibration",
+      "licence review"
+    ],
+    "controller": [
+      "setup",
+      "selection inventory",
+      "launch",
+      "reservation",
+      "broker",
+      "analysis/reporting"
+    ]
+  },
+  "completeness_requirements": [
+    "Provider usage reconciled with native CLI traces and parent/child scope IDs",
+    "No duplicate cumulative turn usage or embedded reasoning tokens",
+    "selection.usd and reflection not counted twice",
+    "Whole-study includes grading and shared model work although improvement.py grading_tokens remains separate",
+    "Unmeasured is null, never zero",
+    "No U1 test comparison for pilot/development/diagnostic stream data",
+    "Exact delivered artifact and independent grader contracts hashed"
+  ],
+  "static_validation_platform": {
+    "os": "Linux",
+    "python": "3.10.20",
+    "scope": "Document JSON/arithmetic/reference/privacy self-check only; no upstream code, installer, CLI, model or native-discovery validation"
+  },
+  "design_counts": {
+    "k": 1,
+    "independent_native_rollouts_per_task": 1,
+    "home_artifacts_graded_per_task": 3,
+    "judge_families": 2,
+    "grading_artifact_family_pairs_per_task": 6
+  }
+}
