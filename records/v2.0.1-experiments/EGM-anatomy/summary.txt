@@ -1,0 +1,115 @@
+claude primary TOTAL {'cache_read': 27323608, 'other': 6090170} PARENT {'cache_read': 24344801, 'other': 2588832} TAIL 26757824 UPPER 28282560 PRESET3_REMOVE 12283198 UN {'cache_read': 0, 'other': 347254}
+stage role cache other
+S5 parent 992382 133996
+S5 subagents 409821 349249
+S6 parent 439938 55061
+S6 subagents 235921 305362
+S7 parent 5567035 408963
+S7 subagents 659659 939533
+S8 parent 355344 33936
+S8 subagents 798739 598259
+S9 parent 6731704 381425
+S9 subagents 874667 944897
+final parent 7169298 258083
+parent_output_unallocated parent 0 557308
+prep parent 2511469 734301
+unknown parent 577631 25759
+unknown subagents 0 16784
+reads [('README.md', 200), ('docs/design.md', 200), ('.oaw/integrations/egm/agents/zoom_out.md', 41), ('.oaw/integrations/egm/resources/document_standards/feature-spec-standard.md', 41), ('.oaw/integrations/egm/resources/document_standards/zoom-out-standard.md', 40), ('.oaw/integrations/egm/agents/style.md', 40), ('.oaw/integrations/egm/resources/document_standards/implementation-readiness-standard.md', 40), ('.oaw/integrations/egm/agents/comprehension.md', 21)]
+codex primary TOTAL {'cache_read': 55434240, 'other': 3560080} PARENT {'cache_read': 41050112, 'other': 1488740} TAIL 48673510 UPPER 48673510 PRESET3_REMOVE 35654548 UN {'cache_read': 0, 'other': 0}
+stage role cache other
+S5 parent 6180096 389912
+S5 subagents 1627136 345923
+S6 parent 4729472 95626
+S6 subagents 1332096 184521
+S7 parent 8484224 158628
+S7 subagents 4742784 604903
+S8 parent 4679936 121703
+S8 subagents 1658624 318964
+S9 parent 10426752 169440
+S9 subagents 5023488 617029
+final parent 5183744 141576
+prep parent 1365888 411855
+reads []
+claude completed TOTAL {'cache_read': 29536403, 'other': 6531504} PARENT {'cache_read': 26354334, 'other': 2801117} TAIL 28900078 UPPER 30488209 PRESET3_REMOVE 13322610 UN {'cache_read': 0, 'other': 367600}
+stage role cache other
+S5 parent 1074342 141779
+S5 subagents 441284 381467
+S6 parent 439938 55061
+S6 subagents 250082 324574
+S7 parent 6104041 449049
+S7 subagents 702504 1003639
+S8 parent 420685 39978
+S8 subagents 861156 633031
+S9 parent 7320876 409204
+S9 subagents 927043 1003292
+final parent 7679598 276327
+parent_output_unallocated parent 0 600357
+prep parent 2737223 803603
+unknown parent 577631 25759
+unknown subagents 0 16784
+reads [('README.md', 220), ('docs/design.md', 220), ('.oaw/integrations/egm/agents/zoom_out.md', 45), ('.oaw/integrations/egm/resources/document_standards/feature-spec-standard.md', 45), ('.oaw/integrations/egm/resources/document_standards/zoom-out-standard.md', 44), ('.oaw/integrations/egm/agents/style.md', 44), ('.oaw/integrations/egm/resources/document_standards/implementation-readiness-standard.md', 44), ('.oaw/integrations/egm/agents/comprehension.md', 23)]
+codex completed TOTAL {'cache_read': 59921536, 'other': 3839776} PARENT {'cache_read': 44354304, 'other': 1615136} TAIL 52578842 UPPER 52578842 PRESET3_REMOVE 38677853 UN {'cache_read': 0, 'other': 0}
+stage role cache other
+S5 parent 6663168 429148
+S5 subagents 1761920 365039
+S6 parent 5209216 103972
+S6 subagents 1445376 201153
+S7 parent 9089536 168201
+S7 subagents 5103360 651280
+S8 parent 5180544 129329
+S8 subagents 1837696 338915
+S9 parent 11292160 181525
+S9 subagents 5418880 668253
+final parent 5412992 146454
+prep parent 1506688 456507
+reads []
+claude plan TOTAL {'cache_read': 17134038, 'other': 1346165} PARENT {'cache_read': 4329862, 'other': 273370} TAIL 17113600 UPPER 17294957 PRESET3_REMOVE 5575547 UN {'cache_read': 0, 'other': 113794}
+stage role cache other
+S5 parent 102770 11096
+S5 subagents 787716 95405
+S6 parent 187363 7040
+S6 subagents 109494 63331
+S7 parent 1587134 66608
+S7 subagents 1145956 221001
+S8 parent 272640 11067
+S8 subagents 794907 112019
+S9 parent 1268616 36778
+S9 subagents 9966103 467245
+final parent 770709 25589
+parent_output_unallocated parent 0 67563
+prep parent 140630 47629
+reads [('catalog.py', 14), ('plans/v2.0.1-execution.md', 10), ('OWNER_REQUEST.md', 10), ('validation-2026-11-07-RESULT.md', 10), ('codemap-comparison-2026-11-06.md', 10), ('DECISIONS-D21-D31.md', 10), ('AGENTS.md', 10), ('egm-selftest-2026-11-06-RESULT.md', 9)]
+claude defects TOTAL {'cache_read': 21721597, 'other': 4785393} PARENT {'cache_read': 19389770, 'other': 2035605} TAIL 21054496 UPPER 22390891 PRESET3_REMOVE 9515784 UN {'cache_read': 0, 'other': 288410}
+stage role cache other
+S5 parent 772984 101658
+S5 subagents 331402 272715
+S6 parent 337100 41463
+S6 subagents 170783 232883
+S7 parent 4204724 315702
+S7 subagents 465127 724128
+S8 parent 355344 33936
+S8 subagents 684856 470979
+S9 parent 5258106 298763
+S9 subagents 679659 743889
+final parent 5827993 209061
+parent_output_unallocated parent 0 427811
+prep parent 2055888 581452
+unknown parent 577631 25759
+unknown subagents 0 16784
+reads [('README.md', 160), ('docs/design.md', 160), ('.oaw/integrations/egm/agents/zoom_out.md', 33), ('.oaw/integrations/egm/resources/document_standards/feature-spec-standard.md', 33), ('.oaw/integrations/egm/resources/document_standards/zoom-out-standard.md', 32), ('.oaw/integrations/egm/agents/style.md', 32), ('.oaw/integrations/egm/resources/document_standards/implementation-readiness-standard.md', 32), ('.oaw/integrations/egm/agents/comprehension.md', 17)]
+codex defects TOTAL {'cache_read': 44797952, 'other': 2836392} PARENT {'cache_read': 33276544, 'other': 1180327} TAIL 39333974 UPPER 39333974 PRESET3_REMOVE 29021357 UN {'cache_read': 0, 'other': 0}
+stage role cache other
+S5 parent 5045120 337080
+S5 subagents 1292032 267584
+S6 parent 3918592 83525
+S6 subagents 1079808 148796
+S7 parent 6866432 132804
+S7 subagents 3819776 486200
+S8 parent 3901952 65683
+S8 subagents 1314944 261029
+S9 parent 8275456 138986
+S9 subagents 4014848 492456
+final parent 4220928 111759
+prep parent 1048064 310490
+reads []

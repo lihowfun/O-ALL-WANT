@@ -1,0 +1,99 @@
+[
+  {
+    "path": "records/v2.0.1-experiments/capability/PLAN.md",
+    "versions": [
+      {
+        "commit": "b3605ba41edb1e60ca68f3c4c573c463e48c6030",
+        "title": "records: capability plan v5 converged - gpt-6-astra confirms its blocker is closed",
+        "lines": 225,
+        "bytes": 25170,
+        "sha256": "ca6a24a70a86531c36a8e03984adaadba4aa3df84b1e92aa70547bfa012f3577"
+      },
+      {
+        "commit": "ba4c7f410698350893eaaccababa3940946974bf",
+        "title": "records: capability plan v5 - escalation points from gpt-6-astra and Fable 5.1",
+        "lines": 225,
+        "bytes": 24957,
+        "sha256": "9d8875cd7d52e8bb9f08435f3ae41485bfa58ed1e5e5871f0a72195f95860598"
+      },
+      {
+        "commit": "ea791fc35d40a2fb5330094e5600a944921dd3e0",
+        "title": "records: capability plan v4 - Codex round 3 points, then escalation",
+        "lines": 212,
+        "bytes": 22621,
+        "sha256": "369abd955174695ca30ab8f06d0b2330409b1e4f7b4d85dda1dc2b448362ea61"
+      },
+      {
+        "commit": "a2aed615563c4bee8d1aca9638b40332b717dff1",
+        "title": "records: capability plan v3 - Codex round 2 points",
+        "lines": 188,
+        "bytes": 19360,
+        "sha256": "bb6dd99b743ef769d9c032df4000d97b9094a5456944a9109e0673949b373e9c"
+      },
+      {
+        "commit": "81c00bde25dda670427282961172aee1b429729c",
+        "title": "records: capability plan v2 - all 12 points of Codex round 1",
+        "lines": 141,
+        "bytes": 13632,
+        "sha256": "53dfd9db301088a83788dee3402d7e1d6eb4d70c2283e854545f2137d5bb75c8"
+      },
+      {
+        "commit": "d027959d972d7757b4a54f1ae91d6cd0842cdd98",
+        "title": "records: capability draft plan - PPT and video self-tests after harness work (D41)",
+        "lines": 94,
+        "bytes": 6507,
+        "sha256": "662cda81fa4cb5e5cbb759eae7de8e7c186daeaad4139bcff66eeb291d54c290"
+      }
+    ]
+  },
+  {
+    "path": "records/v2.0.1-experiments/H1/PREREG.md",
+    "versions": [
+      {
+        "commit": "777676a25192261a73b0ea9c18bd8e137f581619",
+        "title": "records: H1 pre-freeze amendment 2 - class C ceiling fill (D42), earlier runner records kept",
+        "lines": 345,
+        "bytes": 48080,
+        "sha256": "ae009ea4cf4c0213192185c194ca92e6d4b1faf6deda4346d2a3a4ab24088f1b"
+      },
+      {
+        "commit": "3ac075a9aebd1ec58f4913588f5db8a1432be683",
+        "title": "records: H1 amendment before freeze - grade the design note a design unit names",
+        "lines": 334,
+        "bytes": 44494,
+        "sha256": "dc8d83a518ebe27fc8c5458d9c6e26b9b2a392329d78c688942494ab3c76bbdf"
+      },
+      {
+        "commit": "c5fd20a2c7e1fca6c7d597e523a3c0750ecb7b25",
+        "title": "records: H1 plan version 4, reviewed and ready to freeze (nothing scored)",
+        "lines": 328,
+        "bytes": 42926,
+        "sha256": "014540831436e922550cee22d9a2725a6b3d2279caa67ee17f23840105b4baa8"
+      }
+    ]
+  },
+  {
+    "path": "records/v2.0.1-experiments/FIXCHECK/FIXCHECK.md",
+    "versions": [
+      {
+        "commit": "4033f524312fed19cb35216ee8089d736382b4f8",
+        "title": "test: preregister D45 fixcheck and offline regression gates",
+        "lines": 84,
+        "bytes": 8639,
+        "sha256": "0e09094942186146bf54fce1e3461009571b5fe627cfed3e3d29de7a25d7a58b"
+      }
+    ]
+  },
+  {
+    "path": "records/plan-review-2026-11-07/draft-as-reviewed.md",
+    "lines": 324,
+    "bytes": 27907,
+    "sha256": "03cebf62535efbeaa04e5535c1020b52d976202e18c114fa55b66ffd4c35b34a"
+  },
+  {
+    "path": "records/v2.0.1-experiments/H1/D45-review.md",
+    "lines": 57,
+    "bytes": 8811,
+    "sha256": "cd9c6be4e2b383bb9a2058123e4f54e824510b0c9f772ffd50e852199c0d07e3"
+  }
+]

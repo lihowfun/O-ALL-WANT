@@ -1,0 +1,1346 @@
+[
+  {
+    "cell": "claude",
+    "case": "flags",
+    "defect": "C1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-a/raw/E-flags.a1.jsonl",
+    "line": 83,
+    "anchor": "(?:Cross|cross).tenant|(?:tenant|Tenant).*(?:URL|URL|isolation)|URL.*tenant",
+    "excerpt": "ign.md:9`. - **Problem:** The write path checks only for the `flag_admin` role and takes `tenant_id` from the URL. Nothing compares the URL tenant with `principal.tenant_id`, which the principal does carry (`:18`). As written, any tenant's `flag_admin` can change any other tenant's overrides. The design keeps authorization in the applica",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "flags",
+    "defect": "M1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-a/raw/E-flags.a1.jsonl",
+    "line": 83,
+    "anchor": "KeyError",
+    "excerpt": "returns `_flags.get(name, False)`. It returns False for an unknown flag and never raises `KeyError`. Only `set_global` raises `KeyError` (`src/flags.py:19-20`). - **Problem:** The 404 for unknown flags depends on an exception that never happens. Rollout step 2 also says to keep the existing signat",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "flags",
+    "defect": "M2",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-a/raw/E-flags.a1.jsonl",
+    "line": 83,
+    "anchor": "1,200|1,800|6.*200",
+    "excerpt": " `docs/design.md:13`; rollout step 4 at `:68`. - **Problem:** Six slots × 200 commits/s = 1,200 commits/s. The requirement is 1,800 changed overrides/s for 10 minutes with no rate rejections. Each commit holds exactly one change (`:55`), there is no queue, and requests without a slot get 429 (`",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "uploads",
+    "defect": "C1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-a/raw/E-uploads.a1.jsonl",
+    "line": 86,
+    "anchor": "(?:Redelivery|redelivery|Duplicate|duplicate).*(?:state|success|delete)|not safe to repeat|not.*idempotent",
+    "excerpt": "e `incoming` object and then crashes before deleting the SQS message (design.md:45), or a duplicate copy simply arrives later. Step 1 finds no object, deletes a row that is already `clean` or `infected`, and sends `upload_failed` after `upload_scanned` was already sent. For a clean file, the object is then left in `files` with no row pointing to it. - **D",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "uploads",
+    "defect": "C2",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-a/raw/E-uploads.a1.jsonl",
+    "line": 86,
+    "anchor": "(?:Download|download).*(?:unscanned|pending)|unscanned.*download",
+    "excerpt": "ective is clear and the overall structure is simple, but three findings are blockers: the download endpoint can serve unscanned files (breaks R1), the worker fleet is smaller than the average load (breaks R2 and R3), and the scan worker does not handle repeated SQS messages safely, which ADR-001 requires.  I read every requir",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "uploads",
+    "defect": "M1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-a/raw/E-uploads.a1.jsonl",
+    "line": 86,
+    "anchor": "600|fleet|1,200",
+    "excerpt": "ngs are blockers: the download endpoint can serve unscanned files (breaks R1), the worker fleet is smaller than the average load (breaks R2 and R3), and the scan worker does not handle repeated SQS messages safely, which ADR-001 requires.  I read every required file: the persona, the standard, ",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "digest",
+    "defect": "C1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-a/raw/E-digest.a1.jsonl",
+    "line": 89,
+    "anchor": "(?:cache|Cache).*(?:private|personal|recipient)|(?:HTML|html).*(?:cache|Cache)",
+    "excerpt": "cache component that exists elsewhere is unverified.  ---  ## 🔴 Blocker 1: The per-locale HTML cache leaks one user's private notifications to other users  - **Label:** Factual defect. Also a YAGNI / premature-optimization problem. - **Evidence:**   - design.md:31-33: \"Keep a run-wide HTML cache ind",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "digest",
+    "defect": "M1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-a/raw/E-digest.a1.jsonl",
+    "line": 89,
+    "anchor": "120,?000|2,?000.*minute|90 minutes",
+    "excerpt": " budget throughout the 07:00–08:00 window\". - **Effect:** The ceiling is 2 × 1,000 × 60 = 120,000 requests per hour. Sending 180,000 messages takes at least 90 minutes, before counting timeout retries (design.md:39), which use the same request budget. About 60,000 recipients would still be queued",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "digest",
+    "defect": "M2",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-a/raw/E-digest.a1.jsonl",
+    "line": 89,
+    "anchor": "100.*(?:row|limit)|LIMIT 100|truncat",
+    "excerpt": "e` column has no stated purpose (see Nit 2).  ## 🔴 Blocker 2: The reused retrieval helper truncates at 100 rows, but the design says it returns the complete set  - **Label:** Factual defect. - **Evidence:**   - design.md:28: \"This existing helper returns the complete pending set through cutoff.\" ",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "export",
+    "defect": "C1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-a/raw/E-export.a1.jsonl",
+    "line": 79,
+    "anchor": "(?:user|caller).*(?:export|subject)|(?:export|Export).*(?:user|caller)",
+    "excerpt": " design fails on three blockers: it can't handle the target request volume, any signed-in user can export someone else's data, and open legal requests are lost at cutover. There are also four major findings. Everything else is either consistent with the sources or minor.  The review is complete: I read t",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "export",
+    "defect": "C2",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-a/raw/E-export.a1.jsonl",
+    "line": 79,
+    "anchor": "(?:open|legacy|outstanding).*(?:request|task)|(?:drop|Drop).*export_tasks",
+    "excerpt": " handle the target request volume, any signed-in user can export someone else's data, and open legal requests are lost at cutover. There are also four major findings. Everything else is either consistent with the sources or minor.  The review is complete: I read the persona, the standard, the target and all",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "export",
+    "defect": "M1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-a/raw/E-export.a1.jsonl",
+    "line": 79,
+    "anchor": "960|1,200.*(?:day|daily)|capacity",
+    "excerpt": "rkers, 6 minutes per export, \"so this pool covers R3\") against R3 at `docs/design.md:27` (1,200 requests/day). - **The math:**   - One worker handles 1440 / 6 = 240 exports/day, so 4 workers handle 960/day. That is 80% of R3.   - Meeting 1,200/day needs at least 5 workers running at 100% busy. A queue at 10",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "payouts",
+    "defect": "C1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-a/raw/E-payouts.a1.jsonl",
+    "line": 111,
+    "anchor": "refund|Refund",
+    "excerpt": "e is lean, with no speculative abstractions, caching or queues. It fails on three points: refunds are computed wrongly, the payout detail endpoint is unscoped, and it depends on a component that doesn't exist.  Paths below are relative to the workspace root, `[local path omitted]",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "payouts",
+    "defect": "C2",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-a/raw/E-payouts.a1.jsonl",
+    "line": 111,
+    "anchor": "ownership|another seller|other sellers",
+    "excerpt": "ic wrongly.  **2. Blocker: factual defect (as written). The payout detail endpoint has no ownership check.** - **Evidence:**   - `docs/design.md:50` scopes the list endpoint to the JWT `sub`.   - `docs/design.md:52-54` says the detail handler \"loads the payout by `payout_id` and returns it\", with n",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "payouts",
+    "defect": "M1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-a/raw/E-payouts.a1.jsonl",
+    "line": 111,
+    "anchor": "HoldPolicy",
+    "excerpt": "andler must filter on `seller_id = sub`.  **3. Major: factual defect plus open question. `HoldPolicy` and the hold window have no source.** - **Evidence:**   - `docs/design.md:25-26` relies on `HoldPolicy`, which appears nowhere in the codebase or ADRs (grep returns only design.md).   - `LedgerEntry",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "metering",
+    "defect": "C1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-a/raw/E-metering.a1.jsonl",
+    "line": 101,
+    "anchor": "(?:dedup|Dedup).*(?:expir|window|1 h|24)|1 h.*24",
+    "excerpt": "oal at design.md:23 is not affected.  ### 2. Blocker: factual defect against R1. A 1-hour dedup window is shorter than the 24-hour retry window - **Evidence:**   - Cleanup deletes `seen_events` rows older than 1 hour (design.md:51-52), measured from insert time (`seen_at DEFAULT now()`, design.md:70).   - The client keeps any batch it can't ",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "metering",
+    "defect": "C2",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-a/raw/E-metering.a1.jsonl",
+    "line": 101,
+    "anchor": "overwrit|tenant trust",
+    "excerpt": "cord has a tenant field.  ---  ### 1. Blocker: factual defect. Ingest does not resolve or overwrite `tenant_id` - **Evidence:** design.md:29-31 says ingest is unchanged because `authenticate()` resolves the tenant and overwrites any client-sent `tenant_id`. In the code:   - `authenticate()` only r",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "metering",
+    "defect": "M1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-a/raw/E-metering.a1.jsonl",
+    "line": 101,
+    "anchor": "48,000|48k|60,000|capacity",
+    "excerpt": "lem to Postgres.  ### 3. Major: factual defect against R2. 16 consumers at 3,000/s is not 60,000/s - **Evidence:** design.md:36-38 says 16 partitions × one consumer each at 3,000 events/s \"covers R2\". 16 × 3,000 = 48,000/s, but R2 asks for 60,000/s at peak (design.md:18). - **Effect:** At peak t",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "resets",
+    "defect": "C1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-a/raw/E-resets.a1.jsonl",
+    "line": 84,
+    "anchor": "purpose",
+    "excerpt": " so it inherits the wrong lifetime too.  ### B3. Redemption never checks that the token's purpose matches the route (factual defect) - **Where:** docs/design.md:32-34 against requirement docs/design.md:11. Related: :35, :53-55. - **Discrepancy:** Line 33 rejects a token only if the row is absent,",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "resets",
+    "defect": "M1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-a/raw/E-resets.a1.jsonl",
+    "line": 84,
+    "anchor": "24.hour|24 hours|60 minutes|60.minute",
+    "excerpt": "01-link-lifetimes.md:7-8. - **Discrepancy:** The design says verification tokens live for 60 minutes. ADR-001, which is Accepted, says 24 hours and calls the lifetimes \"product requirements for every rollout stage\". Its rationale (adr-001:12) is customers who open onboarding email the next morning, ",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "resets",
+    "defect": "M2",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-a/raw/E-resets.a1.jsonl",
+    "line": 84,
+    "anchor": "20.*(?:start|email|mail)|18,000|capacity|30.*600",
+    "excerpt": "e. The token format at line 21 matches ADR-001:9.  ---  ## Blockers  ### B1. Planned mail capacity is below the required issuance rate (factual defect) - **Where:** docs/design.md:13-14 against docs/design.md:43-45 and :48. - **Discrepancy:** The requirements are 30 eligible issuances per second f",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "cron",
+    "defect": "C1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-a/raw/E-cron.a1.jsonl",
+    "line": 88,
+    "anchor": "cache.*(?:tenant|ownership)|(?:Cache|cache).*(?:authorization|check)",
+    "excerpt": "change `invoke`. Either way, line 41 has to describe the real behavior.  ### Blocker 2: A cache hit skips the tenant check, so other tenants can read private run output - **Lines:** design.md 54, 58-63. Requirement at line 16. Context at line 7. - **Type:** Factual defect. - **Description:** The middleware only resolves `tenant_id` (line",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "cron",
+    "defect": "M1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-a/raw/E-cron.a1.jsonl",
+    "line": 88,
+    "anchor": "720|120.*10",
+    "excerpt": " 13-14. Gates at lines 75-78. - **Type:** Factual defect (arithmetic). - **Description:** 120 schedules every 10 seconds is at most 720 occurrences per minute. The requirement is 900 per minute for 30 minutes. - **Effect:** The backlog grows by about 180 per minute. An occurrence due at minute *t* is created at",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "cron",
+    "defect": "M2",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-a/raw/E-cron.a1.jsonl",
+    "line": 88,
+    "anchor": "never raises|Outcome|invoke[^\\n]{0,60}wrong",
+    "excerpt": "ly `runtime.py`, so there is nothing else to reuse.  ---  ### Blocker 1: The design gets `invoke` wrong, so failed runs are marked succeeded and never retried - **Lines:** design.md 41-44. Compare `src/runtime.py` 12-17. - **Type:** Factual defect. - **Description:** Line 41 says `invoke` \"returns an O",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "invoices",
+    "defect": "C1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-b/raw/E-invoices.a1.jsonl",
+    "line": 103,
+    "anchor": "(?:finalized|Finalized).*(?:chang|modif)|(?:late|Late).usage",
+    "excerpt": "Verdict: Not ready.** The design has three Blockers. The 12-worker sizing cannot meet R1. Late usage changes finalized invoices, which ADR-002 forbids. Invoice PDFs containing personal data are public at URLs anyone can guess. The Context section is clear enough to review, and the overall shape (coo",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "invoices",
+    "defect": "C2",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-b/raw/E-invoices.a1.jsonl",
+    "line": 103,
+    "anchor": "(?:public|Public).*(?:PDF|invoice|read|disclosure)|(?:PDF|Invoice).*(?:public|guess)",
+    "excerpt": "ign has three Blockers. The 12-worker sizing cannot meet R1. Late usage changes finalized invoices, which ADR-002 forbids. Invoice PDFs containing personal data are public at URLs anyone can guess. The Context section is clear enough to review, and the overall shape (coordinator, shards, one resumable draft per subscription and period, idempotent charge key) fits the problem.  I read every fil",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "invoices",
+    "defect": "M1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-b/raw/E-invoices.a1.jsonl",
+    "line": 103,
+    "anchor": "8.*(?:hour|20)|30,000|17 workers|capacity",
+    "excerpt": ":** 2.4M subscriptions x 0.15 s = 360,000 worker-seconds. Split across 12 workers that is 30,000 s, about 8 h 20 min. R1 allows 6 h (21,600 s), which needs at least 17 workers even with zero coordinator, queue or retry overhead. The design states both numbers itself, so the gap is plain arithmet",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "ratelimit",
+    "defect": "C1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-b/raw/E-ratelimit.a1.jsonl",
+    "line": 75,
+    "anchor": "X-Account-ID|client.controlled|Client.controlled",
+    "excerpt": " and `adr-001-quota-contract.md` line 13. - **What's wrong:** `account_id` is taken from `X-Account-ID` when that header is present. Line 5 says the TLS frontend forwards client headers unchanged, so any authenticated client can set it. - **Why it matters:**   - **Charging other accounts:** a client c",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "ratelimit",
+    "defect": "M1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-b/raw/E-ratelimit.a1.jsonl",
+    "line": 75,
+    "anchor": "PostgreSQL|control.plane SQL",
+    "excerpt": "onents don't duplicate anything that already exists.  ## 🔴 Blocker 1: Reading policy from PostgreSQL on each request breaks accepted ADR-002 - **Where:** `design.md` lines 20, 27–28 and 57–58 (plan steps 1–2), against `adr-002-control-plane-isolation.md` lines 6–7 and 10. - **What's wrong:** The des",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "ratelimit",
+    "defect": "M2",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-b/raw/E-ratelimit.a1.jsonl",
+    "line": 75,
+    "anchor": "16,000|24,000|capacity",
+    "excerpt": "- It lets a client header choose which account's quota is charged. - Its own numbers show 16,000 evaluations/sec of Redis capacity against a 24,000/sec target.  The document has enough context to review. Its objective is clear: a shared limiter replaces the per-worker counters. That matches `REA",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "search",
+    "defect": "C1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-b/raw/E-search.a1.jsonl",
+    "line": 106,
+    "anchor": "(?:delet|Delet).*(?:event|publish)|erasure",
+    "excerpt": "rd, the target and every supplied context file. Nothing was modified.  ## Blockers  **B1. Delete events are never published, so R5 (erasure within 24 h) is not met.** Factual defect. - **Evidence:** `docs/design.md:28-29` says `publish_change()` emits an event for \"INSERT, UPDATE and DELETE … `op` = `c`, `u` or `d`\". `d",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "search",
+    "defect": "C2",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-b/raw/E-search.a1.jsonl",
+    "line": 106,
+    "anchor": "(?:balance|Balance).*(?:replay|redeliver|idempoten|duplicate)|at.least.once",
+    "excerpt": "a relay behaviour that doesn't exist, uses an update model that breaks under the accepted at-least-once delivery, and its own throughput figure doesn't fit the rebuild window. I read the persona, the standard, the target and every supplied context file. Nothing was modified.  ## Blockers  **B1. Delete ",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "search",
+    "defect": "M1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-b/raw/E-search.a1.jsonl",
+    "line": 106,
+    "anchor": "37,500|10.4|10 hours|rebuild throughput",
+    "excerpt": "ackfill writes 90M documents at 2,400 actions/s (`design.md:78-79`). 90,000,000 / 2,400 = 37,500 s, about 10.4 h, against R6's 8-hour window (`design.md:21`). That is before counting the relay drain, the per-customer invoice summing and the alias switch. - **Why it matters:** The claim \"For 90M ",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "webhooks",
+    "defect": "C1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-b/raw/E-webhooks.a1.jsonl",
+    "line": 67,
+    "anchor": "(?:tenant|Tenant).*(?:isolation|status|API)|(?:Status|status).*tenant",
+    "excerpt": " Two of the Majors depend on facts the supplied sources don't settle.  ### Blocker 1: The status API lets any tenant read other tenants' deliveries - **Evidence:** design.md:66 runs `SELECT * FROM deliveries WHERE id = :id` with no tenant filter.   - design.md:69 says the middleware supplies `tenant_id`, but the query never uses it.",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "webhooks",
+    "defect": "M1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-b/raw/E-webhooks.a1.jsonl",
+    "line": 67,
+    "anchor": "720|1,200|24 slots",
+    "excerpt": "rn 404 for ids owned by other tenants. Add a cross-tenant test to step 3.  ### Blocker 2: 24 slots cannot reach 1,200 deliveries per minute - **Evidence:**   - design.md:11-12 require 1,200 per minute (20 per second) while every receiver takes 2 seconds.   - design.md:45-46 give 12 processes × 2 s",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "webhooks",
+    "defect": "M2",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-b/raw/E-webhooks.a1.jsonl",
+    "line": 67,
+    "anchor": "create_delivery|return contract",
+    "excerpt": " at dispatch is required is an open question.  ### Major 2: The design misdescribes what `create_delivery` returns - **Evidence:** design.md:24 says \"The helper returns a row mapping; ingestion uses result['id'].\" In fact `create_delivery` returns `fetchone()[0]`, which is a plain integer id (src/webhook",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "carts",
+    "defect": "C1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-b/raw/E-carts.a2.jsonl",
+    "line": 81,
+    "anchor": "(?:aggregate|Aggregate|sum|Sum).*(?:tax|round)|(?:tax|Tax).*(?:aggregate|sum|round)",
+    "excerpt": "13, :36-38, :20, :22; pricing.py:27-35  - **Discrepancy:** G4 (line 13) requires rounding tax per discounted line and then summing. Line 37 instead calls `tax_cents` once on the summed merchandise, and line 38 stores a \"single tax amount.\" - **Effect:** Totals differ whenever rounding at line level and rounding the total disagree. For example, three 5-cent lines at 10% give 1+1+",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "carts",
+    "defect": "M1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-b/raw/E-carts.a2.jsonl",
+    "line": 81,
+    "anchor": "Expired coupons|expiry validation",
+    "excerpt": "either repository exists yet; step 1 of the rollout creates them.  ---  ### 1. 🔴 Blocker: Expired coupons are accepted, which breaks G5 **Scope:** design.md:14, :21, :30-32, :4; pricing.py:14-20  - **Discrepancy:** Line 21 says `discount_cents` \"rejects expired coupons.\" It does not. pricing.py:14-20 onl",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "carts",
+    "defect": "M2",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-b/raw/E-carts.a2.jsonl",
+    "line": 81,
+    "anchor": "(?:decimal|Decimal).*(?:string|String)|(?:v1|V1).*(?:encoding|integer|money)",
+    "excerpt": "t. This is minor, but it may have led to the wrong single-call design.  ### 3. 🔴 Blocker: v1 decimal-string money encoding violates Accepted ADR-001 **Scope:** design.md:52-54, :66, :71; adr-001-v1-money.md:6-11  - **Discrepancy:** Lines 52-53 render all five money fields as two-place decimal strings (`\"total\": \"12.34\"`)",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "migrations",
+    "defect": "C1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-b/raw/E-migrations.a1.jsonl",
+    "line": 108,
+    "anchor": "lost.update|overwrit|stale backfill",
+    "excerpt": "needs to be revisited.  **B3. Computing values in Python from a separate SELECT creates a lost-update race with the dual-writing app.** - **Where:** docs/design.md:34-38, with :28-29 and :33. - **Evidence:**   - Step 1 reads `amount`. Step 2 computes `amount_cents` in Python.   - Step 3 writes those ",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "migrations",
+    "defect": "C2",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-b/raw/E-migrations.a1.jsonl",
+    "line": 108,
+    "anchor": "(?:drop|DROP|contract|Contract).*(?:deploy|release|column)|seven days",
+    "excerpt": "fc-b4c88b7d84d7/scratchpad/x2/runs/claude-b/ws/E-migrations.  ---  ## Blockers  **B1. The contract runs in the same deploy as the backfill and drops the old column. This breaks ADR-002 and R4.** - **Where:** docs/design.md:28-29, :48, :51. Compare docs/adr-002-expand-contract-releases.md:9-11 and docs/design.md:13. - **Evidence:**   - Line 51 runs the contract ",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "migrations",
+    "defect": "M1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-b/raw/E-migrations.a1.jsonl",
+    "line": 108,
+    "anchor": "66.7|67.*hour|240,000|400,000",
+    "excerpt": "here:** docs/design.md:11, :41. - **Arithmetic:**   - 400 M rows / 1,000 rows per batch = 400,000 batches.   - Each batch takes about 100 ms of work plus 500 ms of pause, so about 0.6 s.   - 400,000 x 0.6 s = about 240,000 s, or about 67 hours, against a 6-hour target.   - Even with no pause, 400",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "invites",
+    "defect": "C1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-b/raw/E-invites.a1.jsonl",
+    "line": 112,
+    "anchor": "(?:email|Email).*(?:identity|match|compar)|(?:R2|Acceptance).*(?:enforc|email)",
+    "excerpt": "hoever owns the requirement; the design must not quietly claim R4 is met.  ### Finding 3: R2 is never enforced - **Severity:** Blocker (factual defect: a stated requirement is not covered) - **Affected Scope:** design.md:18 (R2), against Accept steps design.md:46-55 - **Simplicity Rationale:**   - R2 says o",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "invites",
+    "defect": "C2",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-b/raw/E-invites.a1.jsonl",
+    "line": 112,
+    "anchor": "re.charges|Retry safety|retried accept|retry.*billing",
+    "excerpt": "membership.py:23-28). It does this even when the upsert hit an existing row.   - So every retried accept for an owner, admin or member adds one seat locally and reports one more seat to billing. That breaks R6 (one paid seat per billable member).   - The re-run is also more complex than it needs to be. ",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "invites",
+    "defect": "M1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-b/raw/E-invites.a1.jsonl",
+    "line": 112,
+    "anchor": "50.*s|10.*(?:msg|message)|500.*30",
+    "excerpt": "icity Rationale:**   - ADR-002 sends all transactional email through one worker. It sends 10 messages per second, and that limit is shared by every service.   - 500 invitations take at least 50 seconds to send even with an empty queue, so \"every email sent within 30 seconds\" cannot happen.   - The d",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "auditlog",
+    "defect": "C1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-b/raw/E-auditlog.a1.jsonl",
+    "line": 78,
+    "anchor": "hold.*(?:queued|planning|snapshot|delet)|(?:queued|planning|snapshot).*hold",
+    "excerpt": "use that same check, or take tenant_id from the principal and not from the body.  **B2. A hold acknowledged after purge planning does not stop deletion** - **Where:** design.md:34-39 and :78, compared with design.md:12. - **Problem:**   - Purge planning picks `hold=false` partitions each night and commits their object keys to a durable queue (lin",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "auditlog",
+    "defect": "C2",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-b/raw/E-auditlog.a1.jsonl",
+    "line": 78,
+    "anchor": "(?:tenant|Tenant).*(?:export|Export)|(?:export|Export).*tenant",
+    "excerpt": "requires lasting identity. So this is not reinventing the wheel.  ---  ## Blockers  **B1. Exports don't check that the requested tenant is the auditor's own tenant** - **Where:** design.md:42-43 and :62, compared with design.md:13; existing pattern at src/audit.py:29. - **Problem:** Export POST only checks `role=auditor` and then uses the `tenant_id` from the r",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "claude",
+    "case": "auditlog",
+    "defect": "M1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/claude-b/raw/E-auditlog.a1.jsonl",
+    "line": 78,
+    "anchor": "120 minutes|120 min|240.*2|90.minute",
+    "excerpt": "ncel queue entries. The \"reviewed list\" at go-live (line 78) has the same gap.  **B3. The 90-minute export target can't be met by the design as written** - **Where:** design.md:15, :16, :46-47 and :77, with units fixed at :8. - **Problem:** A tenant/day can hold up to 240 GiB of compressed data (li",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "flags",
+    "defect": "C1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-a/raw/E-flags.a1-rollouts/rollout-2026-11-09T02-33-03-01a1bc6f-74bb-7562-93ae-73181fdcb4b1.jsonl",
+    "line": 34,
+    "anchor": "(?:Cross|cross).tenant|(?:tenant|Tenant).*(?:URL|URL|isolation)|URL.*tenant",
+    "excerpt": "Three concrete defects need correction:  1. **Blocker — Tenant authorization is incomplete (docs/design.md:17–24, 30).** The application owns resource authorization, but writes check only `flag_admin` and use the tenant ID from the URL. There is no requirement to match that ID to the signed principal’s `tenant_id`. Consequently, an administrator can select another tenant’s override row through the URL, violating line 9. DELETE inherits the same problem. Require the URL tenant to equal the authenticated tenant before accessing the resource, or derive the row key directly from the principal.  2. **Major — Unknown-flag validation relies on behavior the existing functi",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "flags",
+    "defect": "M1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-a/raw/E-flags.a1-rollouts/rollout-2026-11-09T02-33-03-01a1bc6f-74bb-7562-93ae-73181fdcb4b1.jsonl",
+    "line": 34,
+    "anchor": "KeyError",
+    "excerpt": "al` with `_flags.get(name, False)`, so an unknown flag returns false rather than raising `KeyError`. The specified exception mapping therefore cannot produce the required 404. The foreign key can reject an unknown PUT later, but that does not implement the promised validation or response; an unkno",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "flags",
+    "defect": "M2",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-a/raw/E-flags.a1-rollouts/rollout-2026-11-09T02-33-03-01a1bc6f-74bb-7562-93ae-73181fdcb4b1.jsonl",
+    "line": 34,
+    "anchor": "1,200|1,800|6.*200",
+    "excerpt": "esign.md:13, 53–57).** Six slots at at most 200 commits/s provide an aggregate ceiling of 1,200 changed overrides/s, because every changed override requires its own commit. The requirement is 1,800/s for ten minutes without rate rejection. Even with perfectly even loading, the proposed capacity",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "uploads",
+    "defect": "C1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-a/raw/E-uploads.a1-rollouts/rollout-2026-11-09T02-48-15-01a1bc7d-5fc7-70b3-a651-bb525afaf598.jsonl",
+    "line": 39,
+    "anchor": "(?:Redelivery|redelivery|Duplicate|duplicate).*(?:state|success|delete)|not safe to repeat|not.*idempotent",
+    "excerpt": "**      A successful worker removes the source object (`docs/design.md:45`). A subsequent duplicate message encounters a missing source and deletes the upload row and emits `upload_failed` (`docs/design.md:37–39`). Concurrent or repeated delivery can also repeat scanning and webhook emission, and the unconditional DLQ update can replace a completed verdict with `error` (`docs/design.md:41–49`). This contradicts the explicit accepted requirement that every consumer step be safe to repeat (`docs/adr-001-sqs-standard-scan-queue.md:11–17`). Define durable processing and terminal-state behavior shared by workers and the DLQ consumer; source-object absence cannot independently determine abandonment.  4. **Major — Backlog rollout deletes uploads that are still legitimately in progres",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "uploads",
+    "defect": "C2",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-a/raw/E-uploads.a1-rollouts/rollout-2026-11-09T02-48-15-01a1bc7d-5fc7-70b3-a651-bb525afaf598.jsonl",
+    "line": 39,
+    "anchor": "(?:Download|download).*(?:unscanned|pending)|unscanned.*download",
+    "excerpt": " GET. New and migrated rows point to `incoming` (`docs/design.md:75,86`), so a tenant can download an uploaded object while its status remains `pending`, directly violating R1 (`docs/design.md:12`). `error` also passes the gate. Require `status = 'clean'` before issuing any download URL. This is the simplest architectural enforcement point.  2. **Ma",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "uploads",
+    "defect": "M1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-a/raw/E-uploads.a1-rollouts/rollout-2026-11-09T02-48-15-01a1bc7d-5fc7-70b3-a651-bb525afaf598.jsonl",
+    "line": 39,
+    "anchor": "600|fleet|1,200",
+    "excerpt": "wnload URL. This is the simplest architectural enforcement point.  2. **Major — The fixed fleet cannot sustain the stated daily volume.**      The design provides 600 scans/minute (`docs/design.md:53–55`), or 864,000 scans/day, against approximately 1 million uploads/day and a peak of 1,200/min",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "digest",
+    "defect": "C1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-a/raw/E-digest.a1-rollouts/rollout-2026-11-09T03-11-14-01a1bc92-6912-7853-aa45-c80fb0a77d43.jsonl",
+    "line": 33,
+    "anchor": "(?:cache|Cache).*(?:private|personal|recipient)|(?:HTML|html).*(?:cache|Cache)",
+    "excerpt": "Review result: **fails**, with three concrete defects.  1. **Blocker — Shared HTML cache exposes another recipient’s private activity.**      `docs/design.md:31–33` keys complete rendered emails by `(locale, run_date)` and reuses them across recipients. However, `src/notifications.py:13–",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "digest",
+    "defect": "M1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-a/raw/E-digest.a1-rollouts/rollout-2026-11-09T03-11-14-01a1bc92-6912-7853-aa45-c80fb0a77d43.jsonl",
+    "line": 33,
+    "anchor": "120,?000|2,?000.*minute|90 minutes",
+    "excerpt": "s at 1,000 provider requests per minute each, with no other sender. That allows at most **120,000 requests during the one-hour window**, while `docs/design.md:8–9` requires 180,000 recipients with pending rows. Every recipient requires a distinct provider acceptance under `docs/design.md:36–38`. ",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "digest",
+    "defect": "M2",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-a/raw/E-digest.a1-rollouts/rollout-2026-11-09T03-11-14-01a1bc92-6912-7853-aa45-c80fb0a77d43.jsonl",
+    "line": 33,
+    "anchor": "100.*(?:row|limit)|LIMIT 100|truncat",
+    "excerpt": " existing renderer already provides that operation.  2. **Major — Reused retrieval helper truncates the required notification set.**      `docs/design.md:27–28` calls `pending_for_user` once and incorrectly describes its result as complete. The actual query has `LIMIT 100` at `src/notifications.p",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "export",
+    "defect": "C1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-a/raw/E-export.a1-rollouts/rollout-2026-11-09T03-23-43-01a1bc9d-d8e6-7dd0-a7dd-df10b23f336b.jsonl",
+    "line": 39,
+    "anchor": "(?:user|caller).*(?:export|subject)|(?:export|Export).*(?:user|caller)",
+    "excerpt": " `63–65`.      The specified control is a signed-in session; the handler then accepts the export subject and delivery address from the caller. A customer can therefore request another customer’s archive and have its bearer download link emailed to an address they control. The existing flow binds the subject to `session.user_id` (`src/privacy_exports.py:8–17`). Preserve that binding for customers and explicitly authorize support requests for other subjects. One shared endpoint remains possible; caller-supplied identity must not replace authorization. ADR-001 accepts bearer links, so adding a login requirement to downloads would not address the request authorization defect.  2. **Major — Worker cap",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "export",
+    "defect": "C2",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-a/raw/E-export.a1-rollouts/rollout-2026-11-09T03-23-43-01a1bc9d-d8e6-7dd0-a7dd-df10b23f336b.jsonl",
+    "line": 39,
+    "anchor": "(?:open|legacy|outstanding).*(?:request|task)|(?:drop|Drop).*export_tasks",
+    "excerpt": "support-ticket collection, compression, upload, and delivery.  3. **Major — Rollout drops outstanding customer requests without a transition.**      Scope: `docs/design.md:93–94`; existing obligations at `14–15`.      The design says roughly 300 legacy tasks are open, but rollout drops `export_tasks` and removes the ",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "export",
+    "defect": "M1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-a/raw/E-export.a1-rollouts/rollout-2026-11-09T03-23-43-01a1bc9d-d8e6-7dd0-a7dd-df10b23f336b.jsonl",
+    "line": 39,
+    "anchor": "960|1,200.*(?:day|daily)|capacity",
+    "excerpt": "ent to downloads would not address the request authorization defect.  2. **Major — Worker capacity cannot meet the stated steady-state volume.**      Scope: `docs/design.md:54–56`; requirement at `27`.      Four workers at six minutes per export provide `4 × 1,440 / 6 = 960` exports/day at full ut",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "payouts",
+    "defect": "C1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-a/raw/E-payouts.a1-rollouts/rollout-2026-11-09T03-38-41-01a1bcab-8b38-73c2-9fba-7fa32c91af4e.jsonl",
+    "line": 40,
+    "anchor": "refund|Refund",
+    "excerpt": "E.md`, both ADRs, and all `src/*.py` (`src/ledger.py`). Searched the codebase for payout, refund, balance, transfer, and hold-policy components. `db` is imported by `src/ledger.py:5`, but no local implementation was found. No writes, compilation, tests, or web access.  The objective is clear and",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "payouts",
+    "defect": "C2",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-a/raw/E-payouts.a1-rollouts/rollout-2026-11-09T03-38-41-01a1bcab-8b38-73c2-9fba-7fa32c91af4e.jsonl",
+    "line": 40,
+    "anchor": "ownership|another seller|other sellers",
+    "excerpt": "migration and writer changes; none are proposed.  - **Major — The detail API lacks seller ownership enforcement (`docs/design.md:50–54`).** The list endpoint scopes results to JWT `sub`, but the detail endpoint is described as loading solely by `payout_id` and returning the result. Verifying the JW",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "payouts",
+    "defect": "M1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-a/raw/E-payouts.a1-rollouts/rollout-2026-11-09T03-38-41-01a1bcab-8b38-73c2-9fba-7fa32c91af4e.jsonl",
+    "line": 40,
+    "anchor": "HoldPolicy",
+    "excerpt": "conditional risks:  - **Undefined eligibility policy.** `docs/design.md:25–26` relies on `HoldPolicy`, but code searches found no implementation or other definition. ADR-001 defines eligibility using a settled balance of at least $25 (`docs/adr-001-weekly-payout-schedule.md:9–11`), and fulfilment cu",
+    "final_existing_grades": {
+      "opus": "mentioned_only",
+      "codex": "mentioned_only"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "metering",
+    "defect": "C1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-a/raw/E-metering.a1-rollouts/rollout-2026-11-09T03-47-20-01a1bcb3-756e-7190-9635-e66c29c8afee.jsonl",
+    "line": 55,
+    "anchor": "(?:dedup|Dedup).*(?:expir|window|1 h|24)|1 h.*24",
+    "excerpt": "`docs/design.md:43-52`; requirement at `docs/design.md:17`.  The proposed cleanup removes deduplication records after one hour. The SDK preserves event identifiers in its spool (`src/meter_client.py:17-24`), retains a batch when delivery fails (`src/meter_client.py:26-43`), and expires failed events only after their event timestamp is more than 24 hours old (`src/meter_client.py:8`, `src/meter_client.py:45-47`).  **Actual effect:** If ingest accepts a batch but its successful response is lost, the SDK can resend those same identifiers after th",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "metering",
+    "defect": "C2",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-a/raw/E-metering.a1-rollouts/rollout-2026-11-09T03-47-20-01a1bcb3-756e-7190-9635-e66c29c8afee.jsonl",
+    "line": 55,
+    "anchor": "overwrit|tenant trust",
+    "excerpt": "osed design from meeting its stated requirements.  ## Concrete findings  ### 1. Blocker — Tenant trust depends on behavior the ingest API does not implement  **Affected scope:** `docs/design.md:27-31`.  The design says `authenticate()` resolves the tenant and ingest overwrites the submitted `tenant_id",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "metering",
+    "defect": "M1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-a/raw/E-metering.a1-rollouts/rollout-2026-11-09T03-47-20-01a1bcb3-756e-7190-9635-e66c29c8afee.jsonl",
+    "line": 55,
+    "anchor": "48,000|48k|60,000|capacity",
+    "excerpt": " absence of the claimed overwrite is directly observable.  ### 2. Major — Stated consumer capacity falls short of the required peak  **Affected scope:** `docs/design.md:35-38`; requirement at `docs/design.md:18`.  Sixteen consumers at the stated 3,000 events/s each provide 48,000 events/s, below t",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "resets",
+    "defect": "C1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-a/raw/E-resets.a1-rollouts/rollout-2026-11-09T04-18-17-01a1bccf-cc09-7303-85bb-fbfa2cc26acc.jsonl",
+    "line": 41,
+    "anchor": "purpose",
+    "excerpt": "t resolve the sustained capacity deficit.  2. **Major — Redemption does not enforce token purpose.**      [docs/design.md:31–38]([local path omitted]) looks up a token solely by d",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "resets",
+    "defect": "M1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-a/raw/E-resets.a1-rollouts/rollout-2026-11-09T04-18-17-01a1bccf-cc09-7303-85bb-fbfa2cc26acc.jsonl",
+    "line": 41,
+    "anchor": "24.hour|24 hours|60 minutes|60.minute",
+    "excerpt": "4d7/scratchpad/x2/runs/codex-a/ws/E-resets/docs/design.md:23) sets verification expiry to 60 minutes. Accepted [ADR 001:6–12]([local path omitted]) requires 24 hours a",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "resets",
+    "defect": "M2",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-a/raw/E-resets.a1-rollouts/rollout-2026-11-09T04-18-17-01a1bccf-cc09-7303-85bb-fbfa2cc26acc.jsonl",
+    "line": 41,
+    "anchor": "20.*(?:start|email|mail)|18,000|capacity|30.*600",
+    "excerpt": " defects prevent the design from meeting its requirements.  1. **Blocker — Fixed delivery capacity cannot meet the issuance deadline.**      [docs/design.md:13–14]([local path omitted]",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "cron",
+    "defect": "C1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-a/raw/E-cron.a1-rollouts/rollout-2026-11-09T04-26-10-01a1bcd7-05b1-7e81-adbc-980c2790a1b0.jsonl",
+    "line": 47,
+    "anchor": "cache.*(?:tenant|ownership)|(?:Cache|cache).*(?:authorization|check)",
+    "excerpt": ": `invoke`, `load_run`, and `run_inline`.  ## Findings  ### zoom-1-1 — Blocker — Response-cache hits bypass tenant ownership  **Evidence:** `docs/design.md:16` requires ownership checks for run reads, including output. `docs/design.md:59–63` authenticates the caller but immediately returns a cache entry addressed only by `",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "cron",
+    "defect": "M1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-a/raw/E-cron.a1-rollouts/rollout-2026-11-09T04-26-10-01a1bcd7-05b1-7e81-adbc-980c2790a1b0.jsonl",
+    "line": 47,
+    "anchor": "720|120.*10",
+    "excerpt": "in 60 seconds. `docs/design.md:26–33` permits one active dispatcher, one batch of at most 120 schedules every 10 seconds, one occurrence per selected schedule, and no other recurring-run creation path.  **Discrepancy and effect:** The dispatcher can create at most 720 recurring runs per minute: `120 × 6`. Requi",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "cron",
+    "defect": "M2",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-a/raw/E-cron.a1-rollouts/rollout-2026-11-09T04-26-10-01a1bcd7-05b1-7e81-adbc-980c2790a1b0.jsonl",
+    "line": 47,
+    "anchor": "never raises|Outcome|invoke[^\\n]{0,60}wrong",
+    "excerpt": " only exceptions. In fact, `src/runtime.py:12–17` catches handler exceptions and returns `Outcome(ok=False, error=...)`. The current caller checks `outcome.ok` at `src/runtime.py:31–37`. `docs/design.md:17` requires retries before terminal failure.  **Discrepancy and effect:** Following the propo",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "invoices",
+    "defect": "C1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-b/raw/E-invoices.a1-rollouts/rollout-2026-11-09T02-26-12-01a1bc69-30d0-77c3-a009-f7b94cee99a8.jsonl",
+    "line": 41,
+    "anchor": "(?:finalized|Finalized).*(?:chang|modif)|(?:late|Late).usage",
+    "excerpt": " tax-call median alone would take about 6 hours 40 minutes with 12 workers.  2. **Major — Late usage contradicts the accepted immutability decision.**      `docs/design.md:45–48` explicitly changes a finalized invoice and replaces its PDF. Accepted `docs/adr-002-invoice-numbering-immutability.md:14–",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "invoices",
+    "defect": "C2",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-b/raw/E-invoices.a1-rollouts/rollout-2026-11-09T02-26-12-01a1bc69-30d0-77c3-a009-f7b94cee99a8.jsonl",
+    "line": 41,
+    "anchor": "(?:public|Public).*(?:PDF|invoice|read|disclosure)|(?:PDF|Invoice).*(?:public|guess)",
+    "excerpt": "ple invoices for that subscription and billing period as currently written.  3. **Major — Public access exposes customer invoice contents.**      `docs/design.md:53–57` makes PDFs public and addresses them using invoice numbers. Those numbers are sequential under accepted `docs/adr-002-invoice-numbering-immutability.md:12–13`.",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "invoices",
+    "defect": "M1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-b/raw/E-invoices.a1-rollouts/rollout-2026-11-09T02-26-12-01a1bc69-30d0-77c3-a009-f7b94cee99a8.jsonl",
+    "line": 41,
+    "anchor": "8.*(?:hour|20)|30,000|17 workers|capacity",
+    "excerpt": " The worker pool cannot meet R1 at the stated processing time.**      `docs/design.md:25–28` specifies 12 workers, sequential processing within each worker, and approximately 150 ms per subscription. Processing 2.4M subscriptions therefore takes approximately 30,000 seconds, or **8 hours 20 minutes**, before coordination overhead. R1 requires six hours (`docs/design.md:12–13`). Size capacity from the required throughput: at least 17 workers under ideal conditions, with measured headroom. The tax-call median alone would take about 6 hours 40 minutes with 12 workers.  2. **Major — Late usage contradicts the accepted immutability decision.**      `docs/design.md:45–48` explicitly changes a finalized invoice and replaces its PDF. Accept",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "ratelimit",
+    "defect": "C1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-b/raw/E-ratelimit.a1-rollouts/rollout-2026-11-09T02-44-29-01a1bc79-eccf-76e2-be69-cae90c3b0d62.jsonl",
+    "line": 37,
+    "anchor": "X-Account-ID|client.controlled|Client.controlled",
+    "excerpt": "ual defects prevent acceptance.  1. **Blocker — Factual security and requirements defect: client-controlled quota identity.**      Affected scope: `docs/design.md:24–26`. The frontend preserves client headers (`docs/design.md:5`), and the design lets `X-Account-ID` replace the authenticated account for pol",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "ratelimit",
+    "defect": "M1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-b/raw/E-ratelimit.a1-rollouts/rollout-2026-11-09T02-44-29-01a1bc79-eccf-76e2-be69-cae90c3b0d62.jsonl",
+    "line": 37,
+    "anchor": "PostgreSQL|control.plane SQL",
+    "excerpt": "lection mechanism is needed.  2. **Blocker — Factual architectural conflict: request-path control-plane SQL.**      Affected scope: `docs/design.md:27–29,47,53,57–58`. The proposed synchronous PostgreSQL lookup on every request directly contradicts accepted ADR-002: request handlers must not query control-",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "ratelimit",
+    "defect": "M2",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-b/raw/E-ratelimit.a1-rollouts/rollout-2026-11-09T02-44-29-01a1bc79-eccf-76e2-be69-cae90c3b0d62.jsonl",
+    "line": 37,
+    "anchor": "16,000|24,000|capacity",
+    "excerpt": "design’s 60-second policy-change requirement (`docs/design.md:18`).  3. **Major — Factual capacity defect: provisioned throughput is below the launch requirement.**      Affected scope: `docs/design.md:40–43`. Four shards sustaining 4,000 evaluations/sec each provide 16,000 evaluations/sec, below ",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "search",
+    "defect": "C1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-b/raw/E-search.a1-rollouts/rollout-2026-11-09T02-58-04-01a1bc86-5ce8-74f3-b3d5-e61d869bbd6b.jsonl",
+    "line": 46,
+    "anchor": "(?:delet|Delet).*(?:event|publish)|erasure",
+    "excerpt": "r a new consumer.  ## Prioritized findings  ### 1. Blocker — The existing relay drops the deletion events required by R5  **Evidence:** `docs/design.md:19-20`, `docs/design.md:28-35`; `src/change_publisher.py:8`, `src/change_publisher.py:21-24`, `src/change_publisher.py:35-39`; `docs/adr-002-contact-det",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "search",
+    "defect": "C2",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-b/raw/E-search.a1-rollouts/rollout-2026-11-09T02-58-04-01a1bc86-5ce8-74f3-b3d5-e61d869bbd6b.jsonl",
+    "line": 46,
+    "anchor": "(?:balance|Balance).*(?:replay|redeliver|idempoten|duplicate)|at.least.once",
+    "excerpt": "dler cannot compensate for an event that the upstream component discards.  ### 2. Major — Balance deltas are incompatible with the accepted duplicate-delivery contract  **Evidence:** `docs/design.md:36-44`; `docs/adr-001-change-log-relay.md:9-11`; `src/change_publisher.py:25-26`, `src/change_publisher.py:37-39`.  Invoice creation adds an amount an",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "search",
+    "defect": "M1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-b/raw/E-search.a1-rollouts/rollout-2026-11-09T02-58-04-01a1bc86-5ce8-74f3-b3d5-e61d869bbd6b.jsonl",
+    "line": 46,
+    "anchor": "37,500|10.4|10 hours|rebuild throughput",
+    "excerpt": "ow duplicate handling and the balance write remain consistent.  ### 3. Major — The stated rebuild throughput exceeds the maintenance window  **Evidence:** `docs/design.md:21`, `docs/design.md:74-80`.  The rebuild must write 90 million customer documents through a path rated at 2,400 actions/s:  `90,000,000 ",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "webhooks",
+    "defect": "C1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-b/raw/E-webhooks.a1-rollouts/rollout-2026-11-09T03-33-11-01a1bca6-8161-7fe1-9480-4642b6e09075.jsonl",
+    "line": 32,
+    "anchor": "(?:tenant|Tenant).*(?:isolation|status|API)|(?:Status|status).*tenant",
+    "excerpt": "ce. No modifications, web access, or tests performed.  Concrete findings:  1. **Blocker — Status API exposes other tenants’ deliveries.**      `docs/design.md:65–70` authenticates a tenant but selects solely by delivery id and returns the payload. Supplying another tenant’s id therefore bypasses the ownership requiremen",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "webhooks",
+    "defect": "M1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-b/raw/E-webhooks.a1-rollouts/rollout-2026-11-09T03-33-11-01a1bca6-8161-7fe1-9480-4642b6e09075.jsonl",
+    "line": 32,
+    "anchor": "720|1,200|24 slots",
+    "excerpt": "o-second receiver duration (`11–13`), the theoretical maximum is 12 deliveries/second, or 720/minute, before database and scheduling overhead. Incoming work is 1,200/minute, so backlog necessarily grows by at least 480/minute; the latency target also becomes unsustainable. At least 40 simulta",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "webhooks",
+    "defect": "M2",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-b/raw/E-webhooks.a1-rollouts/rollout-2026-11-09T03-33-11-01a1bca6-8161-7fe1-9480-4642b6e09075.jsonl",
+    "line": 32,
+    "anchor": "create_delivery|return contract",
+    "excerpt": "stion caller assumes the wrong existing return type.**      `docs/design.md:21–24` keeps `create_delivery` but describes its return value as a mapping accessed with `result['id']`. `src/webhooks.py:19–23` returns the scalar id via `fetchone()[0]`. Implementing the documented caller against this helper ra",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "carts",
+    "defect": "C1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-b/raw/E-carts.a1-rollouts/rollout-2026-11-09T03-45-34-01a1bcb1-d80b-7c03-a182-246b99c24f20.jsonl",
+    "line": 42,
+    "anchor": "(?:aggregate|Aggregate|sum|Sum).*(?:tax|round)|(?:tax|Tax).*(?:aggregate|sum|round)",
+    "excerpt": "avior description so implementation does not rely on an absent guarantee.  ### 3. Major — aggregate tax rounding violates G4 and duplicates existing quote behavior  **Certainty:** Confirmed.   **Sources:** `docs/design.md:13`, `docs/design.md:34–39`; `src/pricing.py:23–35`.  G4 requires rounding tax separate",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "carts",
+    "defect": "M1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-b/raw/E-carts.a1-rollouts/rollout-2026-11-09T03-45-34-01a1bcb1-d80b-7c03-a182-246b99c24f20.jsonl",
+    "line": 42,
+    "anchor": "Expired coupons|expiry validation",
+    "excerpt": "ry for the stated recalculation objective.  ### 2. Major — direct recalculation delegates expiry validation to code that does not perform it  **Certainty:** Confirmed.   **Sources:** `docs/design.md:4–5`, `docs/design.md:14`, `docs/design.md:21`, `docs/design.md:30–32`; `README.md:2`; `src/pricing.py:7–20`",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "carts",
+    "defect": "M2",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-b/raw/E-carts.a1-rollouts/rollout-2026-11-09T03-45-34-01a1bcb1-d80b-7c03-a182-246b99c24f20.jsonl",
+    "line": 42,
+    "anchor": "(?:decimal|Decimal).*(?:string|String)|(?:v1|V1).*(?:encoding|integer|money)",
+    "excerpt": "this file, per the corrected read-only instruction.  ## Factual defects  ### 1. Blocker — v1 response encoding contradicts an Accepted contract  **Certainty:** Confirmed.   **Sources:** `docs/design.md:25`, `docs/design.md:52–54`, `docs/design.md:66`; `docs/adr-001-v1-money.md:3–11`.  The proposed `/v1` route",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "migrations",
+    "defect": "C1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-b/raw/E-migrations.a1-rollouts/rollout-2026-11-09T03-53-43-01a1bcb9-4e89-7530-93c7-de7846e8e3ae.jsonl",
+    "line": 43,
+    "anchor": "lost.update|overwrit|stale backfill",
+    "excerpt": " planned evidence, not proof that this requirement is met.  3. **Major — The backfill can overwrite newer dual-written values.**      Evidence: `docs/design.md:28–29` allows application writes throughout backfill; `docs/design.md:34–38` reads the source, computes outside the update, then updates b",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "migrations",
+    "defect": "C2",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-b/raw/E-migrations.a1-rollouts/rollout-2026-11-09T03-53-43-01a1bcb9-4e89-7530-93c7-de7846e8e3ae.jsonl",
+    "line": 43,
+    "anchor": "(?:drop|DROP|contract|Contract).*(?:deploy|release|column)|seven days",
+    "excerpt": "r — Contract destroys the required rollback path.**      Evidence: `docs/design.md:47–51` drops old columns in the same deploy after backfill; `docs/design.md:13` requires rollback by redeploying the previous application release. Accepted `docs/adr-002-expand-contract-releases.md:5–11` explicitly requires contract in a later release, after the release that stopped using the objects has spent seven days in production. The preceding application still uses `orders.amount`, so dropping it makes redeployment fail. Preserve the accepted release boundary and state when the application stops using the old column; backfill completion alone cannot authorize contract.  2. **Major — The selected defaults cannot satisfy the six-hour backfill requirement.**      Evidence: `docs/design.md:11` requires 400 million r",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "migrations",
+    "defect": "M1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-b/raw/E-migrations.a1-rollouts/rollout-2026-11-09T03-53-43-01a1bcb9-4e89-7530-93c7-de7846e8e3ae.jsonl",
+    "line": 43,
+    "anchor": "66.7|67.*hour|240,000|400,000",
+    "excerpt": "es 1,000 rows per batch, approximately 100 ms processing, and 500 ms pause. This requires 400,000 batches and approximately 240,000 seconds, or **66.7 hours**, before replica pauses and retries. The pauses alone require 55.6 hours. Establish a throughput budget and a feasible operating configurat",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "invites",
+    "defect": "C1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-b/raw/E-invites.a1-rollouts/rollout-2026-11-09T04-08-19-01a1bcc6-ade8-73c2-9413-dd3892af9533.jsonl",
+    "line": 39,
+    "anchor": "(?:email|Email).*(?:identity|match|compar)|(?:R2|Acceptance).*(?:enforc|email)",
+    "excerpt": "sion and shared mail queue. Three concrete Major findings prevent approval.  1. **Major — Acceptance does not enforce the invited email identity.**      Affected scope: `docs/design.md:46–55`; requirement at `docs/design.md:18`. Acceptance requires a signed-in session, checks token/status and existing membership, then creates members",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "invites",
+    "defect": "C2",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-b/raw/E-invites.a1-rollouts/rollout-2026-11-09T04-08-19-01a1bcc6-ade8-73c2-9413-dd3892af9533.jsonl",
+    "line": 39,
+    "anchor": "re.charges|Retry safety|retried accept|retry.*billing",
+    "excerpt": "missing core authorization rule, not a need for additional token machinery.  2. **Major — Retry safety incorrectly assumes membership upsert makes billing idempotent.**      Affected scope: `docs/design.md:54–60`; requirements at `docs/design.md:22–23`. The design deliberately repeats `add_member` whe",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "invites",
+    "defect": "M1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-b/raw/E-invites.a1-rollouts/rollout-2026-11-09T04-08-19-01a1bcc6-ade8-73c2-9413-dd3892af9533.jsonl",
+    "line": 39,
+    "anchor": "50.*s|10.*(?:msg|message)|500.*30",
+    "excerpt": "cope: `docs/design.md:20–21,31–35`. ADR-002 explicitly establishes one shared sender at **10 messages per second** (`docs/adr-002-transactional-email-queue.md:10–12`) and says delivery depends on queue depth (`:15–16`). Sending 500 messages requires approximately **50 seconds at minimum**, even with no competing traffic. Enqueuing all messages before returning 202 does not satisfy “every email sent within 30 seconds.” Resolve the requirement/capacity conflict explicitly; do not bypass the accepted shared queue or introduce speculative inf",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "auditlog",
+    "defect": "C1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-b/raw/E-auditlog.a1-rollouts/rollout-2026-11-09T04-20-43-01a1bcd2-081a-7f02-adba-76758b14a0e1.jsonl",
+    "line": 32,
+    "anchor": "hold.*(?:queued|planning|snapshot|delet)|(?:queued|planning|snapshot).*hold",
+    "excerpt": "fects prevent the proposed architecture from meeting its own requirements:  - **Blocker — hold and purge are not coordinated (docs/design.md:12, 34–39).** The planner checks `hold=false`, then commits keys to a durable queue. A hold can commit and acknowledge after enqueueing but before the worker deletes the object; the worker still deletes that queued key. Line 32 makes that loss irreversible. The design needs a shared synchronization boundary covering hold acknowledgement and physical deletion; a planning-time eligibility check cannot provide the stated guarantee.  - **Blocker — export authorization omits tenant ownership (docs/design.md:13, 42–45).** POST checks the auditor role but selects the manif",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "auditlog",
+    "defect": "C2",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-b/raw/E-auditlog.a1-rollouts/rollout-2026-11-09T04-20-43-01a1bcd2-081a-7f02-adba-76758b14a0e1.jsonl",
+    "line": 32,
+    "anchor": "(?:tenant|Tenant).*(?:export|Export)|(?:export|Export).*tenant",
+    "excerpt": "on; a planning-time eligibility check cannot provide the stated guarantee.  - **Blocker — export authorization omits tenant ownership (docs/design.md:13, 42–45).** POST checks the auditor role but selects the manifest using the request body's tenant ID. An auditor from tenant A can request tenant B's manifest, receive a job owned by A's principal, then pass GET's ownership check. Existing `query()` already checks both role and tenant equality (src/audit.py:28–30). Apply that established authorization rule before resolving the export manifest; gateway verification alone does not bind the requested tenant to the principal.  - **Major — the export architecture cannot meet its stated size and deadline (docs/design.md:15–16, 46–47).** A permitted 240 GiB object takes at least 120 minutes at 2 GiB/min, be",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  },
+  {
+    "cell": "codex",
+    "case": "auditlog",
+    "defect": "M1",
+    "first_observable_review_stage": "S5",
+    "locator": "x2/runs/codex-b/raw/E-auditlog.a1-rollouts/rollout-2026-11-09T04-20-43-01a1bcd2-081a-7f02-adba-76758b14a0e1.jsonl",
+    "line": 32,
+    "anchor": "120 minutes|120 min|240.*2|90.minute",
+    "excerpt": "ure cannot meet its stated size and deadline (docs/design.md:15–16, 46–47).** A permitted 240 GiB object takes at least 120 minutes at 2 GiB/min, before scheduling and final verification. The full-object verification requirement prevents readiness before that transfer completes. Reconcile the size limit, throughput, and deadline befor",
+    "final_existing_grades": {
+      "opus": "detected",
+      "codex": "detected"
+    }
+  }
+]

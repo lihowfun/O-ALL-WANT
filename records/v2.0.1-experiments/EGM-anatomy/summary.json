@@ -1,0 +1,1470 @@
+{
+  "claude:primary": {
+    "runs": 20,
+    "total": {
+      "cache_read": 27323608,
+      "other": 6090170
+    },
+    "unattributed": {
+      "cache_read": 0,
+      "other": 347254
+    },
+    "stages": [
+      {
+        "stage": "S5",
+        "role": "parent",
+        "cache_read": 992382,
+        "other": 133996
+      },
+      {
+        "stage": "S5",
+        "role": "subagents",
+        "cache_read": 409821,
+        "other": 349249
+      },
+      {
+        "stage": "S6",
+        "role": "parent",
+        "cache_read": 439938,
+        "other": 55061
+      },
+      {
+        "stage": "S6",
+        "role": "subagents",
+        "cache_read": 235921,
+        "other": 305362
+      },
+      {
+        "stage": "S7",
+        "role": "parent",
+        "cache_read": 5567035,
+        "other": 408963
+      },
+      {
+        "stage": "S7",
+        "role": "subagents",
+        "cache_read": 659659,
+        "other": 939533
+      },
+      {
+        "stage": "S8",
+        "role": "parent",
+        "cache_read": 355344,
+        "other": 33936
+      },
+      {
+        "stage": "S8",
+        "role": "subagents",
+        "cache_read": 798739,
+        "other": 598259
+      },
+      {
+        "stage": "S9",
+        "role": "parent",
+        "cache_read": 6731704,
+        "other": 381425
+      },
+      {
+        "stage": "S9",
+        "role": "subagents",
+        "cache_read": 874667,
+        "other": 944897
+      },
+      {
+        "stage": "final",
+        "role": "parent",
+        "cache_read": 7169298,
+        "other": 258083
+      },
+      {
+        "stage": "parent_output_unallocated",
+        "role": "parent",
+        "cache_read": 0,
+        "other": 557308
+      },
+      {
+        "stage": "prep",
+        "role": "parent",
+        "cache_read": 2511469,
+        "other": 734301
+      },
+      {
+        "stage": "unknown",
+        "role": "parent",
+        "cache_read": 577631,
+        "other": 25759
+      },
+      {
+        "stage": "unknown",
+        "role": "subagents",
+        "cache_read": 0,
+        "other": 16784
+      }
+    ],
+    "parent": {
+      "cache_read": 24344801,
+      "other": 2588832
+    },
+    "tail_lower": {
+      "cache_read": 22832305,
+      "other": 3925519
+    },
+    "tail_upper": 28282560,
+    "preset3_removable_work": {
+      "cache_read": 9458839,
+      "other": 2824359
+    },
+    "reads": {
+      ".claude/skills/egm-review/SKILL.md": 20,
+      "README.md": 200,
+      "docs/design.md": 200,
+      "docs/adr-001-client-freshness.md": 10,
+      "docs/adr-002-override-precedence.md": 10,
+      "src/flags.py": 10,
+      ".oaw/integrations/egm/skills/egm-review/SKILL.md": 20,
+      ".oaw/integrations/egm/docs/claude.md": 20,
+      ".oaw/integrations/egm/docs/harnesses.md": 18,
+      ".oaw/integrations/egm/skills/egm-review-loop/SKILL.md": 20,
+      ".claude/agents/egm-zoom-out.md": 9,
+      ".oaw/integrations/egm/agents/zoom_out.md": 41,
+      ".oaw/integrations/egm/resources/document_standards/zoom-out-standard.md": 40,
+      ".oaw/integrations/egm/agents/comprehension.md": 21,
+      ".oaw/integrations/egm/agents/design_critic.md": 20,
+      ".oaw/integrations/egm/resources/document_standards/feature-spec-standard.md": 41,
+      ".oaw/integrations/egm/agents/structural.md": 20,
+      ".oaw/integrations/egm/agents/style.md": 40,
+      "review_out/zoom_out_report.md": 16,
+      "review_out/comprehension_report.md": 16,
+      "review_out/critic_report.md": 16,
+      ".oaw/integrations/egm/agents/implementation_readiness.md": 20,
+      ".oaw/integrations/egm/resources/document_standards/implementation-readiness-standard.md": 40,
+      ".oaw/integrations/egm/agents/codebase_details.md": 20,
+      "docs/adr-001-sqs-standard-scan-queue.md": 10,
+      "docs/adr-002-report-export-scan-exemption.md": 10,
+      "src/uploads.py": 10,
+      ".oaw/integrations/egm/.claude-plugin/agents/synthesizer.md": 2,
+      ".oaw/integrations/egm/.claude-plugin/agents/zoom_out.md": 2,
+      "docs/adr-001-artifact-storage-nfs.md": 10,
+      "docs/adr-002-fail-static-serving.md": 10,
+      "docs/adr-003-object-storage-artifacts.md": 10,
+      "src/rollout.py": 10,
+      ".oaw/integrations/egm/agents/synthesizer.md": 11,
+      ".claude/agents/egm-design.md": 9,
+      "zoom_out_report.md": 4,
+      "comprehension_report.md": 4,
+      "critic_report.md": 4,
+      "docs/adr-001-global-schedule.md": 10,
+      "docs/adr-002-dispatch-completion.md": 10,
+      "src/notifications.py": 10,
+      ".claude/skills/egm-review-loop/SKILL.md": 3,
+      "docs/adr-001-presigned-download-links.md": 10,
+      "docs/adr-002-exclude-risk-scores.md": 10,
+      "src/privacy_exports.py": 10,
+      "review_out/report.json": 2,
+      "docs/adr-001-weekly-payout-schedule.md": 10,
+      "docs/adr-002-paylane-transfers.md": 10,
+      "src/ledger.py": 10,
+      "docs/adr-001-event-time-windows.md": 10,
+      "docs/adr-002-raw-event-archive.md": 10,
+      "src/meter_client.py": 10,
+      "src/ingest_api.py": 10,
+      ".oaw/integrations/egm/resources/execution_instructions.md": 2,
+      "docs/adr-001-query-orders-primary.md": 9,
+      "docs/adr-002-gateway-tenant-scoping.md": 10,
+      "docs/adr-003-nightly-snapshots.md": 10,
+      "src/snapshot_reader.py": 10,
+      "src/cache.py": 10,
+      "docs/adr-001-link-lifetimes.md": 10,
+      "docs/adr-002-sessions-and-mail.md": 10,
+      "src/accounts.py": 10,
+      "src/mailer.py": 10,
+      "docs/adr-001-interval-schedules.md": 10,
+      "docs/adr-002-handler-effects.md": 10,
+      "src/runtime.py": 10,
+      "docs/adr-001-money-integer-cents.md": 10,
+      "docs/adr-002-invoice-numbering-immutability.md": 10,
+      "src/invoice_runner.py": 10,
+      "src/proration.py": 10,
+      "docs/adr-001-quota-contract.md": 10,
+      "docs/adr-002-control-plane-isolation.md": 10,
+      "src/gateway.py": 10,
+      "docs/adr-001-change-log-relay.md": 10,
+      "docs/adr-002-contact-details-in-search.md": 10,
+      "src/change_publisher.py": 10,
+      "docs/adr-001-hourly-import.md": 10,
+      "docs/adr-002-polling-budget.md": 10,
+      "docs/adr-003-export-semantics.md": 10,
+      "src/feed.py": 10,
+      "docs/adr-001-access-lifetime.md": 10,
+      "docs/adr-002-mobile-policy.md": 10,
+      "docs/adr-003-refresh-capacity.md": 10,
+      "src/session.py": 10,
+      ".claude/agents/egm-synthesizer.md": 2,
+      "docs/adr-001-delivery-contract.md": 10,
+      "docs/adr-002-sandbox-transport.md": 10,
+      "src/webhooks.py": 10,
+      "docs/adr-001-v1-money.md": 10,
+      "docs/adr-002-promotion-boundaries.md": 10,
+      "src/pricing.py": 10,
+      "docs/adr-001-concurrent-index-builds.md": 10,
+      "docs/adr-002-expand-contract-releases.md": 10,
+      "src/runner.py": 10,
+      "docs/adr-001-invite-token-hashing.md": 10,
+      "docs/adr-002-transactional-email-queue.md": 10,
+      "src/roles.py": 10,
+      "src/membership.py": 10,
+      "docs/adr-001-canonical-archive.md": 10,
+      "docs/adr-002-event-identity.md": 10,
+      "src/audit.py": 10
+    },
+    "repeat_reads": {
+      ".claude/skills/egm-review/SKILL.md": 0,
+      "README.md": 180,
+      "docs/design.md": 180,
+      "docs/adr-001-client-freshness.md": 9,
+      "docs/adr-002-override-precedence.md": 9,
+      "src/flags.py": 9,
+      ".oaw/integrations/egm/skills/egm-review/SKILL.md": 0,
+      ".oaw/integrations/egm/docs/claude.md": 0,
+      ".oaw/integrations/egm/docs/harnesses.md": 0,
+      ".oaw/integrations/egm/skills/egm-review-loop/SKILL.md": 0,
+      ".claude/agents/egm-zoom-out.md": 0,
+      ".oaw/integrations/egm/agents/zoom_out.md": 21,
+      ".oaw/integrations/egm/resources/document_standards/zoom-out-standard.md": 20,
+      ".oaw/integrations/egm/agents/comprehension.md": 1,
+      ".oaw/integrations/egm/agents/design_critic.md": 0,
+      ".oaw/integrations/egm/resources/document_standards/feature-spec-standard.md": 21,
+      ".oaw/integrations/egm/agents/structural.md": 0,
+      ".oaw/integrations/egm/agents/style.md": 20,
+      "review_out/zoom_out_report.md": 0,
+      "review_out/comprehension_report.md": 0,
+      "review_out/critic_report.md": 0,
+      ".oaw/integrations/egm/agents/implementation_readiness.md": 0,
+      ".oaw/integrations/egm/resources/document_standards/implementation-readiness-standard.md": 20,
+      ".oaw/integrations/egm/agents/codebase_details.md": 0,
+      "docs/adr-001-sqs-standard-scan-queue.md": 9,
+      "docs/adr-002-report-export-scan-exemption.md": 9,
+      "src/uploads.py": 9,
+      ".oaw/integrations/egm/.claude-plugin/agents/synthesizer.md": 0,
+      ".oaw/integrations/egm/.claude-plugin/agents/zoom_out.md": 0,
+      "docs/adr-001-artifact-storage-nfs.md": 9,
+      "docs/adr-002-fail-static-serving.md": 9,
+      "docs/adr-003-object-storage-artifacts.md": 9,
+      "src/rollout.py": 9,
+      ".oaw/integrations/egm/agents/synthesizer.md": 0,
+      ".claude/agents/egm-design.md": 0,
+      "zoom_out_report.md": 0,
+      "comprehension_report.md": 0,
+      "critic_report.md": 0,
+      "docs/adr-001-global-schedule.md": 9,
+      "docs/adr-002-dispatch-completion.md": 9,
+      "src/notifications.py": 9,
+      ".claude/skills/egm-review-loop/SKILL.md": 0,
+      "docs/adr-001-presigned-download-links.md": 9,
+      "docs/adr-002-exclude-risk-scores.md": 9,
+      "src/privacy_exports.py": 9,
+      "review_out/report.json": 0,
+      "docs/adr-001-weekly-payout-schedule.md": 9,
+      "docs/adr-002-paylane-transfers.md": 9,
+      "src/ledger.py": 9,
+      "docs/adr-001-event-time-windows.md": 9,
+      "docs/adr-002-raw-event-archive.md": 9,
+      "src/meter_client.py": 9,
+      "src/ingest_api.py": 9,
+      ".oaw/integrations/egm/resources/execution_instructions.md": 0,
+      "docs/adr-001-query-orders-primary.md": 8,
+      "docs/adr-002-gateway-tenant-scoping.md": 9,
+      "docs/adr-003-nightly-snapshots.md": 9,
+      "src/snapshot_reader.py": 9,
+      "src/cache.py": 9,
+      "docs/adr-001-link-lifetimes.md": 9,
+      "docs/adr-002-sessions-and-mail.md": 9,
+      "src/accounts.py": 9,
+      "src/mailer.py": 9,
+      "docs/adr-001-interval-schedules.md": 9,
+      "docs/adr-002-handler-effects.md": 9,
+      "src/runtime.py": 9,
+      "docs/adr-001-money-integer-cents.md": 9,
+      "docs/adr-002-invoice-numbering-immutability.md": 9,
+      "src/invoice_runner.py": 9,
+      "src/proration.py": 9,
+      "docs/adr-001-quota-contract.md": 9,
+      "docs/adr-002-control-plane-isolation.md": 9,
+      "src/gateway.py": 9,
+      "docs/adr-001-change-log-relay.md": 9,
+      "docs/adr-002-contact-details-in-search.md": 9,
+      "src/change_publisher.py": 9,
+      "docs/adr-001-hourly-import.md": 9,
+      "docs/adr-002-polling-budget.md": 9,
+      "docs/adr-003-export-semantics.md": 9,
+      "src/feed.py": 9,
+      "docs/adr-001-access-lifetime.md": 9,
+      "docs/adr-002-mobile-policy.md": 9,
+      "docs/adr-003-refresh-capacity.md": 9,
+      "src/session.py": 9,
+      ".claude/agents/egm-synthesizer.md": 0,
+      "docs/adr-001-delivery-contract.md": 9,
+      "docs/adr-002-sandbox-transport.md": 9,
+      "src/webhooks.py": 9,
+      "docs/adr-001-v1-money.md": 9,
+      "docs/adr-002-promotion-boundaries.md": 9,
+      "src/pricing.py": 9,
+      "docs/adr-001-concurrent-index-builds.md": 9,
+      "docs/adr-002-expand-contract-releases.md": 9,
+      "src/runner.py": 9,
+      "docs/adr-001-invite-token-hashing.md": 9,
+      "docs/adr-002-transactional-email-queue.md": 9,
+      "src/roles.py": 9,
+      "src/membership.py": 9,
+      "docs/adr-001-canonical-archive.md": 9,
+      "docs/adr-002-event-identity.md": 9,
+      "src/audit.py": 9
+    }
+  },
+  "codex:primary": {
+    "runs": 20,
+    "total": {
+      "cache_read": 55434240,
+      "other": 3560080
+    },
+    "unattributed": {
+      "cache_read": 0,
+      "other": 0
+    },
+    "stages": [
+      {
+        "stage": "S5",
+        "role": "parent",
+        "cache_read": 6180096,
+        "other": 389912
+      },
+      {
+        "stage": "S5",
+        "role": "subagents",
+        "cache_read": 1627136,
+        "other": 345923
+      },
+      {
+        "stage": "S6",
+        "role": "parent",
+        "cache_read": 4729472,
+        "other": 95626
+      },
+      {
+        "stage": "S6",
+        "role": "subagents",
+        "cache_read": 1332096,
+        "other": 184521
+      },
+      {
+        "stage": "S7",
+        "role": "parent",
+        "cache_read": 8484224,
+        "other": 158628
+      },
+      {
+        "stage": "S7",
+        "role": "subagents",
+        "cache_read": 4742784,
+        "other": 604903
+      },
+      {
+        "stage": "S8",
+        "role": "parent",
+        "cache_read": 4679936,
+        "other": 121703
+      },
+      {
+        "stage": "S8",
+        "role": "subagents",
+        "cache_read": 1658624,
+        "other": 318964
+      },
+      {
+        "stage": "S9",
+        "role": "parent",
+        "cache_read": 10426752,
+        "other": 169440
+      },
+      {
+        "stage": "S9",
+        "role": "subagents",
+        "cache_read": 5023488,
+        "other": 617029
+      },
+      {
+        "stage": "final",
+        "role": "parent",
+        "cache_read": 5183744,
+        "other": 141576
+      },
+      {
+        "stage": "prep",
+        "role": "parent",
+        "cache_read": 1365888,
+        "other": 411855
+      }
+    ],
+    "parent": {
+      "cache_read": 41050112,
+      "other": 1488740
+    },
+    "tail_lower": {
+      "cache_read": 46261120,
+      "other": 2412390
+    },
+    "tail_upper": 48673510,
+    "preset3_removable_work": {
+      "cache_read": 33434368,
+      "other": 2220180
+    },
+    "reads": {},
+    "repeat_reads": {}
+  },
+  "claude:completed": {
+    "runs": 22,
+    "total": {
+      "cache_read": 29536403,
+      "other": 6531504
+    },
+    "unattributed": {
+      "cache_read": 0,
+      "other": 367600
+    },
+    "stages": [
+      {
+        "stage": "S5",
+        "role": "parent",
+        "cache_read": 1074342,
+        "other": 141779
+      },
+      {
+        "stage": "S5",
+        "role": "subagents",
+        "cache_read": 441284,
+        "other": 381467
+      },
+      {
+        "stage": "S6",
+        "role": "parent",
+        "cache_read": 439938,
+        "other": 55061
+      },
+      {
+        "stage": "S6",
+        "role": "subagents",
+        "cache_read": 250082,
+        "other": 324574
+      },
+      {
+        "stage": "S7",
+        "role": "parent",
+        "cache_read": 6104041,
+        "other": 449049
+      },
+      {
+        "stage": "S7",
+        "role": "subagents",
+        "cache_read": 702504,
+        "other": 1003639
+      },
+      {
+        "stage": "S8",
+        "role": "parent",
+        "cache_read": 420685,
+        "other": 39978
+      },
+      {
+        "stage": "S8",
+        "role": "subagents",
+        "cache_read": 861156,
+        "other": 633031
+      },
+      {
+        "stage": "S9",
+        "role": "parent",
+        "cache_read": 7320876,
+        "other": 409204
+      },
+      {
+        "stage": "S9",
+        "role": "subagents",
+        "cache_read": 927043,
+        "other": 1003292
+      },
+      {
+        "stage": "final",
+        "role": "parent",
+        "cache_read": 7679598,
+        "other": 276327
+      },
+      {
+        "stage": "parent_output_unallocated",
+        "role": "parent",
+        "cache_read": 0,
+        "other": 600357
+      },
+      {
+        "stage": "prep",
+        "role": "parent",
+        "cache_read": 2737223,
+        "other": 803603
+      },
+      {
+        "stage": "unknown",
+        "role": "parent",
+        "cache_read": 577631,
+        "other": 25759
+      },
+      {
+        "stage": "unknown",
+        "role": "subagents",
+        "cache_read": 0,
+        "other": 16784
+      }
+    ],
+    "parent": {
+      "cache_read": 26354334,
+      "other": 2801117
+    },
+    "tail_lower": {
+      "cache_read": 24705923,
+      "other": 4194155
+    },
+    "tail_upper": 30488209,
+    "preset3_removable_work": {
+      "cache_read": 10294032,
+      "other": 3028578
+    },
+    "reads": {
+      ".claude/skills/egm-review/SKILL.md": 22,
+      "README.md": 220,
+      "docs/design.md": 220,
+      "docs/adr-004-events.md": 10,
+      "src/projector.py": 10,
+      ".oaw/integrations/egm/skills/egm-review/SKILL.md": 22,
+      ".oaw/integrations/egm/docs/claude.md": 22,
+      ".oaw/integrations/egm/docs/harnesses.md": 20,
+      ".oaw/integrations/egm/agents/synthesizer.md": 13,
+      ".oaw/integrations/egm/skills/egm-review-loop/SKILL.md": 22,
+      ".claude/agents/egm-zoom-out.md": 11,
+      ".oaw/integrations/egm/agents/zoom_out.md": 45,
+      ".oaw/integrations/egm/resources/document_standards/zoom-out-standard.md": 44,
+      ".oaw/integrations/egm/agents/comprehension.md": 23,
+      ".oaw/integrations/egm/agents/design_critic.md": 22,
+      ".oaw/integrations/egm/resources/document_standards/feature-spec-standard.md": 45,
+      ".oaw/integrations/egm/agents/structural.md": 22,
+      ".oaw/integrations/egm/agents/style.md": 44,
+      "review_out/zoom_out_report.md": 18,
+      "review_out/comprehension_report.md": 18,
+      "review_out/critic_report.md": 18,
+      ".oaw/integrations/egm/agents/implementation_readiness.md": 22,
+      ".oaw/integrations/egm/resources/document_standards/implementation-readiness-standard.md": 44,
+      ".oaw/integrations/egm/agents/codebase_details.md": 22,
+      "docs/adr-001-client-freshness.md": 10,
+      "docs/adr-002-override-precedence.md": 10,
+      "src/flags.py": 10,
+      "docs/adr-001-sqs-standard-scan-queue.md": 10,
+      "docs/adr-002-report-export-scan-exemption.md": 10,
+      "src/uploads.py": 10,
+      ".oaw/integrations/egm/.claude-plugin/agents/synthesizer.md": 2,
+      ".oaw/integrations/egm/.claude-plugin/agents/zoom_out.md": 2,
+      "docs/adr-001-artifact-storage-nfs.md": 10,
+      "docs/adr-002-fail-static-serving.md": 10,
+      "docs/adr-003-object-storage-artifacts.md": 10,
+      "src/rollout.py": 10,
+      ".claude/agents/egm-design.md": 9,
+      "zoom_out_report.md": 4,
+      "comprehension_report.md": 4,
+      "critic_report.md": 4,
+      "docs/adr-001-global-schedule.md": 10,
+      "docs/adr-002-dispatch-completion.md": 10,
+      "src/notifications.py": 10,
+      ".claude/skills/egm-review-loop/SKILL.md": 3,
+      "docs/adr-001-presigned-download-links.md": 10,
+      "docs/adr-002-exclude-risk-scores.md": 10,
+      "src/privacy_exports.py": 10,
+      "review_out/report.json": 2,
+      "docs/adr-001-weekly-payout-schedule.md": 10,
+      "docs/adr-002-paylane-transfers.md": 10,
+      "src/ledger.py": 10,
+      "docs/adr-001-event-time-windows.md": 10,
+      "docs/adr-002-raw-event-archive.md": 10,
+      "src/meter_client.py": 10,
+      "src/ingest_api.py": 10,
+      ".oaw/integrations/egm/resources/execution_instructions.md": 2,
+      "docs/adr-001-query-orders-primary.md": 9,
+      "docs/adr-002-gateway-tenant-scoping.md": 10,
+      "docs/adr-003-nightly-snapshots.md": 10,
+      "src/snapshot_reader.py": 10,
+      "src/cache.py": 10,
+      "docs/adr-001-link-lifetimes.md": 10,
+      "docs/adr-002-sessions-and-mail.md": 10,
+      "src/accounts.py": 10,
+      "src/mailer.py": 10,
+      "docs/adr-001-interval-schedules.md": 10,
+      "docs/adr-002-handler-effects.md": 10,
+      "src/runtime.py": 10,
+      "docs/adr-001-money-integer-cents.md": 10,
+      "docs/adr-002-invoice-numbering-immutability.md": 10,
+      "src/invoice_runner.py": 10,
+      "src/proration.py": 10,
+      "docs/adr-002-storage.md": 10,
+      "docs/adr-012-lookup-exception.md": 10,
+      "src/lookup.py": 10,
+      "docs/adr-001-quota-contract.md": 10,
+      "docs/adr-002-control-plane-isolation.md": 10,
+      "src/gateway.py": 10,
+      "docs/adr-001-change-log-relay.md": 10,
+      "docs/adr-002-contact-details-in-search.md": 10,
+      "src/change_publisher.py": 10,
+      "docs/adr-001-hourly-import.md": 10,
+      "docs/adr-002-polling-budget.md": 10,
+      "docs/adr-003-export-semantics.md": 10,
+      "src/feed.py": 10,
+      "docs/adr-001-access-lifetime.md": 10,
+      "docs/adr-002-mobile-policy.md": 10,
+      "docs/adr-003-refresh-capacity.md": 10,
+      "src/session.py": 10,
+      ".claude/agents/egm-synthesizer.md": 2,
+      "docs/adr-001-delivery-contract.md": 10,
+      "docs/adr-002-sandbox-transport.md": 10,
+      "src/webhooks.py": 10,
+      "docs/adr-001-v1-money.md": 10,
+      "docs/adr-002-promotion-boundaries.md": 10,
+      "src/pricing.py": 10,
+      "docs/adr-001-concurrent-index-builds.md": 10,
+      "docs/adr-002-expand-contract-releases.md": 10,
+      "src/runner.py": 10,
+      "docs/adr-001-invite-token-hashing.md": 10,
+      "docs/adr-002-transactional-email-queue.md": 10,
+      "src/roles.py": 10,
+      "src/membership.py": 10,
+      "docs/adr-001-canonical-archive.md": 10,
+      "docs/adr-002-event-identity.md": 10,
+      "src/audit.py": 10
+    },
+    "repeat_reads": {
+      ".claude/skills/egm-review/SKILL.md": 0,
+      "README.md": 198,
+      "docs/design.md": 198,
+      "docs/adr-004-events.md": 9,
+      "src/projector.py": 9,
+      ".oaw/integrations/egm/skills/egm-review/SKILL.md": 0,
+      ".oaw/integrations/egm/docs/claude.md": 0,
+      ".oaw/integrations/egm/docs/harnesses.md": 0,
+      ".oaw/integrations/egm/agents/synthesizer.md": 0,
+      ".oaw/integrations/egm/skills/egm-review-loop/SKILL.md": 0,
+      ".claude/agents/egm-zoom-out.md": 0,
+      ".oaw/integrations/egm/agents/zoom_out.md": 23,
+      ".oaw/integrations/egm/resources/document_standards/zoom-out-standard.md": 22,
+      ".oaw/integrations/egm/agents/comprehension.md": 1,
+      ".oaw/integrations/egm/agents/design_critic.md": 0,
+      ".oaw/integrations/egm/resources/document_standards/feature-spec-standard.md": 23,
+      ".oaw/integrations/egm/agents/structural.md": 0,
+      ".oaw/integrations/egm/agents/style.md": 22,
+      "review_out/zoom_out_report.md": 0,
+      "review_out/comprehension_report.md": 0,
+      "review_out/critic_report.md": 0,
+      ".oaw/integrations/egm/agents/implementation_readiness.md": 0,
+      ".oaw/integrations/egm/resources/document_standards/implementation-readiness-standard.md": 22,
+      ".oaw/integrations/egm/agents/codebase_details.md": 0,
+      "docs/adr-001-client-freshness.md": 9,
+      "docs/adr-002-override-precedence.md": 9,
+      "src/flags.py": 9,
+      "docs/adr-001-sqs-standard-scan-queue.md": 9,
+      "docs/adr-002-report-export-scan-exemption.md": 9,
+      "src/uploads.py": 9,
+      ".oaw/integrations/egm/.claude-plugin/agents/synthesizer.md": 0,
+      ".oaw/integrations/egm/.claude-plugin/agents/zoom_out.md": 0,
+      "docs/adr-001-artifact-storage-nfs.md": 9,
+      "docs/adr-002-fail-static-serving.md": 9,
+      "docs/adr-003-object-storage-artifacts.md": 9,
+      "src/rollout.py": 9,
+      ".claude/agents/egm-design.md": 0,
+      "zoom_out_report.md": 0,
+      "comprehension_report.md": 0,
+      "critic_report.md": 0,
+      "docs/adr-001-global-schedule.md": 9,
+      "docs/adr-002-dispatch-completion.md": 9,
+      "src/notifications.py": 9,
+      ".claude/skills/egm-review-loop/SKILL.md": 0,
+      "docs/adr-001-presigned-download-links.md": 9,
+      "docs/adr-002-exclude-risk-scores.md": 9,
+      "src/privacy_exports.py": 9,
+      "review_out/report.json": 0,
+      "docs/adr-001-weekly-payout-schedule.md": 9,
+      "docs/adr-002-paylane-transfers.md": 9,
+      "src/ledger.py": 9,
+      "docs/adr-001-event-time-windows.md": 9,
+      "docs/adr-002-raw-event-archive.md": 9,
+      "src/meter_client.py": 9,
+      "src/ingest_api.py": 9,
+      ".oaw/integrations/egm/resources/execution_instructions.md": 0,
+      "docs/adr-001-query-orders-primary.md": 8,
+      "docs/adr-002-gateway-tenant-scoping.md": 9,
+      "docs/adr-003-nightly-snapshots.md": 9,
+      "src/snapshot_reader.py": 9,
+      "src/cache.py": 9,
+      "docs/adr-001-link-lifetimes.md": 9,
+      "docs/adr-002-sessions-and-mail.md": 9,
+      "src/accounts.py": 9,
+      "src/mailer.py": 9,
+      "docs/adr-001-interval-schedules.md": 9,
+      "docs/adr-002-handler-effects.md": 9,
+      "src/runtime.py": 9,
+      "docs/adr-001-money-integer-cents.md": 9,
+      "docs/adr-002-invoice-numbering-immutability.md": 9,
+      "src/invoice_runner.py": 9,
+      "src/proration.py": 9,
+      "docs/adr-002-storage.md": 9,
+      "docs/adr-012-lookup-exception.md": 9,
+      "src/lookup.py": 9,
+      "docs/adr-001-quota-contract.md": 9,
+      "docs/adr-002-control-plane-isolation.md": 9,
+      "src/gateway.py": 9,
+      "docs/adr-001-change-log-relay.md": 9,
+      "docs/adr-002-contact-details-in-search.md": 9,
+      "src/change_publisher.py": 9,
+      "docs/adr-001-hourly-import.md": 9,
+      "docs/adr-002-polling-budget.md": 9,
+      "docs/adr-003-export-semantics.md": 9,
+      "src/feed.py": 9,
+      "docs/adr-001-access-lifetime.md": 9,
+      "docs/adr-002-mobile-policy.md": 9,
+      "docs/adr-003-refresh-capacity.md": 9,
+      "src/session.py": 9,
+      ".claude/agents/egm-synthesizer.md": 0,
+      "docs/adr-001-delivery-contract.md": 9,
+      "docs/adr-002-sandbox-transport.md": 9,
+      "src/webhooks.py": 9,
+      "docs/adr-001-v1-money.md": 9,
+      "docs/adr-002-promotion-boundaries.md": 9,
+      "src/pricing.py": 9,
+      "docs/adr-001-concurrent-index-builds.md": 9,
+      "docs/adr-002-expand-contract-releases.md": 9,
+      "src/runner.py": 9,
+      "docs/adr-001-invite-token-hashing.md": 9,
+      "docs/adr-002-transactional-email-queue.md": 9,
+      "src/roles.py": 9,
+      "src/membership.py": 9,
+      "docs/adr-001-canonical-archive.md": 9,
+      "docs/adr-002-event-identity.md": 9,
+      "src/audit.py": 9
+    }
+  },
+  "codex:completed": {
+    "runs": 22,
+    "total": {
+      "cache_read": 59921536,
+      "other": 3839776
+    },
+    "unattributed": {
+      "cache_read": 0,
+      "other": 0
+    },
+    "stages": [
+      {
+        "stage": "S5",
+        "role": "parent",
+        "cache_read": 6663168,
+        "other": 429148
+      },
+      {
+        "stage": "S5",
+        "role": "subagents",
+        "cache_read": 1761920,
+        "other": 365039
+      },
+      {
+        "stage": "S6",
+        "role": "parent",
+        "cache_read": 5209216,
+        "other": 103972
+      },
+      {
+        "stage": "S6",
+        "role": "subagents",
+        "cache_read": 1445376,
+        "other": 201153
+      },
+      {
+        "stage": "S7",
+        "role": "parent",
+        "cache_read": 9089536,
+        "other": 168201
+      },
+      {
+        "stage": "S7",
+        "role": "subagents",
+        "cache_read": 5103360,
+        "other": 651280
+      },
+      {
+        "stage": "S8",
+        "role": "parent",
+        "cache_read": 5180544,
+        "other": 129329
+      },
+      {
+        "stage": "S8",
+        "role": "subagents",
+        "cache_read": 1837696,
+        "other": 338915
+      },
+      {
+        "stage": "S9",
+        "role": "parent",
+        "cache_read": 11292160,
+        "other": 181525
+      },
+      {
+        "stage": "S9",
+        "role": "subagents",
+        "cache_read": 5418880,
+        "other": 668253
+      },
+      {
+        "stage": "final",
+        "role": "parent",
+        "cache_read": 5412992,
+        "other": 146454
+      },
+      {
+        "stage": "prep",
+        "role": "parent",
+        "cache_read": 1506688,
+        "other": 456507
+      }
+    ],
+    "parent": {
+      "cache_read": 44354304,
+      "other": 1615136
+    },
+    "tail_lower": {
+      "cache_read": 49989760,
+      "other": 2589082
+    },
+    "tail_upper": 52578842,
+    "preset3_removable_work": {
+      "cache_read": 36290816,
+      "other": 2387037
+    },
+    "reads": {},
+    "repeat_reads": {}
+  },
+  "claude:plan": {
+    "runs": 1,
+    "total": {
+      "cache_read": 17134038,
+      "other": 1346165
+    },
+    "unattributed": {
+      "cache_read": 0,
+      "other": 113794
+    },
+    "stages": [
+      {
+        "stage": "S5",
+        "role": "parent",
+        "cache_read": 102770,
+        "other": 11096
+      },
+      {
+        "stage": "S5",
+        "role": "subagents",
+        "cache_read": 787716,
+        "other": 95405
+      },
+      {
+        "stage": "S6",
+        "role": "parent",
+        "cache_read": 187363,
+        "other": 7040
+      },
+      {
+        "stage": "S6",
+        "role": "subagents",
+        "cache_read": 109494,
+        "other": 63331
+      },
+      {
+        "stage": "S7",
+        "role": "parent",
+        "cache_read": 1587134,
+        "other": 66608
+      },
+      {
+        "stage": "S7",
+        "role": "subagents",
+        "cache_read": 1145956,
+        "other": 221001
+      },
+      {
+        "stage": "S8",
+        "role": "parent",
+        "cache_read": 272640,
+        "other": 11067
+      },
+      {
+        "stage": "S8",
+        "role": "subagents",
+        "cache_read": 794907,
+        "other": 112019
+      },
+      {
+        "stage": "S9",
+        "role": "parent",
+        "cache_read": 1268616,
+        "other": 36778
+      },
+      {
+        "stage": "S9",
+        "role": "subagents",
+        "cache_read": 9966103,
+        "other": 467245
+      },
+      {
+        "stage": "final",
+        "role": "parent",
+        "cache_read": 770709,
+        "other": 25589
+      },
+      {
+        "stage": "parent_output_unallocated",
+        "role": "parent",
+        "cache_read": 0,
+        "other": 67563
+      },
+      {
+        "stage": "prep",
+        "role": "parent",
+        "cache_read": 140630,
+        "other": 47629
+      }
+    ],
+    "parent": {
+      "cache_read": 4329862,
+      "other": 273370
+    },
+    "tail_lower": {
+      "cache_read": 16102922,
+      "other": 1010678
+    },
+    "tail_upper": 17294957,
+    "preset3_removable_work": {
+      "cache_read": 4987980,
+      "other": 587567
+    },
+    "reads": {
+      "claude.md": 1,
+      "plans/v2.0.1-execution.md": 10,
+      "SKILL.md": 1,
+      "synthesizer.md": 1,
+      "zoom_out.md": 3,
+      "zoom-out-standard.md": 2,
+      "OWNER_REQUEST.md": 10,
+      "validation-2026-11-07-RESULT.md": 10,
+      "codemap-comparison-2026-11-06.md": 10,
+      "egm-selftest-2026-11-06-RESULT.md": 9,
+      "DECISIONS-D21-D31.md": 10,
+      "ws/AGENTS.md": 9,
+      "AGENTS.md": 10,
+      "plans/v2.0.0-execution.md": 7,
+      "oaw_mode.py": 9,
+      "goldfish_review.py": 4,
+      "catalog.py": 14,
+      "oaw.py": 7,
+      "code_index.py": 8,
+      "catalog_core.py": 5,
+      "comprehension.md": 2,
+      "design_critic.md": 1,
+      "feature-spec-standard.md": 2,
+      "structural.md": 1,
+      "style.md": 2,
+      "minimal-project/AGENTS.md": 1,
+      ".claude/agents/egm-design.md": 1,
+      "zoom_out_report.md": 1,
+      "comprehension_report.md": 2,
+      "critic_report.md": 1,
+      "SHARED_ACCEPTANCE_PROTOCOL.md": 2,
+      "SKILL_VALUE_EXPERIMENT.md": 1,
+      "SKILL_INTAKE.md": 2,
+      "implementation_readiness.md": 1,
+      "implementation-readiness-standard.md": 2,
+      "codebase_details.md": 1,
+      "harness_check.py": 2,
+      ".claude/agents/egm-implementation-readiness.md": 1,
+      ".agents/skills/egm-review/SKILL.md": 2,
+      "egm/skills/egm-review/SKILL.md": 1,
+      ".claude/agents/egm-codebase-details.md": 1,
+      ".agents/skills/oaw-evidence/SKILL.md": 1,
+      "minimal-project/.oaw/integrations/egm/skills/egm-review/SKILL.md": 1,
+      "workflows/test.yml": 2,
+      "ws/VERSION.json": 2,
+      "code-map/PREREG.md": 2,
+      "test_catalog_ui.py": 2,
+      "test_oaw_mode.py": 1,
+      "test_install.py": 1,
+      ".agents/skills/egm-review/agents/openai.yaml": 1
+    },
+    "repeat_reads": {
+      "claude.md": 0,
+      "plans/v2.0.1-execution.md": 9,
+      "SKILL.md": 0,
+      "synthesizer.md": 0,
+      "zoom_out.md": 2,
+      "zoom-out-standard.md": 1,
+      "OWNER_REQUEST.md": 9,
+      "validation-2026-11-07-RESULT.md": 9,
+      "codemap-comparison-2026-11-06.md": 9,
+      "egm-selftest-2026-11-06-RESULT.md": 8,
+      "DECISIONS-D21-D31.md": 9,
+      "ws/AGENTS.md": 8,
+      "AGENTS.md": 9,
+      "plans/v2.0.0-execution.md": 6,
+      "oaw_mode.py": 8,
+      "goldfish_review.py": 3,
+      "catalog.py": 13,
+      "oaw.py": 6,
+      "code_index.py": 7,
+      "catalog_core.py": 4,
+      "comprehension.md": 1,
+      "design_critic.md": 0,
+      "feature-spec-standard.md": 1,
+      "structural.md": 0,
+      "style.md": 1,
+      "minimal-project/AGENTS.md": 0,
+      ".claude/agents/egm-design.md": 0,
+      "zoom_out_report.md": 0,
+      "comprehension_report.md": 1,
+      "critic_report.md": 0,
+      "SHARED_ACCEPTANCE_PROTOCOL.md": 1,
+      "SKILL_VALUE_EXPERIMENT.md": 0,
+      "SKILL_INTAKE.md": 1,
+      "implementation_readiness.md": 0,
+      "implementation-readiness-standard.md": 1,
+      "codebase_details.md": 0,
+      "harness_check.py": 1,
+      ".claude/agents/egm-implementation-readiness.md": 0,
+      ".agents/skills/egm-review/SKILL.md": 1,
+      "egm/skills/egm-review/SKILL.md": 0,
+      ".claude/agents/egm-codebase-details.md": 0,
+      ".agents/skills/oaw-evidence/SKILL.md": 0,
+      "minimal-project/.oaw/integrations/egm/skills/egm-review/SKILL.md": 0,
+      "workflows/test.yml": 1,
+      "ws/VERSION.json": 1,
+      "code-map/PREREG.md": 1,
+      "test_catalog_ui.py": 1,
+      "test_oaw_mode.py": 0,
+      "test_install.py": 0,
+      ".agents/skills/egm-review/agents/openai.yaml": 0
+    }
+  },
+  "claude:defects": {
+    "runs": 16,
+    "total": {
+      "cache_read": 21721597,
+      "other": 4785393
+    },
+    "unattributed": {
+      "cache_read": 0,
+      "other": 288410
+    },
+    "stages": [
+      {
+        "stage": "S5",
+        "role": "parent",
+        "cache_read": 772984,
+        "other": 101658
+      },
+      {
+        "stage": "S5",
+        "role": "subagents",
+        "cache_read": 331402,
+        "other": 272715
+      },
+      {
+        "stage": "S6",
+        "role": "parent",
+        "cache_read": 337100,
+        "other": 41463
+      },
+      {
+        "stage": "S6",
+        "role": "subagents",
+        "cache_read": 170783,
+        "other": 232883
+      },
+      {
+        "stage": "S7",
+        "role": "parent",
+        "cache_read": 4204724,
+        "other": 315702
+      },
+      {
+        "stage": "S7",
+        "role": "subagents",
+        "cache_read": 465127,
+        "other": 724128
+      },
+      {
+        "stage": "S8",
+        "role": "parent",
+        "cache_read": 355344,
+        "other": 33936
+      },
+      {
+        "stage": "S8",
+        "role": "subagents",
+        "cache_read": 684856,
+        "other": 470979
+      },
+      {
+        "stage": "S9",
+        "role": "parent",
+        "cache_read": 5258106,
+        "other": 298763
+      },
+      {
+        "stage": "S9",
+        "role": "subagents",
+        "cache_read": 679659,
+        "other": 743889
+      },
+      {
+        "stage": "final",
+        "role": "parent",
+        "cache_read": 5827993,
+        "other": 209061
+      },
+      {
+        "stage": "parent_output_unallocated",
+        "role": "parent",
+        "cache_read": 0,
+        "other": 427811
+      },
+      {
+        "stage": "prep",
+        "role": "parent",
+        "cache_read": 2055888,
+        "other": 581452
+      },
+      {
+        "stage": "unknown",
+        "role": "parent",
+        "cache_read": 577631,
+        "other": 25759
+      },
+      {
+        "stage": "unknown",
+        "role": "subagents",
+        "cache_read": 0,
+        "other": 16784
+      }
+    ],
+    "parent": {
+      "cache_read": 19389770,
+      "other": 2035605
+    },
+    "tail_lower": {
+      "cache_read": 17983692,
+      "other": 3070804
+    },
+    "tail_upper": 22390891,
+    "preset3_removable_work": {
+      "cache_read": 7322320,
+      "other": 2193464
+    },
+    "reads": {
+      ".claude/skills/egm-review/SKILL.md": 16,
+      "README.md": 160,
+      "docs/design.md": 160,
+      "docs/adr-001-client-freshness.md": 10,
+      "docs/adr-002-override-precedence.md": 10,
+      "src/flags.py": 10,
+      ".oaw/integrations/egm/skills/egm-review/SKILL.md": 16,
+      ".oaw/integrations/egm/docs/claude.md": 16,
+      ".oaw/integrations/egm/docs/harnesses.md": 14,
+      ".oaw/integrations/egm/skills/egm-review-loop/SKILL.md": 16,
+      ".claude/agents/egm-zoom-out.md": 9,
+      ".oaw/integrations/egm/agents/zoom_out.md": 33,
+      ".oaw/integrations/egm/resources/document_standards/zoom-out-standard.md": 32,
+      ".oaw/integrations/egm/agents/comprehension.md": 17,
+      ".oaw/integrations/egm/agents/design_critic.md": 16,
+      ".oaw/integrations/egm/resources/document_standards/feature-spec-standard.md": 33,
+      ".oaw/integrations/egm/agents/structural.md": 16,
+      ".oaw/integrations/egm/agents/style.md": 32,
+      "review_out/zoom_out_report.md": 14,
+      "review_out/comprehension_report.md": 14,
+      "review_out/critic_report.md": 14,
+      ".oaw/integrations/egm/agents/implementation_readiness.md": 16,
+      ".oaw/integrations/egm/resources/document_standards/implementation-readiness-standard.md": 32,
+      ".oaw/integrations/egm/agents/codebase_details.md": 16,
+      "docs/adr-001-sqs-standard-scan-queue.md": 10,
+      "docs/adr-002-report-export-scan-exemption.md": 10,
+      "src/uploads.py": 10,
+      ".oaw/integrations/egm/.claude-plugin/agents/synthesizer.md": 2,
+      ".oaw/integrations/egm/.claude-plugin/agents/zoom_out.md": 1,
+      "docs/adr-001-global-schedule.md": 10,
+      "docs/adr-002-dispatch-completion.md": 10,
+      "src/notifications.py": 10,
+      ".claude/skills/egm-review-loop/SKILL.md": 2,
+      "docs/adr-001-presigned-download-links.md": 10,
+      "docs/adr-002-exclude-risk-scores.md": 10,
+      "src/privacy_exports.py": 10,
+      ".oaw/integrations/egm/agents/synthesizer.md": 8,
+      "review_out/report.json": 2,
+      "docs/adr-001-weekly-payout-schedule.md": 10,
+      "docs/adr-002-paylane-transfers.md": 10,
+      "src/ledger.py": 10,
+      "docs/adr-001-event-time-windows.md": 10,
+      "docs/adr-002-raw-event-archive.md": 10,
+      "src/meter_client.py": 10,
+      "src/ingest_api.py": 10,
+      ".oaw/integrations/egm/resources/execution_instructions.md": 2,
+      ".claude/agents/egm-design.md": 6,
+      "docs/adr-001-link-lifetimes.md": 10,
+      "docs/adr-002-sessions-and-mail.md": 10,
+      "src/accounts.py": 10,
+      "src/mailer.py": 10,
+      "zoom_out_report.md": 2,
+      "comprehension_report.md": 2,
+      "critic_report.md": 2,
+      "docs/adr-001-interval-schedules.md": 10,
+      "docs/adr-002-handler-effects.md": 10,
+      "src/runtime.py": 10,
+      "docs/adr-001-money-integer-cents.md": 10,
+      "docs/adr-002-invoice-numbering-immutability.md": 10,
+      "src/invoice_runner.py": 10,
+      "src/proration.py": 10,
+      "docs/adr-001-quota-contract.md": 10,
+      "docs/adr-002-control-plane-isolation.md": 10,
+      "src/gateway.py": 10,
+      "docs/adr-001-change-log-relay.md": 10,
+      "docs/adr-002-contact-details-in-search.md": 10,
+      "src/change_publisher.py": 10,
+      "docs/adr-001-delivery-contract.md": 10,
+      "docs/adr-002-sandbox-transport.md": 10,
+      "src/webhooks.py": 10,
+      "docs/adr-001-v1-money.md": 10,
+      "docs/adr-002-promotion-boundaries.md": 10,
+      "src/pricing.py": 10,
+      "docs/adr-001-concurrent-index-builds.md": 10,
+      "docs/adr-002-expand-contract-releases.md": 10,
+      "src/runner.py": 10,
+      "docs/adr-001-invite-token-hashing.md": 10,
+      "docs/adr-002-transactional-email-queue.md": 10,
+      "src/roles.py": 10,
+      "src/membership.py": 10,
+      "docs/adr-001-canonical-archive.md": 10,
+      "docs/adr-002-event-identity.md": 10,
+      "src/audit.py": 10,
+      ".claude/agents/egm-synthesizer.md": 1
+    },
+    "repeat_reads": {
+      ".claude/skills/egm-review/SKILL.md": 0,
+      "README.md": 144,
+      "docs/design.md": 144,
+      "docs/adr-001-client-freshness.md": 9,
+      "docs/adr-002-override-precedence.md": 9,
+      "src/flags.py": 9,
+      ".oaw/integrations/egm/skills/egm-review/SKILL.md": 0,
+      ".oaw/integrations/egm/docs/claude.md": 0,
+      ".oaw/integrations/egm/docs/harnesses.md": 0,
+      ".oaw/integrations/egm/skills/egm-review-loop/SKILL.md": 0,
+      ".claude/agents/egm-zoom-out.md": 0,
+      ".oaw/integrations/egm/agents/zoom_out.md": 17,
+      ".oaw/integrations/egm/resources/document_standards/zoom-out-standard.md": 16,
+      ".oaw/integrations/egm/agents/comprehension.md": 1,
+      ".oaw/integrations/egm/agents/design_critic.md": 0,
+      ".oaw/integrations/egm/resources/document_standards/feature-spec-standard.md": 17,
+      ".oaw/integrations/egm/agents/structural.md": 0,
+      ".oaw/integrations/egm/agents/style.md": 16,
+      "review_out/zoom_out_report.md": 0,
+      "review_out/comprehension_report.md": 0,
+      "review_out/critic_report.md": 0,
+      ".oaw/integrations/egm/agents/implementation_readiness.md": 0,
+      ".oaw/integrations/egm/resources/document_standards/implementation-readiness-standard.md": 16,
+      ".oaw/integrations/egm/agents/codebase_details.md": 0,
+      "docs/adr-001-sqs-standard-scan-queue.md": 9,
+      "docs/adr-002-report-export-scan-exemption.md": 9,
+      "src/uploads.py": 9,
+      ".oaw/integrations/egm/.claude-plugin/agents/synthesizer.md": 0,
+      ".oaw/integrations/egm/.claude-plugin/agents/zoom_out.md": 0,
+      "docs/adr-001-global-schedule.md": 9,
+      "docs/adr-002-dispatch-completion.md": 9,
+      "src/notifications.py": 9,
+      ".claude/skills/egm-review-loop/SKILL.md": 0,
+      "docs/adr-001-presigned-download-links.md": 9,
+      "docs/adr-002-exclude-risk-scores.md": 9,
+      "src/privacy_exports.py": 9,
+      ".oaw/integrations/egm/agents/synthesizer.md": 0,
+      "review_out/report.json": 0,
+      "docs/adr-001-weekly-payout-schedule.md": 9,
+      "docs/adr-002-paylane-transfers.md": 9,
+      "src/ledger.py": 9,
+      "docs/adr-001-event-time-windows.md": 9,
+      "docs/adr-002-raw-event-archive.md": 9,
+      "src/meter_client.py": 9,
+      "src/ingest_api.py": 9,
+      ".oaw/integrations/egm/resources/execution_instructions.md": 0,
+      ".claude/agents/egm-design.md": 0,
+      "docs/adr-001-link-lifetimes.md": 9,
+      "docs/adr-002-sessions-and-mail.md": 9,
+      "src/accounts.py": 9,
+      "src/mailer.py": 9,
+      "zoom_out_report.md": 0,
+      "comprehension_report.md": 0,
+      "critic_report.md": 0,
+      "docs/adr-001-interval-schedules.md": 9,
+      "docs/adr-002-handler-effects.md": 9,
+      "src/runtime.py": 9,
+      "docs/adr-001-money-integer-cents.md": 9,
+      "docs/adr-002-invoice-numbering-immutability.md": 9,
+      "src/invoice_runner.py": 9,
+      "src/proration.py": 9,
+      "docs/adr-001-quota-contract.md": 9,
+      "docs/adr-002-control-plane-isolation.md": 9,
+      "src/gateway.py": 9,
+      "docs/adr-001-change-log-relay.md": 9,
+      "docs/adr-002-contact-details-in-search.md": 9,
+      "src/change_publisher.py": 9,
+      "docs/adr-001-delivery-contract.md": 9,
+      "docs/adr-002-sandbox-transport.md": 9,
+      "src/webhooks.py": 9,
+      "docs/adr-001-v1-money.md": 9,
+      "docs/adr-002-promotion-boundaries.md": 9,
+      "src/pricing.py": 9,
+      "docs/adr-001-concurrent-index-builds.md": 9,
+      "docs/adr-002-expand-contract-releases.md": 9,
+      "src/runner.py": 9,
+      "docs/adr-001-invite-token-hashing.md": 9,
+      "docs/adr-002-transactional-email-queue.md": 9,
+      "src/roles.py": 9,
+      "src/membership.py": 9,
+      "docs/adr-001-canonical-archive.md": 9,
+      "docs/adr-002-event-identity.md": 9,
+      "src/audit.py": 9,
+      ".claude/agents/egm-synthesizer.md": 0
+    }
+  },
+  "codex:defects": {
+    "runs": 16,
+    "total": {
+      "cache_read": 44797952,
+      "other": 2836392
+    },
+    "unattributed": {
+      "cache_read": 0,
+      "other": 0
+    },
+    "stages": [
+      {
+        "stage": "S5",
+        "role": "parent",
+        "cache_read": 5045120,
+        "other": 337080
+      },
+      {
+        "stage": "S5",
+        "role": "subagents",
+        "cache_read": 1292032,
+        "other": 267584
+      },
+      {
+        "stage": "S6",
+        "role": "parent",
+        "cache_read": 3918592,
+        "other": 83525
+      },
+      {
+        "stage": "S6",
+        "role": "subagents",
+        "cache_read": 1079808,
+        "other": 148796
+      },
+      {
+        "stage": "S7",
+        "role": "parent",
+        "cache_read": 6866432,
+        "other": 132804
+      },
+      {
+        "stage": "S7",
+        "role": "subagents",
+        "cache_read": 3819776,
+        "other": 486200
+      },
+      {
+        "stage": "S8",
+        "role": "parent",
+        "cache_read": 3901952,
+        "other": 65683
+      },
+      {
+        "stage": "S8",
+        "role": "subagents",
+        "cache_read": 1314944,
+        "other": 261029
+      },
+      {
+        "stage": "S9",
+        "role": "parent",
+        "cache_read": 8275456,
+        "other": 138986
+      },
+      {
+        "stage": "S9",
+        "role": "subagents",
+        "cache_read": 4014848,
+        "other": 492456
+      },
+      {
+        "stage": "final",
+        "role": "parent",
+        "cache_read": 4220928,
+        "other": 111759
+      },
+      {
+        "stage": "prep",
+        "role": "parent",
+        "cache_read": 1048064,
+        "other": 310490
+      }
+    ],
+    "parent": {
+      "cache_read": 33276544,
+      "other": 1180327
+    },
+    "tail_lower": {
+      "cache_read": 37412736,
+      "other": 1921238
+    },
+    "tail_upper": 39333974,
+    "preset3_removable_work": {
+      "cache_read": 27238656,
+      "other": 1782701
+    },
+    "reads": {},
+    "repeat_reads": {}
+  },
+  "quality_cost": {
+    "claude:N": {
+      "median": 60598.5,
+      "total": 1235529
+    },
+    "claude:E": {
+      "median": 1661316.0,
+      "total": 33413778
+    },
+    "codex:N": {
+      "median": 100407.5,
+      "total": 2209117
+    },
+    "codex:E": {
+      "median": 2934812.0,
+      "total": 58994320
+    }
+  }
+}

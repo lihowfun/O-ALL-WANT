@@ -1,0 +1,430 @@
+{
+  "claude:primary": {
+    "total": 33413778,
+    "cache_percent": 81.77347679750551,
+    "parent_percent": 80.60636842682082,
+    "stage_percent": {
+      "S5": 5.642726183193053,
+      "S6": 3.101361360574072,
+      "S7": 22.670857512730226,
+      "S8": 5.345932447387422,
+      "S9": 26.733561825903074,
+      "final": 22.228498076452176,
+      "prep": 9.71386713588628,
+      "parent_output_unallocated": 1.6678987931265958,
+      "unknown": 1.8560427378191116
+    },
+    "top_agents": [
+      [
+        "parent",
+        26933633
+      ],
+      [
+        "egm-zoom-out",
+        2156068
+      ],
+      [
+        "egm-style",
+        987931
+      ],
+      [
+        "egm-codebase-details",
+        739161
+      ],
+      [
+        "egm-implementation-readiness",
+        572886
+      ],
+      [
+        "egm-design",
+        571940
+      ],
+      [
+        "egm-structural",
+        546838
+      ],
+      [
+        "egm-comprehension",
+        541283
+      ],
+      [
+        "claude",
+        9037
+      ],
+      [
+        "statusline-setup",
+        7747
+      ]
+    ]
+  },
+  "codex:primary": {
+    "total": 58994320,
+    "cache_percent": 93.96538514216284,
+    "parent_percent": 72.10669094923037,
+    "stage_percent": {
+      "S5": 14.481168695562555,
+      "S6": 10.74970437831981,
+      "S7": 23.715061043164834,
+      "S8": 11.491321537395464,
+      "S9": 27.522495385996482,
+      "prep": 3.01341383373857,
+      "final": 9.026835125822283
+    },
+    "top_agents": [
+      [
+        "parent",
+        42538852
+      ],
+      [
+        "/root/intermediate_zoom",
+        1607011
+      ],
+      [
+        "/root/initial_zoom",
+        1604613
+      ],
+      [
+        "/root/comprehension",
+        1516617
+      ],
+      [
+        "/root/codebase_details",
+        1129220
+      ],
+      [
+        "/root/critic_design",
+        1110103
+      ],
+      [
+        "/root/critic_style",
+        1029570
+      ],
+      [
+        "/root/critic_structural",
+        1018911
+      ],
+      [
+        "/root/readiness",
+        997771
+      ],
+      [
+        "/root/readiness_style",
+        753819
+      ],
+      [
+        "/root/implementation_style",
+        632914
+      ],
+      [
+        "/root/design_critic",
+        462444
+      ],
+      [
+        "/root/feature_style",
+        435873
+      ],
+      [
+        "/root/structural",
+        430482
+      ],
+      [
+        "/root/implementation_readiness",
+        418484
+      ],
+      [
+        "/root/codebase",
+        379862
+      ],
+      [
+        "/root/intermediate_zoom_out",
+        370577
+      ],
+      [
+        "/root/initial_zoom_out",
+        368446
+      ],
+      [
+        "/root/critic_synthesis",
+        361886
+      ],
+      [
+        "/root/readiness_codebase",
+        311098
+      ],
+      [
+        "/root/readiness_synthesis",
+        293057
+      ],
+      [
+        "/root/implementation",
+        219050
+      ],
+      [
+        "/root/readiness_plan",
+        155793
+      ],
+      [
+        "/root/critic_structure",
+        152965
+      ],
+      [
+        "/root/readiness_code",
+        98502
+      ],
+      [
+        "/root/structural_critique",
+        77779
+      ],
+      [
+        "/root/implementation_codebase",
+        77638
+      ],
+      [
+        "/root/critic_synthesis/design_critic",
+        76834
+      ],
+      [
+        "/root/critic_synthesis/structural",
+        76729
+      ],
+      [
+        "/root/readiness_synthesis/implementation",
+        59769
+      ],
+      [
+        "/root/design_critique",
+        58213
+      ],
+      [
+        "/root/readiness_synthesis/codebase",
+        57353
+      ],
+      [
+        "/root/readiness_synthesis/style",
+        56187
+      ],
+      [
+        "/root/critic_synthesis/style",
+        55898
+      ]
+    ]
+  },
+  "claude:plan": {
+    "total": 18480203,
+    "cache_percent": 92.71563737692708,
+    "parent_percent": 24.90899044777809,
+    "stage_percent": {
+      "S5": 5.394892036629685,
+      "S6": 1.9871426737033138,
+      "S7": 16.345594255647516,
+      "S8": 6.442748491453259,
+      "S9": 63.52063340429756,
+      "final": 4.308924528588783,
+      "prep": 1.0187063421327136,
+      "parent_output_unallocated": 0.3655966333270257
+    },
+    "top_agents": [
+      [
+        "egm:egm-codebase-details",
+        7785499
+      ],
+      [
+        "parent",
+        4603232
+      ],
+      [
+        "egm:egm-implementation-readiness",
+        2520074
+      ],
+      [
+        "egm:egm-zoom-out",
+        1790047
+      ],
+      [
+        "egm:egm-design",
+        647216
+      ],
+      [
+        "egm:egm-structural",
+        569630
+      ],
+      [
+        "egm:egm-style",
+        277886
+      ],
+      [
+        "egm:egm-comprehension",
+        172825
+      ]
+    ]
+  },
+  "claude_flags_reads": [
+    {
+      "file": "README.md",
+      "agent": "egm-codebase-details",
+      "count": 1
+    },
+    {
+      "file": "README.md",
+      "agent": "egm-comprehension",
+      "count": 1
+    },
+    {
+      "file": "README.md",
+      "agent": "egm-design",
+      "count": 1
+    },
+    {
+      "file": "README.md",
+      "agent": "egm-implementation-readiness",
+      "count": 1
+    },
+    {
+      "file": "README.md",
+      "agent": "egm-structural",
+      "count": 1
+    },
+    {
+      "file": "README.md",
+      "agent": "egm-style",
+      "count": 2
+    },
+    {
+      "file": "README.md",
+      "agent": "egm-zoom-out",
+      "count": 2
+    },
+    {
+      "file": "README.md",
+      "agent": "parent",
+      "count": 1
+    },
+    {
+      "file": "docs/design.md",
+      "agent": "egm-codebase-details",
+      "count": 1
+    },
+    {
+      "file": "docs/design.md",
+      "agent": "egm-comprehension",
+      "count": 1
+    },
+    {
+      "file": "docs/design.md",
+      "agent": "egm-design",
+      "count": 1
+    },
+    {
+      "file": "docs/design.md",
+      "agent": "egm-implementation-readiness",
+      "count": 1
+    },
+    {
+      "file": "docs/design.md",
+      "agent": "egm-structural",
+      "count": 1
+    },
+    {
+      "file": "docs/design.md",
+      "agent": "egm-style",
+      "count": 2
+    },
+    {
+      "file": "docs/design.md",
+      "agent": "egm-zoom-out",
+      "count": 2
+    },
+    {
+      "file": "docs/design.md",
+      "agent": "parent",
+      "count": 1
+    },
+    {
+      "file": "src/flags.py",
+      "agent": "egm-codebase-details",
+      "count": 1
+    },
+    {
+      "file": "src/flags.py",
+      "agent": "egm-comprehension",
+      "count": 1
+    },
+    {
+      "file": "src/flags.py",
+      "agent": "egm-design",
+      "count": 1
+    },
+    {
+      "file": "src/flags.py",
+      "agent": "egm-implementation-readiness",
+      "count": 1
+    },
+    {
+      "file": "src/flags.py",
+      "agent": "egm-structural",
+      "count": 1
+    },
+    {
+      "file": "src/flags.py",
+      "agent": "egm-style",
+      "count": 2
+    },
+    {
+      "file": "src/flags.py",
+      "agent": "egm-zoom-out",
+      "count": 2
+    },
+    {
+      "file": "src/flags.py",
+      "agent": "parent",
+      "count": 1
+    }
+  ],
+  "flags_repeat_evidence": [
+    {
+      "line": 83,
+      "excerpt": "get_global`, `set_global` and `snapshot`.",
+      "task_id": "ad80f3ba8c7515171"
+    },
+    {
+      "line": 115,
+      "excerpt": "get_global`, `set_global` and `snapshot`. The document says `get_global(flag)` raises `KeyError` for an unknown flag. An upstream gateway already checks bearer tokens and passes the applicat",
+      "task_id": "aa292c5acad7042cd"
+    },
+    {
+      "line": 202,
+      "excerpt": "1,200 commits/s. Each commit holds exactly one override change (line 55), and there is no queue (line 56). A request that gets no slot returns 429 (line 57).",
+      "task_id": "a9072e725c2ad8761"
+    },
+    {
+      "line": 212,
+      "excerpt": "get_global(flag)` \"raises `KeyError` for an unknown flag\" and maps that to 404. It doesn't. `get_global` returns `_flags.get(name, False)`, so an unknown name returns `False`. Only `set_glob",
+      "task_id": "a0598b145eecfe5c8"
+    },
+    {
+      "line": 217,
+      "excerpt": "1,200 commits/s. Each commit holds exactly one override change (L55). There is no queue, slots are \"fixed for this release\" (L56), and a request without a slot returns 429 (L57).",
+      "task_id": "aeb0d5861cc7dde61"
+    },
+    {
+      "line": 268,
+      "excerpt": "get_global` returns `_flags.get(name, False)` (src/flags.py:10-12). Only `set_global` raises `KeyError` (src/flags.py:19-20).",
+      "task_id": "ad5f6f74f349d832d"
+    },
+    {
+      "line": 361,
+      "excerpt": "get_global` never raises.",
+      "task_id": "ae0ca00d4043e7e8e"
+    },
+    {
+      "line": 370,
+      "excerpt": "get_global` raises `KeyError`, but the code doesn't. The step 2 migration carries this error forward.**",
+      "task_id": "a02981d87e804df1e"
+    },
+    {
+      "line": 376,
+      "excerpt": "1,200 commits/s. Each commit is one change, slots are fixed, there is no queue, and a request without a slot gets 429.",
+      "task_id": "a20ed4cdb99a9dc69"
+    }
+  ]
+}

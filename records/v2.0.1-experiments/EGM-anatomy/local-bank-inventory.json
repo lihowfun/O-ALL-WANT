@@ -1,0 +1,32 @@
+[
+  {
+    "locator": "h1-review/PREREG.v2.md",
+    "lines": 256,
+    "bytes": 26995,
+    "sha256": "8db2ccc635d43f6688fd8fad285939492ca774adf1a9122fbdea386e261a3062"
+  },
+  {
+    "locator": "h1-review/AUTHOR_BRIEF_B.v2.md",
+    "lines": 78,
+    "bytes": 5584,
+    "sha256": "850b82d49ea64b248492aabbac3d11d96f23aa54de8a65e46ff924ab353f6068"
+  },
+  {
+    "locator": "h1-review/AUTHOR_BRIEF_C.v2.md",
+    "lines": 59,
+    "bytes": 3749,
+    "sha256": "40fe49af352aaab126e4afa8ab674551023809fc32448b216a04df412c0042f0"
+  },
+  {
+    "locator": "h1-review/h1_run.v2.py",
+    "lines": 1442,
+    "bytes": 77854,
+    "sha256": "748c03dadda64ffd9e6e0de30765114956a747b0823b5e507ee68cabdbfc9371"
+  },
+  {
+    "locator": "h1-review/h1_judge.v2.py",
+    "lines": 364,
+    "bytes": 16020,
+    "sha256": "9616e8461a16304b54d569de98b5886e8407c82c2e8795c02c6ff60716efa969"
+  }
+]

@@ -1,0 +1,82 @@
+{
+  "auditlog": {
+    "C1": "hold.*(?:queued|planning|snapshot|delet)|(?:queued|planning|snapshot).*hold",
+    "C2": "(?:tenant|Tenant).*(?:export|Export)|(?:export|Export).*tenant",
+    "M1": "120 minutes|120 min|240.*2|90.minute"
+  },
+  "carts": {
+    "C1": "(?:aggregate|Aggregate|sum|Sum).*(?:tax|round)|(?:tax|Tax).*(?:aggregate|sum|round)",
+    "M1": "Expired coupons|expiry validation",
+    "M2": "(?:decimal|Decimal).*(?:string|String)|(?:v1|V1).*(?:encoding|integer|money)"
+  },
+  "cron": {
+    "C1": "cache.*(?:tenant|ownership)|(?:Cache|cache).*(?:authorization|check)",
+    "M1": "720|120.*10",
+    "M2": "never raises|Outcome|invoke[^\\n]{0,60}wrong"
+  },
+  "digest": {
+    "C1": "(?:cache|Cache).*(?:private|personal|recipient)|(?:HTML|html).*(?:cache|Cache)",
+    "M1": "120,?000|2,?000.*minute|90 minutes",
+    "M2": "100.*(?:row|limit)|LIMIT 100|truncat"
+  },
+  "export": {
+    "C1": "(?:user|caller).*(?:export|subject)|(?:export|Export).*(?:user|caller)",
+    "C2": "(?:open|legacy|outstanding).*(?:request|task)|(?:drop|Drop).*export_tasks",
+    "M1": "960|1,200.*(?:day|daily)|capacity"
+  },
+  "flags": {
+    "C1": "(?:Cross|cross).tenant|(?:tenant|Tenant).*(?:URL|URL|isolation)|URL.*tenant",
+    "M1": "KeyError",
+    "M2": "1,200|1,800|6.*200"
+  },
+  "invites": {
+    "C1": "(?:email|Email).*(?:identity|match|compar)|(?:R2|Acceptance).*(?:enforc|email)",
+    "C2": "re.charges|Retry safety|retried accept|retry.*billing",
+    "M1": "50.*s|10.*(?:msg|message)|500.*30"
+  },
+  "invoices": {
+    "C1": "(?:finalized|Finalized).*(?:chang|modif)|(?:late|Late).usage",
+    "C2": "(?:public|Public).*(?:PDF|invoice|read|disclosure)|(?:PDF|Invoice).*(?:public|guess)",
+    "M1": "8.*(?:hour|20)|30,000|17 workers|capacity"
+  },
+  "metering": {
+    "C1": "(?:dedup|Dedup).*(?:expir|window|1 h|24)|1 h.*24",
+    "C2": "overwrit|tenant trust",
+    "M1": "48,000|48k|60,000|capacity"
+  },
+  "migrations": {
+    "C1": "lost.update|overwrit|stale backfill",
+    "C2": "(?:drop|DROP|contract|Contract).*(?:deploy|release|column)|seven days",
+    "M1": "66.7|67.*hour|240,000|400,000"
+  },
+  "payouts": {
+    "C1": "refund|Refund",
+    "C2": "ownership|another seller|other sellers",
+    "M1": "HoldPolicy"
+  },
+  "ratelimit": {
+    "C1": "X-Account-ID|client.controlled|Client.controlled",
+    "M1": "PostgreSQL|control.plane SQL",
+    "M2": "16,000|24,000|capacity"
+  },
+  "resets": {
+    "C1": "purpose",
+    "M1": "24.hour|24 hours|60 minutes|60.minute",
+    "M2": "20.*(?:start|email|mail)|18,000|capacity|30.*600"
+  },
+  "search": {
+    "C1": "(?:delet|Delet).*(?:event|publish)|erasure",
+    "C2": "(?:balance|Balance).*(?:replay|redeliver|idempoten|duplicate)|at.least.once",
+    "M1": "37,500|10.4|10 hours|rebuild throughput"
+  },
+  "uploads": {
+    "C1": "(?:Redelivery|redelivery|Duplicate|duplicate).*(?:state|success|delete)|not safe to repeat|not.*idempotent",
+    "C2": "(?:Download|download).*(?:unscanned|pending)|unscanned.*download",
+    "M1": "600|fleet|1,200"
+  },
+  "webhooks": {
+    "C1": "(?:tenant|Tenant).*(?:isolation|status|API)|(?:Status|status).*tenant",
+    "M1": "720|1,200|24 slots",
+    "M2": "create_delivery|return contract"
+  }
+}

@@ -1,0 +1,1131 @@
+{
+  "opus:claude:N": {
+    "detected": 47,
+    "unsupported": 4,
+    "clean": {
+      "registry": {
+        "key": "claude|N|registry",
+        "cell": "claude",
+        "arm": "N",
+        "id": "registry",
+        "rep": 1,
+        "grader_sha256": "e06a97ae59e355be0bb1978defe787e536377ccb63d0b650b9500bfb1a35eac7",
+        "spec_sha256": "0935fd3764e098727d9004df4784940d6b8caa998a52b88c217b286fab761b22",
+        "report_sha256": "27e007b32181a0c739b77ed8fb9c4da26e5df792748f56b138f80137036d0b50",
+        "row_runner_sha256": "81ba3cfe2c0fa060052ebf77f89679902a4cb5a9e152420b287924ca694c64d2",
+        "family": "opus",
+        "verdict": {
+          "valid_review": true,
+          "detected": [],
+          "unsupported_claims": [
+            {
+              "claim": "The 50 s worst case for R3 is not actually the worst case; a transient fetch failure makes it 70 s, so the stated bound does not justify claiming R3 is met.",
+              "why": "H2: design.md:44-46 correctly bounds rollback at one 20 s poll plus the 30 s request deadline, which is 50 s and under 60 s, with no model load. A ConnectionError in refresh() (rollout.py:38-40) means the registry is unreachable from that node. ADR-002:14-15 explicitly accepts that assignments cannot change while the registry is unreachable, so this case is not a flaw in the R3 arithmetic. The claim that sequential fetch latency uses up the margin has no supporting source evidence."
+            }
+          ],
+          "hard_negatives_violated": [
+            "H2"
+          ],
+          "mentioned_only": [],
+          "valid_additional_findings": 2,
+          "uncertainties": 9,
+          "note": "The case has no planted defects. Two findings are grounded additions: the canary artifact preload ordering is unspecified, and the flag-off back-out disables rollback while a canary is still active. The third finding contradicts H2 by treating a node-level registry-unreachable poll as a breach of the R3 bound."
+        },
+        "tokens": 9294,
+        "detected": [],
+        "mentioned_only": [],
+        "hard_negatives_violated": [
+          "H2"
+        ],
+        "unsupported": 1,
+        "valid": true,
+        "planted": 0
+      },
+      "supplier": {
+        "key": "claude|N|supplier",
+        "cell": "claude",
+        "arm": "N",
+        "id": "supplier",
+        "rep": 1,
+        "grader_sha256": "e06a97ae59e355be0bb1978defe787e536377ccb63d0b650b9500bfb1a35eac7",
+        "spec_sha256": "0935fd3764e098727d9004df4784940d6b8caa998a52b88c217b286fab761b22",
+        "report_sha256": "fd11142ae7b0d5b220fd4240d950ba1e765326148bcae41156479ff6de95e5fb",
+        "row_runner_sha256": "81ba3cfe2c0fa060052ebf77f89679902a4cb5a9e152420b287924ca694c64d2",
+        "family": "opus",
+        "verdict": {
+          "valid_review": true,
+          "detected": [],
+          "unsupported_claims": [],
+          "hard_negatives_violated": [],
+          "mentioned_only": [],
+          "valid_additional_findings": 1,
+          "uncertainties": 10,
+          "note": "The review is complete and its single finding is grounded: design.md:48-50 gives `snapshot` and `stock` no creation or publication timestamp, and design.md:46 makes revisions opaque integers, so the 48-hour cleanup at design.md:74 has no age criterion; the uncertainties, including the 690-second lock-contention scenario, are conditional and do not assert the opposite of any hard negative."
+        },
+        "tokens": 8246,
+        "detected": [],
+        "mentioned_only": [],
+        "hard_negatives_violated": [],
+        "unsupported": 0,
+        "valid": true,
+        "planted": 0
+      },
+      "sessions": {
+        "key": "claude|N|sessions",
+        "cell": "claude",
+        "arm": "N",
+        "id": "sessions",
+        "rep": 1,
+        "grader_sha256": "e06a97ae59e355be0bb1978defe787e536377ccb63d0b650b9500bfb1a35eac7",
+        "spec_sha256": "0935fd3764e098727d9004df4784940d6b8caa998a52b88c217b286fab761b22",
+        "report_sha256": "13221d97548931441633a61e83efc79d2625e6152615c0ee486b0cd9c2747de3",
+        "row_runner_sha256": "81ba3cfe2c0fa060052ebf77f89679902a4cb5a9e152420b287924ca694c64d2",
+        "family": "opus",
+        "verdict": {
+          "valid_review": true,
+          "detected": [],
+          "unsupported_claims": [],
+          "hard_negatives_violated": [],
+          "mentioned_only": [],
+          "valid_additional_findings": 0,
+          "uncertainties": 9,
+          "note": "The review completed with no defect findings, which is correct for a case with no planted defects; its 9 grounded uncertainties all respect H1–H4, including explicitly affirming the 600 s lifetime, the retained 30-day deadline and the 2,240 req/s capacity."
+        },
+        "tokens": 8046,
+        "detected": [],
+        "mentioned_only": [],
+        "hard_negatives_violated": [],
+        "unsupported": 0,
+        "valid": true,
+        "planted": 0
+      },
+      "dashboard": {
+        "key": "claude|N|dashboard",
+        "cell": "claude",
+        "arm": "N",
+        "id": "dashboard",
+        "rep": 1,
+        "grader_sha256": "e06a97ae59e355be0bb1978defe787e536377ccb63d0b650b9500bfb1a35eac7",
+        "spec_sha256": "0935fd3764e098727d9004df4784940d6b8caa998a52b88c217b286fab761b22",
+        "report_sha256": "0870c0f0f242369ec7edff57f3c4c9a43527bbcfbe1b833197fa171fbda1df23",
+        "row_runner_sha256": "81ba3cfe2c0fa060052ebf77f89679902a4cb5a9e152420b287924ca694c64d2",
+        "family": "opus",
+        "verdict": {
+          "valid_review": true,
+          "detected": [],
+          "unsupported_claims": [],
+          "hard_negatives_violated": [],
+          "mentioned_only": [],
+          "valid_additional_findings": 1,
+          "uncertainties": 10,
+          "note": "The review completed. It makes one grounded extra finding: json.dumps(default=str) in ChartCache.put (src/cache.py:25) turns datetime taken_at and Decimal aggregates from SnapshotReader.run (src/snapshot_reader.py:27) into strings, so cache hits and misses return different types. It contradicts no hard negative, its ten uncertainties are conditional, and the case has no planted defects to detect."
+        },
+        "tokens": 8794,
+        "detected": [],
+        "mentioned_only": [],
+        "hard_negatives_violated": [],
+        "unsupported": 0,
+        "valid": true,
+        "planted": 0
+      }
+    }
+  },
+  "opus:claude:E": {
+    "detected": 48,
+    "unsupported": 9,
+    "clean": {
+      "dashboard": {
+        "key": "claude|E|dashboard",
+        "cell": "claude",
+        "arm": "E",
+        "id": "dashboard",
+        "rep": 1,
+        "grader_sha256": "e06a97ae59e355be0bb1978defe787e536377ccb63d0b650b9500bfb1a35eac7",
+        "spec_sha256": "0935fd3764e098727d9004df4784940d6b8caa998a52b88c217b286fab761b22",
+        "report_sha256": "364c5182499cdac9477a07cfd4b900b3b0629e93b1299fb3761ace5726ef18b0",
+        "row_runner_sha256": "81ba3cfe2c0fa060052ebf77f89679902a4cb5a9e152420b287924ca694c64d2",
+        "family": "opus",
+        "verdict": {
+          "valid_review": true,
+          "detected": [],
+          "unsupported_claims": [],
+          "hard_negatives_violated": [],
+          "mentioned_only": [],
+          "valid_additional_findings": 5,
+          "uncertainties": 12,
+          "note": "The case has no planted defects, and none of the five rollout and verification findings contradicts H1-H4. Each is grounded in design.md: unlogged cron schemas between steps 1 and 2, no rollback for step 2 plus retention deleting backfilled schemas, no rollout test of R4, step 4's done criterion missing the banner, and R3 unmet before step 4. Finding 1's R4 impact assumes snapctl rejects schemas without a published log row, which the 'published schema' wording supports; finding 2 slightly overstates 'not acknowledged', since design.md:67 says the 14 newest are kept."
+        },
+        "tokens": 9654,
+        "detected": [],
+        "mentioned_only": [],
+        "hard_negatives_violated": [],
+        "unsupported": 0,
+        "valid": true,
+        "planted": 0
+      },
+      "registry": {
+        "key": "claude|E|registry",
+        "cell": "claude",
+        "arm": "E",
+        "id": "registry",
+        "rep": 1,
+        "grader_sha256": "e06a97ae59e355be0bb1978defe787e536377ccb63d0b650b9500bfb1a35eac7",
+        "spec_sha256": "0935fd3764e098727d9004df4784940d6b8caa998a52b88c217b286fab761b22",
+        "report_sha256": "83f3adf85c0d0a7b76123388464b04aba6ab9a970c0f02764f74c323abc429f7",
+        "row_runner_sha256": "81ba3cfe2c0fa060052ebf77f89679902a4cb5a9e152420b287924ca694c64d2",
+        "family": "opus",
+        "verdict": {
+          "valid_review": true,
+          "detected": [],
+          "unsupported_claims": [
+            {
+              "claim": "The stated 50 s worst case for R3 is not a worst case; one failed poll gives 70 s and the code does not deliver the guarantee.",
+              "why": "H2: design.md:44-46 gives one 20 s poll (POLL_INTERVAL_S, src/rollout.py:6) plus the 30 s request deadline, which is 50 s, under R3's 60 s, and rollback needs no model load (design.md:41-42). A node failing to reach the registry is the fail-static case accepted in ADR-002, not a flaw in the latency arithmetic."
+            },
+            {
+              "claim": "R3 contradicts accepted ADR-002 because cut-off nodes keep serving the canary during a partition, so the requirement cannot hold.",
+              "why": "H4: ADR-002:10-15 accepts that assignments, including rollbacks, cannot change while the registry is unreachable from a node, and design.md:50-51 adopts that policy explicitly. Treating the accepted fail-static consequence as a design defect contradicts the current accepted decision."
+            }
+          ],
+          "hard_negatives_violated": [
+            "H2",
+            "H4"
+          ],
+          "mentioned_only": [],
+          "valid_additional_findings": 5,
+          "uncertainties": 10,
+          "note": "There is no planted defect to detect; five grounded additional findings are valid (flag back-out stranding an active canary, no version column in rollout_events, undefined convergence measure, unstated audit atomicity, promote never piloted), but two findings attack the R3 arithmetic and the accepted ADR-002 fail-static policy, violating H2 and H4."
+        },
+        "tokens": 10162,
+        "detected": [],
+        "mentioned_only": [],
+        "hard_negatives_violated": [
+          "H2",
+          "H4"
+        ],
+        "unsupported": 2,
+        "valid": true,
+        "planted": 0
+      },
+      "supplier": {
+        "key": "claude|E|supplier",
+        "cell": "claude",
+        "arm": "E",
+        "id": "supplier",
+        "rep": 1,
+        "grader_sha256": "e06a97ae59e355be0bb1978defe787e536377ccb63d0b650b9500bfb1a35eac7",
+        "spec_sha256": "0935fd3764e098727d9004df4784940d6b8caa998a52b88c217b286fab761b22",
+        "report_sha256": "c6d1873012acc3fc2ea9519423761e1eb28e44c588399dbc348e92f8f5aee813",
+        "row_runner_sha256": "81ba3cfe2c0fa060052ebf77f89679902a4cb5a9e152420b287924ca694c64d2",
+        "family": "opus",
+        "verdict": {
+          "valid_review": true,
+          "detected": [],
+          "unsupported_claims": [
+            {
+              "claim": "Rollout verification omits revision-ordering, freshness, oversize and redaction cases, the Done criterion cannot be checked, and the shadow comparison cannot work because no step retains fetched bodies.",
+              "why": "This asks for a fuller test matrix, which the protocol forbids inferring from a preferred template; design.md:66-70 is a proposed plan, not a false claim. The body-retention point is contradicted by R5 (design.md:16), which refers to 'stored exports'. design.md:27 only bars logging bodies, not retaining them for the shadow comparison."
+            }
+          ],
+          "hard_negatives_violated": [],
+          "mentioned_only": [],
+          "valid_additional_findings": 2,
+          "uncertainties": 10,
+          "note": "The case has no planted defects and the review violates no hard negatives. The manual-import checked_at ambiguity (design.md:35 vs 60/71) is a grounded gap but overstated as major, partly because the 30-minute unknown fallback during rollback is intended per design.md:72. The cleanup age test has no time column in the schema (design.md:49/74), which is grounded. The test-coverage finding is template-driven and partly contradicted."
+        },
+        "tokens": 10620,
+        "detected": [],
+        "mentioned_only": [],
+        "hard_negatives_violated": [],
+        "unsupported": 1,
+        "valid": true,
+        "planted": 0
+      },
+      "sessions": {
+        "key": "claude|E|sessions",
+        "cell": "claude",
+        "arm": "E",
+        "id": "sessions",
+        "rep": 1,
+        "grader_sha256": "e06a97ae59e355be0bb1978defe787e536377ccb63d0b650b9500bfb1a35eac7",
+        "spec_sha256": "0935fd3764e098727d9004df4784940d6b8caa998a52b88c217b286fab761b22",
+        "report_sha256": "41bcde9cedd21de3316ac85689e84209ff47eb31935c11894016b300ddb96210",
+        "row_runner_sha256": "81ba3cfe2c0fa060052ebf77f89679902a4cb5a9e152420b287924ca694c64d2",
+        "family": "opus",
+        "verdict": {
+          "valid_review": true,
+          "detected": [],
+          "unsupported_claims": [
+            {
+              "claim": "Capable clients whose sessions are not enrolled cannot apply any legacy refresh response, so most canary-stage clients would discard successful refreshes and fail after 30 seconds (major).",
+              "why": "Lines 45-49 and 59 describe the rotation flow and its response schema, which carries generation. Nothing applies the 'newer generation' rule (line 46) to legacy responses. Legacy refresh (lines 65-67) issues claims without rotating a refresh token, so applying it cannot replace newer credentials (line 15). The claimed failure comes from the review's reading, not from the sources."
+            },
+            {
+              "claim": "The plan relies on ADR-003's per-shard admission limit but has no task to enforce it, so nothing sheds load before a shard exceeds its tested capacity (major).",
+              "why": "ADR-003 is Accepted and its Decision states 'Enforce admission at 560 refresh requests/s per shard' with excess receiving HTTP 503 (ADR-003:9,11). design.md:69 adopts ADR-003 and design.md:61 defines the 503/Retry-After contract. Admission is an explicit accepted decision, not an absent one. Requiring a separate per-file rollout task is a template demand."
+            },
+            {
+              "claim": "The completion criterion 'all capable sessions rotate' may never hold because sessions that never refresh never rotate.",
+              "why": "In context, line 75 follows the canary of '1%, 10%, then 100% of capable sessions' (line 70), so 'rotate' means enrolled in rotation, not that each session has performed one. Sessions that never refresh expire at their 30-day deadline (lines 11-12) and stop being live sessions. The finding depends on an over-literal reading."
+            }
+          ],
+          "hard_negatives_violated": [],
+          "mentioned_only": [],
+          "valid_additional_findings": 2,
+          "uncertainties": 11,
+          "note": "The case has no planted defects. Two findings are grounded: reuse revocation after the replay window depends on cleanup timing (lines 43/44/57), and the test plan omits several specified security behaviours. Three major/minor findings rest on over-literal readings or call ADR-003's accepted admission decision absent."
+        },
+        "tokens": 12281,
+        "detected": [],
+        "mentioned_only": [],
+        "hard_negatives_violated": [],
+        "unsupported": 3,
+        "valid": true,
+        "planted": 0
+      }
+    }
+  },
+  "opus:codex:N": {
+    "detected": 47,
+    "unsupported": 1,
+    "clean": {
+      "registry": {
+        "key": "codex|N|registry",
+        "cell": "codex",
+        "arm": "N",
+        "id": "registry",
+        "rep": 1,
+        "grader_sha256": "e06a97ae59e355be0bb1978defe787e536377ccb63d0b650b9500bfb1a35eac7",
+        "spec_sha256": "0935fd3764e098727d9004df4784940d6b8caa998a52b88c217b286fab761b22",
+        "report_sha256": "1c6b11ada75eb7dc81db0adca52935278bf38a19c371e2b13abf65e88f9babb1",
+        "row_runner_sha256": "81ba3cfe2c0fa060052ebf77f89679902a4cb5a9e152420b287924ca694c64d2",
+        "family": "opus",
+        "verdict": {
+          "valid_review": true,
+          "detected": [],
+          "unsupported_claims": [],
+          "hard_negatives_violated": [],
+          "mentioned_only": [],
+          "valid_additional_findings": 0,
+          "uncertainties": 4,
+          "note": "The review completed and cites concrete source lines; it reports no findings, which is correct for a case with no planted defect, and its four uncertainties are conditional and recorded separately, not counted as false alarms or hard-negative violations. The first uncertainty questions the R3 bound only conditionally and does not contradict H2."
+        },
+        "tokens": 7436,
+        "detected": [],
+        "mentioned_only": [],
+        "hard_negatives_violated": [],
+        "unsupported": 0,
+        "valid": true,
+        "planted": 0
+      },
+      "supplier": {
+        "key": "codex|N|supplier",
+        "cell": "codex",
+        "arm": "N",
+        "id": "supplier",
+        "rep": 1,
+        "grader_sha256": "e06a97ae59e355be0bb1978defe787e536377ccb63d0b650b9500bfb1a35eac7",
+        "spec_sha256": "0935fd3764e098727d9004df4784940d6b8caa998a52b88c217b286fab761b22",
+        "report_sha256": "e47ac4b7bf071ca9b6850bb51bbdd29862af2c829b2e3c63fcb9b77ccb0da320",
+        "row_runner_sha256": "81ba3cfe2c0fa060052ebf77f89679902a4cb5a9e152420b287924ca694c64d2",
+        "family": "opus",
+        "verdict": {
+          "valid_review": true,
+          "detected": [],
+          "unsupported_claims": [],
+          "hard_negatives_violated": [],
+          "mentioned_only": [],
+          "valid_additional_findings": 0,
+          "uncertainties": 3,
+          "note": "The review completed with no concrete findings, which is correct for this no-defect case; its three uncertainties are grounded questions about pending benchmarks, unimplemented atomicity, and the manual-import checked_at source, and none contradicts H1–H4."
+        },
+        "tokens": 6740,
+        "detected": [],
+        "mentioned_only": [],
+        "hard_negatives_violated": [],
+        "unsupported": 0,
+        "valid": true,
+        "planted": 0
+      },
+      "sessions": {
+        "key": "codex|N|sessions",
+        "cell": "codex",
+        "arm": "N",
+        "id": "sessions",
+        "rep": 1,
+        "grader_sha256": "e06a97ae59e355be0bb1978defe787e536377ccb63d0b650b9500bfb1a35eac7",
+        "spec_sha256": "0935fd3764e098727d9004df4784940d6b8caa998a52b88c217b286fab761b22",
+        "report_sha256": "7489c8d46f88136c34535c4e4434eeca41c78953b9a6d33d2d4e0c536cd04a97",
+        "row_runner_sha256": "81ba3cfe2c0fa060052ebf77f89679902a4cb5a9e152420b287924ca694c64d2",
+        "family": "opus",
+        "verdict": {
+          "valid_review": true,
+          "detected": [],
+          "unsupported_claims": [
+            {
+              "claim": "The design's 'at most 550 per shard' conflicts with ADR-003's 560/shard admission, so the advertised 2,240 requests/s cannot be admitted and the capacity statement needs reconciliation.",
+              "why": "docs/design.md:9 bounds expected demand (2,200 requests/s including retries, at most 550 per shard); it does not cap admission. ADR-003 (docs/adr-003-refresh-capacity.md:7-11) admits up to 560 per shard, 2,240 total, which is headroom above that demand. docs/design.md:69 correctly cites the 2,240 capacity, so there is no contradiction."
+            }
+          ],
+          "hard_negatives_violated": [
+            "H4"
+          ],
+          "mentioned_only": [],
+          "valid_additional_findings": 0,
+          "uncertainties": 3,
+          "note": "The review completed with one grounded but mistaken finding: it reads the 550-per-shard demand bound as an admission ceiling and disputes the 2,240 usable capacity that H4 affirms, and this case has no planted defects to detect."
+        },
+        "tokens": 8135,
+        "detected": [],
+        "mentioned_only": [],
+        "hard_negatives_violated": [
+          "H4"
+        ],
+        "unsupported": 1,
+        "valid": true,
+        "planted": 0
+      },
+      "dashboard": {
+        "key": "codex|N|dashboard",
+        "cell": "codex",
+        "arm": "N",
+        "id": "dashboard",
+        "rep": 1,
+        "grader_sha256": "e06a97ae59e355be0bb1978defe787e536377ccb63d0b650b9500bfb1a35eac7",
+        "spec_sha256": "0935fd3764e098727d9004df4784940d6b8caa998a52b88c217b286fab761b22",
+        "report_sha256": "317d529a317a419adc9c39f31b6e150c3ec8a0e1507807686a35af6f25da33d7",
+        "row_runner_sha256": "81ba3cfe2c0fa060052ebf77f89679902a4cb5a9e152420b287924ca694c64d2",
+        "family": "opus",
+        "verdict": {
+          "valid_review": true,
+          "detected": [],
+          "unsupported_claims": [],
+          "hard_negatives_violated": [],
+          "mentioned_only": [],
+          "valid_additional_findings": 0,
+          "uncertainties": 3,
+          "note": "The review completed, raised no concrete defects (correct for a case with no planted defects), and its three source-grounded uncertainties explicitly respect the accepted decisions, so no hard negatives are contradicted."
+        },
+        "tokens": 7181,
+        "detected": [],
+        "mentioned_only": [],
+        "hard_negatives_violated": [],
+        "unsupported": 0,
+        "valid": true,
+        "planted": 0
+      }
+    }
+  },
+  "opus:codex:E": {
+    "detected": 47,
+    "unsupported": 1,
+    "clean": {
+      "sessions": {
+        "key": "codex|E|sessions",
+        "cell": "codex",
+        "arm": "E",
+        "id": "sessions",
+        "rep": 1,
+        "grader_sha256": "e06a97ae59e355be0bb1978defe787e536377ccb63d0b650b9500bfb1a35eac7",
+        "spec_sha256": "0935fd3764e098727d9004df4784940d6b8caa998a52b88c217b286fab761b22",
+        "report_sha256": "60aa6f1ee6cfaa3f724d8f87a81f68cd3c8db185f8e9fd09c3f8dd6863d3da21",
+        "row_runner_sha256": "81ba3cfe2c0fa060052ebf77f89679902a4cb5a9e152420b287924ca694c64d2",
+        "family": "opus",
+        "verdict": {
+          "valid_review": true,
+          "detected": [],
+          "unsupported_claims": [],
+          "hard_negatives_violated": [],
+          "mentioned_only": [],
+          "valid_additional_findings": 0,
+          "uncertainties": 8,
+          "note": "The review completed with no findings on a case with no planted defects; its eight source-grounded uncertainties, including a capacity note that agrees 550 per shard fits within ADR-003's 2,240 requests/s, do not contradict any hard negative."
+        },
+        "tokens": 7545,
+        "detected": [],
+        "mentioned_only": [],
+        "hard_negatives_violated": [],
+        "unsupported": 0,
+        "valid": true,
+        "planted": 0
+      },
+      "supplier": {
+        "key": "codex|E|supplier",
+        "cell": "codex",
+        "arm": "E",
+        "id": "supplier",
+        "rep": 1,
+        "grader_sha256": "e06a97ae59e355be0bb1978defe787e536377ccb63d0b650b9500bfb1a35eac7",
+        "spec_sha256": "0935fd3764e098727d9004df4784940d6b8caa998a52b88c217b286fab761b22",
+        "report_sha256": "89b213acad7d696569d40e1f3ee9d75f7f2c81805b6f3ec117056956e0ef94bc",
+        "row_runner_sha256": "81ba3cfe2c0fa060052ebf77f89679902a4cb5a9e152420b287924ca694c64d2",
+        "family": "opus",
+        "verdict": {
+          "valid_review": true,
+          "detected": [],
+          "unsupported_claims": [],
+          "hard_negatives_violated": [],
+          "mentioned_only": [],
+          "valid_additional_findings": 1,
+          "uncertainties": 6,
+          "note": "The review completed with source-grounded claims and violated no hard negatives (it explicitly agrees with the 390-second ADR-002 budget); its single finding is accurate, since the explicitly listed snapshot columns at docs/design.md:49 carry no timestamp to support the 48-hour cleanup rule at line 74, though rating it major somewhat overstates a schema underspecification."
+        },
+        "tokens": 7701,
+        "detected": [],
+        "mentioned_only": [],
+        "hard_negatives_violated": [],
+        "unsupported": 0,
+        "valid": true,
+        "planted": 0
+      },
+      "dashboard": {
+        "key": "codex|E|dashboard",
+        "cell": "codex",
+        "arm": "E",
+        "id": "dashboard",
+        "rep": 1,
+        "grader_sha256": "e06a97ae59e355be0bb1978defe787e536377ccb63d0b650b9500bfb1a35eac7",
+        "spec_sha256": "0935fd3764e098727d9004df4784940d6b8caa998a52b88c217b286fab761b22",
+        "report_sha256": "a49bfcc8ade8c2f598b6330d9e90d276683b5d6ff440ed2b0b7cb00042c4a48b",
+        "row_runner_sha256": "81ba3cfe2c0fa060052ebf77f89679902a4cb5a9e152420b287924ca694c64d2",
+        "family": "opus",
+        "verdict": {
+          "valid_review": true,
+          "detected": [],
+          "unsupported_claims": [],
+          "hard_negatives_violated": [],
+          "mentioned_only": [],
+          "valid_additional_findings": 0,
+          "uncertainties": 9,
+          "note": "The review completed with zero concrete findings, which matches this no-defect case; its nine grounded uncertainties are conditional or clarifying, and none contradicts H1–H4, since it explicitly affirms the 28 h 59 min computation, the gateway authentication, and snapshot serving."
+        },
+        "tokens": 7961,
+        "detected": [],
+        "mentioned_only": [],
+        "hard_negatives_violated": [],
+        "unsupported": 0,
+        "valid": true,
+        "planted": 0
+      },
+      "registry": {
+        "key": "codex|E|registry",
+        "cell": "codex",
+        "arm": "E",
+        "id": "registry",
+        "rep": 1,
+        "grader_sha256": "e06a97ae59e355be0bb1978defe787e536377ccb63d0b650b9500bfb1a35eac7",
+        "spec_sha256": "0935fd3764e098727d9004df4784940d6b8caa998a52b88c217b286fab761b22",
+        "report_sha256": "1001ceec7a2b92aef9a7fbab6ec03f05ba62bb101e170b2a8ca227b6aa713030",
+        "row_runner_sha256": "81ba3cfe2c0fa060052ebf77f89679902a4cb5a9e152420b287924ca694c64d2",
+        "family": "opus",
+        "verdict": {
+          "valid_review": true,
+          "detected": [],
+          "unsupported_claims": [
+            {
+              "claim": "Major: R3's 60 s rollback bound conflicts with the accepted outage exception, so the guarantee overstates supported behavior when nodes cannot fetch a committed rollback.",
+              "why": "The design does not leave the outage case unqualified. docs/design.md:48-51 cites ADR-002 and states that transitions are unavailable and nodes keep the cached assignment during an outage. docs/adr-002-fail-static-serving.md:13-15 explicitly accepts that rollbacks cannot change mid-outage. The R3 arithmetic (design.md:44-46) covers normal propagation. Calling this documented, accepted fail-static trade-off a major defect re-raises the hard negative instead of identifying a real gap."
+            }
+          ],
+          "hard_negatives_violated": [
+            "H4"
+          ],
+          "mentioned_only": [],
+          "valid_additional_findings": 0,
+          "uncertainties": 10,
+          "note": "The review is complete and grounded, and correctly respects H1-H3. Its only finding treats the accepted ADR-002 fail-static rollback exception as a major R3 defect, so it is counted as unsupported and as violating H4; the ten uncertainties are recorded separately and are not false alarms."
+        },
+        "tokens": 9451,
+        "detected": [],
+        "mentioned_only": [],
+        "hard_negatives_violated": [
+          "H4"
+        ],
+        "unsupported": 1,
+        "valid": true,
+        "planted": 0
+      }
+    }
+  },
+  "codex:claude:N": {
+    "detected": 47,
+    "unsupported": 4,
+    "clean": {
+      "registry": {
+        "key": "claude|N|registry",
+        "cell": "claude",
+        "arm": "N",
+        "id": "registry",
+        "rep": 1,
+        "grader_sha256": "e06a97ae59e355be0bb1978defe787e536377ccb63d0b650b9500bfb1a35eac7",
+        "spec_sha256": "0935fd3764e098727d9004df4784940d6b8caa998a52b88c217b286fab761b22",
+        "report_sha256": "27e007b32181a0c739b77ed8fb9c4da26e5df792748f56b138f80137036d0b50",
+        "row_runner_sha256": "81ba3cfe2c0fa060052ebf77f89679902a4cb5a9e152420b287924ca694c64d2",
+        "family": "codex",
+        "verdict": {
+          "valid_review": true,
+          "detected": [],
+          "unsupported_claims": [
+            {
+              "claim": "The stated 50 s rollback bound fails R3 because it ignores failed polls and fetch latency.",
+              "why": "H2 explicitly accepts the 20 s polling plus 30 s request deadline as meeting R3, with no model load on rollback (design.md:38-46). Failed connectivity falls under the accepted fail-static exception (ADR-002:10-15); additional fetch delays are not established by the supplied sources."
+            }
+          ],
+          "hard_negatives_violated": [
+            "H2"
+          ],
+          "mentioned_only": [],
+          "valid_additional_findings": 2,
+          "uncertainties": 9,
+          "note": "The completed review provides two grounded additional findings, one unsupported finding contradicting H2, and nine separately recorded uncertainties."
+        },
+        "tokens": 20894,
+        "detected": [],
+        "mentioned_only": [],
+        "hard_negatives_violated": [
+          "H2"
+        ],
+        "unsupported": 1,
+        "valid": true,
+        "planted": 0
+      },
+      "supplier": {
+        "key": "claude|N|supplier",
+        "cell": "claude",
+        "arm": "N",
+        "id": "supplier",
+        "rep": 1,
+        "grader_sha256": "e06a97ae59e355be0bb1978defe787e536377ccb63d0b650b9500bfb1a35eac7",
+        "spec_sha256": "0935fd3764e098727d9004df4784940d6b8caa998a52b88c217b286fab761b22",
+        "report_sha256": "fd11142ae7b0d5b220fd4240d950ba1e765326148bcae41156479ff6de95e5fb",
+        "row_runner_sha256": "81ba3cfe2c0fa060052ebf77f89679902a4cb5a9e152420b287924ca694c64d2",
+        "family": "codex",
+        "verdict": {
+          "valid_review": true,
+          "detected": [],
+          "unsupported_claims": [],
+          "hard_negatives_violated": [],
+          "mentioned_only": [],
+          "valid_additional_findings": 1,
+          "uncertainties": 10,
+          "note": "The completed review identifies one grounded additional finding about missing snapshot-age metadata; all ten entries under uncertainties are recorded separately."
+        },
+        "tokens": 19715,
+        "detected": [],
+        "mentioned_only": [],
+        "hard_negatives_violated": [],
+        "unsupported": 0,
+        "valid": true,
+        "planted": 0
+      },
+      "sessions": {
+        "key": "claude|N|sessions",
+        "cell": "claude",
+        "arm": "N",
+        "id": "sessions",
+        "rep": 1,
+        "grader_sha256": "e06a97ae59e355be0bb1978defe787e536377ccb63d0b650b9500bfb1a35eac7",
+        "spec_sha256": "0935fd3764e098727d9004df4784940d6b8caa998a52b88c217b286fab761b22",
+        "report_sha256": "13221d97548931441633a61e83efc79d2625e6152615c0ee486b0cd9c2747de3",
+        "row_runner_sha256": "81ba3cfe2c0fa060052ebf77f89679902a4cb5a9e152420b287924ca694c64d2",
+        "family": "codex",
+        "verdict": {
+          "valid_review": true,
+          "detected": [],
+          "unsupported_claims": [],
+          "hard_negatives_violated": [],
+          "mentioned_only": [],
+          "valid_additional_findings": 0,
+          "uncertainties": 9,
+          "note": "The review completed with source-grounded observations, no concrete defect findings, and nine uncertainty entries; no hard negatives were violated."
+        },
+        "tokens": 19720,
+        "detected": [],
+        "mentioned_only": [],
+        "hard_negatives_violated": [],
+        "unsupported": 0,
+        "valid": true,
+        "planted": 0
+      },
+      "dashboard": {
+        "key": "claude|N|dashboard",
+        "cell": "claude",
+        "arm": "N",
+        "id": "dashboard",
+        "rep": 1,
+        "grader_sha256": "e06a97ae59e355be0bb1978defe787e536377ccb63d0b650b9500bfb1a35eac7",
+        "spec_sha256": "0935fd3764e098727d9004df4784940d6b8caa998a52b88c217b286fab761b22",
+        "report_sha256": "0870c0f0f242369ec7edff57f3c4c9a43527bbcfbe1b833197fa171fbda1df23",
+        "row_runner_sha256": "81ba3cfe2c0fa060052ebf77f89679902a4cb5a9e152420b287924ca694c64d2",
+        "family": "codex",
+        "verdict": {
+          "valid_review": true,
+          "detected": [],
+          "unsupported_claims": [],
+          "hard_negatives_violated": [],
+          "mentioned_only": [],
+          "valid_additional_findings": 1,
+          "uncertainties": 10,
+          "note": "The completed review identifies one grounded additional finding about cache serialization changing value types and records ten uncertainties without contradicting any hard negative."
+        },
+        "tokens": 18758,
+        "detected": [],
+        "mentioned_only": [],
+        "hard_negatives_violated": [],
+        "unsupported": 0,
+        "valid": true,
+        "planted": 0
+      }
+    }
+  },
+  "codex:claude:E": {
+    "detected": 48,
+    "unsupported": 33,
+    "clean": {
+      "dashboard": {
+        "key": "claude|E|dashboard",
+        "cell": "claude",
+        "arm": "E",
+        "id": "dashboard",
+        "rep": 1,
+        "grader_sha256": "e06a97ae59e355be0bb1978defe787e536377ccb63d0b650b9500bfb1a35eac7",
+        "spec_sha256": "0935fd3764e098727d9004df4784940d6b8caa998a52b88c217b286fab761b22",
+        "report_sha256": "364c5182499cdac9477a07cfd4b900b3b0629e93b1299fb3761ace5726ef18b0",
+        "row_runner_sha256": "81ba3cfe2c0fa060052ebf77f89679902a4cb5a9e152420b287924ca694c64d2",
+        "family": "codex",
+        "verdict": {
+          "valid_review": true,
+          "detected": [],
+          "unsupported_claims": [
+            {
+              "claim": "The first new-job run necessarily has an unlogged previous snapshot that cannot be restored or retained correctly.",
+              "why": "The rollout does not establish that the old cron executes between backfill and replacement (design.md:55-58). Nor is snapctl's log-based target validation specified. The finding identifies a possible transition risk but asserts an inevitable failure."
+            },
+            {
+              "claim": "Step 2 leaves no way back to cron, and deleting older backfilled snapshots is a defect requiring a gate.",
+              "why": "The document omits instructions for restoring cron, but does not establish that restoration is impossible. Deletion beyond the newest 14 is the explicitly proposed retention policy (design.md:25-26,67); no requirement mandates preserving older snapshots or approving their deletion separately."
+            },
+            {
+              "claim": "Shipping the age display in step 4 violates R3 during steps 2-3.",
+              "why": "The sources specify a phased rollout that completes the age display in step 4 (design.md:54-63), without requiring R3 to be fulfilled at every intermediate rollout stage."
+            }
+          ],
+          "hard_negatives_violated": [],
+          "mentioned_only": [],
+          "valid_additional_findings": 2,
+          "uncertainties": 12,
+          "note": "The completed review contains concrete source-based claims, including two grounded validation gaps concerning rollback timing and stale-banner coverage; there are no planted defects."
+        },
+        "tokens": 21641,
+        "detected": [],
+        "mentioned_only": [],
+        "hard_negatives_violated": [],
+        "unsupported": 3,
+        "valid": true,
+        "planted": 0
+      },
+      "registry": {
+        "key": "claude|E|registry",
+        "cell": "claude",
+        "arm": "E",
+        "id": "registry",
+        "rep": 1,
+        "grader_sha256": "e06a97ae59e355be0bb1978defe787e536377ccb63d0b650b9500bfb1a35eac7",
+        "spec_sha256": "0935fd3764e098727d9004df4784940d6b8caa998a52b88c217b286fab761b22",
+        "report_sha256": "83f3adf85c0d0a7b76123388464b04aba6ab9a970c0f02764f74c323abc429f7",
+        "row_runner_sha256": "81ba3cfe2c0fa060052ebf77f89679902a4cb5a9e152420b287924ca694c64d2",
+        "family": "codex",
+        "verdict": {
+          "valid_review": true,
+          "detected": [],
+          "unsupported_claims": [
+            {
+              "claim": "The stated 50 s rollback bound fails R3 because one failed poll takes it above 60 s.",
+              "why": "H2 accepts the stated bound: 20 s polling plus the 30 s request deadline equals 50 s, with no model load. Registry unavailability follows the accepted fail-static policy (design.md:38-51; ADR-002:9-15)."
+            },
+            {
+              "claim": "R3 contradicts ADR-002 because unreachable nodes retain their assignments.",
+              "why": "H4 explicitly accepts cached assignments and unavailable transitions during registry outages. The design incorporates that policy at design.md:48-51."
+            },
+            {
+              "claim": "The pilot convergence criterion is undefined and cannot verify R3.",
+              "why": "The plan explicitly names canary and rollback exercises and requires measured fleet convergence under 60 s (design.md:90-91). Unspecified measurement details warrant clarification, but do not establish that verification is impossible."
+            },
+            {
+              "claim": "Promotion first runs on live nodes at full rollout because the pilot omits it.",
+              "why": "Integration tests covering every transition are an explicit prerequisite (design.md:88-89). Enabling all models does not establish when or at what scale promotion first occurs; treating proposed tests as deficient because they have not yet run is unsupported."
+            }
+          ],
+          "hard_negatives_violated": [
+            "H2",
+            "H4"
+          ],
+          "mentioned_only": [],
+          "valid_additional_findings": 3,
+          "uncertainties": 10,
+          "note": "The completed review provides grounded additional findings about flag-disabled rollback access, missing version identity in audit events, and unspecified transaction atomicity."
+        },
+        "tokens": 21951,
+        "detected": [],
+        "mentioned_only": [],
+        "hard_negatives_violated": [
+          "H2",
+          "H4"
+        ],
+        "unsupported": 4,
+        "valid": true,
+        "planted": 0
+      },
+      "supplier": {
+        "key": "claude|E|supplier",
+        "cell": "claude",
+        "arm": "E",
+        "id": "supplier",
+        "rep": 1,
+        "grader_sha256": "e06a97ae59e355be0bb1978defe787e536377ccb63d0b650b9500bfb1a35eac7",
+        "spec_sha256": "0935fd3764e098727d9004df4784940d6b8caa998a52b88c217b286fab761b22",
+        "report_sha256": "c6d1873012acc3fc2ea9519423761e1eb28e44c588399dbc348e92f8f5aee813",
+        "row_runner_sha256": "81ba3cfe2c0fa060052ebf77f89679902a4cb5a9e152420b287924ca694c64d2",
+        "family": "codex",
+        "verdict": {
+          "valid_review": true,
+          "detected": [],
+          "unsupported_claims": [
+            {
+              "claim": "Both plausible manual-import implementations necessarily break an accepted constraint.",
+              "why": "The missing freshness provenance is a grounded gap, but the asserted inevitability is unsupported: fetching manually need not violate the request limit, and returning unknown during rollback after checks expire is required by design.md:39 and 72."
+            },
+            {
+              "claim": "Stock foreign keys make snapshots ineligible for cleanup.",
+              "why": "Design.md:74-75 describes cleanup eligibility relative to the current pointer; dependent stock rows can be deleted within the cleanup transaction. The missing age field is a separate, grounded omission."
+            },
+            {
+              "claim": "The rollout completion criterion cannot be checked, and comparing the same exports requires retaining or logging fetched bodies.",
+              "why": "Design.md:63-70 proposes benchmarking, shadow comparison and load verification. Unspecified test details do not make these checks impossible, and comparing normalized maps can use the fetched document in memory without logging or retaining its body."
+            }
+          ],
+          "hard_negatives_violated": [],
+          "mentioned_only": [],
+          "valid_additional_findings": 2,
+          "uncertainties": 10,
+          "note": "The review identifies grounded gaps in manual-import freshness provenance and snapshot age metadata, but overstates several consequences; there are no planted defects."
+        },
+        "tokens": 21248,
+        "detected": [],
+        "mentioned_only": [],
+        "hard_negatives_violated": [],
+        "unsupported": 3,
+        "valid": true,
+        "planted": 0
+      },
+      "sessions": {
+        "key": "claude|E|sessions",
+        "cell": "claude",
+        "arm": "E",
+        "id": "sessions",
+        "rep": 1,
+        "grader_sha256": "e06a97ae59e355be0bb1978defe787e536377ccb63d0b650b9500bfb1a35eac7",
+        "spec_sha256": "0935fd3764e098727d9004df4784940d6b8caa998a52b88c217b286fab761b22",
+        "report_sha256": "41bcde9cedd21de3316ac85689e84209ff47eb31935c11894016b300ddb96210",
+        "row_runner_sha256": "81ba3cfe2c0fa060052ebf77f89679902a4cb5a9e152420b287924ca694c64d2",
+        "family": "codex",
+        "verdict": {
+          "valid_review": true,
+          "detected": [],
+          "unsupported_claims": [
+            {
+              "claim": "Cleanup-dependent handling of different-ID reuse after the replay window is a major correctness defect.",
+              "why": "The design distinguishes known prior tokens from unknown or superseded tokens (43-44), and guarantees DB-time enforcement for cached replay (41, 56-57). It does not require cleanup-independent reuse detection after the replay window."
+            },
+            {
+              "claim": "The plan lacks enforcement of per-shard admission limits.",
+              "why": "Accepted ADR-003 explicitly requires admission at 560 requests/s per shard and excess-load 503 responses (9-11); design.md:69 incorporates that ADR. An additional rollout task or implementation location is not required to establish the decision."
+            },
+            {
+              "claim": "The specified security behaviours could count as complete without verification.",
+              "why": "The proposed test categories include concurrency, revocation, expiry and failure (72-73), without claiming an exhaustive case inventory or completed execution. Missing individually enumerated cases does not establish that those behaviours will go untested."
+            },
+            {
+              "claim": "The completion criterion may be permanently unsatisfiable because some capable sessions never refresh.",
+              "why": "Sessions expire at their absolute deadline (11-12). The review assumes 'all capable sessions' permanently includes expired historical sessions, which the completion criterion does not specify."
+            }
+          ],
+          "hard_negatives_violated": [],
+          "mentioned_only": [],
+          "valid_additional_findings": 1,
+          "uncertainties": 11,
+          "note": "The completed review identifies a grounded compatibility gap between legacy generation-zero responses during canary rollout and the client's unconditional newer-generation acceptance rule."
+        },
+        "tokens": 22969,
+        "detected": [],
+        "mentioned_only": [],
+        "hard_negatives_violated": [],
+        "unsupported": 4,
+        "valid": true,
+        "planted": 0
+      }
+    }
+  },
+  "codex:codex:N": {
+    "detected": 47,
+    "unsupported": 1,
+    "clean": {
+      "registry": {
+        "key": "codex|N|registry",
+        "cell": "codex",
+        "arm": "N",
+        "id": "registry",
+        "rep": 1,
+        "grader_sha256": "e06a97ae59e355be0bb1978defe787e536377ccb63d0b650b9500bfb1a35eac7",
+        "spec_sha256": "0935fd3764e098727d9004df4784940d6b8caa998a52b88c217b286fab761b22",
+        "report_sha256": "1c6b11ada75eb7dc81db0adca52935278bf38a19c371e2b13abf65e88f9babb1",
+        "row_runner_sha256": "81ba3cfe2c0fa060052ebf77f89679902a4cb5a9e152420b287924ca694c64d2",
+        "family": "codex",
+        "verdict": {
+          "valid_review": true,
+          "detected": [],
+          "unsupported_claims": [],
+          "hard_negatives_violated": [],
+          "mentioned_only": [],
+          "valid_additional_findings": 0,
+          "uncertainties": 4,
+          "note": "The review completed with no findings and four source-grounded uncertainties, which do not count as false alarms or hard-negative violations."
+        },
+        "tokens": 19456,
+        "detected": [],
+        "mentioned_only": [],
+        "hard_negatives_violated": [],
+        "unsupported": 0,
+        "valid": true,
+        "planted": 0
+      },
+      "supplier": {
+        "key": "codex|N|supplier",
+        "cell": "codex",
+        "arm": "N",
+        "id": "supplier",
+        "rep": 1,
+        "grader_sha256": "e06a97ae59e355be0bb1978defe787e536377ccb63d0b650b9500bfb1a35eac7",
+        "spec_sha256": "0935fd3764e098727d9004df4784940d6b8caa998a52b88c217b286fab761b22",
+        "report_sha256": "e47ac4b7bf071ca9b6850bb51bbdd29862af2c829b2e3c63fcb9b77ccb0da320",
+        "row_runner_sha256": "81ba3cfe2c0fa060052ebf77f89679902a4cb5a9e152420b287924ca694c64d2",
+        "family": "codex",
+        "verdict": {
+          "valid_review": true,
+          "detected": [],
+          "unsupported_claims": [],
+          "hard_negatives_violated": [],
+          "mentioned_only": [],
+          "valid_additional_findings": 0,
+          "uncertainties": 3,
+          "note": "The review completed, raises three source-grounded uncertainties, and makes no concrete defect claims or assertions contradicting the hard negatives."
+        },
+        "tokens": 17467,
+        "detected": [],
+        "mentioned_only": [],
+        "hard_negatives_violated": [],
+        "unsupported": 0,
+        "valid": true,
+        "planted": 0
+      },
+      "sessions": {
+        "key": "codex|N|sessions",
+        "cell": "codex",
+        "arm": "N",
+        "id": "sessions",
+        "rep": 1,
+        "grader_sha256": "e06a97ae59e355be0bb1978defe787e536377ccb63d0b650b9500bfb1a35eac7",
+        "spec_sha256": "0935fd3764e098727d9004df4784940d6b8caa998a52b88c217b286fab761b22",
+        "report_sha256": "7489c8d46f88136c34535c4e4434eeca41c78953b9a6d33d2d4e0c536cd04a97",
+        "row_runner_sha256": "81ba3cfe2c0fa060052ebf77f89679902a4cb5a9e152420b287924ca694c64d2",
+        "family": "codex",
+        "verdict": {
+          "valid_review": true,
+          "detected": [],
+          "unsupported_claims": [
+            {
+              "claim": "The per-shard ceiling conflicts with the accepted admission policy and advertised capacity.",
+              "why": "The finding conflates the required peak workload of 550 requests/s per shard (docs/design.md:9) with the admission limit of 560 (ADR-003:9). Four shards provide 2,240 usable requests/s, sufficient for the stated 2,200 peak; the capacity statement is consistent with that requirement."
+            }
+          ],
+          "hard_negatives_violated": [
+            "H4"
+          ],
+          "mentioned_only": [],
+          "valid_additional_findings": 0,
+          "uncertainties": 3,
+          "note": "The review completed with source-grounded claims, but its sole finding violates H4; its three uncertainties are recorded separately."
+        },
+        "tokens": 18023,
+        "detected": [],
+        "mentioned_only": [],
+        "hard_negatives_violated": [
+          "H4"
+        ],
+        "unsupported": 1,
+        "valid": true,
+        "planted": 0
+      },
+      "dashboard": {
+        "key": "codex|N|dashboard",
+        "cell": "codex",
+        "arm": "N",
+        "id": "dashboard",
+        "rep": 1,
+        "grader_sha256": "e06a97ae59e355be0bb1978defe787e536377ccb63d0b650b9500bfb1a35eac7",
+        "spec_sha256": "0935fd3764e098727d9004df4784940d6b8caa998a52b88c217b286fab761b22",
+        "report_sha256": "317d529a317a419adc9c39f31b6e150c3ec8a0e1507807686a35af6f25da33d7",
+        "row_runner_sha256": "81ba3cfe2c0fa060052ebf77f89679902a4cb5a9e152420b287924ca694c64d2",
+        "family": "codex",
+        "verdict": {
+          "valid_review": true,
+          "detected": [],
+          "unsupported_claims": [],
+          "hard_negatives_violated": [],
+          "mentioned_only": [],
+          "valid_additional_findings": 0,
+          "uncertainties": 3,
+          "note": "The review completed with no defect findings and three source-grounded uncertainties, without contradicting any hard negative."
+        },
+        "tokens": 17829,
+        "detected": [],
+        "mentioned_only": [],
+        "hard_negatives_violated": [],
+        "unsupported": 0,
+        "valid": true,
+        "planted": 0
+      }
+    }
+  },
+  "codex:codex:E": {
+    "detected": 47,
+    "unsupported": 1,
+    "clean": {
+      "sessions": {
+        "key": "codex|E|sessions",
+        "cell": "codex",
+        "arm": "E",
+        "id": "sessions",
+        "rep": 1,
+        "grader_sha256": "e06a97ae59e355be0bb1978defe787e536377ccb63d0b650b9500bfb1a35eac7",
+        "spec_sha256": "0935fd3764e098727d9004df4784940d6b8caa998a52b88c217b286fab761b22",
+        "report_sha256": "60aa6f1ee6cfaa3f724d8f87a81f68cd3c8db185f8e9fd09c3f8dd6863d3da21",
+        "row_runner_sha256": "81ba3cfe2c0fa060052ebf77f89679902a4cb5a9e152420b287924ca694c64d2",
+        "family": "codex",
+        "verdict": {
+          "valid_review": true,
+          "detected": [],
+          "unsupported_claims": [],
+          "hard_negatives_violated": [],
+          "mentioned_only": [],
+          "valid_additional_findings": 0,
+          "uncertainties": 8,
+          "note": "The review completed with source-grounded observations, no concrete defect findings, and eight separately recorded uncertainties."
+        },
+        "tokens": 17896,
+        "detected": [],
+        "mentioned_only": [],
+        "hard_negatives_violated": [],
+        "unsupported": 0,
+        "valid": true,
+        "planted": 0
+      },
+      "supplier": {
+        "key": "codex|E|supplier",
+        "cell": "codex",
+        "arm": "E",
+        "id": "supplier",
+        "rep": 1,
+        "grader_sha256": "e06a97ae59e355be0bb1978defe787e536377ccb63d0b650b9500bfb1a35eac7",
+        "spec_sha256": "0935fd3764e098727d9004df4784940d6b8caa998a52b88c217b286fab761b22",
+        "report_sha256": "89b213acad7d696569d40e1f3ee9d75f7f2c81805b6f3ec117056956e0ef94bc",
+        "row_runner_sha256": "81ba3cfe2c0fa060052ebf77f89679902a4cb5a9e152420b287924ca694c64d2",
+        "family": "codex",
+        "verdict": {
+          "valid_review": true,
+          "detected": [],
+          "unsupported_claims": [],
+          "hard_negatives_violated": [],
+          "mentioned_only": [],
+          "valid_additional_findings": 1,
+          "uncertainties": 6,
+          "note": "The completed review identifies a grounded additional retention-metadata gap, records six uncertainties separately, and contradicts none of the hard negatives."
+        },
+        "tokens": 19229,
+        "detected": [],
+        "mentioned_only": [],
+        "hard_negatives_violated": [],
+        "unsupported": 0,
+        "valid": true,
+        "planted": 0
+      },
+      "dashboard": {
+        "key": "codex|E|dashboard",
+        "cell": "codex",
+        "arm": "E",
+        "id": "dashboard",
+        "rep": 1,
+        "grader_sha256": "e06a97ae59e355be0bb1978defe787e536377ccb63d0b650b9500bfb1a35eac7",
+        "spec_sha256": "0935fd3764e098727d9004df4784940d6b8caa998a52b88c217b286fab761b22",
+        "report_sha256": "a49bfcc8ade8c2f598b6330d9e90d276683b5d6ff440ed2b0b7cb00042c4a48b",
+        "row_runner_sha256": "81ba3cfe2c0fa060052ebf77f89679902a4cb5a9e152420b287924ca694c64d2",
+        "family": "codex",
+        "verdict": {
+          "valid_review": true,
+          "detected": [],
+          "unsupported_claims": [],
+          "hard_negatives_violated": [],
+          "mentioned_only": [],
+          "valid_additional_findings": 0,
+          "uncertainties": 9,
+          "note": "The completed review grounds its nine uncertainties in the sources, makes no concrete defect findings, and respects all four hard negatives."
+        },
+        "tokens": 19632,
+        "detected": [],
+        "mentioned_only": [],
+        "hard_negatives_violated": [],
+        "unsupported": 0,
+        "valid": true,
+        "planted": 0
+      },
+      "registry": {
+        "key": "codex|E|registry",
+        "cell": "codex",
+        "arm": "E",
+        "id": "registry",
+        "rep": 1,
+        "grader_sha256": "e06a97ae59e355be0bb1978defe787e536377ccb63d0b650b9500bfb1a35eac7",
+        "spec_sha256": "0935fd3764e098727d9004df4784940d6b8caa998a52b88c217b286fab761b22",
+        "report_sha256": "1001ceec7a2b92aef9a7fbab6ec03f05ba62bb101e170b2a8ca227b6aa713030",
+        "row_runner_sha256": "81ba3cfe2c0fa060052ebf77f89679902a4cb5a9e152420b287924ca694c64d2",
+        "family": "codex",
+        "verdict": {
+          "valid_review": true,
+          "detected": [],
+          "unsupported_claims": [
+            {
+              "claim": "The rollback bound constitutes a major defect because registry outages can prevent rollback within 60 seconds.",
+              "why": "ADR-002:9–15 explicitly accepts that rollbacks cannot propagate during registry outages, and docs/design.md:48–51 repeats this exception. The finding treats the documented, accepted fail-static exception as a defect."
+            }
+          ],
+          "hard_negatives_violated": [
+            "H4"
+          ],
+          "mentioned_only": [],
+          "valid_additional_findings": 0,
+          "uncertainties": 10,
+          "note": "The completed review grounds its claims in the sources, but its sole concrete finding flags an explicitly accepted outage exception; its ten uncertainties are recorded separately."
+        },
+        "tokens": 20334,
+        "detected": [],
+        "mentioned_only": [],
+        "hard_negatives_violated": [
+          "H4"
+        ],
+        "unsupported": 1,
+        "valid": true,
+        "planted": 0
+      }
+    }
+  }
+}

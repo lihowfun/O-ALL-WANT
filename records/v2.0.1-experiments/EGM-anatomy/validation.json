@@ -1,0 +1,10 @@
+{
+  "platform": "Linux-6.8.0-136-generic-x86_64-with-glibc2.35",
+  "python": "3.10.12",
+  "checks": 455,
+  "result": "PASS",
+  "source_hashes_checked": 281,
+  "e_traces": 49,
+  "provenance_items": 96,
+  "limitations": "Checks establish accounting and source consistency, not model quality, host discovery, or efficacy of any proposed change."
+}
