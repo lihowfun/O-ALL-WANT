@@ -845,7 +845,18 @@ def probe_claude(target: Path, *, command: str = "claude", timeout: float = 60.0
 
     # CreateProcess does not search PATHEXT for an extensionless command. Resolve it first
     # so both claude.cmd and claude.exe on PATH work. All probe arguments are fixed literals.
-    argv = [shutil.which(command) or command, "-p", "Reply with OK.", "--output-format", "stream-json",
+    # Qualify each lookup so older Windows which() cannot prepend the current directory.
+    # Explicit paths remain supported, including non-npm test launchers.
+    if os.path.dirname(command):
+        executable = shutil.which(command) or command
+    else:
+        directories = (item.strip('"') for item in os.environ.get("PATH", os.defpath).split(os.pathsep))
+        executable = next((found for directory in directories
+                           if os.path.isabs(directory)
+                           for found in [shutil.which(os.path.join(directory, command))] if found), None)
+        if executable is None:
+            return {"error": f"cannot start {command}: not found in absolute PATH directories"}
+    argv = [executable, "-p", "Reply with OK.", "--output-format", "stream-json",
             "--verbose", "--no-session-persistence"]
     try:
         process = subprocess.Popen(argv, cwd=str(target), stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,

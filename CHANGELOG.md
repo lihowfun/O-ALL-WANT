@@ -12,6 +12,8 @@ the owner's merge and `v2.0.1` tag.
 
 ### Release fixes after FIXCHECK (D45)
 
+- Wiki memory commands parse timestamped notes; dual-source recall preserves each file's written order while interleaving source heads deterministically.
+- Read-only main memory files route directly to pending memory without temporary files or replace retries.
 - Incremental user installs retain the first file receipt and original backup, reject intervening edits, and never overwrite an existing backup.
 - Catalog restore, absorb and absorbed-skill removal recheck captured files and manifest under the install lock before mutation; stale operations ask the user to rerun.
 

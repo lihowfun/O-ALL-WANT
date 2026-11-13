@@ -86,17 +86,42 @@ class DoctorProbeTests(unittest.TestCase):
 
     def test_probe_resolves_host_from_path(self):
         command = Path(self.fake({"type": "system", "subtype": "init", "tools": ["Skill"]}, after=""))
-        with patch.dict(os.environ, {"PATH": str(command.parent) + os.pathsep + os.environ.get("PATH", "")}):
+        for directory in (str(command.parent), f'"{command.parent}"'):
+            with self.subTest(directory=directory), patch.dict(os.environ, {"PATH": directory}):
+                result = oaw.probe_claude(self.target, command=command.stem)
+            self.assertEqual(result.get("tools"), ["Skill"], result)
+
+    def test_probe_never_starts_launcher_only_in_current_directory(self):
+        command = Path(self.fake({"type": "system", "subtype": "init", "tools": ["Skill"]}, after=""))
+        previous = os.getcwd()
+        self.addCleanup(os.chdir, previous)
+        os.chdir(command.parent)
+        with patch.dict(os.environ, {"PATH": os.pathsep.join(["", ".", "relative-bin"])}), \
+                patch.object(subprocess, "Popen", side_effect=AssertionError("untrusted launcher started")):
             result = oaw.probe_claude(self.target, command=command.stem)
-        self.assertEqual(result.get("tools"), ["Skill"], result)
+        self.assertIn("cannot start", result["error"])
+
+    def test_probe_windows_legacy_which_cannot_inject_current_directory(self):
+        planted = str(self.target / "claude.cmd")
+        trusted = str(Path(self.temporary.name) / "trusted-bin")
+        def legacy_which(command):
+            # Python <3.12 Windows prepends cwd only for a command without a directory.
+            return planted if not os.path.dirname(command) else None
+        with patch.dict(os.environ, {"PATH": os.pathsep.join(["", ".", trusted])}), \
+                patch.object(oaw.shutil, "which", side_effect=legacy_which), \
+                patch.object(subprocess, "Popen", side_effect=AssertionError("cwd launcher started")):
+            result = oaw.probe_claude(self.target)
+        self.assertIn("cannot start", result["error"])
 
     def test_probe_passes_the_resolved_cmd_or_exe_to_popen(self):
         for extension in ("cmd", "exe"):
             resolved = rf"C:\Program Files\Claude\claude.{extension}"
-            with self.subTest(extension=extension), patch.object(oaw.shutil, "which", return_value=resolved) as which:
+            directory = str(Path(self.temporary.name) / "trusted-bin")
+            with self.subTest(extension=extension), patch.dict(os.environ, {"PATH": directory}), \
+                    patch.object(oaw.shutil, "which", return_value=resolved) as which:
                 with patch.object(subprocess, "Popen", side_effect=OSError("fixture")) as popen:
                     result = oaw.probe_claude(self.target)
-                which.assert_called_once_with("claude")
+                which.assert_called_once_with(os.path.join(directory, "claude"))
                 self.assertEqual(popen.call_args.args[0], [resolved, "-p", "Reply with OK.", "--output-format",
                                                          "stream-json", "--verbose", "--no-session-persistence"])
                 self.assertFalse(popen.call_args.kwargs.get("shell", False))

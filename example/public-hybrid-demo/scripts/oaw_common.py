@@ -132,7 +132,7 @@ def confined_path(root, *parts):
     """
     boundary = Path(root).resolve()
     candidate = boundary.joinpath(*parts).resolve()
-    inside, target = (os.path.normcase(plain_windows_path(str(path))) for path in (boundary, candidate))
+    inside, target = (os.path.normcase(os.path.normpath(plain_windows_path(str(path)))) for path in (boundary, candidate))
     try:
         common = os.path.commonpath([inside, target])
     except ValueError as exc:

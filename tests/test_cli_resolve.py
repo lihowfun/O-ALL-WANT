@@ -2,6 +2,7 @@
 
 import importlib.util
 import json
+import ntpath
 import os
 from pathlib import Path
 import subprocess
@@ -182,6 +183,25 @@ class ResolveCliTests(unittest.TestCase):
 
 
 class ConfinedPathTests(unittest.TestCase):
+    def test_extended_prefix_cannot_hide_parent_traversal(self):
+        from pathlib import PureWindowsPath
+        plain = oaw_common.plain_windows_path
+        # Simulate 3.10/3.11 Windows resolve leaving extended-length paths unchanged.
+        for root, candidate in ((r"C:\proj", r"\\?\C:\proj\..\outside\x"),
+                                (r"\\server\share\proj", r"\\?\UNC\server\share\proj\..\outside\x")):
+            with self.subTest(candidate=candidate), \
+                    patch.object(oaw_common, "Path") as path_type, \
+                    patch.object(oaw_common, "plain_windows_path", side_effect=lambda value:
+                                 plain(value, platform="nt")), \
+                    patch.object(oaw_common.os.path, "normcase", ntpath.normcase), \
+                    patch.object(oaw_common.os.path, "normpath", ntpath.normpath), \
+                    patch.object(oaw_common.os.path, "commonpath", ntpath.commonpath):
+                boundary = path_type.return_value.resolve.return_value
+                boundary.__str__.return_value = root
+                boundary.joinpath.return_value.resolve.return_value = PureWindowsPath(candidate)
+                with self.assertRaisesRegex(ValueError, "outside the project boundary"):
+                    oaw_common.confined_path(root, candidate)
+
     def test_extended_length_prefix_is_dropped_only_from_windows_drive_and_unc_paths(self):
         plain = oaw_common.plain_windows_path
         self.assertEqual(plain(r"\\?\C:\Users\x\.oaw\reviews", platform="nt"), r"C:\Users\x\.oaw\reviews")

@@ -13,6 +13,7 @@ import argparse
 import base64
 import errno
 import hashlib
+import heapq
 import json
 import os
 import re
@@ -311,9 +312,10 @@ def _memory_sources():
 
 
 def _memory_entries(sources=None):
-    """Merge individual entries, retaining their original source offsets."""
-    entries = []
+    """Merge source heads by UTC date/time, preserving each file's written order."""
+    groups = []
     for priority, source in enumerate(_memory_sources() if sources is None else sources):
+        entries = []
         content = source["content"]
         if content is None:
             continue
@@ -323,16 +325,23 @@ def _memory_entries(sources=None):
             end = starts[number + 1].start() if number + 1 < len(starts) else len(content)
             entry = content[start:end].rstrip()
             header = re.match(r"## \[([^\]\n]*)\]", entry)
+            full = False
             try:
-                stamp = datetime.fromisoformat(header[1]) if header else None
-                if stamp is None:
-                    raise ValueError("Missing entry date")
-                stamp = stamp.replace(tzinfo=timezone.utc) if stamp.tzinfo is None else stamp.astimezone(timezone.utc)
+                value = header[1] if header else ""
+                full = bool(re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}[+-]\d{2}:\d{2}", value))
+                if full:
+                    stamp = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f%z").astimezone(timezone.utc)
+                elif re.fullmatch(r"\d{4}-\d{2}-\d{2}", value):
+                    stamp = datetime.strptime(value, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+                else:
+                    raise ValueError("Unknown entry date format")
             except (ValueError, OverflowError):
                 stamp = datetime.min.replace(tzinfo=timezone.utc)
+                full = False
             entries.append({"source": source["source"], "content": content, "start": start,
-                            "entry": entry, "order": (stamp, priority, -start)})
-    return sorted(entries, key=lambda entry: entry["order"], reverse=True)
+                            "entry": entry, "order": (stamp, full, priority)})
+        groups.append(entries)
+    return list(heapq.merge(*groups, key=lambda entry: entry["order"], reverse=True))
 
 
 def memory_add(note):
@@ -358,6 +367,8 @@ def memory_add(note):
     default = "# Agent Memory — Decision & Finding Log\n\n---\n"
     fallback = False
     try:
+        if os.path.exists(target) and not os.access(target, os.W_OK):
+            raise PermissionError(errno.EACCES, "Primary memory is not writable", target)
         locked_update(target, mutate, default=default, root=BASE_DIR)
     except OSError as exc:
         if exc.errno not in {errno.EACCES, errno.EPERM, errno.EROFS}:
@@ -365,7 +376,7 @@ def memory_add(note):
         target = confined_path(BASE_DIR, ".oaw", "memory-pending.md")
         locked_update(target, mutate, default=default, root=BASE_DIR)
         fallback = True
-    label = os.path.relpath(target, BASE_DIR).replace("\\", "/")
+    label = os.path.relpath(target, os.path.realpath(BASE_DIR)).replace("\\", "/")
     suffix = " (pending: primary memory is read-only or permission denied)" if fallback else ""
     print(f"✅ Memory entry added to {label}{suffix}: [{tag}] {note[:60]}...")
 
