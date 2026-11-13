@@ -1,6 +1,6 @@
 # OAW roadmap
 
-Updated 2026-11-13. The working plan is
+Updated 2026-11-14. The working plan is
 [docs/plans/v2.0.1-release-path.md](docs/plans/v2.0.1-release-path.md);
 work items are GitHub issues grouped by milestone.
 
@@ -11,8 +11,9 @@ starts before it ships. One trial was already under way when this plan was
 written and continues in its own session without gating the release: the
 capability tasting of presentation skills (#13, #9).
 
-1. Cross-platform CI on the release pull request (Linux, macOS, Windows). It
-   needs the pull request's base changed to `main`, which waits for the owner. #18
+1. Cross-platform CI on the release pull request (Linux, macOS, Windows). The
+   pull request's base was changed to `main` on 2026-11-14 with the owner's
+   approval, so every push now runs the six jobs. #18
 2. Apply the preregistered FIXCHECK disposition: revert M1/M2/R2; retain M3/R1
    and the #18 path fix, together with release polish. #17
 3. The one FIXCHECK check on the frozen H1 tasks is complete: [result](https://github.com/lihowfun/O-ALL-WANT/blob/e05c4d5a9238fe3ef4529552a27ce9095ead6a3b/records/v2.0.1-experiments/FIXCHECK/RESULT.md). #17
@@ -21,7 +22,7 @@ capability tasting of presentation skills (#13, #9).
 5. One full cross-family review, at most three rounds. #11
 6. The owner merges the release pull request and tags `v2.0.1`. #11
 
-Disposition update (2026-11-13): M1 (session-end saving), M2 (empty-recall host guidance) and R2 (one deep
+Disposition (2026-11-13, confirmed by the owner on 2026-11-14 as D48): M1 (session-end saving), M2 (empty-recall host guidance) and R2 (one deep
 code-review round) were implemented, failed the preregistered regression
 thresholds in the one FIXCHECK check, and were reverted. M3 (permission-only
 pending memory), R1 (native same-family Codex review with explicit cross-family
