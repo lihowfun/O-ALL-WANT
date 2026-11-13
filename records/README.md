@@ -5,10 +5,18 @@
 ## 分支規則
 - `main`：發布版本。
 - `codex/oaw-2-native-upgrade`：PR #4（Codex）。
-- `claude/oaw-2`：Claude 這邊唯一的 V2 分支（skill 吸收流程、論文 2606.03979 的 memory-check 原型）。PR 結束後該 merge 進 main 就 merge，然後刪除。
+- `claude/oaw-2`：原 V2 開發分支，PR #16。
+- `codex/v2.0.1-release-fixes`：2026-11-13 owner 授權另開的修復分支，從 `claude/oaw-2` 分出；目前候選 `c2d9852`。原 PR #16 的 head 沒有被替換。
 - `records`：唯一的長期紀錄分支。每一輪消化、需要授權的執行包和它的結果，都放在這裡的資料夾，不另開分支。
 
-**接手從這裡開始**：`handoff-2026-11-05/HANDOFF.md`（2026-11-05 開發環境從 Windows 搬到 Linux 的交接）。
+**目前接手入口**：[2026-11-13 執行進度](release-fixes-2026-11-13/PROGRESS.md)。
+
+- [分支與證據 review](review-2026-11-13/REVIEW.md)：第 1–9 節是實作前快照。
+- [Harness² 吸收評估](intake-2026-11-13-harness2/EVALUATION.md)：harness 最佳化與可選能力套件的雙目標。
+- [H1 結果](v2.0.1-experiments/H1/RESULT.md)、[D45 修正複查](v2.0.1-experiments/FIXCHECK/FIXCHECK.md)：原始證據與新複查分開。
+- [PPT 校準](v2.0.1-experiments/capability/CALIBRATION.md)：凍結前資料，不是候選正式判定。
+
+較早的環境移轉背景：[2026-11-05 handoff](handoff-2026-11-05/HANDOFF.md)。
 
 ## 資料夾
 - `handoff-2026-11-05/`：交接文件、可攜試吃腳本 `kit/`、owner 工作規則 `memory-seed/`。

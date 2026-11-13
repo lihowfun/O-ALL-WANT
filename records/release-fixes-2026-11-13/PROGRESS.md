@@ -37,9 +37,9 @@
 
 | 項目 | 現況與下一個可驗證交付 |
 |---|---|
-| #17 FIXCHECK | 尚未啟動模型作答。先建立 FIXCHECK.md、獨立 manifest／帳本與門檻計算 script，綁定上述候選 commit，fresh review 後才跑 |
-| #18 CI | PR #16 即時核對仍為 draft，base 為 codex/oaw-2-native-upgrade；六格 CI 尚未驗證。新 branch 不自動替換原 PR head |
-| #10／#12 文件 | 本批只同步變更行為；發佈主張、使用者安裝 SOP 舊敘述與其餘回饋待後續整理 |
+| #17 FIXCHECK | 離線準備與 fresh review 完成；28 tests、最終 4/4 PASS。獨立 state／17M 預算／候選與 H1 來源均已綁定。模型作答尚未啟動，0/24 |
+| #18 CI | PR #16 的 base 仍為 codex/oaw-2-native-upgrade；六格 CI 尚未驗證。已向 owner 提出具體選項：新修復 branch 對 main 的 draft PR，或沿用 PR #16。等待安排確認 |
+| #10／#12 文件 | 已備妥 [發佈文字候選](RELEASE_COPY.md)，核對 H1 主張與雙路線安裝現況；尚未套用，EGM path／doctor 呈現仍待實際驗收 |
 | #11 發佈 | VERSION 仍 2.0.0 proposed；待 FIXCHECK／CI、完整發佈 review、owner merge／tag |
 | PPT 收尾 | 原校準結果與本次修復分開；沒有改題、凍結或重跑 |
 | G5 舊判定 | 發佈後用原資料重判；尚未執行 |
@@ -47,9 +47,15 @@
 
 FIXCHECK 的 Claude 預估約 8M、上限 17M，使用獨立帳本；不使用 H1 剩餘額度。原 H1 的 36 筆 Claude／44 筆 Codex 計分列已重新確認存在，後續 manifest 要綁定原始列摘要。複查不能產生新的整包有效判詞。
 
+## FIXCHECK 準備完成
+
+[預登記](../v2.0.1-experiments/FIXCHECK/FIXCHECK.md)、[manifest](../v2.0.1-experiments/FIXCHECK/MANIFEST.json)、[離線驗證與 review](../v2.0.1-experiments/FIXCHECK/VALIDATION.md) 已備妥。原 H1 36/44 rows 的整檔 SHA 與公開 72 筆 O/N1/N2 摘要均核對；12 題 mapping 與原 runner／工具快照一致。
+
+初審抓到 functions/items 矛盾、偽造 recall、負數 session token 三個缺口；修復後 reviewer 重放原反例全部拒絕，最終 4/4 PASS。這些是計算器驗證，不是產品收益；目前 0 次 FIXCHECK 作答、沒有新效果判定。records toolkit gate 9/9、167 tests；產品 gate 677 tests 是另一個 checkout 的先前驗證。
+
 ## 後續順序
 
-- **P0**：FIXCHECK 設計、離線計算器與資料身分驗證，約 0.5–1 天；依賴本次候選 commit 與既有 H1 資料。並行解決 CI 的 PR 安排，最終以六格實際結果為準。
+- **P0**：確定 CI 的 PR 安排並取得六格實際結果；FIXCHECK 準備已完成，依核准順序做一次複查（Claude 預估約 8M、上限 17M；Codex 另帳）。啟動前需重新核對實際 PPT 程序與已推送的 manifest。
 - **P1**：依複查結果處理規則還原或保留，完成發佈文件／版本與完整 review；約 0.5–1 天，依賴複查與 CI。
 - **P2**：發佈後 #9 接 Harness² U1 帳目／報告 adapter，估 1–2 天；U2／U3 與能力試吃依 pilot、真實需求和既有預算規則往下。
 

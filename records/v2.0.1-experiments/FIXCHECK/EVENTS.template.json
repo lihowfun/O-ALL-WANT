@@ -1,0 +1,653 @@
+{
+  "manifest_sha256": "d1bec84b95004f7d27f9adf6a1acc07ae53be41f45fcbb50943c334f1ea5b80e",
+  "rows": [
+    {
+      "M1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M3": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "cell": "codex",
+      "extra_deep": false,
+      "extra_required_review": false,
+      "row_sha256": null,
+      "unit": "t01"
+    },
+    {
+      "M1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M3": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "cell": "codex",
+      "extra_deep": false,
+      "extra_required_review": false,
+      "row_sha256": null,
+      "unit": "t04"
+    },
+    {
+      "M1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M3": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "cell": "codex",
+      "extra_deep": false,
+      "extra_required_review": false,
+      "row_sha256": null,
+      "unit": "t09"
+    },
+    {
+      "M1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M3": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "cell": "codex",
+      "extra_deep": false,
+      "extra_required_review": false,
+      "row_sha256": null,
+      "unit": "t12"
+    },
+    {
+      "M1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M3": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "cell": "codex",
+      "extra_deep": false,
+      "extra_required_review": false,
+      "row_sha256": null,
+      "unit": "explicit-1-b1"
+    },
+    {
+      "M1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M3": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "cell": "codex",
+      "extra_deep": false,
+      "extra_required_review": false,
+      "row_sha256": null,
+      "unit": "passing-1-b1"
+    },
+    {
+      "M1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M3": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "cell": "codex",
+      "extra_deep": false,
+      "extra_required_review": false,
+      "row_sha256": null,
+      "unit": "superseded-2-b1"
+    },
+    {
+      "M1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M3": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "cell": "codex",
+      "extra_deep": false,
+      "extra_required_review": false,
+      "row_sha256": null,
+      "unit": "handoff-1-b1"
+    },
+    {
+      "M1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M3": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "cell": "codex",
+      "extra_deep": false,
+      "extra_required_review": false,
+      "row_sha256": null,
+      "unit": "design-1-c1"
+    },
+    {
+      "M1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M3": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "cell": "codex",
+      "extra_deep": false,
+      "extra_required_review": false,
+      "row_sha256": null,
+      "unit": "large-2-c1"
+    },
+    {
+      "M1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M3": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "cell": "codex",
+      "extra_deep": false,
+      "extra_required_review": false,
+      "row_sha256": null,
+      "unit": "design-3-c1"
+    },
+    {
+      "M1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M3": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "cell": "codex",
+      "extra_deep": false,
+      "extra_required_review": false,
+      "row_sha256": null,
+      "unit": "large-3-c2"
+    },
+    {
+      "M1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M3": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "cell": "claude",
+      "extra_deep": false,
+      "extra_required_review": false,
+      "row_sha256": null,
+      "unit": "t01"
+    },
+    {
+      "M1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M3": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "cell": "claude",
+      "extra_deep": false,
+      "extra_required_review": false,
+      "row_sha256": null,
+      "unit": "t04"
+    },
+    {
+      "M1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M3": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "cell": "claude",
+      "extra_deep": false,
+      "extra_required_review": false,
+      "row_sha256": null,
+      "unit": "t09"
+    },
+    {
+      "M1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M3": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "cell": "claude",
+      "extra_deep": false,
+      "extra_required_review": false,
+      "row_sha256": null,
+      "unit": "t12"
+    },
+    {
+      "M1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M3": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "cell": "claude",
+      "extra_deep": false,
+      "extra_required_review": false,
+      "row_sha256": null,
+      "unit": "explicit-1-b1"
+    },
+    {
+      "M1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M3": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "cell": "claude",
+      "extra_deep": false,
+      "extra_required_review": false,
+      "row_sha256": null,
+      "unit": "passing-1-b1"
+    },
+    {
+      "M1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M3": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "cell": "claude",
+      "extra_deep": false,
+      "extra_required_review": false,
+      "row_sha256": null,
+      "unit": "superseded-2-b1"
+    },
+    {
+      "M1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M3": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "cell": "claude",
+      "extra_deep": false,
+      "extra_required_review": false,
+      "row_sha256": null,
+      "unit": "handoff-1-b1"
+    },
+    {
+      "M1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M3": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "cell": "claude",
+      "extra_deep": false,
+      "extra_required_review": false,
+      "row_sha256": null,
+      "unit": "design-1-c1"
+    },
+    {
+      "M1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M3": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "cell": "claude",
+      "extra_deep": false,
+      "extra_required_review": false,
+      "row_sha256": null,
+      "unit": "large-2-c1"
+    },
+    {
+      "M1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M3": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "cell": "claude",
+      "extra_deep": false,
+      "extra_required_review": false,
+      "row_sha256": null,
+      "unit": "design-3-c1"
+    },
+    {
+      "M1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "M3": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R1": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "R2": {
+        "evidence": [],
+        "status": "unverified"
+      },
+      "cell": "claude",
+      "extra_deep": false,
+      "extra_required_review": false,
+      "row_sha256": null,
+      "unit": "large-3-c2"
+    }
+  ]
+}

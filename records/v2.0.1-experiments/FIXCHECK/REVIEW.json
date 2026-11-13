@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "manifest_sha256": "d1bec84b95004f7d27f9adf6a1acc07ae53be41f45fcbb50943c334f1ea5b80e",
+  "verdict": "PASS",
+  "reviewer": "Codex fresh-context agent, no inherited parent context",
+  "initial_criteria": [
+    "FAIL",
+    "PASS",
+    "FAIL",
+    "PASS"
+  ],
+  "final_criteria": [
+    "PASS",
+    "PASS",
+    "PASS",
+    "PASS"
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "summary": "Functions and requirement items could contradict",
+      "status": "closed"
+    },
+    {
+      "id": 2,
+      "summary": "Forged recall could hide failed recall functions",
+      "status": "closed"
+    },
+    {
+      "id": 3,
+      "summary": "Negative session usage could cancel in row total",
+      "status": "closed"
+    }
+  ],
+  "verification": {
+    "tests_passed": 28,
+    "original_counterexamples_replayed": 3,
+    "grader_mappings_checked": 12,
+    "manifest_and_bindings_match": true,
+    "experiment_starts": 0
+  },
+  "scope": "Original criteria review plus limited finding closure and final binding checks; no model-answer experiment."
+}

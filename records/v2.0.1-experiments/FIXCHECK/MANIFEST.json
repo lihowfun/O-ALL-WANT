@@ -1,0 +1,894 @@
+{
+  "baseline_sha256": "5a3b9161ca763d695083f8d547b3f9f60b1051e37edc656c32c8be62574fa59b",
+  "candidate_commit": "c2d9852bf8cabf13fd86a4340ab89f69044cae5a",
+  "experiment": "H1-FIXCHECK-2026-11-13",
+  "files": {
+    "FIXCHECK.md": "0e09094942186146bf54fce1e3461009571b5fe627cfed3e3d29de7a25d7a58b",
+    "fixcheck.py": "de58c02952ba17152a563dee9f674b2add56b155d9d582ba71f1eaaa184d4984",
+    "test_fixcheck.py": "f6a0e02db6aa2403ebfe9e8518f5f94c6f02874036ee0517cad92a44c08d1b16",
+    "thresholds.py": "b985e1e339408da82ce392d2cc09c51b7aea9a5ae05e858072d7dc05194d37e3"
+  },
+  "h1_freeze_sha256": "4943bf2ce02c9c9383828d201f59198f951c0446e263a5b05ba381095fa3a4d8",
+  "method": {
+    "arms": [
+      "O"
+    ],
+    "cells": [
+      "codex",
+      "claude"
+    ],
+    "class_order": [
+      "A",
+      "B",
+      "C"
+    ],
+    "full_reruns": 0,
+    "large_score_drop_max": [
+      1,
+      10
+    ],
+    "memory_M1_min": 3,
+    "memory_total": 4,
+    "new_effectiveness_verdict": false,
+    "small_token_ratio_max": [
+      6,
+      5
+    ],
+    "tag": "fixcheck"
+  },
+  "reference_rows_sha256": {
+    "claude": "ef79735f9fc9ca988d5f8d68cbc398abe81fcafa17fd98ab7e511a46479fedb5",
+    "codex": "7a4b68b594b1058677f91648c9fd45f95da8e7fd40bad94220a19ff368f555c8"
+  },
+  "runtime": {
+    "arms": {
+      "L": {
+        "commit": "90c4452042b73f409add62a34daae3e5b8599f83",
+        "content_sha256": "70c4030736d3de3a02089b42dd322d712784924e8d999fca9b05d6b45d64d3c0",
+        "tree": "15219fe4d757bfc1829c0fda5f7d625acb4e8ffa",
+        "uncommitted": 0
+      },
+      "N": {
+        "commit": "49943b5a94413a530761350f04e896f76e8d620e",
+        "content_sha256": "e6122a43de6c95fc970870739835c85dc333111107e6e38f333620a7590114cf",
+        "tree": "6751ab7eae06e6f97a157860470fd588920a734b",
+        "uncommitted": 0
+      },
+      "O": {
+        "commit": "54563feddf5fd7c2b89b9e2e1c1f0c50fd5666c9",
+        "content_sha256": "4d1f5ec14dd93192ca747be194e7e97c018d6542d1fba3def7f91eee601b279b",
+        "tree": "f901ef192813418c69a7dec6d28b04240eac6ca6",
+        "uncommitted": 0
+      }
+    },
+    "base_commit": "49943b5a94413a530761350f04e896f76e8d620e",
+    "budget": {
+      "cap": 17000000,
+      "decision": "D45",
+      "spent_before": 0
+    },
+    "eval_stats_sha256": "6ad7a60f4f744775cc32c43f95e488a30c46aab22fd1adcb7051e44854659948",
+    "files": {
+      "AUTHOR_BRIEF_B.md": "80f88795dd7f366222317c740f3db5066a8ea5066e3eb47fceea6e07ba61b9da",
+      "AUTHOR_BRIEF_C.md": "698bd2f549abbafcbc9c065951a5db09f57855981455e77f431efeede5bf953d",
+      "PREREG.md": "ae009ea4cf4c0213192185c194ca92e6d4b1faf6deda4346d2a3a4ab24088f1b",
+      "h1_judge.py": "037aed8bb882a7df210e9ae6d830f04d64104cf2f7a7b3ed0ef68b61af7609f6",
+      "h1_run.py": "64dd42efeb24530cef93283d51eabda49223de8702be0f78c9792ab2dae9cbd7"
+    },
+    "launch": {
+      "arms": {
+        "claude": {
+          "A": [
+            "N1",
+            "O",
+            "N2"
+          ],
+          "B": [
+            "N1",
+            "O",
+            "N2"
+          ],
+          "C": [
+            "N1",
+            "O",
+            "N2"
+          ]
+        },
+        "codex": {
+          "A": [
+            "N1",
+            "O",
+            "N2"
+          ],
+          "B": [
+            "N1",
+            "O",
+            "L",
+            "N2"
+          ],
+          "C": [
+            "N1",
+            "O",
+            "L",
+            "N2"
+          ]
+        }
+      },
+      "audit_argv": [
+        "$H1_BIN/codex",
+        "exec",
+        "--json",
+        "--model",
+        "gpt-6.1-sol",
+        "-c",
+        "model_reasoning_effort=\"high\"",
+        "--sandbox",
+        "read-only",
+        "--skip-git-repo-check",
+        "--ignore-user-config",
+        "--cd",
+        "/home/dev/proj",
+        "-"
+      ],
+      "audit_prompt": "The repository in the current directory is pallets/flask. Do not change any file.\n\nBelow are a task description that was given to an engineer and a pytest file that is used afterwards to check the\nresult. For every test function, decide whether what it checks was stated in the task description. A function\ncounts as stated only when every name, signature, config key, default value, message text and behaviour that it\nrelies on is given in the description, or is already true of this repository before the task. A function that needs\na choice the description leaves open (a name, a wording, an order, an edge case it does not mention) is not stated.\n\nReply with JSON only, no other text:\n{\"functions\": [{\"name\": \"<test function>\", \"stated\": true or false, \"sentence\": \"<the sentence of the description it checks, or empty>\", \"reason\": \"<one short sentence>\"}]}\n\n## Task description\n<<<\n%s\n>>>\n\n## Test file\n<<<\n%s\n>>>\n",
+      "bwrap_version": "bubblewrap 0.6.1",
+      "cells": {
+        "claude": {
+          "argv": [
+            "$H1_BIN/claude",
+            "-p",
+            "<prompt>",
+            "--output-format",
+            "stream-json",
+            "--verbose",
+            "--model",
+            "claude-opus-5-5",
+            "--effort",
+            "high",
+            "--permission-mode",
+            "bypassPermissions",
+            "--setting-sources",
+            "project",
+            "--strict-mcp-config",
+            "--disallowedTools",
+            "WebSearch,WebFetch,RemoteTrigger,PushNotification,ShareOnboardingGuide,CronCreate,CronDelete,CronList,ScheduleWakeup,SendMessage,ListAgents,EnterWorktree,ExitWorktree,Workflow"
+          ],
+          "billing_source_required": "none",
+          "cli_file": {
+            "relative": "bin/claude",
+            "resolved": "lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe",
+            "ro_index": 0,
+            "sha256": "bfb3703ad5380242328459bc62ada4bde8ae7ba57c6e1eeadb9c00e08874c478"
+          },
+          "cli_version": "2.1.322 (Claude Code)",
+          "model": "claude-opus-5-5",
+          "prompt_on": "argv",
+          "sandbox": [
+            "bwrap",
+            "--ro-bind",
+            "/",
+            "/",
+            "--dev",
+            "/dev",
+            "--proc",
+            "/proc",
+            "--tmpfs",
+            "/tmp",
+            "--tmpfs",
+            "/home",
+            "--tmpfs",
+            "$H1_HIDE[0]",
+            "--ro-bind",
+            "$H1_STATE/tools/0",
+            "$H1_RO[0]",
+            "--ro-bind",
+            "$H1_STATE/tools/1",
+            "$H1_RO[1]",
+            "--bind",
+            "$H1_STATE/runs/<run>/home",
+            "/home/dev",
+            "--bind",
+            "$H1_STATE/runs/<run>/work/proj",
+            "/home/dev/proj",
+            "--bind",
+            "~/.claude/.credentials.json",
+            "/home/dev/.claude/.credentials.json",
+            "--chdir",
+            "/home/dev/proj",
+            "--die-with-parent",
+            "--unshare-ipc",
+            "--unshare-pid",
+            "<argv>"
+          ]
+        },
+        "codex": {
+          "argv": [
+            "$H1_BIN/codex",
+            "exec",
+            "--json",
+            "--model",
+            "gpt-6.1-sol",
+            "-c",
+            "model_reasoning_effort=\"high\"",
+            "--sandbox",
+            "workspace-write",
+            "--skip-git-repo-check",
+            "--ignore-user-config",
+            "--cd",
+            "/home/dev/proj",
+            "-"
+          ],
+          "billing_source_required": "chatgpt",
+          "cli_file": {
+            "relative": "bin/codex",
+            "resolved": "lib/node_modules/@openai/codex/bin/codex.js",
+            "ro_index": 0,
+            "sha256": "e14fc83739c13c1074b12bd1acce4010c893c7f6fbfc1593b4a31d74cabb57af"
+          },
+          "cli_version": "codex-cli 0.167.0",
+          "model": "gpt-6.1-sol",
+          "prompt_on": "stdin",
+          "sandbox": [
+            "bwrap",
+            "--ro-bind",
+            "/",
+            "/",
+            "--dev",
+            "/dev",
+            "--proc",
+            "/proc",
+            "--tmpfs",
+            "/tmp",
+            "--tmpfs",
+            "/home",
+            "--tmpfs",
+            "$H1_HIDE[0]",
+            "--ro-bind",
+            "$H1_STATE/tools/0",
+            "$H1_RO[0]",
+            "--ro-bind",
+            "$H1_STATE/tools/1",
+            "$H1_RO[1]",
+            "--bind",
+            "$H1_STATE/runs/<run>/home",
+            "/home/dev",
+            "--bind",
+            "$H1_STATE/runs/<run>/work/proj",
+            "/home/dev/proj",
+            "--bind",
+            "~/.codex/auth.json",
+            "/home/dev/.codex/auth.json",
+            "--chdir",
+            "/home/dev/proj",
+            "--die-with-parent",
+            "--unshare-ipc",
+            "--unshare-pid",
+            "<argv>"
+          ]
+        }
+      },
+      "disallowed_tools": [
+        "WebSearch",
+        "WebFetch",
+        "RemoteTrigger",
+        "PushNotification",
+        "ShareOnboardingGuide",
+        "CronCreate",
+        "CronDelete",
+        "CronList",
+        "ScheduleWakeup",
+        "SendMessage",
+        "ListAgents",
+        "EnterWorktree",
+        "ExitWorktree",
+        "Workflow"
+      ],
+      "grading": {
+        "environment": {
+          "DISABLE_AUTOUPDATER": "1",
+          "GIT_AUTHOR_EMAIL": "dev@example.invalid",
+          "GIT_AUTHOR_NAME": "dev",
+          "GIT_COMMITTER_EMAIL": "dev@example.invalid",
+          "GIT_COMMITTER_NAME": "dev",
+          "GIT_CONFIG_NOSYSTEM": "1",
+          "GIT_TERMINAL_PROMPT": "0",
+          "HOME": "/home/dev",
+          "LANG": "C.UTF-8",
+          "LC_ALL": "C.UTF-8",
+          "PATH": "/home/dev/proj/.venv/bin:/usr/bin:/bin",
+          "TERM": "dumb",
+          "VIRTUAL_ENV": "/home/dev/proj/.venv"
+        },
+        "pytest": ".venv/bin/python -m pytest -q -p no:cacheprovider --no-header -rf",
+        "sandbox": [
+          "bwrap",
+          "--ro-bind",
+          "/",
+          "/",
+          "--dev",
+          "/dev",
+          "--proc",
+          "/proc",
+          "--tmpfs",
+          "/tmp",
+          "--tmpfs",
+          "/home",
+          "--tmpfs",
+          "$H1_HIDE[0]",
+          "--ro-bind",
+          "$H1_STATE/tools/0",
+          "$H1_RO[0]",
+          "--ro-bind",
+          "$H1_STATE/tools/1",
+          "$H1_RO[1]",
+          "--dir",
+          "/home/dev",
+          "--bind",
+          "$H1_STATE/runs/<run>/grade/proj",
+          "/home/dev/proj",
+          "--bind",
+          "$H1_STATE/runs/<run>/grade/io",
+          "/home/dev/grade",
+          "--unshare-net",
+          "--chdir",
+          "/home/dev/proj",
+          "--die-with-parent",
+          "--unshare-ipc",
+          "--unshare-pid",
+          "/bin/bash",
+          "-c",
+          "<script>"
+        ]
+      },
+      "l_policy": "# Project guidance\n\n- Write decisions and facts that later work will need in NOTES.md at the repository root. If NOTES.md exists, read it before starting work.\n- For a large or risky change, have one fresh-context reviewer (a subagent with no view of this conversation) check the plan before you start and the diff and test results when you finish, and resolve the justified findings.\n",
+      "limits": {
+        "first_estimates": {
+          "A": {
+            "L": 350000,
+            "N": 350000,
+            "O": 450000
+          },
+          "B": {
+            "L": 350000,
+            "N": 350000,
+            "O": 450000
+          },
+          "C": {
+            "L": 2500000,
+            "N": 2500000,
+            "O": 3500000
+          }
+        },
+        "max_attempts": 3,
+        "max_authors": 3,
+        "reserve": 1.25,
+        "session_seconds": 7200,
+        "token_ceiling": 8000000
+      },
+      "local_settings_sha256": "b03e599b58478a2b1e3268d43cd2b392db285bce11ebf00aa8488671b65c7384",
+      "order_offset": {
+        "A": 0,
+        "B": 4,
+        "C": 8
+      },
+      "prompt": "You are working in the repository in the current directory.\n\n{task}\n\nMake the change in the source code and verify it with the project's tests. Do not commit.",
+      "session_environment": {
+        "DISABLE_AUTOUPDATER": "1",
+        "GIT_AUTHOR_EMAIL": "dev@example.invalid",
+        "GIT_AUTHOR_NAME": "dev",
+        "GIT_COMMITTER_EMAIL": "dev@example.invalid",
+        "GIT_COMMITTER_NAME": "dev",
+        "GIT_CONFIG_NOSYSTEM": "1",
+        "GIT_TERMINAL_PROMPT": "0",
+        "HOME": "/home/dev",
+        "LANG": "C.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "PATH": "/home/dev/proj/.venv/bin:/usr/bin:/bin:$H1_BIN",
+        "TERM": "dumb",
+        "VIRTUAL_ENV": "/home/dev/proj/.venv"
+      },
+      "solver_prompt": "You are working in the repository in the current directory.\n\nThe maintainer sent the following requests one after another. Carry out all of them, in order.\n\n{requests}\n\nMake the changes in the source code and verify them with the project's tests. Do not commit."
+    },
+    "oaw_commit": "c2d9852bf8cabf13fd86a4340ab89f69044cae5a",
+    "oaw_mode_sha256": "368320e01f59485a1441e695798b3c1da6ab6d660136a5edbad85bd7f8e10a1f",
+    "suite_baseline_sha256": "e2c7f48bf50b4cbe341e9953f15ed3869bcbabe3d541a0032ca5c76ec08d883c",
+    "system_tools": {
+      "bash": {
+        "path": "/usr/bin/bash",
+        "sha256": "59474588a312b6b6e73e5a42a59bf71e62b55416b6c9d5e4a6e1c630c2a9ecd4",
+        "version": "GNU bash, version 5.1.16(1)-release (x86_64-pc-linux-gnu)"
+      },
+      "bwrap": {
+        "path": "/usr/bin/bwrap",
+        "sha256": "bf6cf3d4456665f5d80c14eb79a76e0ce87b39a0883e614a161658b4ec33492c",
+        "version": "bubblewrap 0.6.1"
+      },
+      "git": {
+        "path": "/usr/bin/git",
+        "sha256": "07997209f4513fdee3e1eb151b1c37d56cfe37f9915d331ec37d688c6b9d3ce9",
+        "version": "git version 2.34.1"
+      },
+      "python3": {
+        "path": "/usr/bin/python3.10",
+        "sha256": "a2f33a6e006989270f4340528eb61f8f97366e00a5d1b602ac8672ea44fc56ae",
+        "version": "Python 3.10.12"
+      },
+      "timeout": {
+        "path": "/usr/bin/timeout",
+        "sha256": "2e3f2616d64647f6c30250f258ae350e2d21e4e413bd2c1e4f7c2d9f9c17f984",
+        "version": "timeout (GNU coreutils) 8.32"
+      }
+    },
+    "tools": [
+      {
+        "content_sha256": "63169bb67bbc7a5bf543b6978077bada52e856f2a9c2c3785bb2b99beb1ad606",
+        "index": 0
+      },
+      {
+        "content_sha256": "355415a56fa36dad2d3995d1c703f0407f32e88b2044916692c1ee4ecaebbe1b",
+        "index": 1
+      }
+    ],
+    "units": {
+      "A": "38a5d55c34b2ce65262c46da6d6746cc0d342be0ee1ac152a2f3bc9ce263e933",
+      "B": "25c437cbf7e3555c42f58bd58f4ef59778849691726ee1116b72ef4fc103fe87",
+      "C": "98c4ff2aaa37b0fc692e9e37119db967a670cda55fae03ab2d068be0621f7630"
+    }
+  },
+  "schema": 1,
+  "units": [
+    {
+      "functions": [
+        "test_copy_app_config",
+        "test_copy_is_independent_and_shallow",
+        "test_copy_preserves_subclass",
+        "test_copy_returns_config_instance"
+      ],
+      "id": "t01",
+      "items": {
+        "test_copy_app_config": [
+          "test_copy_app_config"
+        ],
+        "test_copy_is_independent_and_shallow": [
+          "test_copy_is_independent_and_shallow"
+        ],
+        "test_copy_preserves_subclass": [
+          "test_copy_preserves_subclass"
+        ],
+        "test_copy_returns_config_instance": [
+          "test_copy_returns_config_instance"
+        ]
+      },
+      "klass": "A",
+      "learning_sessions": [],
+      "sessions": 1,
+      "sha256": "4c9f670c23ffb82a58dbada4c60574e74c3d1e6f0adb492536306c7977ab87fe",
+      "type": null
+    },
+    {
+      "functions": [
+        "test_endpoint_filter",
+        "test_endpoint_filter_no_match",
+        "test_endpoint_filter_with_sort",
+        "test_without_filter_unchanged"
+      ],
+      "id": "t04",
+      "items": {
+        "test_endpoint_filter": [
+          "test_endpoint_filter"
+        ],
+        "test_endpoint_filter_no_match": [
+          "test_endpoint_filter_no_match"
+        ],
+        "test_endpoint_filter_with_sort": [
+          "test_endpoint_filter_with_sort"
+        ],
+        "test_without_filter_unchanged": [
+          "test_without_filter_unchanged"
+        ]
+      },
+      "klass": "A",
+      "learning_sessions": [],
+      "sessions": 1,
+      "sha256": "21d3792e19b38a1c94392d09ab4488f335c564cca813e472d5e92ee50af4223e",
+      "type": null
+    },
+    {
+      "functions": [
+        "test_max_cookie_size_can_be_set",
+        "test_max_cookie_size_raised_in_view",
+        "test_max_cookie_size_reset_to_default",
+        "test_max_cookie_size_used_for_warning"
+      ],
+      "id": "t09",
+      "items": {
+        "test_max_cookie_size_can_be_set": [
+          "test_max_cookie_size_can_be_set"
+        ],
+        "test_max_cookie_size_raised_in_view": [
+          "test_max_cookie_size_raised_in_view"
+        ],
+        "test_max_cookie_size_reset_to_default": [
+          "test_max_cookie_size_reset_to_default"
+        ],
+        "test_max_cookie_size_used_for_warning": [
+          "test_max_cookie_size_used_for_warning"
+        ]
+      },
+      "klass": "A",
+      "learning_sessions": [],
+      "sessions": 1,
+      "sha256": "af6f9d0e09909f7e53e1f5565d3596b0ff7c0ace12051a1c9fb6d03808e3e6c7",
+      "type": null
+    },
+    {
+      "functions": [
+        "test_any_mapping_is_accepted",
+        "test_non_mapping_raises",
+        "test_processor_returning_none_is_skipped"
+      ],
+      "id": "t12",
+      "items": {
+        "test_any_mapping_is_accepted": [
+          "test_any_mapping_is_accepted"
+        ],
+        "test_non_mapping_raises": [
+          "test_non_mapping_raises"
+        ],
+        "test_processor_returning_none_is_skipped": [
+          "test_processor_returning_none_is_skipped"
+        ]
+      },
+      "klass": "A",
+      "learning_sessions": [],
+      "sessions": 1,
+      "sha256": "6a31d63bb7d321fcd460e440a42535221cd0907d00afb3bf3e8069684bfe564a",
+      "type": null
+    },
+    {
+      "functions": [
+        "test_base_s1_exact_endpoint",
+        "test_base_s1_rule_without_view",
+        "test_recall_probe_config",
+        "test_recall_probe_default"
+      ],
+      "id": "explicit-1-b1",
+      "items": {
+        "test_base_s1_exact_endpoint": [
+          "test_base_s1_exact_endpoint"
+        ],
+        "test_base_s1_rule_without_view": [
+          "test_base_s1_rule_without_view"
+        ],
+        "test_recall_probe_config": [
+          "test_recall_probe_config"
+        ],
+        "test_recall_probe_default": [
+          "test_recall_probe_default"
+        ]
+      },
+      "klass": "B",
+      "learning_sessions": [
+        1
+      ],
+      "sessions": 2,
+      "sha256": "b2817fb471563b88caa58fe0c0ebe5e055d5fb80b0389d0c4423b5f7e21de173",
+      "type": "explicit"
+    },
+    {
+      "functions": [
+        "test_base_s1_pop_namespace",
+        "test_base_s2_sequence_copy",
+        "test_recall_list_error",
+        "test_recall_list_separator"
+      ],
+      "id": "passing-1-b1",
+      "items": {
+        "test_base_s1_pop_namespace": [
+          "test_base_s1_pop_namespace"
+        ],
+        "test_base_s2_sequence_copy": [
+          "test_base_s2_sequence_copy"
+        ],
+        "test_recall_list_error": [
+          "test_recall_list_error"
+        ],
+        "test_recall_list_separator": [
+          "test_recall_list_separator"
+        ]
+      },
+      "klass": "B",
+      "learning_sessions": [
+        1
+      ],
+      "sessions": 2,
+      "sha256": "845760d6289179f8cca068e345d175e76eeffe9c25f74634788c13f11afb37ce",
+      "type": "passing"
+    },
+    {
+      "functions": [
+        "test_base_s1_text_response",
+        "test_base_s2_json_error",
+        "test_base_s3_maintenance_shape",
+        "test_recall_maintenance_body",
+        "test_recall_maintenance_header"
+      ],
+      "id": "superseded-2-b1",
+      "items": {
+        "test_base_s1_text_response": [
+          "test_base_s1_text_response"
+        ],
+        "test_base_s2_json_error": [
+          "test_base_s2_json_error"
+        ],
+        "test_base_s3_maintenance_shape": [
+          "test_base_s3_maintenance_shape"
+        ],
+        "test_recall_maintenance_body": [
+          "test_recall_maintenance_body"
+        ],
+        "test_recall_maintenance_header": [
+          "test_recall_maintenance_header"
+        ]
+      },
+      "klass": "B",
+      "learning_sessions": [
+        1,
+        2
+      ],
+      "sessions": 3,
+      "sha256": "d542be626000d65b8a0d1622da0f4b0d3a3248b1ce04888579465733c3959500",
+      "type": "superseded"
+    },
+    {
+      "functions": [
+        "test_base_s1_required_missing_order",
+        "test_base_s1_required_present",
+        "test_recall_redaction_mask",
+        "test_recall_redaction_suffix"
+      ],
+      "id": "handoff-1-b1",
+      "items": {
+        "test_base_s1_required_missing_order": [
+          "test_base_s1_required_missing_order"
+        ],
+        "test_base_s1_required_present": [
+          "test_base_s1_required_present"
+        ],
+        "test_recall_redaction_mask": [
+          "test_recall_redaction_mask"
+        ],
+        "test_recall_redaction_suffix": [
+          "test_recall_redaction_suffix"
+        ]
+      },
+      "klass": "B",
+      "learning_sessions": [
+        1
+      ],
+      "sessions": 2,
+      "sha256": "a78a482a468deca133379645e50c6d4f51a05606f95a549cdeb73f464630edfd",
+      "type": "handoff"
+    },
+    {
+      "functions": [
+        "test_r01_design_note",
+        "test_r02_lazy_manager",
+        "test_r03_mapping_and_keywords",
+        "test_r04_deep_isolation",
+        "test_r05_full_restore_and_exception",
+        "test_r06_nesting",
+        "test_r07_reuse_and_reentry",
+        "test_r08_atomic_validation_and_copy",
+        "test_r09_contexts_and_late_use",
+        "test_r10_sessions_and_legacy"
+      ],
+      "id": "design-1-c1",
+      "items": {
+        "r01": [
+          "test_r01_design_note"
+        ],
+        "r02": [
+          "test_r02_lazy_manager"
+        ],
+        "r03": [
+          "test_r03_mapping_and_keywords"
+        ],
+        "r04": [
+          "test_r04_deep_isolation"
+        ],
+        "r05": [
+          "test_r05_full_restore_and_exception"
+        ],
+        "r06": [
+          "test_r06_nesting"
+        ],
+        "r07": [
+          "test_r07_reuse_and_reentry"
+        ],
+        "r08": [
+          "test_r08_atomic_validation_and_copy"
+        ],
+        "r09": [
+          "test_r09_contexts_and_late_use"
+        ],
+        "r10": [
+          "test_r10_sessions_and_legacy"
+        ]
+      },
+      "klass": "C",
+      "learning_sessions": [],
+      "sessions": 1,
+      "sha256": "e193658a5159069f096643699ca34b03e016197e974e0ab40007df8ea5893d8e",
+      "type": "design"
+    },
+    {
+      "functions": [
+        "test_r01_result_and_copy",
+        "test_r02_defaults_and_input_isolation",
+        "test_r03_header_merging",
+        "test_r04_references_and_missing",
+        "test_r05_expectations",
+        "test_r06_fail_fast_and_field_order",
+        "test_r07_captures",
+        "test_r08_pointer_errors",
+        "test_r09_preflight",
+        "test_r10_client_lifecycle",
+        "test_r11_dispatch_and_json_provider"
+      ],
+      "id": "large-2-c1",
+      "items": {
+        "r01": [
+          "test_r01_result_and_copy"
+        ],
+        "r02": [
+          "test_r02_defaults_and_input_isolation"
+        ],
+        "r03": [
+          "test_r03_header_merging"
+        ],
+        "r04": [
+          "test_r04_references_and_missing"
+        ],
+        "r05": [
+          "test_r05_expectations"
+        ],
+        "r06": [
+          "test_r06_fail_fast_and_field_order"
+        ],
+        "r07": [
+          "test_r07_captures"
+        ],
+        "r08": [
+          "test_r08_pointer_errors"
+        ],
+        "r09": [
+          "test_r09_preflight"
+        ],
+        "r10": [
+          "test_r10_client_lifecycle"
+        ],
+        "r11": [
+          "test_r11_dispatch_and_json_provider"
+        ]
+      },
+      "klass": "C",
+      "learning_sessions": [],
+      "sessions": 1,
+      "sha256": "c948614052b64527c451a2d24784c38609e732ac1d0c9c6266c0be970141c033",
+      "type": "large"
+    },
+    {
+      "functions": [
+        "test_r01_note",
+        "test_r02_precedence_and_context",
+        "test_r03_forms_and_preservation",
+        "test_r04_authorities",
+        "test_r05_https_policy",
+        "test_r06_encoded_and_raw_rejections",
+        "test_r07_malformed_inputs_and_referrer",
+        "test_r08_lazy_fallback_and_blueprints",
+        "test_r09_redirect_override_and_code",
+        "test_r10_async_errors_and_state"
+      ],
+      "id": "design-3-c1",
+      "items": {
+        "r01": [
+          "test_r01_note"
+        ],
+        "r02": [
+          "test_r02_precedence_and_context"
+        ],
+        "r03": [
+          "test_r03_forms_and_preservation"
+        ],
+        "r04": [
+          "test_r04_authorities"
+        ],
+        "r05": [
+          "test_r05_https_policy"
+        ],
+        "r06": [
+          "test_r06_encoded_and_raw_rejections"
+        ],
+        "r07": [
+          "test_r07_malformed_inputs_and_referrer"
+        ],
+        "r08": [
+          "test_r08_lazy_fallback_and_blueprints"
+        ],
+        "r09": [
+          "test_r09_redirect_override_and_code"
+        ],
+        "r10": [
+          "test_r10_async_errors_and_state"
+        ]
+      },
+      "klass": "C",
+      "learning_sessions": [],
+      "sessions": 1,
+      "sha256": "916a293edb817c58acf1e0b9a305ece587b75e67837f4746df0e9748ff85f482",
+      "type": "design"
+    },
+    {
+      "functions": [
+        "test_r01_opt_in",
+        "test_r02_recursive_copies",
+        "test_r03_dictionary_mutations",
+        "test_r04_list_mutations",
+        "test_r05_reads",
+        "test_r06_flags_and_permanence",
+        "test_r07_detachment",
+        "test_r08_atomic_failures",
+        "test_r09_cycles",
+        "test_r10_cookie_protocol",
+        "test_r11_snapshots_and_restore",
+        "test_r12_lifecycle_and_null_session"
+      ],
+      "id": "large-3-c2",
+      "items": {
+        "r01": [
+          "test_r01_opt_in"
+        ],
+        "r02": [
+          "test_r02_recursive_copies"
+        ],
+        "r03": [
+          "test_r03_dictionary_mutations"
+        ],
+        "r04": [
+          "test_r04_list_mutations"
+        ],
+        "r05": [
+          "test_r05_reads"
+        ],
+        "r06": [
+          "test_r06_flags_and_permanence"
+        ],
+        "r07": [
+          "test_r07_detachment"
+        ],
+        "r08": [
+          "test_r08_atomic_failures"
+        ],
+        "r09": [
+          "test_r09_cycles"
+        ],
+        "r10": [
+          "test_r10_cookie_protocol"
+        ],
+        "r11": [
+          "test_r11_snapshots_and_restore"
+        ],
+        "r12": [
+          "test_r12_lifecycle_and_null_session"
+        ]
+      },
+      "klass": "C",
+      "learning_sessions": [],
+      "sessions": 1,
+      "sha256": "ca41dddc428930d624d755e897894ba58b365466db3959044a0021c0883a5d24",
+      "type": "large"
+    }
+  ]
+}
