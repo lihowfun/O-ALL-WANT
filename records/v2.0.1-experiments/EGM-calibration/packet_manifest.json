@@ -1,0 +1,2867 @@
+{
+  "schema_version": 1,
+  "tree_algorithm": "sha256(canonical JSON files array)",
+  "files": [
+    {
+      "path": ".claude-plugin/marketplace.json",
+      "size": 296,
+      "sha256": "af43770ab970cc3f61a62809c9560e965ea610716e68dfc0575a0912406ab95f"
+    },
+    {
+      "path": ".gitattributes",
+      "size": 199,
+      "sha256": "240ad1da081db3bda763413457d7e5c1ba09bbfe545ac65e1e8c04528eba2e4e"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/bug_report.yml",
+      "size": 1632,
+      "sha256": "8321eeb311193f859de2086427822415357e7d8bf13dd286ea83b247aff7fc01"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/config.yml",
+      "size": 238,
+      "sha256": "44e2c87210ca2115fc670211e3b2ada5f7bbb80b63df5b52a9a626c99c5f94f5"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/feature_request.yml",
+      "size": 1690,
+      "sha256": "c79540baca41bfcfef289b524f19986538058be50942435a891f3716935d6ef1"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/wiki_fact_correction.yml",
+      "size": 1417,
+      "sha256": "ca47b0e68e05d9cf89f93d74abcc6f9f10264c18a437bd8b75ef20d1ad43a66a"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/wiki_topic_proposal.yml",
+      "size": 1982,
+      "sha256": "5143f7aa8e2daa04b31f4b20e805a0d0a097f5ae8d3ebf9b2b1df664b1c2edab"
+    },
+    {
+      "path": ".github/copilot-instructions.md",
+      "size": 61,
+      "sha256": "835d43cbd5b9aac9378a3cc01a615b3f311d1f83954f9c6ff72b6e71415b6173"
+    },
+    {
+      "path": ".github/pull_request_template.md",
+      "size": 441,
+      "sha256": "1fb52bd29ae9bb9801c687fa74ee14d550c49a36e6787715a0d891be35a5d644"
+    },
+    {
+      "path": ".github/workflows/test.yml",
+      "size": 946,
+      "sha256": "5c7542f5568122573dcb0a490a22cfa336427442079c20f6cdb9b26538aac949"
+    },
+    {
+      "path": ".gitignore",
+      "size": 587,
+      "sha256": "d238a6815a216fc67151d6efab2e22b06feabb6c7c31f5b48b94efde35f95b24"
+    },
+    {
+      "path": "AGENTS.md",
+      "size": 1499,
+      "sha256": "2ce2a992004ee7959222acd30fa1f84b95d9e15d95e4b6e1eae17813319c304d"
+    },
+    {
+      "path": "AI_CONTEXT.md",
+      "size": 376,
+      "sha256": "67fa988ec2970891c01a45551455dcef6cb4f653f2753b2140eca3746d5179f6"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "size": 49346,
+      "sha256": "4e99c5388318dae25e0a0e06f2bd6742cd4b3b80abe9f4f4b02a3049081ec57b"
+    },
+    {
+      "path": "CLAUDE.md",
+      "size": 11,
+      "sha256": "336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49"
+    },
+    {
+      "path": "CONTRIBUTING.md",
+      "size": 1991,
+      "sha256": "fea6bfcbb8fb39b9ab3297f3b00afbd2cb996ca2f6f86c24d5764d4edcebc073"
+    },
+    {
+      "path": "LICENSE",
+      "size": 1065,
+      "sha256": "2b2b1a73eff18f097384f38e2e4c0a7c18410ceec22b97e7d37cd4e2958e6a63"
+    },
+    {
+      "path": "LICENSES/Apache-2.0.txt",
+      "size": 11358,
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "path": "README.md",
+      "size": 18716,
+      "sha256": "7de3865ae68a47f01cd192d7c5575ac27a3e5f44afed0f7151035a90ec4f9f54"
+    },
+    {
+      "path": "README.zh.md",
+      "size": 18241,
+      "sha256": "33000c8601db915f05751ec3fd6f9fa2749f9ed6d5d8daf6bd1f2ba96f47e569"
+    },
+    {
+      "path": "ROADMAP.md",
+      "size": 595,
+      "sha256": "55c95bfb7b45ed301727891c4c33467b719f84d66838d2c27a520cc5dfca95d5"
+    },
+    {
+      "path": "SECURITY.md",
+      "size": 1055,
+      "sha256": "b350a85c38fbc42f15063479b3b1b752988d23af034217b00db8f714a224b157"
+    },
+    {
+      "path": "THIRD_PARTY_NOTICES.md",
+      "size": 1801,
+      "sha256": "1d45a6f8e332564286515342cdaab30d97bc5fee1af0f223a5a2a04514b433c8"
+    },
+    {
+      "path": "VERSION.json",
+      "size": 226,
+      "sha256": "8b0340ccdb726b1d23096186ab0cc5d428c71a25a7b2044cb811856ab63e375c"
+    },
+    {
+      "path": "docs/Architecture_Origins.md",
+      "size": 6900,
+      "sha256": "6fb618032cd4e0b188b830631a03904d1c96aab0a434a3f8aac5c0b355b4fe53"
+    },
+    {
+      "path": "docs/CLAUDE_ACCEPTANCE.md",
+      "size": 14560,
+      "sha256": "bdbb26b66097dd8593ad14faf557480d8146c56c44fb6e153097d3ee22b1965b"
+    },
+    {
+      "path": "docs/CLAUDE_REVIEW.md",
+      "size": 5320,
+      "sha256": "381c780651e2a5e047fec78e2e52bcacf2cbbc041c75ba1c086fe1fd8c2e6f77"
+    },
+    {
+      "path": "docs/CLI_Reference.md",
+      "size": 47254,
+      "sha256": "41db7b25e561a5d00e490f3b279c7eaeb84f8040312633de1e4546d2e2f61975"
+    },
+    {
+      "path": "docs/COMPARISON.md",
+      "size": 1411,
+      "sha256": "eb448d1713bfd91e35c24f8c723df7f51eb64e356e3a0291adfb340f5375b511"
+    },
+    {
+      "path": "docs/Design_Principles.md",
+      "size": 1662,
+      "sha256": "59604a939566312f570fd7e0d080654c0ea61afdeb49c2f4575868006de0e501"
+    },
+    {
+      "path": "docs/Memory_System_Experiments_Report_2026-04-21.md",
+      "size": 9181,
+      "sha256": "c4561dfc14ca40df8b46c8698f87ac24988d8aaa48ec56d4d9efde9d1f700ad6"
+    },
+    {
+      "path": "docs/SELF_IMPROVEMENT.md",
+      "size": 9943,
+      "sha256": "5c52ee697b3cf96db762eca4dfa5ac0455d2c33c8ef526efb99e41168e871c1e"
+    },
+    {
+      "path": "docs/SHARED_ACCEPTANCE_PROTOCOL.md",
+      "size": 30514,
+      "sha256": "625588d6f8edd14882add4464b2538b47962ff4f70b3eb464190ae338dc6b67f"
+    },
+    {
+      "path": "docs/SKILL_INTAKE.md",
+      "size": 52982,
+      "sha256": "6667acb201da40dd624a7209ad0f0d024b289e035776a23c9f4ec7434764cf55"
+    },
+    {
+      "path": "docs/SKILL_VALUE_EXPERIMENT.md",
+      "size": 7565,
+      "sha256": "ac0a00468845ebf855826f64d4bee18b3b12ec84b7c73185c1a50790a15e7209"
+    },
+    {
+      "path": "docs/Skill_Guide.md",
+      "size": 3369,
+      "sha256": "3d43ccbd7e9e13f854450557c52f4ea24bdb185a452f2acabf6aaf0fc25ec472"
+    },
+    {
+      "path": "docs/UPGRADING.md",
+      "size": 7503,
+      "sha256": "031f586540e86f05ce8dffd78cdb7193eeebbf9a03c9c9460d3b723d179380de"
+    },
+    {
+      "path": "docs/Wiki_Sync_Guide.md",
+      "size": 8011,
+      "sha256": "6a4fac2f4fba542943bd9a851234c9c54ea7036e4789e87572263f349e598466"
+    },
+    {
+      "path": "docs/archive/2026-04-15_Repo_Health_Review.md",
+      "size": 3576,
+      "sha256": "e3eec3b4e09c4ba753cd3e4f816d8ce33ade8daacf7e68c5215e28d50afa92a6"
+    },
+    {
+      "path": "docs/archive/Cross_Context_Validation_Review_2026-04-21.md",
+      "size": 12161,
+      "sha256": "a9c8afd027526dfa5f6b1e392cafd98240228e1e5976ec5e1bc3d0c40a6b91d3"
+    },
+    {
+      "path": "docs/archive/Deprecation_Protocol_Decision_2026-04-20.md",
+      "size": 5342,
+      "sha256": "19ea0bb5e4052de83b93e9cdc8bb7d0dcb1af771761eb398131f2eb931c24328"
+    },
+    {
+      "path": "docs/archive/Dogfood_Session_2026-04-21.md",
+      "size": 7312,
+      "sha256": "f6c39ec866411241e9542794a31ce9da0de8d0aa5bc9d042e1f19e168c66fb10"
+    },
+    {
+      "path": "docs/archive/Evaluator_Design_Decision_2026-04-20.md",
+      "size": 9644,
+      "sha256": "c086df06605ba5fc7963204d844d223c4b37dca7a056e33b4c181b6f35e5deb7"
+    },
+    {
+      "path": "docs/archive/Evidence_Tier_Generalization_2026-04-20.md",
+      "size": 4995,
+      "sha256": "11698ed69aeb7479aedd17cf02cd41730f4a603460041adaf91684b415cb88b2"
+    },
+    {
+      "path": "docs/archive/Experiment_Followups_Plan_2026-04-21.md",
+      "size": 10328,
+      "sha256": "08f8a5a04f7ef4cc9a0b08ee487659b4a110d5685fb0be7a8ba45865fd8cbf03"
+    },
+    {
+      "path": "docs/archive/Future_Optimization_Plan_2026-04-20.md",
+      "size": 16525,
+      "sha256": "347e73cfa222793787a37bcb92cfc2e7418939b41e5a440ca0e7489af82cfa17"
+    },
+    {
+      "path": "docs/archive/Future_Optimization_Plan_Amendment_v2_2026-04-20.md",
+      "size": 16608,
+      "sha256": "3859972789fb38eae1ab2c6b58e0a7907b71c37f8e4affbd4d4fcaa637fa7153"
+    },
+    {
+      "path": "docs/archive/Future_Optimization_Plan_Confirmed_2026-04-20.md",
+      "size": 12578,
+      "sha256": "e54bbb138aa2ac43e0c23c20d22cbf98ce0d1394b463a1e7e0a07a9bf86462e9"
+    },
+    {
+      "path": "docs/archive/Harness_Engineering_Quality_Audit_2026-04-20.md",
+      "size": 13440,
+      "sha256": "8a983dd0aed363a26ff5bcaf49d6ddd618753f1944b2f95ff97694e52832d747"
+    },
+    {
+      "path": "docs/archive/Hybrid_Wiki_Router_Experiment.md",
+      "size": 3235,
+      "sha256": "07d828fedd6423236124f12631c5138b49fe3ab55ea21907601d19d8fc7e2492"
+    },
+    {
+      "path": "docs/archive/Inheritance_And_Promotion_Experiment_2026-04-21.md",
+      "size": 7018,
+      "sha256": "b1129204d8cd98bd95353a5540b5a6191a440c477adbfa20e0def5caba3a8e34"
+    },
+    {
+      "path": "docs/archive/Inheritance_Check_Dogfood_2026-04-21.md",
+      "size": 3683,
+      "sha256": "23f01ede5530cf620c4594911f81a18e7fd8a33bcf77311449b219fce35ca355"
+    },
+    {
+      "path": "docs/archive/Memory_Discipline_Experiment_2026-04-21.md",
+      "size": 8092,
+      "sha256": "6723d4d4e5032e60ee77b883d08418fa7e8e34e52ad43311c0043ed91904c536"
+    },
+    {
+      "path": "docs/archive/Merge_Readiness_2026-04-20.md",
+      "size": 10936,
+      "sha256": "c71e796cf3e412f4745b87cbdefd69f56de90d598c8f16055663e006a27db4e4"
+    },
+    {
+      "path": "docs/archive/OAW_README_REFRESH_REPORT.md",
+      "size": 3434,
+      "sha256": "6cc7af1a3cacf31e3acc42f5756351658ddd683b67775674e191b0a7e3896843"
+    },
+    {
+      "path": "docs/archive/Release_Checklist.md",
+      "size": 1729,
+      "sha256": "88cbbaace57214aac0a76277538ba904e9bb5ae585c717e9b5897481d09cd32e"
+    },
+    {
+      "path": "docs/archive/Skill_Failure_Modes_2026-04-20.md",
+      "size": 9147,
+      "sha256": "5669259c99f89203b919f313089ef604320d975bd4ce5eb71b3f569e09bfab2c"
+    },
+    {
+      "path": "docs/archive/Taiwan_MD_Collaboration_Study.md",
+      "size": 2129,
+      "sha256": "ce77625445c6422b51e71302248c1e060ae2c1d6025bb90291eafbf1ccb57357"
+    },
+    {
+      "path": "docs/archive/first_run_demo.md",
+      "size": 6668,
+      "sha256": "b880ac38cd2a4aac82a91ce1162d3efe67c7fb7b68158cbb60f08dcc7152bd61"
+    },
+    {
+      "path": "docs/archive/v1_0_0_vs_v1_1_0_Comparison_2026-04-21.md",
+      "size": 8190,
+      "sha256": "7cf64e45311ff849afd21dacc9e33f07beea253902fc8e6827d7afc18925b7ee"
+    },
+    {
+      "path": "docs/assets/oboi_meme.png",
+      "size": 5950270,
+      "sha256": "827ad16c7ac6195016c58d6950efe9192bb8ad2268f7d9439645c9ba300cdff1"
+    },
+    {
+      "path": "docs/knowledge/Harness_Engineering_Context_Fragmentation.md",
+      "size": 1603,
+      "sha256": "b1f770f566dc3e6d5d87611893ead2dba7d0e8c2747d7484fed56c74d8a064d2"
+    },
+    {
+      "path": "docs/knowledge/Harness_Engineering_Deterministic_State.md",
+      "size": 1722,
+      "sha256": "d0c5d8a6d752dee49233b4cad943f6da2d1253609c96c2fc50823d57dfb36f20"
+    },
+    {
+      "path": "docs/knowledge/Harness_Engineering_Knowledge_Synthesis.md",
+      "size": 1978,
+      "sha256": "d70d004b3585ed64655b8ed92e6f2dacc4b4a1df4fa596143a89533f12d5f4ed"
+    },
+    {
+      "path": "docs/knowledge/OAW_Session_Continuity_Test.md",
+      "size": 17018,
+      "sha256": "bef506b82e958e039ce6f5a9db47736ea64ea8fca584d48f377b369ffd9d1816"
+    },
+    {
+      "path": "docs/knowledge/Release_Learnings.md",
+      "size": 2288,
+      "sha256": "2693803df15c0334c43deccd4c321a4f33bae3a9baf8fcf95e3b288f28c76f1b"
+    },
+    {
+      "path": "docs/plans/egm-oaw-three-way-acceptance.md",
+      "size": 17582,
+      "sha256": "b32e98fc30ba62430e45a6acd971bbc8f91b8518aff0940dc44a0a9b41fb9a7f"
+    },
+    {
+      "path": "docs/plans/oaw-v1-v2-evaluation.md",
+      "size": 17048,
+      "sha256": "e7828179d6bb064d7116eb1d4f397ff5d562a7fcf1664d29dea44bf04655894d"
+    },
+    {
+      "path": "docs/plans/skill-catalog-execution.md",
+      "size": 40810,
+      "sha256": "a79012785bac771bc21a43b6a661c639cefc432f301b48994ed11b7f951bda91"
+    },
+    {
+      "path": "docs/plans/v2.0.0-execution.md",
+      "size": 8793,
+      "sha256": "7e320d5e2ea42b1dc96005f5326acf7bc79d2989d03c3be32e415594d5609ae2"
+    },
+    {
+      "path": "docs/plans/v2.0.1-execution.md",
+      "size": 27907,
+      "sha256": "03cebf62535efbeaa04e5535c1020b52d976202e18c114fa55b66ffd4c35b34a"
+    },
+    {
+      "path": "docs/prompts/WIKI_REFRESH_PROMPT.md",
+      "size": 384,
+      "sha256": "f1114356330df221690654c703c31dc2b3a1c51acff9a2ea96549d43fbb56fe4"
+    },
+    {
+      "path": "docs/prompts/WIKI_SKILL_PROMOTION_PROMPT.md",
+      "size": 759,
+      "sha256": "2dc16e2d6ad73c9b5af0c9041585f7c4ebcb658df6e01b7d8720212942179488"
+    },
+    {
+      "path": "docs/prompts/WIKI_TOPIC_PROMPT.md",
+      "size": 586,
+      "sha256": "ede35a4bf21db1aeb713db3d8f7d64e6a0ee94d21f369786a5f60edfe6594a44"
+    },
+    {
+      "path": "docs/releases/2.0.0-sources.json",
+      "size": 13377,
+      "sha256": "66db8d44e3e108df47ddd2bc3b74a413563253b3ccd09463bb08fa2e79211844"
+    },
+    {
+      "path": "docs/releases/2.0.0-sources.md",
+      "size": 5255,
+      "sha256": "c17c2c11e25f0354b4bb7f7fce922d53bc0ef1fe0fd69be2db5fc3802877e10f"
+    },
+    {
+      "path": "docs/reviews/2026-10-29-pr4-egm.md",
+      "size": 8746,
+      "sha256": "7bf16dda24080d52148dddb3a741b887276f3b8a053f7ee78ca893e748904866"
+    },
+    {
+      "path": "docs/reviews/2026-10-30-repository-cleanup.md",
+      "size": 2290,
+      "sha256": "e4b48890db5fd643ea1e00f3f8b7dc6052d7035ac0bb80abc239c87d1c63271e"
+    },
+    {
+      "path": "docs/validation/egm-codex-2026-10-29.md",
+      "size": 9504,
+      "sha256": "da534df570882415bc8cc14e81ac2a4878364344bd714b9e3ee55f040a53e0e9"
+    },
+    {
+      "path": "docs/validation/egm-oaw-codex-2026-10-30.md",
+      "size": 12872,
+      "sha256": "39940e080a2c169f3639ae609a9174078649eb716416a18820ea8269e612ff6e"
+    },
+    {
+      "path": "docs/validation/egm-offline-2026-10-29.md",
+      "size": 5775,
+      "sha256": "c942200ce36a89df727886177979eb0ef9ce959c557ae5ac3877b482a8f57521"
+    },
+    {
+      "path": "docs/validation/v2.0.0-local.md",
+      "size": 6555,
+      "sha256": "97567c8f3cee72b001268b3eead929c859e0959e4bc17b7fb17fd7c0c7168af5"
+    },
+    {
+      "path": "docs/wiki/CONTRIBUTING_WIKI.md",
+      "size": 1764,
+      "sha256": "e771b9128d09339a21e182ed7da795ae3d8e48834dcdc454eb789a55d2ab8c00"
+    },
+    {
+      "path": "docs/wiki/TOPIC_BOARD.md",
+      "size": 2038,
+      "sha256": "84fda2da8f5e97a7fcadd397bc95d16cfbba785bf40ff24d4ea84d637bcc40d4"
+    },
+    {
+      "path": "docs/wiki/WIKI_PIPELINE.md",
+      "size": 707,
+      "sha256": "d557df47e29e8fc44cb2a6ec810b48a27ccd178e9e52115f04b053bb5ffcaed9"
+    },
+    {
+      "path": "evals/code-map/PREREG.md",
+      "size": 15723,
+      "sha256": "1428bf1ee0aad813b03c04b8c89633ce0cefffff8a6282c2a8b676982f2a6a13"
+    },
+    {
+      "path": "evals/code-map/native_search.py",
+      "size": 18106,
+      "sha256": "208b410291dce79ebed58f99e6476d014ae8324b4cf8fb4c88add19900814d95"
+    },
+    {
+      "path": "evals/code-map/questions.json",
+      "size": 61223,
+      "sha256": "9fae80bdfb16f7acd28dfa6785decd4b6a1a1a246d9af4b7e7988e3091885970"
+    },
+    {
+      "path": "evals/code-map/score.py",
+      "size": 33120,
+      "sha256": "7596ad70d7a2d924ba625d2eb41a8d6c1caeccc3c50ce04a99afd282115fbf6e"
+    },
+    {
+      "path": "evals/egm-local/README.md",
+      "size": 8725,
+      "sha256": "b60b5a3690ec7d33cf2130d9aa2d3b21084e2e4329cfb8a2e77b2561f9640d38"
+    },
+    {
+      "path": "evals/egm-local/anonymize.py",
+      "size": 8784,
+      "sha256": "297be193feb6809aa5c06f4a4b8c0625805d1cfc372c494fef9721ce2df2e134"
+    },
+    {
+      "path": "evals/egm-local/cases/clean/README.md",
+      "size": 183,
+      "sha256": "1d805ebfa9b8720d37b14e89b72e49360adeac58d16362ddab490f37e9887167"
+    },
+    {
+      "path": "evals/egm-local/cases/clean/docs/adr-002-storage.md",
+      "size": 200,
+      "sha256": "8aa6cf37d45afa3f77bf024dffe8eaf954d6750a402e5f77eefdae21838630e2"
+    },
+    {
+      "path": "evals/egm-local/cases/clean/docs/adr-012-lookup-exception.md",
+      "size": 343,
+      "sha256": "42b0293363a50089c10d1c9cfb19907f96a5374187f82dd1ceebb319316ee189"
+    },
+    {
+      "path": "evals/egm-local/cases/clean/docs/design.md",
+      "size": 1718,
+      "sha256": "8ea27019de88f1553ea3a21220f2f39e4906bf021cdc1f3d1024240201d5437b"
+    },
+    {
+      "path": "evals/egm-local/cases/clean/src/lookup.py",
+      "size": 440,
+      "sha256": "f7dea1a9ef4f9a700e6852b5b96686a7287748d8855a9790edfb13f9940dedd5"
+    },
+    {
+      "path": "evals/egm-local/cases/events/README.md",
+      "size": 121,
+      "sha256": "6f1d9b9a96299f2a77c2aa2c296d0d1730149b63edef3c17d15c1d8bd7b4ea1b"
+    },
+    {
+      "path": "evals/egm-local/cases/events/docs/adr-004-events.md",
+      "size": 308,
+      "sha256": "840cb6af46d0ae9a62814631d9d24e833e608a4990f3b7b0c2054925462b3d95"
+    },
+    {
+      "path": "evals/egm-local/cases/events/docs/design.md",
+      "size": 1098,
+      "sha256": "96c57cf1b46d3105713a9e7589aca9108794cb3f007de9ad657727f798a8e483"
+    },
+    {
+      "path": "evals/egm-local/cases/events/src/projector.py",
+      "size": 240,
+      "sha256": "7b0d222f26d9092405c217fb1153e060c36930540d65ffaed964beb35a758084"
+    },
+    {
+      "path": "evals/egm-local/cases/orders/README.md",
+      "size": 190,
+      "sha256": "c24dded06df19f67d700cf4f7f2abedac3224bbfa3ccc312ee24b2cc2d6b3459"
+    },
+    {
+      "path": "evals/egm-local/cases/orders/docs/adr-001-storage.md",
+      "size": 331,
+      "sha256": "b584b1de3c70a8a305fda60b3b3b57758dbdab18a4eae7c4650ab31403a41df3"
+    },
+    {
+      "path": "evals/egm-local/cases/orders/docs/design.md",
+      "size": 1303,
+      "sha256": "68160a6074e9dd7c565e8aae00839a2911e8899c218896b937dd08ea56b0cd72"
+    },
+    {
+      "path": "evals/egm-local/cases/orders/src/reserve.py",
+      "size": 383,
+      "sha256": "87c7568af4f57a0a1e561fc822adee4444f6fe0d12dee9bf1dd605b437986e80"
+    },
+    {
+      "path": "evals/egm-local/grade_prompt.md",
+      "size": 1832,
+      "sha256": "7fde3fd0a76ff4c9c9c20ec338950b5b805048b3a7002384c1ed11f11d24c22f"
+    },
+    {
+      "path": "evals/egm-local/measure.py",
+      "size": 8591,
+      "sha256": "0738eba81a80e2580d4783119a2d91b930c52749b97aff47695072daacb1f8f5"
+    },
+    {
+      "path": "evals/egm-local/prepare.py",
+      "size": 6099,
+      "sha256": "d21d7cffcd2c53f41cbc28007bed299e968523e1c9d8ae82fd1d81a8556e0bf1"
+    },
+    {
+      "path": "evals/egm-local/results/2026-10-29-d108b3a9e599/README.md",
+      "size": 2101,
+      "sha256": "177796f9448e8dd313ff7da0d5e3106601ce0bebf2f0d9ed49d990fda92883e9"
+    },
+    {
+      "path": "evals/egm-local/results/2026-10-29-d108b3a9e599/adjudication/events.json",
+      "size": 1722,
+      "sha256": "3f014be8af943cc6bc0009b9b132fc9c6247f8dd34f739403c181e35eabba336"
+    },
+    {
+      "path": "evals/egm-local/results/2026-10-29-d108b3a9e599/aggregate.json",
+      "size": 2963,
+      "sha256": "64c6ae05d396911462ef4c3d505389f36e0c0173cb41ca8e8847eee66eacfb13"
+    },
+    {
+      "path": "evals/egm-local/results/2026-10-29-d108b3a9e599/artifact-path-audit.json",
+      "size": 8960,
+      "sha256": "fc38b1dc14bdb3dd02f52ddca99b06d008d8be463d1ea2039044e70998f7f3d4"
+    },
+    {
+      "path": "evals/egm-local/results/2026-10-29-d108b3a9e599/artifact-sha256.json",
+      "size": 3168,
+      "sha256": "6d2d817a3f1d13a3c1f8e196bcea9f973cd166a215d3c783a02edb19c1eca01b"
+    },
+    {
+      "path": "evals/egm-local/results/2026-10-29-d108b3a9e599/auxiliary/clean.json",
+      "size": 2727,
+      "sha256": "fd0fcc888457fc87bec2fb9c95ccb7a28e2a1fe5c9229da121823fe378024b85"
+    },
+    {
+      "path": "evals/egm-local/results/2026-10-29-d108b3a9e599/auxiliary/events.json",
+      "size": 2711,
+      "sha256": "3a4e60b4cf26d93d578cae096f2d4e7c239d8d988fe5ea7fb1b7f171d63c36e9"
+    },
+    {
+      "path": "evals/egm-local/results/2026-10-29-d108b3a9e599/auxiliary/orders.json",
+      "size": 2689,
+      "sha256": "f6c43388181aa48e8b6c88e50116345661d7bcb6858cce3ced2e9bb4a7740230"
+    },
+    {
+      "path": "evals/egm-local/results/2026-10-29-d108b3a9e599/collection-integrity.json",
+      "size": 416,
+      "sha256": "67416a3be941cc42ac32b06304eea39927da370fa576929cbf435ab5264f7322"
+    },
+    {
+      "path": "evals/egm-local/results/2026-10-29-d108b3a9e599/context-diagnostic.json",
+      "size": 608,
+      "sha256": "0c51fff2dfa8024405f659d8b310615c4250ddf3ee5e6a42515e8c7b9f19e1ab"
+    },
+    {
+      "path": "evals/egm-local/results/2026-10-29-d108b3a9e599/dispatch.json",
+      "size": 34526,
+      "sha256": "51ef7b45f8f849dbed11196c4a05d629451be6b9554511826c9539754a36f894"
+    },
+    {
+      "path": "evals/egm-local/results/2026-10-29-d108b3a9e599/evidence.json",
+      "size": 86892,
+      "sha256": "62eba62de6687abb80690594147775859793987378ba56c73528ad6d91c84094"
+    },
+    {
+      "path": "evals/egm-local/results/2026-10-29-d108b3a9e599/grades/clean-g1.json",
+      "size": 21320,
+      "sha256": "827b0212b4ba1cde6652e42ca7c1bee7b43ada52b4bb9fc5585eabaaecb381c8"
+    },
+    {
+      "path": "evals/egm-local/results/2026-10-29-d108b3a9e599/grades/clean-g2.json",
+      "size": 16749,
+      "sha256": "5c5872ef3004912a4195f4c016c808ce834a40655552c04f4234dd163626643f"
+    },
+    {
+      "path": "evals/egm-local/results/2026-10-29-d108b3a9e599/grades/events-g1.json",
+      "size": 17840,
+      "sha256": "6da2671c2e682d94e9533a47e9b452cb6158b17614d4d3401d6d1af9b8d8d2bc"
+    },
+    {
+      "path": "evals/egm-local/results/2026-10-29-d108b3a9e599/grades/events-g2.json",
+      "size": 26157,
+      "sha256": "93920909666c0ec300429f4f9264c929970f6b2793ef04bac57ecd0324ac1cb6"
+    },
+    {
+      "path": "evals/egm-local/results/2026-10-29-d108b3a9e599/grades/orders-g1.json",
+      "size": 25551,
+      "sha256": "2d0873b7d24e90fd5fbec812e2c4c3937da6fc1ce8c97b09c1c62aa0d877cd33"
+    },
+    {
+      "path": "evals/egm-local/results/2026-10-29-d108b3a9e599/grades/orders-g2.json",
+      "size": 29313,
+      "sha256": "2215cd4498a698ba49971cddc23ded92e61251f2922c7a24c259bf2e57f89b60"
+    },
+    {
+      "path": "evals/egm-local/results/2026-10-29-d108b3a9e599/invalid-grading-v1/adjudication-events.json",
+      "size": 6497,
+      "sha256": "63576c26dd256fef09f6359d506677cbd338de00622ef0b1ad65fd2919e8fb1a"
+    },
+    {
+      "path": "evals/egm-local/results/2026-10-29-d108b3a9e599/invalid-grading-v1/aggregate.json",
+      "size": 2965,
+      "sha256": "233a779cfd530039e579ffa27e7b5ac2f92c242421e8799cfb3c9fc4dc87fc2d"
+    },
+    {
+      "path": "evals/egm-local/results/2026-10-29-d108b3a9e599/invalid-grading-v1/grades/clean-g1.json",
+      "size": 17946,
+      "sha256": "011087dcff85d613220d5a14073783ff6da2869d96fa2101282e9080d5443832"
+    },
+    {
+      "path": "evals/egm-local/results/2026-10-29-d108b3a9e599/invalid-grading-v1/grades/clean-g2.json",
+      "size": 12921,
+      "sha256": "887aff893e88cfd4e0278e8286d0ece634c39bb9572efb4e4f78637d108f3b00"
+    },
+    {
+      "path": "evals/egm-local/results/2026-10-29-d108b3a9e599/invalid-grading-v1/grades/events-g1.json",
+      "size": 19761,
+      "sha256": "d6e8647f4854b88154e75355d5e0f2db5e76f52e51ca244005f7c4ee3872b18d"
+    },
+    {
+      "path": "evals/egm-local/results/2026-10-29-d108b3a9e599/invalid-grading-v1/grades/events-g2.json",
+      "size": 14340,
+      "sha256": "325a5e6c2b868f18bda4892726e0ae21286491b9239404ebe6d36cb61983b3a9"
+    },
+    {
+      "path": "evals/egm-local/results/2026-10-29-d108b3a9e599/invalid-grading-v1/grades/orders-g1.json",
+      "size": 19033,
+      "sha256": "2d4f689ba0c588d66c2cc439b6e6c238cbdc489528122549a0697c1997942188"
+    },
+    {
+      "path": "evals/egm-local/results/2026-10-29-d108b3a9e599/invalid-grading-v1/grades/orders-g2.json",
+      "size": 33353,
+      "sha256": "e505ccd4eea92486bf95499735727f75309a13b6187d737b35238cd17213309b"
+    },
+    {
+      "path": "evals/egm-local/results/2026-10-29-d108b3a9e599/invalid-grading-v1/invalidation.json",
+      "size": 867,
+      "sha256": "4e17dcc9964d3d873f195dc3000139a1b786c2a6838b3a2276409020e94eab61"
+    },
+    {
+      "path": "evals/egm-local/results/2026-10-29-d108b3a9e599/method-source-identity.json",
+      "size": 30140,
+      "sha256": "9b41ba77ed30d7db7d9c7a3e012092e42d7453b07e63bc6f13425919325cf93d"
+    },
+    {
+      "path": "evals/egm-local/results/2026-10-29-d108b3a9e599/reports/clean.json",
+      "size": 12164,
+      "sha256": "548b553464832589ec703474d287d709129dc6c180ad6e1e10d9c95ab527385d"
+    },
+    {
+      "path": "evals/egm-local/results/2026-10-29-d108b3a9e599/reports/events.json",
+      "size": 29602,
+      "sha256": "1ab0bc85c65eb553dde8babc0671d554c3e05a0ed36de07afe0252841e604d6d"
+    },
+    {
+      "path": "evals/egm-local/results/2026-10-29-d108b3a9e599/reports/orders.json",
+      "size": 32934,
+      "sha256": "da19b835514d31438bdf8c8df31164d8e4a71b9b3f0b2fd0b70cc914d3538dae"
+    },
+    {
+      "path": "evals/egm-local/results/2026-10-29-d108b3a9e599/run-metadata.json",
+      "size": 1697,
+      "sha256": "347ca70313ece8fa6d882d7fde93dac38bbb24c453ccb4497c9ce1287fe7435e"
+    },
+    {
+      "path": "evals/egm-local/results/2026-10-29-d108b3a9e599/unblind-map.json",
+      "size": 749,
+      "sha256": "5a795d0dfeaf2306de76017f2cad66ce1b4bf2c9cfed4845903798ccf9837b92"
+    },
+    {
+      "path": "evals/egm-local/review_prompt.md",
+      "size": 2971,
+      "sha256": "17099cbbca87eb531ce9d76b1544f60cbaa44d758bd0e8039a4c7b618e9bf5f6"
+    },
+    {
+      "path": "evals/egm-local/spec.json",
+      "size": 9035,
+      "sha256": "a25816f957ac8e038300dfaedd41cdc57ad72ab397e6ad02a78c073c2424eb4c"
+    },
+    {
+      "path": "evals/egm-local/spec.sha256",
+      "size": 76,
+      "sha256": "b0f4b2d037aee2aaa0d3f997179d5e1aece7d2140e7d5da0443dc12ef896366b"
+    },
+    {
+      "path": "evals/egm-pilot/LICENSE.egm",
+      "size": 11358,
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "path": "evals/egm-pilot/NOTICE.md",
+      "size": 1722,
+      "sha256": "1fac83bd57a4e74e9882835aef900e7075b953a8f174f60d529979b12ee614e1"
+    },
+    {
+      "path": "evals/egm-pilot/README.md",
+      "size": 4723,
+      "sha256": "cd9ca5843f4e21cc7142778b5fda39f8ce4dfe6954c122edb82d7d3f20bc201f"
+    },
+    {
+      "path": "evals/egm-pilot/convert_scenarios.py",
+      "size": 20844,
+      "sha256": "ff993755b3a03c68699f874700ce286b4f15ddb51e79b2d6a8771010c5dd542b"
+    },
+    {
+      "path": "evals/egm-pilot/outcome/defects.json",
+      "size": 14303,
+      "sha256": "a18e6cfb82cd17489c92d3da28a5218b99358c60e490ed38ca7ce2f993ed951c"
+    },
+    {
+      "path": "evals/egm-pilot/outcome/overlay-oaw/.agents/memory.md",
+      "size": 633,
+      "sha256": "b5296012ae06dc317c5b5952b3d4973f939d8af46d8152751b4f5d913cadf7ae"
+    },
+    {
+      "path": "evals/egm-pilot/outcome/project/README.md",
+      "size": 285,
+      "sha256": "51839262be7d71e4d6dcb406c880374b1fdb96d329e26a9aa280cd6ed157987c"
+    },
+    {
+      "path": "evals/egm-pilot/outcome/project/docs/decisions/0007-postgresql-only.md",
+      "size": 788,
+      "sha256": "6cbc19e59f2931b77c37f86ea28ae2d04bf4190d5e321ab39c10bee9aa5004d5"
+    },
+    {
+      "path": "evals/egm-pilot/outcome/project/docs/design_draft.md",
+      "size": 1597,
+      "sha256": "fd7f90711a15387a8290e69812b9e75db04220a0262cc75f08416942e4726cbf"
+    },
+    {
+      "path": "evals/egm-pilot/outcome/project/src/notify/config.py",
+      "size": 191,
+      "sha256": "df2ceb67178649f1d545043ce9ab4b32d2a6b438bbf444620021cfddc335e046"
+    },
+    {
+      "path": "evals/egm-pilot/outcome/project/src/notify/dispatcher.py",
+      "size": 734,
+      "sha256": "4991cc2a68e32c8dbd5c1fb0a5201bab409ac38688b283638ab376ac23156a72"
+    },
+    {
+      "path": "evals/egm-pilot/outcome/project/src/notify/store.py",
+      "size": 979,
+      "sha256": "14c296da4c348510d56478e110f370f14d88eb5f3507e7f0a9d0250ffdee0acf"
+    },
+    {
+      "path": "evals/egm-pilot/pilot_common.py",
+      "size": 11847,
+      "sha256": "949465c1f33df21b6d3eafba488994497b746f6ff19eeb658405261c119f8995"
+    },
+    {
+      "path": "evals/egm-pilot/protocol/project/README.md",
+      "size": 75,
+      "sha256": "5f615127a14fa062e0b30c151606478b18882e13078f3d19d9a8ba7423f03295"
+    },
+    {
+      "path": "evals/egm-pilot/run_pilot.py",
+      "size": 26420,
+      "sha256": "5c81adbe6c297b83a551fab07b1ef6a080564e3c8cbaea004f85b16bfb7f4418"
+    },
+    {
+      "path": "evals/egm-pilot/scenarios.json",
+      "size": 35547,
+      "sha256": "bbe2a13d1640e204373d7b53ce85778420c1c75a4f19f6761076696a8a48b580"
+    },
+    {
+      "path": "evals/egm-pilot/score.py",
+      "size": 22052,
+      "sha256": "f16dcecb1233e041412f07e60a0a695f651609fde7b84070dd3ffc30fad34e0a"
+    },
+    {
+      "path": "evals/egm-pilot/spec.json",
+      "size": 11703,
+      "sha256": "7e34211051ecc5e6492215a62977cdb6b92bc373e18d4c8b94e2fe697b95ece2"
+    },
+    {
+      "path": "evals/egm-pilot/spec.sha256",
+      "size": 76,
+      "sha256": "a97ca2666630c371bb85e55ec079e42ebb5a2d302cd51908cb6acdd1683ac1e9"
+    },
+    {
+      "path": "evals/native-ablation/spec.json",
+      "size": 362,
+      "sha256": "5e464ce85109cf38b57bf06831e526d2b7a2c4fd6e81fc053ba414245539a3ba"
+    },
+    {
+      "path": "evals/skill-value/experiment.py",
+      "size": 28019,
+      "sha256": "4dafe698f6dfec46fa6eb3525438f8821b9034ad9ce13fc40fd14c7b4d2c9781"
+    },
+    {
+      "path": "evals/skill-value/fixtures.py",
+      "size": 18019,
+      "sha256": "f739e4d944e8c9b4c75244554607c4093dcb06eea5fdaecfa52b770ff5ed78df"
+    },
+    {
+      "path": "evals/skill-value/grade-prompt.md",
+      "size": 2816,
+      "sha256": "f645e9c6d35bf0e87026eca86fd82bdd455bf57516b6458b86cf0817470b8944"
+    },
+    {
+      "path": "evals/skill-value/improve_fixtures.py",
+      "size": 12448,
+      "sha256": "36528cbddfc335de33162386b64ee5843928dc99c46e1166f378986a4c8a2898"
+    },
+    {
+      "path": "evals/skill-value/protocol.json",
+      "size": 3797,
+      "sha256": "483279928f577de2dd43ec578ce609470b606efaf74d4131a43709c6cdfa7571"
+    },
+    {
+      "path": "evals/skill-value/summarize.py",
+      "size": 9810,
+      "sha256": "8f1d58b744a5ac535a1a7e2e486a382695afaabfcb308c3661f51761836cb163"
+    },
+    {
+      "path": "evals/skill-value/test_experiment.py",
+      "size": 8063,
+      "sha256": "fd3bb4d8e29a30943cdf832f486cf7fe8370ba5b5bab1301bc768cbef5fc6b1c"
+    },
+    {
+      "path": "evals/skill-value/test_fixtures.py",
+      "size": 9434,
+      "sha256": "cd97994de6d3a1e93985b52fd24fff9f94f3550cbbf774d87cb42c0647a60c9d"
+    },
+    {
+      "path": "evals/skill-value/test_improve_fixtures.py",
+      "size": 8106,
+      "sha256": "c4b3d2d24f3d5649157ae7cf1663fbce96f3afb4485ab165e5fdd7b98c3be4fd"
+    },
+    {
+      "path": "evals/three-way/README.md",
+      "size": 2745,
+      "sha256": "3c898a566005cc4dae05ac708f402ea11b7f5204760d048bfece4822bd3d43ba"
+    },
+    {
+      "path": "evals/three-way/bench.py",
+      "size": 25277,
+      "sha256": "2d1ac3964ddf37300c29fba23643ad97ff90a667ff724f59dad2e8ac05ac92ca"
+    },
+    {
+      "path": "evals/three-way/budget-amendment.md",
+      "size": 1636,
+      "sha256": "b447af8bf7e46cefc6d74fca53b367c794946e7e279367b0439f971594481770"
+    },
+    {
+      "path": "evals/three-way/continue_budget.py",
+      "size": 4454,
+      "sha256": "ad803e2fe4d44f33395a7484ff2edaa99aff6308f71c06f79315bcd4f64f278b"
+    },
+    {
+      "path": "evals/three-way/grade-prompt.md",
+      "size": 2002,
+      "sha256": "d6c44a5b18a5925f72d0b56309d1e9979c35397065cf1574e39126e2bf911092"
+    },
+    {
+      "path": "evals/three-way/invalid-environment-v1.md",
+      "size": 1903,
+      "sha256": "90133200a6fedf72f9912237effaf41676a019a6cabef872d300ad0bb805fe9a"
+    },
+    {
+      "path": "evals/three-way/make_memory_packet.py",
+      "size": 4612,
+      "sha256": "b5d439703d08c9461a73ef9a6ec06adb18588cbe195e6bb722a73714d807dbce"
+    },
+    {
+      "path": "evals/three-way/make_packet.py",
+      "size": 3889,
+      "sha256": "72ad9d0545d90f3e65e53a12f0e791fffca7c37fd02ab848cbab418511ff2298"
+    },
+    {
+      "path": "evals/three-way/protocol.json",
+      "size": 1973,
+      "sha256": "26211195eaabfc6ae739f6371f624c016c6ffbf60d39f4488a3e495c7a8a1080"
+    },
+    {
+      "path": "evals/three-way/replicate.py",
+      "size": 3942,
+      "sha256": "814430286550f626c8e9b46ed3573fb54f90f586333afd031d282ab9aca3f011"
+    },
+    {
+      "path": "evals/three-way/replication-protocol.json",
+      "size": 2034,
+      "sha256": "ec156c9f79a73449df35be498b35b615d00c66b69f83b434c3ef1e32cbd55bb4"
+    },
+    {
+      "path": "evals/three-way/replication_summary.py",
+      "size": 3802,
+      "sha256": "7be1b16023f33dc72692791764f5cc1d07019edc985001c7897a42ab8344b514"
+    },
+    {
+      "path": "evals/three-way/rubric.json",
+      "size": 3387,
+      "sha256": "cdcad48f48180bb4c131495d973a93ef2c76f082f75cc4627afa8d8407ce6dfb"
+    },
+    {
+      "path": "evals/three-way/secondary-extra-audit.md",
+      "size": 1302,
+      "sha256": "86c13aa763b0f578a18988f2e574ef34338f17f3b2485c44ea555db6d84cf501"
+    },
+    {
+      "path": "evals/three-way/summarize.py",
+      "size": 6200,
+      "sha256": "d38cec14574a4a22cb4aa6624e71bb29df8d2fc9d35dbecb25a401c4b685d608"
+    },
+    {
+      "path": "evals/three-way/test_bench.py",
+      "size": 5500,
+      "sha256": "8b160336e3ea6a02a4bf61118c80203356e520df8b26cb4b1247f2abb9258dad"
+    },
+    {
+      "path": "evidence/DECISIONS-D21-D31.md",
+      "size": 17119,
+      "sha256": "ad3bb46bac1aadec52fab954499b186d555c5300a3f4767e0ef21f01bf22de35"
+    },
+    {
+      "path": "evidence/OWNER_REQUEST.md",
+      "size": 1028,
+      "sha256": "287923059c01a5596637623e1f7469fd0c864e6d4264147bebd8f5fbb04d2589"
+    },
+    {
+      "path": "evidence/codemap-comparison-2026-11-06.md",
+      "size": 6088,
+      "sha256": "c788812d728af86691fed7c39937e83d4936852c32aa6475efd2ab2de03fab67"
+    },
+    {
+      "path": "evidence/egm-selftest-2026-11-06-RESULT.md",
+      "size": 8526,
+      "sha256": "a547f197f135432f72a7333088ef9e0c23d284859227eb835daa5dba1fe40964"
+    },
+    {
+      "path": "evidence/validation-2026-11-07-RESULT.md",
+      "size": 11574,
+      "sha256": "554ed6d52cad68a57ce20ff098fd8c0b9b39fa2308dbbf18adde84e080ca09ad"
+    },
+    {
+      "path": "example/README.md",
+      "size": 447,
+      "sha256": "5f7c64d501f8c8098ae265cf66cafd031e308c3bb9f3a37be0718bc0e655e8c7"
+    },
+    {
+      "path": "example/minimal-project/.agents/skills/egm-bootstrap/SKILL.md",
+      "size": 1507,
+      "sha256": "fc51266f56f18b3f9efb8dfac6648df79945a903197ee8874af543dc366ff18b"
+    },
+    {
+      "path": "example/minimal-project/.agents/skills/egm-bootstrap/agents/openai.yaml",
+      "size": 306,
+      "sha256": "ac541d833ffe90278bb2723312b12237f5cb99fda00449879f61bf5ccab5563b"
+    },
+    {
+      "path": "example/minimal-project/.agents/skills/egm-bootstrap/assets/icon.svg",
+      "size": 601,
+      "sha256": "e1f021c3074bc22d982301bff8374cf1c2ff7c032d1834b66fed91a9ab57d370"
+    },
+    {
+      "path": "example/minimal-project/.agents/skills/egm-brainstorm/SKILL.md",
+      "size": 1731,
+      "sha256": "847d904b7ab806d9667a0e0bc556b3de39d33540b91db0fafc97f63c34af0686"
+    },
+    {
+      "path": "example/minimal-project/.agents/skills/egm-brainstorm/agents/openai.yaml",
+      "size": 307,
+      "sha256": "eddc9e67c701da916f7cfdb793f19f25c84e325c1ccd3652954eacb2162280d3"
+    },
+    {
+      "path": "example/minimal-project/.agents/skills/egm-brainstorm/assets/icon.svg",
+      "size": 496,
+      "sha256": "89d894e7e9c10c2ad955ef1964049e508b718e96e8a177f547b240c774498b49"
+    },
+    {
+      "path": "example/minimal-project/.agents/skills/egm-draft/SKILL.md",
+      "size": 1693,
+      "sha256": "93be7592a12669bed78b688cf022c2920aba5f006e4669a90d18deeb4b1adc70"
+    },
+    {
+      "path": "example/minimal-project/.agents/skills/egm-draft/agents/openai.yaml",
+      "size": 306,
+      "sha256": "55e41537962325238fedcb0b03a37fa2536078293be82c75208c71b4f2a746ed"
+    },
+    {
+      "path": "example/minimal-project/.agents/skills/egm-draft/assets/icon.svg",
+      "size": 545,
+      "sha256": "0cca32ed85b4198fdf3566198f92a17c943ee3d9a72d38c2898132b67130aebd"
+    },
+    {
+      "path": "example/minimal-project/.agents/skills/egm-drift-report/SKILL.md",
+      "size": 1707,
+      "sha256": "5c2d473f074959d117d56134971aec1c0f3d12cef446044c39268df41a7eec66"
+    },
+    {
+      "path": "example/minimal-project/.agents/skills/egm-drift-report/agents/openai.yaml",
+      "size": 312,
+      "sha256": "19664cbf36ed1dd2765d39c676006db9113ea01fb5f8417af4b5d767d5542b62"
+    },
+    {
+      "path": "example/minimal-project/.agents/skills/egm-drift-report/assets/icon.svg",
+      "size": 281,
+      "sha256": "47bc4ecbe493f4454f9b7642f42de9fe41f8a93cbb86aa3ffbb5d58532ea0e2d"
+    },
+    {
+      "path": "example/minimal-project/.agents/skills/egm-resolve/SKILL.md",
+      "size": 1669,
+      "sha256": "b9110a0cdc64441fe8302ad97edc7012daa8d48b0c008c6dd1509f380f52d65f"
+    },
+    {
+      "path": "example/minimal-project/.agents/skills/egm-resolve/agents/openai.yaml",
+      "size": 301,
+      "sha256": "1c3235ad16060e52a32bd9b86340a286cc9b1113f79195b6051b1c5c63ef7068"
+    },
+    {
+      "path": "example/minimal-project/.agents/skills/egm-resolve/assets/icon.svg",
+      "size": 506,
+      "sha256": "14ac0ad863fc6ab83ba5fd5f7bd46fd11b609d65f9e482b3fcddd7a139834733"
+    },
+    {
+      "path": "example/minimal-project/.agents/skills/egm-review-loop/SKILL.md",
+      "size": 1816,
+      "sha256": "82480bc35249cc9401c82c4c9a0cd2ee6de946683ec8fc1e15108d137e9ae563"
+    },
+    {
+      "path": "example/minimal-project/.agents/skills/egm-review-loop/agents/openai.yaml",
+      "size": 312,
+      "sha256": "93bad0484437e92755a94cf13c0cde0d1f6bdea6a0dc7b51aab815efec4cd199"
+    },
+    {
+      "path": "example/minimal-project/.agents/skills/egm-review-loop/assets/icon.svg",
+      "size": 544,
+      "sha256": "d6d5537843253fe634d248b6eadd5a5bcd2ef7742e016896eb11c583174eb530"
+    },
+    {
+      "path": "example/minimal-project/.agents/skills/egm-review/SKILL.md",
+      "size": 1701,
+      "sha256": "a268af361aeceb1e7bf49a3112ffa20727953e024e7453717a56d313b73770c1"
+    },
+    {
+      "path": "example/minimal-project/.agents/skills/egm-review/agents/openai.yaml",
+      "size": 306,
+      "sha256": "659ab99489607ab3722800805993b59bbe8db9eaa156f9bb4a4995b233f540f9"
+    },
+    {
+      "path": "example/minimal-project/.agents/skills/egm-review/assets/icon.svg",
+      "size": 530,
+      "sha256": "02154028864bd8547a45d7c9f55c59f95cb4ce3f57ecb3426f67034ab97d022f"
+    },
+    {
+      "path": "example/minimal-project/.agents/skills/oaw-evidence/SKILL.md",
+      "size": 1110,
+      "sha256": "e1a0c9f4739f860f8b610e3a900fbb5999fc06c03fc1eeba9e9a1bb8d4ca0b30"
+    },
+    {
+      "path": "example/minimal-project/.oaw/install.json",
+      "size": 12401,
+      "sha256": "c81e24f51b0c7dd9d8275109d4bebc38bef6c7b199095573223c686710f4baf5"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/.claude-plugin/agents/bootstrap_orchestrator.md",
+      "size": 921,
+      "sha256": "b07f80ac2b54b840a48b290221e4a15d97b2e90de5ed3d2760efba4112760930"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/.claude-plugin/agents/codebase_details.md",
+      "size": 666,
+      "sha256": "17d4f89bb8786f78eca6d9e01e31493497cf4c2af55fa97342507648e185b78d"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/.claude-plugin/agents/comprehension.md",
+      "size": 657,
+      "sha256": "78356e3e5e89c3d4a6b9d51865ad81f1b256cb3289869a4070e149b7b90ae7f2"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/.claude-plugin/agents/design_critic.md",
+      "size": 641,
+      "sha256": "02058b72fe6c249ac0efc393069e9bb32a9890204f4efb8c51ffad36b8e4056e"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/.claude-plugin/agents/implementation_readiness.md",
+      "size": 673,
+      "sha256": "98e7f8ccf177f6964e0dabe01d9b5ab429c8af7fc3bc5ba4178c84aaf1f90848"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/.claude-plugin/agents/structural.md",
+      "size": 639,
+      "sha256": "33237f2b2147903a270fae5b649cf638444fc9cf1109964b46db152bef3a5f90"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/.claude-plugin/agents/style.md",
+      "size": 628,
+      "sha256": "edeb79ef6336337438180b936469301f49782812e0c7a9841e20af2fe50844f2"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/.claude-plugin/agents/synthesizer.md",
+      "size": 767,
+      "sha256": "e6f053a5d6b289592e7bb7b56d8ebae7f9b5080db6430c9f484fc9a40f4c7dfd"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/.claude-plugin/agents/zoom_out.md",
+      "size": 637,
+      "sha256": "c74662092db4297aebae1367d4614ae42e140fd6080b4276c0327853ae96ce0b"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/.claude-plugin/icon.png",
+      "size": 13264,
+      "sha256": "ac92b3a769ba1754941d93b3cbe6456714f04a5bc123f4e36a7e2ff3e4bc8fbd"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/.claude-plugin/plugin.json",
+      "size": 1281,
+      "sha256": "b57b690c962e00bac6979e3788083a9c8120dc09beaac49b2abff1991d0ab4cc"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/.codex-plugin/plugin.json",
+      "size": 1337,
+      "sha256": "3ab8abb44a4d13f8c390309fba14683593952c37ef9ced4e5ea7c1fa8afac070"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/LICENSE",
+      "size": 11358,
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/OAW_SOURCE.json",
+      "size": 7619,
+      "sha256": "c6ff4b7b56ce8187e842baa190c0b3fda2a37d112450931839e43bd7faf3d25e"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/README.md",
+      "size": 7511,
+      "sha256": "3e3e3653f3a887404aacd1c6aff15918056d0f00a9117e4241e367e7fc19cbb4"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/agents/bootstrap_orchestrator.md",
+      "size": 1706,
+      "sha256": "5c2fa484754f8d582669500d16d5728fe95daff8bd964f8e7f09142c6a666bfc"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/agents/codebase_details.md",
+      "size": 4683,
+      "sha256": "d80db07e449b57b3b3776d1401cca72a54b6b65a0ab218b86f9064ee4b8167bc"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/agents/comprehension.md",
+      "size": 4748,
+      "sha256": "974f4972f717dc7b102a9b1407b3a625749149f2ae905727241e919f43cc3fa5"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/agents/design_critic.md",
+      "size": 3843,
+      "sha256": "cee6294735ce2bd4fea19245852b6eb07cbe8ede7e72a4bfc829f586e4a39d0f"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/agents/implementation_readiness.md",
+      "size": 3929,
+      "sha256": "1f6aa61cfe7cb86dc94943ab3b3fd339e5baba533937198fd10edb06dfa64e8f"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/agents/structural.md",
+      "size": 3954,
+      "sha256": "f0d4fe6faee4e388366b7d653fe353a9b09f45ca1bf5dae29280e351cda7da87"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/agents/style.md",
+      "size": 4023,
+      "sha256": "9d0d59d7fac7ee479f9beea22d28b8ea20b6fea0215e06bd292a14eb2bb3b692"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/agents/synthesizer.md",
+      "size": 4450,
+      "sha256": "402e661fa44684ce51246575d169f65003981846f318cf13cf124c8895b4ccab"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/agents/zoom_out.md",
+      "size": 4903,
+      "sha256": "adc9d7b7db4c304866e61d5e5e446502231abe188ce64656939305e07ae7995f"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/assets/icon.svg",
+      "size": 1003,
+      "sha256": "224dfd77640ed4a3e85ff1d5f2378f13556407625456ceda625646fcaa765f24"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/docs/assets/readme-header.svg",
+      "size": 1456,
+      "sha256": "e20f4b61ae27ca32c81a65e5fe4a4275dd464df08e107ba361c6cddc87a6178c"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/docs/claude.md",
+      "size": 9395,
+      "sha256": "cbc51e603740134e5890fe645f3d516c03674598be43733c53411c920f445cc1"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/docs/codex.md",
+      "size": 6104,
+      "sha256": "a7390390c233ece29a2ee7508a8d328b6b4ee200f649417c097687c76f014ad0"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/docs/faq.md",
+      "size": 2755,
+      "sha256": "e8cb380b8295dfa4ae6c5a2f0bb86a3b0fde58b65f5ce6dc7dc2527ebc4e4ef5"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/docs/getting_started.md",
+      "size": 6652,
+      "sha256": "e45d171e4bc306fcb87a426f2608a9ed46a3ca329d67fd5c11a0d944865a57c7"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/docs/harnesses.md",
+      "size": 7559,
+      "sha256": "12b1e70adb6dec4edcf0d5a129806ba09135f243c545a4c9b42d87edd57dbd48"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/docs/index.md",
+      "size": 5259,
+      "sha256": "5ebb17daf9cec8c9802e62e8ba98345b29ddb44bfa0c9638a9859539d10a86c4"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/docs/privacy.md",
+      "size": 2188,
+      "sha256": "9d55a0a1d860787e07be7c6c5fb23f898b0a798b8975a39676f0845465df8583"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/docs/releases.md",
+      "size": 3676,
+      "sha256": "d5dbaf5638079ce63a01517078760618688cf00913287a5163f2855b0a4ad05d"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/plugin.json",
+      "size": 1424,
+      "sha256": "227c4a9e4c337c6f43941287af5e6a09e6a247372ec6b98cca03f8ac0cf166e7"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/resources/README.md",
+      "size": 887,
+      "sha256": "109c89969542dd5919c3f50f1bcf569c7668a505bff10439044135526e1a6b01"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/resources/document_standards/feature-spec-standard.md",
+      "size": 1489,
+      "sha256": "b3e4960fd884fde880a41da782fc73342fe232769e5835a4470b3c8c517644c4"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/resources/document_standards/heilmeier-standard.md",
+      "size": 1155,
+      "sha256": "a23bc354a5651bd00d817409a72ebcb7536c249e2038c13255ce89f49f138174"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/resources/document_standards/implementation-readiness-standard.md",
+      "size": 1379,
+      "sha256": "ed0d2a085eac0fd9581d504a2ec0df2a92d6b2538636a22b16e0b1370fba6dbb"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/resources/document_standards/re-implementation-standard.md",
+      "size": 1535,
+      "sha256": "421aacbf5e9a0d4c5b794edfa4cac333f8cc67bc4cf0e3717efcad4f827e6e46"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/resources/document_standards/zoom-out-standard.md",
+      "size": 2884,
+      "sha256": "0a01013bd363a8d744f8372b65495892360d7339e4e35c767003ae38f48e6799"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/resources/execution_instructions.md",
+      "size": 2348,
+      "sha256": "06f0ee648efa2fefd79081d01f32c4930d709fa709df42d06a287f97a8582179"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/skills/egm-bootstrap/SKILL.md",
+      "size": 23767,
+      "sha256": "ac86aae69c782b67ebb96d1dae5bcef675745e3f57cca99196038bb5e350fc4c"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/skills/egm-bootstrap/agents/openai.yaml",
+      "size": 198,
+      "sha256": "e5f83ece63fce8c73329efedd990f912ab395e1e8339f89f83f9e6efef00fb27"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/skills/egm-bootstrap/assets/icon.svg",
+      "size": 601,
+      "sha256": "e1f021c3074bc22d982301bff8374cf1c2ff7c032d1834b66fed91a9ab57d370"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/skills/egm-bootstrap/references/templates.md",
+      "size": 2064,
+      "sha256": "f49793727cccbd72afdc4a0569a1d8e8138e943d2fc9b0df772b09deaca80437"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/skills/egm-bootstrap/references/worker-return.schema.json",
+      "size": 568,
+      "sha256": "f18a3822f60a0f117e1582cccac78a90cf14154afca811d4e81ea3fe562e52a5"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/skills/egm-brainstorm/SKILL.md",
+      "size": 14202,
+      "sha256": "fb594315b47dca4bbea878fc77cec42a1a3ef8c75a8b903b1812260391a13ed9"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/skills/egm-brainstorm/agents/openai.yaml",
+      "size": 199,
+      "sha256": "2b858c20f9d3b54cc1e02410a4fd6f7989b36d6d5d152cc87cd0d1082ce3bfc9"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/skills/egm-brainstorm/assets/icon.svg",
+      "size": 496,
+      "sha256": "89d894e7e9c10c2ad955ef1964049e508b718e96e8a177f547b240c774498b49"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/skills/egm-draft/SKILL.md",
+      "size": 16770,
+      "sha256": "7908cb6d6b9ab82fef416211988ab9abd6681d4c783b2c31b1a8c40f97009ab0"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/skills/egm-draft/agents/openai.yaml",
+      "size": 198,
+      "sha256": "eafc643897b5a4ea7a849bd4211acaf8f3bc31a079f199ef5d04d08b410705b7"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/skills/egm-draft/assets/icon.svg",
+      "size": 545,
+      "sha256": "0cca32ed85b4198fdf3566198f92a17c943ee3d9a72d38c2898132b67130aebd"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/skills/egm-draft/references/design_doc.md",
+      "size": 5288,
+      "sha256": "eb8e580e4de6be88da33fdbe662d1b39a0fa7a13378d2dd240f82eb712684e0d"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/skills/egm-drift-report/SKILL.md",
+      "size": 3169,
+      "sha256": "c000ffe2e77a9fe74ee6915b314e1547337c95c79a19014c44fd976dc6511476"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/skills/egm-drift-report/agents/openai.yaml",
+      "size": 204,
+      "sha256": "b54c32c1badc9a73e507f097377324dc31f2839cfef9c426d4dba1c622d5673c"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/skills/egm-drift-report/assets/icon.svg",
+      "size": 281,
+      "sha256": "47bc4ecbe493f4454f9b7642f42de9fe41f8a93cbb86aa3ffbb5d58532ea0e2d"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/skills/egm-resolve/SKILL.md",
+      "size": 8539,
+      "sha256": "6bb1909b42b815e074bd486c6244b56eef8d61669abb3302c764a16be05af472"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/skills/egm-resolve/agents/openai.yaml",
+      "size": 193,
+      "sha256": "7ad63dc69777e6e8b2e3d33cf4105149043038ffb489e750b3f483be7836cf30"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/skills/egm-resolve/assets/icon.svg",
+      "size": 506,
+      "sha256": "14ac0ad863fc6ab83ba5fd5f7bd46fd11b609d65f9e482b3fcddd7a139834733"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/skills/egm-review-loop/SKILL.md",
+      "size": 9770,
+      "sha256": "d99803ad5bf99900e9548491f6ad1ab58a9488bbf7af79f67ead033bb48b7023"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/skills/egm-review-loop/agents/openai.yaml",
+      "size": 204,
+      "sha256": "2073f27ed2c084c8db710f72dac367d26cb8cbc16aa2195546feb732b47a23ce"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/skills/egm-review-loop/assets/icon.svg",
+      "size": 544,
+      "sha256": "d6d5537843253fe634d248b6eadd5a5bcd2ef7742e016896eb11c583174eb530"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/skills/egm-review/SKILL.md",
+      "size": 22497,
+      "sha256": "5e96e3b586a086c7c87b4f0185303a49adc9486028134d258827e9bbfb89e986"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/skills/egm-review/agents/openai.yaml",
+      "size": 198,
+      "sha256": "780d8877443f704ee27d504c13d08f304f0bca4c4418f5703f61ae40416fca74"
+    },
+    {
+      "path": "example/minimal-project/.oaw/integrations/egm/skills/egm-review/assets/icon.svg",
+      "size": 530,
+      "sha256": "02154028864bd8547a45d7c9f55c59f95cb4ce3f57ecb3426f67034ab97d022f"
+    },
+    {
+      "path": "example/minimal-project/AGENTS.md",
+      "size": 1528,
+      "sha256": "5d05fd073dbf701d1376ddf5dc462178dca7c2ff21d22957b1dc4c84a58d410b"
+    },
+    {
+      "path": "example/minimal-project/CLAUDE.md",
+      "size": 11,
+      "sha256": "336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49"
+    },
+    {
+      "path": "example/minimal-project/README.md",
+      "size": 499,
+      "sha256": "e6b158a48d541475a681f301d05a377c54788f43952b0370b3fe762683db10c4"
+    },
+    {
+      "path": "example/minimal-project/scripts/context_hub.py",
+      "size": 39407,
+      "sha256": "1fcc162e3d94792c3c5d173ceebde079ac3e238f9da5efd66978f821af8a1696"
+    },
+    {
+      "path": "example/minimal-project/scripts/oaw_common.py",
+      "size": 22340,
+      "sha256": "33063249f7f244778d9caaec70e76d119ce1d4fe117c425db5995c47f48adc2c"
+    },
+    {
+      "path": "example/minimal-project/scripts/oaw_mode.py",
+      "size": 20901,
+      "sha256": "2002176656aeb7e795a8c674c4648e6021bb4e0689b6d0441d4790700e327590"
+    },
+    {
+      "path": "example/public-hybrid-demo/.agents/memory.md",
+      "size": 867,
+      "sha256": "982cdfc97ea78bb317f184bf4e66e51527802dc5653e5934efa6ff159682379c"
+    },
+    {
+      "path": "example/public-hybrid-demo/.agents/skills/egm-bootstrap/SKILL.md",
+      "size": 1507,
+      "sha256": "fc51266f56f18b3f9efb8dfac6648df79945a903197ee8874af543dc366ff18b"
+    },
+    {
+      "path": "example/public-hybrid-demo/.agents/skills/egm-bootstrap/agents/openai.yaml",
+      "size": 306,
+      "sha256": "ac541d833ffe90278bb2723312b12237f5cb99fda00449879f61bf5ccab5563b"
+    },
+    {
+      "path": "example/public-hybrid-demo/.agents/skills/egm-bootstrap/assets/icon.svg",
+      "size": 601,
+      "sha256": "e1f021c3074bc22d982301bff8374cf1c2ff7c032d1834b66fed91a9ab57d370"
+    },
+    {
+      "path": "example/public-hybrid-demo/.agents/skills/egm-brainstorm/SKILL.md",
+      "size": 1731,
+      "sha256": "847d904b7ab806d9667a0e0bc556b3de39d33540b91db0fafc97f63c34af0686"
+    },
+    {
+      "path": "example/public-hybrid-demo/.agents/skills/egm-brainstorm/agents/openai.yaml",
+      "size": 307,
+      "sha256": "eddc9e67c701da916f7cfdb793f19f25c84e325c1ccd3652954eacb2162280d3"
+    },
+    {
+      "path": "example/public-hybrid-demo/.agents/skills/egm-brainstorm/assets/icon.svg",
+      "size": 496,
+      "sha256": "89d894e7e9c10c2ad955ef1964049e508b718e96e8a177f547b240c774498b49"
+    },
+    {
+      "path": "example/public-hybrid-demo/.agents/skills/egm-draft/SKILL.md",
+      "size": 1693,
+      "sha256": "93be7592a12669bed78b688cf022c2920aba5f006e4669a90d18deeb4b1adc70"
+    },
+    {
+      "path": "example/public-hybrid-demo/.agents/skills/egm-draft/agents/openai.yaml",
+      "size": 306,
+      "sha256": "55e41537962325238fedcb0b03a37fa2536078293be82c75208c71b4f2a746ed"
+    },
+    {
+      "path": "example/public-hybrid-demo/.agents/skills/egm-draft/assets/icon.svg",
+      "size": 545,
+      "sha256": "0cca32ed85b4198fdf3566198f92a17c943ee3d9a72d38c2898132b67130aebd"
+    },
+    {
+      "path": "example/public-hybrid-demo/.agents/skills/egm-drift-report/SKILL.md",
+      "size": 1707,
+      "sha256": "5c2d473f074959d117d56134971aec1c0f3d12cef446044c39268df41a7eec66"
+    },
+    {
+      "path": "example/public-hybrid-demo/.agents/skills/egm-drift-report/agents/openai.yaml",
+      "size": 312,
+      "sha256": "19664cbf36ed1dd2765d39c676006db9113ea01fb5f8417af4b5d767d5542b62"
+    },
+    {
+      "path": "example/public-hybrid-demo/.agents/skills/egm-drift-report/assets/icon.svg",
+      "size": 281,
+      "sha256": "47bc4ecbe493f4454f9b7642f42de9fe41f8a93cbb86aa3ffbb5d58532ea0e2d"
+    },
+    {
+      "path": "example/public-hybrid-demo/.agents/skills/egm-resolve/SKILL.md",
+      "size": 1669,
+      "sha256": "b9110a0cdc64441fe8302ad97edc7012daa8d48b0c008c6dd1509f380f52d65f"
+    },
+    {
+      "path": "example/public-hybrid-demo/.agents/skills/egm-resolve/agents/openai.yaml",
+      "size": 301,
+      "sha256": "1c3235ad16060e52a32bd9b86340a286cc9b1113f79195b6051b1c5c63ef7068"
+    },
+    {
+      "path": "example/public-hybrid-demo/.agents/skills/egm-resolve/assets/icon.svg",
+      "size": 506,
+      "sha256": "14ac0ad863fc6ab83ba5fd5f7bd46fd11b609d65f9e482b3fcddd7a139834733"
+    },
+    {
+      "path": "example/public-hybrid-demo/.agents/skills/egm-review-loop/SKILL.md",
+      "size": 1816,
+      "sha256": "82480bc35249cc9401c82c4c9a0cd2ee6de946683ec8fc1e15108d137e9ae563"
+    },
+    {
+      "path": "example/public-hybrid-demo/.agents/skills/egm-review-loop/agents/openai.yaml",
+      "size": 312,
+      "sha256": "93bad0484437e92755a94cf13c0cde0d1f6bdea6a0dc7b51aab815efec4cd199"
+    },
+    {
+      "path": "example/public-hybrid-demo/.agents/skills/egm-review-loop/assets/icon.svg",
+      "size": 544,
+      "sha256": "d6d5537843253fe634d248b6eadd5a5bcd2ef7742e016896eb11c583174eb530"
+    },
+    {
+      "path": "example/public-hybrid-demo/.agents/skills/egm-review/SKILL.md",
+      "size": 1701,
+      "sha256": "a268af361aeceb1e7bf49a3112ffa20727953e024e7453717a56d313b73770c1"
+    },
+    {
+      "path": "example/public-hybrid-demo/.agents/skills/egm-review/agents/openai.yaml",
+      "size": 306,
+      "sha256": "659ab99489607ab3722800805993b59bbe8db9eaa156f9bb4a4995b233f540f9"
+    },
+    {
+      "path": "example/public-hybrid-demo/.agents/skills/egm-review/assets/icon.svg",
+      "size": 530,
+      "sha256": "02154028864bd8547a45d7c9f55c59f95cb4ce3f57ecb3426f67034ab97d022f"
+    },
+    {
+      "path": "example/public-hybrid-demo/.agents/skills/oaw-evidence/SKILL.md",
+      "size": 1110,
+      "sha256": "e1a0c9f4739f860f8b610e3a900fbb5999fc06c03fc1eeba9e9a1bb8d4ca0b30"
+    },
+    {
+      "path": "example/public-hybrid-demo/.agents/skills/oaw-improve/SKILL.md",
+      "size": 1216,
+      "sha256": "afa1477fb57822637c6baea2dd846e6d4f03f836ab8bf3b9fccf849757625729"
+    },
+    {
+      "path": "example/public-hybrid-demo/.agents/skills/oaw-wiki/SKILL.md",
+      "size": 950,
+      "sha256": "04246a795b6820ff3cf15f5a81c954ac18184bd0ef07c5bb3655977b8167b38e"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/install.json",
+      "size": 12955,
+      "sha256": "3e5d963e65cd41a415cebd1d5611c8fa656120fb4d7f148a9e01ef3c1006da9c"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/.claude-plugin/agents/bootstrap_orchestrator.md",
+      "size": 921,
+      "sha256": "b07f80ac2b54b840a48b290221e4a15d97b2e90de5ed3d2760efba4112760930"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/.claude-plugin/agents/codebase_details.md",
+      "size": 666,
+      "sha256": "17d4f89bb8786f78eca6d9e01e31493497cf4c2af55fa97342507648e185b78d"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/.claude-plugin/agents/comprehension.md",
+      "size": 657,
+      "sha256": "78356e3e5e89c3d4a6b9d51865ad81f1b256cb3289869a4070e149b7b90ae7f2"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/.claude-plugin/agents/design_critic.md",
+      "size": 641,
+      "sha256": "02058b72fe6c249ac0efc393069e9bb32a9890204f4efb8c51ffad36b8e4056e"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/.claude-plugin/agents/implementation_readiness.md",
+      "size": 673,
+      "sha256": "98e7f8ccf177f6964e0dabe01d9b5ab429c8af7fc3bc5ba4178c84aaf1f90848"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/.claude-plugin/agents/structural.md",
+      "size": 639,
+      "sha256": "33237f2b2147903a270fae5b649cf638444fc9cf1109964b46db152bef3a5f90"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/.claude-plugin/agents/style.md",
+      "size": 628,
+      "sha256": "edeb79ef6336337438180b936469301f49782812e0c7a9841e20af2fe50844f2"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/.claude-plugin/agents/synthesizer.md",
+      "size": 767,
+      "sha256": "e6f053a5d6b289592e7bb7b56d8ebae7f9b5080db6430c9f484fc9a40f4c7dfd"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/.claude-plugin/agents/zoom_out.md",
+      "size": 637,
+      "sha256": "c74662092db4297aebae1367d4614ae42e140fd6080b4276c0327853ae96ce0b"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/.claude-plugin/icon.png",
+      "size": 13264,
+      "sha256": "ac92b3a769ba1754941d93b3cbe6456714f04a5bc123f4e36a7e2ff3e4bc8fbd"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/.claude-plugin/plugin.json",
+      "size": 1281,
+      "sha256": "b57b690c962e00bac6979e3788083a9c8120dc09beaac49b2abff1991d0ab4cc"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/.codex-plugin/plugin.json",
+      "size": 1337,
+      "sha256": "3ab8abb44a4d13f8c390309fba14683593952c37ef9ced4e5ea7c1fa8afac070"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/LICENSE",
+      "size": 11358,
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/OAW_SOURCE.json",
+      "size": 7619,
+      "sha256": "c6ff4b7b56ce8187e842baa190c0b3fda2a37d112450931839e43bd7faf3d25e"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/README.md",
+      "size": 7511,
+      "sha256": "3e3e3653f3a887404aacd1c6aff15918056d0f00a9117e4241e367e7fc19cbb4"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/agents/bootstrap_orchestrator.md",
+      "size": 1706,
+      "sha256": "5c2fa484754f8d582669500d16d5728fe95daff8bd964f8e7f09142c6a666bfc"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/agents/codebase_details.md",
+      "size": 4683,
+      "sha256": "d80db07e449b57b3b3776d1401cca72a54b6b65a0ab218b86f9064ee4b8167bc"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/agents/comprehension.md",
+      "size": 4748,
+      "sha256": "974f4972f717dc7b102a9b1407b3a625749149f2ae905727241e919f43cc3fa5"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/agents/design_critic.md",
+      "size": 3843,
+      "sha256": "cee6294735ce2bd4fea19245852b6eb07cbe8ede7e72a4bfc829f586e4a39d0f"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/agents/implementation_readiness.md",
+      "size": 3929,
+      "sha256": "1f6aa61cfe7cb86dc94943ab3b3fd339e5baba533937198fd10edb06dfa64e8f"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/agents/structural.md",
+      "size": 3954,
+      "sha256": "f0d4fe6faee4e388366b7d653fe353a9b09f45ca1bf5dae29280e351cda7da87"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/agents/style.md",
+      "size": 4023,
+      "sha256": "9d0d59d7fac7ee479f9beea22d28b8ea20b6fea0215e06bd292a14eb2bb3b692"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/agents/synthesizer.md",
+      "size": 4450,
+      "sha256": "402e661fa44684ce51246575d169f65003981846f318cf13cf124c8895b4ccab"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/agents/zoom_out.md",
+      "size": 4903,
+      "sha256": "adc9d7b7db4c304866e61d5e5e446502231abe188ce64656939305e07ae7995f"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/assets/icon.svg",
+      "size": 1003,
+      "sha256": "224dfd77640ed4a3e85ff1d5f2378f13556407625456ceda625646fcaa765f24"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/docs/assets/readme-header.svg",
+      "size": 1456,
+      "sha256": "e20f4b61ae27ca32c81a65e5fe4a4275dd464df08e107ba361c6cddc87a6178c"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/docs/claude.md",
+      "size": 9395,
+      "sha256": "cbc51e603740134e5890fe645f3d516c03674598be43733c53411c920f445cc1"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/docs/codex.md",
+      "size": 6104,
+      "sha256": "a7390390c233ece29a2ee7508a8d328b6b4ee200f649417c097687c76f014ad0"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/docs/faq.md",
+      "size": 2755,
+      "sha256": "e8cb380b8295dfa4ae6c5a2f0bb86a3b0fde58b65f5ce6dc7dc2527ebc4e4ef5"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/docs/getting_started.md",
+      "size": 6652,
+      "sha256": "e45d171e4bc306fcb87a426f2608a9ed46a3ca329d67fd5c11a0d944865a57c7"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/docs/harnesses.md",
+      "size": 7559,
+      "sha256": "12b1e70adb6dec4edcf0d5a129806ba09135f243c545a4c9b42d87edd57dbd48"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/docs/index.md",
+      "size": 5259,
+      "sha256": "5ebb17daf9cec8c9802e62e8ba98345b29ddb44bfa0c9638a9859539d10a86c4"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/docs/privacy.md",
+      "size": 2188,
+      "sha256": "9d55a0a1d860787e07be7c6c5fb23f898b0a798b8975a39676f0845465df8583"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/docs/releases.md",
+      "size": 3676,
+      "sha256": "d5dbaf5638079ce63a01517078760618688cf00913287a5163f2855b0a4ad05d"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/plugin.json",
+      "size": 1424,
+      "sha256": "227c4a9e4c337c6f43941287af5e6a09e6a247372ec6b98cca03f8ac0cf166e7"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/resources/README.md",
+      "size": 887,
+      "sha256": "109c89969542dd5919c3f50f1bcf569c7668a505bff10439044135526e1a6b01"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/resources/document_standards/feature-spec-standard.md",
+      "size": 1489,
+      "sha256": "b3e4960fd884fde880a41da782fc73342fe232769e5835a4470b3c8c517644c4"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/resources/document_standards/heilmeier-standard.md",
+      "size": 1155,
+      "sha256": "a23bc354a5651bd00d817409a72ebcb7536c249e2038c13255ce89f49f138174"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/resources/document_standards/implementation-readiness-standard.md",
+      "size": 1379,
+      "sha256": "ed0d2a085eac0fd9581d504a2ec0df2a92d6b2538636a22b16e0b1370fba6dbb"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/resources/document_standards/re-implementation-standard.md",
+      "size": 1535,
+      "sha256": "421aacbf5e9a0d4c5b794edfa4cac333f8cc67bc4cf0e3717efcad4f827e6e46"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/resources/document_standards/zoom-out-standard.md",
+      "size": 2884,
+      "sha256": "0a01013bd363a8d744f8372b65495892360d7339e4e35c767003ae38f48e6799"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/resources/execution_instructions.md",
+      "size": 2348,
+      "sha256": "06f0ee648efa2fefd79081d01f32c4930d709fa709df42d06a287f97a8582179"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/skills/egm-bootstrap/SKILL.md",
+      "size": 23767,
+      "sha256": "ac86aae69c782b67ebb96d1dae5bcef675745e3f57cca99196038bb5e350fc4c"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/skills/egm-bootstrap/agents/openai.yaml",
+      "size": 198,
+      "sha256": "e5f83ece63fce8c73329efedd990f912ab395e1e8339f89f83f9e6efef00fb27"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/skills/egm-bootstrap/assets/icon.svg",
+      "size": 601,
+      "sha256": "e1f021c3074bc22d982301bff8374cf1c2ff7c032d1834b66fed91a9ab57d370"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/skills/egm-bootstrap/references/templates.md",
+      "size": 2064,
+      "sha256": "f49793727cccbd72afdc4a0569a1d8e8138e943d2fc9b0df772b09deaca80437"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/skills/egm-bootstrap/references/worker-return.schema.json",
+      "size": 568,
+      "sha256": "f18a3822f60a0f117e1582cccac78a90cf14154afca811d4e81ea3fe562e52a5"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/skills/egm-brainstorm/SKILL.md",
+      "size": 14202,
+      "sha256": "fb594315b47dca4bbea878fc77cec42a1a3ef8c75a8b903b1812260391a13ed9"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/skills/egm-brainstorm/agents/openai.yaml",
+      "size": 199,
+      "sha256": "2b858c20f9d3b54cc1e02410a4fd6f7989b36d6d5d152cc87cd0d1082ce3bfc9"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/skills/egm-brainstorm/assets/icon.svg",
+      "size": 496,
+      "sha256": "89d894e7e9c10c2ad955ef1964049e508b718e96e8a177f547b240c774498b49"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/skills/egm-draft/SKILL.md",
+      "size": 16770,
+      "sha256": "7908cb6d6b9ab82fef416211988ab9abd6681d4c783b2c31b1a8c40f97009ab0"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/skills/egm-draft/agents/openai.yaml",
+      "size": 198,
+      "sha256": "eafc643897b5a4ea7a849bd4211acaf8f3bc31a079f199ef5d04d08b410705b7"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/skills/egm-draft/assets/icon.svg",
+      "size": 545,
+      "sha256": "0cca32ed85b4198fdf3566198f92a17c943ee3d9a72d38c2898132b67130aebd"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/skills/egm-draft/references/design_doc.md",
+      "size": 5288,
+      "sha256": "eb8e580e4de6be88da33fdbe662d1b39a0fa7a13378d2dd240f82eb712684e0d"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/skills/egm-drift-report/SKILL.md",
+      "size": 3169,
+      "sha256": "c000ffe2e77a9fe74ee6915b314e1547337c95c79a19014c44fd976dc6511476"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/skills/egm-drift-report/agents/openai.yaml",
+      "size": 204,
+      "sha256": "b54c32c1badc9a73e507f097377324dc31f2839cfef9c426d4dba1c622d5673c"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/skills/egm-drift-report/assets/icon.svg",
+      "size": 281,
+      "sha256": "47bc4ecbe493f4454f9b7642f42de9fe41f8a93cbb86aa3ffbb5d58532ea0e2d"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/skills/egm-resolve/SKILL.md",
+      "size": 8539,
+      "sha256": "6bb1909b42b815e074bd486c6244b56eef8d61669abb3302c764a16be05af472"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/skills/egm-resolve/agents/openai.yaml",
+      "size": 193,
+      "sha256": "7ad63dc69777e6e8b2e3d33cf4105149043038ffb489e750b3f483be7836cf30"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/skills/egm-resolve/assets/icon.svg",
+      "size": 506,
+      "sha256": "14ac0ad863fc6ab83ba5fd5f7bd46fd11b609d65f9e482b3fcddd7a139834733"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/skills/egm-review-loop/SKILL.md",
+      "size": 9770,
+      "sha256": "d99803ad5bf99900e9548491f6ad1ab58a9488bbf7af79f67ead033bb48b7023"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/skills/egm-review-loop/agents/openai.yaml",
+      "size": 204,
+      "sha256": "2073f27ed2c084c8db710f72dac367d26cb8cbc16aa2195546feb732b47a23ce"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/skills/egm-review-loop/assets/icon.svg",
+      "size": 544,
+      "sha256": "d6d5537843253fe634d248b6eadd5a5bcd2ef7742e016896eb11c583174eb530"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/skills/egm-review/SKILL.md",
+      "size": 22497,
+      "sha256": "5e96e3b586a086c7c87b4f0185303a49adc9486028134d258827e9bbfb89e986"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/skills/egm-review/agents/openai.yaml",
+      "size": 198,
+      "sha256": "780d8877443f704ee27d504c13d08f304f0bca4c4418f5703f61ae40416fca74"
+    },
+    {
+      "path": "example/public-hybrid-demo/.oaw/integrations/egm/skills/egm-review/assets/icon.svg",
+      "size": 530,
+      "sha256": "02154028864bd8547a45d7c9f55c59f95cb4ce3f57ecb3426f67034ab97d022f"
+    },
+    {
+      "path": "example/public-hybrid-demo/AGENTS.md",
+      "size": 1528,
+      "sha256": "5d05fd073dbf701d1376ddf5dc462178dca7c2ff21d22957b1dc4c84a58d410b"
+    },
+    {
+      "path": "example/public-hybrid-demo/CLAUDE.md",
+      "size": 11,
+      "sha256": "336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49"
+    },
+    {
+      "path": "example/public-hybrid-demo/README.md",
+      "size": 738,
+      "sha256": "06ab2a80c631fe6d93fc7a4468d40b14dc9540cc829d8315bc8a8fdccddb6176"
+    },
+    {
+      "path": "example/public-hybrid-demo/docs/knowledge/Annotation_Policy.md",
+      "size": 1401,
+      "sha256": "0b1caa3b2c3ed3a219a336d2c75833df6954691e0c39c29a449c51e171fb42ac"
+    },
+    {
+      "path": "example/public-hybrid-demo/docs/knowledge/Experiment_Findings.md",
+      "size": 1646,
+      "sha256": "63f4099bf530155041739ae3d42e0d0a652aa9c96522777780741bf380d90ebb"
+    },
+    {
+      "path": "example/public-hybrid-demo/docs/knowledge/Ingestion_Pipeline.md",
+      "size": 1423,
+      "sha256": "3284b694dfbe35d87e74e4f3763931065035251a9271ffd3102d752458f6dc91"
+    },
+    {
+      "path": "example/public-hybrid-demo/docs/knowledge/Router_Evaluation.md",
+      "size": 1465,
+      "sha256": "1fed936f26f952266cd8aeeb417aefb7e4d173817a0129496174a89e1d9bc642"
+    },
+    {
+      "path": "example/public-hybrid-demo/docs/knowledge/index.md",
+      "size": 1030,
+      "sha256": "21e6c4c30e50b8c4ff428ed5670548ed463009071c06d4ae80841b93e0a05807"
+    },
+    {
+      "path": "example/public-hybrid-demo/docs/knowledge/log.md",
+      "size": 579,
+      "sha256": "d8150bc14425adfa954d2fa8ec89b572a9cb776bfe52baf9c18ce1cf8a966815"
+    },
+    {
+      "path": "example/public-hybrid-demo/docs/raw/README.md",
+      "size": 228,
+      "sha256": "8dded088382fa905071d96fe43381bd9172804d01c70afc2ea4abb6e36fc3b79"
+    },
+    {
+      "path": "example/public-hybrid-demo/docs/raw/annotation_policy_source.md",
+      "size": 767,
+      "sha256": "fd93a16904ef011a4e990016a81c4c12d769f9be93b74d3a9ed4b01d7fa5162d"
+    },
+    {
+      "path": "example/public-hybrid-demo/docs/raw/experiment_findings_source.md",
+      "size": 849,
+      "sha256": "30dfdc494e660fdb89e07c0a3920638360a11562c45b80e72e8a0aa0fb6ce2be"
+    },
+    {
+      "path": "example/public-hybrid-demo/docs/raw/ingestion_pipeline_source.md",
+      "size": 785,
+      "sha256": "3024439b1fd36dcca19777d2c51d2705dd33688fe0e764c4969915cc7b30f875"
+    },
+    {
+      "path": "example/public-hybrid-demo/docs/raw/router_evaluation_source.md",
+      "size": 833,
+      "sha256": "bbf471ba64f0a88aee25d129e0c25b0849adbed3918e7df8b6be6b6840a43b1b"
+    },
+    {
+      "path": "example/public-hybrid-demo/experiments/README.md",
+      "size": 309,
+      "sha256": "7d247ced4b6ec9dc442329151b0eedb58845c952656c679075d490a86103e145"
+    },
+    {
+      "path": "example/public-hybrid-demo/experiments/exp_001_router_eval.md",
+      "size": 617,
+      "sha256": "a812c1b720f6c59c6f87fff12000fbd3d25ffa77ab513ee55cb9b0888386f800"
+    },
+    {
+      "path": "example/public-hybrid-demo/scripts/context_hub.py",
+      "size": 39407,
+      "sha256": "1fcc162e3d94792c3c5d173ceebde079ac3e238f9da5efd66978f821af8a1696"
+    },
+    {
+      "path": "example/public-hybrid-demo/scripts/improvement.py",
+      "size": 25610,
+      "sha256": "7ec437240dbd621d421413f79c994e754db7b4879af1b98584d5a4149e275420"
+    },
+    {
+      "path": "example/public-hybrid-demo/scripts/oaw_common.py",
+      "size": 22340,
+      "sha256": "33063249f7f244778d9caaec70e76d119ce1d4fe117c425db5995c47f48adc2c"
+    },
+    {
+      "path": "example/public-hybrid-demo/scripts/oaw_mode.py",
+      "size": 20901,
+      "sha256": "2002176656aeb7e795a8c674c4648e6021bb4e0689b6d0441d4790700e327590"
+    },
+    {
+      "path": "example/public-hybrid-demo/scripts/validate_skills.py",
+      "size": 12944,
+      "sha256": "ebcd392ea41c7c9ac732fbb3fe6207b0a82bfdb81e3840c8c4bc076d585b0385"
+    },
+    {
+      "path": "example/public-hybrid-demo/scripts/wiki_sync.py",
+      "size": 85608,
+      "sha256": "0c7aa732c80b7df2d7e8e4839d4a289bec8bb456193536babbcfe7d8fdb0a96d"
+    },
+    {
+      "path": "install.sh",
+      "size": 1042,
+      "sha256": "9083adb9d16efcb2e4658304862fac73bf72a66a55403ead484403b4d40122b7"
+    },
+    {
+      "path": "mods/oaw-digest-monitor/.claude-plugin/plugin.json",
+      "size": 1203,
+      "sha256": "b82885db065a459c02d352c61b941b925f09232a5187a83e2c2ca1bc36d82c18"
+    },
+    {
+      "path": "mods/oaw-digest-monitor/README.md",
+      "size": 5416,
+      "sha256": "b1eebfea87edebc5be08484ad5e661129c1e3861a6bd732380ee29109312e345"
+    },
+    {
+      "path": "mods/oaw-digest-monitor/hooks/hooks.json",
+      "size": 34,
+      "sha256": "d842d789476d67282d0f04b7e5fdc68a3d981ccec65dd79cfa2d11eed13fb828"
+    },
+    {
+      "path": "mods/oaw-digest-monitor/hooks/model.ts",
+      "size": 17462,
+      "sha256": "f5b972372bfad1486db3bd3819ec2279ee122b4e266442cc859f341dbf71c85e"
+    },
+    {
+      "path": "mods/oaw-digest-monitor/hooks/register.tsx",
+      "size": 29408,
+      "sha256": "0b94b42b57d0568dd576b5278b03572cc5134b585aa5d8d4044de153d8fc0544"
+    },
+    {
+      "path": "mods/oaw-digest-monitor/hooks/tract.ts",
+      "size": 9233,
+      "sha256": "9fb9ab7bcbe86a3cdd9dee408dd96fe49a0a6affcdd2bd2a3e2cca544ae80232"
+    },
+    {
+      "path": "mods/oaw-digest-monitor/tests/digest.test.tsx",
+      "size": 16549,
+      "sha256": "ca16eae3d53dfecd9900ffd33eb0dbc07c8dd956784bd945501f6c28d1805d3d"
+    },
+    {
+      "path": "mods/oaw-digest-monitor/tests/fixtures.ts",
+      "size": 38570,
+      "sha256": "6aa762e368107813e023056286d45beaa14bea6101fedacc030aaaa53e7dae70"
+    },
+    {
+      "path": "mods/oaw-digest-monitor/tsconfig.json",
+      "size": 56,
+      "sha256": "4087cf0ba92fde503ed0e7c56f37bcb26ad0c085873f10219d0336c0f19b5a8f"
+    },
+    {
+      "path": "mods/oaw-digest-monitor/types/index.d.ts",
+      "size": 2591,
+      "sha256": "f513fc7a49119a3dadbf9d5bf1bdad9c2c6b12fa68a193d2325b67aebdb5fc79"
+    },
+    {
+      "path": "scripts/catalog.py",
+      "size": 155300,
+      "sha256": "7189f22d6dc4f1558456ef65c6a36db982cab0307dae5386fab7760b21570330"
+    },
+    {
+      "path": "scripts/catalog_core.py",
+      "size": 212407,
+      "sha256": "8580373c21bf59abb2da4b6cb70830923be2e57ed597725dad821e8eae1c3807"
+    },
+    {
+      "path": "scripts/catalog_ui/app.js",
+      "size": 120190,
+      "sha256": "c620b15196eed99ceb98bf5f3853ee2e90462fd03a14bcc537889854222113a2"
+    },
+    {
+      "path": "scripts/catalog_ui/index.html",
+      "size": 5624,
+      "sha256": "757c3d4d4f43d6984e3fc708eb01bbf0c2b1bc6935c51866930cc5c27ff169bb"
+    },
+    {
+      "path": "scripts/catalog_ui/style.css",
+      "size": 36281,
+      "sha256": "d83d3931770c585ecbba2c0036dedfcaf4a286331efc40c8b7602d45d3759bd8"
+    },
+    {
+      "path": "scripts/catalog_ui_server.py",
+      "size": 48624,
+      "sha256": "1994b19f2f225e16f6db61b3777d1d8a77018ef2828fb8d8a36634d02de05414"
+    },
+    {
+      "path": "scripts/code_index.py",
+      "size": 88345,
+      "sha256": "67e2d48dfdc6d58e7971df9d59b4a5edd90c3b8499aea8d926616a97206bcd5a"
+    },
+    {
+      "path": "scripts/context_hub.py",
+      "size": 39407,
+      "sha256": "1fcc162e3d94792c3c5d173ceebde079ac3e238f9da5efd66978f821af8a1696"
+    },
+    {
+      "path": "scripts/goldfish_review.py",
+      "size": 28532,
+      "sha256": "15c1d4c04bff052d9be6f7ff79f861bdad8dfd7fbcf6a78ad5d3222f1feb5d67"
+    },
+    {
+      "path": "scripts/harness_check.py",
+      "size": 11701,
+      "sha256": "1331cd72b5c6b380b130a7622ecbc2811c554cf0153c4d4e46070687c7868cb0"
+    },
+    {
+      "path": "scripts/improvement.py",
+      "size": 25610,
+      "sha256": "7ec437240dbd621d421413f79c994e754db7b4879af1b98584d5a4149e275420"
+    },
+    {
+      "path": "scripts/legacy_manifest.json",
+      "size": 6410,
+      "sha256": "2c4a924e2d5099a7507e7ca4b34e856a3b5cc4b99be588f96208e9bb51d1b1d3"
+    },
+    {
+      "path": "scripts/oaw.py",
+      "size": 50831,
+      "sha256": "ffd54ca946a2c25eb3c4a77e83b718349054894ef26d565e84b93a8b96b22c6f"
+    },
+    {
+      "path": "scripts/oaw_common.py",
+      "size": 22340,
+      "sha256": "33063249f7f244778d9caaec70e76d119ce1d4fe117c425db5995c47f48adc2c"
+    },
+    {
+      "path": "scripts/oaw_mode.py",
+      "size": 20901,
+      "sha256": "2002176656aeb7e795a8c674c4648e6021bb4e0689b6d0441d4790700e327590"
+    },
+    {
+      "path": "scripts/oaw_status.py",
+      "size": 36902,
+      "sha256": "66a9db1d66059e0b88493fdd0190e1ceaf8da4f2e985f83d91922f801c334e2a"
+    },
+    {
+      "path": "scripts/sync_egm.py",
+      "size": 10993,
+      "sha256": "572a0d1e6e3da61f84cf21be9ca8c588629edb3f6541e8da79a61fb14fb919fd"
+    },
+    {
+      "path": "scripts/sync_examples.py",
+      "size": 4440,
+      "sha256": "2cee7d5732ea2bf1151ad2e9a809a2d3d78c0f2f0ec6e414d24078f40051ea15"
+    },
+    {
+      "path": "scripts/validate_skills.py",
+      "size": 12944,
+      "sha256": "ebcd392ea41c7c9ac732fbb3fe6207b0a82bfdb81e3840c8c4bc076d585b0385"
+    },
+    {
+      "path": "scripts/wiki_sync.py",
+      "size": 85608,
+      "sha256": "0c7aa732c80b7df2d7e8e4839d4a289bec8bb456193536babbcfe7d8fdb0a96d"
+    },
+    {
+      "path": "templates/.agents/skills/egm-bootstrap/SKILL.md",
+      "size": 1507,
+      "sha256": "fc51266f56f18b3f9efb8dfac6648df79945a903197ee8874af543dc366ff18b"
+    },
+    {
+      "path": "templates/.agents/skills/egm-bootstrap/agents/openai.yaml",
+      "size": 306,
+      "sha256": "ac541d833ffe90278bb2723312b12237f5cb99fda00449879f61bf5ccab5563b"
+    },
+    {
+      "path": "templates/.agents/skills/egm-bootstrap/assets/icon.svg",
+      "size": 601,
+      "sha256": "e1f021c3074bc22d982301bff8374cf1c2ff7c032d1834b66fed91a9ab57d370"
+    },
+    {
+      "path": "templates/.agents/skills/egm-brainstorm/SKILL.md",
+      "size": 1731,
+      "sha256": "847d904b7ab806d9667a0e0bc556b3de39d33540b91db0fafc97f63c34af0686"
+    },
+    {
+      "path": "templates/.agents/skills/egm-brainstorm/agents/openai.yaml",
+      "size": 307,
+      "sha256": "eddc9e67c701da916f7cfdb793f19f25c84e325c1ccd3652954eacb2162280d3"
+    },
+    {
+      "path": "templates/.agents/skills/egm-brainstorm/assets/icon.svg",
+      "size": 496,
+      "sha256": "89d894e7e9c10c2ad955ef1964049e508b718e96e8a177f547b240c774498b49"
+    },
+    {
+      "path": "templates/.agents/skills/egm-draft/SKILL.md",
+      "size": 1693,
+      "sha256": "93be7592a12669bed78b688cf022c2920aba5f006e4669a90d18deeb4b1adc70"
+    },
+    {
+      "path": "templates/.agents/skills/egm-draft/agents/openai.yaml",
+      "size": 306,
+      "sha256": "55e41537962325238fedcb0b03a37fa2536078293be82c75208c71b4f2a746ed"
+    },
+    {
+      "path": "templates/.agents/skills/egm-draft/assets/icon.svg",
+      "size": 545,
+      "sha256": "0cca32ed85b4198fdf3566198f92a17c943ee3d9a72d38c2898132b67130aebd"
+    },
+    {
+      "path": "templates/.agents/skills/egm-drift-report/SKILL.md",
+      "size": 1707,
+      "sha256": "5c2d473f074959d117d56134971aec1c0f3d12cef446044c39268df41a7eec66"
+    },
+    {
+      "path": "templates/.agents/skills/egm-drift-report/agents/openai.yaml",
+      "size": 312,
+      "sha256": "19664cbf36ed1dd2765d39c676006db9113ea01fb5f8417af4b5d767d5542b62"
+    },
+    {
+      "path": "templates/.agents/skills/egm-drift-report/assets/icon.svg",
+      "size": 281,
+      "sha256": "47bc4ecbe493f4454f9b7642f42de9fe41f8a93cbb86aa3ffbb5d58532ea0e2d"
+    },
+    {
+      "path": "templates/.agents/skills/egm-resolve/SKILL.md",
+      "size": 1669,
+      "sha256": "b9110a0cdc64441fe8302ad97edc7012daa8d48b0c008c6dd1509f380f52d65f"
+    },
+    {
+      "path": "templates/.agents/skills/egm-resolve/agents/openai.yaml",
+      "size": 301,
+      "sha256": "1c3235ad16060e52a32bd9b86340a286cc9b1113f79195b6051b1c5c63ef7068"
+    },
+    {
+      "path": "templates/.agents/skills/egm-resolve/assets/icon.svg",
+      "size": 506,
+      "sha256": "14ac0ad863fc6ab83ba5fd5f7bd46fd11b609d65f9e482b3fcddd7a139834733"
+    },
+    {
+      "path": "templates/.agents/skills/egm-review-loop/SKILL.md",
+      "size": 1816,
+      "sha256": "82480bc35249cc9401c82c4c9a0cd2ee6de946683ec8fc1e15108d137e9ae563"
+    },
+    {
+      "path": "templates/.agents/skills/egm-review-loop/agents/openai.yaml",
+      "size": 312,
+      "sha256": "93bad0484437e92755a94cf13c0cde0d1f6bdea6a0dc7b51aab815efec4cd199"
+    },
+    {
+      "path": "templates/.agents/skills/egm-review-loop/assets/icon.svg",
+      "size": 544,
+      "sha256": "d6d5537843253fe634d248b6eadd5a5bcd2ef7742e016896eb11c583174eb530"
+    },
+    {
+      "path": "templates/.agents/skills/egm-review/SKILL.md",
+      "size": 1701,
+      "sha256": "a268af361aeceb1e7bf49a3112ffa20727953e024e7453717a56d313b73770c1"
+    },
+    {
+      "path": "templates/.agents/skills/egm-review/agents/openai.yaml",
+      "size": 306,
+      "sha256": "659ab99489607ab3722800805993b59bbe8db9eaa156f9bb4a4995b233f540f9"
+    },
+    {
+      "path": "templates/.agents/skills/egm-review/assets/icon.svg",
+      "size": 530,
+      "sha256": "02154028864bd8547a45d7c9f55c59f95cb4ce3f57ecb3426f67034ab97d022f"
+    },
+    {
+      "path": "templates/.agents/skills/oaw-evidence/SKILL.md",
+      "size": 1110,
+      "sha256": "e1a0c9f4739f860f8b610e3a900fbb5999fc06c03fc1eeba9e9a1bb8d4ca0b30"
+    },
+    {
+      "path": "templates/.agents/skills/oaw-improve/SKILL.md",
+      "size": 1216,
+      "sha256": "afa1477fb57822637c6baea2dd846e6d4f03f836ab8bf3b9fccf849757625729"
+    },
+    {
+      "path": "templates/.agents/skills/oaw-wiki/SKILL.md",
+      "size": 950,
+      "sha256": "04246a795b6820ff3cf15f5a81c954ac18184bd0ef07c5bb3655977b8167b38e"
+    },
+    {
+      "path": "templates/.claude/agents/egm-bootstrap-orchestrator.md",
+      "size": 1233,
+      "sha256": "eef9db31574681a6d1c97ccbd0e4a347ba3bcd5529f118cb4c3c34cf9790eab9"
+    },
+    {
+      "path": "templates/.claude/agents/egm-codebase-details.md",
+      "size": 978,
+      "sha256": "a8808e613450db1992251975021d838063e7bbbdd735f42ed086870955d77ac5"
+    },
+    {
+      "path": "templates/.claude/agents/egm-comprehension.md",
+      "size": 969,
+      "sha256": "0315f83708c1f903cbd79bfa7b501a2943dafd82fe07092ce9a29185b1bd296f"
+    },
+    {
+      "path": "templates/.claude/agents/egm-design.md",
+      "size": 953,
+      "sha256": "10b84af8d18c7e59f3c0002130aa46a1eae7779f35901c3877ec61637b874843"
+    },
+    {
+      "path": "templates/.claude/agents/egm-implementation-readiness.md",
+      "size": 985,
+      "sha256": "aead3d698e7f2442cfcd6af173bafbd7cbd1a8cc730fecb9ac276b77440bf3e8"
+    },
+    {
+      "path": "templates/.claude/agents/egm-structural.md",
+      "size": 951,
+      "sha256": "6ecfb1aa5986bec889c8ee46698e4391514c9c3676c45449c447cf13c32fee92"
+    },
+    {
+      "path": "templates/.claude/agents/egm-style.md",
+      "size": 940,
+      "sha256": "1c3b8f34bf6c1d947d2db0af33f211a2d90644bf0420ed72ef19d1852bc97357"
+    },
+    {
+      "path": "templates/.claude/agents/egm-synthesizer.md",
+      "size": 1075,
+      "sha256": "51dfd9e0d813609c9b9133689c0d544072c34557f8d7c1bd895a130cd0bb7dc2"
+    },
+    {
+      "path": "templates/.claude/agents/egm-zoom-out.md",
+      "size": 949,
+      "sha256": "6e24711cd536321a9b4ee38c5c3086ecfa2c0e0c57536f5365b38d8334b7f0f4"
+    },
+    {
+      "path": "templates/.cursorrules",
+      "size": 134,
+      "sha256": "7e8425829ec4cda14a7b66d3d83f51860e7dec690edf06a397527e63166fcae1"
+    },
+    {
+      "path": "templates/.github/copilot-instructions.md",
+      "size": 160,
+      "sha256": "e74ee11ceecad3dc0bb6d543edec87fafeaaa06c3e8552e08ab0be2bb104833f"
+    },
+    {
+      "path": "templates/.windsurfrules",
+      "size": 134,
+      "sha256": "7e8425829ec4cda14a7b66d3d83f51860e7dec690edf06a397527e63166fcae1"
+    },
+    {
+      "path": "templates/AGENTS.md",
+      "size": 1669,
+      "sha256": "ec687cd7fe5a0ae83be682a41b5d957b75c99a925e18bf0429056c5895aa375b"
+    },
+    {
+      "path": "templates/CLAUDE.md",
+      "size": 11,
+      "sha256": "336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49"
+    },
+    {
+      "path": "templates/GEMINI.md",
+      "size": 161,
+      "sha256": "74dda054324e794c8863778f623d793e4d01e558ec4fd942032122baa391dd0f"
+    },
+    {
+      "path": "templates/docs/knowledge/index.md",
+      "size": 250,
+      "sha256": "c504bfeefd9230d93271a512d765ff6d12fa1f09f100f231362e70c94d043e0f"
+    },
+    {
+      "path": "templates/docs/knowledge/log.md",
+      "size": 224,
+      "sha256": "085f52697dae1790fdfe78bb3a11cbc5e38941a37e570e78300821cbc0a0ce45"
+    },
+    {
+      "path": "templates/docs/raw/README.md",
+      "size": 458,
+      "sha256": "6d2cf22e8ced4a25be682af1fa0296e8180fc33112a65cee98ffcbba234fd79a"
+    },
+    {
+      "path": "templates/docs/raw/_SOURCE_TEMPLATE.md",
+      "size": 441,
+      "sha256": "a18fb8c0102fdb707392a69d3fc661f7bf7abb1bc8d72f4f609dce3f7b09d370"
+    },
+    {
+      "path": "tests/fixtures/README.md",
+      "size": 1661,
+      "sha256": "1db4bceda13948878770f2f49d7ae05691fdfbd8630d66e35f78f725e306ac3d"
+    },
+    {
+      "path": "tests/fixtures/egm-registered-oaw-source.zip",
+      "size": 67312,
+      "sha256": "744f2137a14cb9cf1e654c0d583e89ac55cae193c1de4be2eb5e76a4b53cd67c"
+    },
+    {
+      "path": "tests/fixtures/paper-2606.03979/components.json",
+      "size": 37167,
+      "sha256": "d7928d9a7036a2235eec37f3cb012b5dfd62b4652184e072125b2e000b3a4894"
+    },
+    {
+      "path": "tests/fixtures/paper-2606.03979/digest.md",
+      "size": 10549,
+      "sha256": "cccb6d48fb0f9045d215ccd3668ec93a7cf66b0bdfcd746953492ec2436643eb"
+    },
+    {
+      "path": "tests/fixtures/paper-2606.03979/goldfish-1.json",
+      "size": 18546,
+      "sha256": "1d0815ecef077d347de314e043f47c52fe08b8b898bb738d8783de0e340995e6"
+    },
+    {
+      "path": "tests/fixtures/paper-2606.03979/goldfish-2.json",
+      "size": 20301,
+      "sha256": "792f1560ec21604e054dc5b6fc87f2a35e4b216e094e23ad02e3435c96728956"
+    },
+    {
+      "path": "tests/fixtures/paper-2606.03979/skeptic.json",
+      "size": 16868,
+      "sha256": "5c1be1e95c6e77327a331b586ebd14cc271c568626c818218dc2d43ee517009b"
+    },
+    {
+      "path": "tests/frozen_egm_source.py",
+      "size": 1705,
+      "sha256": "0019cd512c15950be02035a393df7afc5e19317b9efa02bcd1669c723c088a97"
+    },
+    {
+      "path": "tests/test_catalog.py",
+      "size": 95530,
+      "sha256": "7297e97ad9cb8e7ce3a443e3af686e8cf8ac72d2eace2c3b650e63cdc0ff2e26"
+    },
+    {
+      "path": "tests/test_catalog_core.py",
+      "size": 104799,
+      "sha256": "26216ee1c76d7e65a70809c580a804b87ded83ef11890a08979ae076ad1ab894"
+    },
+    {
+      "path": "tests/test_catalog_ui.py",
+      "size": 66060,
+      "sha256": "c255f8629548b11e41fc2ada5e3504897972f430ef030acbec9019124092ff62"
+    },
+    {
+      "path": "tests/test_cli_resolve.py",
+      "size": 11111,
+      "sha256": "d7a99d7cce9b2f9fad001dbb4e9e35f96e5d685e8c43793dc962c59dcf66fef8"
+    },
+    {
+      "path": "tests/test_code_index.py",
+      "size": 18993,
+      "sha256": "0896e152fa4157dc927ff3e5dc10b34cff8ab9730d2f7bdd4c336216118cf317"
+    },
+    {
+      "path": "tests/test_codemap_eval.py",
+      "size": 21730,
+      "sha256": "ddfddb37c70b40e64be12105eeee6a4c9b7dcf00296fdabc2eb13d7daa8ba2a4"
+    },
+    {
+      "path": "tests/test_context_hub.py",
+      "size": 33032,
+      "sha256": "ed2abc1766a574aa8c44dae26edfd1c2c47649c03bbcab67603b002d16322313"
+    },
+    {
+      "path": "tests/test_digest_mod.py",
+      "size": 8266,
+      "sha256": "b068f2117ae9b990c9e1db23aad38a34f9a094d8f07cdae7c583d221ac27398c"
+    },
+    {
+      "path": "tests/test_egm_integration.py",
+      "size": 44187,
+      "sha256": "700a493b8b339d609d029fb0b64b6f7e3354593e47b0e52455167b53c508da40"
+    },
+    {
+      "path": "tests/test_egm_local.py",
+      "size": 4745,
+      "sha256": "d78d5bdcae40de2ac284dae2b59eea8a6334ca36d10a155931d8933e817e2484"
+    },
+    {
+      "path": "tests/test_egm_local_measure.py",
+      "size": 11577,
+      "sha256": "0ba11be7040b77e2173ae50502727d4f3b2c3eaae3f697c6522b5802628a4c13"
+    },
+    {
+      "path": "tests/test_egm_pilot.py",
+      "size": 32938,
+      "sha256": "5a4edd4b04360d6fbe8f8eb5d2b5b746ce0342b36df8e5875897ae02080be3bf"
+    },
+    {
+      "path": "tests/test_gate.py",
+      "size": 6711,
+      "sha256": "b9c4632d0a7aeb6eb3d7e50ee90b3be040976994ce085517ca9ef24df14b505d"
+    },
+    {
+      "path": "tests/test_goldfish_review.py",
+      "size": 31316,
+      "sha256": "aa0c8a6b2340a550b0e077412778eb65c42ca8c00d8f35e70609a0b0560fcd69"
+    },
+    {
+      "path": "tests/test_improvement.py",
+      "size": 24383,
+      "sha256": "32176a2c132faae9e7693c0df743ebbd6466ddf9785d5a72071a56c5c40e198a"
+    },
+    {
+      "path": "tests/test_install.py",
+      "size": 28938,
+      "sha256": "a35812c39b370ea2950cde0634282d684df775d1e35051912e38c43ac146d38d"
+    },
+    {
+      "path": "tests/test_oaw_mode.py",
+      "size": 26774,
+      "sha256": "7c060d2c9d6867e914378679880419ff0049e2e065ad0a861e98444b0cfe35d5"
+    },
+    {
+      "path": "tests/test_skills.py",
+      "size": 11070,
+      "sha256": "84692950f473f56a982907a021041554d857e7b73b9b6aaf30e6a32fdf4f423b"
+    },
+    {
+      "path": "tests/test_status.py",
+      "size": 6385,
+      "sha256": "2b2dece751cd5637cdeb6b7dcdef495543e69e0cc19cf02387cba5e8670b67aa"
+    },
+    {
+      "path": "tests/test_wiki_sync.py",
+      "size": 77462,
+      "sha256": "096623a63054a3cccad3a1cfc7fced31a153937ee66b78726bf9fe725f6a18a6"
+    },
+    {
+      "path": "vendor/README.md",
+      "size": 1346,
+      "sha256": "3443c12fa4391c91fe0a2eeb36283eaa4422c478068952b3b84404ab870e0775"
+    },
+    {
+      "path": "vendor/egm/.claude-plugin/agents/bootstrap_orchestrator.md",
+      "size": 921,
+      "sha256": "b07f80ac2b54b840a48b290221e4a15d97b2e90de5ed3d2760efba4112760930"
+    },
+    {
+      "path": "vendor/egm/.claude-plugin/agents/codebase_details.md",
+      "size": 666,
+      "sha256": "17d4f89bb8786f78eca6d9e01e31493497cf4c2af55fa97342507648e185b78d"
+    },
+    {
+      "path": "vendor/egm/.claude-plugin/agents/comprehension.md",
+      "size": 657,
+      "sha256": "78356e3e5e89c3d4a6b9d51865ad81f1b256cb3289869a4070e149b7b90ae7f2"
+    },
+    {
+      "path": "vendor/egm/.claude-plugin/agents/design_critic.md",
+      "size": 641,
+      "sha256": "02058b72fe6c249ac0efc393069e9bb32a9890204f4efb8c51ffad36b8e4056e"
+    },
+    {
+      "path": "vendor/egm/.claude-plugin/agents/implementation_readiness.md",
+      "size": 673,
+      "sha256": "98e7f8ccf177f6964e0dabe01d9b5ab429c8af7fc3bc5ba4178c84aaf1f90848"
+    },
+    {
+      "path": "vendor/egm/.claude-plugin/agents/structural.md",
+      "size": 639,
+      "sha256": "33237f2b2147903a270fae5b649cf638444fc9cf1109964b46db152bef3a5f90"
+    },
+    {
+      "path": "vendor/egm/.claude-plugin/agents/style.md",
+      "size": 628,
+      "sha256": "edeb79ef6336337438180b936469301f49782812e0c7a9841e20af2fe50844f2"
+    },
+    {
+      "path": "vendor/egm/.claude-plugin/agents/synthesizer.md",
+      "size": 767,
+      "sha256": "e6f053a5d6b289592e7bb7b56d8ebae7f9b5080db6430c9f484fc9a40f4c7dfd"
+    },
+    {
+      "path": "vendor/egm/.claude-plugin/agents/zoom_out.md",
+      "size": 637,
+      "sha256": "c74662092db4297aebae1367d4614ae42e140fd6080b4276c0327853ae96ce0b"
+    },
+    {
+      "path": "vendor/egm/.claude-plugin/icon.png",
+      "size": 13264,
+      "sha256": "ac92b3a769ba1754941d93b3cbe6456714f04a5bc123f4e36a7e2ff3e4bc8fbd"
+    },
+    {
+      "path": "vendor/egm/.claude-plugin/plugin.json",
+      "size": 1281,
+      "sha256": "b57b690c962e00bac6979e3788083a9c8120dc09beaac49b2abff1991d0ab4cc"
+    },
+    {
+      "path": "vendor/egm/.codex-plugin/plugin.json",
+      "size": 1337,
+      "sha256": "3ab8abb44a4d13f8c390309fba14683593952c37ef9ced4e5ea7c1fa8afac070"
+    },
+    {
+      "path": "vendor/egm/LICENSE",
+      "size": 11358,
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "path": "vendor/egm/OAW_SOURCE.json",
+      "size": 7619,
+      "sha256": "c6ff4b7b56ce8187e842baa190c0b3fda2a37d112450931839e43bd7faf3d25e"
+    },
+    {
+      "path": "vendor/egm/README.md",
+      "size": 7511,
+      "sha256": "3e3e3653f3a887404aacd1c6aff15918056d0f00a9117e4241e367e7fc19cbb4"
+    },
+    {
+      "path": "vendor/egm/agents/bootstrap_orchestrator.md",
+      "size": 1706,
+      "sha256": "5c2fa484754f8d582669500d16d5728fe95daff8bd964f8e7f09142c6a666bfc"
+    },
+    {
+      "path": "vendor/egm/agents/codebase_details.md",
+      "size": 4683,
+      "sha256": "d80db07e449b57b3b3776d1401cca72a54b6b65a0ab218b86f9064ee4b8167bc"
+    },
+    {
+      "path": "vendor/egm/agents/comprehension.md",
+      "size": 4748,
+      "sha256": "974f4972f717dc7b102a9b1407b3a625749149f2ae905727241e919f43cc3fa5"
+    },
+    {
+      "path": "vendor/egm/agents/design_critic.md",
+      "size": 3843,
+      "sha256": "cee6294735ce2bd4fea19245852b6eb07cbe8ede7e72a4bfc829f586e4a39d0f"
+    },
+    {
+      "path": "vendor/egm/agents/implementation_readiness.md",
+      "size": 3929,
+      "sha256": "1f6aa61cfe7cb86dc94943ab3b3fd339e5baba533937198fd10edb06dfa64e8f"
+    },
+    {
+      "path": "vendor/egm/agents/structural.md",
+      "size": 3954,
+      "sha256": "f0d4fe6faee4e388366b7d653fe353a9b09f45ca1bf5dae29280e351cda7da87"
+    },
+    {
+      "path": "vendor/egm/agents/style.md",
+      "size": 4023,
+      "sha256": "9d0d59d7fac7ee479f9beea22d28b8ea20b6fea0215e06bd292a14eb2bb3b692"
+    },
+    {
+      "path": "vendor/egm/agents/synthesizer.md",
+      "size": 4450,
+      "sha256": "402e661fa44684ce51246575d169f65003981846f318cf13cf124c8895b4ccab"
+    },
+    {
+      "path": "vendor/egm/agents/zoom_out.md",
+      "size": 4903,
+      "sha256": "adc9d7b7db4c304866e61d5e5e446502231abe188ce64656939305e07ae7995f"
+    },
+    {
+      "path": "vendor/egm/assets/icon.svg",
+      "size": 1003,
+      "sha256": "224dfd77640ed4a3e85ff1d5f2378f13556407625456ceda625646fcaa765f24"
+    },
+    {
+      "path": "vendor/egm/docs/assets/readme-header.svg",
+      "size": 1456,
+      "sha256": "e20f4b61ae27ca32c81a65e5fe4a4275dd464df08e107ba361c6cddc87a6178c"
+    },
+    {
+      "path": "vendor/egm/docs/claude.md",
+      "size": 9395,
+      "sha256": "cbc51e603740134e5890fe645f3d516c03674598be43733c53411c920f445cc1"
+    },
+    {
+      "path": "vendor/egm/docs/codex.md",
+      "size": 6104,
+      "sha256": "a7390390c233ece29a2ee7508a8d328b6b4ee200f649417c097687c76f014ad0"
+    },
+    {
+      "path": "vendor/egm/docs/faq.md",
+      "size": 2755,
+      "sha256": "e8cb380b8295dfa4ae6c5a2f0bb86a3b0fde58b65f5ce6dc7dc2527ebc4e4ef5"
+    },
+    {
+      "path": "vendor/egm/docs/getting_started.md",
+      "size": 6652,
+      "sha256": "e45d171e4bc306fcb87a426f2608a9ed46a3ca329d67fd5c11a0d944865a57c7"
+    },
+    {
+      "path": "vendor/egm/docs/harnesses.md",
+      "size": 7559,
+      "sha256": "12b1e70adb6dec4edcf0d5a129806ba09135f243c545a4c9b42d87edd57dbd48"
+    },
+    {
+      "path": "vendor/egm/docs/index.md",
+      "size": 5259,
+      "sha256": "5ebb17daf9cec8c9802e62e8ba98345b29ddb44bfa0c9638a9859539d10a86c4"
+    },
+    {
+      "path": "vendor/egm/docs/privacy.md",
+      "size": 2188,
+      "sha256": "9d55a0a1d860787e07be7c6c5fb23f898b0a798b8975a39676f0845465df8583"
+    },
+    {
+      "path": "vendor/egm/docs/releases.md",
+      "size": 3676,
+      "sha256": "d5dbaf5638079ce63a01517078760618688cf00913287a5163f2855b0a4ad05d"
+    },
+    {
+      "path": "vendor/egm/plugin.json",
+      "size": 1424,
+      "sha256": "227c4a9e4c337c6f43941287af5e6a09e6a247372ec6b98cca03f8ac0cf166e7"
+    },
+    {
+      "path": "vendor/egm/resources/README.md",
+      "size": 887,
+      "sha256": "109c89969542dd5919c3f50f1bcf569c7668a505bff10439044135526e1a6b01"
+    },
+    {
+      "path": "vendor/egm/resources/document_standards/feature-spec-standard.md",
+      "size": 1489,
+      "sha256": "b3e4960fd884fde880a41da782fc73342fe232769e5835a4470b3c8c517644c4"
+    },
+    {
+      "path": "vendor/egm/resources/document_standards/heilmeier-standard.md",
+      "size": 1155,
+      "sha256": "a23bc354a5651bd00d817409a72ebcb7536c249e2038c13255ce89f49f138174"
+    },
+    {
+      "path": "vendor/egm/resources/document_standards/implementation-readiness-standard.md",
+      "size": 1379,
+      "sha256": "ed0d2a085eac0fd9581d504a2ec0df2a92d6b2538636a22b16e0b1370fba6dbb"
+    },
+    {
+      "path": "vendor/egm/resources/document_standards/re-implementation-standard.md",
+      "size": 1535,
+      "sha256": "421aacbf5e9a0d4c5b794edfa4cac333f8cc67bc4cf0e3717efcad4f827e6e46"
+    },
+    {
+      "path": "vendor/egm/resources/document_standards/zoom-out-standard.md",
+      "size": 2884,
+      "sha256": "0a01013bd363a8d744f8372b65495892360d7339e4e35c767003ae38f48e6799"
+    },
+    {
+      "path": "vendor/egm/resources/execution_instructions.md",
+      "size": 2348,
+      "sha256": "06f0ee648efa2fefd79081d01f32c4930d709fa709df42d06a287f97a8582179"
+    },
+    {
+      "path": "vendor/egm/skills/egm-bootstrap/SKILL.md",
+      "size": 23767,
+      "sha256": "ac86aae69c782b67ebb96d1dae5bcef675745e3f57cca99196038bb5e350fc4c"
+    },
+    {
+      "path": "vendor/egm/skills/egm-bootstrap/agents/openai.yaml",
+      "size": 198,
+      "sha256": "e5f83ece63fce8c73329efedd990f912ab395e1e8339f89f83f9e6efef00fb27"
+    },
+    {
+      "path": "vendor/egm/skills/egm-bootstrap/assets/icon.svg",
+      "size": 601,
+      "sha256": "e1f021c3074bc22d982301bff8374cf1c2ff7c032d1834b66fed91a9ab57d370"
+    },
+    {
+      "path": "vendor/egm/skills/egm-bootstrap/references/templates.md",
+      "size": 2064,
+      "sha256": "f49793727cccbd72afdc4a0569a1d8e8138e943d2fc9b0df772b09deaca80437"
+    },
+    {
+      "path": "vendor/egm/skills/egm-bootstrap/references/worker-return.schema.json",
+      "size": 568,
+      "sha256": "f18a3822f60a0f117e1582cccac78a90cf14154afca811d4e81ea3fe562e52a5"
+    },
+    {
+      "path": "vendor/egm/skills/egm-brainstorm/SKILL.md",
+      "size": 14202,
+      "sha256": "fb594315b47dca4bbea878fc77cec42a1a3ef8c75a8b903b1812260391a13ed9"
+    },
+    {
+      "path": "vendor/egm/skills/egm-brainstorm/agents/openai.yaml",
+      "size": 199,
+      "sha256": "2b858c20f9d3b54cc1e02410a4fd6f7989b36d6d5d152cc87cd0d1082ce3bfc9"
+    },
+    {
+      "path": "vendor/egm/skills/egm-brainstorm/assets/icon.svg",
+      "size": 496,
+      "sha256": "89d894e7e9c10c2ad955ef1964049e508b718e96e8a177f547b240c774498b49"
+    },
+    {
+      "path": "vendor/egm/skills/egm-draft/SKILL.md",
+      "size": 16770,
+      "sha256": "7908cb6d6b9ab82fef416211988ab9abd6681d4c783b2c31b1a8c40f97009ab0"
+    },
+    {
+      "path": "vendor/egm/skills/egm-draft/agents/openai.yaml",
+      "size": 198,
+      "sha256": "eafc643897b5a4ea7a849bd4211acaf8f3bc31a079f199ef5d04d08b410705b7"
+    },
+    {
+      "path": "vendor/egm/skills/egm-draft/assets/icon.svg",
+      "size": 545,
+      "sha256": "0cca32ed85b4198fdf3566198f92a17c943ee3d9a72d38c2898132b67130aebd"
+    },
+    {
+      "path": "vendor/egm/skills/egm-draft/references/design_doc.md",
+      "size": 5288,
+      "sha256": "eb8e580e4de6be88da33fdbe662d1b39a0fa7a13378d2dd240f82eb712684e0d"
+    },
+    {
+      "path": "vendor/egm/skills/egm-drift-report/SKILL.md",
+      "size": 3169,
+      "sha256": "c000ffe2e77a9fe74ee6915b314e1547337c95c79a19014c44fd976dc6511476"
+    },
+    {
+      "path": "vendor/egm/skills/egm-drift-report/agents/openai.yaml",
+      "size": 204,
+      "sha256": "b54c32c1badc9a73e507f097377324dc31f2839cfef9c426d4dba1c622d5673c"
+    },
+    {
+      "path": "vendor/egm/skills/egm-drift-report/assets/icon.svg",
+      "size": 281,
+      "sha256": "47bc4ecbe493f4454f9b7642f42de9fe41f8a93cbb86aa3ffbb5d58532ea0e2d"
+    },
+    {
+      "path": "vendor/egm/skills/egm-resolve/SKILL.md",
+      "size": 8539,
+      "sha256": "6bb1909b42b815e074bd486c6244b56eef8d61669abb3302c764a16be05af472"
+    },
+    {
+      "path": "vendor/egm/skills/egm-resolve/agents/openai.yaml",
+      "size": 193,
+      "sha256": "7ad63dc69777e6e8b2e3d33cf4105149043038ffb489e750b3f483be7836cf30"
+    },
+    {
+      "path": "vendor/egm/skills/egm-resolve/assets/icon.svg",
+      "size": 506,
+      "sha256": "14ac0ad863fc6ab83ba5fd5f7bd46fd11b609d65f9e482b3fcddd7a139834733"
+    },
+    {
+      "path": "vendor/egm/skills/egm-review-loop/SKILL.md",
+      "size": 9770,
+      "sha256": "d99803ad5bf99900e9548491f6ad1ab58a9488bbf7af79f67ead033bb48b7023"
+    },
+    {
+      "path": "vendor/egm/skills/egm-review-loop/agents/openai.yaml",
+      "size": 204,
+      "sha256": "2073f27ed2c084c8db710f72dac367d26cb8cbc16aa2195546feb732b47a23ce"
+    },
+    {
+      "path": "vendor/egm/skills/egm-review-loop/assets/icon.svg",
+      "size": 544,
+      "sha256": "d6d5537843253fe634d248b6eadd5a5bcd2ef7742e016896eb11c583174eb530"
+    },
+    {
+      "path": "vendor/egm/skills/egm-review/SKILL.md",
+      "size": 22497,
+      "sha256": "5e96e3b586a086c7c87b4f0185303a49adc9486028134d258827e9bbfb89e986"
+    },
+    {
+      "path": "vendor/egm/skills/egm-review/agents/openai.yaml",
+      "size": 198,
+      "sha256": "780d8877443f704ee27d504c13d08f304f0bca4c4418f5703f61ae40416fca74"
+    },
+    {
+      "path": "vendor/egm/skills/egm-review/assets/icon.svg",
+      "size": 530,
+      "sha256": "02154028864bd8547a45d7c9f55c59f95cb4ce3f57ecb3426f67034ab97d022f"
+    }
+  ],
+  "tree_sha256": "3f61293d1b071118f73eb4590dfcefc437ecd12da735c1bd6025b4f24dd21bc1"
+}

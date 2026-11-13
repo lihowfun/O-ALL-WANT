@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "packet_sha256": "3f61293d1b071118f73eb4590dfcefc437ecd12da735c1bd6025b4f24dd21bc1",
+  "file_count": 572,
+  "symlink_count": 0,
+  "forbidden_entries": [],
+  "marker_matches": {
+    "plan-review-2026-11-07": [],
+    "egmcal-key": [],
+    "K01": [],
+    "historical findings": []
+  },
+  "target_lines": 324,
+  "target_bytes": 27907,
+  "pristine_appendix_b_body_characters": 25,
+  "leaking_files_found": [],
+  "scope": "Closed inventory and byte-marker checks on the supplied pristine packet only. Historical study evidence predating this review is intended context. No later review, fix, key or study files found. Provenance/semantic eligibility still require independent freeze signoff."
+}

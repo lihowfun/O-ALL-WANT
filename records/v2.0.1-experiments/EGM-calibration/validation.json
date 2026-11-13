@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "round": 3,
+  "python": "3.10.12",
+  "platform": "Linux",
+  "landlock_abi": 4,
+  "unittest": {
+    "command": "/usr/bin/python3 -m unittest -v",
+    "tests": 48,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 19.146,
+    "passed": true
+  },
+  "standalone_dry_run": {
+    "native_only_completed": true,
+    "merge_disabled": true,
+    "resume_preserves_rows": true,
+    "rows_per_cell": {
+      "codex": 2,
+      "claude": 2
+    },
+    "preflight_both_cells": "PASS; synthetic checks undetermined, gate closed",
+    "graders_both_families": "PASS; synthetic unit-test dry plans, Claude per report without packet/tools",
+    "synthetic_only": true,
+    "model_calls": 0,
+    "network_calls": 0
+  },
+  "synthetic_cli_integration": "PASS; local fake print host under Landlock, stdin, disabled tools, complete cache/noncache accounting, malformed/tool-use failures charged, no model/network access",
+  "sequential_and_batch_tests": "PASS; exact funding boundary, terminal NC5, infrastructure retry baseline, N1 ceiling skip, immutable inputs, batch-2 repeats excluded from decisions, independent-label test-retest, one-round consensus overlay",
+  "packet_sha256": "3f61293d1b071118f73eb4590dfcefc437ecd12da735c1bd6025b4f24dd21bc1",
+  "freeze_sha256": "ad6ad17f20724b2a2d1d9fb5190d8129d72f65b8bcca326583c14936a72e780c",
+  "public_private_path_scan": "PASS",
+  "actual_model_calls": 0,
+  "actual_grading_calls": 0,
+  "real_cli_auth_sandbox_and_meter_preflight": "NOT RUN; eligibility settled, lead preflight and freeze pending; real gate remains closed",
+  "dry_artifact_policy": "Temporary standalone/test dry artifacts removed; only documented commands and validation retained."
+}

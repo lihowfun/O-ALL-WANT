@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "packet_sha256": "3f61293d1b071118f73eb4590dfcefc437ecd12da735c1bd6025b4f24dd21bc1",
+  "freeze_sha256": null,
+  "key_sha256": null,
+  "key_frozen": false,
+  "eligibility_checked": false,
+  "adjudicable_primary_count": null,
+  "isolation_preflight_passed": false,
+  "live_meter_preflight_passed": false,
+  "cells": {
+    "claude": {
+      "version": "2.1.322",
+      "cli_sha256": null,
+      "preflight_sha256": null,
+      "preflight_live_final_gap": null,
+      "inflight_allowance": null
+    },
+    "codex": {
+      "version": "0.167.2",
+      "cli_sha256": null,
+      "preflight_sha256": null,
+      "preflight_live_final_gap": null,
+      "inflight_allowance": null
+    }
+  },
+  "note": "Schema illustration only. cal_run.py gate derives preflight flags from private evidence; the experiment lead supplies freeze/key hashes and eligible count for the settled round-3 key (30 items, 9 primary); the eligibility procedure is already complete. Never hand-edit authorization booleans."
+}

@@ -1,0 +1,19 @@
+Merge the two independent review reports in inputs/A.json and inputs/B.json. Read only these two reports.
+You have no source repository. Do not look for source files, browse the web, verify source claims, or add new
+findings. Preserve the claims, source citations, severity and uncertainty of the input reports. Deduplicate only
+claims about the same mechanism. Keep contradictions side by side and mark them; do not resolve them from
+memory or guesswork. A more specific input claim must not disappear into a vague summary. Do not promote an
+uncertainty into a finding. Write only review files inside review_out/.
+
+Write review_out/report.json, at most 1500 words, with "completed" (boolean), "findings" (array of objects with
+"location", "claim", "evidence", "rationale", "severity"), and "uncertainties" (array). Findings must cite the
+source file and line evidence already present in the reports. Do not name your method, tools, reviewers or review
+stages inside findings or uncertainties. Your final message gives only the report path and the completion status.
+
+Separately write review_out/mapping.json with "schema_version": 1, "mapping" (array), and "contradictions" (array).
+Every input finding and uncertainty must appear exactly once in mapping. Use input IDs A:F001, A:U001, B:F001,
+B:U001, etc., based on one-based order. Each mapping entry has "input_id", "action" ("kept" or "dropped"),
+"output_ids" (array using F001, U001, etc.), and "reason". Kept entries must map to output IDs. A dropped duplicate
+must map to its retained representative. Every output item must map back to at least one input item. Each
+contradictions entry has "input_ids", "output_ids", and "reason". Keep both sides of each contradiction in the
+report. The mapping is an audit artifact and is outside the report word limit.

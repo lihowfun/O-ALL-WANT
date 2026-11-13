@@ -1,0 +1,5 @@
+Review docs/plans/v2.0.1-execution.md, a Traditional Chinese implementation plan for OAW 2.0.1, in this workspace.
+Read the target plan, evidence/OWNER_REQUEST.md and every other evidence/ file. The owner's request is the
+requirement the plan must satisfy. The evidence/ files are the measured results the plan cites; check the plan's
+numbers and claims against them. The rest of the repository is the current OAW code that the plan changes;
+check the plan's claims about current files, commands and behavior against that code.

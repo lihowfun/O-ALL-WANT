@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "files": {
+    "EGM-anatomy/DESIGN.draft.md": "ef31dcd01aa1965ce409f02c54f900b0d96cccc847376f4d8cdd325ce3c7e0f6",
+    "EGM-anatomy/ANATOMY.md": "5f10dae0559d3b01833b599acd179cb75eb3967c44f6f332ca1e11a25ba2825b",
+    "U1/scripts/eval_ledger.py": "50d7a17236db5e9522caf2fcb02d877ad95b66512a0cda01f18c7334601aa1a0",
+    "U1/docs/EVAL_LEDGER.md": "49fea688b0ae7e56116d96782cc38066e7b9c669641e33bd97e49bfb64e43879",
+    "X2/PREREG.md": "1618eba0ec37a5e138d4c8dc16e6d0c26aaeeb36ecae53d977fe2cf4fde7cf14",
+    "X2/x2_run.py": "81ba3cfe2c0fa060052ebf77f89679902a4cb5a9e152420b287924ca694c64d2",
+    "X2/x2_grade.py": "d6c5c4856eb47f5f8322b57a9d1817438ce5d56979fa28dfc4be9a1669c2d0f4",
+    "X2/x2_judge.py": "d3d8edadcd50950311a7c00227a12c7a9f0658892be9a7ed1013e37cc4f5eb72",
+    "X2/x2_case_tools.py": "340f20d2243c6097e763c976bacaf6bdaef1041b152bf9abad1f46e1997db478",
+    "X2/run_x2.sh": "0a68a891624e4c7bc6f648f6ec5ef3c1a326d7b3bbe4189650078bd0fa462d9b",
+    "historical-launch/codex_prompt.txt": "daef58020b4d75080f3e2ae20bd4df35c59d1d33ca7193b33935602504ed6ab7",
+    "historical-launch/egm_prompt.txt": "37be562bf381c769f1a1883ecf9047aced23c7219b6d57a0aa2203983896bec8",
+    "historical-launch/run_egm.sh": "5002765a997c4d2d40566ceabadcc081392cd41891f162d5f346c8cf84f951ff"
+  },
+  "reading_deviation": "DESIGN first read included section 1, beyond requested sections 2-5; historical summaries were visible. No key/historical finding report content was read."
+}

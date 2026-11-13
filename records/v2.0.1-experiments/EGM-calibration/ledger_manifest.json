@@ -1,0 +1,188 @@
+{
+  "format": "egmcal-plain-ledger",
+  "schema_version": 1,
+  "u1_compatible": false,
+  "u1_reason": "U1 null run_id shared grading is rejected. Use a plain ledger; no arbitrary allocation to native runs. Merge is outside this stage.",
+  "analysis_unit": "single-document diagnostic",
+  "study_id": "egm-native-calibration-issue20",
+  "protocol_sha256": "6f3493a91b099520fa5adb8bf4c01226f0df8c08a9f066454ab142edebc194b9",
+  "packet_sha256": "3f61293d1b071118f73eb4590dfcefc437ecd12da735c1bd6025b4f24dd21bc1",
+  "planned_runs": [
+    {
+      "id": "codex-N1",
+      "cell": "codex",
+      "arm": "N1",
+      "model": "gpt-6.1-sol",
+      "effort": "high",
+      "cli_version": "0.167.2",
+      "input": {
+        "kind": "frozen_packet",
+        "sha256": "3f61293d1b071118f73eb4590dfcefc437ecd12da735c1bd6025b4f24dd21bc1"
+      },
+      "prompt_sha256": "631d34572158c6b2844a4f9b1e8fc8bac8f2b07c054a408d5771ee19f78c78fc",
+      "status": "planned",
+      "logical_tokens": null,
+      "noncache_tokens": null,
+      "elapsed_seconds": null
+    },
+    {
+      "id": "codex-N2",
+      "cell": "codex",
+      "arm": "N2",
+      "model": "gpt-6.1-sol",
+      "effort": "high",
+      "cli_version": "0.167.2",
+      "input": {
+        "kind": "frozen_packet",
+        "sha256": "3f61293d1b071118f73eb4590dfcefc437ecd12da735c1bd6025b4f24dd21bc1"
+      },
+      "prompt_sha256": "631d34572158c6b2844a4f9b1e8fc8bac8f2b07c054a408d5771ee19f78c78fc",
+      "status": "planned",
+      "logical_tokens": null,
+      "noncache_tokens": null,
+      "elapsed_seconds": null
+    },
+    {
+      "id": "claude-N1",
+      "cell": "claude",
+      "arm": "N1",
+      "model": "claude-opus-5-5",
+      "effort": "high",
+      "cli_version": "2.1.322",
+      "input": {
+        "kind": "frozen_packet",
+        "sha256": "3f61293d1b071118f73eb4590dfcefc437ecd12da735c1bd6025b4f24dd21bc1"
+      },
+      "prompt_sha256": "631d34572158c6b2844a4f9b1e8fc8bac8f2b07c054a408d5771ee19f78c78fc",
+      "status": "planned",
+      "logical_tokens": null,
+      "noncache_tokens": null,
+      "elapsed_seconds": null
+    },
+    {
+      "id": "claude-N2",
+      "cell": "claude",
+      "arm": "N2",
+      "model": "claude-opus-5-5",
+      "effort": "high",
+      "cli_version": "2.1.322",
+      "input": {
+        "kind": "frozen_packet",
+        "sha256": "3f61293d1b071118f73eb4590dfcefc437ecd12da735c1bd6025b4f24dd21bc1"
+      },
+      "prompt_sha256": "631d34572158c6b2844a4f9b1e8fc8bac8f2b07c054a408d5771ee19f78c78fc",
+      "status": "conditional: N1 not ceiling and sequential funding rule passes",
+      "logical_tokens": null,
+      "noncache_tokens": null,
+      "elapsed_seconds": null
+    }
+  ],
+  "shared_records": [
+    {
+      "id": "eligibility-check-already-spent",
+      "stage": "curation",
+      "provider": "claude",
+      "status": "lead imports measured record",
+      "logical_tokens": 3398755,
+      "noncache_tokens": 359512,
+      "elapsed_seconds": null,
+      "subagents": "none",
+      "metering_source": "session transcript"
+    },
+    {
+      "id": "codex-curator",
+      "stage": "curation",
+      "provider": "codex",
+      "status": "lead records separately",
+      "logical_tokens": null,
+      "noncache_tokens": null,
+      "elapsed_seconds": null
+    },
+    {
+      "id": "grader-codex-batch1",
+      "stage": "grading",
+      "provider": "codex",
+      "model": "gpt-6-astra",
+      "requests": 1,
+      "status": "planned",
+      "logical_tokens": null,
+      "noncache_tokens": null,
+      "elapsed_seconds": null
+    },
+    {
+      "id": "grader-claude-batch1",
+      "stage": "grading",
+      "provider": "claude",
+      "model": "claude-fable-5-2",
+      "requests": 3,
+      "status": "planned",
+      "logical_tokens": null,
+      "noncache_tokens": null,
+      "elapsed_seconds": null
+    },
+    {
+      "id": "reconciliation-batch1",
+      "stage": "reconciliation",
+      "provider": null,
+      "status": "one blind round if primary differences; batch2 conditional",
+      "logical_tokens": null,
+      "noncache_tokens": null,
+      "elapsed_seconds": null
+    },
+    {
+      "id": "grader-codex-batch2",
+      "stage": "grading",
+      "provider": "codex",
+      "model": "gpt-6-astra",
+      "requests": 1,
+      "status": "conditional on Claude N2",
+      "logical_tokens": null,
+      "noncache_tokens": null,
+      "elapsed_seconds": null
+    },
+    {
+      "id": "grader-claude-batch2",
+      "stage": "grading",
+      "provider": "claude",
+      "model": "claude-fable-5-2",
+      "requests": 4,
+      "status": "conditional on Claude N2",
+      "logical_tokens": null,
+      "noncache_tokens": null,
+      "elapsed_seconds": null
+    },
+    {
+      "id": "reconciliation-batch2",
+      "stage": "reconciliation",
+      "provider": null,
+      "status": "one blind round if primary differences; batch2 conditional",
+      "logical_tokens": null,
+      "noncache_tokens": null,
+      "elapsed_seconds": null
+    },
+    {
+      "id": "preparation-reporting",
+      "stage": "preparation",
+      "provider": null,
+      "status": "lead records",
+      "logical_tokens": null,
+      "noncache_tokens": null,
+      "elapsed_seconds": null
+    }
+  ],
+  "record_files": {
+    "runs": [
+      "rows-claude.jsonl",
+      "rows-codex.jsonl"
+    ],
+    "shared": "shared-costs.jsonl",
+    "preflight": "preflight-rows.jsonl"
+  },
+  "budget": {
+    "claude_shared_experiment_cap": 30000000,
+    "native_run_logical_cap": 8000000,
+    "claude_stage_stop_threshold": 15000000,
+    "claude_n2_launch": "stage spent + 1.3 * Claude N1 actual + remaining Claude grading reserve <= 15000000; also check 30M experiment cap"
+  },
+  "unknown_policy": "Missing work/usage is unknown. Never impute zero; all failed attempts are charged. Raw data and private paths stay local."
+}

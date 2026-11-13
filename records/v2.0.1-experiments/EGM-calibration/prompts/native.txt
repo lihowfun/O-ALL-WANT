@@ -1,0 +1,17 @@
+Review docs/plans/v2.0.1-execution.md, a Traditional Chinese implementation plan for OAW 2.0.1, in this workspace.
+Read the target plan, evidence/OWNER_REQUEST.md and every other evidence/ file. The owner's request is the
+requirement the plan must satisfy. The evidence/ files are the measured results the plan cites; check the plan's
+numbers and claims against them. The rest of the repository is the current OAW code that the plan changes;
+check the plan's claims about current files, commands and behavior against that code.
+Assess concrete design correctness and consistency with current accepted decisions. Superseded decisions and
+historical notes are evidence to check, not authority. Distinguish a factual defect from an open question,
+conditional risk or style preference. Do not assume planned tests have already passed. Do not invent requirements
+beyond the supplied sources. Do not browse the web and do not change any existing file; only write review
+files.
+
+
+Finally write one JSON report to review_out/report.json, at most 1500 words, with the fields "completed" (boolean),
+"findings" (array of objects with "location", "claim", "evidence", "rationale", "severity") and "uncertainties"
+(array). Findings must cite source file and line evidence and describe actual effects. Put template or style
+preferences and conditional issues in uncertainties. Do not name your method, tools, reviewers or review stages
+inside findings or uncertainties. Your final message gives only the report path and the completion status.

@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "freeze_sha256": null,
+  "all_shared_work_recorded": false,
+  "isolation_audit_complete": false,
+  "grading_metering_complete": false,
+  "curation_metering_complete": false,
+  "outside_stage_claude_logical": null,
+  "outside_experiment_claude_logical": null,
+  "evidence_sha256": [],
+  "note": "Private audit of all work performed so far, refreshed at each batch scoring point; future conditional work is not yet spent. Missing/false coverage means no conclusion."
+}
