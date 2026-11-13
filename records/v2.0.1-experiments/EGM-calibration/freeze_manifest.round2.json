@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "status": "awaiting the lead freeze after preflight and eligibility check",
+  "files": {
+    "DEVIATIONS.md": "e89b71bf111d1077bc48b8539517ee4c6deecae32de588b4f6f38871d8591cbe",
+    "source_provenance.json": "fda96ae9181c3ab9488da28aeeb939007e128df5f01d0fd88406c150362f68eb",
+    "PREREG.md": "d0ea65ddfb3f541662a02efbbfbbbd4e393e9c7402fbe530a6189e71e5b64cf9",
+    "GRADER.md": "80e5e6cc3e7a0bf6de281be2a9cbd7a006281fd68363ff82996f5003e3d0870e",
+    "RUNBOOK.md": "31713bf252549f75f44ab5be6117ee42dc19586b40eee420ddcfebc2bd4f4fd1",
+    "build_packet.py": "c145d8f07e764c3951fbf7e8f7ff7d6a83c625ef10cf35a523dd9c69d7809c86",
+    "cal_run.py": "1b3a32a0fb79370dfe22b3a5ec37d4632988e1f5e4675c1115140311a959139d",
+    "cal_grade.py": "687e6a242cfc60a64f88753eda61d095381d784948be128f89e276f7cc27055f",
+    "cal_common.py": "9a4d09fcf971aaee06aac827e72f19d785bb558be8e5a86cebb4b3666f72c58a",
+    "cal_sandbox.py": "fdf98109d0c2cbd7fec470c8cfe6bd60708c82ba9b9f8c0b1a0cd10b36338c20",
+    "cal_ledger.py": "1387e54aeb2440bd16b70a3c42973765faac8c0969db9699df7c90d09ec2bcdd",
+    "freeze_tools.py": "1fa1c519fb7e307cb6e514e66ce24e38387bcfa328dcfbf1f616a0f3d3d00666",
+    "packet_manifest.json": "564cf80c33609934ae88e9986b636d302c884045b7ec0ee54e95defa3050b251",
+    "packet_audit.json": "4049f7cdbf958f9d210ff11f57e05c150e9c341b885456f510668a90889f82e6",
+    "prompt_manifest.json": "9767aa518b7c59437e71e0908f11bba2b77cf059d60a560c806a8077df3675c1",
+    "ledger_manifest.json": "1a76c6f213910cf0484ada7f5839f39016c13ed6cdbdee01fdd876bdab41305a",
+    "gate.template.json": "2346dbc5af2c16c965b6fb67d0e313441b0dc67b40b56f1584661a4572029a49",
+    "accounting.template.json": "d94557e22c85874d85a2d109d3c6846fe6e040cc2b65da0d4de245c45ad6113b",
+    "tests/__init__.py": "dcb04828eac72cdd561927b61359deda11e0afe083b8326796a2f0d63534b376",
+    "tests/test_calibration.py": "8d2d4450e3e716be5b792dc7e858d60e6850af31505348e1b88fb93ad4fd36e1",
+    "prompts/native.txt": "631d34572158c6b2844a4f9b1e8fc8bac8f2b07c054a408d5771ee19f78c78fc",
+    "prompts/merge.txt": "21af2677405390d1cb9de70af89ab81bd84b9c49fad2cde6213da57a62716383",
+    "prompts/task_context.txt": "3c1c9e06ee0399d1d2fdf72a71ec3f7e871d8f676e06ab3886a70919e3e04c7e",
+    "prompts/x2-native.txt": "dea81001128159cbdfb13c2403370eb4296f4dc1d62bcc8fb292eff42cf59b75",
+    "prompts/native-vs-x2.diff": "86906ae6cdf0af0baf7755bd2640ec6be54d928beaa06df14cab510143feedd5"
+  }
+}

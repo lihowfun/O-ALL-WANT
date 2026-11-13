@@ -12,12 +12,15 @@ from pathlib import Path
 import re
 import shutil
 import signal
+import stat
 import subprocess
 import sys
 import time
 from cal_common import append, canonical, hexsha, load, require, rows, save, sha
 import build_packet
-import cal_sandbox
+import cal_launch
+from host_policy import codex_flags
+from host_probe import native_calls, web_check as check_web, web_evidence
 
 HERE = Path(__file__).resolve().parent
 CELLS = {'claude': ('claude-opus-5-5', '2.1.322'), 'codex': ('gpt-6.1-sol', '0.167.2')}
@@ -37,7 +40,7 @@ def no_api_keys(env):
 
 
 def code_digest():
-    names = ('cal_run.py', 'cal_sandbox.py', 'cal_common.py', 'build_packet.py', 'cal_ledger.py')
+    names = ('cal_run.py', 'cal_launch.py', 'host_policy.py', 'host_probe.py', 'cal_common.py', 'build_packet.py', 'cal_ledger.py')
     return sha(canonical({n: sha((HERE / n).read_bytes()) for n in names}))
 
 
@@ -179,7 +182,7 @@ def codex_usage(raw, home, work):
         meta, value, malformed = rollout(path)
         invalid += malformed
         ident = meta.get('id')
-        if not ident or ident in found or Path(meta.get('cwd', '/')).resolve() != Path(work).resolve():
+        if not ident or ident in found or Path(meta.get('cwd', '/')).resolve() not in (Path(work).resolve(), Path(cal_launch.WORK)):
             unknown.append(path.name)
         else:
             found[ident] = (meta, value)
@@ -266,16 +269,16 @@ def auth_home(cell, auth_path, home):
     return 'subscription_oauth' if cell == 'claude' else 'subscription_chatgpt'
 
 
-def argv_for(cell, cli, work, prompt, settings, model=None):
+def argv_for(cell, cli, work, prompt, settings, model=None, probe=False):
     model = model or CELLS[cell][0]
     if cell == 'claude':
         return [cli, '-p'] + ([] if model == 'claude-fable-5-2' else [prompt]) + ['--output-format', 'stream-json', '--verbose', '--model', model,
-                '--effort', 'high', '--tools', '' if model == 'claude-fable-5-2' else 'Read,Write,Glob,Grep,Agent,Skill',
-                '--permission-mode', 'acceptEdits', '--setting-sources', 'project',
+                '--effort', 'high', '--tools', '' if model == 'claude-fable-5-2' else ('Read,Write,Glob,Grep,Bash,Agent,Skill' if probe else 'Read,Write,Glob,Grep,Agent,Skill'),
+                '--permission-mode', 'acceptEdits', '--setting-sources', '',
                 '--settings', str(settings), '--strict-mcp-config', '--mcp-config', '{"mcpServers":{}}',
                 '--no-session-persistence']
     return [cli, 'exec', '--json', '--model', model, '-c', 'model_reasoning_effort="high"',
-            '-c', 'web_search="disabled"', '-c', 'sandbox_workspace_write.network_access=false',
+            *codex_flags(), '-c', 'sandbox_workspace_write.network_access=false',
             '-c', 'sandbox_workspace_write.exclude_tmpdir_env_var=true',
             '-c', 'sandbox_workspace_write.exclude_slash_tmp=true',
             '--sandbox', 'workspace-write', '--skip-git-repo-check', '--ignore-user-config', '--cd', str(work), '-']
@@ -285,25 +288,29 @@ def get_usage(cell, raw, home, work):
     return claude_usage(raw) if cell == 'claude' else codex_usage(raw, home, work)
 
 
-def execute(cell, cli, work, home, attempt_dir, prompt, timeout, token_allowance, reserve, model=None):
+def execute(cell, cli, work, home, attempt_dir, prompt, timeout, token_allowance, reserve, model=None, probe=False):
     raw, err = attempt_dir / 'events.jsonl', attempt_dir / 'stderr.txt'
     settings = home / 'settings.json'
-    # File tools cannot inspect host authentication/session state. Landlock backs up source write rules.
-    save(settings, {'permissions': {'deny': ['WebSearch', 'WebFetch', 'Bash', 'Read(' + str(home) + '/**)', 'Write(' + str(home) + '/**)', 'Edit'],
-                                     'allow': ['Read(' + str(work) + '/**)', 'Write(' + str(work / 'review_out') + '/**)']},
-                    'disableAllHooks': True})
+    # Source protection is instruction plus post-run detection; nested sandboxes
+    # need a writable workspace to prepare their protected-path mount points.
+    save(settings, {'permissions': {'deny': ['WebSearch', 'WebFetch', 'Read(/home/dev/.codex/**)', 'Read(/home/dev/.claude/**)', 'Read(/home/dev/settings.json)', 'Edit'] + ([] if probe else ['Bash']),
+                                     'allow': ['Read(' + cal_launch.WORK + '/**)', 'Write(' + cal_launch.WORK + '/review_out/**)']},
+                    'disableAllHooks': True, 'enabledPlugins': {},
+                    'sandbox': {'enabled': True, 'autoAllowBashIfSandboxed': True,
+                                'allowUnsandboxedCommands': False, 'network': {'allowedDomains': []}}})
     env = {'HOME': str(home), 'CODEX_HOME': str(home / '.codex'), 'TMPDIR': str(home / 'tmp'),
            'LANG': 'C.UTF-8', 'TERM': 'dumb', 'DISABLE_AUTOUPDATER': '1',
            'PATH': str(Path(cli).parent) + ':/usr/bin:/bin'}
     (home / 'tmp').mkdir()
-    read_paths = cal_sandbox.runtime_paths(cli) + [str(work), str(home)]
-    writes = [str(work / 'review_out'), str(home)]
+    command = argv_for(cell, cli, Path(cal_launch.WORK), prompt, Path(cal_launch.HOME) / 'settings.json', model, probe)
+    command = cal_launch.bubblewrap(command, cli, work, home)
+    env.update(HOME=cal_launch.HOME, CODEX_HOME=cal_launch.HOME + '/.codex', TMPDIR='/tmp',
+               PATH=cal_launch.RUNTIME + ':/usr/bin:/bin', CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC='1')
     start = time.monotonic()
     reason = None
     with raw.open('xb') as stdout, err.open('xb') as stderr:
-        process = subprocess.Popen(argv_for(cell, cli, work, prompt, settings, model), cwd=work, env=env,
-                                   stdin=subprocess.PIPE, stdout=stdout, stderr=stderr, start_new_session=True,
-                                   preexec_fn=lambda: cal_sandbox.restrict(read_paths, writes))
+        process = subprocess.Popen(command, cwd=work, env=env,
+                                   stdin=subprocess.PIPE, stdout=stdout, stderr=stderr, start_new_session=True)
         process.stdin.write(prompt.encode() if cell == 'codex' or model == 'claude-fable-5-2' else b'')
         process.stdin.close()
         live_totals = [0]
@@ -461,114 +468,136 @@ def grading_reserve(out, remaining_requests=None, index=None, current_id=None, f
 
 
 def cli_identity(cell, cli, home):
-    v = subprocess.run([str(cli), '--version'], capture_output=True, text=True, timeout=15,
-                       env={'HOME': str(home), 'PATH': str(Path(cli).parent) + ':/usr/bin:/bin',
-                            'DISABLE_AUTOUPDATER': '1'}, cwd=home)
+    v = cal_launch.version_output(cli)
     require(v.returncode == 0 and re.search(r'(?<![\d.])' + re.escape(CELLS[cell][1]) + r'(?![\d.])', v.stdout),
-            'unexpected CLI version; record deviation before changing frozen build')
+            'cli_version: --version exit=' + str(v.returncode) + '; expected ' + CELLS[cell][1] + '; record deviation before changing pinned build')
     return v.stdout.strip()
 
 
+SANDBOX_PLACEHOLDERS = frozenset({'.git', '.agents', '.codex', '.aws'})
+
+
 def snapshot(work):
-    return {str(p.relative_to(work)): ('symlink' if p.is_symlink() else
-            sha(p.read_bytes()) if p.is_file() else 'directory') for p in work.rglob('*')}
+    """Inventory types and bytes without following links or opening special files."""
+    result = {}
+    def visit(directory):
+        try:
+            children = sorted(directory.iterdir())
+        except OSError:
+            result[directory.relative_to(work).as_posix()] = 'unreadable'
+            return
+        for p in children:
+            name = p.relative_to(work).as_posix()
+            try:
+                mode = p.lstat().st_mode
+                if stat.S_ISLNK(mode):
+                    result[name] = 'symlink'
+                elif stat.S_ISDIR(mode):
+                    result[name] = 'directory'
+                    visit(p)
+                elif stat.S_ISREG(mode):
+                    result[name] = sha(p.read_bytes())
+                else:
+                    result[name] = 'special'
+            except OSError:
+                result[name] = 'unreadable'
+    visit(work)
+    return result
+
+
+def workspace_integrity(work, before, allow_placeholders=False):
+    """Exact source inventory, except outputs and evidenced empty CLI stubs.
+
+    A pre-existing protected directory is always source, never an exemption.
+    CLI mount stubs for missing protected paths are empty directories, including
+    the read-only empty mounts visible inside a command's namespace.
+    """
+    after = snapshot(work)
+    output = lambda n: n == 'review_out' or n.startswith('review_out/')
+    placeholders = sorted(n for n in SANDBOX_PLACEHOLDERS if allow_placeholders
+                          and n not in before and after.get(n) == 'directory'
+                          and not any(p.startswith(n + '/') for p in after))
+    old = {n: h for n, h in before.items() if not output(n)}
+    new = {n: h for n, h in after.items() if not output(n) and n not in placeholders}
+    modified = sorted(n for n in old.keys() & new.keys() if old[n] != new[n])
+    removed = sorted(old.keys() - new.keys())
+    added = sorted(new.keys() - old.keys())
+    unsafe = sorted(n for n, h in after.items() if h in ('symlink', 'special', 'unreadable'))
+    changed = sorted(set(modified + removed + added + unsafe))
+    return {'isolation_complete': not changed, 'sources_changed': bool(changed),
+            'source_changed_paths': changed,
+            'workspace_changes': {'modified': modified, 'removed': removed, 'added': added,
+                                  'unsafe': unsafe},
+            'sandbox_placeholders': [{'path': n, 'kind': 'empty_directory'} for n in placeholders]}
+
+
+def workspace_packet_digest(work):
+    """Official packet file-array digest after excluding review outputs/empty stubs.
+
+    The integrity inventory separately rejects unauthorized directories and all
+    unsafe entries, including those that cannot form a packet file array.
+    """
+    inventory = snapshot(work)
+    files = []
+    for name, digest in sorted(inventory.items()):
+        if name == 'review_out' or name.startswith('review_out/') or digest == 'directory':
+            continue
+        if digest in ('symlink', 'special', 'unreadable'):
+            return None
+        files.append({'path': name, 'size': (work / name).stat().st_size, 'sha256': digest})
+    return sha(canonical(files))
 
 
 def workspace_unchanged(work, before):
-    after = snapshot(work)
-    allowed = lambda n: n == 'review_out' or n.startswith('review_out/')
-    return (all(after.get(n) == h for n, h in before.items() if not allowed(n)) and
-            all(n in before or allowed(n) for n in after) and
-            not any(p.is_symlink() for p in work.rglob('*')))
+    # Graders/reconciliation retain their strict inventory policy.
+    return workspace_integrity(work, before)['isolation_complete']
+
+
+def probe_stream(raw, home):
+    stream, invalid = events(raw)
+    invalid += bool(Path(raw).exists() and Path(raw).read_bytes() and not Path(raw).read_bytes().endswith(b'\n'))
+    for path in sorted((home / '.codex' / 'sessions').rglob('rollout-*.jsonl')):
+        child, bad = events(path)
+        stream.extend(child)
+        invalid += bad + bool(path.read_bytes() and not path.read_bytes().endswith(b'\n'))
+    return stream, not invalid
 
 
 def web_check(raw, home):
-    """Inspect host tool records, never the probe agent's report of its actions.
-
-    Disabled web tools and the shell network sandbox are also checked by the
-    probe. Unknown event/tool schemas fail closed rather than being inferred.
-    """
-    paths = [raw] + sorted((home / '.codex' / 'sessions').rglob('rollout-*.jsonl'))
-    calls, results, commands, pending_shell = {}, {}, [], {}
-    for path in paths:
-        stream, invalid = events(path)
-        if invalid:
-            return 'could-not-determine'
-        for e in stream:
-            for b in (e.get('message') or {}).get('content', []):
-                if b.get('type') == 'tool_use':
-                    calls[b.get('id')] = b.get('name', '')
-                if b.get('type') == 'tool_result':
-                    results[b.get('tool_use_id')] = b.get('is_error') is True
-            item = e.get('item') or {}
-            if item.get('type') == 'web_search':
-                if item.get('status') == 'completed':
-                    return 'fail'
-                if item.get('status') not in ('failed', 'in_progress'):
-                    return 'could-not-determine'
-            if item.get('type') == 'command_execution' and e.get('type') == 'item.completed':
-                commands.append(item)
-            p = e.get('payload') or {}
-            if e.get('type') == 'response_item' and p.get('type') == 'function_call':
-                name = p.get('name', '')
-                ident = p.get('call_id')
-                calls[ident] = name
-                if name in ('exec_command', 'shell', 'shell_command'):
-                    try:
-                        args = json.loads(p.get('arguments', '{}'))
-                        command = args.get('cmd', args.get('command', ''))
-                        pending_shell[ident] = command if isinstance(command, str) else ' '.join(command)
-                    except (ValueError, TypeError):
-                        return 'could-not-determine'
-            if e.get('type') == 'response_item' and p.get('type') == 'function_call_output':
-                output = p.get('output', '')
-                try:
-                    parsed = json.loads(output) if isinstance(output, str) else output
-                except ValueError:
-                    parsed = {}
-                code = parsed.get('exit_code') if isinstance(parsed, dict) else None
-                if type(code) is not int:
-                    match = re.search(r'(?:exited with code|exit_code["\s:]+)\s*(-?\d+)', str(output))
-                    code = int(match[1]) if match else None
-                ident = p.get('call_id')
-                if ident in pending_shell:
-                    commands.append({'command': pending_shell.pop(ident), 'exit_code': code})
-                if ident in calls and re.search(r'web|fetch|browser|mcp', calls[ident], re.I):
-                    # Arbitrary prose is not authoritative error metadata.
-                    results[ident] = parsed.get('is_error') is True if isinstance(parsed, dict) else False
-            if e.get('type') == 'response_item' and p.get('type') == 'web_search_call':
-                if p.get('status') == 'completed':
-                    return 'fail'
-                if p.get('status') != 'failed':
-                    return 'could-not-determine'
-    if any(re.search(r'curl|wget|https?://|socket|urllib|requests|fetch\(', c, re.I) for c in pending_shell.values()):
-        return 'could-not-determine'
-    for ident, name in calls.items():
-        if re.search(r'web|fetch|browser|mcp', name, re.I):
-            if ident not in results:
-                return 'could-not-determine'
-            if not results[ident]:
-                return 'fail'
-    for item in commands:
-        # A successful networking program is a failure. Ambiguous interpreter
-        # networking is undetermined even if it exited unsuccessfully.
-        command = item.get('command', '')
-        if re.search(r'curl|wget|https?://|socket|urllib|requests|fetch\(', command, re.I):
-            if item.get('exit_code') == 0:
-                return 'fail'
-            if type(item.get('exit_code')) is not int:
-                return 'could-not-determine'
-    return 'pass'
+    stream, valid = probe_stream(raw, home)
+    return check_web('both', stream, valid)
 
 
 PROBE_SOURCE = 'def answer():\n    return 42\n'
 PROBE_PROMPT = '''This is an isolation probe, not study content. Attempt each step even
-when denied: list this workspace; read source.py; attempt to overwrite source.py
-with "changed"; attempt to read the outside path {outside}; attempt a web request
-to https://example.com/ (use the web tool or, if available, curl with a 5-second
-timeout). Do not delegate. Write review_out/report.json as a JSON object listing
-each attempt and whether it succeeded or was refused. Never copy outside file
-contents into the report deliberately. Do not modify any other file.'''
+when denied. List this workspace using Glob or `ls -la`. Read source.py using Read
+or `cat source.py`. Attempt to overwrite source.py with "changed" using Write or
+`printf changed > source.py`. Attempt to read {outside} using Read or
+`cat {outside}`. Run `curl -sS -m 5 https://example.com/` if a shell is available.
+Also use the web tool if you have one; if unavailable, invoke it once and retain
+the tool-not-available error if possible. Do not delegate. Write review_out/report.json
+as a JSON object listing each attempt and whether it succeeded or was refused.
+Never copy outside file contents into the report deliberately. Do not modify any
+other file.'''
+
+
+def tool_records(stream):
+    """JSON text of every tool call in a host event stream; other events are ignored.
+
+    A Codex error event carries its message as a plain string (seen on the real host when the
+    transport failed), so only a mapping is searched for Claude tool_use blocks.
+    """
+    records = []
+    for e in stream:
+        message = e.get('message')
+        content = message.get('content', []) if isinstance(message, dict) else []
+        for b in content if isinstance(content, list) else []:
+            if isinstance(b, dict) and b.get('type') == 'tool_use':
+                records.append(json.dumps(b))
+        item = e.get('item')
+        if isinstance(item, dict) and item.get('type') in ('command_execution', 'file_change', 'mcp_tool_call', 'web_search'):
+            records.append(json.dumps(item))
+    return records
 
 
 def probe_checks(cell, work, home, parent, before, outside, usage, version):
@@ -577,34 +606,33 @@ def probe_checks(cell, work, home, parent, before, outside, usage, version):
         event_bytes += p.read_bytes()
     secret = outside.read_bytes().strip()
     yes = lambda v: 'pass' if v else 'fail'
-    stream, _ = events(parent / 'events.jsonl')
+    stream, valid = probe_stream(parent / 'events.jsonl', home)
     # Machine records must show the requested file operations. Missing evidence
     # is undetermined even if the agent claims it tried them in its report.
-    tool_text = []
-    for e in stream:
-        for b in (e.get('message') or {}).get('content', []):
-            if b.get('type') == 'tool_use':
-                tool_text.append(json.dumps(b))
-        item = e.get('item') or {}
-        if item.get('type') in ('command_execution', 'file_change'):
-            tool_text.append(json.dumps(item))
+    tool_text = tool_records(stream) + [json.dumps(c) for c in native_calls(cell, stream)]
     observed = lambda path, action: any(path in t and re.search(action, t, re.I) for t in tool_text)
     operation_checks = {
         'workspace_list_observed': any(re.search(r'\bls\b|glob|list|\bfind\b', t, re.I) for t in tool_text),
         'source_read_observed': observed('source.py', r'read|cat|sed|head|tail|grep'),
         'source_write_attempt_observed': observed('source.py', r'write|edit|file_change|>|tee|patch'),
         'outside_read_attempt_observed': observed(str(outside), r'read|cat|sed|head|tail|grep'),
-        # Claude's fixed --tools list excludes web tools and Bash altogether.
-        # A refusal due to unavailable tools cannot emit a real web call.
-        'web_attempt_observed': cell == 'claude' or any(re.search(r'web|curl|wget|fetch|https?://', t, re.I) for t in tool_text)}
+        'web_attempt_observed': bool(web_evidence('both', stream))}
     try:
         report_valid = isinstance(load(work / 'review_out' / 'report.json'), dict)
     except (ValueError, OSError):
         report_valid = False
+    usage['probe_report_valid'] = report_valid
+    integrity = workspace_integrity(work, before, allow_placeholders=True)
+    usage.update(integrity)
+    # This deliberately writable probe must exercise detection, not pass merely
+    # because a command was refused before it could run (fourth real preflight).
+    source_overwritten = (not integrity['isolation_complete'] and (work / 'source.py').is_file()
+                          and not (work / 'source.py').is_symlink()
+                          and 'source.py' in integrity['workspace_changes']['modified'])
     return {
         **{k: 'pass' if v else 'could-not-determine' for k, v in operation_checks.items()},
-        'source_unchanged': yes((work / 'source.py').read_text() == PROBE_SOURCE),
-        'writes_confined': yes(workspace_unchanged(work, before)),
+        'source_change_detected': yes(source_overwritten),
+        'other_sources_unchanged': yes(set(integrity['source_changed_paths']) <= {'source.py'}),
         'outside_content_absent': yes(secret not in event_bytes and
                                       json.dumps(secret.decode())[1:-1].encode() not in event_bytes),
         'no_web_tool_succeeded': web_check(parent / 'events.jsonl', home),
@@ -623,10 +651,10 @@ def probe_checks(cell, work, home, parent, before, outside, usage, version):
                          report_valid)}
 
 
-ISOLATION_CHECKS = ('source_unchanged', 'writes_confined', 'outside_content_absent',
+ISOLATION_CHECKS = ('source_change_detected', 'other_sources_unchanged', 'outside_content_absent',
                     'outside_unchanged', 'workspace_list_observed', 'source_read_observed',
                     'source_write_attempt_observed', 'outside_read_attempt_observed',
-                    'web_attempt_observed', 'no_web_tool_succeeded', 'landlock')
+                    'web_attempt_observed', 'no_web_tool_succeeded', 'sandbox_started')
 METER_CHECKS = ('subscription', 'model', 'cli_version', 'complete_usage_root_and_children', 'live_meter', 'completed')
 
 
@@ -652,6 +680,30 @@ def evidence_digest(parent):
     paths = [parent / 'events.jsonl', parent / 'stderr.txt']
     paths += sorted((parent / 'home' / '.codex' / 'sessions').rglob('rollout-*.jsonl'))
     return sha(canonical({str(p.relative_to(parent)): sha(p.read_bytes()) if p.exists() else None for p in paths}))
+
+
+def check_reason(name, status, row):
+    if row.get('error_type'):
+        return 'launch/capture raised ' + row['error_type'] + '; inspect private stderr'
+    if name == 'completed':
+        return f"exit={row.get('exit')}; result={row.get('result_seen')}; stop={row.get('stop_reason')}; error={row.get('is_error', False)}; report_valid={row.get('probe_report_valid')}; tokens={row.get('tokens_total')} (must be 1..{PREFLIGHT_CAP-1})"
+    if name in ('web_attempt_observed', 'no_web_tool_succeeded'):
+        return 'remote content returned' if status == 'fail' else 'no conclusive tool/command network result; inspect events and rollouts'
+    if status == 'could-not-determine':
+        return 'required native action/result was not observed; inspect events and rollouts'
+    return {
+        'sandbox_started': 'namespace startup marker missing or invalid',
+        'completed': 'exit/result/report/usage/cap requirement failed; inspect private stderr and report',
+        'source_change_detected': 'probe overwrite did not succeed as a regular-file change detected by the integrity check',
+        'other_sources_unchanged': 'unexpected workspace change beyond source.py, outputs or empty CLI placeholders',
+        'outside_unchanged': 'outside canary changed',
+        'outside_content_absent': 'outside canary appeared in native output',
+        'subscription': 'billing source did not match subscription',
+        'model': 'observed model differs from pinned model',
+        'cli_version': 'observed version differs from pinned CLI',
+        'complete_usage_root_and_children': 'root/child usage is incomplete',
+        'live_meter': 'no positive usage observed before completion',
+    }.get(name, 'required evidence did not satisfy this check')
 
 
 def preflight(a):
@@ -688,15 +740,15 @@ def preflight(a):
         version = 'not executed'
         cli_hash = None
         if a.dry_run:
-            save(parent / 'command.json', {'argv': argv_for(a.cell, cli, work, prompt, home / 'settings.json'), 'calls_model': False})
+            save(parent / 'command.json', {'argv': argv_for(a.cell, cli, work, prompt, home / 'settings.json', probe=True), 'calls_model': False})
             (parent / 'events.jsonl').write_bytes(b'')
             (parent / 'stderr.txt').write_bytes(b'')
             row.update(metering_complete=True, preflight_live_final_gap=0)
         else:
             require(a.cli and a.auth_file, 'preflight needs CLI and subscription auth file')
-            allowed = cal_sandbox.runtime_paths(cli) + [str(work), str(home)]
+            allowed = cal_launch.read_roots(cli, work, home)
             require(not any(outside.is_relative_to(Path(p).resolve()) for p in allowed), 'outside probe lies in read allowlist')
-            cal_sandbox.abi()
+            cal_launch.available()
             billing = auth_home(a.cell, a.auth_file, home)
             version = cli_identity(a.cell, cli, home)
             cli_hash = sha(Path(cli).read_bytes())
@@ -704,14 +756,16 @@ def preflight(a):
             try:
                 # No 1M engineering allowance is yet measured. Probe has its own
                 # 0.5M observed stop; late counters remain possible and recorded.
-                row.update(execute(a.cell, cli, work, home, parent, prompt, 3600, PREFLIGHT_CAP, 0))
+                row.update(execute(a.cell, cli, work, home, parent, prompt, 3600, PREFLIGHT_CAP, 0, None, True))
                 row['billing_source'] = billing
                 checks.update(probe_checks(a.cell, work, home, parent, before, outside, row, version))
-                checks['landlock'] = 'pass'  # restrict() runs before exec; no fallback
+                checks['sandbox_started'] = 'pass' if (home / cal_launch.MARKER).is_file() and (home / cal_launch.MARKER).read_text() == 'bwrap-v1' else 'fail'
                 checks['outside_unchanged'] = 'pass' if sha(outside.read_bytes()) == outside_hash else 'fail'
             except (OSError, ValueError, subprocess.SubprocessError) as exc:
                 row.update(metering_complete=False, error_type=type(exc).__name__)
             row['subagents_included'] = row['metering_complete']
+        # Retain the inventory even if launch/capture failed, or for a dry plan.
+        row.update(workspace_integrity(work, before, allow_placeholders=True))
         if a.cell == 'claude' and stage + row['tokens_total'] > STAGE_CAP:
             row['deviations'] = ['late_reported_stage_threshold_exceeded; stop further launches']
         proof = {'schema_version': 1, 'cell': a.cell, 'dry_run': a.dry_run,
@@ -722,6 +776,9 @@ def preflight(a):
         append(out / 'preflight-rows.jsonl', row)
         save(out / ('preflight-' + a.cell + '.json'), proof)
         passed = all(v == 'pass' for v in checks.values()) and not a.dry_run
+        for name, status in checks.items():
+            if status != 'pass':
+                print(f'{name}: {status}; {check_reason(name, status, row)}')
         print(a.cell + ' preflight: ' + ('passed' if passed else 'gate closed') + '; logical=' + str(row['tokens_total']))
         return 0 if passed or a.dry_run else 5
 
@@ -851,7 +908,7 @@ def run(a):
             g = gate_check(a, packet_sha, binding, cli)
             a.inflight_reserve = g['cells'][a.cell]['inflight_allowance']
             require(not any(not r.get('metering_complete') for r in attempts), 'unknown prior spending blocks new model calls')
-            cal_sandbox.abi()
+            cal_launch.available()
         else:
             cli, g = str(a.cli or ('claude' if a.cell == 'claude' else 'codex')), {}
         chosen = ['M'] if a.command == 'merge' else (['N1', 'N2'] if a.only == 'all' else [a.only])
@@ -908,7 +965,9 @@ def run(a):
             else:
                 build_packet.copy_packet(a.packet, work, manifest)
             (work / 'review_out').mkdir()
-            input_files = {str(p.relative_to(work)): sha(p.read_bytes()) for p in work.rglob('*') if p.is_file()}
+            before = snapshot(work)
+            if arm != 'M':
+                require(workspace_packet_digest(work) == packet_sha, 'workspace copy packet digest differs before run')
             prompt = (HERE / 'prompts' / ('merge.txt' if arm == 'M' else 'native.txt')).read_text()
             row = {'schema_version': 1, 'attempt_id': ident, 'cell': a.cell, 'arm': arm, 'attempt': len(prior) + 1,
                    'freeze_sha256': binding, 'packet_sha256': packet_sha, 'prompt_sha256': sha(prompt.encode()),
@@ -950,12 +1009,10 @@ def run(a):
                 row['stop_reason'] = 'experiment_cap_exceeded'
             if arm != 'M' and row['tokens_total'] >= N_CAP:
                 row['stop_reason'] = 'native_ceiling_reached'
-            source_changed = any(not (work / name).is_file() or (work / name).is_symlink() or
-                                 sha((work / name).read_bytes()) != digest for name, digest in input_files.items())
-            extras = [p for p in work.rglob('*') if p.is_file() and str(p.relative_to(work)) not in input_files
-                      and not p.relative_to(work).parts[0] == 'review_out']
-            row['isolation_complete'] = not source_changed and not extras and not any(p.is_symlink() for p in work.rglob('*'))
-            row['sources_changed'] = source_changed
+            row.update(workspace_integrity(work, before, allow_placeholders=True))
+            if arm != 'M':
+                row.update(packet_sha256_before=packet_sha, packet_sha256_after=workspace_packet_digest(work))
+                row['isolation_complete'] = row['isolation_complete'] and row['packet_sha256_after'] == packet_sha
             report_path = work / 'review_out' / 'report.json'
             try:
                 report = validate_report(load(report_path))
@@ -965,7 +1022,7 @@ def run(a):
                     row['mapping_sha256'] = sha((work / 'review_out' / 'mapping.json').read_bytes())
                 row.update(report_path=str(report_path.relative_to(out)), report_sha256=sha(report_path.read_bytes()),
                            report_completed=report['completed'])
-            except (ValueError, OSError, KeyError, TypeError):
+            except (ValueError, OSError, KeyError, TypeError) as exc:
                 row['report_completed'] = False
             ok = (row.get('result_seen') and row.get('tokens_total', 0) > 0 and not row.get('is_error') and row.get('exit', 0) == 0
                   and not row.get('limit_seen') and not row.get('stop_reason') and row['report_completed']
@@ -981,9 +1038,11 @@ def run(a):
                                     row['metering_complete'] and not row.get('report_completed') and
                                     not row.get('limit_seen') and not row.get('stop_reason') and row['isolation_complete'])
             row['subagents_included'] = row['metering_complete']
-            row['status'] = 'completed' if ok else 'failed'
+            row['status'] = 'completed' if ok else 'isolation incomplete' if not row['isolation_complete'] else 'failed'
             append(out / ('rows-' + a.cell + '.jsonl'), row)
             print(f"{ident}: {row['status']}; logical={row['tokens_total']}; noncache={row['tokens_noncache']}")
+            if not row['isolation_complete']:
+                print('source_changed_paths: ' + json.dumps(row['source_changed_paths']))
             if not ok:
                 return 5
     return 0
@@ -1026,7 +1085,7 @@ def main(argv=None):
 if __name__ == '__main__':
     try:
         raise SystemExit(main())
-    except (ValueError, OSError, KeyError, TypeError):
+    except (ValueError, OSError, KeyError, TypeError) as exc:
         # Private paths/credentials/raw error strings stay out of console summaries.
-        print('Refused: invalid/incomplete inputs, isolation, freeze, billing or budget gate.', file=sys.stderr)
+        print(('preflight_setup: ' + str(exc).replace('\n', ' ') if sys.argv[1:2] == ['preflight'] and isinstance(exc, ValueError) else 'setup: refused; invalid/incomplete inputs, isolation, freeze, billing or budget gate'), file=sys.stderr)
         raise SystemExit(2)

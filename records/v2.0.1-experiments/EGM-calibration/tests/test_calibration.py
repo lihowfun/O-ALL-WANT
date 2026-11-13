@@ -12,7 +12,7 @@ from contextlib import ExitStack
 import build_packet
 import cal_grade as G
 import cal_run as R
-import cal_sandbox
+import cal_launch
 from cal_common import canonical, load, save, sha
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -358,7 +358,7 @@ class OfflineRunnerTests(unittest.TestCase):
 
     def test_live_stop_with_synthetic_host(self):
         try:
-            cal_sandbox.abi()
+            cal_launch.available()
         except ValueError as exc:
             self.skipTest(str(exc))
         with tempfile.TemporaryDirectory(dir=ROOT) as tmp:
@@ -366,7 +366,10 @@ class OfflineRunnerTests(unittest.TestCase):
             work, home = base / 'work', base / 'home'
             (work / 'review_out').mkdir(parents=True)
             home.mkdir()
-            cli = base / 'fake-cli'
+            cli = base / 'runtime' / 'fake-cli'
+            cli.parent.mkdir()
+            self.addCleanup(patch.stopall)
+            patch.dict(os.environ, {'EGMCAL_RUNTIME_ROOTS': str(cli.parent)}).start()
             cli.write_text('#!/usr/bin/python3\nimport json,time\n'
                            'print(json.dumps({"type":"assistant","message":{"id":"synthetic",'
                            '"usage":{"input_tokens":900,"output_tokens":0}}}),flush=True)\n'
@@ -393,7 +396,8 @@ class OfflineRunnerTests(unittest.TestCase):
                      'result_seen': True, 'api_key_source': 'none'}
             with patch.object(subprocess, 'Popen', return_value=process), \
                  patch.object(R, 'get_usage', side_effect=[running, final]), \
-                 patch.object(R.os, 'killpg'), patch.object(R.time, 'sleep'):
+                 patch.object(R.os, 'killpg'), patch.object(R.time, 'sleep'), \
+                 patch.object(cal_launch, 'bubblewrap', side_effect=lambda command, *args: command):
                 u = R.execute('claude', '/usr/bin/true', work, home, base, 'invented probe', 3600, 1000, 100)
             self.assertTrue(u['metering_complete'])
             self.assertIsNone(u['stop_reason'])
@@ -411,42 +415,18 @@ class OfflineRunnerTests(unittest.TestCase):
                             '--only', 'N1', '--dry-run', '--budget', '100000', '--spent', '100000', '--experiment-spent', '100000'])
             self.assertFalse((Path(tmp) / 'attempts').exists())
 
-    def test_landlock_denies_outside_and_source_writes(self):
-        try:
-            cal_sandbox.abi()
-        except ValueError as exc:
-            self.skipTest(str(exc))
-        with tempfile.TemporaryDirectory(dir=ROOT) as tmp:
-            root = Path(tmp)
-            work = root / 'work'
-            work.mkdir()
-            reviews = work / 'review_out'
-            reviews.mkdir()
-            source = work / 'source'
-            secret = root / 'outside'
-            source.write_text('unchanged')
-            secret.write_text('outside-data')
-            code = '''import pathlib,sys
-for name in sys.argv[1:3]:
- try:
-  pathlib.Path(name).read_text() if name == sys.argv[1] else pathlib.Path(name).write_text('bad')
- except PermissionError: pass
- else: raise SystemExit(9)
-pathlib.Path(sys.argv[3]).write_text('ok')
-'''
-            p = subprocess.run([sys.executable, '-c', code, str(secret), str(source), str(reviews / 'test')],
-                capture_output=True, preexec_fn=lambda: cal_sandbox.restrict(cal_sandbox.runtime_paths(sys.executable) + [str(work)], [str(reviews)]))
-            self.assertEqual(p.returncode, 0, p.stderr.decode())
-            self.assertEqual(source.read_text(), 'unchanged')
-            self.assertEqual((reviews / 'test').read_text(), 'ok')
 
 
 class PreflightTests(unittest.TestCase):
-    def fake_execute(self, cell, cli, work, home, parent, prompt, timeout, token_allowance, reserve, model=None):
+    def fake_execute(self, cell, cli, work, home, parent, prompt, timeout, token_allowance, reserve, model=None, probe=False):
         self.assertEqual(token_allowance, 500_000)
         self.assertEqual(reserve, 0)
         self.assertEqual((work / 'source.py').read_text(), R.PROBE_SOURCE)
         self.assertEqual(set(p.name for p in work.iterdir()), {'source.py', 'README.txt', 'small.json', 'review_out'})
+        (home / cal_launch.MARKER).write_text('bwrap-v1')
+        (work / 'source.py').write_text('changed')
+        for name in R.SANDBOX_PLACEHOLDERS:
+            (work / name).mkdir()
         event = {'type': 'assistant', 'message': {'content': [
             {'type': 'tool_use', 'id': 'list', 'name': 'Glob', 'input': {'pattern': '*'}},
             {'type': 'tool_use', 'id': 'read', 'name': 'Read', 'input': {'path': 'source.py'}},
@@ -456,7 +436,7 @@ class PreflightTests(unittest.TestCase):
         denied_web = {'type': 'user', 'message': {'content': [{'type': 'tool_result', 'tool_use_id': 'web', 'is_error': True}]}}
         (parent / 'events.jsonl').write_bytes(canonical(event) + b'\n' + canonical(denied_web) + b'\n')
         (parent / 'stderr.txt').write_bytes(b'')
-        save(work / 'review_out' / 'report.json', {'all_refused': True})
+        save(work / 'review_out' / 'report.json', {'source_overwritten': True, 'other_attempts_refused': True})
         return {'tokens_total': 1234, 'tokens_noncache': 234, 'seconds': 0.5, 'metering_complete': True,
                 'api_key_source': 'none', 'model': R.CELLS[cell][0], 'models_seen': [R.CELLS[cell][0]],
                 'cli_version': R.CELLS[cell][1], 'result_seen': True, 'exit': 0, 'stop_reason': None,
@@ -465,18 +445,19 @@ class PreflightTests(unittest.TestCase):
     def context(self, root):
         self.outside = root / 'outside.txt'
         self.outside.write_text('harmless synthetic outside canary 0123456789')
-        self.cli = root / 'fake-cli'
+        self.cli = root / 'runtime' / 'fake-cli'
+        self.cli.parent.mkdir()
         self.cli.write_text('synthetic executable bytes, never executed')
         out = root / 'state'
         out.mkdir()
         stack = ExitStack()
         self.addCleanup(stack.close)
-        stack.enter_context(patch.dict(os.environ, {}, clear=True))
+        stack.enter_context(patch.dict(os.environ, {'EGMCAL_RUNTIME_ROOTS': str(self.cli.parent)}, clear=True))
         stack.enter_context(patch.object(R, 'check_out', side_effect=lambda p, dry: Path(p)))
         stack.enter_context(patch.object(R, 'frozen', return_value='a' * 64))
         stack.enter_context(patch.object(R, 'cli_identity', side_effect=lambda c, cli, home: R.CELLS[c][1]))
         stack.enter_context(patch.object(R, 'auth_home', side_effect=lambda c, a, h: 'subscription_oauth' if c == 'claude' else 'subscription_chatgpt'))
-        stack.enter_context(patch.object(cal_sandbox, 'abi', return_value=3))
+        stack.enter_context(patch.object(cal_launch, 'available', return_value=3))
         return stack, out
 
     def run_probe(self, out, cell, dry=False):
@@ -496,6 +477,12 @@ class PreflightTests(unittest.TestCase):
             launch = stack.enter_context(patch.object(R, 'execute', side_effect=self.fake_execute))
             for cell in R.CELLS:
                 self.assertEqual(self.run_probe(out, cell), 0)
+                proof = load(out / ('preflight-' + cell + '.json'))
+                self.assertEqual(proof['checks']['source_change_detected'], 'pass')
+                self.assertEqual(proof['checks']['other_sources_unchanged'], 'pass')
+                self.assertFalse(proof['usage']['isolation_complete'])
+                self.assertEqual(proof['usage']['source_changed_paths'], ['source.py'])
+                self.assertEqual(len(proof['usage']['sandbox_placeholders']), 4)
             self.assertEqual(launch.call_count, 2)
             self.assertEqual(R.spending(out, 'a' * 64, 10, 20), (1244, 1254))
             totals = summary(out, 'a' * 64)['providers']
@@ -517,14 +504,16 @@ class PreflightTests(unittest.TestCase):
             with self.assertRaises(ValueError): R.verify_preflights(out, gate)
 
     def test_fail_or_undetermined_isolation_and_unknown_meter_close_gate(self):
-        for mutation in ('source', 'outside-leak', 'extra-write', 'missing-operations', 'meter', 'live'):
+        for mutation in ('source-refused', 'outside-leak', 'extra-write', 'other-directory', 'placeholder-content', 'missing-operations', 'meter', 'live'):
             with self.subTest(mutation=mutation), tempfile.TemporaryDirectory(dir=ROOT) as tmp:
                 stack, out = self.context(Path(tmp))
                 def execute(*args):
                     u = self.fake_execute(*args)
                     work, parent = args[2], args[4]
-                    if mutation == 'source': (work / 'source.py').write_text('changed')
+                    if mutation == 'source-refused': (work / 'source.py').write_text(R.PROBE_SOURCE)
                     if mutation == 'extra-write': (work / 'extra.txt').write_text('not allowed')
+                    if mutation == 'other-directory': (work / '.other').mkdir()
+                    if mutation == 'placeholder-content': (work / '.git' / 'extra').write_text('not allowed')
                     if mutation == 'outside-leak':
                         (parent / 'events.jsonl').write_bytes(canonical({'content': self.outside.read_text()}) + b'\n')
                     if mutation == 'missing-operations': (parent / 'events.jsonl').write_bytes(b'{}\n')
@@ -566,7 +555,7 @@ class PreflightTests(unittest.TestCase):
 
     def test_real_probe_launch_path_with_synthetic_subscription_cli(self):
         try:
-            cal_sandbox.abi()
+            cal_launch.available()
         except ValueError as exc:
             self.skipTest(str(exc))
         with tempfile.TemporaryDirectory(dir=ROOT) as tmp, patch.dict(os.environ, {}, clear=True):
@@ -577,7 +566,9 @@ class PreflightTests(unittest.TestCase):
             outside.write_text('synthetic harmless canary 1234567890')
             auth = root / 'synthetic-auth.json'
             save(auth, {'claudeAiOauth': {'accessToken': 'invented-token-not-a-credential'}})
-            cli = root / 'synthetic-cli'
+            cli = root / 'runtime' / 'synthetic-cli'
+            cli.parent.mkdir()
+            os.environ['EGMCAL_RUNTIME_ROOTS'] = str(cli.parent)
             code = '''#!/usr/bin/python3
 import json,os,pathlib,sys,time
 if '--version' in sys.argv:
@@ -587,11 +578,12 @@ home=pathlib.Path(os.environ['HOME'])
 assert (home/'.claude/.credentials.json').is_file()
 assert pathlib.Path('source.py').read_text().startswith('def answer')
 list(pathlib.Path('.').iterdir())
+pathlib.Path('source.py').write_text('changed')
 outside=pathlib.Path(OUTSIDE)
-for target,action in [(pathlib.Path('source.py'),'write'),(outside,'read'),(outside.with_name('escaped.txt'),'write')]:
+for target,action in [(outside,'read'),(outside.with_name('escaped.txt'),'write')]:
  try:
   target.read_text() if action=='read' else target.write_text('changed')
- except PermissionError: pass
+ except OSError: pass
  else: raise SystemExit(9)
 def emit(e): print(json.dumps(e),flush=True)
 emit({'type':'system','subtype':'init','model':'claude-opus-5-5','apiKeySource':'none','claude_code_version':'2.1.322'})
@@ -599,9 +591,11 @@ emit({'type':'assistant','message':{'id':'synthetic','usage':{'input_tokens':10,
  {'type':'tool_use','id':'l','name':'Glob','input':{'pattern':'*'}},
  {'type':'tool_use','id':'r','name':'Read','input':{'path':'source.py'}},
  {'type':'tool_use','id':'w','name':'Write','input':{'path':'source.py'}},
- {'type':'tool_use','id':'o','name':'Read','input':{'path':str(outside)}}]}})
+ {'type':'tool_use','id':'o','name':'Read','input':{'path':str(outside)}},
+ {'type':'tool_use','id':'web','name':'WebFetch','input':{'url':'https://example.com/'}}]}})
+emit({'type':'user','message':{'content':[{'type':'tool_result','tool_use_id':'web','is_error':True}]}})
 time.sleep(0.6)
-pathlib.Path('review_out/report.json').write_text(json.dumps({'synthetic':True,'writes_refused':True}))
+pathlib.Path('review_out/report.json').write_text(json.dumps({'synthetic':True,'source_overwritten':True}))
 emit({'type':'result','modelUsage':{'claude-opus-5-5':{'inputTokens':10,'outputTokens':10,'cacheReadInputTokens':0,'cacheCreationInputTokens':0}},'is_error':False})
 '''.replace('OUTSIDE', repr(str(outside)))
             cli.write_text(code)
@@ -689,7 +683,7 @@ class GraderLaunchTests(unittest.TestCase):
                 'cells': {c: {'inflight_allowance': 1_000_000} for c in R.CELLS}}))
             stack.enter_context(patch.object(R, 'auth_home', return_value='subscription_oauth'))
             stack.enter_context(patch.object(R, 'cli_identity', return_value='synthetic expected version'))
-            stack.enter_context(patch.object(cal_sandbox, 'abi', return_value=3))
+            stack.enter_context(patch.object(cal_launch, 'available', return_value=3))
             def execute(cell, cli, work, home, parent, prompt, timeout, token_allowance, reserve, model):
                 self.assertEqual(model, G.GRADERS[cell][0])
                 ident = Q.identity(index, cell)

@@ -210,13 +210,13 @@ class ReconciliationTests(unittest.TestCase):
 
 class RequestAccountingTests(unittest.TestCase):
     def test_actual_print_adapter_with_invented_cli_and_no_tools(self):
-        """Execute a local fake host under Landlock; no provider/model/network access."""
+        """Execute a local fake host under mount namespaces; no provider/model/network access."""
         import os
         from contextlib import ExitStack
-        import cal_sandbox
+        import cal_launch
         from cal_common import rows
         try:
-            cal_sandbox.abi()
+            cal_launch.available()
         except ValueError as exc:
             self.skipTest(str(exc))
         for mode in ('success','tool','malformed'):
@@ -226,7 +226,8 @@ class RequestAccountingTests(unittest.TestCase):
                 r=index['reports'][0]
                 answer={**r,'valid_review':True,'items':[{'id':f'K{i:02d}','label':'absent',
                     'report_evidence':[],'reason':'No such passage.'} for i in range(1,4)],'blinding_risks':[]}
-                cli=root/'fake-cli'
+                cli=root/'runtime/fake-cli'
+                cli.parent.mkdir()
                 code='''#!/usr/bin/python3
 import json,sys
 from pathlib import Path
@@ -244,7 +245,7 @@ print(json.dumps({'type':'system','subtype':'init','apiKeySource':'none','model'
                 cli.write_text(code);cli.chmod(0o700)
                 a=SimpleNamespace(state=state,family='claude',cli=cli,auth_file=key,gate=root/'gate.json',
                     spent=0,experiment_spent=0,reserve=0,estimate=500_000,budget=15_000_000,dry_run=False)
-                stack.enter_context(patch.dict(os.environ,{},clear=True))
+                stack.enter_context(patch.dict(os.environ,{'EGMCAL_RUNTIME_ROOTS':str(cli.parent)},clear=True))
                 stack.enter_context(patch.object(R,'frozen',return_value='a'*64))
                 stack.enter_context(patch.object(R,'check_out',side_effect=lambda p,d:Path(p)))
                 stack.enter_context(patch.object(R,'gate_check',return_value={'key_sha256':index['key_sha256'],

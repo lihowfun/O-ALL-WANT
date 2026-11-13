@@ -12,7 +12,7 @@ import cal_grade as G
 import cal_ledger as L
 import cal_requests as Q
 import cal_run as R
-import cal_sandbox
+import cal_launch
 from cal_common import append, canonical, load, rows, save, sha
 from tests.test_calibration import ROOT, fixture
 from tests import test_calibration as T
@@ -163,7 +163,7 @@ class BlindReviewTests(unittest.TestCase):
 
     def test_p04_actual_grader_and_reconciliation_requests_reject_empty_usage(self):
         try:
-            cal_sandbox.abi()
+            cal_launch.available()
         except ValueError as exc:
             self.skipTest(str(exc))
         for stage in ('grading', 'reconciliation'):
@@ -171,7 +171,8 @@ class BlindReviewTests(unittest.TestCase):
                 with self.subTest(stage=stage, streamed=streamed), tempfile.TemporaryDirectory(dir=ROOT) as tmp, ExitStack() as stack:
                     root = Path(tmp)
                     _, _, key, _, state, _, index = T.GraderLaunchTests().setup_inputs(root)
-                    cli = root / 'fake-cli'
+                    cli = root / 'runtime/fake-cli'
+                    cli.parent.mkdir()
                     events = [{'type': 'system', 'subtype': 'init', 'apiKeySource': 'none', 'model': 'claude-fable-5-2'}]
                     if streamed:
                         events.append({'type': 'assistant', 'message': {'id': 'm', 'usage': {'input_tokens': 500_000, 'output_tokens': 50}}})
@@ -180,7 +181,7 @@ class BlindReviewTests(unittest.TestCase):
                     cli.chmod(0o700)
                     a = SimpleNamespace(state=state, family='claude', cli=cli, auth_file=key, gate=root / 'gate.json',
                         spent=0, experiment_spent=0, estimate=500_000, budget=15_000_000, dry_run=False)
-                    stack.enter_context(patch.dict(R.os.environ, {}, clear=True))
+                    stack.enter_context(patch.dict(R.os.environ, {'EGMCAL_RUNTIME_ROOTS':str(cli.parent)}, clear=True))
                     stack.enter_context(patch.object(R, 'frozen', return_value='a' * 64))
                     stack.enter_context(patch.object(R, 'check_out', side_effect=lambda p, d: Path(p)))
                     stack.enter_context(patch.object(R, 'gate_check', return_value={'key_sha256': index['key_sha256'], 'cells': {'claude': {'inflight_allowance': 1_000_000}}}))

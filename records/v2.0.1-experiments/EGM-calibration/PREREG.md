@@ -63,20 +63,56 @@ There is no EGM, extra document, extra N, persona arm or prompt tuning in this s
 Each attempt gets fresh workspace, HOME and session; no resume. Copy only the
 explicit subscription OAuth credential file, never existing config, memory,
 plugins or sessions. Reject nonempty API key/token/provider override environment
-variables rather than silently unsetting them. Source is Landlock read-only;
-only review_out and fresh HOME are writable. Runtime read exceptions are OS
-runtime, selected proc/dev files, CLI executable, workspace and fresh HOME, never
-the study parent or other research. HOME is a necessary host/auth/accounting
-exception, not unrestricted agent access. Packet bytes and exact file set are
-verified before/after each native attempt. No EGM plugin is loaded.
+variables rather than silently unsetting them. Both hosts run through the U2-style
+bubblewrap mount allowlist: tmpfs root, system runtime, selected DNS/TLS files,
+fresh HOME, explicit dedicated EGMCAL_RUNTIME_ROOTS folder and workspace only.
+The per-attempt workspace copy and fresh HOME are host-backed writable mounts
+(ephemeral /tmp and dev/proc support the runtime). This lets the CLI prepare its
+own protected-path mount points. Isolation of native source is by detection plus
+the unchanged instruction not to modify existing files, not by a read-only mount.
+No ordinary
+HOME, study parent or other research is mounted. HOME is a necessary
+host/auth/accounting exception. Packet bytes and exact file set are verified
+before/after each native attempt, recording both official packet file-array
+digests. Any changed, added or removed packet file, unexpected directory, symlink,
+special or unreadable entry produces terminal `isolation incomplete`, with
+`source_changed_paths` and categorized `workspace_changes`; the attempt is charged
+and never redrawn. Outside review_out, the only new entries tolerated are empty
+top-level `.git`, `.agents`, `.codex`, `.aws` directories (including the CLI's
+empty directory mount stubs), recorded as `sandbox_placeholders` per attempt.
+U2's second Codex preflight listed `.aws`, `.codex`, `.git`; `.agents` already
+held packet skills. The installed 0.167.2 protected-path builder names all four;
+the evidence and extraction are recorded in fixtures/host-preflight/README.md.
+Existing packet paths under those names remain protected by the full inventory;
+nonempty directories and regular-file or symlink stubs get no exemption.
+Graders/reconciliation retain their strict input inventories without this exception.
+Landlock is not used; the obsolete helper is removed from the freeze list. Runtime folders are never guessed.
 
-Native Claude retains X2 Read/Write/Glob/Grep/Agent/Skill, disables Bash, web and
-MCP. Codex disables web search and sandbox network access. Real preflight for
-both cells must demonstrate source-write and outside-read denials, tool isolation,
+Native Claude retains X2 Read/Write/Glob/Grep/Agent/Skill. All Claude launches use
+no settings sources, enabledPlugins={}, disabled hooks, strict empty MCP and
+explicit tools; native excludes Bash/web and Fable uses no tools. The harmless built-in Claude
+preflight adds sandboxed Bash solely to observe curl failure; network is denied,
+unsandboxed Bash is refused, and source changes are detected after the probe. All Codex
+launches disable apps, plugins, remote_plugin, plugin_discovery_prefetch,
+browser_use, browser_use_external, browser_use_full_cdp_access, in_app_browser,
+computer_use and skill_mcp_dependency_install, with mcp_servers={} and
+web_search="disabled". Its own workspace-write sandbox stays on, with network
+off. Skills and shell remain available for Codex study runs. Exact per-kind
+flags are in RUNBOOK.md. Successful native MCP/hosted/remote web content is a
+failed isolation check, denied attempts pass, and no attempt is undetermined.
+Real preflight for
+both cells must demonstrate a successful source.py overwrite and detection by
+the same integrity checker (`source_change_detected: pass`), unchanged other
+sources (`other_sources_unchanged: pass`), outside-read denial, tool isolation,
 subscription/model/version and complete root/children metering. Missing observable
 attempts/counters are could-not-determine, which closes the gate. Probe input is
 three harmless files, no study packet/key; observed stop is 500,000 tokens per
-probe, late usage still charged. Dry preparation never invokes even `--version`;
+probe, late usage still charged. The intentional probe mutation makes its raw
+`usage.isolation_complete` false; the gate requires the detection checks to pass.
+A refused source overwrite fails this probe; it cannot validate detection.
+The web checks remain unchanged: a conclusive refused curl can establish no
+network success, while unavailable hosted web alone cannot replace a missing
+command result. Dry preparation never invokes even `--version`;
 it creates synthetic reports and zero-token rows, cannot authorize a real gate,
 and cannot mix with real data or enter grading.
 

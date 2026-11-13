@@ -370,7 +370,7 @@ def run_grader(a):
         return run_claude_grades(a)
     import build_packet
     import cal_run as R
-    import cal_sandbox
+    import cal_launch
     R.no_api_keys(os.environ)
     binding = R.frozen()
     out = R.check_out(a.state, a.dry_run)
@@ -435,7 +435,7 @@ def run_grader(a):
             (parent / 'events.jsonl').write_bytes(b'')
             (parent / 'stderr.txt').write_bytes(b'')
         else:
-            cal_sandbox.abi()
+            cal_launch.available()
             billing = R.auth_home(a.family, a.auth_file, home)
             version = R.cli_identity(a.family, cli, home)
             save(parent / 'intent.json', {'id': ident, 'freeze_sha256': binding, 'model': model,

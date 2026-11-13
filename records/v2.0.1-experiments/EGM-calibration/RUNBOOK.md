@@ -6,6 +6,9 @@ All raw state/maps/grades/credentials remain private on local HOME storage.
 No external shared Claude work may race with these commands. Stop on nonzero;
 never substitute a new grader or redraw a terminal attempt.
 
+Export EGMCAL_RUNTIME_ROOTS (os.pathsep-separated) with each CLI's own self-contained runtime folder, holding CLI files only;
+exactly one folder must contain the CLI in use and must not be HOME, an ancestor of HOME, or a system root. Escaping symlinks are refused. The folder is mounted read-only at /opt/egmcal-runtime; it is never guessed.
+
 Set these inputs in a clean shell (unexpected nonempty API/provider credentials
 are refused, not silently removed). CLI resolved bytes/versions must remain
 Claude 2.1.322 and Codex 0.167.2. Set KEY to the already corrected frozen key.
@@ -234,9 +237,9 @@ export PYTHONDONTWRITEBYTECODE=1
 /usr/bin/python3 build_packet.py "$PACKET"
 /usr/bin/python3 freeze_tools.py --check
 /usr/bin/python3 -m unittest -v
-/usr/bin/python3 cal_run.py native --cell codex --packet "$PACKET" --out .dry-round4 --dry-run
-/usr/bin/python3 cal_run.py native --cell claude --only N1 --packet "$PACKET" --out .dry-round4 --dry-run
-/usr/bin/python3 cal_run.py native --cell claude --only N2 --packet "$PACKET" --out .dry-round4 --dry-run
+/usr/bin/python3 cal_run.py native --cell codex --packet "$PACKET" --out .dry-hostwrite --dry-run
+/usr/bin/python3 cal_run.py native --cell claude --only N1 --packet "$PACKET" --out .dry-hostwrite --dry-run
+/usr/bin/python3 cal_run.py native --cell claude --only N2 --packet "$PACKET" --out .dry-hostwrite --dry-run
 ```
 
 Repeat native dry commands: exactly two immutable rows per cell. Dry N2 creates
@@ -248,3 +251,118 @@ integer, with nonzero usage in at least one bucket for output-producing runs.
 Missing/empty/invalid buckets retain observed lower bounds and mark native,
 grader and reconciliation metering incomplete. Offline tests do not certify real
 CLI flags, authentication, sandbox or metering.
+
+
+## Host launch flags after real preflight fixes (2026-11-14)
+
+Every inference path uses the following external-feature restrictions, including
+study/native runs, merge (where retained), graders, reconciliation (where present)
+and built-in preflight. No existing user or project settings are loaded. Fresh
+HOME contains only the explicit subscription credential and fresh runtime state;
+no plugin directories or MCP configs are mounted/copied. Runtime must be a
+lead-supplied dedicated folder holding CLI files only. The outer namespace keeps
+model transport networking; model shell commands use the CLI network-off sandbox.
+No real CLI was exercised offline for this revision; the next preflight must
+confirm CLI flag acceptance, nested command sandbox, report writes, billing,
+metering and tool-surface removal. Old runner-bound proofs are invalidated.
+
+Codex common base (MODEL is pinned per launch kind), plus every restriction below:
+
+```text
+exec --json --model MODEL -c 'model_reasoning_effort="high"'
+-c sandbox_workspace_write.network_access=false
+-c sandbox_workspace_write.exclude_slash_tmp=true
+-c sandbox_workspace_write.exclude_tmpdir_env_var=true
+--sandbox workspace-write --skip-git-repo-check --ignore-user-config
+--cd /home/dev/proj -
+-c features.apps=false
+-c features.plugins=false
+-c features.remote_plugin=false
+-c features.plugin_discovery_prefetch=false
+-c features.browser_use=false
+-c features.browser_use_external=false
+-c features.browser_use_full_cdp_access=false
+-c features.in_app_browser=false
+-c features.computer_use=false
+-c features.skill_mcp_dependency_install=false
+-c 'mcp_servers={}'
+-c 'web_search="disabled"'
+```
+
+Codex native/merge/preflight use MODEL=gpt-6.1-sol; grader and reconciliation
+use MODEL=gpt-6-astra. Shell/skill discovery is left enabled for all these Codex
+paths because the grader/reconciler writes the requested JSON using packet
+files. No shell/multi-agent feature is globally disabled.
+
+Claude common flags:
+
+```text
+-p --output-format stream-json --verbose --model MODEL --effort high
+--permission-mode acceptEdits --setting-sources ''
+--strict-mcp-config --mcp-config '{"mcpServers":{}}'
+--settings /home/dev/settings.json --no-session-persistence
+```
+
+Claude native/merge add the prompt argument and
+`--tools Read,Write,Glob,Grep,Agent,Skill`, MODEL=claude-opus-5-5. Claude per-report
+grading/reconciliation use MODEL=claude-fable-5-2, `--tools ''`, with the inline
+prompt on stdin. Settings set `enabledPlugins={}`, `disableAllHooks=true` and
+permissions deny WebSearch, WebFetch, Edit and reads of fresh HOME auth/config
+paths. The per-attempt workspace copy is writable so the CLI can create its
+protected-path mount points; native source integrity is enforced by the unchanged
+instruction plus before/after inventory and packet digest checks. The launcher does not pass
+`--plugin-dir`; with fresh HOME, empty settings sources and empty enabledPlugins,
+there are no plugins to load. It leaves Skill available for native review.
+
+`cal_launch.py` is the real shared launcher for both hosts. The obsolete
+`cal_sandbox.py` is removed, including from the freeze list; offline tests now
+exercise bubblewrap. Shell commands and patch writes must work under the CLI's nested sandbox;
+the source overwrite must succeed and be detected; outside reads must be refused.
+The probe names `cat`/Read for
+the outside path, curl with a five-second timeout, and a web-tool attempt.
+Claude preflight alone adds Bash to make the concrete curl attempt observable:
+`--tools Read,Write,Glob,Grep,Bash,Agent,Skill`, MODEL=claude-opus-5-5. Its settings
+enable the Bash sandbox, autoAllowBashIfSandboxed=true,
+allowUnsandboxedCommands=false and network.allowedDomains=[]. Native/merge still
+deny Bash and retain the original listed tools. The harmless probe intentionally
+modifies source.py to exercise the post-run integrity checker. Web tools remain
+excluded in every launch. Missing attempts still keep the gate closed.
+
+Web checks inspect native shell, MCP and hosted search/browse results. Any
+successful remote call/content fails even when another record is ambiguous.
+An observed DNS/refusal/unavailable error passes both no-success and attempt
+checks. Missing attempts or unresolved results are could-not-determine. The real
+egmcal-3 hosted call is now a failing fixture. Trimming is documented in
+fixtures/host-preflight/README.md. Each failed/undetermined preflight check prints
+its name, status and reason on one line; inspect private traces for details.
+
+After the fifth pre-data host fix, rerun both real preflights in new private state;
+carry forward all previous failed-preflight usage. Confirm shell commands and
+apply_patch actually execute, report.json is valid, `source_change_detected` and
+`other_sources_unchanged` both pass, outside reads remain denied, and curl returns
+a conclusive refusal/DNS failure with `no_web_tool_succeeded: pass`. A refused
+source overwrite now fails: it does not exercise detection. The intentional probe
+mutation is recorded in usage as `isolation_complete=false`, with source.py in
+`source_changed_paths`; gate authorization uses the explicit preflight checks.
+Native packet mutations instead produce terminal `status="isolation incomplete"`
+and `retryable=false`, listing all changed paths and recording
+`packet_sha256_before`/`packet_sha256_after`. Never repair and redraw that attempt.
+Only new empty top-level `.git`, `.agents`, `.codex`, `.aws` directories, including
+empty directory mount stubs, may accompany review_out; inspect the per-attempt
+`sandbox_placeholders` list. Contents, regular-file stubs, links, other new
+directories and changes to existing packet entries are violations. These names
+come from U2's listing and the installed pinned CLI's protected-path builder;
+see fixtures/host-preflight/README.md. Grader input inventories remain strict.
+Old proofs/gates bind earlier runner bytes and cannot authorize this revision.
+Offline verification for this revision: 81 tests pass (six new regressions in
+`tests/test_hostwrite.py`); native dry runs in `.dry-hostwrite` produce two rows
+per cell and repeating all four commands adds none. Both dry preflights in
+`.dry-preflight-hostwrite` retain undetermined checks and zero-token usage.
+The dry verification forbids subprocess creation and confirms all six plans have
+`calls_model=false`. Use new dry state roots for another verification. No real
+preflight, model call or gate authorization was performed for this revision.
+
+CLI identity discovery runs only `CLI --version`, in a separate fresh bubblewrap
+namespace with no subscription credential and fresh HOME. It
+cannot load operator config. The command is only `--version`, with no tools or prompt. Dry commands skip even this
+identity launch. Version discovery is not an inference launch.

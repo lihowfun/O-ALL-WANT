@@ -31,7 +31,12 @@ The eligibility check cost about twenty times the allowance the design had given
 design's Claude estimate (2.66–3.60M for the stage, native review 0.67M per run, scaled from small
 documents) was withdrawn before any run for that reason; see `PREREG.md`, budget section.
 
-Frozen preparation hash (`freeze_tools.py --check`): `d046bb592f6c038a9f8a36c01f1fcaa64bd82ebde0dffbad311692e541188ce5`.
+Frozen preparation hash (`freeze_tools.py --check`), final: `469e78bd8a7e475c40e17c799ed7cdc9d299b8daba3cd859bf8cee56856c21b9` (freeze 7).
+The first freeze was `d046bb592f6c038a9f8a36c01f1fcaa64bd82ebde0dffbad311692e541188ce5`. Between the two, six real preflights on the host exposed defects in
+the launch and isolation layer and in the preflight's own checks (DNS configuration unreadable, the CLI unable to start its tool host, the CLI's command sandbox
+unable to start inside the first wrapper, a hosted web tool that no local network rule blocks, a read-only workspace mount, a refused command read as undetermined).
+Each fix was made before any study run and is listed in `DEVIATIONS.md`; prompts, key, decision table, scoring and budget rules did not change. The earlier
+manifests are kept as `freeze_manifest.freeze1.json` … `freeze6.json`.
 Packet tree digest: `3f61293d1b071118f73eb4590dfcefc437ecd12da735c1bd6025b4f24dd21bc1` (572 files).
 One blind review of the package before freeze found five blockers in the scripts; all five were fixed
 and confirmed closed by the same reviewer (`review/`).
