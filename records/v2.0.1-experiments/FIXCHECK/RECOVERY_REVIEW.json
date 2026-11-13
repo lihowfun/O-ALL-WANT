@@ -1,0 +1,21 @@
+{
+  "verdict": "PASS",
+  "criteria": "4/4 PASS",
+  "reviewer": "fresh-context fixcheck_recovery_review",
+  "script_sha256": "5a5dbcd6428507c401a540d11043bcef352027c0fb72b70efefa931155180c62",
+  "row_sha256": "8576cbfbeaf7b09a57e5d9141df557b5f81ca7d89fd9db25abfd4fde12080b20",
+  "manifest_sha256": "d1bec84b95004f7d27f9adf6a1acc07ae53be41f45fcbb50943c334f1ea5b80e",
+  "limits": "Review applies to offline recovery only, not the full FIXCHECK result or release. Null exit/wall time preserved; truncated rollout event metadata are observed lower bounds.",
+  "checks": [
+    "59 preserved inputs unchanged; proposed row differs only by explicit completeness labels",
+    "428278 logical tokens; no child sessions; full parent stream identity verified",
+    "17 saved grade fields independently reconstructed; frozen validators pass",
+    "8 disposable integrity probes pass; locked input and original-ledger-prefix guard verified"
+  ],
+  "initial_findings": [
+    "Design: exit0 inference invalid because timeout accepted; fixed to null",
+    "Design: lock alone insufficient; explicit duplicate/conflict guard added",
+    "Implementation: append input revalidation missing; hashes/file sets/ledger prefixes now rechecked"
+  ],
+  "models_called_for_recovery": 0
+}

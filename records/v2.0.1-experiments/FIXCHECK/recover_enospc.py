@@ -130,12 +130,45 @@ def session(runner, root, number, allow_truncated=False):
             "stream_sha256": sha(raw), "rollout_sha256": sha(rollout),
             "rollout_logical_tokens": old_total, "stream_logical_tokens": total,
             "malformed_rollout_lines": malformed,
+            "rollout_event_metadata": "observed lower bounds; truncated" if allow_truncated else "complete saved rollout",
             "stream_error_items": errors,
         },
     }
     for text in facts["tool_texts"]:
         runner.evidence(result, text)
     return result
+
+
+def verify_append_inputs(state, row):
+    index_path = state / "RECOVERY_INPUTS.json"
+    if sha(index_path) != row["recovery"]["input_index_sha256"]:
+        raise ValueError("recovery input index binding differs")
+    index = read(index_path)
+    scopes = (ROOT + "/raw/", ROOT + "/work/proj/src/", ROOT + "/grade/")
+    expected_names = {name for name in index["files"] if name.startswith(scopes)}
+    current_names = set()
+    for scope in scopes:
+        for path in (state / scope).rglob("*"):
+            if "__pycache__" in path.parts:
+                continue
+            if path.is_symlink():
+                raise ValueError("symlink introduced in preserved input scope")
+            if path.is_file():
+                current_names.add(path.relative_to(state).as_posix())
+    if current_names != expected_names:
+        raise ValueError("preserved input file set changed")
+    ledger_names = {"attempts-fixcheck-codex.jsonl", "rows-fixcheck-codex.jsonl"}
+    for name, expected in read(index_path)["files"].items():
+        data = (state / name).read_bytes()
+        if name in ledger_names:
+            original, extra = data[:expected["size"]], data[expected["size"]:]
+            if len(original) != expected["size"] or hashlib.sha256(original).hexdigest() != expected["sha256"]:
+                raise ValueError("original ledger prefix changed")
+            additions = [json.loads(line) for line in extra.decode().splitlines() if line.strip()]
+            if len(additions) > 1 or any(canonical(r) != canonical(row) for r in additions):
+                raise ValueError("unexpected ledger additions after recovery preparation")
+        elif len(data) != expected["size"] or hashlib.sha256(data).hexdigest() != expected["sha256"]:
+            raise ValueError("original recovery input changed: " + name)
 
 
 def append_once(attempt_path, row_path, row):
@@ -177,7 +210,46 @@ def selftest():
         else:
             raise AssertionError("conflict accepted")
         assert first == (a.read_bytes(), b.read_bytes())
-    print("3 ledger recovery checks passed; no experiment ledger touched.")
+    with tempfile.TemporaryDirectory() as tmp:
+        state = Path(tmp)
+        source = state / ROOT / "work/proj/src/source.py"
+        source.parent.mkdir(parents=True)
+        source.write_text("preserved source")
+        a, b = state / "attempts-fixcheck-codex.jsonl", state / "rows-fixcheck-codex.jsonl"
+        old_row = dict(row, unit="earlier", root="earlier")
+        for path in (a, b):
+            path.write_text(canonical(old_row) + "\n")
+        index = {"files": {p.relative_to(state).as_posix(): {"size": p.stat().st_size, "sha256": sha(p)} for p in (source, a, b)}}
+        write(state / "RECOVERY_INPUTS.json", index)
+        proposed = dict(row, recovery={"input_index_sha256": sha(state / "RECOVERY_INPUTS.json")})
+        verify_append_inputs(state, proposed)
+        for path, changed in ((source, b"tampered source"), (a, b"changed prefix"),
+                              (b, b.read_bytes() + (canonical(old_row) + "\n").encode()),
+                              (state / "RECOVERY_INPUTS.json", b"{}\n")):
+            original = path.read_bytes()
+            path.write_bytes(changed)
+            try:
+                verify_append_inputs(state, proposed)
+            except ValueError:
+                pass
+            else:
+                raise AssertionError("changed recovery input accepted")
+            finally:
+                path.write_bytes(original)
+        added = source.with_name("added.py")
+        added.write_text("new source must be rejected")
+        try:
+            verify_append_inputs(state, proposed)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError("new source accepted")
+        finally:
+            added.unlink()
+        append_once(a, b, proposed)
+        verify_append_inputs(state, proposed)
+        append_once(a, b, proposed)
+    print("8 ledger/input integrity probes passed; no experiment ledger touched.")
 
 
 def main():
@@ -205,6 +277,7 @@ def main():
             calc.validate_grade(row, unit_meta)
             calc.score(row)
             with runner.rows_lock("fixcheck", "codex"):
+                verify_append_inputs(state, row)
                 result = append_once(state / "attempts-fixcheck-codex.jsonl",
                                      state / "rows-fixcheck-codex.jsonl", row)
             print("Recovery ledgers synchronized; existing flags:", result)
