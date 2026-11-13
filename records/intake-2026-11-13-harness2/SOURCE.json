@@ -1,0 +1,122 @@
+{
+  "schema": "oaw-source-review/1",
+  "reviewed_on": "2026-11-13",
+  "repository": "https://github.com/google-research/harness2",
+  "commit": "6868817518876de8fd170c6a8354daca273b6191",
+  "commit_date": "2026-11-02T02:17:27Z",
+  "package_version": "0.1.0",
+  "paper": {
+    "url": "https://arxiv.org/html/2610.14224v1",
+    "version": "v1",
+    "verification": "read; results not reproduced"
+  },
+  "review_scope": "selected source files; not a full archive or a catalog tasting record",
+  "status": "source-review-complete; no adoption verdict",
+  "runtime_executed": false,
+  "model_experiment_runs": 0,
+  "catalog_registered": false,
+  "product_modified": false,
+  "oaw_product_commit": "359e6e337d116667c2453c55af1215dd85d4be15",
+  "files": [
+    {
+      "path": "README.md",
+      "git_blob_sha": "a5e91206948cd3d5bbed30c2a951923020e780d2",
+      "url": "https://github.com/google-research/harness2/blob/6868817518876de8fd170c6a8354daca273b6191/README.md"
+    },
+    {
+      "path": "docs/EXPERIMENTS.md",
+      "git_blob_sha": "bd52e1506037d172a03c128427881d5342bbace7",
+      "url": "https://github.com/google-research/harness2/blob/6868817518876de8fd170c6a8354daca273b6191/docs/EXPERIMENTS.md"
+    },
+    {
+      "path": "docs/BENCHMARKS.md",
+      "git_blob_sha": "18ca85f02a817aaf891a19b999cbe2d9b322f003",
+      "url": "https://github.com/google-research/harness2/blob/6868817518876de8fd170c6a8354daca273b6191/docs/BENCHMARKS.md"
+    },
+    {
+      "path": "docs/SETUP.md",
+      "git_blob_sha": "43e502f55ec68acffb065544260b3a3f20578b02",
+      "url": "https://github.com/google-research/harness2/blob/6868817518876de8fd170c6a8354daca273b6191/docs/SETUP.md"
+    },
+    {
+      "path": "pyproject.toml",
+      "git_blob_sha": "d5892bea7cfd1d2a6d509b057a9cb6a66d6901ae",
+      "url": "https://github.com/google-research/harness2/blob/6868817518876de8fd170c6a8354daca273b6191/pyproject.toml"
+    },
+    {
+      "path": "harness2/core/selection.py",
+      "git_blob_sha": "2cf04f50e35fd82d7abaea279a83b4a7eb4c2193",
+      "url": "https://github.com/google-research/harness2/blob/6868817518876de8fd170c6a8354daca273b6191/harness2/core/selection.py"
+    },
+    {
+      "path": "harness2/core/judge.py",
+      "git_blob_sha": "37ad093845489df7f7685b5a97faf076ef1aab9b",
+      "url": "https://github.com/google-research/harness2/blob/6868817518876de8fd170c6a8354daca273b6191/harness2/core/judge.py"
+    },
+    {
+      "path": "harness2/core/report.py",
+      "git_blob_sha": "b7ecf6e42a1061218b0eb8cde9c441c136e28e72",
+      "url": "https://github.com/google-research/harness2/blob/6868817518876de8fd170c6a8354daca273b6191/harness2/core/report.py"
+    },
+    {
+      "path": "harness2/core/library.py",
+      "git_blob_sha": "39e50684b4044e483a3c16a447958044d4b5e6de",
+      "url": "https://github.com/google-research/harness2/blob/6868817518876de8fd170c6a8354daca273b6191/harness2/core/library.py"
+    },
+    {
+      "path": "harness2/core/spec.py",
+      "git_blob_sha": "e58d14852490b2d4ae3aa6da1c1c796e3e961b48",
+      "url": "https://github.com/google-research/harness2/blob/6868817518876de8fd170c6a8354daca273b6191/harness2/core/spec.py"
+    },
+    {
+      "path": "harness2/core/recursion.py",
+      "git_blob_sha": "0afe2140db2d5d1df4597a86832526d4ad680e90",
+      "url": "https://github.com/google-research/harness2/blob/6868817518876de8fd170c6a8354daca273b6191/harness2/core/recursion.py"
+    },
+    {
+      "path": "harness2/core/ledger.py",
+      "git_blob_sha": "319a6697758d05294dab9f42e8f8700759d7e6f6",
+      "url": "https://github.com/google-research/harness2/blob/6868817518876de8fd170c6a8354daca273b6191/harness2/core/ledger.py"
+    },
+    {
+      "path": "harness2/core/runmark.py",
+      "git_blob_sha": "afa1287ba597631ac4a7bb99e985ed19d18c04b4",
+      "url": "https://github.com/google-research/harness2/blob/6868817518876de8fd170c6a8354daca273b6191/harness2/core/runmark.py"
+    },
+    {
+      "path": "harness2/core/context.py",
+      "git_blob_sha": "72f2868b06c13e30c031cb91c0f04dcd80293ec9",
+      "url": "https://github.com/google-research/harness2/blob/6868817518876de8fd170c6a8354daca273b6191/harness2/core/context.py"
+    },
+    {
+      "path": "harness2/core/prompts.py",
+      "git_blob_sha": "9ccacf23b64ac15b06a1939f26224960f56d757c",
+      "url": "https://github.com/google-research/harness2/blob/6868817518876de8fd170c6a8354daca273b6191/harness2/core/prompts.py"
+    },
+    {
+      "path": "harness2/core/schedule.py",
+      "git_blob_sha": "293767e9e3c1d6bd81fd59a66988c9025bf3c2d8",
+      "url": "https://github.com/google-research/harness2/blob/6868817518876de8fd170c6a8354daca273b6191/harness2/core/schedule.py"
+    },
+    {
+      "path": "scripts/split_tasks.py",
+      "git_blob_sha": "8a778e7c3060ab18d8071fc62705b91b58332339",
+      "url": "https://github.com/google-research/harness2/blob/6868817518876de8fd170c6a8354daca273b6191/scripts/split_tasks.py"
+    },
+    {
+      "path": "tests/test_baseline_judge.py",
+      "git_blob_sha": "2a1d640c5b6ffe6d0f2eb44901eba3d9a792f70a",
+      "url": "https://github.com/google-research/harness2/blob/6868817518876de8fd170c6a8354daca273b6191/tests/test_baseline_judge.py"
+    },
+    {
+      "path": "tests/test_task_input_identity.py",
+      "git_blob_sha": "a1c1d0778a2c5585ee90eef08aaf6355edea317a",
+      "url": "https://github.com/google-research/harness2/blob/6868817518876de8fd170c6a8354daca273b6191/tests/test_task_input_identity.py"
+    },
+    {
+      "path": "dependencies/README.md",
+      "git_blob_sha": "85346f2219d9652b3ff3dbc1d683d8c1a734341c",
+      "url": "https://github.com/google-research/harness2/blob/6868817518876de8fd170c6a8354daca273b6191/dependencies/README.md"
+    }
+  ]
+}
