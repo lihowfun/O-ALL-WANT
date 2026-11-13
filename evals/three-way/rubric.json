@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "registered_before_task_runs": true,
+  "reviews": {
+    "kestrel": {
+      "critical": [
+        {"id": "K1", "fact": "Global request_id deduplication collides across tenants; a different tenant can receive another tenant's settlement instead of its own.", "sources": ["docs/decisions/017.md", "docs/design.md", "src/index.py"]}
+      ],
+      "major": [
+        {"id": "K2", "fact": "28-day deletion without archive cannot satisfy 41-day reconciliation.", "sources": ["docs/decisions/017.md", "docs/design.md", "src/index.py"]}
+      ],
+      "hard_negatives": ["Redis hot indexing is approved for settlement; PostgreSQL remains durable source", "Rollback has an explicit failure trigger and owner", "Load tests are planned, not falsely claimed complete"]
+    },
+    "marble": {
+      "critical": [
+        {"id": "M1", "fact": "Unconditional overwrite permits an older event to regress shipment state; need a per-shipment version guard.", "sources": ["docs/decisions/031.md", "docs/design.md", "src/projector.py"]},
+        {"id": "M2", "fact": "Logging a complete Authorization header violates the accepted credential logging prohibition.", "sources": ["docs/decisions/031.md", "docs/design.md", "src/projector.py"]}
+      ],
+      "major": [],
+      "hard_negatives": ["8 hot days plus 73 archive days satisfy the 52-day lookup need under the approved restoration bound", "Rollback and load targets are explicitly stated", "Planned tests are not completed test results"]
+    }
+  },
+  "grading": {
+    "reports_immutable": true,
+    "graders_per_case": 2,
+    "blinded_arm_mapping": true,
+    "full_method_source_required": true,
+    "new_valid_findings": "Validate against actual source; not being planted does not make a finding false.",
+    "deduplication": "Multiple manifestations of one root defect earn only one detection.",
+    "unsupported_claim": "A concrete factual premise asserted as existing/absent that is unsupported or contradicted by actual supplied source; conditional risks and questions are separate unless they contain a false factual premise.",
+    "disagreement": "Critical detection or unsupported factual claim disputes require independent adjudication. No release verdict until resolved."
+  },
+  "memory": {
+    "larch": {"old": [17, 221, 51], "current": [24, 187, 72]},
+    "pumice": {"old": [29, 377, 63], "current": [36, 319, 84]},
+    "value_order": ["retry_seconds", "batch_records", "audit_days"],
+    "dedup_fields": ["tenant_id", "request_id"],
+    "session_1_2_decision": "ADR-040",
+    "session_3_4_decision": "ADR-044",
+    "session_1_2_ticket": "EX-{NAME}-731",
+    "session_3_4_ticket": "EX-{NAME}-942",
+    "encryption_key": null,
+    "complete_contract": "All eight answer fields correct, applicable decision cited, and ticket traced to actual durable evidence for a fresh receiver. A random matching keyword does not pass."
+  },
+  "claims": {
+    "all_pairwise": ["OAW v2 vs OAW v1", "OAW v2 vs EGM", "OAW v1 vs EGM"],
+    "parity": "Observed fixed-suite no regression only; no statistical equivalence, causal indexing effect or general model superiority.",
+    "efficiency": "Report all assigned workflow calls and failures, include controller-dispatched reviewer usage exactly once, and condition any efficiency conclusion on matched task quality. No dollars without dated actual model/tier/cache prices."
+  }
+}

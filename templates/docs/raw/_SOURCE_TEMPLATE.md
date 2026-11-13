@@ -1,25 +1,14 @@
 ---
-source_id: replace-with-source-id
-title: Replace With Human Title
-topic_id: Replace_With_Topic_ID
-related_topics:
-  - Another_Topic
-summary: One sentence on why this source matters.
+source_id: example-source
+title: Example source note
+topic_id: Example_Topic
+related_topics: []
+summary: Describe the evidence this note preserves.
 last_updated: YYYY-MM-DD
 ---
 
-# Replace With Human Title
+# Example source note
 
-## Context
-
-- What happened?
-- Why does this source exist?
-
-## Durable Notes
-
-- Facts or decisions worth keeping in the compiled wiki
-- Constraints that should survive across sessions
-
-## Open Questions
-
-- Questions that still need follow-up
+Replace this example when creating a real source note. Include a source path or
+URL, its revision or observation date, and the scope of the supported conclusion.
+Separate verified observations from assumptions and unresolved questions.

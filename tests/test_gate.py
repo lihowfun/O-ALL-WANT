@@ -1,0 +1,210 @@
+import contextlib
+import io
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
+import unittest
+from unittest.mock import patch
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+import harness_check
+import sync_examples
+
+
+class GateTests(unittest.TestCase):
+    def test_checkout_docs_do_not_claim_automatic_or_temp_exempt_registration(self):
+        reference = (harness_check.ROOT / "docs/CLI_Reference.md").read_text(encoding="utf-8")
+        install_section = reference.split("## Your own skills", 1)[-1].split("## Installed Context Hub", 1)[0]
+        self.assertIn("#optional-checkout-locator", install_section)
+        self.assertNotIn("`init` records the checkout", reference)
+        self.assertNotIn("skipped for a project under the system temp folder", reference)
+        for relative in ("docs/UPGRADING.md", "README.md", "README.zh.md"):
+            with self.subTest(relative=relative):
+                text = (harness_check.ROOT / relative).read_text(encoding="utf-8")
+                self.assertIn("--remember-checkout", text)
+                self.assertIn("#optional-checkout-locator", text)
+
+    def test_readme_gate_claims_link_to_platform_skip_rules(self):
+        for relative, claim in (("README.md", "no unexpected skips"), ("README.zh.md", "沒有預期外的 skip")):
+            with self.subTest(relative=relative):
+                text = (harness_check.ROOT / relative).read_text(encoding="utf-8")
+                gate = next(line for line in text.splitlines() if line.startswith("| ✅"))
+                self.assertIn(claim, gate)
+                self.assertIn("docs/CLI_Reference.md#repository-validation", gate)
+
+    def test_readmes_share_frozen_results_disposition_and_default_entrypoints(self):
+        facts = ("12", "Python", "Claude Code", "Opus 5.5", "Codex CLI", "gpt-6.1-sol", "2.58×", "1.92×",
+                 "FIXCHECK", "M1", "M2", "M3", "R1", "R2", "24", "codex/t01", "claude/t12",
+                 "oaw-add", "oaw-codemap", "oaw-evidence", "oaw-review",
+                 "https://github.com/lihowfun/O-ALL-WANT/blob/268429d/records/v2.0.1-experiments/H1/RESULT.md",
+                 "https://github.com/lihowfun/O-ALL-WANT/blob/e05c4d5a9238fe3ef4529552a27ce9095ead6a3b/records/v2.0.1-experiments/FIXCHECK/RESULT.md",
+                 "docs/validation/v2.0.1-final.md", "vendor/egm/docs/getting_started.md",
+                 "vendor/egm/docs/codex.md", "vendor/egm/docs/claude.md", "vendor/egm/docs/harnesses.md")
+        for relative in ("README.md", "README.zh.md"):
+            text = (harness_check.ROOT / relative).read_text(encoding="utf-8")
+            for fact in facts:
+                with self.subTest(relative=relative, fact=fact):
+                    self.assertIn(fact, text)
+            banner = next(line for line in text.splitlines() if line.startswith("> **v2.0.1"))
+            release_claim = ("v2.0.1 is the first release of the V2 line; 2.0.0 was never released."
+                             if relative == "README.md" else
+                             "v2.0.1 是 V2 系列的首個正式發布版本；2.0.0 從未發布。")
+            self.assertIn(release_claim, banner)
+            for stale in ("proposed", "release candidate", "pending", "候選版本", "待 owner"):
+                self.assertNotIn(stale, banner)
+            for link in ("docs/UPGRADING.md", "docs/CLI_Reference.md", "docs/plans/v2.0.1-release-path.md"):
+                self.assertIn(link, banner)
+        chinese = (harness_check.ROOT / "README.zh.md").read_text(encoding="utf-8")
+        self.assertNotIn("Claude CLI 模型測試", chinese)
+        self.assertNotIn("三個 OAW", chinese)
+
+    def test_source_ledger_rejects_version_and_immutable_pin_drift(self):
+        original = json.loads((harness_check.ROOT / "docs/releases/2.0.1-sources.json").read_text(encoding="utf-8"))
+        version = json.loads((harness_check.ROOT / "VERSION.json").read_text(encoding="utf-8"))
+        self.assertEqual(version["release_status"], "released")
+        self.assertEqual(original["release_status"], version["release_status"])
+        with tempfile.TemporaryDirectory(prefix="oaw-citations-") as temporary:
+            root = Path(temporary)
+            (root / "docs/releases").mkdir(parents=True)
+            (root / ".github/workflows").mkdir(parents=True)
+            for relative in ("VERSION.json", ".github/workflows/test.yml"):
+                (root / relative).write_bytes((harness_check.ROOT / relative).read_bytes())
+            path = root / "docs/releases/2.0.1-sources.json"
+            with patch.object(harness_check, "ROOT", root):
+                path.write_text(json.dumps(original), encoding="utf-8")
+                self.assertTrue(harness_check.version_check().passed)
+                for mutation in ("version", "release-status", "mutable-source", "ci-drift", "unbundled-egm", "egm-lock", "comment-only"):
+                    value = json.loads(json.dumps(original))
+                    if mutation == "version":
+                        value["oaw_version"] = "999.0.0"
+                    elif mutation == "release-status":
+                        value["release_status"] = "proposed"
+                    elif mutation == "mutable-source":
+                        value["sources"][0]["commit"] = "main"
+                    elif mutation == "ci-drift":
+                        next(source for source in value["sources"] if source["usage"] == "ci-action")["commit"] = "f" * 40
+                    elif mutation == "unbundled-egm":
+                        value["sources"][0]["runtime_bundled"] = False
+                    elif mutation == "egm-lock":
+                        value["sources"][0]["source_lock"]["sha256"] = "f" * 64
+                    else:
+                        workflow = root / ".github/workflows/test.yml"
+                        workflow.write_text(workflow.read_text(encoding="utf-8").replace("- uses:", "# - uses:"), encoding="utf-8")
+                    path.write_text(json.dumps(value), encoding="utf-8")
+                    with self.subTest(mutation=mutation):
+                        self.assertFalse(harness_check.version_check().passed)
+
+    def test_complete_example_content_detects_broken_router(self):
+        with tempfile.TemporaryDirectory(prefix="oaw-example-") as temporary:
+            root = Path(temporary)
+            with patch.object(sync_examples, "ROOT", root), patch.object(sync_examples, "EXAMPLES", (("minimal-project", "minimal", False),)):
+                self.assertEqual(sync_examples.sync(write=True), [])
+                self.assertEqual(sync_examples.sync(), [])
+                target = root / "example/minimal-project/AGENTS.md"
+                target.write_text("broken example policy\n", encoding="utf-8")
+                issues = sync_examples.sync()
+                self.assertTrue(any("AGENTS.md" in issue for issue in issues))
+
+    def test_obsolete_example_framework_files_fail(self):
+        with tempfile.TemporaryDirectory(prefix="oaw-example-") as temporary:
+            root = Path(temporary)
+            with patch.object(sync_examples, "ROOT", root), patch.object(sync_examples, "EXAMPLES", (("minimal-project", "minimal", False),)):
+                sync_examples.sync(write=True)
+                obsolete = root / "example/minimal-project/scripts/obsolete.py"
+                obsolete.write_text("obsolete\n", encoding="utf-8")
+                self.assertTrue(any("obsolete.py" in issue for issue in sync_examples.sync()))
+                sync_examples.sync(write=True)
+                self.assertFalse(obsolete.exists())
+
+    def test_arbitrary_crash_is_a_failed_gate(self):
+        check = harness_check.command_check("crash-fixture", [sys.executable, "-c", "raise SystemExit(42)"])
+        self.assertFalse(check.passed)
+        self.assertEqual(check.detail, "exit 42")
+
+    def regression_fixture(self, root, files):
+        for name, body in files.items():
+            (root / name).write_text("import unittest\n\n" + body, encoding="utf-8")
+        return root
+
+    def test_regression_inventory_requires_modules_count_and_no_skips(self):
+        passing = "class A(unittest.TestCase):\n    def test_ok(self):\n        pass\n"
+        skipped = "class B(unittest.TestCase):\n    def test_skip(self):\n        self.skipTest('fixture')\n"
+        with tempfile.TemporaryDirectory(prefix="oaw-gate-") as temporary:
+            root = self.regression_fixture(Path(temporary), {"test_a.py": passing})
+            self.assertTrue(harness_check.regression_check(root, ("test_a",), 1).passed)
+            missing = harness_check.regression_check(root, ("test_a", "test_b"), 1)
+            self.assertFalse(missing.passed)
+            self.assertIn("missing test modules: test_b", missing.detail)
+            self.assertFalse(harness_check.regression_check(root, ("test_a",), 2).passed)
+            self.regression_fixture(root, {"test_b.py": skipped})
+            with patch.dict(os.environ, {"OAW_ALLOW_SKIPS": ""}):
+                result = harness_check.regression_check(root, ("test_a", "test_b"), 2)
+            self.assertFalse(result.passed)
+            self.assertIn("unexpected skip", result.detail)
+            self.assertIn("SKIP test_b.B.test_skip: fixture", result.detail)
+            summary = json.loads(result.stdout.split(harness_check.SUMMARY_MARKER)[-1])
+            self.assertEqual(summary["skips"], [{"id": "test_b.B.test_skip", "reason": "fixture"}])
+            # The local override lets the gate pass but still lists and marks every unexpected skip.
+            with patch.dict(os.environ, {"OAW_ALLOW_SKIPS": "1"}):
+                for platform in ("linux", "darwin", "win32"):
+                    allowed = harness_check.regression_check(root, ("test_a", "test_b"), 2, platform=platform)
+                    self.assertTrue(allowed.passed, allowed.detail)
+                    self.assertIn("SKIP test_b.B.test_skip: fixture", allowed.detail)
+                    self.assertIn("1 unexpected skip(s) allowed by OAW_ALLOW_SKIPS=1 (local override, not a CI result)",
+                                  allowed.detail)
+
+    def test_ci_never_sets_the_local_skip_override(self):
+        for workflow in sorted((harness_check.ROOT / ".github/workflows").glob("*.y*ml")):
+            self.assertNotIn("OAW_ALLOW_SKIPS", workflow.read_text(encoding="utf-8"), workflow.name)
+
+    def test_expected_platform_skips_require_the_exact_id_and_reason(self):
+        for platform, skips in harness_check.EXPECTED_SKIPS.items():
+            for test_id, reason in sorted(skips):
+                with self.subTest(platform=platform, test_id=test_id):
+                    with tempfile.TemporaryDirectory(prefix="oaw-gate-") as temporary:
+                        module, cls, method = test_id.split(".")
+                        body = f"class {cls}(unittest.TestCase):\n    def {method}(self):\n        self.skipTest({reason!r})\n"
+                        root = self.regression_fixture(Path(temporary), {module + ".py": body})
+                        result = harness_check.regression_check(root, (module,), 1, platform=platform)
+                        self.assertTrue(result.passed, result.detail)
+                        self.assertIn(f"SKIP {test_id}: {reason}", result.detail)
+                        self.assertFalse(harness_check.regression_check(root, (module,), 1, platform="linux").passed)
+                        self.regression_fixture(root, {module + ".py": body.replace(repr(reason), repr("other reason"))})
+                        self.assertFalse(harness_check.regression_check(root, (module,), 1, platform=platform).passed)
+                        self.regression_fixture(root, {module + ".py": body, "test_extra.py":
+                                                      "class Extra(unittest.TestCase):\n    @unittest.skip('new skip')\n    def test_new(self): pass\n"})
+                        result = harness_check.regression_check(root, (module,), 2, platform=platform)
+                        self.assertFalse(result.passed)
+                        self.assertIn("unexpected skip", result.detail)
+                        self.assertIn("test_extra.Extra.test_new", result.detail)
+
+    def test_skip_count_without_inventory_fails_gate(self):
+        summary = {"run": 1, "skipped": 1, "successful": True, "modules": []}
+        process = subprocess.CompletedProcess([], 0, harness_check.SUMMARY_MARKER + json.dumps(summary), "")
+        with patch.object(harness_check, "run", return_value=process):
+            result = harness_check.regression_check(required=(), minimum=1, platform="darwin")
+        self.assertFalse(result.passed)
+        self.assertIn("skip inventory does not match", result.detail)
+
+    def test_regression_import_failure_fails_gate(self):
+        with tempfile.TemporaryDirectory(prefix="oaw-gate-") as temporary:
+            root = self.regression_fixture(Path(temporary), {"test_a.py": "raise RuntimeError('import fixture')\n"})
+            result = harness_check.regression_check(root, (), 0)
+            self.assertFalse(result.passed)
+            self.assertIn("exit 1", result.detail)
+
+    def test_redirected_cp1252_output_is_configured_as_utf8(self):
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        code = f"import sys; sys.path.insert(0, {scripts!r}); import harness_check; harness_check.configure_stdio(); print('\\u26a0 wiki \\u4e2d\\u6587')"
+        environment = os.environ.copy()
+        environment["PYTHONIOENCODING"] = "cp1252"
+        process = subprocess.run([sys.executable, "-c", code], capture_output=True, env=environment)
+        self.assertEqual(process.returncode, 0, process.stderr)
+        self.assertIn("⚠ wiki 中文", process.stdout.decode("utf-8"))
+
+
+if __name__ == "__main__":
+    unittest.main()

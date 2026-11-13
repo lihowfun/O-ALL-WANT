@@ -1,9 +1,970 @@
 #!/usr/bin/env python3
+"""
+Context Hub — AI Agent Knowledge Management CLI.
 
+Provides an interface for AI agents (and humans) to search, fetch,
+annotate knowledge, manage rolling decision memory, and bootstrap
+new sessions.
+
+Part of OAW.
+https://github.com/lihowfun/O-ALL-WANT
+"""
+import argparse
+import base64
+import errno
+import hashlib
+import heapq
+import json
 import os
-import pathlib
-import runpy
+import re
+from datetime import datetime, timezone
+from oaw_common import (
+    append_annotation, atomic_write, confined_path, evidence_write_refusal,
+    locked_update, validate_topic_id,
+)
 
-HERE = pathlib.Path(__file__).resolve()
-os.environ["AGENT_MEMORY_BASE_DIR"] = str(HERE.parents[1])
-runpy.run_path(str(HERE.parents[3] / "scripts" / "context_hub.py"), run_name="__main__")
+# ─── Configuration ────────────────────────────────────────────────────────────
+# Adjust these paths to match your project structure.
+
+BASE_DIR = os.path.abspath(os.environ.get("AGENT_MEMORY_BASE_DIR") or os.path.dirname(
+    os.path.dirname(os.path.abspath(__file__))
+))
+DOCS_DIR = os.path.join(BASE_DIR, "docs", "knowledge")
+RAW_DIR = os.path.join(BASE_DIR, "docs", "raw")
+MEMORY_FILE = os.path.join(BASE_DIR, ".agents", "memory.md")
+AI_CONTEXT_FILE = os.path.join(BASE_DIR, "AI_CONTEXT.md")
+META_PAGE_TYPES = {"meta"}
+
+# ─── Utilities ────────────────────────────────────────────────────────────────
+
+
+def _locked_write(filepath, content):
+    """Compatibility helper for whole-file writes; dependent edits use RMW."""
+    atomic_write(filepath, content, root=BASE_DIR)
+
+
+def _topic_path(topic):
+    validate_topic_id(topic, allow_meta=True)
+    return confined_path(BASE_DIR, DOCS_DIR, f"{topic}.md")
+
+
+def _refuse_unsafe_note(note):
+    """Refuse an evidence write before any file is opened; the note is never echoed."""
+    refusal = evidence_write_refusal(note)
+    if refusal:
+        raise ValueError(refusal)
+
+
+def _strip_tag_prefix(note):
+    """Remove a single leading [TAG] prefix while preserving the rest of the note."""
+    return re.sub(r"^\[\w+\]\s*", "", note, count=1)
+
+
+def _parse_frontmatter(content):
+    """Parse a minimal YAML-like frontmatter block if present."""
+    if not content.startswith("---\n"):
+        return {}, content
+
+    lines = content.splitlines()
+    closing_index = None
+    for i in range(1, len(lines)):
+        if lines[i].strip() == "---":
+            closing_index = i
+            break
+
+    if closing_index is None:
+        return {}, content
+
+    metadata = {}
+    current_key = None
+    current_list = None
+
+    for raw_line in lines[1:closing_index]:
+        line = raw_line.rstrip()
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        if stripped.startswith("- ") and current_key:
+            if current_list is None:
+                current_list = []
+                metadata[current_key] = current_list
+            current_list.append(stripped[2:].strip())
+            continue
+        if ":" not in line:
+            continue
+        key, value = line.split(":", 1)
+        current_key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        if value:
+            metadata[current_key] = value
+            current_list = None
+        else:
+            current_list = []
+            metadata[current_key] = current_list
+
+    body = "\n".join(lines[closing_index + 1 :]).lstrip("\n")
+    return metadata, body
+
+
+def _normalize_list(value):
+    """Normalize a scalar/list frontmatter field to a list of strings."""
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return [item for item in value if item]
+    if isinstance(value, str):
+        value = value.strip()
+        if not value:
+            return []
+        if value.startswith("[") and value.endswith("]"):
+            items = [item.strip().strip('"').strip("'") for item in value[1:-1].split(",")]
+            return [item for item in items if item]
+        return [value]
+    return [str(value)]
+
+
+def _page_title(filename, content, metadata):
+    """Best-effort title resolution for a knowledge page."""
+    if metadata.get("title"):
+        return metadata["title"]
+    for line in content.splitlines():
+        if line.startswith("# "):
+            return line[2:].strip()
+    return filename.replace(".md", "").replace("_", " ")
+
+
+def _knowledge_pages(include_meta=False):
+    """Yield loaded knowledge pages with parsed metadata."""
+    docs_dir = confined_path(BASE_DIR, DOCS_DIR)
+    if not os.path.exists(docs_dir):
+        return []
+
+    pages = []
+    for filename in sorted(os.listdir(docs_dir)):
+        if not filename.endswith(".md"):
+            continue
+        path = confined_path(BASE_DIR, DOCS_DIR, filename)
+        if not os.path.isfile(path):
+            continue
+        with open(path, "r", encoding="utf-8") as file:
+            content = file.read()
+        metadata, body = _parse_frontmatter(content)
+        if not include_meta and metadata.get("page_type") in META_PAGE_TYPES:
+            continue
+        pages.append(
+            {
+                "filename": filename,
+                "path": path,
+                "metadata": metadata,
+                "content": content,
+                "body": body,
+                "title": _page_title(filename, body, metadata),
+            }
+        )
+    return pages
+
+
+def _raw_source_count():
+    """Count raw markdown sources, excluding helper files."""
+    raw_dir = confined_path(BASE_DIR, RAW_DIR)
+    if not os.path.exists(raw_dir):
+        return 0
+    count = 0
+    for filename in os.listdir(raw_dir):
+        if not filename.endswith(".md"):
+            continue
+        if filename.startswith("_") or filename.lower() == "readme.md":
+            continue
+        count += 1
+    return count
+
+
+# ─── Search ───────────────────────────────────────────────────────────────────
+
+def search(query, compact=False, include_memory=False):
+    """Search knowledge base topics by keyword, optionally including memory entries."""
+    if not compact:
+        print(f"Searching for '{query}' in {DOCS_DIR}...")
+    if not os.path.exists(DOCS_DIR) and not include_memory:
+        print("0 topics" if compact else "Knowledge directory not found.")
+        return
+
+    results = []
+    for page in _knowledge_pages():
+        filename = page["filename"]
+        content = page["content"]
+        metadata = page["metadata"]
+        search_blob = "\n".join(
+            [
+                filename,
+                page["title"],
+                content,
+                " ".join(_normalize_list(metadata.get("related_topics"))),
+            ]
+        )
+        if not query or query.lower() in search_blob.lower():
+            annotations = content.count("[AI Annotation")
+            results.append((filename.replace(".md", ""), page["title"], annotations))
+
+    if not results:
+        if not compact:
+            print("No matches found in knowledge base.")
+    elif compact:
+        print(f"{len(results)} topics: {', '.join(t[0] for t in results)}")
+    else:
+        print(f"\n{'='*70}")
+        print(f"  MATCHING KNOWLEDGE TOPICS ({len(results)} found)")
+        print(f"{'='*70}")
+        print(f"  {'Topic ID':<30} | {'Annotations':>5} | {'Description'}")
+        print(f"  {'-'*30}-+-{'-'*5}-+-{'-'*30}")
+        for topic, title, ann_count in results:
+            ann_str = f"[{ann_count}]" if ann_count > 0 else ""
+            print(f"  {topic:<30} | {ann_str:>5} | {title}")
+        print()
+
+    if include_memory:
+        entries = [item["entry"] for item in _memory_entries()]
+        mem_hits = [e for e in entries if not query or query.lower() in e.lower()]
+        if mem_hits:
+            if compact:
+                print(f"{len(mem_hits)} memory: {', '.join(e.splitlines()[0][:50] for e in mem_hits)}")
+            else:
+                print(f"  MATCHING MEMORY ENTRIES ({len(mem_hits)} found)")
+                print(f"  {'-'*40}")
+                for entry in mem_hits:
+                    print(f"    {entry.strip().split(chr(10))[0]}")
+                print()
+        elif not compact and not results:
+            print("No matches found. Try broadening the search.")
+
+    if not include_memory and not results and compact:
+        print("0 topics")
+
+
+# ─── Get ──────────────────────────────────────────────────────────────────────
+
+def get(topic):
+    """Fetch the complete content of a knowledge topic."""
+    file_path = _topic_path(topic)
+    if not os.path.exists(file_path):
+        print(f"Topic '{topic}' not found. Run 'search' to list topics.")
+        return 1
+    print(f"\n--- CONTENT OF {topic} ---")
+    with open(file_path, "r", encoding="utf-8") as f:
+        print(f.read())
+    print("--- END OF CONTENT ---")
+    return 0
+
+
+# ─── Annotate ─────────────────────────────────────────────────────────────────
+
+def annotate(topic, note):
+    """Annotate a knowledge topic with a structured finding.
+
+    Raises ValueError, as for an invalid or meta topic, when the note holds a credential.
+    """
+    _refuse_unsafe_note(note)
+    file_path = _topic_path(topic)
+    if not os.path.exists(file_path):
+        print(f"Topic '{topic}' not found. Cannot annotate.")
+        return 1
+
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    # Auto-detect tag from note content
+    tag = ""
+    tag_match = re.match(r'^\[(\w+)\]\s*', note)
+    if tag_match:
+        tag = f" ({tag_match.group(1)})"
+
+    annotation_block = f"\n\n> **[AI Annotation{tag}]** ({timestamp}): {note}\n"
+
+    def mutate(content):
+        if not content:
+            raise ValueError(f"Topic '{topic}' no longer exists or is empty.")
+        metadata, _body = _parse_frontmatter(content)
+        if metadata.get("page_type") in META_PAGE_TYPES:
+            raise ValueError(f"Topic '{topic}' is a meta page and cannot be annotated.")
+        return append_annotation(content, annotation_block)
+
+    locked_update(file_path, mutate, root=BASE_DIR)
+    print(f"✅ Annotated '{topic}' with: {note[:60]}...")
+    return 0
+
+
+# ─── Memory ───────────────────────────────────────────────────────────────────
+
+def _memory_sources():
+    """Read both confined sources once; only an absent file is an empty source."""
+    sources = []
+    for label, path in (
+        (".agents/memory.md", MEMORY_FILE),
+        (".oaw/memory-pending.md", os.path.join(BASE_DIR, ".oaw", "memory-pending.md")),
+    ):
+        path = confined_path(BASE_DIR, path)
+        try:
+            with open(path, "r", encoding="utf-8") as handle:
+                content = handle.read()
+        except FileNotFoundError:
+            content = None
+        sources.append({"source": label, "content": content})
+    return sources
+
+
+MEMORY_SEPARATOR = re.compile(r"^---[ \t]*$", re.MULTILINE)
+# Part of every recall cursor. Change it whenever the order of entries changes for unchanged
+# files, so a cursor issued under the old order is refused instead of skipping or repeating entries.
+MEMORY_ORDER_MARKER = b"memory-sources-v3\0"
+
+
+def _memory_entries(sources=None):
+    """Merge source heads by UTC date/time, preserving each file's written order (newest on top)."""
+    groups = []
+    for priority, source in enumerate(_memory_sources() if sources is None else sources):
+        entries = []
+        content = source["content"]
+        if content is None:
+            continue
+        starts = list(re.finditer(r"^## \[", content, re.MULTILINE))
+        for number, match in enumerate(starts):
+            start = match.start()
+            end = starts[number + 1].start() if number + 1 < len(starts) else len(content)
+            entry = content[start:end].rstrip()
+            header = re.match(r"## \[([^\]\n]*)\]", entry)
+            full = False
+            try:
+                value = header[1] if header else ""
+                full = bool(re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}[+-]\d{2}:\d{2}", value))
+                if full:
+                    stamp = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f%z").astimezone(timezone.utc)
+                elif re.fullmatch(r"\d{4}-\d{2}-\d{2}(?:[T ].*)?", value):
+                    # A date, or a date followed by a time in another form: ordered by the date alone.
+                    stamp = datetime.strptime(value[:10], "%Y-%m-%d").replace(tzinfo=timezone.utc)
+                else:
+                    raise ValueError("Unknown entry date format")
+            except (ValueError, OverflowError):
+                stamp = datetime.min.replace(tzinfo=timezone.utc)
+                full = False
+            entries.append({"source": source["source"], "content": content, "start": start,
+                            "entry": entry, "order": (stamp, full, priority)})
+        groups.append(entries)
+    return list(heapq.merge(*groups, key=lambda entry: entry["order"], reverse=True))
+
+
+def memory_add(note):
+    """Append evidence, using pending memory only after an explicit permission error."""
+    _refuse_unsafe_note(note)
+    tag_match = re.match(r'^\[(\w+)\]', note)
+    tag = tag_match.group(1) if tag_match else "NOTE"
+    note_body = _strip_tag_prefix(note) if tag_match else note
+
+    def mutate(content):
+        # Timestamp each entry while its destination lock is held. File mtime
+        # cannot order entries after primary and pending writes alternate.
+        now = datetime.now(timezone.utc)
+        body = re.sub(r'^' + re.escape(now.date().isoformat()) + r'\s+', '', note_body)
+        entry = f"\n## [{now.isoformat(timespec='microseconds')}] [{tag}] {body}\n"
+        separator = MEMORY_SEPARATOR.search(content)
+        if separator:
+            insert_pos = separator.end()
+            return content[:insert_pos] + "\n" + entry + content[insert_pos:]
+        first = re.search(r"^## \[", content, re.MULTILINE)
+        if first:
+            # No separator: keep the documented order (newest on top) so readers see the new note first.
+            return content[:first.start()] + entry.lstrip("\n") + "\n" + content[first.start():]
+        return content.rstrip() + "\n" + entry
+
+    target = confined_path(BASE_DIR, MEMORY_FILE)
+    default = "# Agent Memory — Decision & Finding Log\n\n---\n"
+    fallback = False
+    try:
+        if os.path.exists(target) and not os.access(target, os.W_OK):
+            raise PermissionError(errno.EACCES, "Primary memory is not writable", target)
+        locked_update(target, mutate, default=default, root=BASE_DIR)
+    except OSError as exc:
+        if exc.errno not in {errno.EACCES, errno.EPERM, errno.EROFS}:
+            raise
+        target = confined_path(BASE_DIR, ".oaw", "memory-pending.md")
+        locked_update(target, mutate, default=default, root=BASE_DIR)
+        fallback = True
+    label = os.path.relpath(target, os.path.realpath(BASE_DIR)).replace("\\", "/")
+    suffix = " (pending: primary memory is read-only or permission denied)" if fallback else ""
+    print(f"✅ Memory entry added to {label}{suffix}: [{tag}] {note[:60]}...")
+
+
+def memory_show(count=10):
+    """Show recent entries from both sources, preserving historical records."""
+    entries = _memory_entries()
+    if not entries:
+        print("No memory entries found.")
+        return
+    print(f"\n{'='*70}")
+    print(f"  RECENT MEMORY ({min(count, len(entries))} of {len(entries)} entries)")
+    print(f"{'='*70}\n")
+    for item in entries[:count]:
+        line = item["content"].count("\n", 0, item["start"]) + 1
+        print(f'{item["source"]}:{line}')
+        print(item["entry"])
+        print()
+
+
+# ─── Lesson ───────────────────────────────────────────────────────────────────
+
+def lesson(mistake, correction):
+    """Record a lesson learned (mistake + correct approach)."""
+    note = f"[INSIGHT] Lesson learned — Mistake: {mistake} | Correction: {correction}"
+    memory_add(note)
+
+
+def _recall_cursor(index, query_hash, snapshot):
+    payload = json.dumps([1, index, query_hash, snapshot], separators=(",", ":"))
+    return base64.urlsafe_b64encode(payload.encode("ascii")).decode("ascii").rstrip("=")
+
+
+def _decode_recall_cursor(cursor, query_hash, snapshot):
+    if not cursor:
+        return 0
+    try:
+        if len(cursor) > 512:
+            raise ValueError
+        data = json.loads(base64.b64decode(cursor + "=" * (-len(cursor) % 4), altchars=b"-_", validate=True))
+        if (not isinstance(data, list) or len(data) != 4 or data[0] != 1
+                or type(data[1]) is not int or data[1] < 0
+                or data[2:] != [query_hash, snapshot]):
+            raise ValueError
+    except (ValueError, UnicodeError) as exc:
+        raise ValueError("Invalid recall cursor or sources changed; restart without --cursor.") from exc
+    return data[1]
+
+
+_MEMORY_HEADER = re.compile(r"## \[([^\]\n]*)\][ \t]*(?:\[(\w+)\])?[ \t]*(.*)")
+
+
+# Adapted from claude-mem plugin/skills/mem-search/SKILL.md:35-54 (Apache-2.0); modified: index-then-fetch re-implemented as a recall mode whose fetch is a host Read of the cited line.
+def _index_row(label, kind, content, entry_start, entry, match, title, width):
+    """One recall --index row: the match line, the entry header or page title, a match window.
+
+    The window stays on the matched line, holds the complete match and is at
+    most width characters; width leaves room for the whole query. Header fields
+    are capped (date and tag 40, title 120), so every row has a bounded length.
+    """
+    date = tag = None
+    if kind == "memory":
+        first = entry.split("\n", 1)[0]
+        header = _MEMORY_HEADER.fullmatch(first)
+        date, tag, title = header.groups() if header else (None, None, first[3:])
+    line_start = entry.rfind("\n", 0, match.start()) + 1
+    line_end = entry.find("\n", match.end())
+    line_end = len(entry) if line_end < 0 else line_end
+    left = max(line_start, min(match.start() - (width - len(match.group())) // 2, line_end - width))
+    right = min(line_end, left + width)
+    window = entry[left:match.start()].lstrip() + match.group() + entry[match.end():right].rstrip()
+    return {"source": label, "line": content.count("\n", 0, entry_start + match.start()) + 1,
+            "entry_line": content.count("\n", 0, entry_start) + 1, "kind": kind,
+            "date": date and date[:40], "tag": tag and tag[:40],
+            "title": title.strip()[:120], "match": window, "entry_chars": len(entry)}
+
+
+def _render_recall(packet, json_out):
+    if json_out:
+        return json.dumps(packet, ensure_ascii=False, separators=(",", ":"))
+    lines = []
+    for item in packet["results"]:
+        if packet.get("mode") == "index":
+            heading = " ".join(part for part in (item["date"], item["tag"] and f"[{item['tag']}]", item["title"]) if part)
+            lines.append(f"{item['source']}:{item['line']}  {heading}  ({item['entry_chars']} chars)")
+            lines.append(f"  > {item['match']}")
+            continue
+        lines.append(f"{item['source']}:{item['line']}")
+        lines.append(item["excerpt"])
+        if item["truncated"]:
+            lines.append("[Excerpt truncated; read the cited source for the complete entry.]")
+        lines.append("")
+    if not lines:
+        lines.append("No matches found.")
+    if packet["continuation"]:
+        lines.append("Next cursor: " + packet["continuation"])
+    return "\n".join(lines).rstrip()
+
+
+def memory_recall(query, limit=8, cursor=None, max_chars=12000, json_out=False, index=False):
+    """Return bounded, cited excerpts; a cursor continues at the next entry.
+
+    An entry never contributes more than 2,000 characters. The complete printed
+    response (including JSON framing and its newline) respects max_chars. An
+    entry's continuation cites its full source; the packet's continuation pages
+    through additional matching entries. Cursors reject changed source snapshots.
+    With index=True each hit is one short row instead of an excerpt. The mode is
+    bound into the cursor, so a cursor from one mode is refused by the other.
+    """
+    if not query.strip() or len(query) > 512:
+        raise ValueError("Recall requires a non-empty query of at most 512 characters.")
+    if index and ("\n" in query or "\r" in query):
+        # An index row quotes one line; a match spanning lines would break the two-line text form.
+        raise ValueError("Recall --index requires a single-line query.")
+    if not 1 <= limit <= 100:
+        raise ValueError("Recall --limit must be between 1 and 100.")
+    if not 512 <= max_chars <= 1000000:
+        raise ValueError("Recall --max-chars must be between 512 and 1000000.")
+
+    pattern = re.compile(re.escape(query), re.IGNORECASE)
+    hits = []
+    digest = hashlib.sha256()
+
+    def scan_entry(content, label, start, entry, memory=False, title=None):
+        match = pattern.search(entry)
+        if match is None:
+            return
+        if index:
+            hits.append(_index_row(label, "memory" if memory else "knowledge", content, start, entry, match,
+                                   title, max(120, len(query) + 40)))
+            return
+        excerpt_start = max(0, match.start() - 200)
+        text = entry[excerpt_start:]
+        line = content.count("\n", 0, start + excerpt_start) + 1
+        hits.append({"source": label, "line": line, "text": text,
+                     "match_start": match.start() - excerpt_start,
+                     "match_end": match.end() - excerpt_start,
+                     "prefix_omitted": excerpt_start > 0, "kind": "memory" if memory else "knowledge"})
+
+    sources = _memory_sources()
+    # Bind ordering semantics and missing/present state, including empty files.
+    digest.update(MEMORY_ORDER_MARKER)
+    for source in sources:
+        content = source["content"]
+        digest.update(source["source"].encode("utf-8") + b"\0")
+        digest.update(b"absent\0" if content is None else b"present\0" + content.encode("utf-8") + b"\0")
+    for entry in _memory_entries(sources):
+        scan_entry(entry["content"], entry["source"], entry["start"], entry["entry"], memory=True)
+
+    def scan(path, label):
+        path = confined_path(BASE_DIR, path)
+        with open(path, "r", encoding="utf-8") as handle:
+            content = handle.read()
+        digest.update(label.encode("utf-8") + b"\0" + content.encode("utf-8") + b"\0")
+        title = None
+        if index:
+            metadata, body = _parse_frontmatter(content)
+            title = _page_title(os.path.basename(path), body, metadata)
+        scan_entry(content, label, 0, content.rstrip(), title=title)
+
+    docs = confined_path(BASE_DIR, DOCS_DIR)
+    if os.path.isdir(docs):
+        for filename in sorted(os.listdir(docs)):
+            if filename.endswith(".md"):
+                scan(os.path.join(docs, filename), "docs/knowledge/" + filename)
+
+    snapshot = digest.hexdigest()[:24]
+    # The default hash stays sha256(query), so default cursors are unchanged.
+    query_hash = hashlib.sha256((("index\0" + query) if index else query).encode("utf-8")).hexdigest()[:24]
+    start = _decode_recall_cursor(cursor, query_hash, snapshot)
+    if start > len(hits):
+        raise ValueError("Recall cursor is beyond the end of the results.")
+    packet = {"schema_version": 1, "results": [], "truncated": False, "continuation": None}
+    position = start
+    if index:
+        packet = {"schema_version": 1, "mode": "index", "results": [], "truncated": False, "continuation": None}
+        # Rows have a bounded length, so whole rows are added while the response fits.
+        while position < len(hits) and len(packet["results"]) < limit:
+            more = position + 1 < len(hits)
+            proposed = dict(packet, results=packet["results"] + [hits[position]], truncated=more,
+                            continuation=_recall_cursor(position + 1, query_hash, snapshot) if more else None)
+            if len(_render_recall(proposed, json_out)) + 1 > max_chars:
+                if not packet["results"]:
+                    raise ValueError("--max-chars is too small for this result's provenance; increase it.")
+                break
+            packet = proposed
+            position += 1
+    while not index and position < len(hits) and len(packet["results"]) < limit:
+        hit = dict(hits[position])
+
+        def candidate(length):
+            excerpt = hit["text"][:length]
+            truncated = hit["prefix_omitted"] or length < len(hit["text"])
+            item = {"source": hit["source"], "line": hit["line"], "kind": hit["kind"],
+                    "excerpt": excerpt, "truncated": truncated,
+                    "continuation": {"source": hit["source"], "line": hit["line"]} if truncated else None}
+            more = position + 1 < len(hits)
+            return {"schema_version": 1, "results": packet["results"] + [item],
+                    "truncated": more or any(row["truncated"] for row in packet["results"]) or truncated,
+                    "continuation": _recall_cursor(position + 1, query_hash, snapshot) if more else None}
+
+        fitting = None
+        for trim_prefix in (False, True):
+            if trim_prefix:
+                offset = hit["match_start"]
+                if not offset:
+                    break
+                hit["line"] += hit["text"].count("\n", 0, offset)
+                hit["text"] = hit["text"][offset:]
+                hit["match_end"] -= offset
+                hit["match_start"] = 0
+                hit["prefix_omitted"] = True
+            low, high = hit["match_end"], min(2000, len(hit["text"]))
+            # Every emitted excerpt must include its complete query match.
+            # Escaped prefix text can be discarded before sacrificing the hit.
+            while low <= high:
+                middle = (low + high) // 2
+                proposed = candidate(middle)
+                if len(_render_recall(proposed, json_out)) + 1 <= max_chars:
+                    fitting = proposed
+                    low = middle + 1
+                else:
+                    high = middle - 1
+            if fitting is not None:
+                break
+        if fitting is None:
+            if not packet["results"]:
+                raise ValueError("--max-chars is too small for this result's provenance; increase it.")
+            break
+        packet = fitting
+        position += 1
+    if position < len(hits):
+        packet["continuation"] = _recall_cursor(position, query_hash, snapshot)
+        packet["truncated"] = True
+    output = _render_recall(packet, json_out)
+    if len(output) + 1 > max_chars:
+        raise ValueError("--max-chars is too small for the recall response.")
+    print(output)
+    return 0
+
+
+# ─── Status ───────────────────────────────────────────────────────────────────
+
+def status(compact=False):
+    """Print a one-screen project status summary."""
+    version_file = confined_path(BASE_DIR, "VERSION.json")
+    version_str = "unknown"
+    phase_str = ""
+    dnr_count = 0
+    if os.path.exists(version_file):
+        with open(version_file, "r", encoding="utf-8") as f:
+            v = json.load(f)
+        version_str = v.get("version", "unknown")
+        dnr_count = len(v.get("do_not_rerun", []))
+        phase_str = v.get("current_phase", "")
+
+    if compact:
+        pages = _knowledge_pages()
+        mem_count = len(_memory_entries())
+        raw_count = _raw_source_count()
+        parts = [f"v{version_str}", f"{len(pages)} topics", f"{mem_count} memories", f"{dnr_count} locked"]
+        if phase_str:
+            parts.append(f"phase: {phase_str}")
+        if raw_count:
+            parts.append(f"{raw_count} raw")
+        print(" | ".join(parts))
+        return
+
+    print(f"\n{'='*70}")
+    print(f"  📊 PROJECT STATUS")
+    print(f"{'='*70}\n")
+
+    # 1. Version
+    if os.path.exists(version_file):
+        with open(version_file, "r", encoding="utf-8") as f:
+            v = json.load(f)
+        print(f"  📦 VERSION: {v.get('version', 'unknown')}")
+        dnr = v.get("do_not_rerun", [])
+        print(f"  🚫 DO NOT RERUN: {len(dnr)} experiments locked")
+        if v.get("current_phase"):
+            print(f"  🎯 CURRENT PHASE: {v.get('current_phase')}")
+    print()
+
+    # 2. Recent memory
+    print("  🧠 RECENT DECISIONS (last 3)")
+    print(f"  {'-'*40}")
+    for item in _memory_entries()[:3]:
+        print(f'    {item["entry"].splitlines()[0]}')
+    print()
+
+    # 3. Knowledge topics
+    print("  📚 KNOWLEDGE TOPICS")
+    print(f"  {'-'*40}")
+    pages = _knowledge_pages()
+    for page in pages:
+        print(f"    {page['filename'].replace('.md', '')}")
+    if _raw_source_count():
+        print()
+        print(f"  🧾 RAW SOURCES: {_raw_source_count()} file(s) in docs/raw/")
+    print()
+
+
+# ─── Bootstrap ────────────────────────────────────────────────────────────────
+
+def bootstrap(compact=False):
+    """Output everything a new agent session needs to get started."""
+    if compact:
+        status(compact=True)
+        print()
+        entries = _memory_entries()
+        if entries:
+            print("Recent:")
+            for item in entries[:3]:
+                print(f'  {item["entry"].splitlines()[0]}')
+        search("", compact=True)
+        return
+
+    print(f"\n{'='*70}")
+    print(f"  🚀 CONTEXT HUB BOOTSTRAP — New Session")
+    print(f"{'='*70}\n")
+
+    # 1. Full AI context (single source of truth)
+    if os.path.exists(AI_CONTEXT_FILE):
+        print("📋 PROJECT CONTEXT (AI_CONTEXT.md)")
+        print("-" * 40)
+        with open(confined_path(BASE_DIR, AI_CONTEXT_FILE), "r", encoding="utf-8") as f:
+            print(f.read())
+        print()
+
+    # 2. Recent memory
+    print("🧠 RECENT DECISIONS (last 5)")
+    print("-" * 40)
+    memory_show(5)
+
+    # 3. Knowledge topics
+    print("📚 AVAILABLE KNOWLEDGE TOPICS")
+    print("-" * 40)
+    search("")
+
+
+# ─── Setup ────────────────────────────────────────────────────────────────────
+
+_PLACEHOLDER_RE = re.compile(r'\$\{[A-Za-z0-9_]+\}')
+_SETUP_FILES = ["AI_CONTEXT.md", "CLAUDE.md", "VERSION.json", "ROADMAP.md"]
+
+
+def setup():
+    """Audit unfilled ${...} placeholders in key project files."""
+    found_any = False
+    for filename in _SETUP_FILES:
+        filepath = confined_path(BASE_DIR, filename)
+        if not os.path.exists(filepath):
+            continue
+        with open(filepath, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+        hits = []
+        seen = set()
+        for lineno, line in enumerate(lines, 1):
+            for m in _PLACEHOLDER_RE.finditer(line):
+                ph = m.group()
+                if ph not in seen:
+                    seen.add(ph)
+                    hits.append((lineno, ph))
+        if hits:
+            found_any = True
+            print(f"\n  📄 {filename}")
+            for lineno, ph in hits:
+                print(f"     line {lineno}: {ph}")
+    if found_any:
+        print("\n  To fill a placeholder, tell your agent:")
+        print('  "Fill ${PROJECT_NAME} with MyProject in AI_CONTEXT.md"')
+        print("  or edit the files directly in your editor.\n")
+    else:
+        print("✅ No unfilled placeholders found in key project files.")
+
+
+# ─── Context Lane ─────────────────────────────────────────────────────────────
+
+_LANE_NAMES = ("operational", "wiki", "execution", "debug")
+
+
+def context_lane(lane):
+    """Output the context files for a specific routing lane."""
+    if lane not in _LANE_NAMES:
+        print(f"Unknown lane '{lane}'. Available: {', '.join(_LANE_NAMES)}")
+        return
+
+    def _print_file(filepath, label=None, max_lines=None):
+        filepath = confined_path(BASE_DIR, filepath)
+        if not os.path.exists(filepath):
+            return
+        with open(filepath, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+        if max_lines:
+            lines = lines[:max_lines]
+        print(f"\n{'─'*60}")
+        print(f"  {label or os.path.relpath(filepath, BASE_DIR)}")
+        print(f"{'─'*60}")
+        print("".join(lines))
+
+    if lane == "operational":
+        _print_file(os.path.join(BASE_DIR, "AI_CONTEXT.md"))
+        _print_file(os.path.join(BASE_DIR, "ROADMAP.md"), max_lines=60,
+                    label="ROADMAP.md (first 60 lines)")
+        _print_file(os.path.join(BASE_DIR, "VERSION.json"))
+        if _memory_entries():
+            print(f"\n{'─'*60}")
+            print("  Project memory, primary and pending (last 5 entries)")
+            print(f"{'─'*60}")
+            memory_show(5)
+
+    elif lane == "wiki":
+        _print_file(os.path.join(DOCS_DIR, "index.md"))
+        print(f"\n{'─'*60}")
+        print("  Available knowledge topics")
+        print(f"{'─'*60}")
+        search("")
+
+    elif lane == "execution":
+        print(f"\n{'─'*60}")
+        print("  Available native skill packages")
+        print(f"{'─'*60}")
+        canonical = confined_path(BASE_DIR, "templates", ".agents", "skills")
+        directories = [canonical] if os.path.isdir(canonical) else [
+            confined_path(BASE_DIR, ".agents", "skills"),
+            confined_path(BASE_DIR, ".claude", "skills"),
+        ]
+        found = False
+        for skills_dir in directories:
+            if not os.path.isdir(skills_dir):
+                continue
+            for fname in sorted(os.listdir(skills_dir)):
+                package = confined_path(BASE_DIR, skills_dir, fname, "SKILL.md")
+                if os.path.isfile(package):
+                    print("  " + os.path.relpath(package, BASE_DIR).replace("\\", "/"))
+                    found = True
+                elif fname.endswith(".md") and not fname.startswith("_") \
+                        and fname.lower() != "readme.md":
+                    print(f"  /{fname[:-3]} (legacy flat skill)")
+                    found = True
+        if not found:
+            print("  No skills directory found.")
+
+    elif lane == "debug":
+        _print_file(os.path.join(DOCS_DIR, "Known_Limitations.md"))
+        if _memory_entries():
+            print(f"\n{'─'*60}")
+            print("  Project memory, primary and pending (last 5 entries)")
+            print(f"{'─'*60}")
+            memory_show(5)
+
+
+# ─── Main ─────────────────────────────────────────────────────────────────────
+
+def _main():
+    parser = argparse.ArgumentParser(
+        description="OAW — Context Hub CLI",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Commands:
+  %(prog)s search "query"                   Search knowledge topics
+  %(prog)s search --include-memory          Also search primary and pending project memory
+  %(prog)s search --compact                 One-line topic list (saves tokens)
+  %(prog)s get Topic_Name                   Fetch a topic's full content
+  %(prog)s annotate Topic "note"            Annotate a topic with a finding
+  %(prog)s memory add "[TAG] note"          Add a memory entry
+  %(prog)s memory show --last 5             Show recent decisions
+  %(prog)s memory recall "query" --json    Bounded excerpts with provenance and cursor
+  %(prog)s lesson "mistake" "fix"           Record a lesson learned
+  %(prog)s status                           One-screen project status
+  %(prog)s status --compact                 One-line status (saves tokens)
+  %(prog)s bootstrap                        Get new-session context dump
+  %(prog)s bootstrap --compact              Minimal bootstrap (saves tokens)
+  %(prog)s setup                            Audit unfilled placeholders
+  %(prog)s context --lane operational       Output context for a routing lane
+        """
+    )
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    # Search
+    p_search = subparsers.add_parser("search", help="Search knowledge base topics.")
+    p_search.add_argument("query", nargs="?", default="", help="Query to search for.")
+    p_search.add_argument("--compact", action="store_true", help="One-line output (saves tokens).")
+    p_search.add_argument("--include-memory", action="store_true",
+                          help="Also search primary and pending project memory entries.")
+
+    # Get
+    p_get = subparsers.add_parser("get", help="Get full content of a topic.")
+    p_get.add_argument("topic", help="The topic ID (filename without .md).")
+
+    # Annotate
+    p_annotate = subparsers.add_parser("annotate", help="Annotate a topic with new findings.")
+    p_annotate.add_argument("topic", help="The topic ID.")
+    p_annotate.add_argument("note", help="Your observation (prefix with [TAG] for structure).")
+
+    # Memory
+    p_memory = subparsers.add_parser("memory", help="Manage the rolling decision memory.")
+    mem_sub = p_memory.add_subparsers(dest="mem_action", required=True)
+
+    p_mem_add = mem_sub.add_parser("add", help="Add a new memory entry.")
+    p_mem_add.add_argument("note", help="The memory entry (format: '[TAG] Title - Details').")
+
+    p_mem_show = mem_sub.add_parser("show", help="Show recent memory entries.")
+    p_mem_show.add_argument("--last", type=int, default=10, help="Number of entries to show.")
+
+    p_recall = mem_sub.add_parser("recall", help="Recall bounded memory and knowledge excerpts.")
+    p_recall.add_argument("query", help="Literal case-insensitive substring to recall.")
+    p_recall.add_argument("--limit", type=int, default=8, help="Maximum matching entries (1-100).")
+    p_recall.add_argument("--cursor", default=None, help="Continuation cursor from a previous recall.")
+    p_recall.add_argument("--max-chars", type=int, default=12000,
+                          help="Total printed character budget, including JSON framing (512-1000000).")
+    p_recall.add_argument("--json", action="store_true", dest="json_out", help="Emit structured provenance and continuation.")
+    p_recall.add_argument("--index", action="store_true",
+                          help="One short row per hit (source:line of the match, date, tag or title, entry size, "
+                               "match window) instead of excerpts; read the cited line for the full entry. "
+                               "Cursors are bound to the mode.")
+
+    # Lesson
+    p_lesson = subparsers.add_parser("lesson", help="Record a lesson learned (mistake + correction).")
+    p_lesson.add_argument("mistake", help="What went wrong.")
+    p_lesson.add_argument("correction", help="What the correct approach is.")
+
+    # Status
+    p_status = subparsers.add_parser("status", help="Print one-screen project status summary.")
+    p_status.add_argument("--compact", action="store_true", help="One-line output (saves tokens).")
+
+    # Bootstrap
+    p_bootstrap = subparsers.add_parser("bootstrap", help="Output new-session bootstrap context.")
+    p_bootstrap.add_argument("--compact", action="store_true", help="Minimal output (saves tokens).")
+
+    # Setup
+    subparsers.add_parser("setup", help="Audit unfilled ${...} placeholders in key project files.")
+
+    # Context lane
+    p_context = subparsers.add_parser("context", help="Output context files for a routing lane.")
+    p_context.add_argument(
+        "--lane", required=True,
+        choices=list(_LANE_NAMES),
+        help="Lane to load: operational, wiki, execution, or debug.",
+    )
+
+    args = parser.parse_args()
+    for filepath in (DOCS_DIR, RAW_DIR, MEMORY_FILE, AI_CONTEXT_FILE):
+        confined_path(BASE_DIR, filepath)
+
+    if args.command == "search":
+        search(args.query, compact=args.compact, include_memory=args.include_memory)
+    elif args.command == "get":
+        return get(args.topic)
+    elif args.command == "annotate":
+        return annotate(args.topic, args.note)
+    elif args.command == "memory":
+        if args.mem_action == "add":
+            memory_add(args.note)
+        elif args.mem_action == "show":
+            memory_show(args.last)
+        elif args.mem_action == "recall":
+            return memory_recall(args.query, args.limit, args.cursor, args.max_chars, args.json_out, index=args.index)
+    elif args.command == "lesson":
+        lesson(args.mistake, args.correction)
+    elif args.command == "status":
+        status(compact=args.compact)
+    elif args.command == "bootstrap":
+        bootstrap(compact=args.compact)
+    elif args.command == "setup":
+        setup()
+    elif args.command == "context":
+        context_lane(args.lane)
+
+
+def main():
+    try:
+        return _main() or 0
+    except (ValueError, OSError, RuntimeError) as exc:
+        print(f"Error: {exc}")
+        return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

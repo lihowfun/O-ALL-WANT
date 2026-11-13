@@ -6,73 +6,25 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
-  smoke:
-    runs-on: ubuntu-latest
+  contracts:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python: ["3.10", "3.13"]
+    runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1, Node 24
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0, Node 24
         with:
-          python-version: "3.10"
-
-      # Single source of truth: every smoke check is implemented in
-      # scripts/harness_check.py so contributors can run the same gate locally
-      # via `./scripts/harness_check.py`.
-      - name: OAW harness check
-        run: ./scripts/harness_check.py
-
-      # harness_check covers the generic "fresh install passes lint" path,
-      # but this step specifically exercises that lint REJECTS a crafted page
-      # with missing required metadata. It's a targeted regression guard for
-      # the required-metadata enforcement from the LLM-wiki governance layer.
-      - name: wiki_sync.py rejects missing required metadata
-        run: |
-          target=$(mktemp -d)
-          mkdir -p "$target/docs/knowledge"
-          cat > "$target/docs/knowledge/Broken_Topic.md" <<'EOF'
-          ---
-          id: Broken_Topic
-          title: Broken Topic
-          page_type: topic
-          related_topics: []
-          ---
-
-          # Broken Topic
-
-          This page is missing last_updated metadata.
-          EOF
-
-          set +e
-          AGENT_MEMORY_BASE_DIR="$target" python3 scripts/wiki_sync.py lint > "$RUNNER_TEMP/oaw-wiki-lint.txt" 2>&1
-          rc=$?
-          set -e
-          cat "$RUNNER_TEMP/oaw-wiki-lint.txt"
-          if [ $rc -eq 0 ]; then
-            echo "::error::wiki_sync.py lint should reject missing required metadata"
-            exit 1
-          fi
-          grep -q "knowledge page missing required metadata" "$RUNNER_TEMP/oaw-wiki-lint.txt"
-
-      # Example drift is also inside harness_check, but we keep an explicit
-      # file-set diff step so a failing CI log points directly at the offending
-      # files, not at a generic "drift detected" line.
-      - name: minimal-project example — full file-set diff on failure
-        if: failure()
-        run: |
-          target=$(mktemp -d)
-          pushd "$target" > /dev/null
-          echo y | "$GITHUB_WORKSPACE/install.sh"
-          popd > /dev/null
-
-          find "$target" -type f | sed "s#^$target/##" | sort > "$RUNNER_TEMP/oaw-installed-files.txt"
-          find example/minimal-project -type f | sed 's#^example/minimal-project/##' | sort > "$RUNNER_TEMP/oaw-example-files.txt"
-
-          echo "--- files in fresh install but missing from example/minimal-project ---"
-          comm -23 "$RUNNER_TEMP/oaw-installed-files.txt" "$RUNNER_TEMP/oaw-example-files.txt" || true
-
-          echo "--- context_hub.py diff ---"
-          diff -u scripts/context_hub.py example/minimal-project/scripts/context_hub.py || true
-
-          echo "--- wiki_sync.py diff ---"
-          diff -u scripts/wiki_sync.py example/minimal-project/scripts/wiki_sync.py || true
+          python-version: ${{ matrix.python }}
+      - name: OAW behavioral and installation contracts
+        run: python scripts/harness_check.py --verbose
+      - name: Offline three-arm measurement contracts
+        run: python -m unittest discover -s evals/three-way -p "test_bench.py" -v
+      - name: Offline retained-skill experiment contracts
+        run: python -m unittest discover -s evals/skill-value -p "test_*.py" -v

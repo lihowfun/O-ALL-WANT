@@ -9,6 +9,8 @@ related_topics:
   - Harness_Engineering_Knowledge_Synthesis
 ---
 
+> Historical v1 material from April 2026. This is not the current v2 runtime or performance contract; see [v2 design](../Design_Principles.md).
+
 # Deterministic State Control (確定性狀態控制)
 
 ## 核心問題
