@@ -86,3 +86,28 @@ candidate. Gate results here do not replace its disposition, final integration
 checks or actual Linux/macOS/Windows CI. Controller/design/code-review model
 costs were not independently metered; zero new experimental task calls is not
 zero engineering/review cost.
+
+## Cross-family review follow-up (2026-11-13)
+
+U1 was built and first reviewed within one model family, so a Claude review followed. Fourteen
+adversarial synthetic bundles (missing outcome, unscored outcome given a zero, self-reported usage,
+self-reported grader, symlink escape, unmatched repeats, a grade bound to another run's output, stream
+analysis unit, and others) were all refused or reported incomplete as the contract requires; a failed
+attempt's cost stayed in the arm's total. No input was found that reports more than its evidence.
+
+Three design gaps were found and changed, then reviewed once by Codex (no blocker; two disclosure
+findings in the Markdown output, both fixed with a test):
+
+- `required_metrics`: completeness was judged on all four metrics, so a subscription-billed study with
+  no dollar cost could never be complete and exit 2 lost its meaning. The frozen manifest may now name
+  the metrics that decide completeness (default: all four; `logical_tokens` is mandatory). Other metrics
+  are still reported with their unknown entries, in JSON and Markdown.
+- Test-only comparison: any pilot or development run of the compared arms made `compare` refuse, which
+  kept pilot cost out of the study ledger that holds the test comparison. `compare` now uses the test
+  runs only and reports the runs it left out.
+- Identical harness: two arms with the same harness hash were compared as if they differed; this is
+  now refused.
+
+Measured on Linux x86_64, `/usr/bin/python3` 3.10.12: the two ledger test files, 33 tests, pass. The
+full gate result for the commit that carries this change is recorded in its commit message. These are
+synthetic fixtures; they are not model measurements and establish no benefit.

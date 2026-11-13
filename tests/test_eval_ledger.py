@@ -318,6 +318,76 @@ class LedgerTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'floor_sd'):
             ledger.compare(self.bundle, 'base', 'candidate', 'c', 0.1)
 
+    def test_declared_required_metrics_decide_completeness(self):
+        # Subscription-billed runs have no dollar cost: unknown by default, out of scope only if the plan says so.
+        b = copy.deepcopy(self.bundle)
+        for r in b['records']:
+            if r['status'] != 'not_applicable':
+                r['metrics']['cost_usd'] = None
+        self.assertEqual(ledger.summarize(b)['status'], 'incomplete')
+        b['manifest']['required_metrics'] = ['noncache_tokens', 'logical_tokens']
+        bind(b)
+        report = ledger.summarize(b)
+        self.assertEqual(report['status'], 'complete')
+        self.assertEqual(report['required_metrics'], ['logical_tokens', 'noncache_tokens'])
+        self.assertFalse(report['whole_study']['cost_usd']['complete'])
+        self.assertIsNone(report['whole_study']['cost_usd']['total'])
+        b['records'][0]['metrics']['noncache_tokens'] = None
+        self.assertEqual(ledger.summarize(b)['status'], 'incomplete')
+        for bad in ([], ['cost_usd'], ['logical_tokens', 'logical_tokens'], ['logical_tokens', 'latency'],
+                    'logical_tokens', [['logical_tokens']]):
+            c = copy.deepcopy(self.bundle)
+            c['manifest']['required_metrics'] = bad
+            bind(c)
+            with self.assertRaisesRegex(ValueError, 'required_metrics'):
+                ledger.summarize(c)
+
+    def test_pilot_runs_share_the_ledger_but_never_enter_a_comparison(self):
+        b = copy.deepcopy(self.bundle)
+        run = copy.deepcopy(b['manifest']['runs'][0])
+        run.update(id='p-base', task_id='p', split='pilot', input_sha256=h(b'p'))
+        b['manifest']['runs'].append(run)
+        bind(b)
+        result = self.compare(b)
+        self.assertEqual(result['comparison']['excluded_non_test_runs'], {'development': 0, 'pilot': 1})
+        self.assertEqual(result['comparison']['task_repeats'], [['a', 1], ['b', 1]])
+        self.assertEqual(result['comparison']['quality'], self.compare()['comparison']['quality'])
+        self.assertEqual(result['comparison']['cost'], self.compare()['comparison']['cost'])
+        self.assertEqual(result['coverage']['planned'], 5)
+        self.assertEqual(result['status'], 'incomplete')
+
+    def test_markdown_discloses_metric_scope_and_runs_left_out(self):
+        full = ledger.markdown(self.compare())
+        self.assertIn('Completeness is judged on: logical_tokens, noncache_tokens, cost_usd, elapsed_seconds.', full)
+        self.assertNotIn('Not required by this manifest', full)
+        self.assertIn('Compared test runs only (task#repeat): a#1, b#1.', full)
+        self.assertIn('Left out, never compared: 0 development and 0 pilot runs', full)
+        b = copy.deepcopy(self.bundle)
+        b['manifest']['required_metrics'] = ['logical_tokens']
+        for r in b['records']:
+            if r['status'] != 'not_applicable':
+                r['metrics'].update(noncache_tokens=None, cost_usd=None, elapsed_seconds=None)
+        for run in b['manifest']['runs']:
+            if run['task_id'] == 'b':
+                run['split'] = 'development'
+        bind(b)
+        narrow = ledger.markdown(self.compare(b))
+        self.assertNotEqual(narrow, full)
+        self.assertIn('Status: **complete**', narrow)
+        self.assertIn('Completeness is judged on: logical_tokens.', narrow)
+        self.assertIn('Not required by this manifest: noncache_tokens (8 unknown entries); cost_usd (8 unknown entries); '
+                      'elapsed_seconds (8 unknown entries).', narrow)
+        self.assertIn('Compared test runs only (task#repeat): a#1.', narrow)
+        self.assertIn('Left out, never compared: 2 development and 0 pilot runs', narrow)
+
+    def test_identical_harness_identity_is_not_a_comparison(self):
+        b = copy.deepcopy(self.bundle)
+        for run in b['manifest']['runs']:
+            run['harness_sha256'] = h(b'same harness')
+        bind(b)
+        with self.assertRaisesRegex(ValueError, 'same harness identity'):
+            self.compare(b)
+
     def test_invalid_numbers_boolean_tokens_and_zero_answer_rejected(self):
         for value in (-1, True, 1.5, float('nan'), float('inf'), 0):
             b = copy.deepcopy(self.bundle)

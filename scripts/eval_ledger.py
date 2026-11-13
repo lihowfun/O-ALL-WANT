@@ -132,6 +132,17 @@ def grading_contract(value):
     return value
 
 
+def required_metrics(manifest):
+    """Metrics whose totals decide completeness. Frozen with the plan; the default is every metric."""
+    value = manifest.get('required_metrics')
+    if value is None:
+        return list(METRICS)
+    require(isinstance(value, list) and value and all(isinstance(m, str) for m in value)
+            and len(set(value)) == len(value) and set(value) <= set(METRICS) and 'logical_tokens' in value,
+            'required_metrics must be distinct known metrics including logical_tokens')
+    return [m for m in METRICS if m in value]
+
+
 def manifest_index(manifest):
     require(isinstance(manifest, dict), 'Manifest must be an object')
     require(type(manifest.get('schema_version')) is int and manifest['schema_version'] == 1, 'Unknown manifest schema')
@@ -140,6 +151,7 @@ def manifest_index(manifest):
     require(manifest.get('analysis_unit') in ('independent_task', 'stream', 'diagnostic'), 'Declare analysis_unit')
     if manifest.get('grading_contract') is not None:
         grading_contract(manifest['grading_contract'])
+    required_metrics(manifest)
     runs = manifest.get('runs')
     require(isinstance(runs, list) and runs, 'Plan must contain runs')
     index, keys, tasks, arms, conditions = {}, set(), {}, {}, {}
@@ -358,9 +370,10 @@ def summarize(bundle):
                        'execution': totals([r for r in records if r['run_id'] in ids and r['stage'] != 'grading'],
                                            sum(rid in ids and stage != 'grading' for rid, stage in absent))})
     whole = totals(records, len(absent))
-    complete = all(v['complete'] for v in whole.values()) and all(r['artifact_identity_complete'] and r['grading_evidence_complete'] and r['scored'] for r in rows)
+    needed = required_metrics(bundle['manifest'])
+    complete = all(whole[m]['complete'] for m in needed) and all(r['artifact_identity_complete'] and r['grading_evidence_complete'] and r['scored'] for r in rows)
     return {'schema_version': 1, 'study_id': bundle['manifest']['study_id'], 'manifest_sha256': bundle['manifest_sha256'],
-            'status': 'complete' if complete else 'incomplete', 'benefit_verdict': None,
+            'status': 'complete' if complete else 'incomplete', 'benefit_verdict': None, 'required_metrics': needed,
             'coverage': {'planned': len(rows), 'started': sum(r['started'] for r in rows),
                          'completed': sum(r['completed'] for r in rows), 'scored': sum(r['scored'] for r in rows),
                          'missing_outcomes': sum(not r['completed'] for r in rows),
@@ -393,10 +406,15 @@ def compare(bundle, baseline, candidate, condition, margin, *, floor_sd=None, lo
     require(baseline != candidate, 'Comparison arms must differ')
     contract = grading_contract(manifest.get('grading_contract'))
     require(contract['source_kind'] in ('mechanical', 'independent_model'), 'Independent grading contract required')
-    runs = [r for r in manifest['runs'] if r['arm'] in (baseline, candidate) and r['condition']['id'] == condition]
-    require(runs and all(r['split'] == 'test' for r in runs), 'Comparison requires only planned test runs, no pilot/development')
+    planned = [r for r in manifest['runs'] if r['arm'] in (baseline, candidate) and r['condition']['id'] == condition]
+    # Pilot and development runs stay in the same study ledger for cost, but never enter a comparison.
+    runs = [r for r in planned if r['split'] == 'test']
+    require(runs, 'Comparison requires planned test runs; pilot/development runs are never compared')
+    excluded = {split: sum(r['split'] == split for r in planned) for split in ('development', 'pilot')}
     by_arm = {arm: {(r['task_id'], r['repeat']): r for r in runs if r['arm'] == arm} for arm in (baseline, candidate)}
     require(by_arm[baseline] and set(by_arm[baseline]) == set(by_arm[candidate]), 'Unmatched task/repeat plan')
+    require({r['harness_sha256'] for r in by_arm[baseline].values()} != {r['harness_sha256'] for r in by_arm[candidate].values()},
+            'Comparison arms have the same harness identity')
     outcomes = {o['run_id']: o for o in bundle['outcomes']}
     products, costs = {baseline: {}, candidate: {}}, {baseline: {}, candidate: {}}
     for arm, mapped in by_arm.items():
@@ -419,6 +437,7 @@ def compare(bundle, baseline, candidate, condition, margin, *, floor_sd=None, lo
     return {**report, 'comparison': {'scope': 'single metric/judge; execution tokens excluding grading/shared study overhead',
              'condition': condition, 'baseline': baseline, 'candidate': candidate, 'grading_contract': contract,
              'task_repeats': [[task, repeat] for task, repeat in sorted(by_arm[baseline])],
+             'excluded_non_test_runs': excluded,
              'quality': eval_stats.compare(products[candidate], products[baseline], margin,
                                            floor_sd=floor_sd, lower_is_better=lower_is_better),
              'cost': eval_stats.cost(costs[candidate], costs[baseline]),
@@ -429,6 +448,12 @@ def markdown(report):
     c = report['coverage']
     lines = ['# Evaluation accounting: ' + report['study_id'], '',
              'Status: **' + report['status'] + '**. No benefit/adoption verdict.', '',
+             'Completeness is judged on: ' + ', '.join(report['required_metrics']) + '.']
+    outside = [m for m in METRICS if m not in report['required_metrics']]
+    if outside:
+        lines.append('Not required by this manifest: ' + '; '.join(
+            f"{m} ({report['whole_study'][m]['unknown_entries']} unknown entries)" for m in outside) + '.')
+    lines += ['',
              f"Planned {c['planned']}; started {c['started']}; completed {c['completed']}; scored {c['scored']}; missing outcomes {c['missing_outcomes']}.",
              '', '| Scope | Observed logical tokens | Complete total |', '|---|---:|---:|']
     for name, values in list(report['scopes'].items()) + [('whole_study', report['whole_study'])]:
@@ -443,7 +468,10 @@ def markdown(report):
         lines.append(f"| {r['id']} | {r['completed']} | {r['scored']} | {', '.join(r['missing_stages']) or 'none'} |")
     if report.get('comparison'):
         comp = report['comparison']
+        left_out = comp['excluded_non_test_runs']
         lines += ['', 'Comparison scope: ' + comp['scope'],
+                  'Compared test runs only (task#repeat): ' + ', '.join(f'{task}#{repeat}' for task, repeat in comp['task_repeats']) + '.',
+                  f"Left out, never compared: {left_out['development']} development and {left_out['pilot']} pilot runs of these arms.",
                   f"Quality: {comp['quality']['class']}; execution cost: {comp['cost']['class']}. No adoption verdict."]
     if report.get('adapter'):
         lines += ['', 'Import: ' + report['adapter']['limitation'],

@@ -31,7 +31,7 @@ stdout. Redirect them explicitly if a saved report is wanted. Exit codes:
 
 | Code | Meaning |
 |---|---|
-| 0 | Valid input, complete declared accounting and scored artifact identities |
+| 0 | Valid input, complete accounting for the manifest's required metrics, and scored artifact identities |
 | 2 | Valid input, incomplete accounting or outcomes; report still usable |
 | 1 | Invalid, conflicting or unreadable input; do not use a partial result |
 
@@ -73,7 +73,17 @@ separators, `ensure_ascii=False`, `allow_nan=False`.
 
 The **manifest** has `schema_version: 1`, `study_id`, `protocol_sha256`,
 `analysis_unit` (`independent_task`, `stream`, `diagnostic`), an optional
-`grading_contract`, and every planned `run`. Each run declares:
+`grading_contract`, an optional `required_metrics`, and every planned `run`.
+
+`required_metrics` lists the metrics whose totals decide whether the accounting
+is complete. It defaults to all four, must include `logical_tokens`, and is part
+of the frozen manifest, so it cannot be relaxed after the runs without changing
+the binding. A study billed by subscription has no dollar cost to record: declare
+`["logical_tokens", "noncache_tokens"]` (and `elapsed_seconds` if it is metered)
+rather than leaving every such report incomplete. Metrics outside the list are
+still reported, with their unknown entries.
+
+Each run declares:
 
 | Field | Meaning |
 |---|---|
@@ -145,10 +155,14 @@ observed subtotal includes declared observations even if completeness or
 independence is unverified; it is not a certified bill or a whole-study total.
 
 Comparison requires both arms' entire paired test set with identical repeat
-sets, the same condition and frozen task identities, complete execution logical
-usage, delivered artifacts, and matching metric/judge contracts. It refuses
-pilot/development, stream/diagnostic, missing outcomes, self/unknown grading,
-missing independent completed grading evidence, and incomplete execution tokens.
+sets, the same condition and frozen task identities, different harness
+identities, complete execution logical usage, delivered artifacts, and matching
+metric/judge contracts. It refuses stream/diagnostic studies, missing outcomes,
+self/unknown grading, missing independent completed grading evidence, incomplete
+execution tokens, and two arms with the same harness hash. Only `test` runs are
+compared: pilot and development runs of the same arms may sit in the same ledger
+so that their cost stays in the study total, and the comparison reports how many
+it left out in `excluded_non_test_runs`. A comparison with no test run is refused.
 One-repeat tasks require explicit `--floor-sd`; the existing
 [eval_stats protocol](EVAL_PROTOCOL.md) defines the quality and cost mathematics.
 `--lower-is-better` preserves that protocol's direction option. This module
