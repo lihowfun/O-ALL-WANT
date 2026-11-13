@@ -24,6 +24,22 @@ FIXCHECK 完成後另加一小段：哪些修正保留、哪些事件驗到／�
 
 依據：[user_install.py](https://github.com/lihowfun/O-ALL-WANT/blob/c2d9852bf8cabf13fd86a4340ab89f69044cae5a/scripts/user_install.py) L1–12、L990 起 plan、L1648 起 inventory；[oaw.py CLI](https://github.com/lihowfun/O-ALL-WANT/blob/c2d9852bf8cabf13fd86a4340ab89f69044cae5a/scripts/oaw.py#L1083)。
 
+## #10 的評估雙軌（與安裝路線分開）
+
+GitHub [#10](https://github.com/lihowfun/O-ALL-WANT/issues/10) 要求的是幫助型／能力型兩軌；前面的維護者／使用者是「誰決定安裝」，不能拿來替代這一項。
+
+| 比較面向 | 幫助型：改善既有工作 | 能力型：新增成品能力 |
+|---|---|---|
+| 對照 | 原生；官方食物；skill 的 description-only；適用時加廉價做法 | 原生加相同底層工具；官方食物；description-only |
+| 任務 | 同類一致、盲出題與凍結；依正式 protocol | 成品任務與機械檢查；先凍結各能力的 protocol |
+| 評分 | 機械優先，否則不同家族盲評；套正式統計規則 | 成品正確性，另驗 installed-but-idle 對開場 token／一般任務的影響 |
+| 可用結果 | 預設／可選用／排掉；資料不足保留無判定 | 可選用／排掉，永不進預設；沒有完整有效資料就無判定 |
+| 額外成本 | 作者、作答、審查、選擇、重試與失敗都記錄 | 相同，另列工具／授權／artifact 成本 |
+
+依據 [D38/D41/D42](https://github.com/lihowfun/O-ALL-WANT/blob/268429d/records/digestion-2026-11-03/ingest/DECISIONS.md)：D38 定義兩目的，能力型門檻是草案（成品通過數增加、閒置啟動成本不超過 2%、一般工作不變差）；具體試吃以預登記為準。D41 選定先 harness、再 PPT／影片；遊戲是可選能力範例，尚未啟動正式試吃。D42 只授權 H1 的特定天花板補題，不能概括成事後換題的通行證。OAW 自己亦需面對相同效果門檻；H1 合併仍未定。
+
+#12 的實作驗收以 [RELEASE_POLISH.md](RELEASE_POLISH.md) 為準：repo 外 locator 必須明確 opt-in，不能僅列路徑；doctor 要實際縮短預設文字，保留完整檢查與 JSON。
+
 ## 舊原型限制：逐條改範圍
 
 候選 `SKILL_INTAKE.md` L352–374 不再當整個產品現況。

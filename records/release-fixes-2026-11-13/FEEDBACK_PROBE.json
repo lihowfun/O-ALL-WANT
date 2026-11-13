@@ -1,0 +1,94 @@
+{
+  "candidate_commit": "c2d9852bf8cabf13fd86a4340ab89f69044cae5a",
+  "scope": "Isolated model-free install; OAW_CONFIG_HOME under disposable test root.",
+  "init_exit": 0,
+  "doctor_exit": 0,
+  "doctor_json_exit": 0,
+  "doctor_text_lines": 141,
+  "doctor_checks": 136,
+  "doctor_check_status_counts": {
+    "PASS": 136,
+    "WARN": 0,
+    "FAIL": 0
+  },
+  "outside_project_locator_written_without_opt_in": true,
+  "egm_bridges": [
+    {
+      "entry": ".agents/skills/egm-bootstrap/SKILL.md",
+      "target_exists": true,
+      "inside_project": true
+    },
+    {
+      "entry": ".agents/skills/egm-brainstorm/SKILL.md",
+      "target_exists": true,
+      "inside_project": true
+    },
+    {
+      "entry": ".agents/skills/egm-draft/SKILL.md",
+      "target_exists": true,
+      "inside_project": true
+    },
+    {
+      "entry": ".agents/skills/egm-drift-report/SKILL.md",
+      "target_exists": true,
+      "inside_project": true
+    },
+    {
+      "entry": ".agents/skills/egm-resolve/SKILL.md",
+      "target_exists": true,
+      "inside_project": true
+    },
+    {
+      "entry": ".agents/skills/egm-review/SKILL.md",
+      "target_exists": true,
+      "inside_project": true
+    },
+    {
+      "entry": ".agents/skills/egm-review-loop/SKILL.md",
+      "target_exists": true,
+      "inside_project": true
+    },
+    {
+      "entry": ".claude/skills/egm-bootstrap/SKILL.md",
+      "target_exists": true,
+      "inside_project": true
+    },
+    {
+      "entry": ".claude/skills/egm-brainstorm/SKILL.md",
+      "target_exists": true,
+      "inside_project": true
+    },
+    {
+      "entry": ".claude/skills/egm-draft/SKILL.md",
+      "target_exists": true,
+      "inside_project": true
+    },
+    {
+      "entry": ".claude/skills/egm-drift-report/SKILL.md",
+      "target_exists": true,
+      "inside_project": true
+    },
+    {
+      "entry": ".claude/skills/egm-resolve/SKILL.md",
+      "target_exists": true,
+      "inside_project": true
+    },
+    {
+      "entry": ".claude/skills/egm-review/SKILL.md",
+      "target_exists": true,
+      "inside_project": true
+    },
+    {
+      "entry": ".claude/skills/egm-review-loop/SKILL.md",
+      "target_exists": true,
+      "inside_project": true
+    }
+  ],
+  "egm_docs_exist": {
+    "docs/getting_started.md": true,
+    "docs/harnesses.md": true,
+    "docs/codex.md": true,
+    "docs/claude.md": true
+  },
+  "model_answers_started": 0
+}
