@@ -113,9 +113,9 @@ python3 scripts/oaw.py remove NAME --target PROJECT [--dry-run] [--apply] [--for
   points at `catalog.py taste`), startup cost (description estimate), what runs on its own, how to remove.
 - `--choice only` on an OAW project retires OAW's unchanged files with backups and keeps edited ones as yours
   (profile `manager-only`; also `migrate --profile manager-only`). `init` or `migrate --profile minimal` switches back.
-- `init` records the checkout in the user's OAW settings (`checkout.json` under `$OAW_CONFIG_HOME`, else
-  `~/.config/oaw/`, `~/Library/Application Support/oaw/` or `%APPDATA%\oaw\`), never in the project, so the
-  explicit `oaw-add` skill can find it (skipped for a project under the system temp folder unless `OAW_CONFIG_HOME` is set). `OAW_VERDICTS` points at another verdicts file (maintainers and tests).
+- Recording the checkout outside the project requires `--remember-checkout`; see
+  [Optional checkout locator](#optional-checkout-locator) for destinations and consent behavior.
+  `OAW_VERDICTS` points at another verdicts file (maintainers and tests).
 - Maintainers regenerate the shipped results with `python3 scripts/build_verdicts.py --ledger LEDGER --write`
   (`--check` compares); it refuses local foods and anything that looks like a private path.
 

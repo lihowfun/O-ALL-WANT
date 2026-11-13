@@ -15,6 +15,43 @@ import sync_examples
 
 
 class GateTests(unittest.TestCase):
+    def test_checkout_docs_do_not_claim_automatic_or_temp_exempt_registration(self):
+        reference = (harness_check.ROOT / "docs/CLI_Reference.md").read_text(encoding="utf-8")
+        install_section = reference.split("## Your own skills", 1)[-1].split("## Installed Context Hub", 1)[0]
+        self.assertIn("#optional-checkout-locator", install_section)
+        self.assertNotIn("`init` records the checkout", reference)
+        self.assertNotIn("skipped for a project under the system temp folder", reference)
+        for relative in ("docs/UPGRADING.md", "README.md", "README.zh.md"):
+            with self.subTest(relative=relative):
+                text = (harness_check.ROOT / relative).read_text(encoding="utf-8")
+                self.assertIn("--remember-checkout", text)
+                self.assertIn("#optional-checkout-locator", text)
+
+    def test_readme_gate_claims_link_to_platform_skip_rules(self):
+        for relative, claim in (("README.md", "no unexpected skips"), ("README.zh.md", "沒有預期外的 skip")):
+            with self.subTest(relative=relative):
+                text = (harness_check.ROOT / relative).read_text(encoding="utf-8")
+                gate = next(line for line in text.splitlines() if line.startswith("| ✅"))
+                self.assertIn(claim, gate)
+                self.assertIn("docs/CLI_Reference.md#repository-validation", gate)
+
+    def test_readmes_share_frozen_results_disposition_and_default_entrypoints(self):
+        facts = ("12", "Python", "Claude Code", "Opus 5.5", "Codex CLI", "gpt-6.1-sol", "2.58×", "1.92×",
+                 "FIXCHECK", "M1", "M2", "M3", "R1", "R2", "24", "codex/t01", "claude/t12",
+                 "oaw-add", "oaw-codemap", "oaw-evidence", "oaw-review",
+                 "https://github.com/lihowfun/O-ALL-WANT/blob/268429d/records/v2.0.1-experiments/H1/RESULT.md",
+                 "https://github.com/lihowfun/O-ALL-WANT/blob/e05c4d5a9238fe3ef4529552a27ce9095ead6a3b/records/v2.0.1-experiments/FIXCHECK/RESULT.md",
+                 "docs/validation/v2.0.1-final.md", "vendor/egm/docs/getting_started.md",
+                 "vendor/egm/docs/codex.md", "vendor/egm/docs/claude.md", "vendor/egm/docs/harnesses.md")
+        for relative in ("README.md", "README.zh.md"):
+            text = (harness_check.ROOT / relative).read_text(encoding="utf-8")
+            for fact in facts:
+                with self.subTest(relative=relative, fact=fact):
+                    self.assertIn(fact, text)
+        chinese = (harness_check.ROOT / "README.zh.md").read_text(encoding="utf-8")
+        self.assertNotIn("Claude CLI 模型測試", chinese)
+        self.assertNotIn("三個 OAW", chinese)
+
     def test_source_ledger_rejects_version_and_immutable_pin_drift(self):
         original = json.loads((harness_check.ROOT / "docs/releases/2.0.1-sources.json").read_text(encoding="utf-8"))
         with tempfile.TemporaryDirectory(prefix="oaw-citations-") as temporary:

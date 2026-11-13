@@ -12,6 +12,9 @@ the owner's merge and `v2.0.1` tag.
 
 ### Release fixes after FIXCHECK (D45)
 
+- Incremental user installs retain the first file receipt and original backup, reject intervening edits, and never overwrite an existing backup.
+- Catalog restore, absorb and absorbed-skill removal recheck captured files and manifest under the install lock before mutation; stale operations ask the user to rerun.
+
 M1 (session-end saving), M2 (empty-recall host guidance) and R2 (one deep
 code-review round) were implemented, failed the preregistered regression
 thresholds in the one FIXCHECK check, and were reverted. M3 (permission-only

@@ -2,7 +2,7 @@
 
 Offline: local file:// git fixtures, a mocked tarball and mocked GitHub search.
 """
-from contextlib import redirect_stderr, redirect_stdout
+from contextlib import contextmanager, redirect_stderr, redirect_stdout
 import hashlib
 import io
 import json
@@ -171,6 +171,27 @@ class CatalogCliTests(unittest.TestCase):
                 continue
             result[relative] = sha(path.read_bytes())
         return result
+
+    @contextmanager
+    def change_before_install_lock(self, change):
+        original_lock = oaw.install_lock
+        captured = {}
+
+        @contextmanager
+        def competing_lock(target):
+            if target == self.project and not captured:
+                with patch.object(oaw, "install_lock", original_lock):
+                    change()
+                captured.update({p.relative_to(target).as_posix(): p.read_bytes()
+                                 for p in target.rglob("*") if p.is_file()})
+            with original_lock(target):
+                yield
+
+        with patch.object(oaw, "install_lock", competing_lock):
+            yield captured
+        self.assertTrue(captured)
+        self.assertEqual({p.relative_to(self.project).as_posix(): p.read_bytes()
+                          for p in self.project.rglob("*") if p.is_file()}, captured)
 
     # ------------------------------------------------------------------ intake
 
@@ -716,6 +737,71 @@ class CatalogCliTests(unittest.TestCase):
         self.assertFalse((self.project / ".agents/skills/sweet-notes").exists())
         self.assertNotEqual(restored["build"], "build.1")  # the kept file makes it a new, named composition
         self.assertEqual(self.cli("builds")["builds"][-1]["kind"], "restore")
+
+    def test_restore_aborts_when_migration_keeps_new_custom_policy_before_lock(self):
+        files, _manifest = catalog.layer_files(self.project)
+        build = catalog.record_build(self.project, self.lab, files, label="baseline", label_zh="baseline", kind="baseline")
+        agents = self.project / "AGENTS.md"
+        agents.write_bytes(b"policy captured before restore\n")
+
+        def competing_migration():
+            # Complete the competing writer exactly between capture and lock acquisition.
+            agents.write_bytes(b"later custom policy\r\n")
+            oaw.apply_plan(oaw.plan_install(self.project, "minimal", False, migrate=True,
+                                           keep_custom=["AGENTS.md"]), migrate=True)
+
+        with self.change_before_install_lock(competing_migration):
+            with self.assertRaisesRegex(catalog.CatalogError, "run.*again"):
+                catalog.cmd_restore(self.project, build["name"], True)
+        self.assertEqual(agents.read_bytes(), b"later custom policy\r\n")
+
+        # With no intervening writer, restore still recovers the requested managed bytes.
+        files, _manifest = catalog.layer_files(self.project)
+        build = catalog.record_build(self.project, self.lab, files, label="baseline", label_zh="baseline", kind="baseline")
+        (self.project / "scripts/context_hub.py").write_bytes(b"earlier runtime\r\n")
+        result = catalog.cmd_restore(self.project, build["name"], True)
+        self.assertEqual(result["status"], "restored")
+        self.assertEqual(catalog.layer_files(self.project)[0], files)
+
+    def test_restore_rechecks_writes_deletes_absence_and_manifest_even_without_a_manifest_write(self):
+        for case in ("write", "delete", "absent", "manifest"):
+            with self.subTest(case=case):
+                self.project = self.base / case
+                shutil.copytree(self.template, self.project)
+                files, _manifest = catalog.layer_files(self.project)
+                agents = self.project / "AGENTS.md"
+                if case == "delete":
+                    del files["AGENTS.md"]
+                build = catalog.record_build(self.project, self.lab, files, label="baseline", label_zh="baseline", kind="baseline")
+                if case == "write":
+                    agents.write_bytes(b"captured policy\n")
+                elif case == "absent":
+                    agents.unlink()
+                path = self.project / oaw.MANIFEST_PATH if case == "manifest" else agents
+                later = path.read_bytes() + b"\n" if path.exists() else b"appeared after capture\r\n"
+                with self.change_before_install_lock(lambda: path.write_bytes(later)):
+                    with self.assertRaisesRegex(catalog.CatalogError, "run.*again"):
+                        catalog.cmd_restore(self.project, build["name"], True)
+
+    def test_absorb_rechecks_manifest_before_any_mutation(self):
+        name = self.clean_food()
+        self.cli("taste", name)
+        self.pass_ab(name)
+        path = self.project / oaw.MANIFEST_PATH
+        later = path.read_bytes() + b"\n"
+        with self.change_before_install_lock(lambda: path.write_bytes(later)):
+            with self.assertRaisesRegex(catalog.CatalogError, "run.*again"):
+                catalog.cmd_absorb(self.project, name, ["skill:sweet-notes"], "test", True)
+
+    def test_remove_rechecks_absorbed_file_before_any_mutation(self):
+        name = self.clean_food()
+        self.cli("taste", name)
+        self.pass_ab(name)
+        self.cli("absorb", name, "--components", "skill:sweet-notes", "--apply")
+        path = self.project / ".agents/skills/sweet-notes/SKILL.md"
+        with self.change_before_install_lock(lambda: path.write_bytes(b"later owner edit\r\n")):
+            with self.assertRaisesRegex(catalog.CatalogError, "run.*again"):
+                catalog.cmd_remove(self.project, name, "test", True)
 
     def test_remove_deletes_only_checked_absorbed_skill_files(self):
         (self.project / "src").mkdir()

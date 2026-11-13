@@ -98,7 +98,7 @@ The goal is still simple: **spend expensive tokens on real reasoning and real ou
 | 🛟 | **Safe lifecycle** | `init` protects existing content; `migrate` previews by default and `--apply` keeps backups, receipts, rollback and conflict proposals; `doctor` reports health | always |
 | 🔒 | **Safe writes** | Locked read-modify-write, atomic replacement, and refusal of symlink/junction or path escapes | always |
 | 📉 | **Compact output** | `search --compact` and `--max-chars` budgets keep tool output short | default |
-| ✅ | **Proof gate** | `harness_check.py`: 9 check groups, every required test module, a minimum test count and zero skips; CI on Ubuntu, macOS and Windows with Python 3.10 and 3.13 | this repo |
+| ✅ | **Proof gate** | `harness_check.py`: 9 check groups, every required test module, a minimum test count and [no unexpected skips](docs/CLI_Reference.md#repository-validation); CI on Ubuntu, macOS and Windows with Python 3.10 and 3.13 | this repo |
 
 ### 🥄 Scooped out of the pot in v2
 

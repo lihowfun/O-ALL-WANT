@@ -165,6 +165,62 @@ class UserInstallTests(unittest.TestCase):
 
     # ------------------------------------------------------------------ preview
 
+    def shared_hook_and_server(self):
+        source = self.sources / "shared"
+        self.put(source, "common.py", "print('shared support')\n")
+        self.put(source, "hooks/hooks.json", json.dumps({"hooks": {"Stop": [
+            {"hooks": [{"type": "command", "command": "python3 common.py"}]}]}}))
+        self.put(source, ".mcp.json", json.dumps({"mcpServers": {
+            "shared-server": {"command": "python3", "args": ["common.py"]}}}))
+        return source, self.project / ".claude/oaw-user/shared/common.py"
+
+    def test_wider_consent_preserves_the_first_support_file_receipt_and_backup(self):
+        source, installed = self.shared_hook_and_server()
+        installed.parent.mkdir(parents=True)
+        original = b"original project bytes\r\n\x00\xff"
+        installed.write_bytes(original)
+        self.cli("add", str(source), "--choice", "only", "--consent", "hooks", "--apply")
+        first = user_install.load_record(self.project)["packages"]["shared"]["parts"]["hooks:shared-hooks"]["files"]
+        self.cli("add", str(source), "--choice", "only", "--consent", "all", "--apply")
+        parts = user_install.load_record(self.project)["packages"]["shared"]["parts"]
+        self.assertEqual(parts["mcp:shared-server"]["files"], first)
+        for item in first:
+            self.assertEqual((self.project / item["backup"]).read_bytes(), original)
+        self.assertEqual(self.cli("remove", "shared")["status"], "removed")
+        self.assertEqual(installed.read_bytes(), original)
+
+    def test_wider_consent_refuses_an_intervening_support_file_edit(self):
+        source, installed = self.shared_hook_and_server()
+        installed.parent.mkdir(parents=True)
+        original = b"original project bytes\r\n"
+        installed.write_bytes(original)
+        self.cli("add", str(source), "--choice", "only", "--consent", "hooks", "--apply")
+        installed_bytes = installed.read_bytes()
+        edited = b"user edited installed support\r\n"
+        installed.write_bytes(edited)
+        before = tree(self.project)
+        result = self.cli("add", str(source), "--choice", "only", "--consent", "all", "--apply", code=2)
+        self.assertIn("changed", result["error"])
+        self.assertEqual(tree(self.project), before)
+        self.assertEqual(installed.read_bytes(), edited)
+        # Resolving the edit lets removal recover the original bytes from the first addition.
+        installed.write_bytes(installed_bytes)
+        self.cli("remove", "shared")
+        self.assertEqual(installed.read_bytes(), original)
+
+    def test_add_never_overwrites_an_existing_original_backup(self):
+        source, installed = self.shared_hook_and_server()
+        self.init()
+        installed.parent.mkdir(parents=True)
+        installed.write_bytes(b"current project bytes\r\n")
+        backup = self.project / ".oaw/user-skills/backups/shared/.claude/oaw-user/shared/common.py"
+        backup.parent.mkdir(parents=True)
+        backup.write_bytes(b"earlier recovery bytes\r\n")
+        before = tree(self.project)
+        result = self.cli("add", str(source), "--choice", "oaw", "--consent", "all", "--apply", code=2)
+        self.assertIn("already exists", result["error"])
+        self.assertEqual(tree(self.project), before)
+
     def test_preview_writes_nothing_on_clean_and_installed_projects(self):
         for installed in (False, True):
             with self.subTest(installed=installed):
