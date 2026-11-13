@@ -86,5 +86,14 @@
     "tests/test_catalog_ui.py": "75921cb12cee81f74fdcd496d012b910e23273ed67175f36eab12c764c7f1cde",
     "tests/test_user_install.py": "4371939a3b690f0a10e75a415a3d3cfabb3eb7f79f880cfab4a4eb6f270b8722"
   },
-  "exit_code": 0
+  "exit_code": 0,
+  "post_gate_document_updates": {
+    "files": {
+      "ROADMAP.md": {
+        "at_gate": "7256466645fccb00c6d333461635cfb5e2a5eff542904dc67ec7162c57d92648",
+        "after_gate": "5ac328d7b4bc869be04ffa4c2d422b17730f8b1335e1407e8870680fd82a8661"
+      }
+    },
+    "reason": "ROADMAP appended the just-completed validation result; executable and skill sources are unchanged."
+  }
 }
