@@ -37,9 +37,9 @@
 
 | 項目 | 現況與下一個可驗證交付 |
 |---|---|
-| #17 FIXCHECK | 離線準備與 fresh review 完成；28 tests、最終 4/4 PASS。獨立 state／17M 預算／候選與 H1 來源均已綁定。模型作答尚未啟動，0/24 |
+| #17 FIXCHECK | 離線準備與 fresh review 完成；28 tests、最終 4/4 PASS。獨立 state／17M 預算／候選與 H1 來源均已綁定。Codex A 已開始，最新快照見 [RUN_STATUS](../v2.0.1-experiments/FIXCHECK/RUN_STATUS.md)；尚無回歸結論 |
 | #18 CI | PR #16 的 base 仍為 codex/oaw-2-native-upgrade；六格 CI 尚未驗證。已向 owner 提出具體選項：新修復 branch 對 main 的 draft PR，或沿用 PR #16。等待安排確認 |
-| #10／#12 文件與修整 | 在 codex/v2.0.1-release-polish 獨立工作樹實作中：locator opt-in、doctor 摘要、EGM 文件、評估雙軌 SOP。97 installer tests 通過；full gate／code review 進行中。FIXCHECK 候選 c2d9852 未改 |
+| #10／#12 文件與修整 | 在 codex/v2.0.1-release-polish 獨立工作樹實作中：locator opt-in、doctor 摘要、EGM 文件、評估雙軌 SOP。97 installer tests、最終 full gate 9/9／685 tests；code review finding closed，4/4 PASS。已推送 5af21f6；FIXCHECK 候選 c2d9852 未改 |
 | #11 發佈 | VERSION 仍 2.0.0 proposed；待 FIXCHECK／CI、完整發佈 review、owner merge／tag |
 | PPT 收尾 | 原校準結果與本次修復分開；沒有改題、凍結或重跑 |
 | G5 舊判定 | 發佈後用原資料重判；尚未執行 |
@@ -51,17 +51,17 @@ FIXCHECK 的 Claude 預估約 8M、上限 17M，使用獨立帳本；不使用 H
 
 [預登記](../v2.0.1-experiments/FIXCHECK/FIXCHECK.md)、[manifest](../v2.0.1-experiments/FIXCHECK/MANIFEST.json)、[離線驗證與 review](../v2.0.1-experiments/FIXCHECK/VALIDATION.md) 已備妥。原 H1 36/44 rows 的整檔 SHA 與公開 72 筆 O/N1/N2 摘要均核對；12 題 mapping 與原 runner／工具快照一致。
 
-初審抓到 functions/items 矛盾、偽造 recall、負數 session token 三個缺口；修復後 reviewer 重放原反例全部拒絕，最終 4/4 PASS。這些是計算器驗證，不是產品收益；目前 0 次 FIXCHECK 作答、沒有新效果判定。records toolkit gate 9/9、167 tests；產品 gate 677 tests 是另一個 checkout 的先前驗證。
+初審抓到 functions/items 矛盾、偽造 recall、負數 session token 三個缺口；修復後 reviewer 重放原反例全部拒絕，最終 4/4 PASS。這些是計算器驗證，不是產品收益；準備完成時為 0 次 FIXCHECK 作答；之後執行進度見 RUN_STATUS，沒有新效果判定。records toolkit gate 9/9、167 tests；產品 gate 677 tests 是另一個 checkout 的先前驗證。
 
 ## 發佈修整的獨立進度
 
 [RELEASE_POLISH.md](RELEASE_POLISH.md) 由 fresh-context agent 做實作前審查，4/4 PASS。GitHub #10 確認要求幫助型／能力型兩軌（不是拿維護者／使用者路線替代）；#12 要求 repo 外設定寫入須同意、doctor 簡潔、EGM 文件指向。
 
-[原候選的實測](FEEDBACK_PROBE.json)：both-host 安裝會未經 opt-in 寫 locator；doctor 141 行、136 個 PASS。新工作樹的同樣隔離實測：預設與 preview 都不寫，明確選擇 apply 才寫；doctor 7 行，verbose 141 行、JSON 136 checks。兩個 host 共 14 個 EGM bridge 與四份上游文件都存在。沒有模型作答，也沒有更動 EGM vendored bytes。完整驗證與 code review 完成前不標整批完成。
+[原候選的實測](FEEDBACK_PROBE.json)：both-host 安裝會未經 opt-in 寫 locator；doctor 141 行、136 個 PASS。新工作樹的同樣隔離實測：預設與 preview 都不寫，明確選擇 apply 才寫；doctor 7 行，verbose 141 行、JSON 136 checks。兩個 host 共 14 個 EGM bridge 與四份上游文件都存在。沒有模型作答，也沒有更動 EGM vendored bytes。完整驗證與 code review 已完成：9/9 gate、685 tests、0 skips，原 review 文件 finding 已 closed。另修正舊 D19 測試全面禁用「遊戲」字詞與 D38 能力範圍的衝突，保留介面命名限制。[驗證](https://github.com/lihowfun/O-ALL-WANT/blob/5af21f61d1d30d844ead3169081532842d3fe375/docs/validation/v2.0.1-release-polish.md)。此批待 FIXCHECK 處置後整合，未發布。
 
 ## 後續順序
 
-- **P0**：確定 CI 的 PR 安排並取得六格實際結果；FIXCHECK 準備已完成，依核准順序做一次複查（Claude 預估約 8M、上限 17M；Codex 另帳）。啟動前需重新核對實際 PPT 程序與已推送的 manifest。
+- **P0**：繼續已核准的一次 FIXCHECK（Claude 預估約 8M、上限 17M；Codex 另帳），每次 resume 檢查實際 PPT 程序與已推送 manifest。同時等待 CI PR 安排選擇，最終仍需六格實際結果。
 - **P1**：依複查結果處理規則還原或保留，完成發佈文件／版本與完整 review；約 0.5–1 天，依賴複查與 CI。
 - **P2**：發佈後 #9 接 Harness² U1 帳目／報告 adapter，估 1–2 天；U2／U3 與能力試吃依 pilot、真實需求和既有預算規則往下。
 
