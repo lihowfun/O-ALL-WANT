@@ -1,0 +1,2551 @@
+{
+  "schema": "g5-historical-accounting/1",
+  "schema1_ledger_bundle": false,
+  "note": "Historical row accounting, not an eligibility certificate or eval_ledger report. Dataset views overlap; never sum them.",
+  "unknown": null,
+  "sources": {
+    "records/digestion-2026-11-03/taste-graphify/agent/out/grades.jsonl": {
+      "sha256": "f2b37aff221c03f9e527a0d0fd04193dba4b54a7b28787fed157892f357b4219"
+    },
+    "records/digestion-2026-11-03/taste-graphify/agent/out/rows.jsonl": {
+      "sha256": "255011568d4a0f72982bdecdcff150019065554e52933abd3d486ea7ff9152cf"
+    },
+    "records/digestion-2026-11-03/taste-graphify/erpnext/out/grades.jsonl": {
+      "sha256": "cf43436f03e4442a39dbdc5e60fa5f10c871085c3752789b5300ce67e021eb65"
+    },
+    "records/digestion-2026-11-03/taste-graphify/erpnext/out/rows.jsonl": {
+      "sha256": "87a756734b62e33aa13428572eca74f6767623558a8db4297cc5bc069d517723"
+    },
+    "records/digestion-2026-11-03/codemap-erpnext-confirm/out-opus/grades.jsonl": {
+      "sha256": "cd34433f6aa077cdfe09b17dc65b02a93e911a0164324a35422d9b9061ffd808"
+    },
+    "records/digestion-2026-11-03/codemap-erpnext-confirm/out-opus/rows.jsonl": {
+      "sha256": "958233d3bb092df513d2d99acdf64e1dd44ef492d8ed2c2ffbd3711214b01a82"
+    },
+    "records/digestion-2026-11-03/codemap-erpnext-confirm/out-sonnet/grades.jsonl": {
+      "sha256": "7064998603a54c98dabd945154464bec2c7abca46cd0729f4211f1575bae3c6b"
+    },
+    "records/digestion-2026-11-03/codemap-erpnext-confirm/out-sonnet/rows.jsonl": {
+      "sha256": "7e6f2bd4c0dc4a2d9dd1856d222e3ed53c8ee2b1a92e29c8ad337e88caf5c3fa"
+    },
+    "records/digestion-2026-11-03/codemap-erpnext-weaker/out/opus48/grades.jsonl": {
+      "sha256": "ee4c3019c75b39fc176a6b29852e5780975608df0bfbdb85c760344a0cfd2a54"
+    },
+    "records/digestion-2026-11-03/codemap-erpnext-weaker/out/opus48/rows.jsonl": {
+      "sha256": "f758b68cbe8fb070b6dba5fee07e77e1dae640cc79b3e6a25a5e2e3dcd4d8dbe"
+    },
+    "records/digestion-2026-11-03/codemap-erpnext-weaker/out/haiku/grades-b.jsonl": {
+      "sha256": "b719beec2cffa440097a97754f730524aa36afc74ffc19b38a8f183dffb3843a"
+    },
+    "records/digestion-2026-11-03/codemap-erpnext-weaker/out/haiku/grades.jsonl": {
+      "sha256": "e36ea28fd16e93f0ce3d06c0532edf65880698696a34002f5c9b8b846f1a1e71"
+    },
+    "records/digestion-2026-11-03/codemap-erpnext-weaker/out/haiku/rows.jsonl": {
+      "sha256": "61a92a5dc1832f115d03a4cc7e70e2e2082666b4846f1572a1b88a32f5b2b7a7"
+    },
+    "records/digestion-2026-11-06/taste-codegraph/out-opus/grades-not-run-ratelimit.jsonl": {
+      "sha256": "cd1f899edf58445991c6085982b2723b44e628783b6bf6f12100c7a569709b2e"
+    },
+    "records/digestion-2026-11-06/taste-codegraph/out-opus/grades.jsonl": {
+      "sha256": "62d0bcd119751cc29b6618e1fb43a4ec591ca4e9671af5704a5084b8d4ec205d"
+    },
+    "records/digestion-2026-11-06/taste-codegraph/out-opus/rows.jsonl": {
+      "sha256": "cd52f10cf4ecbfa3a8ae7a68fdea64280e6b20f1c3de013d9b2c09d01cd3dbe0"
+    },
+    "records/digestion-2026-11-06/taste-codegraph/out-sonnet/grades-not-run-ratelimit.jsonl": {
+      "sha256": "1f455f6180d24d4843d94bafb9d117b3dd43981e3642ccb52cdb86ebf546a404"
+    },
+    "records/digestion-2026-11-06/taste-codegraph/out-sonnet/grades.jsonl": {
+      "sha256": "e8e7ad027df4da391474771a4a183e3b45d0b5006fd1e0b6056133abb1ddbaea"
+    },
+    "records/digestion-2026-11-06/taste-codegraph/out-sonnet/rows.jsonl": {
+      "sha256": "bacb120c1ae9f08cae998f5ac6d44a4cb23879ddf5323f8723f9ab254894548c"
+    },
+    "records/digestion-2026-11-06/taste-codegraph/out-opus48/grades.jsonl": {
+      "sha256": "5c42ba706d113eea93378590e29a7efaf0542e6c76c7c244c0570d7331b6bac9"
+    },
+    "records/digestion-2026-11-06/taste-codegraph/out-opus48/rows.jsonl": {
+      "sha256": "8a66beee2b667509c840a25a1e5f94138db22c2cbf5b816c648fc0a3c8ab3b8d"
+    },
+    "records/digestion-2026-11-06/taste-codegraph/out-haiku/grades-b.jsonl": {
+      "sha256": "e165f41c42f88c792a7dfdcd0834df159d77f5b0b13ce5bbb88db2ba8c058ae0"
+    },
+    "records/digestion-2026-11-06/taste-codegraph/out-haiku/grades-not-run-ratelimit.jsonl": {
+      "sha256": "336ad34beba7a7ae7ba50eca8e094d37192ed0783e4b88ad2e6193933542d435"
+    },
+    "records/digestion-2026-11-06/taste-codegraph/out-haiku/grades.jsonl": {
+      "sha256": "65df53e8c90096bddaf5e8ea546ea417d689aaaf3e6f04efdc1ecc715cb8a77e"
+    },
+    "records/digestion-2026-11-06/taste-codegraph/out-haiku/rows.jsonl": {
+      "sha256": "fa449e2e4725ef40cedafb8f13e925e6fb80d4087da53ed0af4704a3acc576e1"
+    },
+    "records/digestion-2026-11-06/taste-codegraph/out-nb-opus/grades.jsonl": {
+      "sha256": "f7d825fc9f9cb738364e5f8b2f5eca684ddef4ea8ea1a5f2a3655193c9dbd296"
+    },
+    "records/digestion-2026-11-06/taste-codegraph/out-nb-opus/rows.jsonl": {
+      "sha256": "23f5e22cf356b61cce1ae2cab21a9ec38f9ba14d872bf735c2b28be274c5799d"
+    },
+    "records/digestion-2026-11-07/validation/v8/out/grades-codex-original.jsonl": {
+      "sha256": "8e91072dcb5e64dfae3c0459d802ebfcd98e2a9a21f64b4d6f5e232eb19e9538"
+    },
+    "records/digestion-2026-11-07/validation/v8/out/grades-opus.jsonl": {
+      "sha256": "f6f7e4612cd1a0dbf9bea56b8c169c97ada210f1a36235afae1e1d2f5b35d203"
+    },
+    "records/digestion-2026-11-07/validation/v8/out/rows.jsonl": {
+      "sha256": "b1e93703a1408534ce48d78a9dab3e474f258dca46a0ec08b99a748b83a7ced8"
+    },
+    "records/v2.0.1-experiments/X1/out-opus/grades-codex.jsonl": {
+      "sha256": "4a34caa01e6962e90b303124b82ea02c0c4ed57b026871892fbf7c7327553c45"
+    },
+    "records/v2.0.1-experiments/X1/out-opus/grades-opus.jsonl": {
+      "sha256": "b9ee53a171d091c8055fa782470fd85799b930e872a427eff27c554daf5d2e7f"
+    },
+    "records/v2.0.1-experiments/X1/out-opus/rows.jsonl": {
+      "sha256": "0f3545792dd1a64b9af63e384902a18fd80ec9d28a057986168a7f1f0d90db5d"
+    },
+    "records/v2.0.1-experiments/X1/out-codex/grades-codex.jsonl": {
+      "sha256": "40474171af0dfb961a689ca20d20635c1178591a7cc7635ef8231cc519b83ab9"
+    },
+    "records/v2.0.1-experiments/X1/out-codex/grades-opus.jsonl": {
+      "sha256": "84024e920a038511488792496b269a18dbce75010ed962d5b93a5d3da2e74f15"
+    },
+    "records/v2.0.1-experiments/X1/out-codex/rows.jsonl": {
+      "sha256": "bb796e9fe47ec1f9ddd7d705fa3585303fd75bcd567b6ada7ce648fc42594fb8"
+    },
+    "records/digestion-2026-11-03/taste-tokeneconomizer/grades.jsonl": {
+      "sha256": "80836968baebd3ac13977ebdcb55793ea4ac3e6ab417cf3f329c7042a5939660"
+    },
+    "records/digestion-2026-11-03/taste-tokeneconomizer/rows.jsonl": {
+      "sha256": "6176f4543eee0340dffb0d599b9c10dddd92978f7fe219346111fca95953bb05"
+    },
+    "records/digestion-2026-11-03/taste-tokeneconomizer/followup-envfacts/grades.jsonl": {
+      "sha256": "c37e563a4b2a98117355de970636f784975543c51e00a722f5986915552d8089"
+    },
+    "records/digestion-2026-11-03/taste-tokeneconomizer/followup-envfacts/rows.jsonl": {
+      "sha256": "7c11cc1565a320c1459108a92c5e4dbb0d546fa73def76996f115ef03b34e581"
+    },
+    "records/digestion-2026-11-07/validation/v4/opus/grades-codex-original.jsonl": {
+      "sha256": "74804bf772ffdc4bcdcf7e26d9b74f1f8db1ae6e5ce32dadf6e700079c967b18"
+    },
+    "records/digestion-2026-11-07/validation/v4/opus/grades-codex-reversed.jsonl": {
+      "sha256": "42c4ac807efa044e85c19707c4803ed18d15d2a11e5516bf46a9a0fcd89c0955"
+    },
+    "records/digestion-2026-11-07/validation/v4/sonnet/grades-codex-original.jsonl": {
+      "sha256": "6e827b301ab3f4f4b12e8adc65088809135d26a696463c49565892413817de72"
+    },
+    "records/digestion-2026-11-07/validation/v4/sonnet/grades-codex-reversed.jsonl": {
+      "sha256": "bfd5c160b6c1cd2a627c79c027ac77666fe2bc7b8d3b7afa6eb50187a95715d9"
+    },
+    "records/digestion-2026-11-07/validation/v4/opus48/grades-codex-original.jsonl": {
+      "sha256": "1b52b439bd851e9ae5a0d9267b05102ee8b920f5662e2775b7150112f95ae256"
+    },
+    "records/digestion-2026-11-07/validation/v4/opus48/grades-codex-reversed.jsonl": {
+      "sha256": "3d91492f560861c62c77d0f4f402124dc50b3062598de14c3e634c08c5560c84"
+    },
+    "records/digestion-2026-11-07/validation/v4/haiku/grades-codex-original.jsonl": {
+      "sha256": "76b6364bbee79f1f5cba90d5832e8828cb3280a205bbe727fba18414c6b16c16"
+    },
+    "records/digestion-2026-11-07/validation/v4/haiku/grades-codex-reversed.jsonl": {
+      "sha256": "0a58550e91b999a7d6c5acd34a864cccc99d4ccb5ef2b120053895f2fad4a409"
+    },
+    "records/digestion-2026-11-03/codemap-stage0/run1-invalid-R-not-executed/results.json": {
+      "sha256": "ebf654f1985971d8e3f27a83a4e9fd6641638e6e65ddb409565186088ef53403"
+    },
+    "records/digestion-2026-11-03/codemap-stage0/run2/results.json": {
+      "sha256": "3fbc8cb52ba8300d9d551bcb963d76ba9a4eeb87c6786d51de0400a412c4a0a1"
+    },
+    "records/digestion-2026-11-03/taste-graphify/results.json": {
+      "sha256": "7e2da660e352ce889cf062a0dd1fa533aba52676330898593ee70bfd4f1ba6c2"
+    },
+    "records/audit-2026-11-08/CODEX_AUDIT.md": {
+      "sha256": "1209592d5cad84287e2e0a54beeeef7064adf7014bc3ba41091206c4cb580a38"
+    },
+    "records/digestion-2026-11-03/ingest/DECISIONS.md": {
+      "sha256": "729d5be23626fbe954a72d552cd2f387064f7e455f125dfe0900d261283693d9"
+    },
+    "records/digestion-2026-11-03/taste-tokeneconomizer/PREREG.md": {
+      "sha256": "84222aa376b006352fb0db5e526ef8d50dc2b814dd8dff8daf6b2533ce4433dd"
+    },
+    "records/digestion-2026-11-03/taste-tokeneconomizer/tasks.json": {
+      "sha256": "0ecc8d51ba450cc6c622251739390b1985c7fac2b4de0b9fb8f09f588b4b37c6"
+    },
+    "records/digestion-2026-11-03/taste-tokeneconomizer/verify.json": {
+      "sha256": "14aca57d79916b10f69dc30368c2352da79821d6948ef08fe4707441d1d244d2"
+    },
+    "records/digestion-2026-11-03/taste-tokeneconomizer/followup-envfacts/PREREG.md": {
+      "sha256": "b8c7e155bf93421bc7541b1de29df4fc1c5ab2eac32ed8d8f63b74e551652ddb"
+    },
+    "records/digestion-2026-11-03/taste-graphify/erpnext/questions.json": {
+      "sha256": "b7604bca63a134d43962924f88d9c209b01060f7020b054b2b3b366790b2ad83"
+    },
+    "records/digestion-2026-11-06/taste-codegraph/PREREG.md": {
+      "sha256": "becdc84fbe19224db0ac38df1d3c12494e798709949fb99b54600976bf2fe3da"
+    },
+    "records/digestion-2026-11-06/taste-codegraph/taste_run.py": {
+      "sha256": "e03e7fb73836e339cfa2af631b4b49929de20771c0e5dec464b1755f20d553de"
+    },
+    "records/digestion-2026-11-07/validation/v8/questions.json": {
+      "sha256": "eee033ec39e248520fea77ed776607c8d168cacfd8cb9ad2ddd993904d5fe6d6"
+    },
+    "records/digestion-2026-11-07/validation/v8/ADDENDUM-V8.md": {
+      "sha256": "19405463ccdbbdb1acf5df6e2db96bc2e0168824ea35f222225f7c20296a4dd9"
+    },
+    "records/v2.0.1-experiments/X1/PREREG.md": {
+      "sha256": "174d9ed103a1063b6f54c76082710949f55271c6e0b81266f8ba722fdc17ebed"
+    },
+    "records/v2.0.1-experiments/X1/questions.json": {
+      "sha256": "a75a977596b7e1666682fa81b4b6547ab0765cac32c6df5aa249f88ecef31b7e"
+    },
+    "records/v2.0.1-experiments/X1/floor_sd.json": {
+      "sha256": "988d8af16e8f28f707087cd9d6c21440f0adaa592f6c6e28408834a10b3248c9"
+    }
+  },
+  "datasets": {
+    "graphify_oaw_agent": {
+      "rows_source": "records/digestion-2026-11-03/taste-graphify/agent/out/rows.jsonl",
+      "planned": 18,
+      "started_observed": 18,
+      "started_all_attempts": null,
+      "started_lower_bound": 18,
+      "completed": 18,
+      "scored": 18,
+      "missing_planned_outputs": 0,
+      "missing_reason": null,
+      "grading_passes": {
+        "grades.jsonl": {
+          "source": "records/digestion-2026-11-03/taste-graphify/agent/out/grades.jsonl",
+          "attempt_rows": 18,
+          "valid_scored": 18,
+          "zero_token_not_run": 0,
+          "mechanical": false,
+          "stage": "grading",
+          "logical_tokens": {
+            "observed": 105365,
+            "unknown_entries": 0,
+            "complete": true,
+            "total": 105365
+          },
+          "noncache_tokens": null,
+          "cost_usd": null,
+          "elapsed_seconds": null
+        }
+      },
+      "arms": {
+        "G": {
+          "completed_rows": 6,
+          "seeded_rows": 0,
+          "task_count": 6,
+          "answer": {
+            "logical_tokens": {
+              "observed": 1413267,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 1413267
+            },
+            "noncache_tokens": null,
+            "cost_usd": {
+              "observed": 2.1508510000000003,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 2.1508510000000003
+            },
+            "elapsed_seconds": {
+              "observed": 324.69999999999993,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 324.69999999999993
+            }
+          },
+          "proposal_sidecalls": {
+            "completed_calls": 0,
+            "logical_tokens": 0,
+            "elapsed_seconds": null,
+            "note": "Separate food sidecalls; not included in answer logical tokens."
+          },
+          "map_commands": null
+        },
+        "N": {
+          "completed_rows": 6,
+          "seeded_rows": 0,
+          "task_count": 6,
+          "answer": {
+            "logical_tokens": {
+              "observed": 1432773,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 1432773
+            },
+            "noncache_tokens": null,
+            "cost_usd": {
+              "observed": 2.3875908,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 2.3875908
+            },
+            "elapsed_seconds": {
+              "observed": 300.20000000000005,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 300.20000000000005
+            }
+          },
+          "proposal_sidecalls": {
+            "completed_calls": 0,
+            "logical_tokens": 0,
+            "elapsed_seconds": null,
+            "note": "Separate food sidecalls; not included in answer logical tokens."
+          },
+          "map_commands": null
+        },
+        "S": {
+          "completed_rows": 6,
+          "seeded_rows": 0,
+          "task_count": 6,
+          "answer": {
+            "logical_tokens": {
+              "observed": 944430,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 944430
+            },
+            "noncache_tokens": null,
+            "cost_usd": {
+              "observed": 1.6397224,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 1.6397224
+            },
+            "elapsed_seconds": {
+              "observed": 290.1,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 290.1
+            }
+          },
+          "proposal_sidecalls": {
+            "completed_calls": 0,
+            "logical_tokens": 0,
+            "elapsed_seconds": null,
+            "note": "Separate food sidecalls; not included in answer logical tokens."
+          },
+          "map_commands": null
+        }
+      },
+      "shared_stages": {
+        "authoring": null,
+        "review": null,
+        "controller": null
+      }
+    },
+    "graphify_erpnext_initial": {
+      "rows_source": "records/digestion-2026-11-03/taste-graphify/erpnext/out/rows.jsonl",
+      "planned": 8,
+      "started_observed": 8,
+      "started_all_attempts": null,
+      "started_lower_bound": 8,
+      "completed": 8,
+      "scored": 8,
+      "missing_planned_outputs": 0,
+      "missing_reason": null,
+      "grading_passes": {
+        "grades.jsonl": {
+          "source": "records/digestion-2026-11-03/taste-graphify/erpnext/out/grades.jsonl",
+          "attempt_rows": 8,
+          "valid_scored": 8,
+          "zero_token_not_run": 0,
+          "mechanical": false,
+          "stage": "grading",
+          "logical_tokens": {
+            "observed": 44711,
+            "unknown_entries": 0,
+            "complete": true,
+            "total": 44711
+          },
+          "noncache_tokens": null,
+          "cost_usd": null,
+          "elapsed_seconds": null
+        }
+      },
+      "arms": {
+        "G": {
+          "completed_rows": 4,
+          "seeded_rows": 0,
+          "task_count": 4,
+          "answer": {
+            "logical_tokens": {
+              "observed": 578111,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 578111
+            },
+            "noncache_tokens": null,
+            "cost_usd": {
+              "observed": 1.0124894,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 1.0124894
+            },
+            "elapsed_seconds": {
+              "observed": 175.5,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 175.5
+            }
+          },
+          "proposal_sidecalls": {
+            "completed_calls": 0,
+            "logical_tokens": 0,
+            "elapsed_seconds": null,
+            "note": "Separate food sidecalls; not included in answer logical tokens."
+          },
+          "map_commands": null
+        },
+        "N": {
+          "completed_rows": 4,
+          "seeded_rows": 0,
+          "task_count": 4,
+          "answer": {
+            "logical_tokens": {
+              "observed": 404548,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 404548
+            },
+            "noncache_tokens": null,
+            "cost_usd": {
+              "observed": 0.9047524000000001,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 0.9047524000000001
+            },
+            "elapsed_seconds": {
+              "observed": 146.0,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 146.0
+            }
+          },
+          "proposal_sidecalls": {
+            "completed_calls": 0,
+            "logical_tokens": 0,
+            "elapsed_seconds": null,
+            "note": "Separate food sidecalls; not included in answer logical tokens."
+          },
+          "map_commands": null
+        }
+      },
+      "shared_stages": {
+        "authoring": null,
+        "review": null,
+        "controller": null
+      }
+    },
+    "erpnext_confirm_opus": {
+      "rows_source": "records/digestion-2026-11-03/codemap-erpnext-confirm/out-opus/rows.jsonl",
+      "planned": 36,
+      "started_observed": 36,
+      "started_all_attempts": null,
+      "started_lower_bound": 36,
+      "completed": 36,
+      "scored": 36,
+      "missing_planned_outputs": 0,
+      "missing_reason": null,
+      "grading_passes": {
+        "grades.jsonl": {
+          "source": "records/digestion-2026-11-03/codemap-erpnext-confirm/out-opus/grades.jsonl",
+          "attempt_rows": 36,
+          "valid_scored": 36,
+          "zero_token_not_run": 0,
+          "mechanical": false,
+          "stage": "grading",
+          "logical_tokens": {
+            "observed": 199779,
+            "unknown_entries": 0,
+            "complete": true,
+            "total": 199779
+          },
+          "noncache_tokens": null,
+          "cost_usd": null,
+          "elapsed_seconds": null
+        }
+      },
+      "arms": {
+        "G": {
+          "completed_rows": 12,
+          "seeded_rows": 4,
+          "task_count": 4,
+          "answer": {
+            "logical_tokens": {
+              "observed": 1594626,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 1594626
+            },
+            "noncache_tokens": null,
+            "cost_usd": {
+              "observed": 2.8886883999999995,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 2.8886883999999995
+            },
+            "elapsed_seconds": {
+              "observed": 518.7,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 518.7
+            }
+          },
+          "proposal_sidecalls": {
+            "completed_calls": 0,
+            "logical_tokens": 0,
+            "elapsed_seconds": null,
+            "note": "Separate food sidecalls; not included in answer logical tokens."
+          },
+          "map_commands": null
+        },
+        "N": {
+          "completed_rows": 12,
+          "seeded_rows": 4,
+          "task_count": 4,
+          "answer": {
+            "logical_tokens": {
+              "observed": 1207870,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 1207870
+            },
+            "noncache_tokens": null,
+            "cost_usd": {
+              "observed": 2.6509291999999998,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 2.6509291999999998
+            },
+            "elapsed_seconds": {
+              "observed": 439.3,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 439.3
+            }
+          },
+          "proposal_sidecalls": {
+            "completed_calls": 0,
+            "logical_tokens": 0,
+            "elapsed_seconds": null,
+            "note": "Separate food sidecalls; not included in answer logical tokens."
+          },
+          "map_commands": null
+        },
+        "S": {
+          "completed_rows": 12,
+          "seeded_rows": 0,
+          "task_count": 4,
+          "answer": {
+            "logical_tokens": {
+              "observed": 961011,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 961011
+            },
+            "noncache_tokens": null,
+            "cost_usd": {
+              "observed": 1.8928152,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 1.8928152
+            },
+            "elapsed_seconds": {
+              "observed": 504.5,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 504.5
+            }
+          },
+          "proposal_sidecalls": {
+            "completed_calls": 0,
+            "logical_tokens": 0,
+            "elapsed_seconds": null,
+            "note": "Separate food sidecalls; not included in answer logical tokens."
+          },
+          "map_commands": null
+        }
+      },
+      "shared_stages": {
+        "authoring": null,
+        "review": null,
+        "controller": null
+      }
+    },
+    "erpnext_confirm_sonnet": {
+      "rows_source": "records/digestion-2026-11-03/codemap-erpnext-confirm/out-sonnet/rows.jsonl",
+      "planned": 36,
+      "started_observed": 36,
+      "started_all_attempts": null,
+      "started_lower_bound": 36,
+      "completed": 36,
+      "scored": 36,
+      "missing_planned_outputs": 0,
+      "missing_reason": null,
+      "grading_passes": {
+        "grades.jsonl": {
+          "source": "records/digestion-2026-11-03/codemap-erpnext-confirm/out-sonnet/grades.jsonl",
+          "attempt_rows": 36,
+          "valid_scored": 36,
+          "zero_token_not_run": 0,
+          "mechanical": false,
+          "stage": "grading",
+          "logical_tokens": {
+            "observed": 202802,
+            "unknown_entries": 0,
+            "complete": true,
+            "total": 202802
+          },
+          "noncache_tokens": null,
+          "cost_usd": null,
+          "elapsed_seconds": null
+        }
+      },
+      "arms": {
+        "G": {
+          "completed_rows": 12,
+          "seeded_rows": 0,
+          "task_count": 4,
+          "answer": {
+            "logical_tokens": {
+              "observed": 773485,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 773485
+            },
+            "noncache_tokens": null,
+            "cost_usd": {
+              "observed": 1.0084514000000002,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 1.0084514000000002
+            },
+            "elapsed_seconds": {
+              "observed": 322.6,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 322.6
+            }
+          },
+          "proposal_sidecalls": {
+            "completed_calls": 0,
+            "logical_tokens": 0,
+            "elapsed_seconds": null,
+            "note": "Separate food sidecalls; not included in answer logical tokens."
+          },
+          "map_commands": null
+        },
+        "N": {
+          "completed_rows": 12,
+          "seeded_rows": 0,
+          "task_count": 4,
+          "answer": {
+            "logical_tokens": {
+              "observed": 750437,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 750437
+            },
+            "noncache_tokens": null,
+            "cost_usd": {
+              "observed": 1.0587536,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 1.0587536
+            },
+            "elapsed_seconds": {
+              "observed": 301.1,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 301.1
+            }
+          },
+          "proposal_sidecalls": {
+            "completed_calls": 0,
+            "logical_tokens": 0,
+            "elapsed_seconds": null,
+            "note": "Separate food sidecalls; not included in answer logical tokens."
+          },
+          "map_commands": null
+        },
+        "S": {
+          "completed_rows": 12,
+          "seeded_rows": 0,
+          "task_count": 4,
+          "answer": {
+            "logical_tokens": {
+              "observed": 595572,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 595572
+            },
+            "noncache_tokens": null,
+            "cost_usd": {
+              "observed": 0.6865234,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 0.6865234
+            },
+            "elapsed_seconds": {
+              "observed": 295.70000000000005,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 295.70000000000005
+            }
+          },
+          "proposal_sidecalls": {
+            "completed_calls": 0,
+            "logical_tokens": 0,
+            "elapsed_seconds": null,
+            "note": "Separate food sidecalls; not included in answer logical tokens."
+          },
+          "map_commands": null
+        }
+      },
+      "shared_stages": {
+        "authoring": null,
+        "review": null,
+        "controller": null
+      }
+    },
+    "erpnext_weaker_opus48": {
+      "rows_source": "records/digestion-2026-11-03/codemap-erpnext-weaker/out/opus48/rows.jsonl",
+      "planned": 36,
+      "started_observed": 36,
+      "started_all_attempts": null,
+      "started_lower_bound": 36,
+      "completed": 36,
+      "scored": 36,
+      "missing_planned_outputs": 0,
+      "missing_reason": null,
+      "grading_passes": {
+        "grades.jsonl": {
+          "source": "records/digestion-2026-11-03/codemap-erpnext-weaker/out/opus48/grades.jsonl",
+          "attempt_rows": 36,
+          "valid_scored": 36,
+          "zero_token_not_run": 0,
+          "mechanical": false,
+          "stage": "grading",
+          "logical_tokens": {
+            "observed": 191935,
+            "unknown_entries": 0,
+            "complete": true,
+            "total": 191935
+          },
+          "noncache_tokens": null,
+          "cost_usd": null,
+          "elapsed_seconds": null
+        }
+      },
+      "arms": {
+        "G": {
+          "completed_rows": 12,
+          "seeded_rows": 0,
+          "task_count": 4,
+          "answer": {
+            "logical_tokens": {
+              "observed": 843041,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 843041
+            },
+            "noncache_tokens": null,
+            "cost_usd": {
+              "observed": 2.5106779999999995,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 2.5106779999999995
+            },
+            "elapsed_seconds": {
+              "observed": 502.8,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 502.8
+            }
+          },
+          "proposal_sidecalls": {
+            "completed_calls": 0,
+            "logical_tokens": 0,
+            "elapsed_seconds": null,
+            "note": "Separate food sidecalls; not included in answer logical tokens."
+          },
+          "map_commands": null
+        },
+        "N": {
+          "completed_rows": 12,
+          "seeded_rows": 0,
+          "task_count": 4,
+          "answer": {
+            "logical_tokens": {
+              "observed": 679350,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 679350
+            },
+            "noncache_tokens": null,
+            "cost_usd": {
+              "observed": 2.193617,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 2.193617
+            },
+            "elapsed_seconds": {
+              "observed": 453.20000000000005,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 453.20000000000005
+            }
+          },
+          "proposal_sidecalls": {
+            "completed_calls": 0,
+            "logical_tokens": 0,
+            "elapsed_seconds": null,
+            "note": "Separate food sidecalls; not included in answer logical tokens."
+          },
+          "map_commands": null
+        },
+        "S": {
+          "completed_rows": 12,
+          "seeded_rows": 0,
+          "task_count": 4,
+          "answer": {
+            "logical_tokens": {
+              "observed": 808998,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 808998
+            },
+            "noncache_tokens": null,
+            "cost_usd": {
+              "observed": 2.1309275000000003,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 2.1309275000000003
+            },
+            "elapsed_seconds": {
+              "observed": 535.5,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 535.5
+            }
+          },
+          "proposal_sidecalls": {
+            "completed_calls": 0,
+            "logical_tokens": 0,
+            "elapsed_seconds": null,
+            "note": "Separate food sidecalls; not included in answer logical tokens."
+          },
+          "map_commands": null
+        }
+      },
+      "shared_stages": {
+        "authoring": null,
+        "review": null,
+        "controller": null
+      }
+    },
+    "erpnext_weaker_haiku": {
+      "rows_source": "records/digestion-2026-11-03/codemap-erpnext-weaker/out/haiku/rows.jsonl",
+      "planned": 36,
+      "started_observed": 36,
+      "started_all_attempts": null,
+      "started_lower_bound": 36,
+      "completed": 36,
+      "scored": 36,
+      "missing_planned_outputs": 0,
+      "missing_reason": null,
+      "grading_passes": {
+        "grades-b.jsonl": {
+          "source": "records/digestion-2026-11-03/codemap-erpnext-weaker/out/haiku/grades-b.jsonl",
+          "attempt_rows": 36,
+          "valid_scored": 36,
+          "zero_token_not_run": 0,
+          "mechanical": false,
+          "stage": "grading",
+          "logical_tokens": {
+            "observed": 196606,
+            "unknown_entries": 0,
+            "complete": true,
+            "total": 196606
+          },
+          "noncache_tokens": null,
+          "cost_usd": null,
+          "elapsed_seconds": null
+        },
+        "grades.jsonl": {
+          "source": "records/digestion-2026-11-03/codemap-erpnext-weaker/out/haiku/grades.jsonl",
+          "attempt_rows": 36,
+          "valid_scored": 36,
+          "zero_token_not_run": 0,
+          "mechanical": false,
+          "stage": "grading",
+          "logical_tokens": {
+            "observed": 196136,
+            "unknown_entries": 0,
+            "complete": true,
+            "total": 196136
+          },
+          "noncache_tokens": null,
+          "cost_usd": null,
+          "elapsed_seconds": null
+        }
+      },
+      "arms": {
+        "G": {
+          "completed_rows": 12,
+          "seeded_rows": 0,
+          "task_count": 4,
+          "answer": {
+            "logical_tokens": {
+              "observed": 2105312,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 2105312
+            },
+            "noncache_tokens": null,
+            "cost_usd": {
+              "observed": 4.715480599999999,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 4.715480599999999
+            },
+            "elapsed_seconds": {
+              "observed": 544.9,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 544.9
+            }
+          },
+          "proposal_sidecalls": {
+            "completed_calls": 0,
+            "logical_tokens": 0,
+            "elapsed_seconds": null,
+            "note": "Separate food sidecalls; not included in answer logical tokens."
+          },
+          "map_commands": null
+        },
+        "N": {
+          "completed_rows": 12,
+          "seeded_rows": 0,
+          "task_count": 4,
+          "answer": {
+            "logical_tokens": {
+              "observed": 1756674,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 1756674
+            },
+            "noncache_tokens": null,
+            "cost_usd": {
+              "observed": 3.9033700000000002,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 3.9033700000000002
+            },
+            "elapsed_seconds": {
+              "observed": 387.20000000000005,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 387.20000000000005
+            }
+          },
+          "proposal_sidecalls": {
+            "completed_calls": 0,
+            "logical_tokens": 0,
+            "elapsed_seconds": null,
+            "note": "Separate food sidecalls; not included in answer logical tokens."
+          },
+          "map_commands": null
+        },
+        "S": {
+          "completed_rows": 12,
+          "seeded_rows": 0,
+          "task_count": 4,
+          "answer": {
+            "logical_tokens": {
+              "observed": 1866761,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 1866761
+            },
+            "noncache_tokens": null,
+            "cost_usd": {
+              "observed": 3.3463914,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 3.3463914
+            },
+            "elapsed_seconds": {
+              "observed": 522.2,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 522.2
+            }
+          },
+          "proposal_sidecalls": {
+            "completed_calls": 0,
+            "logical_tokens": 0,
+            "elapsed_seconds": null,
+            "note": "Separate food sidecalls; not included in answer logical tokens."
+          },
+          "map_commands": null
+        }
+      },
+      "shared_stages": {
+        "authoring": null,
+        "review": null,
+        "controller": null
+      }
+    },
+    "erpnext_four_arm_opus": {
+      "rows_source": "records/digestion-2026-11-06/taste-codegraph/out-opus/rows.jsonl",
+      "planned": 48,
+      "started_observed": 48,
+      "started_all_attempts": null,
+      "started_lower_bound": 48,
+      "completed": 48,
+      "scored": 48,
+      "missing_planned_outputs": 0,
+      "missing_reason": null,
+      "grading_passes": {
+        "grades-not-run-ratelimit.jsonl": {
+          "source": "records/digestion-2026-11-06/taste-codegraph/out-opus/grades-not-run-ratelimit.jsonl",
+          "attempt_rows": 18,
+          "valid_scored": 0,
+          "zero_token_not_run": 18,
+          "mechanical": false,
+          "stage": "grading",
+          "logical_tokens": {
+            "observed": 0,
+            "unknown_entries": 0,
+            "complete": true,
+            "total": 0
+          },
+          "noncache_tokens": null,
+          "cost_usd": null,
+          "elapsed_seconds": null
+        },
+        "grades.jsonl": {
+          "source": "records/digestion-2026-11-06/taste-codegraph/out-opus/grades.jsonl",
+          "attempt_rows": 48,
+          "valid_scored": 48,
+          "zero_token_not_run": 0,
+          "mechanical": false,
+          "stage": "grading",
+          "logical_tokens": {
+            "observed": 267751,
+            "unknown_entries": 0,
+            "complete": true,
+            "total": 267751
+          },
+          "noncache_tokens": null,
+          "cost_usd": null,
+          "elapsed_seconds": null
+        }
+      },
+      "arms": {
+        "C": {
+          "completed_rows": 12,
+          "seeded_rows": 0,
+          "task_count": 4,
+          "answer": {
+            "logical_tokens": {
+              "observed": 1268259,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 1268259
+            },
+            "noncache_tokens": null,
+            "cost_usd": {
+              "observed": 2.3238946,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 2.3238946
+            },
+            "elapsed_seconds": {
+              "observed": 418.59999999999997,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 418.59999999999997
+            }
+          },
+          "proposal_sidecalls": {
+            "completed_calls": 0,
+            "logical_tokens": 0,
+            "elapsed_seconds": null,
+            "note": "Separate food sidecalls; not included in answer logical tokens."
+          },
+          "map_commands": null
+        },
+        "G": {
+          "completed_rows": 12,
+          "seeded_rows": 12,
+          "task_count": 4,
+          "answer": {
+            "logical_tokens": {
+              "observed": 1594626,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 1594626
+            },
+            "noncache_tokens": null,
+            "cost_usd": {
+              "observed": 2.8886883999999995,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 2.8886883999999995
+            },
+            "elapsed_seconds": {
+              "observed": 518.7,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 518.7
+            }
+          },
+          "proposal_sidecalls": {
+            "completed_calls": 0,
+            "logical_tokens": 0,
+            "elapsed_seconds": null,
+            "note": "Separate food sidecalls; not included in answer logical tokens."
+          },
+          "map_commands": null
+        },
+        "N": {
+          "completed_rows": 12,
+          "seeded_rows": 12,
+          "task_count": 4,
+          "answer": {
+            "logical_tokens": {
+              "observed": 1207870,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 1207870
+            },
+            "noncache_tokens": null,
+            "cost_usd": {
+              "observed": 2.6509291999999998,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 2.6509291999999998
+            },
+            "elapsed_seconds": {
+              "observed": 439.3,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 439.3
+            }
+          },
+          "proposal_sidecalls": {
+            "completed_calls": 0,
+            "logical_tokens": 0,
+            "elapsed_seconds": null,
+            "note": "Separate food sidecalls; not included in answer logical tokens."
+          },
+          "map_commands": null
+        },
+        "S": {
+          "completed_rows": 12,
+          "seeded_rows": 12,
+          "task_count": 4,
+          "answer": {
+            "logical_tokens": {
+              "observed": 961011,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 961011
+            },
+            "noncache_tokens": null,
+            "cost_usd": {
+              "observed": 1.8928152,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 1.8928152
+            },
+            "elapsed_seconds": {
+              "observed": 504.5,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 504.5
+            }
+          },
+          "proposal_sidecalls": {
+            "completed_calls": 0,
+            "logical_tokens": 0,
+            "elapsed_seconds": null,
+            "note": "Separate food sidecalls; not included in answer logical tokens."
+          },
+          "map_commands": null
+        }
+      },
+      "shared_stages": {
+        "authoring": null,
+        "review": null,
+        "controller": null
+      }
+    },
+    "erpnext_four_arm_sonnet": {
+      "rows_source": "records/digestion-2026-11-06/taste-codegraph/out-sonnet/rows.jsonl",
+      "planned": 48,
+      "started_observed": 48,
+      "started_all_attempts": null,
+      "started_lower_bound": 48,
+      "completed": 48,
+      "scored": 48,
+      "missing_planned_outputs": 0,
+      "missing_reason": null,
+      "grading_passes": {
+        "grades-not-run-ratelimit.jsonl": {
+          "source": "records/digestion-2026-11-06/taste-codegraph/out-sonnet/grades-not-run-ratelimit.jsonl",
+          "attempt_rows": 5,
+          "valid_scored": 0,
+          "zero_token_not_run": 5,
+          "mechanical": false,
+          "stage": "grading",
+          "logical_tokens": {
+            "observed": 0,
+            "unknown_entries": 0,
+            "complete": true,
+            "total": 0
+          },
+          "noncache_tokens": null,
+          "cost_usd": null,
+          "elapsed_seconds": null
+        },
+        "grades.jsonl": {
+          "source": "records/digestion-2026-11-06/taste-codegraph/out-sonnet/grades.jsonl",
+          "attempt_rows": 48,
+          "valid_scored": 48,
+          "zero_token_not_run": 0,
+          "mechanical": false,
+          "stage": "grading",
+          "logical_tokens": {
+            "observed": 269802,
+            "unknown_entries": 0,
+            "complete": true,
+            "total": 269802
+          },
+          "noncache_tokens": null,
+          "cost_usd": null,
+          "elapsed_seconds": null
+        }
+      },
+      "arms": {
+        "C": {
+          "completed_rows": 12,
+          "seeded_rows": 0,
+          "task_count": 4,
+          "answer": {
+            "logical_tokens": {
+              "observed": 929283,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 929283
+            },
+            "noncache_tokens": null,
+            "cost_usd": {
+              "observed": 0.924771,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 0.924771
+            },
+            "elapsed_seconds": {
+              "observed": 268.3,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 268.3
+            }
+          },
+          "proposal_sidecalls": {
+            "completed_calls": 0,
+            "logical_tokens": 0,
+            "elapsed_seconds": null,
+            "note": "Separate food sidecalls; not included in answer logical tokens."
+          },
+          "map_commands": null
+        },
+        "G": {
+          "completed_rows": 12,
+          "seeded_rows": 12,
+          "task_count": 4,
+          "answer": {
+            "logical_tokens": {
+              "observed": 773485,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 773485
+            },
+            "noncache_tokens": null,
+            "cost_usd": {
+              "observed": 1.0084514000000002,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 1.0084514000000002
+            },
+            "elapsed_seconds": {
+              "observed": 322.6,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 322.6
+            }
+          },
+          "proposal_sidecalls": {
+            "completed_calls": 0,
+            "logical_tokens": 0,
+            "elapsed_seconds": null,
+            "note": "Separate food sidecalls; not included in answer logical tokens."
+          },
+          "map_commands": null
+        },
+        "N": {
+          "completed_rows": 12,
+          "seeded_rows": 12,
+          "task_count": 4,
+          "answer": {
+            "logical_tokens": {
+              "observed": 750437,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 750437
+            },
+            "noncache_tokens": null,
+            "cost_usd": {
+              "observed": 1.0587536,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 1.0587536
+            },
+            "elapsed_seconds": {
+              "observed": 301.1,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 301.1
+            }
+          },
+          "proposal_sidecalls": {
+            "completed_calls": 0,
+            "logical_tokens": 0,
+            "elapsed_seconds": null,
+            "note": "Separate food sidecalls; not included in answer logical tokens."
+          },
+          "map_commands": null
+        },
+        "S": {
+          "completed_rows": 12,
+          "seeded_rows": 12,
+          "task_count": 4,
+          "answer": {
+            "logical_tokens": {
+              "observed": 595572,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 595572
+            },
+            "noncache_tokens": null,
+            "cost_usd": {
+              "observed": 0.6865234,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 0.6865234
+            },
+            "elapsed_seconds": {
+              "observed": 295.70000000000005,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 295.70000000000005
+            }
+          },
+          "proposal_sidecalls": {
+            "completed_calls": 0,
+            "logical_tokens": 0,
+            "elapsed_seconds": null,
+            "note": "Separate food sidecalls; not included in answer logical tokens."
+          },
+          "map_commands": null
+        }
+      },
+      "shared_stages": {
+        "authoring": null,
+        "review": null,
+        "controller": null
+      }
+    },
+    "erpnext_four_arm_opus48": {
+      "rows_source": "records/digestion-2026-11-06/taste-codegraph/out-opus48/rows.jsonl",
+      "planned": 48,
+      "started_observed": 48,
+      "started_all_attempts": null,
+      "started_lower_bound": 49,
+      "completed": 48,
+      "scored": 48,
+      "missing_planned_outputs": 0,
+      "missing_reason": null,
+      "grading_passes": {
+        "grades.jsonl": {
+          "source": "records/digestion-2026-11-06/taste-codegraph/out-opus48/grades.jsonl",
+          "attempt_rows": 48,
+          "valid_scored": 48,
+          "zero_token_not_run": 0,
+          "mechanical": false,
+          "stage": "grading",
+          "logical_tokens": {
+            "observed": 258694,
+            "unknown_entries": 0,
+            "complete": true,
+            "total": 258694
+          },
+          "noncache_tokens": null,
+          "cost_usd": null,
+          "elapsed_seconds": null
+        }
+      },
+      "arms": {
+        "C": {
+          "completed_rows": 12,
+          "seeded_rows": 0,
+          "task_count": 4,
+          "answer": {
+            "logical_tokens": {
+              "observed": 1016012,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 1016012
+            },
+            "noncache_tokens": null,
+            "cost_usd": {
+              "observed": 3.468023,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 3.468023
+            },
+            "elapsed_seconds": {
+              "observed": 438.09999999999997,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 438.09999999999997
+            }
+          },
+          "proposal_sidecalls": {
+            "completed_calls": 0,
+            "logical_tokens": 0,
+            "elapsed_seconds": null,
+            "note": "Separate food sidecalls; not included in answer logical tokens."
+          },
+          "map_commands": null
+        },
+        "G": {
+          "completed_rows": 12,
+          "seeded_rows": 12,
+          "task_count": 4,
+          "answer": {
+            "logical_tokens": {
+              "observed": 843041,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 843041
+            },
+            "noncache_tokens": null,
+            "cost_usd": {
+              "observed": 2.5106779999999995,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 2.5106779999999995
+            },
+            "elapsed_seconds": {
+              "observed": 502.8,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 502.8
+            }
+          },
+          "proposal_sidecalls": {
+            "completed_calls": 0,
+            "logical_tokens": 0,
+            "elapsed_seconds": null,
+            "note": "Separate food sidecalls; not included in answer logical tokens."
+          },
+          "map_commands": null
+        },
+        "N": {
+          "completed_rows": 12,
+          "seeded_rows": 12,
+          "task_count": 4,
+          "answer": {
+            "logical_tokens": {
+              "observed": 679350,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 679350
+            },
+            "noncache_tokens": null,
+            "cost_usd": {
+              "observed": 2.193617,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 2.193617
+            },
+            "elapsed_seconds": {
+              "observed": 453.20000000000005,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 453.20000000000005
+            }
+          },
+          "proposal_sidecalls": {
+            "completed_calls": 0,
+            "logical_tokens": 0,
+            "elapsed_seconds": null,
+            "note": "Separate food sidecalls; not included in answer logical tokens."
+          },
+          "map_commands": null
+        },
+        "S": {
+          "completed_rows": 12,
+          "seeded_rows": 12,
+          "task_count": 4,
+          "answer": {
+            "logical_tokens": {
+              "observed": 808998,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 808998
+            },
+            "noncache_tokens": null,
+            "cost_usd": {
+              "observed": 2.1309275000000003,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 2.1309275000000003
+            },
+            "elapsed_seconds": {
+              "observed": 535.5,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 535.5
+            }
+          },
+          "proposal_sidecalls": {
+            "completed_calls": 0,
+            "logical_tokens": 0,
+            "elapsed_seconds": null,
+            "note": "Separate food sidecalls; not included in answer logical tokens."
+          },
+          "map_commands": null
+        }
+      },
+      "shared_stages": {
+        "authoring": null,
+        "review": null,
+        "controller": null
+      }
+    },
+    "erpnext_four_arm_haiku": {
+      "rows_source": "records/digestion-2026-11-06/taste-codegraph/out-haiku/rows.jsonl",
+      "planned": 48,
+      "started_observed": 48,
+      "started_all_attempts": null,
+      "started_lower_bound": 48,
+      "completed": 48,
+      "scored": 48,
+      "missing_planned_outputs": 0,
+      "missing_reason": null,
+      "grading_passes": {
+        "grades-b.jsonl": {
+          "source": "records/digestion-2026-11-06/taste-codegraph/out-haiku/grades-b.jsonl",
+          "attempt_rows": 48,
+          "valid_scored": 48,
+          "zero_token_not_run": 0,
+          "mechanical": false,
+          "stage": "grading",
+          "logical_tokens": {
+            "observed": 264030,
+            "unknown_entries": 0,
+            "complete": true,
+            "total": 264030
+          },
+          "noncache_tokens": null,
+          "cost_usd": null,
+          "elapsed_seconds": null
+        },
+        "grades-not-run-ratelimit.jsonl": {
+          "source": "records/digestion-2026-11-06/taste-codegraph/out-haiku/grades-not-run-ratelimit.jsonl",
+          "attempt_rows": 76,
+          "valid_scored": 0,
+          "zero_token_not_run": 76,
+          "mechanical": false,
+          "stage": "grading",
+          "logical_tokens": {
+            "observed": 0,
+            "unknown_entries": 0,
+            "complete": true,
+            "total": 0
+          },
+          "noncache_tokens": null,
+          "cost_usd": null,
+          "elapsed_seconds": null
+        },
+        "grades.jsonl": {
+          "source": "records/digestion-2026-11-06/taste-codegraph/out-haiku/grades.jsonl",
+          "attempt_rows": 48,
+          "valid_scored": 48,
+          "zero_token_not_run": 0,
+          "mechanical": false,
+          "stage": "grading",
+          "logical_tokens": {
+            "observed": 264058,
+            "unknown_entries": 0,
+            "complete": true,
+            "total": 264058
+          },
+          "noncache_tokens": null,
+          "cost_usd": null,
+          "elapsed_seconds": null
+        }
+      },
+      "arms": {
+        "C": {
+          "completed_rows": 12,
+          "seeded_rows": 0,
+          "task_count": 4,
+          "answer": {
+            "logical_tokens": {
+              "observed": 2194693,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 2194693
+            },
+            "noncache_tokens": null,
+            "cost_usd": {
+              "observed": 4.796450599999999,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 4.796450599999999
+            },
+            "elapsed_seconds": {
+              "observed": 407.6,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 407.6
+            }
+          },
+          "proposal_sidecalls": {
+            "completed_calls": 0,
+            "logical_tokens": 0,
+            "elapsed_seconds": null,
+            "note": "Separate food sidecalls; not included in answer logical tokens."
+          },
+          "map_commands": null
+        },
+        "G": {
+          "completed_rows": 12,
+          "seeded_rows": 12,
+          "task_count": 4,
+          "answer": {
+            "logical_tokens": {
+              "observed": 2105312,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 2105312
+            },
+            "noncache_tokens": null,
+            "cost_usd": {
+              "observed": 4.715480599999999,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 4.715480599999999
+            },
+            "elapsed_seconds": {
+              "observed": 544.9,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 544.9
+            }
+          },
+          "proposal_sidecalls": {
+            "completed_calls": 0,
+            "logical_tokens": 0,
+            "elapsed_seconds": null,
+            "note": "Separate food sidecalls; not included in answer logical tokens."
+          },
+          "map_commands": null
+        },
+        "N": {
+          "completed_rows": 12,
+          "seeded_rows": 12,
+          "task_count": 4,
+          "answer": {
+            "logical_tokens": {
+              "observed": 1756674,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 1756674
+            },
+            "noncache_tokens": null,
+            "cost_usd": {
+              "observed": 3.9033700000000002,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 3.9033700000000002
+            },
+            "elapsed_seconds": {
+              "observed": 387.20000000000005,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 387.20000000000005
+            }
+          },
+          "proposal_sidecalls": {
+            "completed_calls": 0,
+            "logical_tokens": 0,
+            "elapsed_seconds": null,
+            "note": "Separate food sidecalls; not included in answer logical tokens."
+          },
+          "map_commands": null
+        },
+        "S": {
+          "completed_rows": 12,
+          "seeded_rows": 12,
+          "task_count": 4,
+          "answer": {
+            "logical_tokens": {
+              "observed": 1866761,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 1866761
+            },
+            "noncache_tokens": null,
+            "cost_usd": {
+              "observed": 3.3463914,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 3.3463914
+            },
+            "elapsed_seconds": {
+              "observed": 522.2,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 522.2
+            }
+          },
+          "proposal_sidecalls": {
+            "completed_calls": 0,
+            "logical_tokens": 0,
+            "elapsed_seconds": null,
+            "note": "Separate food sidecalls; not included in answer logical tokens."
+          },
+          "map_commands": null
+        }
+      },
+      "shared_stages": {
+        "authoring": null,
+        "review": null,
+        "controller": null
+      }
+    },
+    "codegraph_nb": {
+      "rows_source": "records/digestion-2026-11-06/taste-codegraph/out-nb-opus/rows.jsonl",
+      "planned": 12,
+      "started_observed": 8,
+      "started_all_attempts": null,
+      "started_lower_bound": 8,
+      "completed": 8,
+      "scored": 8,
+      "missing_planned_outputs": 4,
+      "missing_reason": "NB repeat 3 stopped by registered budget guard",
+      "grading_passes": {
+        "grades.jsonl": {
+          "source": "records/digestion-2026-11-06/taste-codegraph/out-nb-opus/grades.jsonl",
+          "attempt_rows": 8,
+          "valid_scored": 8,
+          "zero_token_not_run": 0,
+          "mechanical": false,
+          "stage": "grading",
+          "logical_tokens": {
+            "observed": 44495,
+            "unknown_entries": 0,
+            "complete": true,
+            "total": 44495
+          },
+          "noncache_tokens": null,
+          "cost_usd": null,
+          "elapsed_seconds": null
+        }
+      },
+      "arms": {
+        "NB": {
+          "completed_rows": 8,
+          "seeded_rows": 0,
+          "task_count": 4,
+          "answer": {
+            "logical_tokens": {
+              "observed": 1032229,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 1032229
+            },
+            "noncache_tokens": null,
+            "cost_usd": {
+              "observed": 1.975293,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 1.975293
+            },
+            "elapsed_seconds": {
+              "observed": 300.4,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 300.4
+            }
+          },
+          "proposal_sidecalls": {
+            "completed_calls": 0,
+            "logical_tokens": 0,
+            "elapsed_seconds": null,
+            "note": "Separate food sidecalls; not included in answer logical tokens."
+          },
+          "map_commands": null
+        }
+      },
+      "shared_stages": {
+        "authoring": null,
+        "review": null,
+        "controller": null
+      }
+    },
+    "codegraph_v8": {
+      "rows_source": "records/digestion-2026-11-07/validation/v8/out/rows.jsonl",
+      "planned": 24,
+      "started_observed": 24,
+      "started_all_attempts": null,
+      "started_lower_bound": 24,
+      "completed": 24,
+      "scored": 24,
+      "missing_planned_outputs": 0,
+      "missing_reason": null,
+      "grading_passes": {
+        "grades-codex-original.jsonl": {
+          "source": "records/digestion-2026-11-07/validation/v8/out/grades-codex-original.jsonl",
+          "attempt_rows": 24,
+          "valid_scored": 24,
+          "zero_token_not_run": 0,
+          "mechanical": false,
+          "stage": "grading",
+          "logical_tokens": {
+            "observed": 430683,
+            "unknown_entries": 0,
+            "complete": true,
+            "total": 430683
+          },
+          "noncache_tokens": null,
+          "cost_usd": null,
+          "elapsed_seconds": null
+        },
+        "grades-opus.jsonl": {
+          "source": "records/digestion-2026-11-07/validation/v8/out/grades-opus.jsonl",
+          "attempt_rows": 24,
+          "valid_scored": 24,
+          "zero_token_not_run": 0,
+          "mechanical": false,
+          "stage": "grading",
+          "logical_tokens": {
+            "observed": 160473,
+            "unknown_entries": 0,
+            "complete": true,
+            "total": 160473
+          },
+          "noncache_tokens": null,
+          "cost_usd": null,
+          "elapsed_seconds": null
+        }
+      },
+      "arms": {
+        "C": {
+          "completed_rows": 12,
+          "seeded_rows": 0,
+          "task_count": 4,
+          "answer": {
+            "logical_tokens": {
+              "observed": 864236,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 864236
+            },
+            "noncache_tokens": null,
+            "cost_usd": {
+              "observed": 3.8180845,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 3.8180845
+            },
+            "elapsed_seconds": {
+              "observed": 654.4,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 654.4
+            }
+          },
+          "proposal_sidecalls": {
+            "completed_calls": 0,
+            "logical_tokens": 0,
+            "elapsed_seconds": null,
+            "note": "Separate food sidecalls; not included in answer logical tokens."
+          },
+          "map_commands": null
+        },
+        "N": {
+          "completed_rows": 12,
+          "seeded_rows": 0,
+          "task_count": 4,
+          "answer": {
+            "logical_tokens": {
+              "observed": 1361699,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 1361699
+            },
+            "noncache_tokens": null,
+            "cost_usd": {
+              "observed": 3.7037945000000003,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 3.7037945000000003
+            },
+            "elapsed_seconds": {
+              "observed": 558.5000000000001,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 558.5000000000001
+            }
+          },
+          "proposal_sidecalls": {
+            "completed_calls": 0,
+            "logical_tokens": 0,
+            "elapsed_seconds": null,
+            "note": "Separate food sidecalls; not included in answer logical tokens."
+          },
+          "map_commands": null
+        }
+      },
+      "shared_stages": {
+        "authoring": null,
+        "review": null,
+        "controller": null
+      }
+    },
+    "oaw_x1_opus": {
+      "rows_source": "records/v2.0.1-experiments/X1/out-opus/rows.jsonl",
+      "planned": 24,
+      "started_observed": 24,
+      "started_all_attempts": null,
+      "started_lower_bound": 24,
+      "completed": 24,
+      "scored": 24,
+      "missing_planned_outputs": 0,
+      "missing_reason": null,
+      "grading_passes": {
+        "grades-codex.jsonl": {
+          "source": "records/v2.0.1-experiments/X1/out-opus/grades-codex.jsonl",
+          "attempt_rows": 24,
+          "valid_scored": 24,
+          "zero_token_not_run": 0,
+          "mechanical": false,
+          "stage": "grading",
+          "logical_tokens": {
+            "observed": 432322,
+            "unknown_entries": 0,
+            "complete": true,
+            "total": 432322
+          },
+          "noncache_tokens": null,
+          "cost_usd": null,
+          "elapsed_seconds": null
+        },
+        "grades-opus.jsonl": {
+          "source": "records/v2.0.1-experiments/X1/out-opus/grades-opus.jsonl",
+          "attempt_rows": 24,
+          "valid_scored": 24,
+          "zero_token_not_run": 0,
+          "mechanical": false,
+          "stage": "grading",
+          "logical_tokens": {
+            "observed": 149035,
+            "unknown_entries": 0,
+            "complete": true,
+            "total": 149035
+          },
+          "noncache_tokens": null,
+          "cost_usd": null,
+          "elapsed_seconds": null
+        }
+      },
+      "arms": {
+        "M": {
+          "completed_rows": 12,
+          "seeded_rows": 0,
+          "task_count": 12,
+          "answer": {
+            "logical_tokens": {
+              "observed": 1224881,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 1224881
+            },
+            "noncache_tokens": null,
+            "cost_usd": {
+              "observed": 2.6000372,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 2.6000372
+            },
+            "elapsed_seconds": {
+              "observed": 401.09999999999997,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 401.09999999999997
+            }
+          },
+          "proposal_sidecalls": {
+            "completed_calls": 0,
+            "logical_tokens": 0,
+            "elapsed_seconds": null,
+            "note": "Separate food sidecalls; not included in answer logical tokens."
+          },
+          "map_commands": 0
+        },
+        "N": {
+          "completed_rows": 12,
+          "seeded_rows": 0,
+          "task_count": 12,
+          "answer": {
+            "logical_tokens": {
+              "observed": 1291871,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 1291871
+            },
+            "noncache_tokens": null,
+            "cost_usd": {
+              "observed": 2.7068153999999995,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 2.7068153999999995
+            },
+            "elapsed_seconds": {
+              "observed": 436.4,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 436.4
+            }
+          },
+          "proposal_sidecalls": {
+            "completed_calls": 0,
+            "logical_tokens": 0,
+            "elapsed_seconds": null,
+            "note": "Separate food sidecalls; not included in answer logical tokens."
+          },
+          "map_commands": 0
+        }
+      },
+      "shared_stages": {
+        "authoring": null,
+        "review": null,
+        "controller": null
+      }
+    },
+    "oaw_x1_codex": {
+      "rows_source": "records/v2.0.1-experiments/X1/out-codex/rows.jsonl",
+      "planned": 24,
+      "started_observed": 24,
+      "started_all_attempts": null,
+      "started_lower_bound": 24,
+      "completed": 24,
+      "scored": 24,
+      "missing_planned_outputs": 0,
+      "missing_reason": null,
+      "grading_passes": {
+        "grades-codex.jsonl": {
+          "source": "records/v2.0.1-experiments/X1/out-codex/grades-codex.jsonl",
+          "attempt_rows": 24,
+          "valid_scored": 24,
+          "zero_token_not_run": 0,
+          "mechanical": false,
+          "stage": "grading",
+          "logical_tokens": {
+            "observed": 434965,
+            "unknown_entries": 0,
+            "complete": true,
+            "total": 434965
+          },
+          "noncache_tokens": null,
+          "cost_usd": null,
+          "elapsed_seconds": null
+        },
+        "grades-opus.jsonl": {
+          "source": "records/v2.0.1-experiments/X1/out-codex/grades-opus.jsonl",
+          "attempt_rows": 24,
+          "valid_scored": 24,
+          "zero_token_not_run": 0,
+          "mechanical": false,
+          "stage": "grading",
+          "logical_tokens": {
+            "observed": 153097,
+            "unknown_entries": 0,
+            "complete": true,
+            "total": 153097
+          },
+          "noncache_tokens": null,
+          "cost_usd": null,
+          "elapsed_seconds": null
+        }
+      },
+      "arms": {
+        "M": {
+          "completed_rows": 12,
+          "seeded_rows": 0,
+          "task_count": 12,
+          "answer": {
+            "logical_tokens": {
+              "observed": 2261784,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 2261784
+            },
+            "noncache_tokens": null,
+            "cost_usd": {
+              "observed": 0,
+              "unknown_entries": 12,
+              "complete": false,
+              "total": null
+            },
+            "elapsed_seconds": {
+              "observed": 829.9999999999999,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 829.9999999999999
+            }
+          },
+          "proposal_sidecalls": {
+            "completed_calls": 0,
+            "logical_tokens": 0,
+            "elapsed_seconds": null,
+            "note": "Separate food sidecalls; not included in answer logical tokens."
+          },
+          "map_commands": 24
+        },
+        "N": {
+          "completed_rows": 12,
+          "seeded_rows": 0,
+          "task_count": 12,
+          "answer": {
+            "logical_tokens": {
+              "observed": 2210658,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 2210658
+            },
+            "noncache_tokens": null,
+            "cost_usd": {
+              "observed": 0,
+              "unknown_entries": 12,
+              "complete": false,
+              "total": null
+            },
+            "elapsed_seconds": {
+              "observed": 765.9999999999999,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 765.9999999999999
+            }
+          },
+          "proposal_sidecalls": {
+            "completed_calls": 0,
+            "logical_tokens": 0,
+            "elapsed_seconds": null,
+            "note": "Separate food sidecalls; not included in answer logical tokens."
+          },
+          "map_commands": 0
+        }
+      },
+      "shared_stages": {
+        "authoring": null,
+        "review": null,
+        "controller": null
+      }
+    },
+    "tokeneconomizer_initial": {
+      "rows_source": "records/digestion-2026-11-03/taste-tokeneconomizer/rows.jsonl",
+      "planned": 24,
+      "started_observed": 24,
+      "started_all_attempts": null,
+      "started_lower_bound": 24,
+      "completed": 24,
+      "scored": 24,
+      "missing_planned_outputs": 0,
+      "missing_reason": null,
+      "grading_passes": {
+        "grades.jsonl": {
+          "source": "records/digestion-2026-11-03/taste-tokeneconomizer/grades.jsonl",
+          "attempt_rows": 24,
+          "valid_scored": 24,
+          "zero_token_not_run": 0,
+          "mechanical": true,
+          "stage": "grading",
+          "logical_tokens": {
+            "observed": 0,
+            "unknown_entries": 0,
+            "complete": true,
+            "total": 0
+          },
+          "noncache_tokens": null,
+          "cost_usd": null,
+          "elapsed_seconds": null
+        }
+      },
+      "arms": {
+        "N": {
+          "completed_rows": 12,
+          "seeded_rows": 0,
+          "task_count": 12,
+          "answer": {
+            "logical_tokens": {
+              "observed": 2700325,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 2700325
+            },
+            "noncache_tokens": null,
+            "cost_usd": {
+              "observed": 2.5242912,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 2.5242912
+            },
+            "elapsed_seconds": {
+              "observed": 485.40000000000003,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 485.40000000000003
+            }
+          },
+          "proposal_sidecalls": {
+            "completed_calls": 0,
+            "logical_tokens": 0,
+            "elapsed_seconds": null,
+            "note": "Separate food sidecalls; not included in answer logical tokens."
+          },
+          "map_commands": null
+        },
+        "T": {
+          "completed_rows": 12,
+          "seeded_rows": 0,
+          "task_count": 12,
+          "answer": {
+            "logical_tokens": {
+              "observed": 2575467,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 2575467
+            },
+            "noncache_tokens": null,
+            "cost_usd": {
+              "observed": 2.6987932,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 2.6987932
+            },
+            "elapsed_seconds": {
+              "observed": 574.3000000000001,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 574.3000000000001
+            }
+          },
+          "proposal_sidecalls": {
+            "completed_calls": 4,
+            "logical_tokens": 53678,
+            "elapsed_seconds": {
+              "observed": 82.92999999999999,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 82.92999999999999
+            },
+            "note": "Separate food sidecalls; not included in answer logical tokens."
+          },
+          "map_commands": null
+        }
+      },
+      "shared_stages": {
+        "authoring": null,
+        "review": null,
+        "controller": null
+      }
+    },
+    "tokeneconomizer_envfacts": {
+      "rows_source": "records/digestion-2026-11-03/taste-tokeneconomizer/followup-envfacts/rows.jsonl",
+      "planned": 12,
+      "started_observed": 12,
+      "started_all_attempts": null,
+      "started_lower_bound": 12,
+      "completed": 12,
+      "scored": 12,
+      "missing_planned_outputs": 0,
+      "missing_reason": null,
+      "grading_passes": {
+        "grades.jsonl": {
+          "source": "records/digestion-2026-11-03/taste-tokeneconomizer/followup-envfacts/grades.jsonl",
+          "attempt_rows": 12,
+          "valid_scored": 12,
+          "zero_token_not_run": 0,
+          "mechanical": true,
+          "stage": "grading",
+          "logical_tokens": {
+            "observed": 0,
+            "unknown_entries": 0,
+            "complete": true,
+            "total": 0
+          },
+          "noncache_tokens": null,
+          "cost_usd": null,
+          "elapsed_seconds": null
+        }
+      },
+      "arms": {
+        "T2": {
+          "completed_rows": 12,
+          "seeded_rows": 0,
+          "task_count": 12,
+          "answer": {
+            "logical_tokens": {
+              "observed": 2708350,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 2708350
+            },
+            "noncache_tokens": null,
+            "cost_usd": {
+              "observed": 2.7156958,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 2.7156958
+            },
+            "elapsed_seconds": {
+              "observed": 587.3,
+              "unknown_entries": 0,
+              "complete": true,
+              "total": 587.3
+            }
+          },
+          "proposal_sidecalls": {
+            "completed_calls": 0,
+            "logical_tokens": 0,
+            "elapsed_seconds": null,
+            "note": "Separate food sidecalls; not included in answer logical tokens."
+          },
+          "map_commands": null
+        }
+      },
+      "shared_stages": {
+        "authoring": null,
+        "review": null,
+        "controller": null
+      }
+    }
+  },
+  "cross_family_regrades": {
+    "opus": {
+      "grades-codex-original.jsonl": {
+        "source": "records/digestion-2026-11-07/validation/v4/opus/grades-codex-original.jsonl",
+        "planned": 48,
+        "completed": 48,
+        "scored": 48,
+        "logical_tokens": {
+          "observed": 840699,
+          "unknown_entries": 0,
+          "complete": true,
+          "total": 840699
+        }
+      },
+      "grades-codex-reversed.jsonl": {
+        "source": "records/digestion-2026-11-07/validation/v4/opus/grades-codex-reversed.jsonl",
+        "planned": 48,
+        "completed": 48,
+        "scored": 48,
+        "logical_tokens": {
+          "observed": 845381,
+          "unknown_entries": 0,
+          "complete": true,
+          "total": 845381
+        }
+      }
+    },
+    "sonnet": {
+      "grades-codex-original.jsonl": {
+        "source": "records/digestion-2026-11-07/validation/v4/sonnet/grades-codex-original.jsonl",
+        "planned": 48,
+        "completed": 48,
+        "scored": 48,
+        "logical_tokens": {
+          "observed": 842034,
+          "unknown_entries": 0,
+          "complete": true,
+          "total": 842034
+        }
+      },
+      "grades-codex-reversed.jsonl": {
+        "source": "records/digestion-2026-11-07/validation/v4/sonnet/grades-codex-reversed.jsonl",
+        "planned": 48,
+        "completed": 48,
+        "scored": 48,
+        "logical_tokens": {
+          "observed": 846497,
+          "unknown_entries": 0,
+          "complete": true,
+          "total": 846497
+        }
+      }
+    },
+    "opus48": {
+      "grades-codex-original.jsonl": {
+        "source": "records/digestion-2026-11-07/validation/v4/opus48/grades-codex-original.jsonl",
+        "planned": 48,
+        "completed": 48,
+        "scored": 48,
+        "logical_tokens": {
+          "observed": 838869,
+          "unknown_entries": 0,
+          "complete": true,
+          "total": 838869
+        }
+      },
+      "grades-codex-reversed.jsonl": {
+        "source": "records/digestion-2026-11-07/validation/v4/opus48/grades-codex-reversed.jsonl",
+        "planned": 48,
+        "completed": 48,
+        "scored": 48,
+        "logical_tokens": {
+          "observed": 838087,
+          "unknown_entries": 0,
+          "complete": true,
+          "total": 838087
+        }
+      }
+    },
+    "haiku": {
+      "grades-codex-original.jsonl": {
+        "source": "records/digestion-2026-11-07/validation/v4/haiku/grades-codex-original.jsonl",
+        "planned": 48,
+        "completed": 48,
+        "scored": 48,
+        "logical_tokens": {
+          "observed": 846441,
+          "unknown_entries": 0,
+          "complete": true,
+          "total": 846441
+        }
+      },
+      "grades-codex-reversed.jsonl": {
+        "source": "records/digestion-2026-11-07/validation/v4/haiku/grades-codex-reversed.jsonl",
+        "planned": 48,
+        "completed": 48,
+        "scored": 48,
+        "logical_tokens": {
+          "observed": 849818,
+          "unknown_entries": 0,
+          "complete": true,
+          "total": 849818
+        }
+      }
+    }
+  },
+  "whole_study": {
+    "logical_tokens": null,
+    "noncache_tokens": null,
+    "cost_usd": null,
+    "elapsed_seconds": null,
+    "reason": "Unmetered controller/review work and at least one unrecorded failed codegraph attempt."
+  },
+  "tool_diagnostics": {
+    "oaw_invalid_first": {
+      "source": "records/digestion-2026-11-03/codemap-stage0/run1-invalid-R-not-executed/results.json",
+      "planned_cells": 78,
+      "serialized_cells": 78,
+      "failed_cells": 44,
+      "arms": {
+        "R": 39,
+        "S": 39
+      },
+      "model_logical_tokens": 0,
+      "note": "A serialized zero/error in an invalid diagnostic is not a scored agent answer."
+    },
+    "oaw_stage0": {
+      "source": "records/digestion-2026-11-03/codemap-stage0/run2/results.json",
+      "planned_cells": 78,
+      "serialized_cells": 78,
+      "failed_cells": 5,
+      "arms": {
+        "R": 39,
+        "S": 39
+      },
+      "model_logical_tokens": 0,
+      "note": "A serialized zero/error in an invalid diagnostic is not a scored agent answer."
+    },
+    "graphify_stage0": {
+      "source": "records/digestion-2026-11-03/taste-graphify/results.json",
+      "planned_cells": 117,
+      "serialized_cells": 117,
+      "failed_cells": 6,
+      "arms": {
+        "R": 39,
+        "S": 39,
+        "G": 39
+      },
+      "model_logical_tokens": 0,
+      "note": "A serialized zero/error in an invalid diagnostic is not a scored agent answer."
+    }
+  },
+  "product_sources": {
+    "docs/EVAL_PROTOCOL.md": {
+      "sha256": "ad7ec283f2dc523819d13df8e8b40f26ea38934fb9f745e4cb19c120c9603ed3"
+    },
+    "docs/EVAL_LEDGER.md": {
+      "sha256": "3330c9ef98b02cd5263ea7923e894a332fcdd16c85b156bb7f3ebd49a53157d0"
+    },
+    "scripts/eval_stats.py": {
+      "sha256": "6ad7a60f4f744775cc32c43f95e488a30c46aab22fd1adcb7051e44854659948"
+    },
+    "scripts/eval_ledger.py": {
+      "sha256": "e0cde8f3d6af6ceb19cac012ce9cf1f359e41a7652d388897945e746bb42f439"
+    },
+    "catalog/verdicts.json": {
+      "sha256": "025207a2f26559e8a0ccff3a84779e4e6e993f9da68560fd515f5d557fe7472b"
+    },
+    "docs/intake/graphify-map.md": {
+      "sha256": "5f61dfd0eb39acc6f80a25188ae828ce7f0c5c661f405ab44decd7ae5ce243f4"
+    }
+  },
+  "shared_cost_observations": {
+    "tokeneconomizer_authoring": {
+      "logical_tokens": 6539760,
+      "source": "records/digestion-2026-11-03/taste-tokeneconomizer/PREREG.md:18"
+    },
+    "x1_authoring": {
+      "logical_tokens": 20068719,
+      "source": "records/v2.0.1-experiments/X1/PREREG.md:45"
+    },
+    "x1_haiku_pilots": {
+      "logical_tokens": 2045818,
+      "runs": 4,
+      "source": "records/v2.0.1-experiments/X1/PREREG.md:98"
+    },
+    "codegraph_sonnet_pilot": {
+      "logical_tokens": 43368,
+      "runs": 1,
+      "source": "records/digestion-2026-11-06/taste-codegraph/PREREG.md:41"
+    },
+    "controller": null,
+    "independent_review": null
+  }
+}

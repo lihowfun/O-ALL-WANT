@@ -1,0 +1,85 @@
+{
+  "schema": "g5-rerun-planning/1",
+  "executed": false,
+  "note": "Costs are planning estimates, not approvals, power guarantees, or whole-study totals. Except the documented Sonnet probe, old scored rows are explicitly used as pilot surrogates.",
+  "codegraph_true_pilot_lower_fidelity": {
+    "pilot_unit_logical_tokens": 43368,
+    "runs": 60,
+    "factor": 1.3,
+    "estimated_logical_tokens": 3382704,
+    "pilot_source": "codegraph Sonnet probe, 1 run; PREREG.md:41",
+    "note": "Different model/repository from VS Code home turf; do not use as a dependable budget."
+  },
+  "codegraph_home_turf_surrogate": {
+    "pilot_unit_logical_tokens": 92747.29166666667,
+    "runs": 60,
+    "factor": 1.3,
+    "estimated_logical_tokens": 7234289,
+    "pilot_source": "codegraph_v8: 24 N/C answers",
+    "note": "24 new N calibration answers (12 tasks x 2), then 36 N/C/M test answers; M cost is unmeasured on VS Code."
+  },
+  "codegraph_grading_surrogate": {
+    "pilot_unit_logical_tokens": 12315.75,
+    "runs": 120,
+    "factor": 1.3,
+    "estimated_logical_tokens": 1921257,
+    "pilot_source": "codegraph_v8: 48 Opus/Codex grades",
+    "note": "Two families grade all 60 calibration/test answers."
+  },
+  "graphify_home_turf_surrogate": {
+    "pilot_unit_logical_tokens": 64760.805555555555,
+    "runs": 60,
+    "factor": 1.3,
+    "estimated_logical_tokens": 5051343,
+    "pilot_source": "erpnext_weaker_opus48: 36 N/G/S answers",
+    "note": "24 new N calibration answers, then 36 N/G/M test answers."
+  },
+  "graphify_haiku_surrogate": {
+    "pilot_unit_logical_tokens": 159131.86111111112,
+    "runs": 60,
+    "factor": 1.3,
+    "estimated_logical_tokens": 12412286,
+    "pilot_source": "erpnext_weaker_haiku: 36 N/G/S answers",
+    "note": "Same design, separate Haiku condition, including existing warning scope."
+  },
+  "graphify_grading_surrogate": {
+    "pilot_unit_logical_tokens": 12315.75,
+    "runs": 240,
+    "factor": 1.3,
+    "estimated_logical_tokens": 3842514,
+    "pilot_source": "codegraph_v8: 48 Opus/Codex grades",
+    "note": "Proxy only; graphify prompt/task lengths may differ."
+  },
+  "tokeneconomizer_single_stream_pair_pilot": {
+    "pilot_unit_logical_tokens": 223272.77777777778,
+    "runs": 92,
+    "factor": 1.3,
+    "estimated_logical_tokens": 26703425,
+    "pilot_source": "36 N/T/T2 historical sessions, incl. 4 proposer calls",
+    "note": "One 46-session N/T2 stream pair; only a pilot, not 12 independent D32 units."
+  },
+  "tokeneconomizer_envfacts_default12": {
+    "pilot_unit_logical_tokens": 223272.77777777778,
+    "runs": 1104,
+    "factor": 1.3,
+    "estimated_logical_tokens": 320441091,
+    "pilot_source": "36 N/T/T2 historical sessions, incl. 4 proposer calls",
+    "note": "12 independent streams x 46 sessions x 2 arms; stream, not session, is the inference unit."
+  },
+  "tokeneconomizer_all_configurations_default12": {
+    "pilot_unit_logical_tokens": 223272.77777777778,
+    "runs": 1656,
+    "factor": 1.3,
+    "estimated_logical_tokens": 480661636,
+    "pilot_source": "36 N/T/T2 historical sessions, incl. 4 proposer calls",
+    "note": "12 independent streams x 46 sessions x 3 arms; includes paid proposer."
+  },
+  "unpriced": {
+    "authoring": null,
+    "independent_review": null,
+    "controller": null,
+    "tokeneconomizer_mechanical_grading_logical_tokens": 0,
+    "tokeneconomizer_harder_task_unit_cost": null,
+    "graphify_documents_visual_semantic_trials": null
+  }
+}

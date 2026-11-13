@@ -1,0 +1,43 @@
+{
+  "schema": "g5-self-check/1",
+  "date": "2026-11-13",
+  "platform": "Linux x86_64",
+  "python": "3.10.12",
+  "manual_review": {
+    "source_line_references": "Reviewed; corrected D31 item 4 to line 344, follow-up and graphify citations to the supporting lines.",
+    "unknown_usage": "Malformed grading attempt usage remains unknown; no positive or zero amount inferred.",
+    "new_experiments": false,
+    "post_check_edits": "Only report wording/citations and this check annotation; the accounting inputs and formulas were not changed."
+  },
+  "checks": {
+    "json_valid": true,
+    "record_source_hashes": true,
+    "product_source_hashes": true,
+    "estimate_formulas": true,
+    "question_hashes": {
+      "records/digestion-2026-11-03/taste-tokeneconomizer/tasks.json": true,
+      "records/digestion-2026-11-03/taste-graphify/erpnext/questions.json": true,
+      "records/digestion-2026-11-07/validation/v8/questions.json": true,
+      "records/v2.0.1-experiments/X1/questions.json": true
+    },
+    "denominators": {
+      "erpnext_four_arm_completed": true,
+      "codegraph_C_completed": true,
+      "nb_missing": true,
+      "x1_completed": true,
+      "TE_unique_completed": true,
+      "TE_total_logical": true,
+      "quota_grades": true
+    },
+    "seeded_answer_identity": {
+      "opus": true,
+      "sonnet": true,
+      "opus48": true,
+      "haiku": true
+    },
+    "public_path_hygiene": true,
+    "markdown_local_links": true
+  },
+  "scope": "One self-check of historical accounting, source hashes, question hashes, copied usage, formulas, and path hygiene. No model, food, grader, installation, or product tests run. Line-reference review and resulting corrections recorded in REJUDGE.md.",
+  "verdicts_recomputed": false
+}

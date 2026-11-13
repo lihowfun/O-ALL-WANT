@@ -1,0 +1,40 @@
+{
+  "schema": "g5-local-presence-check/1",
+  "checked_date": "2026-11-13",
+  "method": "Read-only directory, row and manifest inspection; no food, runner, model or grader executed. Private paths and transcript content intentionally omitted.",
+  "codegraph_v8": {
+    "raw_outputs_found": 24,
+    "rows_found": true,
+    "arms_definition_found": true,
+    "codegraph_only_mcp_config_found": true,
+    "official_install_log_found_in_archive": true,
+    "frozen_index_bytes_available": false,
+    "gap_reason": "Archive deletion manifest lists ERPNext and VS Code codegraph.db and daemon.log as deleted during cleanup. Counts/sizes are historical; original index content cannot be rechecked."
+  },
+  "codegraph_erpnext": {
+    "raw_outputs_per_condition": {"opus": 12, "sonnet": 12, "opus48": 12, "haiku": 12},
+    "sonnet_probe_found": true,
+    "sonnet_probe_logical_tokens": 43368,
+    "failed_attempt_log_found": true,
+    "failed_attempt_identity": "C q2 repeat 2, Opus 4.8",
+    "failed_attempt_logical_tokens": null,
+    "gap_reason": "Log records exit 1 and stopping without recording. Runner opens the same raw filename with mode w on retry; only the 12 successful raw files remain. No separate failed usage receipt found in the old output directory or archive."
+  },
+  "graphify_erpnext_shared": {
+    "raw_outputs_found": {"initial": 8, "confirm_opus": 36, "confirm_sonnet": 36, "weaker_opus48": 36, "weaker_haiku": 36},
+    "note": "Initial eight are reused in confirm_opus; these presence counts are not a sum of independent answers. WSL OAW-repository raw outputs have no resolvable local locator in the supplied record."
+  },
+  "tokeneconomizer": {
+    "raw_outputs_found": 36,
+    "delivered_diff_files_found": 36,
+    "arm_definitions_found": true,
+    "sidecall_usage_log_found": true,
+    "note": "File presence does not independently validate all historical installation/permission/cost coverage claims; hidden pytest was not rerun."
+  },
+  "x1": {
+    "public_answer_rows_found": 48,
+    "public_grade_rows_found": 96,
+    "native_raw_outputs_found": null,
+    "gap_reason": "PREREG says local-only scratch/transcripts but gives no resolvable scratch locator. Archive has no X1 rows; the inspected temporary X1-named candidate did not contain a run directory. Do not infer that all local transcripts were deleted."
+  }
+}
