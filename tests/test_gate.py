@@ -16,14 +16,14 @@ import sync_examples
 
 class GateTests(unittest.TestCase):
     def test_source_ledger_rejects_version_and_immutable_pin_drift(self):
-        original = json.loads((harness_check.ROOT / "docs/releases/2.0.0-sources.json").read_text(encoding="utf-8"))
+        original = json.loads((harness_check.ROOT / "docs/releases/2.0.1-sources.json").read_text(encoding="utf-8"))
         with tempfile.TemporaryDirectory(prefix="oaw-citations-") as temporary:
             root = Path(temporary)
             (root / "docs/releases").mkdir(parents=True)
             (root / ".github/workflows").mkdir(parents=True)
             for relative in ("VERSION.json", ".github/workflows/test.yml"):
                 (root / relative).write_bytes((harness_check.ROOT / relative).read_bytes())
-            path = root / "docs/releases/2.0.0-sources.json"
+            path = root / "docs/releases/2.0.1-sources.json"
             with patch.object(harness_check, "ROOT", root):
                 path.write_text(json.dumps(original), encoding="utf-8")
                 self.assertTrue(harness_check.version_check().passed)

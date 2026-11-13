@@ -20,6 +20,8 @@ from pathlib import Path
 import re
 import sys
 
+from catalog_core import RELEASE
+
 PROGRESS_FILE = Path(".oaw/progress.json")
 STATUS_FILE = Path(".oaw/catalog/status.json")
 VIEW_FILE = Path(".oaw/catalog/view.json")
@@ -367,7 +369,7 @@ def effect_line_text(line):
             f"{count_text(line.get('current'))} 對 {count_text(line.get('default'))}{change} [{level_label(line.get('level'))}]")
 
 
-def effect_lines(effect, release="2.0.0"):
+def effect_lines(effect, release=RELEASE):
     if not isinstance(effect, dict) or not isinstance(effect.get("lines"), list):
         return ["  和預設比：尚未評估（catalog.py effect）"]
     lines = [f"  和預設 {clean(effect.get('release') or release, 20)} 比" + ("（過期，請重新評估）" if effect.get("stale") else "") + "："]
@@ -425,7 +427,7 @@ def my_oaw_lines(view):
         lines.append("  skill：尚未評估（catalog.py effect）")
     else:
         lines.append("  skill：" + (", ".join(name + (f"（{tag}）" if tag else "") + host_note(view, name) for name, tag in rows) or "（沒有）"))
-    lines += effect_lines(my.get("effect"), view.get("release") or "2.0.0")
+    lines += effect_lines(my.get("effect"), view.get("release") or RELEASE)
     lines.append("  版本時間線：")
     lines += timeline_lines(timeline)
     return lines

@@ -27,7 +27,7 @@
   <img src="docs/assets/oboi_meme.png" width="400" alt="Harness engineering: I want it all">
 </p>
 
-> **v2.0.0 is proposed in a pull request; it is not a published release.** [Upgrade guide](docs/UPGRADING.md) · [CLI reference](docs/CLI_Reference.md) · [Execution plan](docs/plans/v2.0.0-execution.md)
+> **v2.0.1 is proposed: the release candidate is in pull request #16. It becomes the release when the owner merges and tags `v2.0.1`; 2.0.0 was never released.** [Upgrade guide](docs/UPGRADING.md) · [CLI reference](docs/CLI_Reference.md) · [Execution plan](docs/plans/v2.0.1-release-path.md)
 
 **OAW v2 includes EGM**, project evidence, optional wiki and improvement gates.
 The default recipe exposes the seven pinned EGM skills plus `oaw-add`, `oaw-codemap`, `oaw-evidence` and `oaw-review`;
@@ -86,7 +86,7 @@ The goal is still simple: **spend expensive tokens on real reasoning and real ou
 
 ---
 
-## 🍲 What's in the hot pot? (v2.0.0)
+## 🍲 What's in the hot pot? (v2.0.1)
 
 | | Ingredient | What it does in v2 | You get it with |
 |---|---|---|---|
@@ -278,7 +278,7 @@ See [CONTRIBUTING](CONTRIBUTING.md) and [CHANGELOG](CHANGELOG.md).
 
 ## Source lineage (standing on the shoulders of giants)
 
-Exact versions and usage status: [v2.0.0 source ledger](docs/releases/2.0.0-sources.md).
+Exact versions and usage status: [v2.0.1 source ledger](docs/releases/2.0.1-sources.md).
 EGM **0.1.0** at [`f0ba151b252c9abf1318d9fe857a43265d06de89`](https://github.com/google/elephant-goldfish-model/tree/f0ba151b252c9abf1318d9fe857a43265d06de89)
 is bundled in V2 and installed to `.oaw/integrations/egm/` when the recipe selects an EGM skill. Upstream runtime files
 retain exact bytes, Apache-2.0 licensing and individual hashes. Native entrypoint

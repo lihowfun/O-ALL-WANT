@@ -27,7 +27,7 @@
   <img src="docs/assets/oboi_meme.png" width="400" alt="Harness engineering：我全都要">
 </p>
 
-> **v2.0.0 目前是 PR 中的提案版本，尚未發布 release。** [升級指南](docs/UPGRADING.md) · [CLI](docs/CLI_Reference.md) · [執行計畫](docs/plans/v2.0.0-execution.md)
+> **v2.0.1 維持 proposed：候選版本在 PR #16，待 owner 合併並打上 `v2.0.1` tag 才成為 release；2.0.0 從未發布。** [升級指南](docs/UPGRADING.md) · [CLI](docs/CLI_Reference.md) · [執行計畫](docs/plans/v2.0.1-release-path.md)
 
 **OAW v2 就是整套 OAW，包含已整合的 EGM**。預設提供七個固定版本的 EGM
 skills 與 `oaw-evidence`；wiki、improve 和要啟用哪些 skills 可自行選擇。
@@ -71,7 +71,7 @@ python3 OAW/scripts/oaw.py doctor --target /path/to/project
 
 ---
 
-## 🍲 這版鍋裡有什麼？（v2.0.0）
+## 🍲 這版鍋裡有什麼？（v2.0.1）
 
 | | 料 | 在 v2 做什麼 | 怎麼拿到 |
 |---|---|---|---|
@@ -259,7 +259,7 @@ python3 scripts/sync_examples.py --write
 
 ## Source lineage（站在巨人肩膀上）
 
-確切版本與使用狀態見 [v2.0.0 來源版本表](docs/releases/2.0.0-sources.md)。
+確切版本與使用狀態見 [v2.0.1 來源版本表](docs/releases/2.0.1-sources.md)。
 EGM **0.1.0**、commit [`f0ba151b252c9abf1318d9fe857a43265d06de89`](https://github.com/google/elephant-goldfish-model/tree/f0ba151b252c9abf1318d9fe857a43265d06de89)
 完整 runtime 已內建於 V2，recipe 選了任一 EGM skill 時安裝至 `.oaw/integrations/egm/`。上游檔案保留原文、Apache-2.0 授權與逐檔雜湊；入口轉接變更另列於來源紀錄。
 採用、替換與淘汰建議見 [review](docs/reviews/2026-10-29-pr4-egm.md)。

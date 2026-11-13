@@ -29,7 +29,7 @@ import unicodedata
 from urllib.parse import unquote, urlsplit
 
 SCHEMA_VERSION = 1
-RELEASE = "2.0.0"
+RELEASE = "2.0.1"
 # 2: inline code spans, imperative commands and any rule match in a SKILL.md body make it X1-inline.
 SCANNER_VERSION = 2
 VERDICT_RULES_VERSION = 1
@@ -1431,7 +1431,7 @@ def build_hash(file_hashes: dict) -> str:
 
 
 def build_name(number: int, file_hashes: dict, release: str = RELEASE) -> str:
-    """SemVer 2.0 build metadata: 2.0.0+build.N.<hash7>."""
+    """SemVer 2.0 build metadata: <release>+build.N.<hash7>."""
     if not isinstance(number, int) or isinstance(number, bool) or number < 1:
         raise ValueError("Build numbers start at 1.")
     name = f"{release}+build.{number}.{build_hash(file_hashes)[:7]}"
@@ -2418,13 +2418,13 @@ PIPELINE_STAGES = (
             ("C 級（執行食物程式、新增執行期相依、常設決定沒涵蓋的授權或 CLI 選擇、移除 skill、超出預算）問你", "owner"),
             ("可選：照原樣複製吸收（你勾選成分，先預覽再確認）", "owner")), ("absorb", "forget")),
     _stage("build", "版本", "build", "mixed", ("D3", "D6", "D12", "D14"),
-           "每次吸收或移除都產生 2.0.0+build.N.<hash7> 和還原點，列出和預設比的效果與證據等級；可一鍵線性還原，任何 skill（含 EGM）都能移除。",
+           f"每次吸收或移除都產生 {RELEASE}+build.N.<hash7> 和還原點，列出和預設比的效果與證據等級；可一鍵線性還原，任何 skill（含 EGM）都能移除。",
            (("發布：你合併 PR，整個分支一次決定，不是逐樣核准（D21、D28）", "owner"),
             ("還原點 → 安裝 → 版本 → 和預設比", "automated"),
             ("吸收時照原樣複製 skill 文字，附上食物的授權檔和出處說明（重新實作成 OAW 部件還沒做）", "automated"),
             ("還原到任何一版（線性：只有移除版本，沒有逐項開關）", "owner"), ("移除（含 EGM）、加回：再加回要重新測試", "owner"),
             ("每版引用清單：用在哪裡／沒採用的原因", "planned"),
-            ("release 目標：2.0.0 打 tag 之後，相容的新增進 2.x、不相容的等 3.0.0", "planned")),
+            (f"release 目標：{RELEASE} 打 tag 之後，相容的新增進 2.x、不相容的等 3.0.0", "planned")),
            ("remove-food", "restore", "taste", "absorb", "forget")),
 )
 PIPELINE_ORDER = tuple(stage["id"] for stage in PIPELINE_STAGES)

@@ -445,7 +445,7 @@ class CatalogCliTests(unittest.TestCase):
         self.assertEqual(builds["builds"][1]["effect"]["skills"]["added"], ["sweet-notes"])
         self.assertEqual(builds["builds"][0]["effect"]["quality"], "not measured")  # the baseline holds no food
         for build in (first, second):
-            self.assertRegex(build, r"^2\.0\.0\+build\.\d+\.[0-9a-f]{7}$")
+            self.assertRegex(build, r"^2\.0\.1\+build\.\d+\.[0-9a-f]{7}$")
         self.assertEqual((builds["current"], builds["matches"]), (second, second))
         committed = json.loads((self.project / ".oaw/catalog/builds.json").read_text(encoding="utf-8"))
         self.assertNotIn(str(self.lab), json.dumps(committed))
@@ -639,6 +639,31 @@ class CatalogCliTests(unittest.TestCase):
             self.assertIn("outside the OAW-managed layer", self.cli("restore", "build.1", "--apply", code=2)["error"])
         self.assertEqual((self.project / "AI_CONTEXT.md").read_bytes(), b"# mine\n")
         self.assertFalse((self.project / "src").exists())
+
+    def test_200_proposal_builds_list_and_restore_alongside_new_201_builds(self):
+        manifest = oaw.read_manifest(self.project)
+        manifest["framework_version"] = "2.0.0"
+        oaw.atomic_write(self.project / oaw.MANIFEST_PATH, oaw.json_bytes(manifest))
+        old_layer, _ = catalog.layer_files(self.project)
+        make_name = core.build_name
+        with patch.object(core, "build_name", side_effect=lambda n, hashes: make_name(n, hashes, release="2.0.0")):
+            old = catalog.record_build(self.project, self.lab, old_layer, label="Proposal baseline", kind="baseline")
+        doc = catalog.load_builds(self.project)
+        doc["release"] = "2.0.0"
+        catalog.save_json(self.project, ("builds.json",), doc)
+        self.assertRegex(old["name"], r"^2\.0\.0\+build\.1\.[0-9a-f]{7}$")
+        oaw.apply_plan(oaw.plan_install(self.project, "minimal", False, migrate=True), migrate=True)
+        removed = self.cli("remove", "egm", "--reason", "Compare with proposal baseline", "--apply")
+        self.assertRegex(removed["build"], r"^2\.0\.1\+build\.2\.[0-9a-f]{7}$")
+        listed = self.cli("builds")
+        self.assertEqual([b["name"] for b in listed["builds"]], [old["name"], removed["build"]])
+        self.assertIn(old["name"], "\n".join(catalog.cmd_builds(self.project)["lines"]))
+        self.assertEqual(self.cli("restore", old["name"])["status"], "preview")
+        restored = self.cli("restore", old["name"], "--apply")
+        self.assertEqual(restored["requested"], old["name"])
+        self.assertEqual(restored["build"], old["name"])
+        self.assertEqual(restored["doctor"]["status"], "healthy")
+        self.assertEqual(catalog.layer_files(self.project)[0], old_layer)
 
     def test_restore_keeps_project_records_changed_after_the_build(self):
         name = self.clean_food()

@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.0.1] — Proposed, updated 2026-11-14
+
+2.0.0 was the unreleased proposal below; 2.0.1 contains that proposal and the
+changes listed here. The release candidate is in pull request #16, pending
+the owner's merge and `v2.0.1` tag.
+
 ### Release fixes after FIXCHECK (D45)
 
 M1 (session-end saving), M2 (empty-recall host guidance) and R2 (one deep
@@ -534,7 +540,7 @@ is published by this PR. See [migration](docs/UPGRADING.md) and the
   `validate_skills.py --all-packages` opts into a broader portable-subset audit.
 - `oaw-evidence` now describes its actual bounded recall/write CLI instead of
   generic evidence-handling advice.
-- [Versioned source ledger](docs/releases/2.0.0-sources.md) and
+- [Versioned source ledger](docs/releases/2.0.1-sources.md) and
   [EGM review](docs/reviews/2026-10-29-pr4-egm.md): EGM manifest 0.1.0 at full
   commit `f0ba151b252c9abf1318d9fe857a43265d06de89` is now bundled in V2.
   All 65 runtime files, host manifests, personas, standards, icons and license

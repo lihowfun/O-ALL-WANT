@@ -6,7 +6,7 @@ work items are GitHub issues grouped by milestone.
 
 ## Now: release v2.0.1 (the only open line)
 
-2.0.0 was never released, so v2.0.1 is the first released V2. No new experiment
+2.0.0 was never released, so v2.0.1 will be the first V2 release. No new experiment
 starts before it ships. One trial was already under way when this plan was
 written and continues in its own session without gating the release: the
 capability tasting of presentation skills (#13, #9).
@@ -42,7 +42,8 @@ output, upstream EGM guide links and the benefit/capability intake SOP (#10,
 #12). Its historical Linux gate was 9/9, 685 tests, 0 skips;
 [validation](docs/validation/v2.0.1-release-polish.md). FIXCHECK remains pinned
 to `c2d9852`. Final six-job platform/Python CI, cross-family release review and owner
-merge remain pending. The version stays 2.0.0 proposed.
+merge remain pending. The version is 2.0.1 proposed, the release candidate in pull request #16;
+no tag or release yet.
 
 ## Next: after the release
 

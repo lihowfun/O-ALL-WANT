@@ -26,7 +26,7 @@ if __name__ == "__main__":
     sys.modules.setdefault("oaw", sys.modules[__name__])
 
 FRAMEWORK_ROOT = Path(__file__).resolve().parents[1]
-FRAMEWORK_VERSION = "2.0.0"
+FRAMEWORK_VERSION = "2.0.1"
 MANIFEST_PATH = ".oaw/install.json"
 PROFILES = ("minimal", "knowledge")
 # Plan W3 choice 2: OAW only manages the user's own skills; no OAW policy, skills or helpers are installed.

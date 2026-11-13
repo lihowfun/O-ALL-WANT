@@ -627,7 +627,7 @@ class RoundTripTests(UiCase):
         self.assertFalse((self.project / ".agents/skills/sweet-notes").exists())
         absorbed = self.action("absorb", {"food": "sweet-notes", "components": [part["id"]], "apply": True, "reason": "test"})["result"]
         self.assertTrue((self.project / ".agents/skills/sweet-notes/SKILL.md").is_file())
-        self.assertRegex(absorbed["build"], r"^2\.0\.0\+build\.2\.[0-9a-f]{7}$")
+        self.assertRegex(absorbed["build"], r"^2\.0\.1\+build\.2\.[0-9a-f]{7}$")
         view = self.api("/api/view")["view"]
         self.assertEqual(view["my_oaw"]["current_build"], absorbed["build"])
         stage = view["foods"][0]["pipeline"]
@@ -803,12 +803,12 @@ class MenuTests(UiCase):
         self.assertIn("這一站：核准（目前）", text)
         self.assertIn("🟢 吸收 skill:sweet-notes", text)
         self.assertIn("實測還是規劃中", text)
-        self.assertIn("已吸收：新版本 2.0.0+build.2.", text)
+        self.assertIn("已吸收：新版本 2.0.1+build.2.", text)
         self.assertIn("品質：加強（實測）。", text)  # measured by the A/B that let it in, never by static checks
         self.assertIn("sweet-notes（新增）", text)
         self.assertIn("品質：加強（實測） [實測]", text)
         self.assertIn("standing policy set", text)
-        self.assertIn("restored 2.0.0+build.1.", text)
+        self.assertIn("restored 2.0.1+build.1.", text)
         self.assertIn("沒有這個選項。", text)
         self.assertIn("沒有原因：已取消。", text)
         self.assertTrue(any("f = 忘掉這樣食物" in prompt for prompt in prompts))
@@ -896,7 +896,7 @@ class MenuTests(UiCase):
         with patch("builtins.input", side_effect=["1", "3", "", EOFError()]), redirect_stdout(out), redirect_stderr(err):
             code = catalog.main(["menu", "--target", str(self.project)])
         self.assertEqual(code, 0, err.getvalue())
-        self.assertIn("我的 OAW：預設 2.0.0", out.getvalue())
+        self.assertIn("我的 OAW：預設 2.0.1", out.getvalue())
         self.assertIn("每週偵查：候選 0", out.getvalue())
         self.assertIn("已離開選單", out.getvalue())
 
@@ -910,7 +910,7 @@ class StatusViewTests(UiCase):
         with redirect_stdout(out):
             oaw_status.main(["--project", str(self.project)])
         text = out.getvalue()
-        self.assertIn("我的 OAW：預設 2.0.0（尚未建立版本）", text)
+        self.assertIn("我的 OAW：預設 2.0.1（尚未建立版本）", text)
         self.assertIn("○ 未測 · example/hostile-food", text)
         self.assertIn("歷史證據 1 份（不計入判定）", text)
         self.assertIn("實測：先試吃", text)

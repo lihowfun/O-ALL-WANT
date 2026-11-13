@@ -101,7 +101,7 @@ class InstallTests(unittest.TestCase):
         code, result = self.invoke("init")
         self.assertEqual(code, 0, result)
         manifest = json.loads((self.target / ".oaw/install.json").read_text())
-        self.assertEqual(manifest["framework_version"], "2.0.0")
+        self.assertEqual(manifest["framework_version"], "2.0.1")
         expected = oaw.source_files("minimal", False)
         self.assertEqual(set(manifest["managed_files"]), set(expected))
         self.assertTrue(set(oaw.EGM_SKILLS).issubset(manifest["skills"]))
@@ -379,6 +379,49 @@ class InstallTests(unittest.TestCase):
         self.assertEqual(code, 0, health)
         self.assertTrue(any(c["status"] == "WARN" and c["path"] == "CLAUDE.md" and "different policy" in c["detail"]
                             for c in health["checks"]), health)
+
+    def test_200_proposal_upgrades_to_201_preserving_records_and_custom_policy(self):
+        for command in ("init", "migrate"):
+            with self.subTest(command=command):
+                self.target = self.base / command
+                with patch.object(oaw, "FRAMEWORK_VERSION", "2.0.0"):
+                    code, result = self.invoke("init", "--host", "both", "--profile", "knowledge", "--with-improve")
+                self.assertEqual(code, 0, result)
+                previous = json.loads((self.target / ".oaw/install.json").read_text())
+                self.assertEqual(previous["framework_version"], "2.0.0")
+                records = {path: b"Project-owned record\n" for path in (
+                    *oaw.ALWAYS_PRESERVE, "docs/knowledge/index.md", "docs/raw/notes.md",
+                    ".agents/memory.pending.md")}
+                policy = (self.target / "AGENTS.md").read_bytes() + b"Run project tests before commits.\n"
+                for path, content in {**records, "AGENTS.md": policy}.items():
+                    self.write(self.target, path, content)
+                if command == "migrate":
+                    # A changed owned helper exercises replacement and backup as well as the version bump.
+                    old_helper = (self.target / "scripts/context_hub.py").read_bytes()
+                    self.write(self.framework, "scripts/context_hub.py", old_helper + b"# Framework update\n")
+                    before = self.snapshot()
+                    code, preview = self.invoke("migrate")
+                    self.assertEqual(code, 0, preview)
+                    self.assertEqual(preview["status"], "dry-run")
+                    self.assertEqual(self.snapshot(), before)
+                code, result = self.invoke(command, *(["--apply"] if command == "migrate" else []))
+                self.assertEqual(code, 0, result)
+                manifest = json.loads((self.target / ".oaw/install.json").read_text())
+                self.assertEqual(manifest["framework_version"], "2.0.1")
+                for field in ("installation_id", "profile", "hosts", "with_improve", "skills", "skills_explicit"):
+                    self.assertEqual(manifest[field], previous[field], field)
+                for path, content in {**records, "AGENTS.md": policy}.items():
+                    self.assertEqual((self.target / path).read_bytes(), content, path)
+                if command == "migrate":
+                    backup = self.target / result["backup"]
+                    self.assertEqual(json.loads((backup / "install.json").read_text()), previous)
+                    self.assertEqual((backup / "scripts/context_hub.py").read_bytes(), old_helper)
+                    self.assertEqual((self.target / "scripts/context_hub.py").read_bytes(),
+                                     (self.framework / "scripts/context_hub.py").read_bytes())
+                self.assertEqual(self.invoke("doctor")[0], 0)
+                before = self.snapshot()
+                self.assertEqual(self.invoke("init")[0], 0)
+                self.assertEqual(self.snapshot(), before)
 
     def test_modified_v2_managed_file_is_never_overwritten(self):
         self.invoke("init")

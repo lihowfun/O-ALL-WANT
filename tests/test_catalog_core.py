@@ -295,10 +295,12 @@ class BuildEffectPlanTests(unittest.TestCase):
     def test_build_names_are_semver_build_metadata(self):
         hashes = {"b.txt": "2" * 64, "a.txt": "1" * 64}
         name = core.build_name(3, hashes)
-        self.assertRegex(name, r"^2\.0\.0\+build\.3\.[0-9a-f]{7}$")
+        self.assertRegex(name, r"^2\.0\.1\+build\.3\.[0-9a-f]{7}$")
         self.assertEqual(name, core.build_name(3, dict(reversed(list(hashes.items())))))
         self.assertNotEqual(name, core.build_name(3, {**hashes, "a.txt": "3" * 64}))
         self.assertEqual(core.parse_build_name(name)["number"], 3)
+        self.assertEqual(core.parse_build_name("2.0.0+build.3.abcdef0"),
+                         {"release": "2.0.0", "number": 3, "hash7": "abcdef0"})
         for bad in (0, -1, True):
             with self.assertRaises(ValueError):
                 core.build_name(bad, hashes)

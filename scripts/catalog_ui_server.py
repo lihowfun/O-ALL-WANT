@@ -222,7 +222,7 @@ def act_restore(target, params, progress):
 
 
 def act_effect(target, params, progress):
-    progress("在 LAB_HOME 裝一份預設 2.0.0，靜態比較兩者")
+    progress(f"在 LAB_HOME 裝一份預設 {core.RELEASE}，靜態比較兩者")
     return catalog.cmd_effect(target)
 
 

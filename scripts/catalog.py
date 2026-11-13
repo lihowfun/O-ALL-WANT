@@ -2585,7 +2585,7 @@ def parser() -> argparse.ArgumentParser:
     restore = commands.add_parser("restore", parents=[common], help="restore the OAW-managed layer of a build")
     restore.add_argument("build")
     restore.add_argument("--apply", action="store_true")
-    commands.add_parser("effect", parents=[common], help="static effect of this install versus the default 2.0.0 recipe")
+    commands.add_parser("effect", parents=[common], help=f"static effect of this install versus the default {core.RELEASE} recipe")
     commands.add_parser("view", parents=[common], help="write .oaw/catalog/view.json for every renderer")
     scout = commands.add_parser("scout", parents=[common], help="weekly scout: search, filter, accumulate candidates")
     scout_commands = scout.add_subparsers(dest="scout_command")
