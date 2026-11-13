@@ -13,6 +13,11 @@ the owner's merge and `v2.0.1` tag.
 ### Release fixes after FIXCHECK (D45)
 
 - Wiki memory commands parse timestamped notes; dual-source recall preserves each file's written order while interleaving source heads deterministically.
+- `memory add` writes a new entry on top even when the memory file has no `---` separator, so a superseding
+  note is listed first; recall cursors issued under an earlier ordering are refused; a header whose date is
+  followed by a hand-written time is ordered by its date.
+- `doctor --probe` finds `claude.cmd` and `claude.exe` in absolute PATH directories on every supported Python
+  (Python 3.10 and 3.11 ignore PATHEXT for a name with a directory part), never in the current directory.
 - Read-only main memory files route directly to pending memory without temporary files or replace retries.
 - Incremental user installs retain the first file receipt and original backup, reject intervening edits, and never overwrite an existing backup.
 - Catalog restore, absorb and absorbed-skill removal recheck captured files and manifest under the install lock before mutation; stale operations ask the user to rerun.

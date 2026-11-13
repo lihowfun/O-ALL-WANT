@@ -311,8 +311,14 @@ def _memory_sources():
     return sources
 
 
+MEMORY_SEPARATOR = re.compile(r"^---[ \t]*$", re.MULTILINE)
+# Part of every recall cursor. Change it whenever the order of entries changes for unchanged
+# files, so a cursor issued under the old order is refused instead of skipping or repeating entries.
+MEMORY_ORDER_MARKER = b"memory-sources-v3\0"
+
+
 def _memory_entries(sources=None):
-    """Merge source heads by UTC date/time, preserving each file's written order."""
+    """Merge source heads by UTC date/time, preserving each file's written order (newest on top)."""
     groups = []
     for priority, source in enumerate(_memory_sources() if sources is None else sources):
         entries = []
@@ -331,8 +337,9 @@ def _memory_entries(sources=None):
                 full = bool(re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}[+-]\d{2}:\d{2}", value))
                 if full:
                     stamp = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f%z").astimezone(timezone.utc)
-                elif re.fullmatch(r"\d{4}-\d{2}-\d{2}", value):
-                    stamp = datetime.strptime(value, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+                elif re.fullmatch(r"\d{4}-\d{2}-\d{2}(?:[T ].*)?", value):
+                    # A date, or a date followed by a time in another form: ordered by the date alone.
+                    stamp = datetime.strptime(value[:10], "%Y-%m-%d").replace(tzinfo=timezone.utc)
                 else:
                     raise ValueError("Unknown entry date format")
             except (ValueError, OverflowError):
@@ -357,10 +364,14 @@ def memory_add(note):
         now = datetime.now(timezone.utc)
         body = re.sub(r'^' + re.escape(now.date().isoformat()) + r'\s+', '', note_body)
         entry = f"\n## [{now.isoformat(timespec='microseconds')}] [{tag}] {body}\n"
-        separator = re.search(r"^---[ \t]*$", content, re.MULTILINE)
+        separator = MEMORY_SEPARATOR.search(content)
         if separator:
             insert_pos = separator.end()
             return content[:insert_pos] + "\n" + entry + content[insert_pos:]
+        first = re.search(r"^## \[", content, re.MULTILINE)
+        if first:
+            # No separator: keep the documented order (newest on top) so readers see the new note first.
+            return content[:first.start()] + entry.lstrip("\n") + "\n" + content[first.start():]
         return content.rstrip() + "\n" + entry
 
     target = confined_path(BASE_DIR, MEMORY_FILE)
@@ -518,7 +529,7 @@ def memory_recall(query, limit=8, cursor=None, max_chars=12000, json_out=False, 
 
     sources = _memory_sources()
     # Bind ordering semantics and missing/present state, including empty files.
-    digest.update(b"memory-sources-v2\0")
+    digest.update(MEMORY_ORDER_MARKER)
     for source in sources:
         content = source["content"]
         digest.update(source["source"].encode("utf-8") + b"\0")

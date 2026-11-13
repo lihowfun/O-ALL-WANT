@@ -16,7 +16,6 @@ import json
 import os
 from pathlib import Path, PurePosixPath
 import re
-import shutil
 import stat
 import sys
 import tempfile
@@ -834,6 +833,31 @@ def stop_probe(process, *, platform: str = os.name) -> None:
         process.wait(timeout=10)
 
 
+def host_command(command: str, *, platform: str = os.name, search_path: str | None = None) -> str | None:
+    """Find a host CLI in the absolute PATH directories, never in the current directory.
+
+    On Windows the PATHEXT extensions are tried here: before Python 3.12 shutil.which does not
+    apply them to a name with a directory part, and it searches the current directory first.
+    An explicit path is tried as given, with the same extensions on Windows.
+    """
+    windows = platform == "nt"
+    pathext = (os.environ.get("PATHEXT") or ".COM;.EXE;.BAT;.CMD").split(";")
+    extensions = list(dict.fromkeys(item.lower() for item in pathext if item.startswith("."))) if windows else [""]
+    suffix = os.path.splitext(command)[1].lower()
+    names = [command] if not windows or suffix in extensions else [command + extension for extension in extensions]
+    if os.path.dirname(command):
+        directories = [""]
+    else:
+        entries = os.environ.get("PATH", os.defpath) if search_path is None else search_path
+        directories = [entry for entry in (item.strip('"') for item in entries.split(os.pathsep)) if os.path.isabs(entry)]
+    for directory in directories:
+        for name in names:
+            candidate = os.path.join(directory, name) if directory else name
+            if os.path.isfile(candidate) and (windows or os.access(candidate, os.X_OK)):
+                return candidate
+    return None
+
+
 def probe_claude(target: Path, *, command: str = "claude", timeout: float = 60.0) -> dict:
     """Start Claude Code in the project only until it reports its init event (tools and skills), then stop it.
 
@@ -845,17 +869,11 @@ def probe_claude(target: Path, *, command: str = "claude", timeout: float = 60.0
 
     # CreateProcess does not search PATHEXT for an extensionless command. Resolve it first
     # so both claude.cmd and claude.exe on PATH work. All probe arguments are fixed literals.
-    # Qualify each lookup so older Windows which() cannot prepend the current directory.
-    # Explicit paths remain supported, including non-npm test launchers.
-    if os.path.dirname(command):
-        executable = shutil.which(command) or command
-    else:
-        directories = (item.strip('"') for item in os.environ.get("PATH", os.defpath).split(os.pathsep))
-        executable = next((found for directory in directories
-                           if os.path.isabs(directory)
-                           for found in [shutil.which(os.path.join(directory, command))] if found), None)
-        if executable is None:
+    executable = host_command(command)
+    if executable is None:
+        if not os.path.dirname(command):
             return {"error": f"cannot start {command}: not found in absolute PATH directories"}
+        executable = command  # an explicit path that does not exist fails in Popen below
     argv = [executable, "-p", "Reply with OK.", "--output-format", "stream-json",
             "--verbose", "--no-session-persistence"]
     try:

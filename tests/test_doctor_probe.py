@@ -101,27 +101,43 @@ class DoctorProbeTests(unittest.TestCase):
             result = oaw.probe_claude(self.target, command=command.stem)
         self.assertIn("cannot start", result["error"])
 
-    def test_probe_windows_legacy_which_cannot_inject_current_directory(self):
-        planted = str(self.target / "claude.cmd")
-        trusted = str(Path(self.temporary.name) / "trusted-bin")
-        def legacy_which(command):
-            # Python <3.12 Windows prepends cwd only for a command without a directory.
-            return planted if not os.path.dirname(command) else None
-        with patch.dict(os.environ, {"PATH": os.pathsep.join(["", ".", trusted])}), \
-                patch.object(oaw.shutil, "which", side_effect=legacy_which), \
+    def test_host_lookup_tries_pathext_itself_and_never_the_current_directory(self):
+        trusted = Path(self.temporary.name) / "trusted bin"
+        trusted.mkdir()
+        for name in ("claude.cmd", "other.exe", "other.cmd"):
+            (trusted / name).write_text("fixture", encoding="utf-8")
+        planted = Path(self.temporary.name) / "cwd"
+        planted.mkdir()
+        (planted / "planted.cmd").write_text("fixture", encoding="utf-8")
+        previous = os.getcwd()
+        self.addCleanup(os.chdir, previous)
+        os.chdir(planted)
+        path = os.pathsep.join(["", ".", "relative-bin", f'"{trusted}"'])
+        with patch.dict(os.environ, {"PATHEXT": ".COM;.EXE;.BAT;.CMD"}), \
+                patch("shutil.which", side_effect=AssertionError("the lookup must not depend on shutil.which")):
+            # Python 3.10 on Windows: which() ignores PATHEXT for a name with a directory part (seen in CI).
+            self.assertEqual(oaw.host_command("claude", platform="nt", search_path=path), str(trusted / "claude.cmd"))
+            self.assertEqual(oaw.host_command("other", platform="nt", search_path=path), str(trusted / "other.exe"))
+            self.assertEqual(oaw.host_command("other.cmd", platform="nt", search_path=path), str(trusted / "other.cmd"))
+            self.assertEqual(oaw.host_command(str(trusted / "claude"), platform="nt"), str(trusted / "claude.cmd"))
+            self.assertIsNone(oaw.host_command("planted", platform="nt", search_path=path))
+            self.assertIsNone(oaw.host_command("planted.cmd", platform="nt", search_path=path))
+            self.assertIsNone(oaw.host_command("missing", platform="nt", search_path=path))
+            self.assertIsNone(oaw.host_command(str(trusted / "missing"), platform="nt"))
+        # Elsewhere the name is used as given and must be executable.
+        self.assertIsNone(oaw.host_command("claude", platform="posix", search_path=str(trusted)))
+        with patch.dict(os.environ, {"PATH": os.pathsep.join(["", "."])}), \
                 patch.object(subprocess, "Popen", side_effect=AssertionError("cwd launcher started")):
-            result = oaw.probe_claude(self.target)
+            result = oaw.probe_claude(self.target, command="planted")
         self.assertIn("cannot start", result["error"])
 
     def test_probe_passes_the_resolved_cmd_or_exe_to_popen(self):
         for extension in ("cmd", "exe"):
             resolved = rf"C:\Program Files\Claude\claude.{extension}"
-            directory = str(Path(self.temporary.name) / "trusted-bin")
-            with self.subTest(extension=extension), patch.dict(os.environ, {"PATH": directory}), \
-                    patch.object(oaw.shutil, "which", return_value=resolved) as which:
+            with self.subTest(extension=extension), patch.object(oaw, "host_command", return_value=resolved) as lookup:
                 with patch.object(subprocess, "Popen", side_effect=OSError("fixture")) as popen:
                     result = oaw.probe_claude(self.target)
-                which.assert_called_once_with(os.path.join(directory, "claude"))
+                lookup.assert_called_once_with("claude")
                 self.assertEqual(popen.call_args.args[0], [resolved, "-p", "Reply with OK.", "--output-format",
                                                          "stream-json", "--verbose", "--no-session-persistence"])
                 self.assertFalse(popen.call_args.kwargs.get("shell", False))

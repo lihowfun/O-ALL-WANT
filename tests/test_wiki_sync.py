@@ -1164,7 +1164,10 @@ class MemoryCheckTests(unittest.TestCase):
 
         def record(function):
             def wrapper(path, *args, **kwargs):
-                judged.append(os.path.normcase(os.path.abspath(os.fspath(path))))
+                # Path.resolve() itself stats its result on Python 3.11 and 3.12 (not 3.10 or 3.13).
+                # That is link resolution, which refusing a link requires; only other callers judge a path.
+                if not sys._getframe(1).f_globals.get("__name__", "").startswith("pathlib"):
+                    judged.append(os.path.normcase(os.path.abspath(os.fspath(path))))
                 return function(path, *args, **kwargs)
             return wrapper
 

@@ -413,7 +413,7 @@ class ContextHubTests(unittest.TestCase):
                      '"kind":"knowledge","excerpt":"---\\ntitle: Recall Topic\\n---\\n# Recall Topic\\n\\nBackground '
                      'paragraph.\\nA Needle in the knowledge page.","truncated":false,"continuation":null}],'
                      '"truncated":false,"continuation":null}\n'),
-            "paged": first + "Next cursor: WzEsMSwiMDk4ODFmNmVkOTMzNjBhMmY2YWQ4MWY0IiwiYzk0OTY0NDBiMjhkYTgxZmFhNzM4Yjk1Il0\n",
+            "paged": first + "Next cursor: WzEsMSwiMDk4ODFmNmVkOTMzNjBhMmY2YWQ4MWY0IiwiMzYyY2I1Yjg5N2VmYTI3YTA0YzEzMmNkIl0\n",
         }
         for name, kwargs in (("text", {}), ("json", {"json_out": True}), ("paged", {"limit": 1})):
             with self.subTest(output=name):
@@ -607,9 +607,61 @@ class ContextHubTests(unittest.TestCase):
                          source("pending", [("2026-11-14", "legacy")])]):
             self.assertEqual(titles(sources), ["stamp", "legacy"])
         # Compact and week dates must not acquire version-dependent ISO parsing semantics.
-        for date in ("20261114", "2026-W46", "2026-11-14T03:00:00Z"):
+        for date in ("20261114", "2026-W46", "14 Nov 2026"):
             self.assertEqual(titles([source("main", [(date, "unknown")]),
                                      source("pending", [("2026-11-13", "dated")])]), ["dated", "unknown"])
+        # A hand-written time after the date keeps the date, so one such header at the top of a file
+        # does not push the whole file below older pending notes (release review C2-03).
+        for date in ("2026-11-14 09:00", "2026-11-14T03:00:00Z", "2026-11-14T09:00"):
+            self.assertEqual(titles([source("main", [(date, "handwritten"), ("2026-11-12", "m-older")]),
+                                     source("pending", [("2026-11-13", "p-older")])]),
+                             ["handwritten", "p-older", "m-older"])
+            # Ordered by the date alone: a full timestamp on the same UTC day still comes first.
+            self.assertEqual(titles([source("main", [(date, "handwritten")]),
+                                     source("pending", [("2026-11-14T00:00:00.000000+00:00", "stamp")])]),
+                             ["stamp", "handwritten"])
+
+    def test_memory_add_puts_the_new_note_on_top_without_a_separator(self):
+        # Release review R2-01: a memory file without '---' used to get new notes appended, so the
+        # superseded decision stayed first for recall, show, status and bootstrap.
+        self.memory.parent.mkdir()
+        self.memory.write_text("# Notes\n\nPreamble text.\n\n## [2026-10-01] [DECISION] cache needle: use LRU\n\nBody.\n",
+                               encoding="utf-8")
+        self.quiet(hub.memory_add, "[DECISION] cache needle: LRU superseded, use ARC")
+        text = self.memory.read_text(encoding="utf-8")
+        self.assertTrue(text.startswith("# Notes\n\nPreamble text.\n\n## ["), text[:60])
+        self.assertLess(text.index("use ARC"), text.index("use LRU"))
+        self.assertTrue(text.endswith("## [2026-10-01] [DECISION] cache needle: use LRU\n\nBody.\n"))
+        for index in (False, True):
+            rows = json.loads(self.quiet(hub.memory_recall, "cache needle", json_out=True, index=index)[1])["results"]
+            self.assertIn("use ARC", rows[0]["title" if index else "excerpt"])
+            self.assertIn("use LRU", rows[1]["title" if index else "excerpt"])
+        self.assertIn("use ARC", self.quiet(hub.memory_show, 1)[1])
+        self.assertNotIn("use LRU", self.quiet(hub.memory_show, 1)[1])
+        for function, kwargs in ((hub.status, {}), (hub.bootstrap, {"compact": True})):
+            output = self.quiet(function, **kwargs)[1]
+            self.assertLess(output.index("use ARC"), output.index("use LRU"))
+        # A file with no entry at all still gets the note appended after its text.
+        self.memory.write_text("# Notes\n\nNothing yet.\n", encoding="utf-8")
+        self.quiet(hub.memory_add, "[NOTE] first needle")
+        self.assertTrue(self.memory.read_text(encoding="utf-8").startswith("# Notes\n\nNothing yet.\n\n## ["))
+
+    def test_a_cursor_issued_under_another_entry_order_is_refused(self):
+        # Release review R2-02: the order of unchanged files changed, so an old cursor must not
+        # be accepted (it skipped one entry and repeated another).
+        self.memory.parent.mkdir()
+        self.memory.write_text("# Memory\n---\n" + "".join(
+            f"\n## [2026-11-{day:02d}] [NOTE] needle {day}\n" for day in (14, 13, 12)), encoding="utf-8")
+        for index in (False, True):
+            with self.subTest(index=index):
+                with patch.object(hub, "MEMORY_ORDER_MARKER", b"memory-sources-v2\0"):
+                    old = json.loads(self.quiet(hub.memory_recall, "needle", limit=1, json_out=True, index=index)[1])["continuation"]
+                self.assertTrue(old)
+                with self.assertRaisesRegex(ValueError, "cursor"):
+                    self.quiet(hub.memory_recall, "needle", limit=1, cursor=old, index=index)
+                fresh = json.loads(self.quiet(hub.memory_recall, "needle", limit=1, json_out=True, index=index)[1])["continuation"]
+                self.assertNotEqual(old, fresh)
+                self.quiet(hub.memory_recall, "needle", limit=1, cursor=fresh, index=index)
 
     def test_read_only_main_routes_directly_to_pending_without_temporary_or_retry(self):
         self.memory.parent.mkdir()
