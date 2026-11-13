@@ -167,3 +167,12 @@ U1 的離線驗收應加入這個具體案例：
 這些要求放進 #9／U1 的資料契約、fixture 和恢復工具；不增加所有 agent 啟動時必讀的規則。U1 仍待發佈後設計／驗收，沒有因本案例提前吸收。
 
 本次 FIXCHECK 帳目仍有範圍限制：固定作答及其子 agent 可重算；設計／恢復 reviewer 與操作代理的工程成本未獨立分攤，不能把作答 token 當成全研究總成本。U1 必須將這些階段納入，或明列未量測，不能以離線恢復工具「零作答呼叫」掩蓋實際發生的審查模型呼叫。
+
+
+## 10. D46：U1 評估方法已開始實作（2026-11-13）
+
+上面的第 7–9 節保留研究當時的排序。使用者之後明確要求「那評估這塊 我們可以吸收阿 你開始動工」，[D46](../digestion-2026-11-03/ingest/DECISIONS.md#d46-start-the-harness2-evaluation-method-implementation-now-2026-11-13) 因此將 **U1 工程提前**；U2／U3 與新模型實驗沒有一併提前。
+
+隔離工作樹 `codex/harness2-evaluation-u1` 以 release-polish `5af21f6` 為底，新增 stdlib 的 `eval_ledger.py` 與 FIXCHECK 唯讀 adapter，接現有 `eval_stats`。沒有增加啟動規則、安裝新 runtime 或新增第三套 scorer。這是 owner 指定的方法工程，並非官方 intake 試吃完成或品質／省 token 證明。
+
+實作與驗收狀態見 [IMPLEMENTATION](IMPLEMENTATION.md)。原 frozen FIXCHECK 候選、manifest、state 與既有實驗判詞維持原狀。

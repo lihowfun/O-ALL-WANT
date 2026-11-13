@@ -63,7 +63,7 @@ FIXCHECK 的 Claude 預估約 8M、上限 17M，使用獨立帳本；不使用 H
 
 - **P0**：繼續已核准的一次 FIXCHECK（Claude 預估約 8M、上限 17M；Codex 另帳），每次 resume 檢查實際 PPT 程序與已推送 manifest。同時等待 CI PR 安排選擇，最終仍需六格實際結果。
 - **P1**：依複查結果處理規則還原或保留，完成發佈文件／版本與完整 review；約 0.5–1 天，依賴複查與 CI。
-- **P2**：發佈後 #9 接 Harness² U1 帳目／報告 adapter，估 1–2 天；U2／U3 與能力試吃依 pilot、真實需求和既有預算規則往下。
+- **D46 平行工程**：owner 已指定提前做 Harness² U1 帳目／報告 adapter；隔離 branch `codex/harness2-evaluation-u1`，詳見 [實作驗收](../intake-2026-11-13-harness2/IMPLEMENTATION.md)。不更動 frozen FIXCHECK 候選，也不另開模型實驗。U2／U3 與能力試吃仍依 pilot、真實需求和既有預算規則往下。
 
 上述為剩餘工程估算與既有預算，非本次已完成／已支出。影片、長期使用、獨立 H1 replication 等有條件工作仍保留原重啟條件。
 

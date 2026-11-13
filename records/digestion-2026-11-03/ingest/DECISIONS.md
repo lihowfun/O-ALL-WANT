@@ -569,3 +569,22 @@ Source: `records/digestion-2026-11-07/validation/RESULT.md`. Implemented by plan
 - Addendum (2026-11-12, same day): the PPT tasting (#13) was already running in its own session, started by the
   owner, when this entry was committed. It continues there, does not gate the release, and is the one existing
   exception to "no new experiment before the release". Its model runs and the fix check do not overlap (D39).
+
+
+## D46. Start the Harness2 evaluation-method implementation now (2026-11-13)
+
+Owner in chat: 「那評估這塊 我們可以吸收阿 你開始動工」, after receiving the
+source-review conclusion and CC handoff. This authorizes implementing the
+evaluation-method absorption now; U1 no longer waits for the release.
+
+- First deliverable: an opt-in, stdlib evaluation accounting/report tool and
+  fixtures, plus a read-only adapter over existing FIXCHECK evidence. Preserve
+  existing eval_stats/improvement semantics; no third scorer or startup rules.
+- Work on `codex/harness2-evaluation-u1` from release-polish `5af21f6`; do not
+  change frozen FIXCHECK candidate `c2d9852`, its state/manifest/thresholds, or H1.
+- This is owner-directed method engineering, not an official Harness2 tasting
+  verdict or proof of quality/token gains. U2/U3 model-readable policies still
+  require their planned validation before promotion.
+- No new model experiment, increased quota/budget, pending CI routing change,
+  rejected cache relocation, merge, tag or release is authorized by this entry.
+  Claude FIXCHECK still waits for 18:00 and continues independently in CC.
