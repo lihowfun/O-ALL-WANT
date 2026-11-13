@@ -181,5 +181,40 @@ class ResolveCliTests(unittest.TestCase):
             self.assertEqual(json.loads(process.stdout), values)
 
 
+class ConfinedPathTests(unittest.TestCase):
+    def test_extended_length_prefix_is_dropped_only_from_windows_drive_and_unc_paths(self):
+        plain = oaw_common.plain_windows_path
+        self.assertEqual(plain(r"\\?\C:\Users\x\.oaw\reviews", platform="nt"), r"C:\Users\x\.oaw\reviews")
+        self.assertEqual(plain(r"\\?\UNC\server\share\a", platform="nt"), r"\\server\share\a")
+        for unchanged in (r"C:\Users\x", r"\\server\share\a", r"\\?\Volume{1b3a}\a", r"relative\a", r"x\\?\C:\a"):
+            self.assertEqual(plain(unchanged, platform="nt"), unchanged)
+        self.assertEqual(plain(r"\\?\C:\Users\x", platform="posix"), r"\\?\C:\Users\x")
+
+    def test_boundary_holds_when_resolution_leaves_the_extended_prefix(self):
+        with tempfile.TemporaryDirectory(prefix="oaw-confined-") as temporary:
+            root = Path(temporary).resolve()
+            inside = oaw_common.confined_path(root, ".oaw", "reviews")
+            self.assertEqual(os.path.normcase(inside), os.path.normcase(str(root / ".oaw" / "reviews")))
+            for escape in (("..", "elsewhere"), (str(root.parent / "elsewhere"),)):
+                with self.assertRaises(ValueError):
+                    oaw_common.confined_path(root, *escape)
+            if os.name == "nt":
+                # Python 3.10 on Windows: a directory created by another thread between realpath's two
+                # lookups leaves the prefix on the target only (seen in CI as a false "outside").
+                real, calls = Path.resolve, []
+
+                def resolve(path, *args, **kwargs):
+                    result = real(path, *args, **kwargs)
+                    calls.append(result)
+                    return Path("\\\\?\\" + str(result)) if len(calls) == 2 else result
+
+                with patch.object(Path, "resolve", resolve):
+                    prefixed = oaw_common.confined_path(root, ".oaw", "reviews")
+                self.assertTrue(prefixed.startswith("\\\\?\\"), prefixed)
+                calls.clear()
+                with patch.object(Path, "resolve", resolve), self.assertRaises(ValueError):
+                    oaw_common.confined_path(root, "..", "elsewhere")
+
+
 if __name__ == "__main__":
     unittest.main()
