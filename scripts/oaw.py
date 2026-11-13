@@ -16,6 +16,7 @@ import json
 import os
 from pathlib import Path, PurePosixPath
 import re
+import shutil
 import stat
 import sys
 import tempfile
@@ -812,6 +813,27 @@ def skill_tool_denied(target: Path) -> list[str]:
     return found
 
 
+def stop_probe(process, *, platform: str = os.name) -> None:
+    """Stop the probe, including the host behind a Windows .cmd launcher, and reap it."""
+    import subprocess
+
+    if process.poll() is not None:
+        return
+    if platform == "nt":
+        try:
+            subprocess.run(["taskkill", "/PID", str(process.pid), "/T", "/F"],
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=10, check=True)
+        except (OSError, subprocess.SubprocessError):
+            process.terminate()
+    else:
+        process.terminate()
+    try:
+        process.wait(timeout=10)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.wait(timeout=10)
+
+
 def probe_claude(target: Path, *, command: str = "claude", timeout: float = 60.0) -> dict:
     """Start Claude Code in the project only until it reports its init event (tools and skills), then stop it.
 
@@ -821,7 +843,10 @@ def probe_claude(target: Path, *, command: str = "claude", timeout: float = 60.0
     import subprocess
     import threading
 
-    argv = [command, "-p", "Reply with OK.", "--output-format", "stream-json", "--verbose", "--no-session-persistence"]
+    # CreateProcess does not search PATHEXT for an extensionless command. Resolve it first
+    # so both claude.cmd and claude.exe on PATH work. All probe arguments are fixed literals.
+    argv = [shutil.which(command) or command, "-p", "Reply with OK.", "--output-format", "stream-json",
+            "--verbose", "--no-session-persistence"]
     try:
         process = subprocess.Popen(argv, cwd=str(target), stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
                                    stderr=subprocess.DEVNULL, text=True, encoding="utf-8", errors="replace")
@@ -834,7 +859,8 @@ def probe_claude(target: Path, *, command: str = "claude", timeout: float = 60.0
             lines.put(line)
         lines.put(None)
 
-    threading.Thread(target=pump, daemon=True).start()
+    reader = threading.Thread(target=pump, daemon=True)
+    reader.start()
     deadline = datetime.now(timezone.utc).timestamp() + timeout
     result = {"error": "no init event before the timeout"}
     try:
@@ -859,12 +885,10 @@ def probe_claude(target: Path, *, command: str = "claude", timeout: float = 60.0
                           "version": event.get("claude_code_version")}
                 break
     finally:
-        if process.poll() is None:
-            process.terminate()
-            try:
-                process.wait(timeout=10)
-            except Exception:
-                process.kill()
+        stop_probe(process)
+        reader.join(timeout=1)
+        if not reader.is_alive():
+            process.stdout.close()
     return result
 
 

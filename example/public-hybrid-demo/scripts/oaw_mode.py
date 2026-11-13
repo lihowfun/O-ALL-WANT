@@ -89,10 +89,10 @@ class ModeError(Exception):
     """A handled failure printed without a traceback."""
 
 
-def git(root: Path, *args: str) -> bytes:
+def git(root: Path, *args: str, input: bytes = b"") -> bytes:
     command = ["git", "-C", str(root), "-c", "core.quotepath=false", *args]
     try:
-        process = subprocess.run(command, input=b"", capture_output=True, check=False)
+        process = subprocess.run(command, input=input, capture_output=True, check=False)
     except OSError as exc:
         raise ModeError(f"git is not available: {exc}") from exc
     if process.returncode:
@@ -584,12 +584,19 @@ def inside_project(root: Path, relative: str) -> bool:
     return True
 
 
-def blob_digest(root: Path, revision: str, relative: str) -> str | None:
-    """sha256 of a file's content at a revision (None when the revision does not have it)."""
+def matches_revision(root: Path, revision: str, relative: str) -> bool:
+    """Compare what Git would commit, including this path's clean/EOL filters, with the endpoint.
+
+    Review records still hash the exact bytes read by the reviewer. The index may hold other
+    content, so hash the working file without writing an object or updating the index.
+    """
     try:
-        return hashlib.sha256(git(root, "show", f"{revision}:./{relative}")).hexdigest()
-    except ModeError:
-        return None
+        content = project_file(root, relative).read_bytes()
+        working = git(root, "hash-object", f"--path={relative}", "--stdin", input=content)
+        endpoint = git(root, "rev-parse", "--verify", f"{revision}:./{relative}")
+        return working.strip() == endpoint.strip()
+    except (OSError, ModeError):
+        return False
 
 
 def report_dir(root: Path, target: str) -> str:
@@ -666,8 +673,8 @@ def review_steps(result: dict, root: Path, settings: dict) -> list[dict]:
                     review = {"target": target, "report_dir": report_dir(root, target),
                               "done": already_reviewed(root, target, how) is not None}
                     endpoint = result.get("range_end")
-                    if endpoint and blob_digest(root, endpoint, target) != file_digest(root, target):
-                        # A record is for the working-tree content; the range asks about the endpoint's content.
+                    if endpoint and not matches_revision(root, endpoint, target):
+                        # A record is for the working-tree bytes; compare their Git form with the endpoint.
                         review["done"] = False
                         review["note"] = (f"the working tree differs from {endpoint} for this file: check out "
                                           f"{endpoint} and review that version")

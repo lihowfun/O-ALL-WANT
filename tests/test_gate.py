@@ -92,9 +92,51 @@ class GateTests(unittest.TestCase):
             with patch.dict(os.environ, {"OAW_ALLOW_SKIPS": ""}):
                 result = harness_check.regression_check(root, ("test_a", "test_b"), 2)
             self.assertFalse(result.passed)
-            self.assertIn("1 skipped test(s)", result.detail)
+            self.assertIn("unexpected skip", result.detail)
+            self.assertIn("SKIP test_b.B.test_skip: fixture", result.detail)
+            summary = json.loads(result.stdout.split(harness_check.SUMMARY_MARKER)[-1])
+            self.assertEqual(summary["skips"], [{"id": "test_b.B.test_skip", "reason": "fixture"}])
+            # The local override lets the gate pass but still lists and marks every unexpected skip.
             with patch.dict(os.environ, {"OAW_ALLOW_SKIPS": "1"}):
-                self.assertTrue(harness_check.regression_check(root, ("test_a", "test_b"), 2).passed)
+                for platform in ("linux", "darwin", "win32"):
+                    allowed = harness_check.regression_check(root, ("test_a", "test_b"), 2, platform=platform)
+                    self.assertTrue(allowed.passed, allowed.detail)
+                    self.assertIn("SKIP test_b.B.test_skip: fixture", allowed.detail)
+                    self.assertIn("1 unexpected skip(s) allowed by OAW_ALLOW_SKIPS=1 (local override, not a CI result)",
+                                  allowed.detail)
+
+    def test_ci_never_sets_the_local_skip_override(self):
+        for workflow in sorted((harness_check.ROOT / ".github/workflows").glob("*.y*ml")):
+            self.assertNotIn("OAW_ALLOW_SKIPS", workflow.read_text(encoding="utf-8"), workflow.name)
+
+    def test_expected_platform_skips_require_the_exact_id_and_reason(self):
+        for platform, skips in harness_check.EXPECTED_SKIPS.items():
+            for test_id, reason in sorted(skips):
+                with self.subTest(platform=platform, test_id=test_id):
+                    with tempfile.TemporaryDirectory(prefix="oaw-gate-") as temporary:
+                        module, cls, method = test_id.split(".")
+                        body = f"class {cls}(unittest.TestCase):\n    def {method}(self):\n        self.skipTest({reason!r})\n"
+                        root = self.regression_fixture(Path(temporary), {module + ".py": body})
+                        result = harness_check.regression_check(root, (module,), 1, platform=platform)
+                        self.assertTrue(result.passed, result.detail)
+                        self.assertIn(f"SKIP {test_id}: {reason}", result.detail)
+                        self.assertFalse(harness_check.regression_check(root, (module,), 1, platform="linux").passed)
+                        self.regression_fixture(root, {module + ".py": body.replace(repr(reason), repr("other reason"))})
+                        self.assertFalse(harness_check.regression_check(root, (module,), 1, platform=platform).passed)
+                        self.regression_fixture(root, {module + ".py": body, "test_extra.py":
+                                                      "class Extra(unittest.TestCase):\n    @unittest.skip('new skip')\n    def test_new(self): pass\n"})
+                        result = harness_check.regression_check(root, (module,), 2, platform=platform)
+                        self.assertFalse(result.passed)
+                        self.assertIn("unexpected skip", result.detail)
+                        self.assertIn("test_extra.Extra.test_new", result.detail)
+
+    def test_skip_count_without_inventory_fails_gate(self):
+        summary = {"run": 1, "skipped": 1, "successful": True, "modules": []}
+        process = subprocess.CompletedProcess([], 0, harness_check.SUMMARY_MARKER + json.dumps(summary), "")
+        with patch.object(harness_check, "run", return_value=process):
+            result = harness_check.regression_check(required=(), minimum=1, platform="darwin")
+        self.assertFalse(result.passed)
+        self.assertIn("skip inventory does not match", result.detail)
 
     def test_regression_import_failure_fails_gate(self):
         with tempfile.TemporaryDirectory(prefix="oaw-gate-") as temporary:
