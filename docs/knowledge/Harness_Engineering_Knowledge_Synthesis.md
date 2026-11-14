@@ -9,6 +9,8 @@ related_topics:
   - Harness_Engineering_Deterministic_State
 ---
 
+> Historical v1 material from April 2026. This is not the current v2 runtime or performance contract; see [v2 design](../Design_Principles.md).
+
 # Knowledge Synthesis (知識蒸餾)
 
 ## 核心問題

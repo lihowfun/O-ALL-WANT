@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "id": "oaw-native-ablation-v1",
+  "cases": ["small-change-no-memory", "session-handoff", "superseded-decision", "untrusted-source"],
+  "repeats": 3,
+  "assertions": ["task_correct", "evidence_correct", "scope_preserved"],
+  "required_checks": ["regression_tests"],
+  "minimum_improvement": 0.05,
+  "maximum_resource_regression": 0.1
+}

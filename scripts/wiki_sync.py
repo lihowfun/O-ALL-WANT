@@ -8,15 +8,24 @@ and vector-DB-free.
 """
 
 import argparse
+import ast
+import keyword
 import os
 import re
 import sys
+import unicodedata
 from collections import defaultdict
 from datetime import date, datetime
+from urllib.parse import quote, unquote, urlsplit, urlunsplit
 
-BASE_DIR = os.environ.get("AGENT_MEMORY_BASE_DIR") or os.path.dirname(
-    os.path.dirname(os.path.abspath(__file__))
+from oaw_common import (
+    _fence_after, atomic_write, close_fence, confined_path, exact_case_path, extract_annotations,
+    locked_update, markdown_lines, normalize_cited_path, render_annotations, validate_topic_id,
 )
+
+BASE_DIR = os.path.abspath(os.environ.get("AGENT_MEMORY_BASE_DIR") or os.path.dirname(
+    os.path.dirname(os.path.abspath(__file__))
+))
 RAW_DIR = os.path.join(BASE_DIR, "docs", "raw")
 KNOWLEDGE_DIR = os.path.join(BASE_DIR, "docs", "knowledge")
 META_FILES = {"index.md", "log.md"}
@@ -100,9 +109,7 @@ def _safe_read(path):
 
 
 def _write(path, content):
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w", encoding="utf-8") as handle:
-        handle.write(content)
+    atomic_write(path, content, root=BASE_DIR)
 
 
 def _body_without_h1(body):
@@ -135,23 +142,29 @@ def _first_paragraph(body):
 def _discover_raw_sources():
     """Load all raw source notes from docs/raw/."""
     sources = []
-    if not os.path.exists(RAW_DIR):
+    raw_dir = confined_path(BASE_DIR, RAW_DIR)
+    if not os.path.exists(raw_dir):
         return sources
 
-    for filename in sorted(os.listdir(RAW_DIR)):
+    for filename in sorted(os.listdir(raw_dir)):
         if not filename.endswith(".md"):
             continue
         if filename.startswith("_") or filename.lower() == "readme.md":
             continue
 
-        path = os.path.join(RAW_DIR, filename)
+        path = confined_path(BASE_DIR, raw_dir, filename)
+        if not os.path.isfile(path):
+            continue
         content = _safe_read(path)
         metadata, body = _parse_frontmatter(content)
         topic_id = metadata.get("topic_id") or os.path.splitext(filename)[0].replace(" ", "_")
+        validate_topic_id(topic_id)
         source_id = metadata.get("source_id") or os.path.splitext(filename)[0]
         title = metadata.get("title") or _topic_title(source_id)
         summary = metadata.get("summary") or _first_paragraph(body)
-        last_updated = metadata.get("last_updated") or _today()
+        last_updated = metadata.get("last_updated") or ""
+        if not isinstance(last_updated, str):
+            raise ValueError(f"Raw source {filename!r} requires a scalar last_updated.")
         related_topics = sorted(
             topic
             for topic in set(_normalize_list(metadata.get("related_topics")))
@@ -170,6 +183,7 @@ def _discover_raw_sources():
                 "summary": summary,
                 "last_updated": last_updated,
                 "related_topics": related_topics,
+                "content": content,
                 "body": _body_without_h1(body) or "_No additional source notes._",
             }
         )
@@ -180,16 +194,19 @@ def _discover_raw_sources():
 def _load_knowledge_pages(include_meta=False):
     """Load current knowledge pages from docs/knowledge/."""
     pages = []
-    if not os.path.exists(KNOWLEDGE_DIR):
+    knowledge_dir = confined_path(BASE_DIR, KNOWLEDGE_DIR)
+    if not os.path.exists(knowledge_dir):
         return pages
 
-    for filename in sorted(os.listdir(KNOWLEDGE_DIR)):
+    for filename in sorted(os.listdir(knowledge_dir)):
         if not filename.endswith(".md"):
             continue
         if not include_meta and filename in META_FILES:
             continue
 
-        path = os.path.join(KNOWLEDGE_DIR, filename)
+        path = confined_path(BASE_DIR, knowledge_dir, filename)
+        if not os.path.isfile(path):
+            continue
         content = _safe_read(path)
         metadata, body = _parse_frontmatter(content)
         page_type = metadata.get("page_type", "topic")
@@ -238,16 +255,15 @@ def _render_frontmatter(fields):
 
 def _extract_ai_annotations(existing_content):
     """Preserve the AI Annotations section across deterministic rebuilds."""
-    marker = "\n## AI Annotations\n"
-    if marker not in existing_content:
-        return ""
-    return existing_content.split(marker, 1)[1].strip()
+    return extract_annotations(existing_content)
 
 
 def _render_topic_page(topic_id, sources, existing_annotations=""):
     """Compile all raw sources for a topic into one durable knowledge page."""
     # Prefer the first raw source's title (preserves user's casing); fall back
     # to deriving from the topic_id.
+    validate_topic_id(topic_id)
+    target_path = confined_path(BASE_DIR, KNOWLEDGE_DIR, f"{topic_id}.md")
     title = next((s["title"] for s in sources if s.get("title")), None) or _topic_title(topic_id)
     related_topics = sorted(
         topic
@@ -282,7 +298,8 @@ def _render_topic_page(topic_id, sources, existing_annotations=""):
     ]
 
     for source in sources:
-        sections.append(f"- **{source['title']}**: {source['summary']}")
+        summary = _rebase_markdown_links(source["summary"], source["path"], target_path)
+        sections.append(f"- **{source['title']}**: {summary}")
 
     sections.extend(["", "## Compiled Source Notes"])
     for source in sources:
@@ -297,31 +314,23 @@ def _render_topic_page(topic_id, sources, existing_annotations=""):
         )
         if source["related_topics"]:
             sections.append("- Related topics: " + ", ".join(f"`{item}`" for item in source["related_topics"]))
-        sections.extend(["", source["body"].strip()])
+        # An unterminated raw fence would hide the next source and the annotation block.
+        body = _rebase_markdown_links(source["body"].strip(), source["path"], target_path)
+        sections.extend(["", close_fence(body)])
 
     if related_topics:
         sections.extend(["", "## Related Topics"])
         for related_topic in related_topics:
             sections.append(f"- `{related_topic}`")
 
-    sections.extend(["", "## AI Annotations", ""])
-    if existing_annotations:
-        sections.append(existing_annotations)
-    else:
-        sections.extend(
-            [
-                "<!-- Auto-appended by agents via: python3 scripts/context_hub.py annotate "
-                f"{topic_id} \"note\" -->",
-                "",
-            ]
-        )
+    sections.extend(["", render_annotations(existing_annotations)])
 
     return "\n".join(sections)
 
 
 def _render_index(pages):
     """Render the generated knowledge index page."""
-    generated_at = _today()
+    generated_at = _snapshot_date(pages)
     lines = [
         _render_frontmatter(
             {
@@ -366,7 +375,6 @@ def _render_index(pages):
 
 def _render_log(pages):
     """Render the generated sync ledger."""
-    generated_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     lines = [
         _render_frontmatter(
             {
@@ -374,13 +382,13 @@ def _render_log(pages):
                 "title": "Knowledge Sync Log",
                 "page_type": "meta",
                 "build_origin": "wiki_sync",
-                "last_updated": _today(),
+                "last_updated": _snapshot_date(pages),
                 "related_topics": [],
             }
         ),
         "# Knowledge Sync Log",
         "",
-        f"> Generated at {generated_at}. `refresh <topic>` should only touch the target",
+        "> Generated from the current knowledge snapshot. `refresh <topic>` touches the target",
         "> topic plus this file and `index.md`.",
         "",
         "| Topic ID | Mode | Source Count | Last Updated |",
@@ -407,7 +415,9 @@ def _build_meta_pages():
 
 def _build_topic_pages(topic_filter=None):
     """Compile all matching raw topics. Returns a list of written topic ids."""
-    os.makedirs(KNOWLEDGE_DIR, exist_ok=True)
+    os.makedirs(confined_path(BASE_DIR, KNOWLEDGE_DIR), exist_ok=True)
+    if topic_filter not in (None, "all"):
+        validate_topic_id(topic_filter)
     grouped_sources = defaultdict(list)
     for source in _discover_raw_sources():
         grouped_sources[source["topic_id"]].append(source)
@@ -420,20 +430,20 @@ def _build_topic_pages(topic_filter=None):
         if topic_filter not in (None, "all") and topic_id != topic_filter:
             continue
 
-        target_path = os.path.join(KNOWLEDGE_DIR, f"{topic_id}.md")
-        existing_annotations = ""
-        if os.path.exists(target_path):
-            existing_content = _safe_read(target_path)
-            metadata, _ = _parse_frontmatter(existing_content)
-            origin = metadata.get("build_origin", "manual")
-            if origin != "wiki_sync":
-                raise ValueError(
-                    f"Refusing to overwrite manual page '{topic_id}'. "
-                    "Rename the raw topic or migrate the page metadata first."
-                )
-            existing_annotations = _extract_ai_annotations(existing_content)
+        target_path = confined_path(BASE_DIR, KNOWLEDGE_DIR, f"{topic_id}.md")
 
-        _write(target_path, _render_topic_page(topic_id, sources, existing_annotations=existing_annotations))
+        def mutate(existing_content):
+            if existing_content:
+                metadata, _ = _parse_frontmatter(existing_content)
+                if metadata.get("build_origin", "manual") != "wiki_sync":
+                    raise ValueError(
+                        f"Refusing to overwrite manual page '{topic_id}'. "
+                        "Rename the raw topic or migrate the page metadata first."
+                    )
+            annotations = _extract_ai_annotations(existing_content)
+            return _render_topic_page(topic_id, sources, existing_annotations=annotations)
+
+        locked_update(target_path, mutate, root=BASE_DIR)
         written.append(topic_id)
 
     return written
@@ -457,30 +467,352 @@ def refresh(topic):
         print(f"✅ Refreshed topic '{topic}'.")
 
 
+_LINK_DESTINATION = r"(?:\\.|[^\s()\\]|\((?:\\.|[^()\\])*\))+"
+_INLINE_LINK = re.compile(r"(!?\[[^\]\n]*\]\()(<[^>\n]+>|" + _LINK_DESTINATION + r")(\s+[^)\n]*)?(\))")
+# `[^note]: text` is a footnote definition, not a link reference.
+_REFERENCE_LINK = re.compile(r"^(\s{0,3}\[(?!\^)[^\]\n]+\]:\s*)(<[^>\n]+>|\S+)", re.MULTILINE)
+
+
+def _map_markdown_links(content, transform):
+    """Transform inline/image/reference destinations, leaving code examples alone."""
+    result = []
+    fence = None
+    for line in content.splitlines(keepends=True):
+        marker = re.match(r"^\s{0,3}(`{3,}|~{3,})", line)
+        if marker:
+            token = marker.group(1)
+            if fence is None:
+                fence = token
+            elif token[0] == fence[0] and len(token) >= len(fence):
+                fence = None
+            result.append(line)
+            continue
+        if fence:
+            result.append(line)
+            continue
+        # Inline code spans are display examples, not navigable Markdown links.
+        pieces = re.split(r"(`+[^`]*`+)", line)
+        for index in range(0, len(pieces), 2):
+            text = _INLINE_LINK.sub(
+                lambda m: m.group(1) + transform(m.group(2)) + (m.group(3) or "") + m.group(4), pieces[index]
+            )
+            pieces[index] = _REFERENCE_LINK.sub(lambda m: m.group(1) + transform(m.group(2)), text)
+        result.append("".join(pieces))
+    return "".join(result)
+
+
+def _rebase_markdown_links(content, source_path, target_path):
+    def transform(destination):
+        angular = destination.startswith("<") and destination.endswith(">")
+        raw = destination[1:-1] if angular else destination
+        try:
+            resolved = _relative_path(source_path, raw)
+        except ValueError:
+            return destination  # Out-of-project targets stay as written.
+        if resolved is None:
+            return destination
+        parsed = urlsplit(raw)
+        relative = os.path.relpath(resolved, os.path.dirname(target_path)).replace("\\", "/")
+        if not angular:
+            relative = quote(relative, safe="/-._~!$&'*,;=+@")
+        rewritten = urlunsplit(("", "", relative, parsed.query, parsed.fragment))
+        return "<" + rewritten + ">" if angular else rewritten
+
+    return _map_markdown_links(content, transform)
+
+
 def _relative_path(from_path, target):
-    """Resolve a repo-relative markdown link against the current file."""
-    if target.startswith(("http://", "https://", "mailto:", "#")):
+    """Resolve a markdown link against the current file; a leading '/' is the repo root.
+
+    Raises ValueError for targets outside the project boundary.
+    """
+    target = target.strip("<>")
+    parsed = urlsplit(target)
+    if parsed.scheme or parsed.netloc or target.startswith("#"):
         return None
-    normalized = target.split("#", 1)[0]
+    normalized = unquote(re.sub(r"\\([\\() ])", r"\1", parsed.path))
     if not normalized:
         return None
-    if os.path.isabs(normalized):
-        return normalized
-    return os.path.normpath(os.path.join(os.path.dirname(from_path), normalized))
+    if normalized.startswith("/"):
+        try:  # An absolute in-project path, else GitHub-style root-relative.
+            return confined_path(BASE_DIR, normalized)
+        except ValueError:
+            return confined_path(BASE_DIR, normalized.lstrip("/"))
+    return confined_path(BASE_DIR, os.path.dirname(from_path), normalized)
 
 
 def _extract_markdown_links(content):
     """Return relative markdown targets mentioned in the document body."""
-    return re.findall(r"\[[^\]]+\]\(([^)]+)\)", content)
+    links = []
+    _map_markdown_links(content, lambda target: links.append(target) or target)
+    return links
+
+
+def _check_links(path, content, kind, where, issues, warnings):
+    """Broken local links are errors; links leaving the project cannot be checked."""
+    for link in _extract_markdown_links(content):
+        try:
+            resolved = _relative_path(path, link)
+        except ValueError:
+            warnings.append(f"{kind} link outside the project in {where}: {link}")
+            continue
+        if resolved and not os.path.exists(resolved):
+            issues.append(f"broken {kind} link in {where}: {link}")
+
+
+# A code citation is a whole single-backtick span `path.ext::Name[::Member]` (or Name.Member).
+# The path needs an extension and a directory part or a known file extension, so `std::vector`,
+# `crate::mod`, `os.path::join`, `System.IO::File` and bare names never count.
+_CODE_SPAN = re.compile(r"(?<!`)`([^`\n]+)`(?!`)")
+_CODE_CITATION = re.compile(r"(?P<path>(?:[A-Za-z]:)?[A-Za-z0-9_./\\-]+\.[A-Za-z0-9]+)"
+                            r"::(?P<chain>[A-Za-z_]\w*(?:(?:::|\.)[A-Za-z_]\w*)*)")
+_CHAIN_SEPARATOR = re.compile(r"::|\.")
+CODE_CITATION_MAX_BYTES = 1024 * 1024
+_PY_DEFINITION = re.compile(r"^\s*(async\s+def|def|class)\s+([A-Za-z_]\w*)\b")
+# name = ..., name: T = ... and chained a = b = ...; name: T alone; a, *b = ... or (a, b) = ...; type X = ...
+_PY_ASSIGNMENT = re.compile(r"^\s*([A-Za-z_]\w*)\s*(?::[^=\n]*)?=(?!=)")
+_PY_CHAINED = re.compile(r"\s*([A-Za-z_]\w*)\s*=(?!=)")
+_PY_ANNOTATION = re.compile(r"^\s*([A-Za-z_]\w*)\s*:\s*[^\s=#][^=]*$")
+_PY_UNPACKING = re.compile(r"^\s*[(\[]?\s*(\*?[A-Za-z_]\w*(?:\s*,\s*\*?[A-Za-z_]\w*)+)\s*,?\s*[)\]]?\s*=(?!=)")
+_PY_TYPE_LINE = re.compile(r"^\s*type\s+([A-Za-z_]\w*)\s*(?:\[[^\]\n]*\])?\s*=(?!=)")
+_PY_BLOCKS = tuple(getattr(ast, name) for name in (
+    "If", "Try", "TryStar", "With", "AsyncWith", "For", "AsyncFor", "While") if hasattr(ast, name))
+_PY_MATCH = tuple(getattr(ast, name) for name in ("Match",) if hasattr(ast, name))
+_PY_TYPE_ALIAS = tuple(getattr(ast, name) for name in ("TypeAlias",) if hasattr(ast, name))  # 3.12+
+
+
+def _is_cited_path(path):
+    """A directory part, or a top-level file with a known extension that is not a product name."""
+    if "/" in path or "\\" in path:
+        return True
+    return path.rsplit(".", 1)[-1].lower() in _MC_EXTENSIONS and path.lower() not in _MC_NOT_FILES
+
+
+def _iter_code_citations(text):
+    """Yield (line, citation, path, chain) for path::Symbol code spans outside fences.
+
+    Lines count from the start of the file. Citations are project-root-relative
+    because code spans are never rebased (see _map_markdown_links). Only fenced
+    code is skipped; indented code blocks and HTML comments are still read.
+    """
+    for number, (_offset, line, in_code) in enumerate(markdown_lines(text), start=1):
+        if in_code:
+            continue
+        for span in _CODE_SPAN.finditer(line):
+            match = _CODE_CITATION.fullmatch(span.group(1).strip())
+            if match and _is_cited_path(match.group("path")):
+                yield number, match.group(0), match.group("path"), _CHAIN_SEPARATOR.split(match.group("chain"))
+
+
+def _target_names(target):
+    """Names bound by an assignment target, through tuple, list and starred unpacking."""
+    if isinstance(target, ast.Name):
+        return [target.id]
+    if isinstance(target, (ast.Tuple, ast.List)):
+        return [name for element in target.elts for name in _target_names(element)]
+    if isinstance(target, ast.Starred):
+        return _target_names(target.value)
+    return []
+
+
+def _collect_python_names(statements, names):
+    """Module and class scopes: defs, classes, assignment and type-alias names, never function bodies."""
+    for node in statements:
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            names.setdefault(node.name, {})
+        elif isinstance(node, ast.ClassDef):
+            _collect_python_names(node.body, names.setdefault(node.name, {}))
+        elif isinstance(node, (ast.Assign, ast.AnnAssign)):
+            for target in node.targets if isinstance(node, ast.Assign) else [node.target]:
+                for name in _target_names(target):
+                    names.setdefault(name, {})
+        elif isinstance(node, _PY_TYPE_ALIAS):
+            names.setdefault(node.name.id, {})
+        elif isinstance(node, _PY_MATCH):
+            for case in node.cases:
+                _collect_python_names(case.body, names)
+        elif isinstance(node, _PY_BLOCKS):
+            for field in ("body", "orelse", "finalbody"):
+                _collect_python_names(getattr(node, field, []), names)
+            for handler in getattr(node, "handlers", []):
+                _collect_python_names(handler.body, names)
+
+
+def _closing_quote(line, start, quote):
+    """Index of the quote that closes a string at or after start, skipping escaped quotes, or -1."""
+    while True:
+        end = line.find(quote, start)
+        if end < 0:
+            return end
+        backslashes = 0
+        while end > backslashes and line[end - backslashes - 1] == "\\":
+            backslashes += 1
+        if backslashes % 2 == 0:
+            return end
+        start = end + 1
+
+
+def _python_statement_lines(text):
+    """Yield the lines that start a statement: never inside brackets, a string or a backslash continuation.
+
+    A light lexer for files that do not parse: it tracks strings, comments and
+    bracket depth, so keyword arguments of a multi-line call and code inside a
+    triple-quoted string are not taken for definitions.
+    """
+    depth, quote, continued = 0, None, False
+    for line in text.splitlines():
+        if not depth and quote is None and not continued:
+            yield line
+        index, continued = 0, False
+        while index < len(line):
+            if quote:
+                end = _closing_quote(line, index, quote)
+                if end < 0:
+                    if len(quote) == 1 and not line.endswith("\\"):
+                        quote = None  # an unterminated one-line string ends with its line
+                    break
+                index, quote = end + len(quote), None
+                continue
+            char = line[index]
+            if char == "#":
+                break
+            if char in "'\"":
+                quote = char * 3 if line.startswith(char * 3, index) else char
+                index += len(quote)
+                continue
+            if char in "([{":
+                depth += 1
+            elif char in ")]}":
+                depth = max(depth - 1, 0)
+            index += 1
+        else:
+            continued = line.endswith("\\")
+
+
+def _python_names_by_regex(text):
+    """Indentation-scoped def/class/assignment scan for files this Python cannot parse."""
+    names = {}
+    scopes = [(-1, names)]  # (header indent, members); members is None inside a function.
+    for line in _python_statement_lines(text):
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        indent = len(line) - len(line.lstrip())
+        while indent <= scopes[-1][0]:
+            scopes.pop()
+        members = scopes[-1][1]
+        definition = _PY_DEFINITION.match(line)
+        if definition:
+            child = members.setdefault(definition.group(2), {}) if members is not None else None
+            scopes.append((indent, child if definition.group(1) == "class" else None))
+            continue
+        if members is None:
+            continue
+        found = []
+        alias, unpacking = _PY_TYPE_LINE.match(line), _PY_UNPACKING.match(line)
+        assignment = _PY_ASSIGNMENT.match(line) or _PY_ANNOTATION.match(line)
+        if alias:
+            found = [alias.group(1)]
+        elif unpacking:
+            found = re.findall(r"[A-Za-z_]\w*", unpacking.group(1))
+        elif assignment:
+            found = [assignment.group(1)]
+            chained = _PY_CHAINED.match(line, assignment.end()) if line[assignment.end() - 1] == "=" else None
+            while chained:  # a = b = 0
+                found.append(chained.group(1))
+                chained = _PY_CHAINED.match(line, chained.end())
+        if found and not any(keyword.iskeyword(name) for name in found):
+            for name in found:
+                members.setdefault(name, {})
+    return names
+
+
+def _python_names(text):
+    """Return (name tree, parsed). ast only parses the cited file; it never imports or runs it.
+
+    Newer syntax than this Python, null bytes or deep nesting fall back to a
+    regex scan, so one bad file yields a verdict instead of aborting lint.
+    """
+    try:
+        names = {}
+        _collect_python_names(ast.parse(text).body, names)
+        return names, True
+    except (SyntaxError, ValueError, RecursionError, MemoryError):
+        return _python_names_by_regex(text), False
+
+
+def _text_has_names(text, chain):
+    """Non-Python files get a text check only: each chain name must appear as a whole word."""
+    return all(re.search(r"(?<!\w)" + re.escape(name) + r"(?!\w)", text) for name in chain)
+
+
+def _cited_file(relative, cache):
+    """Load one cited file once per run: (kind, data), kind 'python', 'regex', 'text' or 'problem'."""
+    if relative not in cache:
+        try:
+            path = exact_case_path(BASE_DIR, relative)
+            if path is None or not os.path.isfile(path):
+                cache[relative] = ("problem", "path not found, case-sensitive")
+            elif os.path.getsize(path) > CODE_CITATION_MAX_BYTES:
+                cache[relative] = ("problem", "file over 1 MB, not checked")
+            else:
+                text = _safe_read(path).removeprefix("﻿")  # a Windows editor's BOM is not code
+                if relative.endswith(".py"):
+                    names, parsed = _python_names(text)
+                    cache[relative] = ("python" if parsed else "regex", names)
+                else:
+                    cache[relative] = ("text", text)
+        except UnicodeError:  # Before ValueError, its base class.
+            cache[relative] = ("problem", "unreadable: not UTF-8 text")
+        except ValueError:
+            cache[relative] = ("problem", "outside the project")
+        except RuntimeError:  # Path.resolve() on a symlink loop before Python 3.13
+            cache[relative] = ("problem", "unreadable: symlink loop")
+        except OSError as exc:
+            cache[relative] = ("problem", f"unreadable: {exc.strerror or type(exc).__name__}")
+    return cache[relative]
+
+
+def _code_citation_problem(path, chain, cache):
+    """Return why one citation does not resolve, or None when it does."""
+    try:
+        relative = normalize_cited_path(path)
+    except ValueError:
+        return "outside the project"
+    kind, data = _cited_file(relative, cache)
+    if kind == "problem":
+        return data
+    if kind == "text":
+        return None if _text_has_names(data, chain) else "name not found, text check"
+    for name in chain:
+        if name not in data:
+            return "symbol not found" + ("; file did not parse, regex fallback" if kind == "regex" else "")
+        data = data[name]
+    return None
+
+
+def _check_code_citations(content, where, warnings, cache):
+    """Unresolved path::Symbol citations are soft warnings, one line per note."""
+    problems = []
+    for number, citation, path, chain in _iter_code_citations(content):
+        reason = _code_citation_problem(path, chain, cache)
+        if reason:
+            problems.append(f"`{citation}` at line {number} ({reason})")
+    if problems:
+        warnings.append(f"code citations in {where}: " + "; ".join(problems))
 
 
 def _parse_date(value):
-    if not value:
+    if not isinstance(value, str) or not value:
         return None
     try:
         return date.fromisoformat(value)
     except ValueError:
         return None
+
+
+def _snapshot_date(pages):
+    return max((page["last_updated"] for page in pages if _parse_date(page["last_updated"])), default="")
 
 
 PLACEHOLDER_PATTERNS = (
@@ -508,85 +840,15 @@ HOLLOW_PHRASES = (
     "streamline",
 )
 
-# Skill lint: at least one of `triggers` / `outputs` must be present in frontmatter,
-# and the body must have an execution-structure heading we recognise. `Rules` is
-# allowed so protocol-style skills (e.g. self-improving) without step-by-step
-# workflows still pass.
-SKILL_FRONTMATTER_REQUIRED_ANY = ("triggers", "outputs")
-SKILL_BODY_STRUCTURE_PATTERNS = (
-    re.compile(r"^##+\s+Steps\b", re.MULTILINE),
-    re.compile(r"^###+\s+Step\s+\d+", re.MULTILINE),
-    re.compile(r"^##+\s+Rules\b", re.MULTILINE),
-    re.compile(r"^###+\s+Rule\s+\d+", re.MULTILINE),
-    re.compile(r"^##+\s+Workflow\b", re.MULTILINE),
-    re.compile(r"^##+\s+Procedure\b", re.MULTILINE),
-)
-SKILL_SKIP_BASENAMES = {"README.md"}
-
-
 def _discover_skill_files():
-    """Locate `.agents/skills/*.md` — works for both self-hosting and user installs.
-
-    Returns a list of absolute paths. Prefers `templates/.agents/skills/` (canonical
-    for OAW itself) and falls back to `.agents/skills/` (how user installs look).
-    Skips `README.md` and any underscore-prefixed fixtures.
-    """
-    candidates = [
-        os.path.join(BASE_DIR, "templates", ".agents", "skills"),
-        os.path.join(BASE_DIR, ".agents", "skills"),
-    ]
-    seen = set()
-    files = []
-    for skill_dir in candidates:
-        if not os.path.isdir(skill_dir):
-            continue
-        for filename in sorted(os.listdir(skill_dir)):
-            if not filename.endswith(".md"):
-                continue
-            if filename in SKILL_SKIP_BASENAMES or filename.startswith("_"):
-                continue
-            full = os.path.join(skill_dir, filename)
-            if full in seen:
-                continue
-            seen.add(full)
-            files.append(full)
-    return files
+    """Lint OAW packages without imposing our portable subset on other plugins."""
+    from validate_skills import find_skill_files
+    return find_skill_files(BASE_DIR, managed_only=True)
 
 
 def _lint_skill_file(path):
-    """Return a list of issue strings for a single skill markdown file.
-
-    Empty list means the skill passed. Issues cover:
-      - missing frontmatter entirely
-      - neither `triggers` nor `outputs` present in frontmatter
-      - no execution-structure heading (Steps / Rule / Workflow / Procedure)
-    """
-    issues = []
-    try:
-        content = _safe_read(path)
-    except OSError as exc:
-        return [f"skill file unreadable: {exc}"]
-
-    metadata, body = _parse_frontmatter(content)
-    rel_path = os.path.relpath(path, BASE_DIR)
-
-    if not metadata:
-        issues.append(f"skill missing frontmatter block: {rel_path}")
-        return issues
-
-    if not any(metadata.get(field) for field in SKILL_FRONTMATTER_REQUIRED_ANY):
-        issues.append(
-            f"skill missing required frontmatter (need at least one of "
-            f"{', '.join(SKILL_FRONTMATTER_REQUIRED_ANY)}): {rel_path}"
-        )
-
-    if not any(pattern.search(body) for pattern in SKILL_BODY_STRUCTURE_PATTERNS):
-        issues.append(
-            f"skill body has no execution-structure heading "
-            f"(Steps / Rules / Workflow / Procedure): {rel_path}"
-        )
-
-    return issues
+    from validate_skills import lint_skill_file
+    return lint_skill_file(confined_path(BASE_DIR, path))
 
 
 def _scan_placeholders(paths):
@@ -676,6 +938,7 @@ def lint(strict=False):
         placeholder_scan_pages = _load_knowledge_pages(include_meta=True)
     pages_by_id = defaultdict(list)
     raw_sources_by_ref = {source["relative_path"]: source for source in raw_sources}
+    cited_files = {}
 
     raw_source_ids = defaultdict(list)
     for source in raw_sources:
@@ -698,10 +961,8 @@ def lint(strict=False):
             issues.append(f"raw source missing topic_id: {source['relative_path']}")
         if not source["summary"]:
             issues.append(f"raw source missing summary: {source['relative_path']}")
-        for link in _extract_markdown_links(source["body"]):
-            resolved = _relative_path(source["path"], link)
-            if resolved and not os.path.exists(resolved):
-                issues.append(f"broken raw link in {source['relative_path']}: {link}")
+        _check_links(source["path"], source["body"], "raw", source["relative_path"], issues, warnings)
+        _check_code_citations(source["content"], source["relative_path"], warnings, cited_files)
 
     for source_id, refs in raw_source_ids.items():
         if len(refs) > 1:
@@ -755,28 +1016,45 @@ def lint(strict=False):
         if page["page_type"] != "topic":
             issues.append(f"non-topic page left outside meta set: {page['filename']}")
         for source_ref in page["source_refs"]:
-            resolved = os.path.normpath(os.path.join(BASE_DIR, source_ref))
+            resolved = confined_path(BASE_DIR, source_ref)
             if not os.path.exists(resolved):
                 issues.append(f"missing source ref in {page['filename']}: {source_ref}")
         for related_topic in page["related_topics"]:
             if related_topic == page["id"]:
                 issues.append(f"self-referential related topic in {page['filename']}: {related_topic}")
-        for link in _extract_markdown_links(page["body"]):
-            resolved = _relative_path(page["path"], link)
-            if resolved and not os.path.exists(resolved):
-                issues.append(f"broken knowledge link in {page['filename']}: {link}")
+        _check_links(page["path"], page["body"], "knowledge", page["filename"], issues, warnings)
+        # Compiled pages repeat their raw notes, which are checked above; templates are placeholders.
+        if page["build_origin"] not in ("wiki_sync", "template"):
+            _check_code_citations(page["content"], page["filename"], warnings, cited_files)
 
     for page_id, filenames in pages_by_id.items():
         if len(filenames) > 1:
             issues.append(f"duplicate topic id '{page_id}': {', '.join(filenames)}")
 
     known_page_ids = set(pages_by_id.keys())
+    raw_topic_ids = {source["topic_id"] for source in raw_sources}
     inbound_links = defaultdict(int)
     for page in knowledge_pages:
+        page_date = _parse_date(page["last_updated"])
         for related_topic in page["related_topics"]:
             if related_topic not in known_page_ids:
                 warnings.append(f"unresolved related topic in {page['filename']}: {related_topic}")
             inbound_links[related_topic] += 1
+
+        # Compiled pages list their raw sources; ledgers like EXPERIMENT_LOG list none.
+        if page["build_origin"] == "wiki_sync" and page["source_refs"]:
+            moved = [ref for ref in page["source_refs"]
+                     if ref in raw_sources_by_ref and raw_sources_by_ref[ref]["topic_id"] != page["id"]]
+            if page["id"] not in raw_topic_ids:
+                issues.append(
+                    f"orphaned compiled page '{page['id']}': no raw source has this topic_id; "
+                    f"delete docs/knowledge/{page['filename']} or restore its raw source, then rebuild"
+                )
+            elif moved:
+                issues.append(
+                    f"stale page '{page['id']}': {', '.join(moved)} moved to another topic; "
+                    "run `python3 scripts/wiki_sync.py build`"
+                )
 
         if page["source_refs"]:
             source_dates = []
@@ -806,12 +1084,11 @@ def lint(strict=False):
         rel = os.path.relpath(path, BASE_DIR)
         warnings.append(f"{desc} in {rel}:{lineno}: {snippet}")
 
-    # Skill frontmatter lint — warn by default, promote to error under --strict.
-    # Skills are the surface users write most often, so catching "forgot triggers"
-    # or "no Steps section" early prevents a whole class of silent dispatch bugs.
+    # OAW-owned skill schema failures are hard errors. Native host/plugin skills
+    # outside the install inventory have their own schemas and validators.
     for skill_path in _discover_skill_files():
         for skill_issue in _lint_skill_file(skill_path):
-            warnings.append(skill_issue)
+            issues.append(skill_issue)
 
     if warnings:
         label = "❌" if strict else "⚠️"
@@ -836,10 +1113,8 @@ EXPERIMENT_LOG_PATH = os.path.join(KNOWLEDGE_DIR, "EXPERIMENT_LOG.md")
 CURRENT_STATE_PATH = os.path.join(KNOWLEDGE_DIR, "CURRENT_STATE.md")
 
 
-def _ensure_experiment_log():
-    """Create EXPERIMENT_LOG.md with a default header if it does not exist."""
-    if os.path.exists(EXPERIMENT_LOG_PATH):
-        return
+def _experiment_log_header():
+    """Default ledger, also used inside a new file's first locked mutation."""
     header = [
         _render_frontmatter(
             {
@@ -861,7 +1136,12 @@ def _ensure_experiment_log():
         "|------|------|:------:|--------|------------|",
         "",
     ]
-    _write(EXPERIMENT_LOG_PATH, "\n".join(header))
+    return "\n".join(header)
+
+
+def _ensure_experiment_log():
+    path = confined_path(BASE_DIR, KNOWLEDGE_DIR, "EXPERIMENT_LOG.md")
+    locked_update(path, lambda content: content or _experiment_log_header(), root=BASE_DIR)
 
 
 def _replace_frontmatter_field(content, key, value):
@@ -891,78 +1171,57 @@ def _replace_frontmatter_field(content, key, value):
 
 def add_experiment(name, status, result, conclusion, exp_date=None, dir_path=None):
     """Append a row to EXPERIMENT_LOG.md (non-interactive)."""
-    if dir_path:
-        global KNOWLEDGE_DIR, EXPERIMENT_LOG_PATH
-        KNOWLEDGE_DIR = dir_path
-        EXPERIMENT_LOG_PATH = os.path.join(KNOWLEDGE_DIR, "EXPERIMENT_LOG.md")
-
-    _ensure_experiment_log()
+    directory = os.path.abspath(dir_path or KNOWLEDGE_DIR)
+    boundary = directory if dir_path else BASE_DIR
+    path = confined_path(boundary, directory, "EXPERIMENT_LOG.md")
     entry_date = exp_date or _today()
-    safe = lambda s: (s or "").replace("|", "\\|").replace("\n", " ").strip()
+    if _parse_date(entry_date) is None:
+        raise ValueError("Experiment date must be YYYY-MM-DD.")
+    safe = lambda s: (s or "").replace("|", "\\|").replace("\n", " ").replace("\r", " ").strip()
     row = f"| {entry_date} | {safe(name)} | {safe(status)} | {safe(result)} | {safe(conclusion)} |"
 
-    existing = _safe_read(EXPERIMENT_LOG_PATH)
-    lines = existing.splitlines()
-    header_idx = None
-    for i, line in enumerate(lines):
-        if line.startswith("|------"):
-            header_idx = i
-            break
-    if header_idx is None:
-        raise ValueError("EXPERIMENT_LOG.md missing table header; delete the file to regenerate.")
-    lines.insert(header_idx + 1, row)
-    updated = "\n".join(lines)
-    updated = _replace_frontmatter_field(updated, "last_updated", _today())
-    if not updated.endswith("\n"):
-        updated += "\n"
-    _write(EXPERIMENT_LOG_PATH, updated)
-    print(f"✅ Experiment logged: {name} [{status}] → {EXPERIMENT_LOG_PATH}")
+    def mutate(existing):
+        lines = (existing or _experiment_log_header()).splitlines()
+        header_idx = next((i for i, line in enumerate(lines) if line.startswith("|------")), None)
+        if header_idx is None:
+            raise ValueError("EXPERIMENT_LOG.md missing table header; repair the ledger before appending.")
+        lines.insert(header_idx + 1, row)
+        updated = _replace_frontmatter_field("\n".join(lines), "last_updated", _today())
+        return updated.rstrip("\n") + "\n"
+
+    locked_update(path, mutate, root=boundary)
+    print(f"✅ Experiment logged: {name} [{status}] → {path}")
 
 
 def update_state(phase=None, status=None, note=None, dir_path=None):
     """Update CURRENT_STATE.md phase row + append an AI annotation (non-interactive)."""
-    if dir_path:
-        global KNOWLEDGE_DIR, CURRENT_STATE_PATH
-        KNOWLEDGE_DIR = dir_path
-        CURRENT_STATE_PATH = os.path.join(KNOWLEDGE_DIR, "CURRENT_STATE.md")
-
-    if not os.path.exists(CURRENT_STATE_PATH):
+    directory = os.path.abspath(dir_path or KNOWLEDGE_DIR)
+    boundary = directory if dir_path else BASE_DIR
+    path = confined_path(boundary, directory, "CURRENT_STATE.md")
+    if bool(phase) != bool(status):
+        raise ValueError("Supply both --phase and --status, or use --note by itself.")
+    if not os.path.exists(path):
         raise ValueError(
-            f"CURRENT_STATE.md not found at {CURRENT_STATE_PATH}. "
+            f"CURRENT_STATE.md not found at {path}. "
             "Copy it from templates/docs/knowledge/CURRENT_STATE.md first."
         )
 
-    content = _safe_read(CURRENT_STATE_PATH)
-    content = _replace_frontmatter_field(content, "last_updated", _today())
+    def mutate(content):
+        if not content:
+            raise ValueError("CURRENT_STATE.md no longer exists or is empty.")
+        content = _replace_frontmatter_field(content, "last_updated", _today())
+        if phase and status:
+            pattern = re.compile(rf"^(\|\s*`?{re.escape(phase)}`?\s*\|)([^|]*)(\|)", re.MULTILINE)
+            content, count = pattern.subn(lambda m: f"{m.group(1)} {status} {m.group(3)}", content, count=1)
+            if not count:
+                raise ValueError(f"Phase row '{phase}' not found in CURRENT_STATE.md.")
+        if note:
+            from oaw_common import append_annotation
+            stamp = datetime.now().strftime("%Y-%m-%d %H:%M")
+            content = append_annotation(content, f"- [{stamp}] {note}")
+        return content.rstrip("\n") + "\n"
 
-    if phase and status:
-        pattern = re.compile(
-            rf"^(\|\s*`?{re.escape(phase)}`?\s*\|)([^|]*)(\|)",
-            re.MULTILINE,
-        )
-        new_content, n = pattern.subn(
-            lambda m: f"{m.group(1)} {status} {m.group(3)}", content, count=1
-        )
-        if n:
-            content = new_content
-        else:
-            print(f"⚠️  Phase row '{phase}' not found in CURRENT_STATE.md — appending annotation only.")
-
-    if note:
-        stamp = datetime.now().strftime("%Y-%m-%d %H:%M")
-        annotation = f"- [{stamp}] {note}"
-        marker = "## AI Annotations"
-        if marker in content:
-            head, tail = content.split(marker, 1)
-            tail_stripped = tail.lstrip("\n")
-            tail_stripped = re.sub(r"^<!--[^>]*-->\s*", "", tail_stripped)
-            content = f"{head}{marker}\n\n{annotation}\n{tail_stripped}"
-        else:
-            content = content.rstrip() + f"\n\n## AI Annotations\n\n{annotation}\n"
-
-    if not content.endswith("\n"):
-        content += "\n"
-    _write(CURRENT_STATE_PATH, content)
+    locked_update(path, mutate, root=boundary)
     print(f"✅ CURRENT_STATE updated: phase={phase or '—'} status={status or '—'}")
 
 
@@ -984,7 +1243,10 @@ def _resolve_ssot_value(spec, base_dir):
     if ":" not in spec:
         return None, f"ssot_mirror spec missing `:` — expected `<file>:<locator>`, got {spec!r}"
     file_part, locator = spec.split(":", 1)
-    path = os.path.normpath(os.path.join(base_dir, file_part))
+    try:
+        path = confined_path(base_dir, file_part)
+    except ValueError:
+        return None, "ssot_mirror path is outside the project boundary"
     if not os.path.exists(path):
         return None, f"file not found: {file_part}"
 
@@ -1087,7 +1349,7 @@ def cross_check():
 
 
 MEMORY_ENTRY_HEADER = re.compile(
-    r"^## \[(\d{4}-\d{2}-\d{2})\] "
+    r"^## \[(\d{4}-\d{2}-\d{2})(?:[T ][^\]\n]*)?\] "
     r"((?:\[[^\]]+\] *)+)"
     r"(.*)$"
 )
@@ -1095,19 +1357,60 @@ TIER_IN_BLOCK = re.compile(r"\[T([1-5])\]")
 TIER_ORDER = {"T1": 1, "T2": 2, "T3": 3, "T4": 4, "T5": 5}
 
 
+_MEMORY_FENCE = re.compile(r"^\s{0,3}(`{3,}|~{3,})")  # the opener _fence_after recognizes
+
+
+def _memory_lines(content):
+    """Split on line breaks only (CRLF, CR, LF), as editors and grep number lines.
+
+    str.splitlines() would also split on form feeds, U+0085 or U+2028, so
+    reported line numbers would drift from what an editor shows.
+    """
+    lines = re.split(r"\r\n|\r|\n", content)
+    if lines and lines[-1] == "":
+        lines.pop()
+    return lines
+
+
+def _memory_fenced(lines):
+    """Per line, whether it is inside or delimits a fenced block.
+
+    A fence that closes later hides heading-shaped example lines inside it. A
+    fence that never closes ends at the next entry heading, so one unclosed
+    fence cannot swallow every later entry. Linear: closers are precomputed.
+    """
+    longest = {"`": [0] * (len(lines) + 1), "~": [0] * (len(lines) + 1)}
+    for index in range(len(lines) - 1, -1, -1):
+        marker = _MEMORY_FENCE.match(lines[index])
+        for char, suffix in longest.items():
+            length = len(marker.group(1)) if marker and marker.group(1)[0] == char else 0
+            suffix[index] = max(suffix[index + 1], length)
+    fenced, fence, closes = [], None, False
+    for index, line in enumerate(lines):
+        if fence is not None and not closes and MEMORY_ENTRY_HEADER.match(line):
+            fence = None
+        after = _fence_after(line, fence)
+        if fence is None and after is not None:
+            closes = longest[after[0]][index + 1] >= len(after)
+        fenced.append(fence is not None or after is not None)
+        fence = after
+    return fenced
+
+
 def _parse_memory_entries(content):
     """Parse .agents/memory.md into structured entries.
 
-    Returns a list of dicts: `{date, tags, tiers, title, body}`. Tags are the
-    raw labels between brackets in order of appearance; tiers is the subset
-    matching `[T1]`–`[T5]`.
+    Returns a list of dicts: `{date, tags, tiers, title, body, line}`. Tags are
+    the raw labels between brackets in order of appearance; tiers is the subset
+    matching `[T1]`–`[T5]`; line is the 1-based heading line. A heading-shaped
+    line inside a fenced example is body text, not an entry.
     """
-    lines = content.splitlines()
+    lines = _memory_lines(content)
     entries = []
     current = None
     body_buf = []
-    for line in lines:
-        m = MEMORY_ENTRY_HEADER.match(line)
+    for number, (line, in_code) in enumerate(zip(lines, _memory_fenced(lines)), 1):
+        m = None if in_code else MEMORY_ENTRY_HEADER.match(line)
         if m:
             if current is not None:
                 current["body"] = "\n".join(body_buf).strip()
@@ -1122,6 +1425,7 @@ def _parse_memory_entries(content):
                 "tiers": entry_tiers,
                 "title": m.group(3).strip(),
                 "body": "",
+                "line": number,
             }
         elif current is not None:
             body_buf.append(line)
@@ -1162,7 +1466,7 @@ def _count_entry_citations(title, archive_dir):
             if not fname.endswith(".md"):
                 continue
             try:
-                text = _safe_read(os.path.join(root, fname))
+                text = _safe_read(confined_path(archive_dir, root, fname))
             except Exception:
                 continue
             if (short and short in text) or (slug and slug in text):
@@ -1179,8 +1483,8 @@ def promote_candidates(
     """
     import json as _json
 
-    memory_file = memory_file or os.path.join(BASE_DIR, ".agents", "memory.md")
-    archive_dir = archive_dir or os.path.join(BASE_DIR, "docs", "archive")
+    memory_file = os.path.abspath(memory_file) if memory_file else confined_path(BASE_DIR, ".agents", "memory.md")
+    archive_dir = os.path.abspath(archive_dir) if archive_dir else confined_path(BASE_DIR, "docs", "archive")
 
     if not os.path.exists(memory_file):
         print(f"❌ memory file not found: {memory_file}")
@@ -1244,6 +1548,333 @@ def promote_candidates(
     return 0
 
 
+def _citation_target(target):
+    """Split `path[::Symbol...]` into its normalized path, chain and display form."""
+    path, separator, chain = target.strip().partition("::")
+    relative = normalize_cited_path(path)
+    names = _CHAIN_SEPARATOR.split(chain) if separator else []
+    if separator and not all(re.fullmatch(r"[A-Za-z_]\w*", name) for name in names):
+        raise ValueError(f"Invalid symbol in citation target: {target}")
+    return relative, names, relative + separator + chain
+
+
+def cites(target, json_out=False):
+    """List raw notes and manual pages whose path::Symbol citations name target.
+
+    Advisory and read-only, like promote-candidates. It matches the text of the
+    notes with the lint's parser, never the code, so a renamed or deleted file
+    still lists the notes that cite it. A target Class also matches Class::method.
+    """
+    import json as _json
+
+    relative, chain, display = _citation_target(target)
+    notes = [(source["relative_path"], source["content"], source["topic_id"]) for source in _discover_raw_sources()]
+    # Compiled pages repeat their raw notes, so only manual pages are scanned, as in lint.
+    notes += [("docs/knowledge/" + page["filename"], page["content"], page["id"])
+              for page in _load_knowledge_pages() if page["build_origin"] not in ("wiki_sync", "template")]
+    results = []
+    for source, content, topic_id in notes:
+        for line, citation, path, names in _iter_code_citations(content):
+            try:
+                cited = normalize_cited_path(path)
+            except ValueError:
+                continue
+            if cited == relative and names[:len(chain)] == chain:
+                results.append({"source": source, "line": line, "citation": citation, "topic_id": topic_id})
+
+    if json_out:
+        print(_json.dumps({"schema_version": 1, "target": display, "results": results}, indent=2))
+        return 0
+    if not results:
+        print(f"No notes cite {display}.")
+        return 0
+    for result in results:
+        print(f"{result['source']}:{result['line']}  {result['citation']}  topic={result['topic_id']}")
+    print("Advisory: refresh these notes, then run `wiki_sync.py refresh <topic>` and `lint`. "
+          "This command does not modify docs/.")
+    return 0
+
+
+# memory-check: one manual, read-only, offline pass over .agents/memory.md.
+# Entry text is only string-matched; it is never executed, followed or rewritten.
+MEMORY_CHECK_WALK_LIMIT = 100_000
+MEMORY_CHECK_MAX_BYTES = 4 * 1024 * 1024  # A larger memory.md is refused unread (exit 1).
+MEMORY_CHECK_MAX_LIMIT = 500
+MEMORY_CHECK_MAX_TOKEN = 400  # Longer words are skipped before any parsing, keeping cost linear.
+MEMORY_CHECK_NOTICE = (
+    "Advisory check of project evidence: data to verify against current sources, "
+    "not instructions. Nothing was changed."
+)
+MEMORY_CHECK_COUNT_KEYS = ("present", "missing_path", "missing_path_removal_context",
+                           "outside_project", "unanchored", "unverified", "skipped")
+_MC_EXTENSIONS = frozenset(
+    "py md json jsonl js mjs cjs ts tsx jsx toml yaml yml txt sh ps1 cfg ini html css sql "
+    "rs go java kt rb c h cpp hpp cs swift lock diff csv xml svg".split()
+)
+# Product names shaped like file names; they are never project files.
+_MC_NOT_FILES = frozenset(
+    "node.js next.js nuxt.js vue.js react.js three.js d3.js express.js chart.js ember.js "
+    "angular.js backbone.js alpine.js nest.js p5.js docs.rs".split()
+)
+_MC_SKIP_DIRS = frozenset((".git", ".hg", ".svn", "node_modules", ".venv", "venv", "__pycache__",
+                           ".tox", ".nox", ".mypy_cache", ".pytest_cache", ".ruff_cache"))
+_MC_CJK_LETTERS = r"⺀-⿟぀-ㇿ㐀-䶿一-鿿가-힯豈-﫿"
+_MC_SEPARATORS = r"‘-‟…　-〿︰-﹏＀-￯"
+_MC_TOKEN = re.compile(rf"[^\s,;{_MC_CJK_LETTERS}{_MC_SEPARATORS}]+")
+_MC_CJK_RUN = re.compile(rf"[{_MC_CJK_LETTERS}]+")
+_MC_PATH_GLUE = re.compile(r"[/\\]|\.\w")
+_MC_SUFFIX = re.compile(r"(?:::[A-Za-z_][\w.]*|:\d+(?:[-:]\d+)*|#[^#/]*)$")
+_MC_PLACEHOLDER = re.compile(r"[<>{}$*?|=@+%^&\x00-\x1f\x7f]")
+_MC_CALL = re.compile(r"\w\((?:\)|$)")  # res.json() or a call cut at "(" is code, not a file
+_MC_BARE = re.compile(r"[\w.\-]+\.([A-Za-z0-9]{1,8})")
+_MC_DRIVE = re.compile(r"^[A-Za-z]:")
+_MC_REMOVAL = re.compile(
+    r"(?<![A-Za-z])(?:remov|delet|renam|retir|replac|deprecat|supersed)"
+    r"|移除|刪除|删除|改名|淘汰|取代|廢棄|废弃",
+    re.IGNORECASE,
+)
+_MC_ESCAPED = frozenset(("Cc", "Cf", "Zl", "Zp"))  # Unicode categories never printed raw
+_MC_JUNCTION_TAG = 0xA0000003
+
+
+def _memory_check_limit(value):
+    """argparse type for --limit: an integer from 1 to MEMORY_CHECK_MAX_LIMIT."""
+    try:
+        number = int(value)
+    except ValueError:
+        number = 0
+    if not 1 <= number <= MEMORY_CHECK_MAX_LIMIT:
+        raise argparse.ArgumentTypeError(f"must be an integer from 1 to {MEMORY_CHECK_MAX_LIMIT}")
+    return number
+
+
+def _memory_check_printable(text):
+    """Escape control, format (bidi marks, U+061C, U+FEFF) and line-separator characters for a terminal."""
+    return "".join(f"\\u{ord(char):04x}" if unicodedata.category(char) in _MC_ESCAPED else char for char in text)
+
+
+def _memory_check_tokens(text):
+    """Yield (token, partial) for each word of one prose line.
+
+    Whitespace, commas, CJK letters and CJK punctuation separate words. A word
+    that CJK letters join to more path text ("docs/設計.md", "docs/plan設計.md",
+    "docs/設計稿a.md") is only part of a CJK-named path and is not checked.
+    """
+    text = text.replace("`", " ")
+    runs = [(match.start(), match.end()) for match in _MC_CJK_RUN.finditer(text)]
+    run_ending, run_starting = {end: start for start, end in runs}, dict(runs)
+    for match in _MC_TOKEN.finditer(text):
+        token, start, end = match.group(0), match.start(), match.end()
+        partial = False
+        if start in run_ending:
+            head = run_ending[start]
+            partial = token[0] in "/\\." or (head > 0 and text[head - 1] in "/\\")
+        if end in run_starting and not partial:
+            partial = token[-1] in "/\\" or _MC_PATH_GLUE.match(text, run_starting[end]) is not None
+        yield token, partial
+
+
+def _memory_check_normalize(token):
+    """Strip Markdown wrapping, punctuation and ::Symbol, :N, :N-M or #L12 suffixes.
+
+    A call such as res.json() is returned unstripped, so classify() skips it as code.
+    """
+    if "](" in token:
+        token = token.rsplit("](", 1)[1]
+    if _MC_CALL.search(token):
+        return token
+    previous = None
+    while token != previous:
+        previous = token
+        if len(token) > 2 and token[0] == "<" and token[-1] == ">":
+            token = token[1:-1]  # a Markdown autolink <path>
+        token = token.lstrip("\"'([").rstrip("\"'()[].,;:!?")
+        while len(token) > 1 and token[0] == token[-1] and token[0] in "*_~":
+            token = token[1:-1]
+        token = _MC_SUFFIX.sub("", token)
+    return token
+
+
+def _memory_check_classify(token, anchors):
+    """Classify a normalized token. A cited path is stat'ed only inside BASE_DIR.
+
+    A top-level link is never followed (its citations are unanchored), and
+    confined_path rejects a path that a deeper link takes outside before it is
+    stat'ed. Bare names are judged by the walk, by name only.
+    """
+    if (not token or len(token) > MEMORY_CHECK_MAX_TOKEN or "://" in token or token.startswith("-")
+            or _MC_PLACEHOLDER.search(token) or _MC_CALL.search(token) or not re.search(r"[^\W\d_]", token)):
+        return "skipped"
+    path = token.replace("\\", "/")
+    parts = [part for part in path.split("/") if part not in ("", ".")]
+    # A drive in any segment ("scripts/D:/x.md") would make a Windows join leave
+    # BASE_DIR, so it is classified before any join or stat, like a leading one.
+    drive = any(_MC_DRIVE.match(part) for part in parts)
+    if drive or path.startswith(("/", "~")) or ".." in parts:
+        # A lone "/compact", "~name" or "A:B" is a command, user name or prose; "C:x.md" and "C:\" are paths.
+        if (len(parts) == 1 and not _MC_BARE.fullmatch(parts[0][2:] if drive else parts[0])
+                and not (drive and path.endswith("/"))):
+            return "skipped"
+        return "outside_project"
+    if "/" in path:
+        if not parts:
+            return "skipped"
+        if parts[0] not in anchors:
+            anchor = os.path.join(BASE_DIR, parts[0])
+            anchors[parts[0]] = not _memory_check_is_link(anchor) and os.path.isdir(anchor)
+        if not anchors[parts[0]]:
+            return "unanchored"
+        try:
+            target = confined_path(BASE_DIR, *parts)
+        except ValueError:
+            return "outside_project"
+        return "present" if os.path.exists(target) else "missing_path"
+    match = _MC_BARE.fullmatch(path)
+    if match and match.group(1).lower() in _MC_EXTENSIONS and path.lower() not in _MC_NOT_FILES:
+        return "bare"
+    return "skipped"
+
+
+def _memory_check_is_link(path):
+    """Symlinks and Windows junctions can leave the project, so the walk skips them."""
+    try:
+        info = os.lstat(path)
+    except OSError:
+        return True
+    return (info.st_mode & 0o170000) == 0o120000 or getattr(info, "st_reparse_tag", 0) == _MC_JUNCTION_TAG
+
+
+def _memory_check_name(name):
+    """Bare names match exactly, case included, on every OS; NFC so macOS NFD names compare equal."""
+    return unicodedata.normalize("NFC", name)
+
+
+def _memory_check_walk(names):
+    """Return (found basenames, incomplete) from a sorted walk of at most MEMORY_CHECK_WALK_LIMIT files."""
+    pending = {_memory_check_name(name) for name in names}
+    found, seen, errors = set(), 0, []
+    if not pending:
+        return found, False
+    for folder, dirs, files in os.walk(BASE_DIR, onerror=errors.append):
+        dirs[:] = sorted(name for name in dirs if name not in _MC_SKIP_DIRS
+                         and not _memory_check_is_link(os.path.join(folder, name)))
+        for name in sorted(files):
+            if seen >= MEMORY_CHECK_WALK_LIMIT:
+                return found, True
+            seen += 1
+            key = _memory_check_name(name)
+            if key in pending:
+                pending.discard(key)
+                found.add(key)
+                if not pending:
+                    return found, False
+    return found, bool(errors)
+
+
+def memory_check(limit=50, json_out=False):
+    """Report memory entries whose cited project paths are not in the current tree.
+
+    Advisory and read-only: reads only .agents/memory.md and stats project paths.
+    It never writes, executes entry text, calls git, a model or the network.
+    Returns 0 whenever the check completed, with or without findings.
+    """
+    import json as _json
+
+    if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= MEMORY_CHECK_MAX_LIMIT:
+        raise ValueError(f"limit must be an integer from 1 to {MEMORY_CHECK_MAX_LIMIT}.")
+    memory_file = confined_path(BASE_DIR, ".agents", "memory.md")
+    exists = os.path.exists(memory_file)
+    lines, entries = [], []
+    if exists:
+        if not os.path.isfile(memory_file):
+            raise ValueError(".agents/memory.md is not a regular file; nothing was checked.")
+        too_large = f".agents/memory.md is larger than {MEMORY_CHECK_MAX_BYTES // 1024 // 1024} MB; nothing was checked."
+        if os.path.getsize(memory_file) > MEMORY_CHECK_MAX_BYTES:
+            raise ValueError(too_large)
+        try:
+            with open(memory_file, "r", encoding="utf-8-sig") as handle:
+                content = handle.read(MEMORY_CHECK_MAX_BYTES + 1)  # characters never outnumber bytes
+        except UnicodeDecodeError as exc:
+            raise ValueError(f".agents/memory.md is not valid UTF-8 (byte {exc.start}); nothing was checked.") from exc
+        if len(content) > MEMORY_CHECK_MAX_BYTES:
+            raise ValueError(too_large)
+        lines, entries = _memory_lines(content), _parse_memory_entries(content)
+    fenced = _memory_fenced(lines)
+
+    counts = dict.fromkeys(MEMORY_CHECK_COUNT_KEYS, 0)
+    findings, bare, anchors, tokens = [], [], {}, 0
+    for index, entry in enumerate(entries):
+        last = entries[index + 1]["line"] - 1 if index + 1 < len(entries) else len(lines)
+        # Fence state spans the file: a closed fence hides heading-shaped examples, an unclosed one ends at an entry.
+        prose = [(number, lines[number - 1]) for number in range(entry["line"], last + 1) if not fenced[number - 1]]
+        removal = any(_MC_REMOVAL.search(text) for _number, text in prose)
+        seen = set()
+        for number, text in prose:
+            for raw, partial in _memory_check_tokens(text):
+                # An over-long word is skipped unparsed; classify() rejects it by length.
+                token = raw if len(raw) > MEMORY_CHECK_MAX_TOKEN else _memory_check_normalize(raw)
+                if token in seen:
+                    continue
+                seen.add(token)
+                tokens += 1
+                kind = "skipped" if partial else _memory_check_classify(token, anchors)
+                finding = {"kind": kind, "line": number, "entry_line": entry["line"], "date": entry["date"],
+                           "tags": list(entry["tags"]), "title": entry["title"][:120], "path": token,
+                           "removal_context": removal}
+                # Bare names are judged by name in the walk (root files come first), never by a stat that
+                # would follow a link or match another case on a case-insensitive disk.
+                if kind == "bare":
+                    bare.append(finding)
+                    continue
+                counts[kind] += 1
+                if kind in ("missing_path", "outside_project"):
+                    findings.append(finding)
+
+    found, walk_truncated = _memory_check_walk(finding["path"] for finding in bare)
+    for finding in bare:
+        if _memory_check_name(finding["path"]) in found:
+            counts["present"] += 1
+            continue
+        finding["kind"] = "unverified" if walk_truncated else "missing_path"
+        counts[finding["kind"]] += 1
+        findings.append(finding)
+    counts["missing_path_removal_context"] = sum(
+        1 for finding in findings if finding["kind"] == "missing_path" and finding["removal_context"])
+    order = {"missing_path": 0, "unverified": 1, "outside_project": 2}
+    findings.sort(key=lambda finding: (finding["line"], order[finding["kind"]], finding["path"]))
+
+    def plural(number, word, many=None):
+        return f"{number} {word if number == 1 else many or word + 's'}"
+
+    if not exists:
+        summary = "Checked 0 entries: .agents/memory.md not found, nothing to check."
+    else:
+        summary = (f"Checked {plural(len(entries), 'entry', 'entries')}: "
+                   f"{plural(counts['missing_path'], 'cited path')} not found "
+                   f"({counts['missing_path_removal_context']} in entries describing a removal), "
+                   f"{counts['outside_project']} outside the project, {counts['unanchored']} unanchored")
+        if walk_truncated:
+            summary += f", {counts['unverified']} unverified (file walk incomplete or stopped at {MEMORY_CHECK_WALK_LIMIT} files)"
+        summary += "."
+    shown = findings[:limit]
+    if json_out:
+        print(_json.dumps({
+            "schema_version": 1, "summary": summary, "memory_file": ".agents/memory.md",
+            "memory_file_present": exists, "checked": {"entries": len(entries), "tokens": tokens},
+            "counts": counts, "findings": shown, "truncated": len(findings) > limit,
+            "walk_truncated": walk_truncated, "notice": MEMORY_CHECK_NOTICE,
+        }, indent=2))
+        return 0
+    print(summary)
+    for finding in shown:
+        label = finding["kind"] + ("; removal context" if finding["removal_context"] else "")
+        print(_memory_check_printable(f"line {finding['line']} [{label}] {finding['path']} — {finding['title']}"))
+    if len(findings) > limit:
+        print(f"... {len(findings) - limit} more finding(s) not shown (--limit {limit}); the counts above are complete.")
+    print(MEMORY_CHECK_NOTICE)
+    return 0
+
+
 def stale(threshold_days=30):
     """List knowledge pages whose `last_updated` is older than threshold_days.
 
@@ -1288,10 +1919,14 @@ Commands:
   %(prog)s add-experiment --name ...    Append row to docs/knowledge/EXPERIMENT_LOG.md
   %(prog)s update-state --phase ...     Update a phase row in docs/knowledge/CURRENT_STATE.md
   %(prog)s promote-candidates           List T3+ memory entries suitable for wiki promotion
+  %(prog)s memory-check [--json]        List memory entries citing project paths that are gone
+  %(prog)s cites PATH[::Symbol]         List raw/manual notes citing a file or symbol
 
 Non-interactive flags on add-experiment / update-state exist so AI workflows
 can call them without prompting the user. `promote-candidates` is advisory —
-it never writes to docs/knowledge/.
+it never writes to docs/knowledge/. `memory-check` is a read-only, manual
+report; it never edits memory.md or decides that an entry is superseded.
+`cites` is read-only and advisory; it never writes to docs/.
         """,
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -1305,7 +1940,8 @@ it never writes to docs/knowledge/.
     p_lint.add_argument(
         "--strict",
         action="store_true",
-        help="Treat unfilled `${...}` / `YYYY-MM-DD` placeholders as errors (default: warn only).",
+        help="Treat every soft warning, such as unfilled `${...}` / `YYYY-MM-DD` placeholders or "
+             "unresolved `path::Symbol` code citations, as an error (default: warn only).",
     )
 
     p_stale = subparsers.add_parser(
@@ -1383,6 +2019,29 @@ it never writes to docs/knowledge/.
         help="Emit machine-readable JSON instead of markdown table.",
     )
 
+    p_memcheck = subparsers.add_parser(
+        "memory-check",
+        help="Report .agents/memory.md entries whose cited project paths are missing (read-only, advisory).",
+    )
+    p_memcheck.add_argument(
+        "--json", action="store_true", dest="json_out",
+        help="Emit machine-readable JSON (schema_version 1) instead of text.",
+    )
+    p_memcheck.add_argument(
+        "--limit", type=_memory_check_limit, default=50,
+        help=f"Maximum findings listed, 1-{MEMORY_CHECK_MAX_LIMIT} (default: 50); counts stay complete.",
+    )
+
+    p_cites = subparsers.add_parser(
+        "cites",
+        help="List raw notes and manual pages citing PATH or PATH::Symbol (read-only, advisory).",
+    )
+    p_cites.add_argument("target", help="Project-relative path, optionally with ::Symbol[::Member].")
+    p_cites.add_argument(
+        "--json", action="store_true", dest="json_out",
+        help="Emit machine-readable JSON (schema_version 1) instead of text.",
+    )
+
     args = parser.parse_args()
 
     try:
@@ -1422,7 +2081,18 @@ it never writes to docs/knowledge/.
                     archive_dir=args.archive_dir,
                 )
             )
-    except ValueError as exc:
+        elif args.command == "memory-check":
+            # Entry text can hold any Unicode; escape what the console cannot encode
+            # instead of ending a completed check (or its error message) in a traceback.
+            if hasattr(sys.stdout, "reconfigure"):
+                sys.stdout.reconfigure(errors="backslashreplace")
+            raise SystemExit(memory_check(limit=args.limit, json_out=args.json_out))
+        elif args.command == "cites":
+            # Note names and topics can hold any Unicode; escape what the console cannot encode.
+            if hasattr(sys.stdout, "reconfigure"):
+                sys.stdout.reconfigure(errors="backslashreplace")
+            raise SystemExit(cites(args.target, json_out=args.json_out))
+    except (ValueError, OSError, RuntimeError) as exc:
         print(f"❌ {exc}")
         raise SystemExit(1) from exc
 

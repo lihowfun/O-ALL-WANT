@@ -1,0 +1,212 @@
+{
+  "grades": [
+    {
+      "review_id": "R01",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        "Performance attainment is unresolved: design.md:4 supplies the target and :20 explicitly labels tests planned; no missing-target or completed-test defect is asserted.",
+        "The current implementation checks order_id before its stock lock, but schema uniqueness and isolation are unavailable; the same-order concurrency concern is correctly conditional."
+      ],
+      "explanations": {
+        "C1": "F01 detects non-atomic check-and-reserve: design.md:11-14 separates availability read, reservation insertion and unconditional write from stale availability. Two requests can reserve the last unit and both write zero. The partial-write inconsistency is supported by the same flow and is not double-counted. reserve.py:2,6-10 supports the baseline transaction/row-lock comparison.",
+        "C2": "F02 detects repeat allocation per order: design.md:7 generates a fresh UUID for every request and :14 repeats every allocation step on retry, without the existing-order lookup shown in reserve.py:3-5. With remaining stock a successful order can allocate again, contrary to ADR-001:3 idempotency per order_id.",
+        "M1": "F03 detects the false MongoDB authorization and scheduled cutover: design.md:8,20 proceeds without replacement ADR; accepted ADR-001 r2:2-3 requires PostgreSQL and an accepted replacement before a second persistent inventory database. README.md makes that accepted decision authoritative.",
+        "M2": "F04 detects the retention contradiction: design.md:17 deletes the only reservation ledger after seven days, requires thirty-day dispute lookups through it, and explicitly supplies no archive. Days eight through thirty cannot be answered from that ledger."
+      }
+    },
+    {
+      "review_id": "R02",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        "The stated performance target is present but unmeasured; planned tests are not presented as successful.",
+        "Current-code duplicate-order concurrency is conditional on unspecified database guarantees and is not an established additional defect."
+      ],
+      "explanations": {
+        "C1": "F02 detects non-atomic check-and-reserve: design.md:11-14 separates availability read, reservation insertion and unconditional write from stale availability. Two requests can reserve the last unit and both write zero. The partial-write inconsistency is supported by the same flow and is not double-counted. reserve.py:2,6-10 supports the baseline transaction/row-lock comparison.",
+        "C2": "F03 detects repeat allocation per order: design.md:7 generates a fresh UUID for every request and :14 repeats every allocation step on retry, without the existing-order lookup shown in reserve.py:3-5. With remaining stock a successful order can allocate again, contrary to ADR-001:3 idempotency per order_id.",
+        "M1": "F01 detects the false MongoDB authorization and scheduled cutover: design.md:8,20 proceeds without replacement ADR; accepted ADR-001 r2:2-3 requires PostgreSQL and an accepted replacement before a second persistent inventory database. README.md makes that accepted decision authoritative.",
+        "M2": "F04 detects the retention contradiction: design.md:17 deletes the only reservation ledger after seven days, requires thirty-day dispute lookups through it, and explicitly supplies no archive. Days eight through thirty cannot be answered from that ledger."
+      }
+    },
+    {
+      "review_id": "R03",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        "Regional authority and routing are unspecified; overlapping regional writers are expressly conditional.",
+        "Performance attainment is unresolved, and planned tests do not establish results.",
+        "Alternatives, risks, non-goals and plan-detail observations are documentation/readiness comments, not additional concrete runtime findings. The assigned sources supply no separate readiness standard that would make a preferred template mandatory."
+      ],
+      "explanations": {
+        "C1": "F01 detects non-atomic check-and-reserve: design.md:11-14 separates availability read, reservation insertion and unconditional write from stale availability. Two requests can reserve the last unit and both write zero. The partial-write inconsistency is supported by the same flow and is not double-counted. reserve.py:2,6-10 supports the baseline transaction/row-lock comparison.",
+        "C2": "F02 detects repeat allocation per order: design.md:7 generates a fresh UUID for every request and :14 repeats every allocation step on retry, without the existing-order lookup shown in reserve.py:3-5. With remaining stock a successful order can allocate again, contrary to ADR-001:3 idempotency per order_id.",
+        "M1": "F03 detects the false MongoDB authorization and scheduled cutover: design.md:8,20 proceeds without replacement ADR; accepted ADR-001 r2:2-3 requires PostgreSQL and an accepted replacement before a second persistent inventory database. README.md makes that accepted decision authoritative.",
+        "M2": "F04 detects the retention contradiction: design.md:17 deletes the only reservation ledger after seven days, requires thirty-day dispute lookups through it, and explicitly supplies no archive. Days eight through thirty cannot be answered from that ledger."
+      }
+    },
+    {
+      "review_id": "R04",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        "Regional ownership, routing and failover questions are unresolved; no topology-specific failure is asserted.",
+        "Alternatives, risks and implementation-detail observations are separated as coverage/readiness concerns. The assigned sources do not supply the referenced feature standard or readiness reviewers, so their authority cannot be independently verified; these observations are not scored as concrete behavioral defects.",
+        "The latency target is explicit and tests are planned; current transaction, stock-lock and prior-order safeguards are shown without proof of every concurrent-idempotency guarantee. Auxiliary memory agrees with accepted ADR r2, but is not independent authority."
+      ],
+      "explanations": {
+        "C1": "F01 detects non-atomic check-and-reserve: design.md:11-14 separates availability read, reservation insertion and unconditional write from stale availability. Two requests can reserve the last unit and both write zero. The partial-write inconsistency is supported by the same flow and is not double-counted. reserve.py:2,6-10 supports the baseline transaction/row-lock comparison.",
+        "C2": "F02 detects repeat allocation per order: design.md:7 generates a fresh UUID for every request and :14 repeats every allocation step on retry, without the existing-order lookup shown in reserve.py:3-5. With remaining stock a successful order can allocate again, contrary to ADR-001:3 idempotency per order_id.",
+        "M1": "F03 detects the false MongoDB authorization and scheduled cutover: design.md:8,20 proceeds without replacement ADR; accepted ADR-001 r2:2-3 requires PostgreSQL and an accepted replacement before a second persistent inventory database. README.md makes that accepted decision authoritative.",
+        "M2": "F04 detects the retention contradiction: design.md:17 deletes the only reservation ledger after seven days, requires thirty-day dispute lookups through it, and explicitly supplies no archive. Days eight through thirty cannot be answered from that ledger."
+      }
+    },
+    {
+      "review_id": "R05",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        "Regional topology and connectivity consequences remain conditional.",
+        "Performance and contention benefits are unmeasured; the target exists and tests are explicitly planned.",
+        "Alternatives, risk treatment, schema and cutover-detail observations are documentation/readiness comments. No supplied standard establishes a mandatory template, and the report does not score them as additional functional failures.",
+        "The design lacks a baseline explanation, while reserve.py supplies baseline behavior; this is expressly not asserted as another blocker, missing-current-file defect or mandatory heading defect."
+      ],
+      "explanations": {
+        "C1": "F01 detects non-atomic check-and-reserve: design.md:11-14 separates availability read, reservation insertion and unconditional write from stale availability. Two requests can reserve the last unit and both write zero. The partial-write inconsistency is supported by the same flow and is not double-counted. reserve.py:2,6-10 supports the baseline transaction/row-lock comparison.",
+        "C2": "F02 detects repeat allocation per order: design.md:7 generates a fresh UUID for every request and :14 repeats every allocation step on retry, without the existing-order lookup shown in reserve.py:3-5. With remaining stock a successful order can allocate again, contrary to ADR-001:3 idempotency per order_id.",
+        "M1": "F03 detects the false MongoDB authorization and scheduled cutover: design.md:8,20 proceeds without replacement ADR; accepted ADR-001 r2:2-3 requires PostgreSQL and an accepted replacement before a second persistent inventory database. README.md makes that accepted decision authoritative.",
+        "M2": "F04 detects the retention contradiction: design.md:17 deletes the only reservation ledger after seven days, requires thirty-day dispute lookups through it, and explicitly supplies no archive. Days eight through thirty cannot be answered from that ledger."
+      }
+    },
+    {
+      "review_id": "R06",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        "Regional authority, routing and failure questions do not establish a particular regional failure or latency miss.",
+        "File/schema/cutover/test-assertion observations remain readiness questions; the report does not claim proposed files should already exist.",
+        "Alternative and risk coverage are absent as text, but the referenced review standard is not supplied. They are expressly content observations rather than new product requirements or heading defects.",
+        "The latency target is explicit; planned tests and the existing code excerpt are not proof of performance or every concurrency guarantee."
+      ],
+      "explanations": {
+        "C1": "F02 detects non-atomic check-and-reserve: design.md:11-14 separates availability read, reservation insertion and unconditional write from stale availability. Two requests can reserve the last unit and both write zero. The partial-write inconsistency is supported by the same flow and is not double-counted. reserve.py:2,6-10 supports the baseline transaction/row-lock comparison.",
+        "C2": "F03 detects repeat allocation per order: design.md:7 generates a fresh UUID for every request and :14 repeats every allocation step on retry, without the existing-order lookup shown in reserve.py:3-5. With remaining stock a successful order can allocate again, contrary to ADR-001:3 idempotency per order_id.",
+        "M1": "F01 detects the false MongoDB authorization and scheduled cutover: design.md:8,20 proceeds without replacement ADR; accepted ADR-001 r2:2-3 requires PostgreSQL and an accepted replacement before a second persistent inventory database. README.md makes that accepted decision authoritative.",
+        "M2": "F04 detects the retention contradiction: design.md:17 deletes the only reservation ledger after seven days, requires thirty-day dispute lookups through it, and explicitly supplies no archive. Days eight through thirty cannot be answered from that ledger."
+      }
+    },
+    {
+      "review_id": "R07",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        "The target exists but attainment and production incidents are not established; planned tests are not completed results.",
+        "Alternative/risk coverage and plan depth are separated from demonstrated correctness defects. The supplied sources do not establish a mandatory review template.",
+        "Regional coordination is unspecified, and no additional editorial or heading defect is asserted."
+      ],
+      "explanations": {
+        "C1": "F01 detects non-atomic check-and-reserve: design.md:11-14 separates availability read, reservation insertion and unconditional write from stale availability. Two requests can reserve the last unit and both write zero. The partial-write inconsistency is supported by the same flow and is not double-counted. reserve.py:2,6-10 supports the baseline transaction/row-lock comparison.",
+        "C2": "F02 detects repeat allocation per order: design.md:7 generates a fresh UUID for every request and :14 repeats every allocation step on retry, without the existing-order lookup shown in reserve.py:3-5. With remaining stock a successful order can allocate again, contrary to ADR-001:3 idempotency per order_id.",
+        "M1": "F03 detects the false MongoDB authorization and scheduled cutover: design.md:8,20 proceeds without replacement ADR; accepted ADR-001 r2:2-3 requires PostgreSQL and an accepted replacement before a second persistent inventory database. README.md makes that accepted decision authoritative.",
+        "M2": "F04 detects the retention contradiction: design.md:17 deletes the only reservation ledger after seven days, requires thirty-day dispute lookups through it, and explicitly supplies no archive. Days eight through thirty cannot be answered from that ledger."
+      }
+    },
+    {
+      "review_id": "R08",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        "Regional routing, replication and failover are unspecified; neither latency attainment nor impossibility is established.",
+        "Alternative/risk and implementation-detail observations are documentation/readiness concerns rather than extra functional findings. The referenced document standard is not in the assigned sources and cannot establish mandatory headings.",
+        "The report does not claim an actual cutover occurred. Tests remain planned, and current safeguards do not alone prove every concurrent same-order execution safe."
+      ],
+      "explanations": {
+        "C1": "F02 detects non-atomic check-and-reserve: design.md:11-14 separates availability read, reservation insertion and unconditional write from stale availability. Two requests can reserve the last unit and both write zero. The partial-write inconsistency is supported by the same flow and is not double-counted. reserve.py:2,6-10 supports the baseline transaction/row-lock comparison.",
+        "C2": "F03 detects repeat allocation per order: design.md:7 generates a fresh UUID for every request and :14 repeats every allocation step on retry, without the existing-order lookup shown in reserve.py:3-5. With remaining stock a successful order can allocate again, contrary to ADR-001:3 idempotency per order_id.",
+        "M1": "F01 detects the false MongoDB authorization and scheduled cutover: design.md:8,20 proceeds without replacement ADR; accepted ADR-001 r2:2-3 requires PostgreSQL and an accepted replacement before a second persistent inventory database. README.md makes that accepted decision authoritative.",
+        "M2": "F04 detects the retention contradiction: design.md:17 deletes the only reservation ledger after seven days, requires thirty-day dispute lookups through it, and explicitly supplies no archive. Days eight through thirty cannot be answered from that ledger."
+      }
+    },
+    {
+      "review_id": "R09",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        "The stated end-to-end performance target is unmeasured; neither attainment nor impossibility follows.",
+        "Partial failure between reservation creation and inventory update is source-grounded under design.md:12-14 and is kept as a risk, without separate credit in addition to C1.",
+        "Current-code same-order concurrency depends on unspecified uniqueness and isolation semantics.",
+        "Tests are explicitly planned and are not treated as executed or passing."
+      ],
+      "explanations": {
+        "C1": "F02 detects non-atomic check-and-reserve: design.md:11-14 separates availability read, reservation insertion and unconditional write from stale availability. Two requests can reserve the last unit and both write zero. The partial-write inconsistency is supported by the same flow and is not double-counted. reserve.py:2,6-10 supports the baseline transaction/row-lock comparison.",
+        "C2": "F03 detects repeat allocation per order: design.md:7 generates a fresh UUID for every request and :14 repeats every allocation step on retry, without the existing-order lookup shown in reserve.py:3-5. With remaining stock a successful order can allocate again, contrary to ADR-001:3 idempotency per order_id.",
+        "M1": "F01 detects the false MongoDB authorization and scheduled cutover: design.md:8,20 proceeds without replacement ADR; accepted ADR-001 r2:2-3 requires PostgreSQL and an accepted replacement before a second persistent inventory database. README.md makes that accepted decision authoritative.",
+        "M2": "F04 detects the retention contradiction: design.md:17 deletes the only reservation ledger after seven days, requires thirty-day dispute lookups through it, and explicitly supplies no archive. Days eight through thirty cannot be answered from that ledger."
+      }
+    }
+  ]
+}

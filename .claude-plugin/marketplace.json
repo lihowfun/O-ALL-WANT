@@ -1,0 +1,11 @@
+{
+  "name": "oaw",
+  "owner": { "name": "lihowfun" },
+  "plugins": [
+    {
+      "name": "oaw-digest-monitor",
+      "source": "./mods/oaw-digest-monitor",
+      "description": "OAW 消化道：每樣 skill 食物停在哪一站、卡在哪、能做什麼，在對話旁直接操作"
+    }
+  ]
+}

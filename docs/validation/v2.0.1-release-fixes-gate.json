@@ -1,0 +1,103 @@
+{
+  "date": "2026-11-13",
+  "platform": "Linux",
+  "python": "3.10.20",
+  "base_commit": "359e6e337d116667c2453c55af1215dd85d4be15",
+  "branch": "codex/v2.0.1-release-fixes",
+  "source_sha256": {
+    "scripts/context_hub.py": "7309e6c0583b89b578ce4fe36da4d985222aef09bcbd7be5c7652afceea2be03",
+    "scripts/oaw_mode.py": "368320e01f59485a1441e695798b3c1da6ab6d660136a5edbad85bd7f8e10a1f",
+    "evals/skill-value/experiment.py": "84413a95b1dfdf4f9d2d8c008a0d2958a6a80bd6d7cf6a563a1ab7c05b556e56",
+    "evals/skill-value/test_experiment.py": "382689007945f9609c6d2f62e167a97116630d0b2ef6a912f6b83fce46c71f78",
+    "templates/AGENTS.md": "3becd898895e9460a0ae473f92ea6f9c010be7c96966b5a859b58de6d2c91844",
+    "templates/.agents/skills/oaw-evidence/SKILL.md": "76af1faae72b5003b08baaff459f4bd84d22353a0989f4428b065e87a007f06f",
+    "templates/.agents/skills/oaw-review/SKILL.md": "2901709419242675629d00c57f2e20029d8ebb341f83ae9c61e33b55b5027329",
+    "tests/test_context_hub.py": "766b13216cdfe281e6538add225ab5845a5db0811eed415ec33c68f9cb9eeff2",
+    "tests/test_oaw_mode.py": "f8af804d2005fe811f205b9fa28eef7d3164257ecc36bc7827c7fab44d25dfa5",
+    "tests/probes/memory_sandbox.py": "270ce5031f0b44fb8f7c108ac6a2458b6a40ac673c84abadfcafd3569f86acd0"
+  },
+  "gate": {
+    "all_passed": true,
+    "passed_count": 9,
+    "total": 9,
+    "checks": [
+      {
+        "name": "syntax",
+        "passed": true,
+        "detail": "44 Python files compiled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "name": "cli-contracts",
+        "passed": true,
+        "detail": "8 entry points expose expected operations",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "name": "native-skills",
+        "passed": true,
+        "detail": "exit 0",
+        "stdout": "Validated 14 portable native skill package(s).\n",
+        "stderr": ""
+      },
+      {
+        "name": "egm-integration",
+        "passed": true,
+        "detail": "exit 0",
+        "stdout": "{\"status\": \"verified\", \"runtime_files\": 65, \"adapter_files\": 30, \"commit\": \"f0ba151b252c9abf1318d9fe857a43265d06de89\"}\n",
+        "stderr": ""
+      },
+      {
+        "name": "behavior-regressions",
+        "passed": true,
+        "detail": "677 tests, 0 skipped",
+        "stdout": "OAW-TEST-SUMMARY {\"run\": 677, \"skipped\": 0, \"successful\": true, \"modules\": [\"test_catalog\", \"test_catalog_core\", \"test_catalog_ui\", \"test_cli_resolve\", \"test_code_index\", \"test_codemap_eval\", \"test_context_hub\", \"test_digest_mod\", \"test_doctor_probe\", \"test_egm_integration\", \"test_egm_local\", \"test_egm_local_measure\", \"test_egm_pilot\", \"test_eval_stats\", \"test_gate\", \"test_goldfish_review\", \"test_improvement\", \"test_install\", \"test_judge_calibration\", \"test_oaw_mode\", \"test_skills\", \"test_status\", \"test_user_install\", \"test_wiki_sync\"]}\n",
+        "stderr": ".....................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................\n----------------------------------------------------------------------\nRan 677 tests in 166.655s\n\nOK\n"
+      },
+      {
+        "name": "installed-lifecycle",
+        "passed": true,
+        "detail": "minimal -> knowledge+improvement+both hosts; doctor and installed helpers; dry-run migration",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "name": "example-content",
+        "passed": true,
+        "detail": "exit 0",
+        "stdout": "Example framework files match installer payloads.\n",
+        "stderr": ""
+      },
+      {
+        "name": "repo-wiki",
+        "passed": true,
+        "detail": "exit 0",
+        "stdout": "⚠️ wiki_sync lint warnings — 22 soft issue(s):\n  - manual topic has no source refs in Harness_Engineering_Context_Fragmentation.md: add docs/raw source refs or stable source metadata when practical\n  - manual topic has no source refs in Harness_Engineering_Deterministic_State.md: add docs/raw source refs or stable source metadata when practical\n  - manual topic has no source refs in Harness_Engineering_Knowledge_Synthesis.md: add docs/raw source refs or stable source metadata when practical\n  - manual topic has no source refs in OAW_Session_Continuity_Test.md: add docs/raw source refs or stable source metadata when practical\n  - orphan page 'Release_Learnings': no sources and no topic links\n  - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:42: VERSION: ${VERSION}\n  - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:44: CURRENT PHASE: ${CURRENT_PHASE}\n  - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:61: # ${PROJECT_NAME} — Master Router\n  - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:63: > Replace `${PROJECT_NAME}`, `${LANGUAGE}`, and the custom forbidden-action\n  - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:82: - `${PROJECT_NAME}`, `${ONE_LINE_DESCRIPTION}`, `${VERSION}`, `${REPO_URL}`, `${PIPELINE_SUMMARY}`\n  - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:83: - `${LANGUAGE}`, `${SAFETY_CRITICAL_FILE}`, `${IMPORTANT_WORKAROUND}`\n  - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:84: - Metric table: `${METRIC_1}`, `${VALUE_1}`, `${DATE}`, `${NOTES}`\n  - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:85: - Test commands: `${SMOKE_TEST_CMD}`, `${REGRESSION_TEST_CMD}`, `${INTEGRATION_TEST_CMD}`\n  - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:86: - Stack: `${LANGUAGE_AND_FRAMEWORKS}`, `${RUNTIME_ENVIRONMENT}`, `${EXTERNAL_SERVICES}`\n  - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:92: \"version\": \"${VERSION}\",\n  - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:93: \"project\": \"${PROJECT_NAME}\",\n  - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:94: \"last_updated\": \"${DATE}\",\n  - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:95: \"current_phase\": \"${CURRENT_PHASE}\",\n  - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:96: \"next_phase\": \"${NEXT_PHASE}\",\n  - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:107: - **What fails**: A fresh agent cannot answer \"what project is this?\" or \"what phase are we in?\" All identity fields are\n  - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:263: | P0 | Fresh install: every file shows `${VERSION}` / `${CURRENT_PHASE}` placeholders — agent cannot orient | `context_h\n  - literal `YYYY-MM-DD` date placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:268: | P2 | Date redundancy: `memory add \"[DECISION] 2026-04-18 ...\"` produced `## [2026-04-18] [DECISION] 2026-04-18 ...` wi\n✅ wiki_sync lint passed — no unresolved issues found.\n",
+        "stderr": ""
+      },
+      {
+        "name": "version",
+        "passed": true,
+        "detail": "2.0.0 (proposed); source ledger and CI pins agree",
+        "stdout": "",
+        "stderr": ""
+      }
+    ]
+  },
+  "extra_offline_tests": {
+    "skill_value": 31,
+    "three_way": 14
+  },
+  "native_sandbox": {
+    "codex": "0.167.2",
+    "primary_errno": 30,
+    "pending_write": true,
+    "later_recall": true,
+    "primary_unchanged": true,
+    "model_calls": 0
+  },
+  "model_effectiveness_verified": false,
+  "remote_ci_verified": false
+}

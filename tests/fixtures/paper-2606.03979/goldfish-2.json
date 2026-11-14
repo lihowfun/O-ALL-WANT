@@ -1,0 +1,137 @@
+{
+  "summary": "Goldfish #2 盲審（只讀了草稿、paper.txt/arXiv abs v2，以及草稿點名的 oaw-ref 檔案；沒讀 DECISIONS.md）。草稿對論文的大部分引用都正確：v2 2026-07-10、CC BY 4.0、Table 1 拿掉 expansion 掉 1.0–1.2、Table 3 random expert 差 0.9–1.5、ARC 8 tasks×5 dreams 所以 3/40、Eq 3–5、§A.3 sleep-time compute、§A.4 兩階段動機都對得上。OAW 這邊的引用也大多正確：context_hub.py:818 的 makedirs、memory_add 插在第一個 ---、MINIMUM_TESTS=159、test 名稱、Skill_Guide.md:40、Explicit exclusions、§5.3。null 模擬的數字和解析解一致。主要問題集中在 P1，有四點：(1) 草稿說「只增加拒絕條件」，其實對 R 內的 case 放寬了現行逐列規則；(2) 建議的 5 repeats＋容許誤差 1，在 p≤0.9 或 |R|≥8 時仍會誤擋大多數好候選，而且 R 只會越長越大；(3) 容許誤差由提案者自己設，上限 repeats−1，可以拿來架空復習集；(4) 復習集從 accepted 紀錄推導，但 accepted 不等於 applied，而且 .oaw/improvements 依文件不進公開 git，所以 clone、CI、其他協作者拿到的 R 都是空的。另外 assertions 是 spec 全域的，取聯集會強迫所有 case 都評所有 assertion。P2 的問題有三點：付費 A/B 用的 §5.3 fixture，失敗模式是 supersession 和 wrong-scope，P2 都偵測不到；K1 會把 append-only 歷史裡合法引用已刪檔案的條目標成失效；K4 目前沒有任何資料可比。§3.10 說「多候選出現前沒有接收點」，這和 SELF_IMPROVEMENT.md 明文允許的「開新提案再試」相矛盾，序列重試本身就是多候選。§2 說最慢層「只能經 improvement.py」也與 README 不符，improvement 是選配。其餘是小錯：作者順序、論文 (i)/(ii) 編號、四類/五類前後不一、最小 spec 的 assertion 數、模擬沒有納入 metric 雜訊。",
+  "findings": [
+    {
+      "finding": "草稿說 P1「只是多一個拒絕條件」或「只增加拒絕條件」，但這不成立。P1 規定凡是屬於復習集 R 的 case，都從現行的逐列（case, repeat, assertion）嚴格規則，改成（case, assertion）的通過次數比較加上容許誤差。即使容許誤差是 0，這個規則也比逐列寬鬆。所以一個提案本來就會重跑的 case（例如它要改的就是 handoff），只要落在 R 裡，就會從嚴格比較被降級。A13 只驗證非復習 case 沒變，沒有涵蓋這個退化。",
+      "severity": "major",
+      "kind": "contradiction",
+      "evidence": "草稿 §3.4(c)「P1 只是多一個拒絕條件」、§3.14(c)「P1 只增加拒絕條件」、§5 P1 第4點「復習 case 改用第 2 點的通過次數規則」；improvement.py:300-304 是逐列規則；docs/SELF_IMPROVEMENT.md:77「Any previously passing assertion that fails in the candidate is a quality regression even if the overall pass count is unchanged」。草稿自己的 §3.14 表（p=0.95、3 repeats、4 cases）：逐列 0.688、通過次數 tol0 0.651、tol1 0.048，可見通過次數規則在任何容許誤差下都擋得比較少。"
+    },
+    {
+      "finding": "草稿暗示「通過次數＋容許誤差」能讓閘門免於「幾乎全部拒絕」，但它建議的 live 設定（5 repeats、容許誤差 1）在合理的通過率下，仍會因純雜訊擋下大多數好候選。誤擋率也會隨 |R| 單調上升，而 R 只增不減。原因是容許誤差逐（case, assertion）套用，沒有任何 family-wise 控制。草稿的表在 5 repeats 那幾列只放了 p≥0.95，沒有呈現這個情況。",
+      "severity": "major",
+      "kind": "overclaim",
+      "evidence": "草稿 §3.14 表：(p=0.95, 5 repeats, 8 cases) tol1 = 0.255；§3.10 本身把 p=0.6–0.95 當成合理範圍；§5「不做的」列出「自動退休」，所以 R 只會變大。我的獨立模擬（goldfish2-sim/p1_effects.py，5 repeats、tol 1、2 assertions、null 候選）的誤擋率：p=0.8 時 4/8/16 cases 分別是 0.614/0.849/0.978；p=0.9 時是 0.348/0.566/0.809；p=0.7、8 cases 是 0.925。"
+    },
+    {
+      "finding": "`rehearsal_tolerance` 寫在提案者自己撰寫的 spec 裡，合法範圍到 repeats−1，專案層級沒有下限，也沒有審查要求。提案者只要把它設成 repeats−1，復習集就形同虛設：3 repeats、tol 2 時，3/3 掉到 1/3 也不算退步。這和 exclusion 一樣是後門，但 §7 只對 exclusion 提問（Q3），沒有問容許誤差。",
+      "severity": "major",
+      "kind": "missing_risk",
+      "evidence": "草稿 §5 P1 第2點「rehearsal_tolerance：整數，0 ≤ 值 ≤ repeats − 1，預設 0……和 spec 一起雜湊」；A7 只檢查型別和範圍；§7 Q3 只問 exclusion。「看到結果前寫進 spec」不能防止提案者事先做過 pilot。"
+    },
+    {
+      "finding": "P1 從 status==accepted 的紀錄推導復習集，背後有兩個沒有寫出來的假設。(a) accepted 等於 patch 已套用並仍然生效：實際上 accept 不會套用 patch，可能從沒套用，也可能後來被 revert，這時就是在重跑 baseline 根本不具備的能力。(b) .oaw/improvements/ 是共享且不可變的：實際上文件要求它不進公開 git，所以新 clone、CI、其他協作者的 R 都是空的，或彼此不同。刪掉一份紀錄會讓 R 靜默縮小，而 fail-closed 只處理「壞掉」的紀錄。所謂「不可變」也只是工具不改，檔案本身是一般 JSON。",
+      "severity": "major",
+      "kind": "unstated_assumption",
+      "evidence": "草稿 §5 P1 第1點「資料直接從已接受、不可變的紀錄推導」；docs/SELF_IMPROVEMENT.md:81「applying it is a separate development action」、:85「Keep `.oaw/improvements/` … out of public Git history」；templates/.agents/skills/oaw-improve/SKILL.md「A recorded acceptance does not apply the patch」；oaw-ref/AGENTS.md「Keep … local improvement runs out of the public repository」。"
+    },
+    {
+      "finding": "OAW 的 assertions 是 spec 全域的，每個 case 的每個 repeat 都必須回報全部 assertions，沒有「某個 case 對應哪些 assertion」的設計。P1 要求 R.assertions ⊆ spec.assertions，並且逐（case, assertion）判斷退步，等於強迫所有新提案在所有 case 上評所有歷史 assertion。舊復習 case 必須評後來新增的 assertion（例如 latency_ok），新 case 也必須評舊的 `source`。結果是，復習 case 在一個它被接受時從未評過的 assertion 上「退步」，也會被當成遺忘。§7 Q2 只問了 case_id 的身分問題。",
+      "severity": "major",
+      "kind": "unstated_assumption",
+      "evidence": "improvement.py:264 validate_run 要求 `any(type(assertions.get(name)) is not bool for name in spec[\"assertions\"])` 全數存在；草稿 §5 P1 第1點對 assertions 取聯集、第3點「R.assertions ⊆ spec.assertions」、第2點「每個（case, assertion）組合」。"
+    },
+    {
+      "finding": "§3.10 說選擇偏誤只會發生在「m 個平行提案」，並把多候選防護 HOLD，理由是「在 OAW 真的出現多候選用法之前，沒有接收點」。但現行文件明文允許，甚至鼓勵，在 rejected 或 inconclusive 之後「開新提案再試」，而 propose 也不檢查同一個 patch sha256 之前是否已被否決。同一個人寫的同一個 diff 序列重試 k 次，就是 m=k 的多候選，§3.10 表的 family-wise 誤判率今天就適用（例如 p=0.8、k=5 → 0.451）。",
+      "severity": "major",
+      "kind": "contradiction",
+      "evidence": "草稿 §3.10(c)「只能防同一提案重試，防不了 m 個平行提案」、(e)「在 OAW 真的出現多候選用法之前，沒有接收點」；docs/SELF_IMPROVEMENT.md:79「Decided proposals are immutable; create a new proposal for another attempt」、:87「gather a targeted missing observation under a new proposal」；improvement.py:193-228 propose() 沒有任何重複 patch 檢查。"
+    },
+    {
+      "finding": "§2 說最慢層（AGENTS.md、skills）「只能經 improvement.py 的 matched A/B 再加上明確 accept」，這與事實不符。improvement 是選配的 --with-improve，預設安裝沒有這道閘門，任何人都可以直接改 AGENTS.md 或 skills。這也削弱了 §0.2「最慢的一層最穩定……不需要新工作」的說法，以及 P1「self-improvement 不得覆寫舊能力」的保證：繞過閘門的直接修改不受復習集約束，還會悄悄移動 P1 比較時的 baseline。",
+      "severity": "major",
+      "kind": "wrong_fact",
+      "evidence": "草稿 §2 表「最低」列、§0.2 第2點；README.md:158「A new rule or skill | Added whenever someone writes it | Optional `oaw-improve`」、README.md:82「You get it with `--with-improve`」；docs/Design_Principles.md「Wiki and improvement workflows are explicit additions」。"
+    },
+    {
+      "finding": "P2 的效益假設和付費 A/B 瞄準的是 P2 偵測不到的失敗模式。§3.2(b) 說 sweep 能讓接手 session「比較不會誤用過期決策」，付費測試沿用 §5.3 的 S3→S4，量測 stale 和 wrong-scope 誤用。但這套 fixture 的失敗模式是 ADR-044 supersede 040（P2 明說 v0 不判定 supersession），以及 ADR-041 只管 analytics、加上不受信任 email 這類 wrong-scope decoy（K1–K5 沒有 wrong-scope 類別）。K4 也沒有任何資料可比。除非另外在 fixture 裡加入失效路徑、沒有來源的決策或重複條目，否則 falsifier「誤用率沒有下降」幾乎必然觸發，量不到 P2 的價值。草稿也沒有說明 S3 之前所需的 S1、S2 狀態從哪裡來。",
+      "severity": "major",
+      "kind": "unclear",
+      "evidence": "草稿 §3.2(b)、§5 P2「付費」段落、「範圍（不做的）：supersession 的判定：等 te.fact-lifecycle」；docs/SHARED_ACCEPTANCE_PROTOCOL.md:251-256（ADR-044 supersedes040、ADR-041 只管 analytics、quoted untrusted email decoy）、:262-265（S3 reconcile 和 S4 辨識 outdated/wrong-scope 來源）。"
+    },
+    {
+      "finding": "K1 `broken_citation` 會把 append-only 歷史裡的合法紀錄當成失效。例如一條紀錄「移除或改名某檔案」的 [DECISION]，本來就應該引用一個已不存在的路徑。依 OAW 原則，歷史筆記可以被現況取代，但不會因此變成錯的。另外，「反引號內含 / 或副檔名的 span」這個抽取規則太寬：`oaw_common._exclusive_lock`、`log.showSignature`、`gpg.program`、`improvement.py compare()`、`v2.0.0`、反引號裡的 URL 都會被當成路徑，而這些寫法草稿自己就大量使用。§7 Q6 只質疑了 K3 和 K5 的誤報，K1 才是 P2 的核心，卻沒有被檢討。",
+      "severity": "major",
+      "kind": "missing_risk",
+      "evidence": "草稿 §5 P2 K1 定義；§2、§3.6 都說 memory 只增不減、是歷史；docs/Design_Principles.md「Current code and authoritative sources can supersede a historical note」；README.md:93 v2 移除 AI_CONTEXT.md 等鏡像（這類決策的引用目標必然已不存在）。"
+    },
+    {
+      "finding": "P2 的類別數前後不一：§0 說「四類」，§5 說「五類」K1–K5。而且 §0 把「已記錄雜湊但來源已經變更」寫成現在就能找到的問題，但現行 memory_add 只寫一行 `## [date] [TAG] body`，沒有任何 `files:` 行或 `sha256:` 欄位。K4，以及 K1 中 `files:` 那一半的來源，在所有現存專案都找不到東西，要等尚未實作的 cm.file-keyed-recall 才會有資料。",
+      "severity": "minor",
+      "kind": "contradiction",
+      "evidence": "草稿 §0 第3點「列出四類問題」vs §5 P2「檢查五類問題」；context_hub.py:299 `entry = f\"\\n## [{timestamp}] [{tag}] {note_body}\\n\"`；草稿 §4 cm.file-keyed-recall 列「absorb（尚未實作）」並稱 sha256 是協調事項。"
+    },
+    {
+      "finding": "K3 和 K5 的啟發式規則有具體的誤報或漏報來源，草稿沒有指出。K3 會把只引用 ADR 編號或直接使用者來源的決策標成沒有來源，但 OAW 自己的協定承認使用者來源有效，fixture 也用 ADR-071/084 作為來源。K3 又把任何 7 位以上的 hex 字串當成 commit，因此 7 位以上的十進位數字（例如 20261103）或像 defaced 這樣的英文字都會被當成來源，造成漏報。K5 的「標題」沒有定義：memory_add 把整則 note 放在同一行 heading，不清楚是比整行，還是比 add 說明文字裡「Title - Details」的前半段。",
+      "severity": "minor",
+      "kind": "missing_risk",
+      "evidence": "docs/SHARED_ACCEPTANCE_PROTOCOL.md:259「user-event attribution本身有效」；evals/skill-value/fixtures.py:67、:89（ADR-071、ADR-084）；草稿 §5 K3「7–40 位十六進位的 commit 引用」；context_hub.py:778 help「format: '[TAG] Title - Details'」、:299。"
+    },
+    {
+      "finding": "P1 的退場條件「前 5 個真實提案的復習 case 從未抓到退步」會被雜訊污染。依草稿自己的雜訊模型，在合理的 p 下，大多數被「抓到」的退步其實是誤擋。草稿沒有定義確認重跑，也沒有其他分辨真遺忘和雜訊的方法，所以這個條件幾乎不會觸發，也無法證明復習集真的有價值。",
+      "severity": "minor",
+      "kind": "unclear",
+      "evidence": "草稿 §5 P1「效益假設與 falsifier」；§3.14 雜訊表；見前面關於誤擋率的模擬。"
+    },
+    {
+      "finding": "null 誤判率「11–26%」依賴幾個沒有說明的條件。第一，最小 spec 其實是 1 個 assertion，不是 2 個。第二，報告的是沒有 metric 雜訊（token_cv=0）的那幾列；腳本有 token_cv=0.3 的結果，但沒有報告。第三，真正的 compare 有 tokens、latency_ms、cost_usd 三個 metric，任何一個都能觸發 eligible 或 rejected，模擬只模擬了 tokens。另外，compare 的輸出和文件本來就聲明「not statistical proof」，所以這是已記載的限制，不是新發現的弱點。",
+      "severity": "minor",
+      "kind": "unstated_assumption",
+      "evidence": "草稿 §0 第5點「最小 spec（2 cases × 3 repeats × 2 assertions）」；improvement.py:80 assertions 最少 1 個、:22 METRICS 三項、:312-318；我重跑 sim/null_eligible.py：(2 cases, p=0.95, cv 0.3) 為 0.295（cv 0 時是 0.249），(2, 0.8, cv 0.3) 為 0.083；1 個 assertion 的解析值在 p=0.8 約 0.25；improvement.py:336、docs/SELF_IMPROVEMENT.md:26、:81。"
+    },
+    {
+      "finding": "P1 對論文的溯源有點牽強。§3.3 的 compute–consolidate–update 沒有「驗證之後才套用」這一步：consolidate 只是用 KS objective 最佳化 A、B，然後直接套用。它保護的是即將更新的較快 sender block，較慢層的舊參數則是凍結、只新增 expert，從來沒有「修改最慢層之前先做回歸測試」這回事。所以 §8 寫「rehearsal 依據 §3.3」並不準確。另外，Fig 4 只顯示 lowest frequency 越低越好，沒有量測 plasticity 的代價，稱之為「trade-off」也言過其實。",
+      "severity": "minor",
+      "kind": "overclaim",
+      "evidence": "paper.txt:178-200（(a) Compute、(b) Consolidate 最佳化 A,B、(c) Update，沒有驗證步驟）、:216（freeze all the parameters … only updates the expanded parameters）、:292（Fig 4 的兩個 trend）；草稿 §3.4(a)「驗證之後才套用」、§3.14(c)「Fig 4 那個 trade-off」、§8「依據 §3.3 的 compute–consolidate–update」。"
+    },
+    {
+      "finding": "§8 引用草稿的作者順序錯了。",
+      "severity": "minor",
+      "kind": "wrong_fact",
+      "evidence": "草稿 §8「Behrouz、Javanmard、Mirrokni、Hashemi」；arXiv abs v2 的 citation_author 依序是 Behrouz, Ali / Hashemi, Farnoosh / Javanmard, Adel / Mirrokni, Vahab；paper.txt 開頭也是 Behrouz、Hashemi、Javanmard、Mirrokni。此外 paper.txt 註明 2025 年 9 月已有 OpenReview 版本，引用時可以一併註記。"
+    },
+    {
+      "finding": "§3.2 引用論文對 online consolidation 的批評時，把編號寫成 (ii)/(iii)，論文原文是 (i)/(ii)。草稿也說這段批評出自「§1／§3.1」，但 §3.1 只列出兩種 consolidation，沒有批評。",
+      "severity": "minor",
+      "kind": "wrong_fact",
+      "evidence": "paper.txt:61「(i) Is selective and retrieval-dependent … (ii) Depends on the context」；paper.txt:156-160（§3.1）；草稿 §3.2(a)。"
+    },
+    {
+      "finding": "§3.11 說「論文 §A.4 提到 privileged teacher 會造成 information leakage」，再把它對應成「出題的人看過候選」。但 §A.4 是轉述其他 OPSD 研究的觀察：天真地反覆做 self-distillation 時，privileged teacher 的資訊會洩漏到 student。這不是論文自己的發現，講的也不是評測題作者被污染，對應關係很鬆。",
+      "severity": "minor",
+      "kind": "overclaim",
+      "evidence": "paper.txt §A.4「Limitations of OPSD」段：naïvely iterating self-distillation … can lead to information leakage from the privileged teacher and to training collapse (Wang et al., 2026; He et al., 2026)；草稿 §3.11(b)。"
+    },
+    {
+      "finding": "§3.7 封存 A/B 的設計不夠清楚，falsifier 也有缺口。草稿說 skill-value 的 scoped-recall fixture 可以共用，但那份 fixture 沒有任何已整合進 docs/raw→docs/knowledge 的條目，全部是 [ARCHIVE] note-NNN，knowledge 頁也是手寫的 map。arm B 要封存哪些條目沒有說：如果封存的是 decoy，結果必然勝出。falsifier 只寫「正確率沒有上升，而且 token 降幅小於 5% → 排泄」，所以正確率下降、token 降 5% 以上的情況會被放行，少了一條傷害條件。",
+      "severity": "minor",
+      "kind": "unclear",
+      "evidence": "evals/skill-value/fixtures.py:41-62、:77-81；草稿 §3.7(d)。"
+    },
+    {
+      "finding": "P1 規定任何一份紀錄壞掉都要 fail closed，但為了判斷 status，必須先解析 .oaw/improvements/ 底下所有 12-hex 的紀錄，包括 proposed 和 evaluated 狀態的。所以只要有一份和復習集無關的提案壞掉，所有新提案和 accept 都會被擋住，形成可用性風險。草稿沒有說明怎麼復原。",
+      "severity": "minor",
+      "kind": "missing_risk",
+      "evidence": "草稿 §5 P1 第1點「任何一份紀錄壞掉就 fail closed」、A11；improvement.py:100-105 load_candidate 會驗證整份紀錄。"
+    },
+    {
+      "finding": "許多決定性的依據在盲審者手上無法查證，包括 D2–D12、「catalog 計畫 P4」、「實機預設 5 次中 1 次」、「版本棘輪」，以及 te./cm./gf. 等既有元件的狀態。其中容許誤差 1 的建議值，只依據一份沒有引用的計畫文件。另外，驗收測試 A2–A14 把提案命名為 P1/P2/P3，和原型 P1/P2 撞名，讀起來容易混淆。",
+      "severity": "minor",
+      "kind": "unclear",
+      "evidence": "草稿 §0、§1、§3.1、§3.14、§4、§5 P1 第2點「和 catalog 計畫『實機預設 5 次中 1 次』一致」、A2「接受 P1（cases：handoff、noaction）」。"
+    },
+    {
+      "finding": "草稿列為證據的交叉驗證腳本，只要有人照樣重跑，就會再次寫入唯讀的 oaw-ref：它把 oaw-ref/scripts 放進 sys.path 後直接 import，沒有用 -B 或 PYTHONDONTWRITEBYTECODE，因此會在 oaw-ref/scripts 底下產生 __pycache__。草稿開頭只說事後已刪除，沒有修正腳本或附上重跑方式。",
+      "severity": "minor",
+      "kind": "missing_risk",
+      "evidence": "草稿開頭「Python 因此產生了 __pycache__，已刪除」；sim/crosscheck_real_compare.py「sys.path.insert(0, sys.argv[1] + \"/scripts\")」、「import improvement as imp」。"
+    },
+    {
+      "finding": "B9 只把 subprocess.run 和 os.system 換成會拋錯的替身，就宣稱「證明它不會執行任何東西」，這說法太強。subprocess.Popen/check_output、os.popen、os.exec*、eval、exec 都沒有被攔截。",
+      "severity": "minor",
+      "kind": "overclaim",
+      "evidence": "草稿 §5 P2 B9。"
+    }
+  ]
+}

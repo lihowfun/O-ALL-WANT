@@ -1,0 +1,140 @@
+{
+  "schema_version": 1,
+  "framework_version": "1.1.0",
+  "source_revision": "5df531372330f6b0e1c9a81aee0c1c45f2f283ff",
+  "hash_algorithm": "sha256",
+  "files": {
+    ".agents/memory.md": [
+      "9c986e920f5622778169f959fd831101ab509daff32677c56cddddfa47bee9e5",
+      "288ca7ca7e9890baed2d7d9341f9df3c2af13dcceaa090c113cce299fb22c876"
+    ],
+    ".agents/skills/README.md": [
+      "5fd39adabf3f7379f2e0758d76fc8bba7691a42c81eac7ceba42daa67b40e009",
+      "6c768f4264c1cf7ca7ae5e2004d9c8aff097e6bae0cba2a75bc5662746c1c2e3"
+    ],
+    ".agents/skills/_TEMPLATE.md": [
+      "0c25452f076ca8243d7f97bd9873675af0a5c5846ad876b8b1175e1bc90c88a1",
+      "f358699cafaed629de73b20b98a10d7fa36e6783a9e9454f5ae77d6166588ae5"
+    ],
+    ".agents/skills/benchmark.md": [
+      "07223bbf344814891769961fbbdbbbce87c6cb6f220c3a7ed07e2ef135ff0bcc",
+      "99662bea116e267a9c7a5dbe4544f161be5cb02b910fe8b9cb6f874de7b7f59f"
+    ],
+    ".agents/skills/classify-evidence.md": [
+      "702d8c095bf7c9f01ae464f2824667f6b5c9b9102933230721632efa89ed10cf",
+      "83701b935d85969509a3a6d7d1efcab6f6a36e8730816c5fdbd3ebf3adc5edad"
+    ],
+    ".agents/skills/debug-pipeline.md": [
+      "5f84f337087d83174f32bc9702c06d437654c698790d9ea24d3c5a9071097f39",
+      "c99f263543e8c7d1558e163c8259bc3631e7a835fefb91a987d1e9f8901024d2"
+    ],
+    ".agents/skills/experiment-report.md": [
+      "8878302169c187b59471d0d2715e4b7178018d38112faf2422898096dcc108ae",
+      "2035626020c7708c89bee13c4890b253e7ca56f90a73fe070d7ef6064e9ba271"
+    ],
+    ".agents/skills/harness-evaluator.md": [
+      "97f997fdc4d86e3f49a9fc8d0a6d98f1d28322c74d56234544e500e7932d3d30",
+      "b1ba551bee652d4f14e4df8f56e8b5adb3423473269946eb80c5dd5119075a97"
+    ],
+    ".agents/skills/inheritance-check.md": [
+      "fc51bf05fa31f5ccf28f82c83fbee7a21972fd0934329b41326ed21d8eeefda8",
+      "c011841f7966bdcfbc1d8ae4582f46fc77b617852b06ecec0a57c569e3098c56"
+    ],
+    ".agents/skills/read-discipline.md": [
+      "247b6a9aed67b127da53f43cc5ab35fa9a152e48402cfdcfd9f00f30d0b51afd",
+      "da90ad61b2cefcd461bea661b28873343b41cdec21f2eed6bb40720192f71928"
+    ],
+    ".agents/skills/self-improving.md": [
+      "380da0179f185ca8b0e840b865778ebd6aa88a11c460dbdb057932155d647ae8",
+      "60d84dcf5fe0fdc3528515b80f42809031d68ce4f8ee18cc517950b2bc157f7a"
+    ],
+    ".agents/skills/version-release.md": [
+      "486b9a20c06185fa42e2e2e91b6448476df3537d4e3f167b52766fe763efb1af",
+      "0da08e9ec413036325365bd059861f88f8496af0ba0c6afd511fec0e4c9bf311"
+    ],
+    ".agents/skills/wiki-refresh.md": [
+      "4f579fc4be673bc72d8d9460edcff49d0355f69ca6a2a7093b6179538eaa8a28",
+      "41fc77c3dd9942996f7d34d72ea9be74fa4a972eded741a208a080fa0b8587c0"
+    ],
+    ".cursorrules": [
+      "c469c58f43326a3d8d7e7d52a322423238fff030ea6ccab7116018963b6292cd",
+      "592a97de73bc49bc070111dd226e50177226b4814ddc5e46c4b5fee6ee8eef41"
+    ],
+    ".github/copilot-instructions.md": [
+      "ef8f8b38493676fbe6b8efe4c64db9747a879148e5ca62f0a33a7bb2b2424bf0",
+      "0a33c4b76dd79f68f5cdfd62a60d710aa178a6c0afdca9fb34138795229fe98c"
+    ],
+    ".windsurfrules": [
+      "c469c58f43326a3d8d7e7d52a322423238fff030ea6ccab7116018963b6292cd",
+      "592a97de73bc49bc070111dd226e50177226b4814ddc5e46c4b5fee6ee8eef41"
+    ],
+    "AGENTS.md": [
+      "5ba1f16f5e06d0c47725d5de532e1f7c2b0c127f908501d9a340edf7bb8b0068",
+      "bb0bc432ac0c223cdb28c8c1f7490d4b6ac8a3e409b96180fdd5016e3b381ec4"
+    ],
+    "AI_CONTEXT.md": [
+      "f0ac03edf45561c699264db2d52d7b7e9c82d617f7c73efaf472a6ab789dc359",
+      "d0840a96bd38e50a325800f8777bf010208b8c3314053e04f4c7ba96e564b869"
+    ],
+    "CLAUDE.md": [
+      "35d4d5da5d06795e4391d7faee850a74ba37c23a6553c6e4fcebd72991aa706a",
+      "fcc3fa55b74f0e44015ebad0911be59e1d28b6ed467776a22d774bff3101bb54"
+    ],
+    "GEMINI.md": [
+      "5ba1f16f5e06d0c47725d5de532e1f7c2b0c127f908501d9a340edf7bb8b0068",
+      "bb0bc432ac0c223cdb28c8c1f7490d4b6ac8a3e409b96180fdd5016e3b381ec4"
+    ],
+    "ROADMAP.md": [
+      "e5dbec3f4392bcbee168380d080774c9cb16bebfb39214aed820dc2753d8e4f0",
+      "7bec2517871f8d9c38d2d786ed56ce1a909dbd2f475776b9f234d041627ca665"
+    ],
+    "VERSION.json": [
+      "652b946c6b78d103604152dabc0384f6200378c0fe1bc1f2cc487b7340bd32bc",
+      "f1473a82d4db02835662382eaa99d08346447922298af1d382aeead40ed572cb"
+    ],
+    "docs/knowledge/Architecture_Decisions.md": [
+      "21e28e8a418f2ccdae71feb0ebe793d7fefd3fad4a1974d89c061a3857e217f9",
+      "c5214840c15f11b97e21886215e201aa441f4d3cd69bc6d8ea3cd41a23359530"
+    ],
+    "docs/knowledge/CURRENT_STATE.md": [
+      "21c59dc1d916f14287e65bb52a625627e0ccf3f6cdf2349d74a07d07564b8dae",
+      "9e456fa0a149587fce37420b75f3a6fa98927d73265a6589a8b29de7598b18d9"
+    ],
+    "docs/knowledge/Experiment_Findings.md": [
+      "a17b8a2e827c66f1f56d2236b6f0b2f441f6fe6f6a58dee9a811ba5ba13be2a5",
+      "213c4e67e71dbc58d67c6e678e008eaeab4aca7bd88df22ad9fe6137171ee5ad"
+    ],
+    "docs/knowledge/Known_Limitations.md": [
+      "8da03032d28994c58191a25703eb5d0feb0bc9a75c21c26d9a568af29fec7f86",
+      "18ae4885a40b4b7dbcc45ce161be2e2c60a709957a3346bab45ea601f8aae303"
+    ],
+    "docs/knowledge/Performance_Baselines.md": [
+      "a03136722398baf8244cd40cae7a51014c024560d1301944b239937cb57eed86",
+      "992399fffa1c346990d29d71ee32db81c9c850a585fb804d7194511a70d24173"
+    ],
+    "docs/knowledge/index.md": [
+      "859cafb5d61ab8dc9b4327f380570b684a103925f8229d175380c1196b71c837",
+      "408e411cc61bb9b7c9cda4160f9b50691ae5aef9f00a80775b45cb02e3a0a653"
+    ],
+    "docs/knowledge/log.md": [
+      "ebf170474ac719cb27b4e46b8ed411af6475b0d471a681705742e7c7f3a6878b",
+      "5abcae14a00a8ab8d4a025fdce19101757021d195080e0f6b2605f4673eeff1b"
+    ],
+    "docs/raw/README.md": [
+      "7e57003936ff079bda6d6c20add9d6faac41a85511d7b1c972a62a1a6c98b024",
+      "35a7671e4e2ca217244e0cf0378ccb4c26b0e29eb5458e45328ac6e202c3dd2c"
+    ],
+    "docs/raw/_SOURCE_TEMPLATE.md": [
+      "df6d8fe39ae282721cbbb017af24b0a78c7952b4062632298666b197c67ca5f6",
+      "7ca6bcf1fe8ebc18158b63cee145c5130f659a499c774c04856388141380ce93"
+    ],
+    "scripts/context_hub.py": [
+      "db7a69ed55bf7daaa2e06ea3bb799a4b40be274196be07a01e09a3f80ddd0741",
+      "29bdf26663b7cdddeda0144e0caeeec7d8c2249aeee5e12d82950a0200742bbb"
+    ],
+    "scripts/wiki_sync.py": [
+      "b2dd5b2a76242826e6a69b7948524c3fcbb422e9484f460b0ef5f430a5585ec2",
+      "66626d9c2218cd80fb6bfb5e6452e93b970e2d6590d95cc7d39f72fbd4e2503f"
+    ]
+  }
+}

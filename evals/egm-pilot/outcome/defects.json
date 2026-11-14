@@ -1,0 +1,207 @@
+{
+  "schema_version": 1,
+  "kind": "oaw-egm-pilot-defects",
+  "target": "docs/design_draft.md",
+  "matching": {
+    "flags": "case-insensitive (re.IGNORECASE)",
+    "window": "two consecutive nonblank corpus lines joined by one space",
+    "rule": "a defect is detected when some window matches every regex of one 'detect' alternative and no 'guards' regex",
+    "planted": "assertion passes when the defect is detected",
+    "decoy": "assertion passes when the decoy is NOT detected (a false alarm fails it)",
+    "echo_guard": "corpus lines equal to a line (12+ characters, compared without markdown markers, case or extra spaces) of any fixture file in outcome/project or outcome/overlay-oaw are removed first, so quoting the draft, the decision record or the memory entry is not a detection",
+    "corpus": "parent-session assistant text and question-tool options of every turn, plus text files the run created or changed in the workspace except the review target and .claude/ or .oaw/ paths",
+    "status": "Triage candidates only, not semantic correctness or a quality gate."
+  },
+  "defects": [
+    {
+      "id": "D1-missing-slo",
+      "kind": "planted",
+      "description": "A multi-region, replicated design (sections 2 and 4) gives no latency, availability, or throughput targets (no SLO).",
+      "location": "sections 2 and 4",
+      "detect": [
+        {
+          "all": [
+            "(?:\\b(?:SLOs?|SLAs?|service[- ]levels?|latency|latencies|p9[059]|p50|percentiles?|response[- ]times?|availability|uptime|throughput|delivery[- ]times?|time[- ]to[- ]deliver|error[- ]budgets?|replication[- ]lag|performance (?:targets?|goals?|requirements?)|how (?:fast|quickly)))\\w*\\W+(?:\\w+\\W+){0,8}?(?:\\b(?:missing|lacks?|lacking|absent|omits?|omitted|without|unspecified|undefined|unquantified|not (?:specified|defined|stated|given|set|mentioned|quantified)|never (?:states?|specif\\w+|defines?|mentions?)|does ?n[o']t (?:state|specify|define|mention|set|give)|TBD|no (?:explicit|stated|defined|measurable|concrete|numeric)|should (?:state|define|specify|set|include|add)))|(?:\\b(?:missing|lacks?|lacking|absent|omits?|omitted|without|unspecified|undefined|unquantified|not (?:specified|defined|stated|given|set|mentioned|quantified)|never (?:states?|specif\\w+|defines?|mentions?)|does ?n[o']t (?:state|specify|define|mention|set|give)|TBD|no (?:explicit|stated|defined|measurable|concrete|numeric)|should (?:state|define|specify|set|include|add)))\\w*\\W+(?:\\w+\\W+){0,8}?(?:\\b(?:SLOs?|SLAs?|service[- ]levels?|latency|latencies|p9[059]|p50|percentiles?|response[- ]times?|availability|uptime|throughput|delivery[- ]times?|time[- ]to[- ]deliver|error[- ]budgets?|replication[- ]lag|performance (?:targets?|goals?|requirements?)|how (?:fast|quickly)))"
+          ]
+        },
+        {
+          "all": [
+            "\\bno\\s+(?:\\w+\\W+){0,3}?\\b(?:SLOs?|SLAs?|service[- ]levels?|latency|latencies|p9[059]|p50|percentiles?|response[- ]times?|availability|uptime|throughput|delivery[- ]times?|time[- ]to[- ]deliver|error[- ]budgets?|replication[- ]lag|performance (?:targets?|goals?|requirements?)|how (?:fast|quickly))"
+          ]
+        }
+      ],
+      "guards": [
+        "\\b(?:SLOs?|latency targets?|availability targets?)\\s+(?:are|is)\\s+(?:clearly\\s+|well\\s+|already\\s+)?(?:defined|specified|stated|given)\\b",
+        "\\bno (?:issues?|problems?|concerns?|gaps?) (?:with|about|regarding|in) (?:the )?(?:SLOs?|latency|availability)"
+      ],
+      "examples": {
+        "detect": [
+          "Missing SLOs: the design never states a delivery latency or availability target.",
+          "There are no latency or availability targets for cross-region sends.",
+          "The doc does not specify p99 delivery time per region."
+        ],
+        "ignore": [
+          "The SLOs are clearly defined in section 2.",
+          "MongoDB replication adds latency; there is no prior decision listed here.",
+          "Latency looks fine."
+        ]
+      }
+    },
+    {
+      "id": "D2-undefined-jargon",
+      "kind": "planted",
+      "description": "'Kestrel shim' and 'BRV pass' (section 4) are used without definition.",
+      "location": "section 4",
+      "detect": [
+        {
+          "all": [
+            "(?:\\b(?:kestrel(?:[- ]shim)?|BRV(?:[- ]pass)?)\\b)\\w*\\W+(?:\\w+\\W+){0,10}?(?:\\b(?:undefined|not defined|never defined|is ?n[o']t defined|not explained|unexplained|never explained|not introduced|never introduced|unclear|jargon|acronyms?|no definition|without (?:a |any )?definition|needs? (?:a )?definition|define|what (?:is|are|does)|unknown terms?|unfamiliar))|(?:\\b(?:undefined|not defined|never defined|is ?n[o']t defined|not explained|unexplained|never explained|not introduced|never introduced|unclear|jargon|acronyms?|no definition|without (?:a |any )?definition|needs? (?:a )?definition|define|what (?:is|are|does)|unknown terms?|unfamiliar))\\w*\\W+(?:\\w+\\W+){0,10}?(?:\\b(?:kestrel(?:[- ]shim)?|BRV(?:[- ]pass)?)\\b)"
+          ]
+        }
+      ],
+      "guards": [
+        "\\b(?:kestrel|BRV)\\w*\\W+(?:\\w+\\W+){0,4}?(?:is|are)\\s+(?:clearly\\s+|well\\s+|already\\s+)?(?:defined|explained|described)\\b"
+      ],
+      "examples": {
+        "detect": [
+          "The terms 'Kestrel shim' and 'BRV pass' are never defined.",
+          "What is the BRV pass, and what does it check?",
+          "Undefined jargon: Kestrel shim."
+        ],
+        "ignore": [
+          "The Kestrel shim is clearly defined in the terms section.",
+          "The Kestrel shim copies each notification into every regional queue."
+        ]
+      }
+    },
+    {
+      "id": "D3-vague-tasks",
+      "kind": "planted",
+      "description": "Implementation plan steps (section 7) are not actionable: 'production ready', 'properly', 'run verification' have no concrete scope or done criteria.",
+      "location": "section 7",
+      "detect": [
+        {
+          "all": [
+            "(?:\\b(?:tasks?|steps?|implementation plan|plan items?|milestones?|production[- ]ready|properly|run verification|verification steps?|build the fan-?out))\\w*\\W+(?:\\w+\\W+){0,10}?(?:\\b(?:vague|non-?actionable|not actionable|unactionable|under-?specified|ambiguous|not specific|unspecific|too (?:broad|generic|high[- ]level|coarse)|(?:no|lacks?|without) (?:acceptance|exit|done|success|completion) criteri\\w*|not testable|untestable|not measurable|unmeasurable|not verifiable|unverifiable))|(?:\\b(?:vague|non-?actionable|not actionable|unactionable|under-?specified|ambiguous|not specific|unspecific|too (?:broad|generic|high[- ]level|coarse)|(?:no|lacks?|without) (?:acceptance|exit|done|success|completion) criteri\\w*|not testable|untestable|not measurable|unmeasurable|not verifiable|unverifiable))\\w*\\W+(?:\\w+\\W+){0,10}?(?:\\b(?:tasks?|steps?|implementation plan|plan items?|milestones?|production[- ]ready|properly|run verification|verification steps?|build the fan-?out))"
+          ]
+        }
+      ],
+      "guards": [
+        "\\b(?:tasks?|steps?|plan)\\s+(?:is|are)\\s+(?:clear|specific|actionable|well[- ]defined|concrete)\\b"
+      ],
+      "examples": {
+        "detect": [
+          "The implementation plan steps are vague and not actionable.",
+          "'Make the dispatcher production ready' has no acceptance criteria.",
+          "Step 3, handle failures properly, is underspecified."
+        ],
+        "ignore": [
+          "The implementation steps are clear and specific.",
+          "Run verification after each step.",
+          "The implementation steps already have acceptance criteria."
+        ]
+      }
+    },
+    {
+      "id": "D4-internal-contradiction",
+      "kind": "planted",
+      "description": "Section 5 deletes delivery records after 7 days, but section 6 promises support look-ups over the last 30 days.",
+      "location": "sections 5 and 6",
+      "detect": [
+        {
+          "all": [
+            "(?:\\b(?:(?:7|seven)[- ]days?|a week)\\b)\\w*\\W+(?:\\w+\\W+){0,25}?(?:\\b(?:(?:30|thirty)[- ]days?|month[- ]old)\\b)|(?:\\b(?:(?:30|thirty)[- ]days?|month[- ]old)\\b)\\w*\\W+(?:\\w+\\W+){0,25}?(?:\\b(?:(?:7|seven)[- ]days?|a week)\\b)",
+            "\\b(?:contradict\\w*|inconsisten\\w*|conflict\\w*|mismatch\\w*|disagree\\w*|incompatible|irreconcil\\w*|cannot|can't|impossible|but|whereas|however|versus|vs\\.?|exceeds?|longer than|beyond|only (?:kept|retained|stored))"
+          ]
+        },
+        {
+          "all": [
+            "(?:\\b(?:retention|retain(?:ed)?|kept|delet(?:ed|ion)|look ?ups?|look[- ]?back|(?:7|seven|30|thirty)[- ]days?))\\w*\\W+(?:\\w+\\W+){0,12}?(?:\\b(?:contradict\\w*|inconsisten\\w*|conflict\\w*|mismatch\\w*|incompatible|irreconcil\\w*|disagree\\w*))|(?:\\b(?:contradict\\w*|inconsisten\\w*|conflict\\w*|mismatch\\w*|incompatible|irreconcil\\w*|disagree\\w*))\\w*\\W+(?:\\w+\\W+){0,12}?(?:\\b(?:retention|retain(?:ed)?|kept|delet(?:ed|ion)|look ?ups?|look[- ]?back|(?:7|seven|30|thirty)[- ]days?))",
+            "\\b(?:operations|support|look[- ]?ups?|look[- ]?back)\\b"
+          ]
+        }
+      ],
+      "guards": [
+        "\\bno (?:internal )?(?:contradictions?|inconsistenc(?:y|ies)|conflicts?)\\b",
+        "\\b(?:is|are) consistent\\b"
+      ],
+      "examples": {
+        "detect": [
+          "Records are deleted after 7 days, but support expects to look up 30 days of history.",
+          "Retention contradicts the operations section.",
+          "Inconsistent retention: seven days vs thirty days.",
+          "Only a week of records survives, so month-old support requests cannot be answered."
+        ],
+        "ignore": [
+          "I found no contradictions between sections 5 and 6.",
+          "Records are kept for 7 days.",
+          "Retention conflicts with regional deployment timing."
+        ]
+      }
+    },
+    {
+      "id": "D5-prior-decision-conflict",
+      "kind": "planted",
+      "description": "Section 4 moves the delivery log to a new MongoDB cluster, contradicting accepted decision 0007 (PostgreSQL is the only datastore; MongoDB was retired after the 2025-11 incident).",
+      "location": "section 4; decision docs/decisions/0007-postgresql-only.md (arm C also: .agents/memory.md)",
+      "detect": [
+        {
+          "all": [
+            "(?:\\bmongo\\w*)\\w*\\W+(?:\\w+\\W+){0,25}?(?:\\bADR[- ]?0*7\\b|\\b0007\\b|\\b(?:prior|previous|earlier|recorded|existing|past|documented|accepted) (?:architecture |design |project |team )?decisions?\\b|\\bdecision records?\\b|\\barchitecture decisions?\\b|\\bretired\\b|\\bretirement\\b|\\bdecommission\\w*|\\bpostgres\\w*[- ]only\\b|\\bonly (?:approved |allowed |sanctioned )?(?:data ?store|database)\\b|\\bstandardi[sz]ed on postgres\\w*|\\bpostgres\\w* (?:is|as) the (?:only|single|sole)\\b|docs/decisions)|(?:\\bADR[- ]?0*7\\b|\\b0007\\b|\\b(?:prior|previous|earlier|recorded|existing|past|documented|accepted) (?:architecture |design |project |team )?decisions?\\b|\\bdecision records?\\b|\\barchitecture decisions?\\b|\\bretired\\b|\\bretirement\\b|\\bdecommission\\w*|\\bpostgres\\w*[- ]only\\b|\\bonly (?:approved |allowed |sanctioned )?(?:data ?store|database)\\b|\\bstandardi[sz]ed on postgres\\w*|\\bpostgres\\w* (?:is|as) the (?:only|single|sole)\\b|docs/decisions)\\w*\\W+(?:\\w+\\W+){0,25}?(?:\\bmongo\\w*)",
+            "\\b(?:contradict\\w*|conflict\\w*|violat\\w*|inconsistent|against|breaks?|forbids?|yet|but|however)\\b"
+          ]
+        },
+        {
+          "all": [
+            "(?:\\bADR[- ]?0*7\\b|0007-postgresql-only|decisions/0007|\\bdecision 0*7\\b)\\w*\\W+(?:\\w+\\W+){0,25}?(?:\\b(?:mongo\\w*|new (?:data ?store|database)|another (?:data ?store|database)|contradict\\w*|conflict\\w*|violat\\w*|inconsistent|against|breaks?))|(?:\\b(?:mongo\\w*|new (?:data ?store|database)|another (?:data ?store|database)|contradict\\w*|conflict\\w*|violat\\w*|inconsistent|against|breaks?))\\w*\\W+(?:\\w+\\W+){0,25}?(?:\\bADR[- ]?0*7\\b|0007-postgresql-only|decisions/0007|\\bdecision 0*7\\b)",
+            "\\b(?:contradict\\w*|conflict\\w*|violat\\w*|inconsistent|against|breaks?|forbids?|yet|but|however)\\b"
+          ]
+        }
+      ],
+      "guards": [
+        "\\bno (?:prior|previous|recorded|existing|earlier|documented) (?:architecture |design )?decisions?\\b",
+        "\\b(?:whether|if) (?:there (?:is|was|are) )?(?:any |a )?(?:prior|previous|recorded|existing|earlier|documented) (?:architecture |design )?decision"
+      ],
+      "examples": {
+        "detect": [
+          "Using MongoDB contradicts ADR-0007, which made PostgreSQL the only datastore.",
+          "The MongoDB cluster was retired in 2025; reintroducing it conflicts with the recorded decision.",
+          "Decision 0007 forbids a new datastore without architecture review, yet the draft adds MongoDB."
+        ],
+        "ignore": [
+          "Why MongoDB instead of PostgreSQL? The choice is not justified.",
+          "Check whether a prior decision exists about MongoDB.",
+          "The decision to use MongoDB needs a rationale.",
+          "I read ADR-0007 and the MongoDB proposal."
+        ]
+      }
+    },
+    {
+      "id": "N1-defined-term-decoy",
+      "kind": "decoy",
+      "description": "'Fan-out worker' is defined in section 3; calling it undefined is a false alarm.",
+      "location": "section 3",
+      "detect": [
+        {
+          "all": [
+            "(?:\\bfan[- ]?out workers?)\\w*\\W+(?:\\w+\\W+){0,8}?(?:\\b(?:undefined|not defined|never defined|is ?n[o']t defined|unexplained|not explained|jargon|no definition|without (?:a |any )?definition|not introduced))|(?:\\b(?:undefined|not defined|never defined|is ?n[o']t defined|unexplained|not explained|jargon|no definition|without (?:a |any )?definition|not introduced))\\w*\\W+(?:\\w+\\W+){0,8}?(?:\\bfan[- ]?out workers?)"
+          ]
+        }
+      ],
+      "guards": [
+        "\\bfan[- ]?out workers?\\W+(?:\\w+\\W+){0,3}?(?:is|are)\\s+(?:clearly\\s+|well\\s+|properly\\s+|already\\s+)?(?:defined|explained)\\b",
+        "\\bunlike\\s+(?:the\\s+)?(?:term\\s+)?[\\\"“']?fan[- ]?out"
+      ],
+      "examples": {
+        "detect": [
+          "The term fan-out worker is never defined.",
+          "Undefined jargon: fan-out worker."
+        ],
+        "ignore": [
+          "The fan-out worker is defined in section 3.",
+          "Kestrel shim is undefined, unlike the fan-out worker."
+        ]
+      }
+    }
+  ]
+}

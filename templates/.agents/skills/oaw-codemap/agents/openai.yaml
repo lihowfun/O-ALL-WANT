@@ -1,0 +1,7 @@
+interface:
+  display_name: "OAW Code Map"
+  short_description: "Callers, impact and a one-page overview from OAW's code index"
+
+# Explicit invocation only. Codex reads this policy; Claude reads disable-model-invocation in SKILL.md.
+policy:
+  allow_implicit_invocation: false

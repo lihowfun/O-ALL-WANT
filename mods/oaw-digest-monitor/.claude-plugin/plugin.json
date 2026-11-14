@@ -1,0 +1,37 @@
+{
+  "name": "oaw-digest-monitor",
+  "version": "0.2.0",
+  "description": "OAW 消化道：每樣 skill 食物停在哪一站、卡在哪、能做什麼，在對話旁直接操作（讀 .oaw/catalog/view.json，動作走 catalog.py）",
+  "author": {
+    "name": "lihowfun"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/lihowfun/O-ALL-WANT",
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "project": {
+      "type": "string",
+      "title": "OAW 專案資料夾",
+      "description": "有 .oaw/catalog 的專案；空白時從 session 的資料夾、上層和下一層自動找",
+      "default": ""
+    },
+    "oawCheckout": {
+      "type": "string",
+      "title": "OAW checkout",
+      "description": "有 scripts/catalog.py 的 OAW 原始碼資料夾；空白時自動找",
+      "default": ""
+    },
+    "python": {
+      "type": "string",
+      "title": "Python 指令",
+      "description": "執行 catalog.py 用的 Python 3.10+，例如 python3 或 py -3",
+      "default": "python3"
+    },
+    "motion": {
+      "type": "boolean",
+      "title": "動畫",
+      "description": "試吃中的蠕動和食糰脈動；關掉時畫面靜止",
+      "default": true
+    }
+  }
+}

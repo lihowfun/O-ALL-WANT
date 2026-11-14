@@ -1,0 +1,939 @@
+[
+  {
+    "trial_id": "events-r2-C",
+    "case": "events",
+    "repeat": 2,
+    "arm": "C",
+    "primary_agent": "/root/v4_events_r2_c",
+    "requested_fork_turns": "none",
+    "listed_reviewer_ids": [
+      "/root/v4_events_r2_c/initial_zoom",
+      "/root/v4_events_r2_c/comprehension",
+      "/root/v4_events_r2_c/critic_design",
+      "/root/v4_events_r2_c/critic_structural",
+      "/root/v4_events_r2_c/critic_style",
+      "/root/v4_events_r2_c/intermediate_zoom",
+      "/root/v4_events_r2_c/readiness",
+      "/root/v4_events_r2_c/readiness_codebase",
+      "/root/v4_events_r2_c/readiness_style"
+    ],
+    "fresh_child_ids": [
+      "/root/v4_events_r2_c/initial_zoom",
+      "/root/v4_events_r2_c/comprehension",
+      "/root/v4_events_r2_c/critic_design",
+      "/root/v4_events_r2_c/critic_structural",
+      "/root/v4_events_r2_c/critic_style",
+      "/root/v4_events_r2_c/intermediate_zoom",
+      "/root/v4_events_r2_c/readiness",
+      "/root/v4_events_r2_c/readiness_codebase",
+      "/root/v4_events_r2_c/readiness_style"
+    ],
+    "stages_completed": [
+      "5 initial zoom",
+      "6 comprehension",
+      "7 design/structural/style critique",
+      "8 intermediate zoom",
+      "9 readiness/codebase/style"
+    ],
+    "words": 569,
+    "initial_inputs_intact": true,
+    "observed_finished_utc": "2026-10-29T09:28:38.392905+00:00"
+  },
+  {
+    "trial_id": "events-r2-A",
+    "case": "events",
+    "repeat": 2,
+    "arm": "A",
+    "primary_agent": "/root/v4_events_r2_a",
+    "requested_fork_turns": "none",
+    "listed_reviewer_ids": [
+      "/root/v4_events_r2_a"
+    ],
+    "fresh_child_ids": [],
+    "stages_completed": [
+      "Read README, complete design, all supplied ADRs, and Python baseline with line numbers",
+      "Checked processing, diagnostics, recovery, and delivery plan against accepted decisions and baseline behavior",
+      "Separated demonstrated defects from conditional risks and open questions",
+      "Wrote final review report"
+    ],
+    "words": 405,
+    "initial_inputs_intact": true,
+    "observed_finished_utc": "2026-10-29T09:30:00.842863+00:00"
+  },
+  {
+    "trial_id": "events-r2-B",
+    "case": "events",
+    "repeat": 2,
+    "arm": "B",
+    "primary_agent": "/root/v4_events_r2_b",
+    "requested_fork_turns": "none",
+    "listed_reviewer_ids": [
+      "/root/v4_events_r2_b/initial_zoom",
+      "/root/v4_events_r2_b/comprehension",
+      "/root/v4_events_r2_b/critic_design",
+      "/root/v4_events_r2_b/critic_structural",
+      "/root/v4_events_r2_b/critic_style",
+      "/root/v4_events_r2_b/intermediate_zoom",
+      "/root/v4_events_r2_b/readiness",
+      "/root/v4_events_r2_b/codebase_details",
+      "/root/v4_events_r2_b/readiness_style"
+    ],
+    "fresh_child_ids": [
+      "/root/v4_events_r2_b/initial_zoom",
+      "/root/v4_events_r2_b/comprehension",
+      "/root/v4_events_r2_b/critic_design",
+      "/root/v4_events_r2_b/critic_structural",
+      "/root/v4_events_r2_b/critic_style",
+      "/root/v4_events_r2_b/intermediate_zoom",
+      "/root/v4_events_r2_b/readiness",
+      "/root/v4_events_r2_b/codebase_details",
+      "/root/v4_events_r2_b/readiness_style"
+    ],
+    "stages_completed": [
+      "5: Initial Zoom Out",
+      "6: Comprehension",
+      "7: Design Critique",
+      "8: Intermediate Zoom Out",
+      "9: Implementation Readiness"
+    ],
+    "words": 509,
+    "initial_inputs_intact": true,
+    "observed_finished_utc": "2026-10-29T09:42:54.829896+00:00"
+  },
+  {
+    "trial_id": "orders-r1-A",
+    "case": "orders",
+    "repeat": 1,
+    "arm": "A",
+    "primary_agent": "/root/v4_orders_r1_a",
+    "requested_fork_turns": "none",
+    "listed_reviewer_ids": [
+      "/root/v4_orders_r1_a",
+      "/root/v4_orders_r1_a/native_crosscheck"
+    ],
+    "fresh_child_ids": [
+      "/root/v4_orders_r1_a/native_crosscheck"
+    ],
+    "stages_completed": [
+      "Read all required workspace sources with line evidence",
+      "Independent fresh native reviewer cross-check",
+      "Parent synthesis of actual reviewer report and source evidence",
+      "Final JSON report"
+    ],
+    "words": 437,
+    "initial_inputs_intact": true,
+    "observed_finished_utc": "2026-10-29T09:44:40.550790+00:00"
+  },
+  {
+    "trial_id": "orders-r1-B",
+    "case": "orders",
+    "repeat": 1,
+    "arm": "B",
+    "primary_agent": "/root/v4_orders_r1_b",
+    "requested_fork_turns": "none",
+    "listed_reviewer_ids": [
+      "/root/v4_orders_r1_b/initial_zoom",
+      "/root/v4_orders_r1_b/comprehension",
+      "/root/v4_orders_r1_b/critic_design",
+      "/root/v4_orders_r1_b/critic_structural",
+      "/root/v4_orders_r1_b/critic_style",
+      "/root/v4_orders_r1_b/intermediate_zoom",
+      "/root/v4_orders_r1_b/readiness_implementation",
+      "/root/v4_orders_r1_b/readiness_codebase",
+      "/root/v4_orders_r1_b/readiness_style"
+    ],
+    "fresh_child_ids": [
+      "/root/v4_orders_r1_b/initial_zoom",
+      "/root/v4_orders_r1_b/comprehension",
+      "/root/v4_orders_r1_b/critic_design",
+      "/root/v4_orders_r1_b/critic_structural",
+      "/root/v4_orders_r1_b/critic_style",
+      "/root/v4_orders_r1_b/intermediate_zoom",
+      "/root/v4_orders_r1_b/readiness_implementation",
+      "/root/v4_orders_r1_b/readiness_codebase",
+      "/root/v4_orders_r1_b/readiness_style"
+    ],
+    "stages_completed": [
+      "5 Initial Zoom Out: initial_zoom",
+      "6 Comprehension: comprehension",
+      "7 Critic: critic_design, critic_structural, critic_style",
+      "8 Intermediate Zoom Out: intermediate_zoom",
+      "9 Implementation Readiness: readiness_implementation, readiness_codebase, readiness_style"
+    ],
+    "words": 523,
+    "initial_inputs_intact": true,
+    "observed_finished_utc": "2026-10-29T09:54:02.655419+00:00"
+  },
+  {
+    "trial_id": "orders-r1-C",
+    "case": "orders",
+    "repeat": 1,
+    "arm": "C",
+    "primary_agent": "/root/v4_orders_r1_c",
+    "requested_fork_turns": "none",
+    "listed_reviewer_ids": [
+      "/root/v4_orders_r1_c/initial_zoom",
+      "/root/v4_orders_r1_c/comprehension",
+      "/root/v4_orders_r1_c/critic_design",
+      "/root/v4_orders_r1_c/critic_structural",
+      "/root/v4_orders_r1_c/critic_style",
+      "/root/v4_orders_r1_c/intermediate_zoom",
+      "/root/v4_orders_r1_c/readiness_implementation",
+      "/root/v4_orders_r1_c/readiness_codebase",
+      "/root/v4_orders_r1_c/readiness_style"
+    ],
+    "fresh_child_ids": [
+      "/root/v4_orders_r1_c/initial_zoom",
+      "/root/v4_orders_r1_c/comprehension",
+      "/root/v4_orders_r1_c/critic_design",
+      "/root/v4_orders_r1_c/critic_structural",
+      "/root/v4_orders_r1_c/critic_style",
+      "/root/v4_orders_r1_c/intermediate_zoom",
+      "/root/v4_orders_r1_c/readiness_implementation",
+      "/root/v4_orders_r1_c/readiness_codebase",
+      "/root/v4_orders_r1_c/readiness_style"
+    ],
+    "stages_completed": [
+      "5 Initial Zoom Out Review",
+      "6 Comprehension Review",
+      "7 Design Critique",
+      "8 Intermediate Zoom Out Review",
+      "9 Implementation Readiness"
+    ],
+    "words": 527,
+    "initial_inputs_intact": true,
+    "observed_finished_utc": "2026-10-29T10:03:49.956040+00:00"
+  },
+  {
+    "trial_id": "clean-r1-C",
+    "case": "clean",
+    "repeat": 1,
+    "arm": "C",
+    "primary_agent": "/root/v4_clean_r1_c",
+    "requested_fork_turns": "none",
+    "listed_reviewer_ids": [
+      "/root/v4_clean_r1_c/c_initial_zoom",
+      "/root/v4_clean_r1_c/c_comprehension",
+      "/root/v4_clean_r1_c/c_design",
+      "/root/v4_clean_r1_c/c_structural",
+      "/root/v4_clean_r1_c/c_critic_style",
+      "/root/v4_clean_r1_c/c_intermediate_zoom",
+      "/root/v4_clean_r1_c/c_readiness",
+      "/root/v4_clean_r1_c/c_codebase",
+      "/root/v4_clean_r1_c/c_readiness_style"
+    ],
+    "fresh_child_ids": [
+      "/root/v4_clean_r1_c/c_initial_zoom",
+      "/root/v4_clean_r1_c/c_comprehension",
+      "/root/v4_clean_r1_c/c_design",
+      "/root/v4_clean_r1_c/c_structural",
+      "/root/v4_clean_r1_c/c_critic_style",
+      "/root/v4_clean_r1_c/c_intermediate_zoom",
+      "/root/v4_clean_r1_c/c_readiness",
+      "/root/v4_clean_r1_c/c_codebase",
+      "/root/v4_clean_r1_c/c_readiness_style"
+    ],
+    "stages_completed": [
+      "5 Initial Zoom Out: one completed fresh reviewer; zoom_out_report.md",
+      "6 Comprehension: one completed fresh reviewer; complete paraphrase and result in comprehension_report.md",
+      "7 Critic: three completed fresh reviewers; critic_report.md",
+      "8 Intermediate Zoom Out: one completed fresh reviewer; required initial zoom, comprehension and critic reports read; intermediate_zoom_out_report.md",
+      "9 Implementation Readiness: three completed fresh reviewers; implementation_readiness_report.md"
+    ],
+    "words": 369,
+    "initial_inputs_intact": true,
+    "observed_finished_utc": "2026-10-29T10:11:29.594024+00:00"
+  },
+  {
+    "trial_id": "clean-r1-A",
+    "case": "clean",
+    "repeat": 1,
+    "arm": "A",
+    "primary_agent": "/root/v4_clean_r1_a",
+    "requested_fork_turns": "none",
+    "listed_reviewer_ids": [
+      "/root/v4_clean_r1_a",
+      "/root/v4_clean_r1_a/authority_review",
+      "/root/v4_clean_r1_a/semantics_review"
+    ],
+    "fresh_child_ids": [
+      "/root/v4_clean_r1_a/authority_review",
+      "/root/v4_clean_r1_a/semantics_review"
+    ],
+    "stages_completed": [
+      "Native primary review of README.md, docs/design.md, all supplied ADRs, and src/lookup.py",
+      "Fresh independent authority and consistency review",
+      "Fresh independent cache semantics and retention review",
+      "Independent report synthesis against current accepted decisions"
+    ],
+    "words": 108,
+    "initial_inputs_intact": true,
+    "observed_finished_utc": "2026-10-29T10:13:11.652949+00:00"
+  },
+  {
+    "trial_id": "clean-r1-B",
+    "case": "clean",
+    "repeat": 1,
+    "arm": "B",
+    "primary_agent": "/root/v4_clean_r1_b",
+    "requested_fork_turns": "none",
+    "listed_reviewer_ids": [
+      "/root/v4_clean_r1_b/b_s5_zoom",
+      "/root/v4_clean_r1_b/b_s6_comprehension",
+      "/root/v4_clean_r1_b/b_s7_design",
+      "/root/v4_clean_r1_b/b_s7_structural",
+      "/root/v4_clean_r1_b/b_s7_style",
+      "/root/v4_clean_r1_b/b_s8_zoom",
+      "/root/v4_clean_r1_b/b_s9_readiness",
+      "/root/v4_clean_r1_b/b_s9_codebase",
+      "/root/v4_clean_r1_b/b_s9_style"
+    ],
+    "fresh_child_ids": [
+      "/root/v4_clean_r1_b/b_s5_zoom",
+      "/root/v4_clean_r1_b/b_s6_comprehension",
+      "/root/v4_clean_r1_b/b_s7_design",
+      "/root/v4_clean_r1_b/b_s7_structural",
+      "/root/v4_clean_r1_b/b_s7_style",
+      "/root/v4_clean_r1_b/b_s8_zoom",
+      "/root/v4_clean_r1_b/b_s9_readiness",
+      "/root/v4_clean_r1_b/b_s9_codebase",
+      "/root/v4_clean_r1_b/b_s9_style"
+    ],
+    "stages_completed": [
+      "5 Initial Zoom Out: one fresh completed reviewer; zoom_out_report.md",
+      "6 Comprehension: one fresh completed reviewer; complete two-heading paraphrase retained in comprehension_report.md",
+      "7 Critic: three fresh completed reviewers; critic_report.md",
+      "8 Intermediate Zoom Out: one fresh completed reviewer; initial zoom/comprehension/critic inputs read; intermediate_zoom_out_report.md",
+      "9 Implementation Readiness: three fresh completed reviewers; implementation_readiness_report.md"
+    ],
+    "words": 297,
+    "initial_inputs_intact": true,
+    "observed_finished_utc": "2026-10-29T10:20:17.131369+00:00"
+  },
+  {
+    "trial_id": "events-r1-B",
+    "case": "events",
+    "repeat": 1,
+    "arm": "B",
+    "primary_agent": "/root/v4_events_r1_b",
+    "requested_fork_turns": "none",
+    "listed_reviewer_ids": [
+      "/root/v4_events_r1_b/initial_zoom",
+      "/root/v4_events_r1_b/comprehension",
+      "/root/v4_events_r1_b/critic_design",
+      "/root/v4_events_r1_b/critic_structural",
+      "/root/v4_events_r1_b/critic_style",
+      "/root/v4_events_r1_b/intermediate_zoom",
+      "/root/v4_events_r1_b/readiness",
+      "/root/v4_events_r1_b/codebase_details",
+      "/root/v4_events_r1_b/readiness_style"
+    ],
+    "fresh_child_ids": [
+      "/root/v4_events_r1_b/initial_zoom",
+      "/root/v4_events_r1_b/comprehension",
+      "/root/v4_events_r1_b/critic_design",
+      "/root/v4_events_r1_b/critic_structural",
+      "/root/v4_events_r1_b/critic_style",
+      "/root/v4_events_r1_b/intermediate_zoom",
+      "/root/v4_events_r1_b/readiness",
+      "/root/v4_events_r1_b/codebase_details",
+      "/root/v4_events_r1_b/readiness_style"
+    ],
+    "stages_completed": [
+      "5 Initial Zoom Out",
+      "6 Comprehension",
+      "7 Design Critique",
+      "8 Intermediate Zoom Out",
+      "9 Implementation Readiness"
+    ],
+    "words": 458,
+    "initial_inputs_intact": true,
+    "observed_finished_utc": "2026-10-29T10:28:16.654963+00:00"
+  },
+  {
+    "trial_id": "events-r1-C",
+    "case": "events",
+    "repeat": 1,
+    "arm": "C",
+    "primary_agent": "/root/v4_events_r1_c",
+    "requested_fork_turns": "none",
+    "listed_reviewer_ids": [
+      "/root/v4_events_r1_c/c5_zoom",
+      "/root/v4_events_r1_c/c6_comprehension",
+      "/root/v4_events_r1_c/c7_design",
+      "/root/v4_events_r1_c/c7_structural",
+      "/root/v4_events_r1_c/c7_style",
+      "/root/v4_events_r1_c/c8_zoom",
+      "/root/v4_events_r1_c/c9_readiness",
+      "/root/v4_events_r1_c/c9_codebase",
+      "/root/v4_events_r1_c/c9_style"
+    ],
+    "fresh_child_ids": [
+      "/root/v4_events_r1_c/c5_zoom",
+      "/root/v4_events_r1_c/c6_comprehension",
+      "/root/v4_events_r1_c/c7_design",
+      "/root/v4_events_r1_c/c7_structural",
+      "/root/v4_events_r1_c/c7_style",
+      "/root/v4_events_r1_c/c8_zoom",
+      "/root/v4_events_r1_c/c9_readiness",
+      "/root/v4_events_r1_c/c9_codebase",
+      "/root/v4_events_r1_c/c9_style"
+    ],
+    "stages_completed": [
+      "5 Initial Zoom Out: one fresh reviewer; zoom_out_report.md saved",
+      "6 Comprehension: one fresh reviewer; complete paraphrase/report saved",
+      "7 Critic: three fresh reviewers; critic_report.md saved",
+      "8 Intermediate Zoom Out: one fresh reviewer; initial zoom and prior reports read; report saved",
+      "9 Implementation Readiness: three fresh reviewers; implementation_readiness_report.md saved"
+    ],
+    "words": 544,
+    "initial_inputs_intact": true,
+    "observed_finished_utc": "2026-10-29T10:37:12.154215+00:00"
+  },
+  {
+    "trial_id": "events-r1-A",
+    "case": "events",
+    "repeat": 1,
+    "arm": "A",
+    "primary_agent": "/root/v4_events_r1_a",
+    "requested_fork_turns": "none",
+    "listed_reviewer_ids": [
+      "/root/v4_events_r1_a",
+      "/root/v4_events_r1_a/independent_events_review"
+    ],
+    "fresh_child_ids": [
+      "/root/v4_events_r1_a/independent_events_review"
+    ],
+    "stages_completed": [
+      "Assigned packet and complete supplied source review",
+      "Parent static correctness and accepted-decision consistency review",
+      "Fresh independent child static review",
+      "Independent report synthesis and duplicate-finding consolidation"
+    ],
+    "words": 338,
+    "initial_inputs_intact": true,
+    "observed_finished_utc": "2026-10-29T10:38:46.495172+00:00"
+  },
+  {
+    "trial_id": "orders-r3-C",
+    "case": "orders",
+    "repeat": 3,
+    "arm": "C",
+    "primary_agent": "/root/v4_orders_r3_c",
+    "requested_fork_turns": "none",
+    "listed_reviewer_ids": [
+      "/root/v4_orders_r3_c/c_stage5_zoom",
+      "/root/v4_orders_r3_c/c_stage6_comprehension",
+      "/root/v4_orders_r3_c/c_stage7_design",
+      "/root/v4_orders_r3_c/c_stage7_structural",
+      "/root/v4_orders_r3_c/c_stage7_style",
+      "/root/v4_orders_r3_c/c_stage8_zoom",
+      "/root/v4_orders_r3_c/c_stage9_readiness",
+      "/root/v4_orders_r3_c/c_stage9_codebase",
+      "/root/v4_orders_r3_c/c_stage9_style"
+    ],
+    "fresh_child_ids": [
+      "/root/v4_orders_r3_c/c_stage5_zoom",
+      "/root/v4_orders_r3_c/c_stage6_comprehension",
+      "/root/v4_orders_r3_c/c_stage7_design",
+      "/root/v4_orders_r3_c/c_stage7_structural",
+      "/root/v4_orders_r3_c/c_stage7_style",
+      "/root/v4_orders_r3_c/c_stage8_zoom",
+      "/root/v4_orders_r3_c/c_stage9_readiness",
+      "/root/v4_orders_r3_c/c_stage9_codebase",
+      "/root/v4_orders_r3_c/c_stage9_style"
+    ],
+    "stages_completed": [
+      "5: Initial Zoom Out, 1 reviewer, zoom_out_report.md",
+      "6: Comprehension, 1 reviewer, complete paraphrase and findings in comprehension_report.md",
+      "7: Critic, 3 reviewers, critic_report.md",
+      "8: Intermediate Zoom Out, 1 reviewer, required own-trial initial report and subsequent reports read, intermediate_zoom_out_report.md",
+      "9: Implementation Readiness, 3 reviewers, implementation_readiness_report.md"
+    ],
+    "words": 590,
+    "initial_inputs_intact": true,
+    "observed_finished_utc": "2026-10-29T10:48:42.581464+00:00"
+  },
+  {
+    "trial_id": "orders-r3-A",
+    "case": "orders",
+    "repeat": 3,
+    "arm": "A",
+    "primary_agent": "/root/v4_orders_r3_a",
+    "requested_fork_turns": "none",
+    "listed_reviewer_ids": [
+      "/root/v4_orders_r3_a",
+      "/root/v4_orders_r3_a/native_review"
+    ],
+    "fresh_child_ids": [
+      "/root/v4_orders_r3_a/native_review"
+    ],
+    "stages_completed": [
+      "source_review",
+      "fresh_independent_native_review",
+      "evidence_cross_check_and_synthesis"
+    ],
+    "words": 385,
+    "initial_inputs_intact": true,
+    "observed_finished_utc": "2026-10-29T10:50:26.225922+00:00"
+  },
+  {
+    "trial_id": "orders-r3-B",
+    "case": "orders",
+    "repeat": 3,
+    "arm": "B",
+    "primary_agent": "/root/v4_orders_r3_b",
+    "requested_fork_turns": "none",
+    "listed_reviewer_ids": [
+      "/root/v4_orders_r3_b/orders_r3_b_s5_zoom",
+      "/root/v4_orders_r3_b/orders_r3_b_s6_comprehension",
+      "/root/v4_orders_r3_b/orders_r3_b_s7_design",
+      "/root/v4_orders_r3_b/orders_r3_b_s7_structural",
+      "/root/v4_orders_r3_b/orders_r3_b_s7_style",
+      "/root/v4_orders_r3_b/orders_r3_b_s8_zoom",
+      "/root/v4_orders_r3_b/orders_r3_b_s9_readiness",
+      "/root/v4_orders_r3_b/orders_r3_b_s9_codebase",
+      "/root/v4_orders_r3_b/orders_r3_b_s9_style"
+    ],
+    "fresh_child_ids": [
+      "/root/v4_orders_r3_b/orders_r3_b_s5_zoom",
+      "/root/v4_orders_r3_b/orders_r3_b_s6_comprehension",
+      "/root/v4_orders_r3_b/orders_r3_b_s7_design",
+      "/root/v4_orders_r3_b/orders_r3_b_s7_structural",
+      "/root/v4_orders_r3_b/orders_r3_b_s7_style",
+      "/root/v4_orders_r3_b/orders_r3_b_s8_zoom",
+      "/root/v4_orders_r3_b/orders_r3_b_s9_readiness",
+      "/root/v4_orders_r3_b/orders_r3_b_s9_codebase",
+      "/root/v4_orders_r3_b/orders_r3_b_s9_style"
+    ],
+    "stages_completed": [
+      "5 Initial Zoom Out: one fresh reviewer; zoom_out_report.md",
+      "6 Comprehension: one fresh reviewer; complete two-heading paraphrase preserved in comprehension_report.md",
+      "7 Critic: three fresh reviewers; critic_report.md",
+      "8 Intermediate Zoom Out: one fresh reviewer; required initial zoom and own comprehension/critic reports read; intermediate_zoom_out_report.md",
+      "9 Implementation Readiness: three fresh reviewers; implementation_readiness_report.md"
+    ],
+    "words": 600,
+    "initial_inputs_intact": true,
+    "observed_finished_utc": "2026-10-29T10:59:09.133833+00:00"
+  },
+  {
+    "trial_id": "events-r3-A",
+    "case": "events",
+    "repeat": 3,
+    "arm": "A",
+    "primary_agent": "/root/v4_events_r3_a",
+    "requested_fork_turns": "none",
+    "listed_reviewer_ids": [
+      "/root/v4_events_r3_a",
+      "/root/v4_events_r3_a/native_review_a",
+      "/root/v4_events_r3_a/native_review_b"
+    ],
+    "fresh_child_ids": [
+      "/root/v4_events_r3_a/native_review_a",
+      "/root/v4_events_r3_a/native_review_b"
+    ],
+    "stages_completed": [
+      "assigned_packet_read",
+      "all_assigned_sources_reviewed",
+      "fresh_native_review_a_completed",
+      "fresh_native_review_b_completed",
+      "independent_report_synthesis_completed"
+    ],
+    "words": 307,
+    "initial_inputs_intact": true,
+    "observed_finished_utc": "2026-10-29T11:00:46.685239+00:00"
+  },
+  {
+    "trial_id": "events-r3-B",
+    "case": "events",
+    "repeat": 3,
+    "arm": "B",
+    "primary_agent": "/root/v4_events_r3_b",
+    "requested_fork_turns": "none",
+    "listed_reviewer_ids": [
+      "/root/v4_events_r3_b/initial_zoom",
+      "/root/v4_events_r3_b/comprehension",
+      "/root/v4_events_r3_b/critic_design",
+      "/root/v4_events_r3_b/critic_structural",
+      "/root/v4_events_r3_b/critic_style",
+      "/root/v4_events_r3_b/intermediate_zoom",
+      "/root/v4_events_r3_b/readiness",
+      "/root/v4_events_r3_b/readiness_codebase",
+      "/root/v4_events_r3_b/readiness_style"
+    ],
+    "fresh_child_ids": [
+      "/root/v4_events_r3_b/initial_zoom",
+      "/root/v4_events_r3_b/comprehension",
+      "/root/v4_events_r3_b/critic_design",
+      "/root/v4_events_r3_b/critic_structural",
+      "/root/v4_events_r3_b/critic_style",
+      "/root/v4_events_r3_b/intermediate_zoom",
+      "/root/v4_events_r3_b/readiness",
+      "/root/v4_events_r3_b/readiness_codebase",
+      "/root/v4_events_r3_b/readiness_style"
+    ],
+    "stages_completed": [
+      "5 Initial Zoom Out: zoom_out_report.md",
+      "6 Comprehension: comprehension_report.md",
+      "7 Design Critique: critic_report.md",
+      "8 Intermediate Zoom Out: intermediate_zoom_out_report.md",
+      "9 Implementation Readiness: implementation_readiness_report.md"
+    ],
+    "words": 500,
+    "initial_inputs_intact": true,
+    "observed_finished_utc": "2026-10-29T11:08:33.892723+00:00"
+  },
+  {
+    "trial_id": "events-r3-C",
+    "case": "events",
+    "repeat": 3,
+    "arm": "C",
+    "primary_agent": "/root/v4_events_r3_c",
+    "requested_fork_turns": "none",
+    "listed_reviewer_ids": [
+      "/root/v4_events_r3_c/events_r3_c_zoom1",
+      "/root/v4_events_r3_c/events_r3_c_comprehension",
+      "/root/v4_events_r3_c/events_r3_c_design",
+      "/root/v4_events_r3_c/events_r3_c_structural",
+      "/root/v4_events_r3_c/events_r3_c_style_feature",
+      "/root/v4_events_r3_c/events_r3_c_zoom2",
+      "/root/v4_events_r3_c/events_r3_c_readiness",
+      "/root/v4_events_r3_c/events_r3_c_codebase",
+      "/root/v4_events_r3_c/events_r3_c_style_plan"
+    ],
+    "fresh_child_ids": [
+      "/root/v4_events_r3_c/events_r3_c_zoom1",
+      "/root/v4_events_r3_c/events_r3_c_comprehension",
+      "/root/v4_events_r3_c/events_r3_c_design",
+      "/root/v4_events_r3_c/events_r3_c_structural",
+      "/root/v4_events_r3_c/events_r3_c_style_feature",
+      "/root/v4_events_r3_c/events_r3_c_zoom2",
+      "/root/v4_events_r3_c/events_r3_c_readiness",
+      "/root/v4_events_r3_c/events_r3_c_codebase",
+      "/root/v4_events_r3_c/events_r3_c_style_plan"
+    ],
+    "stages_completed": [
+      "5 Initial Zoom Out",
+      "6 Comprehension",
+      "7 Critic: design, structural, style",
+      "8 Intermediate Zoom Out",
+      "9 Implementation Readiness: readiness, codebase details, style"
+    ],
+    "words": 463,
+    "initial_inputs_intact": true,
+    "observed_finished_utc": "2026-10-29T11:16:41.399149+00:00"
+  },
+  {
+    "trial_id": "orders-r2-B",
+    "case": "orders",
+    "repeat": 2,
+    "arm": "B",
+    "primary_agent": "/root/v4_orders_r2_b",
+    "requested_fork_turns": "none",
+    "listed_reviewer_ids": [
+      "/root/v4_orders_r2_b/initial_zoom",
+      "/root/v4_orders_r2_b/comprehension",
+      "/root/v4_orders_r2_b/critic_design",
+      "/root/v4_orders_r2_b/critic_structural",
+      "/root/v4_orders_r2_b/critic_style",
+      "/root/v4_orders_r2_b/intermediate_zoom",
+      "/root/v4_orders_r2_b/readiness_implementation",
+      "/root/v4_orders_r2_b/readiness_codebase",
+      "/root/v4_orders_r2_b/readiness_style"
+    ],
+    "fresh_child_ids": [
+      "/root/v4_orders_r2_b/initial_zoom",
+      "/root/v4_orders_r2_b/comprehension",
+      "/root/v4_orders_r2_b/critic_design",
+      "/root/v4_orders_r2_b/critic_structural",
+      "/root/v4_orders_r2_b/critic_style",
+      "/root/v4_orders_r2_b/intermediate_zoom",
+      "/root/v4_orders_r2_b/readiness_implementation",
+      "/root/v4_orders_r2_b/readiness_codebase",
+      "/root/v4_orders_r2_b/readiness_style"
+    ],
+    "stages_completed": [
+      "5 Initial Zoom Out",
+      "6 Comprehension",
+      "7 Design Critique",
+      "8 Intermediate Zoom Out",
+      "9 Implementation Readiness"
+    ],
+    "words": 452,
+    "initial_inputs_intact": true,
+    "observed_finished_utc": "2026-10-29T11:26:09.560692+00:00"
+  },
+  {
+    "trial_id": "orders-r2-C",
+    "case": "orders",
+    "repeat": 2,
+    "arm": "C",
+    "primary_agent": "/root/v4_orders_r2_c",
+    "requested_fork_turns": "none",
+    "listed_reviewer_ids": [
+      "/root/v4_orders_r2_c/c_s5_zoom",
+      "/root/v4_orders_r2_c/c_s6_comprehension",
+      "/root/v4_orders_r2_c/c_s7_design",
+      "/root/v4_orders_r2_c/c_s7_structural",
+      "/root/v4_orders_r2_c/c_s7_style",
+      "/root/v4_orders_r2_c/c_s8_zoom",
+      "/root/v4_orders_r2_c/c_s9_readiness",
+      "/root/v4_orders_r2_c/c_s9_codebase",
+      "/root/v4_orders_r2_c/c_s9_style"
+    ],
+    "fresh_child_ids": [
+      "/root/v4_orders_r2_c/c_s5_zoom",
+      "/root/v4_orders_r2_c/c_s6_comprehension",
+      "/root/v4_orders_r2_c/c_s7_design",
+      "/root/v4_orders_r2_c/c_s7_structural",
+      "/root/v4_orders_r2_c/c_s7_style",
+      "/root/v4_orders_r2_c/c_s8_zoom",
+      "/root/v4_orders_r2_c/c_s9_readiness",
+      "/root/v4_orders_r2_c/c_s9_codebase",
+      "/root/v4_orders_r2_c/c_s9_style"
+    ],
+    "stages_completed": [
+      "5 Initial Zoom Out: one completed reviewer; zoom_out_report.md",
+      "6 Comprehension: one completed reviewer; complete paraphrase preserved in comprehension_report.md",
+      "7 Design Critique: three completed reviewers; critic_report.md",
+      "8 Intermediate Zoom Out: one completed reviewer; initial zoom/comprehension/critic reports explicitly read; intermediate_zoom_out_report.md",
+      "9 Implementation Readiness: three completed reviewers; implementation_readiness_report.md"
+    ],
+    "words": 595,
+    "initial_inputs_intact": true,
+    "observed_finished_utc": "2026-10-29T11:37:35.792302+00:00"
+  },
+  {
+    "trial_id": "orders-r2-A",
+    "case": "orders",
+    "repeat": 2,
+    "arm": "A",
+    "primary_agent": "/root/v4_orders_r2_a",
+    "requested_fork_turns": "none",
+    "listed_reviewer_ids": [
+      "/root/v4_orders_r2_a",
+      "/root/v4_orders_r2_a/review_orders"
+    ],
+    "fresh_child_ids": [
+      "/root/v4_orders_r2_a/review_orders"
+    ],
+    "stages_completed": [
+      "Read README, design, all supplied ADRs and source files",
+      "Independent native source review",
+      "Fresh independent child review",
+      "Independent synthesis and report validation"
+    ],
+    "words": 440,
+    "initial_inputs_intact": true,
+    "observed_finished_utc": "2026-10-29T11:39:30.454034+00:00"
+  },
+  {
+    "trial_id": "clean-r2-A",
+    "case": "clean",
+    "repeat": 2,
+    "arm": "A",
+    "primary_agent": "/root/v4_clean_r2_a",
+    "requested_fork_turns": "none",
+    "listed_reviewer_ids": [
+      "/root/v4_clean_r2_a",
+      "/root/v4_clean_r2_a/fresh_review"
+    ],
+    "fresh_child_ids": [
+      "/root/v4_clean_r2_a/fresh_review"
+    ],
+    "stages_completed": [
+      "Assigned packet and source inventory",
+      "All required README, design, ADR and Python source reads",
+      "Current accepted decision reconciliation",
+      "Independent fresh static review",
+      "Parent evidence reconciliation and final synthesis"
+    ],
+    "words": 101,
+    "initial_inputs_intact": true,
+    "observed_finished_utc": "2026-10-29T11:41:01.029470+00:00"
+  },
+  {
+    "trial_id": "clean-r2-B",
+    "case": "clean",
+    "repeat": 2,
+    "arm": "B",
+    "primary_agent": "/root/v4_clean_r2_b",
+    "requested_fork_turns": "none",
+    "listed_reviewer_ids": [
+      "/root/v4_clean_r2_b/initial_zoom",
+      "/root/v4_clean_r2_b/comprehension",
+      "/root/v4_clean_r2_b/critic_design",
+      "/root/v4_clean_r2_b/critic_structural",
+      "/root/v4_clean_r2_b/critic_style",
+      "/root/v4_clean_r2_b/intermediate_zoom",
+      "/root/v4_clean_r2_b/readiness",
+      "/root/v4_clean_r2_b/readiness_codebase",
+      "/root/v4_clean_r2_b/readiness_style"
+    ],
+    "fresh_child_ids": [
+      "/root/v4_clean_r2_b/initial_zoom",
+      "/root/v4_clean_r2_b/comprehension",
+      "/root/v4_clean_r2_b/critic_design",
+      "/root/v4_clean_r2_b/critic_structural",
+      "/root/v4_clean_r2_b/critic_style",
+      "/root/v4_clean_r2_b/intermediate_zoom",
+      "/root/v4_clean_r2_b/readiness",
+      "/root/v4_clean_r2_b/readiness_codebase",
+      "/root/v4_clean_r2_b/readiness_style"
+    ],
+    "stages_completed": [
+      "5 Initial Zoom Out: full-file direct reviewer; zoom_out_report.md",
+      "6 Comprehension: ranges 1..11 and 12..13; complete paraphrase preserved in comprehension_report.md",
+      "7 Design Critique: three direct fresh reviewers; critic_report.md",
+      "8 Intermediate Zoom Out: fresh reviewer read initial zoom, comprehension and critic reports; intermediate_zoom_out_report.md",
+      "9 Implementation Readiness: three direct fresh reviewers on 12..13; implementation_readiness_report.md"
+    ],
+    "words": 341,
+    "initial_inputs_intact": true,
+    "observed_finished_utc": "2026-10-29T11:48:33.833026+00:00"
+  },
+  {
+    "trial_id": "clean-r2-C",
+    "case": "clean",
+    "repeat": 2,
+    "arm": "C",
+    "primary_agent": "/root/v4_clean_r2_c",
+    "requested_fork_turns": "none",
+    "listed_reviewer_ids": [
+      "/root/v4_clean_r2_c/initial_zoom",
+      "/root/v4_clean_r2_c/comprehension",
+      "/root/v4_clean_r2_c/critic_design",
+      "/root/v4_clean_r2_c/critic_structural",
+      "/root/v4_clean_r2_c/critic_style",
+      "/root/v4_clean_r2_c/intermediate_zoom",
+      "/root/v4_clean_r2_c/readiness",
+      "/root/v4_clean_r2_c/readiness_codebase",
+      "/root/v4_clean_r2_c/readiness_style"
+    ],
+    "fresh_child_ids": [
+      "/root/v4_clean_r2_c/initial_zoom",
+      "/root/v4_clean_r2_c/comprehension",
+      "/root/v4_clean_r2_c/critic_design",
+      "/root/v4_clean_r2_c/critic_structural",
+      "/root/v4_clean_r2_c/critic_style",
+      "/root/v4_clean_r2_c/intermediate_zoom",
+      "/root/v4_clean_r2_c/readiness",
+      "/root/v4_clean_r2_c/readiness_codebase",
+      "/root/v4_clean_r2_c/readiness_style"
+    ],
+    "stages_completed": [
+      "5 Initial Zoom Out: zoom_out_report.md",
+      "6 Comprehension: comprehension_report.md (complete paraphrase retained)",
+      "7 Critic: critic_report.md; three completed reviewers",
+      "8 Intermediate Zoom Out: intermediate_zoom_out_report.md; initial zoom, comprehension and critic artifacts read",
+      "9 Implementation Readiness: implementation_readiness_report.md; three completed reviewers"
+    ],
+    "words": 417,
+    "initial_inputs_intact": true,
+    "observed_finished_utc": "2026-10-29T11:57:55.382233+00:00"
+  },
+  {
+    "trial_id": "clean-r3-B",
+    "case": "clean",
+    "repeat": 3,
+    "arm": "B",
+    "primary_agent": "/root/v4_clean_r3_b",
+    "requested_fork_turns": "none",
+    "listed_reviewer_ids": [
+      "/root/v4_clean_r3_b/initial_zoom",
+      "/root/v4_clean_r3_b/comprehension",
+      "/root/v4_clean_r3_b/critic_design",
+      "/root/v4_clean_r3_b/critic_structural",
+      "/root/v4_clean_r3_b/critic_style",
+      "/root/v4_clean_r3_b/intermediate_zoom",
+      "/root/v4_clean_r3_b/readiness_implementation",
+      "/root/v4_clean_r3_b/readiness_codebase",
+      "/root/v4_clean_r3_b/readiness_style"
+    ],
+    "fresh_child_ids": [
+      "/root/v4_clean_r3_b/initial_zoom",
+      "/root/v4_clean_r3_b/comprehension",
+      "/root/v4_clean_r3_b/critic_design",
+      "/root/v4_clean_r3_b/critic_structural",
+      "/root/v4_clean_r3_b/critic_style",
+      "/root/v4_clean_r3_b/intermediate_zoom",
+      "/root/v4_clean_r3_b/readiness_implementation",
+      "/root/v4_clean_r3_b/readiness_codebase",
+      "/root/v4_clean_r3_b/readiness_style"
+    ],
+    "stages_completed": [
+      "5 Initial Zoom Out: one completed fresh reviewer; zoom_out_report.md",
+      "6 Comprehension: one completed fresh reviewer; complete paraphrases preserved in comprehension_report.md",
+      "7 Design Critique: three completed fresh reviewers; critic_report.md",
+      "8 Intermediate Zoom Out: one completed fresh reviewer; read own-trial initial zoom, comprehension and critic reports; intermediate_zoom_out_report.md",
+      "9 Implementation Readiness: three completed fresh reviewers; implementation_readiness_report.md"
+    ],
+    "words": 380,
+    "initial_inputs_intact": true,
+    "observed_finished_utc": "2026-10-29T12:06:21.639350+00:00"
+  },
+  {
+    "trial_id": "clean-r3-C",
+    "case": "clean",
+    "repeat": 3,
+    "arm": "C",
+    "primary_agent": "/root/v4_clean_r3_c",
+    "requested_fork_turns": "none",
+    "listed_reviewer_ids": [
+      "/root/v4_clean_r3_c/initial_zoom",
+      "/root/v4_clean_r3_c/comprehension",
+      "/root/v4_clean_r3_c/critic_design",
+      "/root/v4_clean_r3_c/critic_structural",
+      "/root/v4_clean_r3_c/critic_style",
+      "/root/v4_clean_r3_c/intermediate_zoom",
+      "/root/v4_clean_r3_c/readiness_implementation",
+      "/root/v4_clean_r3_c/readiness_codebase",
+      "/root/v4_clean_r3_c/readiness_style"
+    ],
+    "fresh_child_ids": [
+      "/root/v4_clean_r3_c/initial_zoom",
+      "/root/v4_clean_r3_c/comprehension",
+      "/root/v4_clean_r3_c/critic_design",
+      "/root/v4_clean_r3_c/critic_structural",
+      "/root/v4_clean_r3_c/critic_style",
+      "/root/v4_clean_r3_c/intermediate_zoom",
+      "/root/v4_clean_r3_c/readiness_implementation",
+      "/root/v4_clean_r3_c/readiness_codebase",
+      "/root/v4_clean_r3_c/readiness_style"
+    ],
+    "stages_completed": [
+      "5 Initial Zoom Out",
+      "6 Comprehension",
+      "7 Design Critique",
+      "8 Intermediate Zoom Out",
+      "9 Implementation Readiness"
+    ],
+    "words": 368,
+    "initial_inputs_intact": true,
+    "observed_finished_utc": "2026-10-29T12:14:24.745675+00:00"
+  },
+  {
+    "trial_id": "clean-r3-A",
+    "case": "clean",
+    "repeat": 3,
+    "arm": "A",
+    "primary_agent": "/root/v4_clean_r3_a",
+    "requested_fork_turns": "none",
+    "listed_reviewer_ids": [
+      "/root/v4_clean_r3_a",
+      "/root/v4_clean_r3_a/independent_review"
+    ],
+    "fresh_child_ids": [
+      "/root/v4_clean_r3_a/independent_review"
+    ],
+    "stages_completed": [
+      "native_source_review",
+      "fresh_independent_review",
+      "independent_report_synthesis"
+    ],
+    "words": 108,
+    "initial_inputs_intact": true,
+    "observed_finished_utc": "2026-10-29T12:15:36.452933+00:00"
+  }
+]

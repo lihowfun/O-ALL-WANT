@@ -1,0 +1,83 @@
+{
+  "summary": "以 paper.txt、paper.html（含 txt 漏掉的 §3.1 SVG 方框）與 figs/ 的原圖逐項核對 extract.md 與 elephant-draft.md。已確認無誤的部分：四個 sha256 和本機檔案一致；Table 1–5 的數字逐格抄寫正確；Fig 3–6 的目測值都在 ±1 以內；圖文不一致（Hope 和 Sleep 混用、正文把 CTNL 和消融都寫成 Figure 6、Table 3 寫成 Table 4.1、BABILong 圖上只有 4 條線且 caption 說的紅藍點不存在、10M 時約 91%）都屬實；HTML 和 txt 都沒有注入指令；§3.10／§3.14 的 null 模擬，我用解析解重算 (2 cases, p=0.8) 得 0.112，(p=0.95, 3 repeats, 4 cases) 的逐列誤擋得 0.689，和草稿一致；oaw-ref 沒有殘留的 __pycache__。沒有 blocker，因為草稿已經把論文數據全部列為 not measured。主要問題出在兩個 GO 項的論文依據：(1) 草稿說 compute–consolidate–update 會「驗證之後才套用」，但論文裡沒有任何驗證步驟；(2) P1 的復習集（重跑舊 case 做 regression）在論文中找不到對應，論文保護舊知識的方法是凍結參數加新 expert，而且明說 consolidation 不應單純 replay，P1 的方向反而相反；(3) Fig 4 只量到「越穩定越好」這一側，沒有量到可塑性的代價，所以不能拿來當 stability/plasticity 取捨的證據；(4) P2 是唯讀的引用 lint，而論文的 offline consolidation 是主動用自生資料做整合，兩者對應不上。因此 §8 引用帳本中 P1、P2 的「依據」應降級為「命名與動機」。另外有幾處小錯：引用的編號錯置、比 SEAL 多出的分數區間寫錯並歸因錯誤（應為 1.1–3.0；以 dreaming 的消融量加總，已大致可以解釋與 SEAL 的差距）、對 Cartridges 例外的描述偏少，以及 Table 1 的消融語意不明。",
+  "findings": [
+    {
+      "finding": "草稿 §3.4(a) 把 compute–consolidate–update 描述成「把快層的知識 consolidate 進新的 expert，驗證之後才套用並重置快層」。但論文的協定裡沒有驗證或接受測試，只是在 KS 目標優化完之後就直接套用並重置。草稿把 harness 端才有的 verify-before-update 歸給了論文，這是 sl.consolidate-before-update 判 GO（P1）的核心類比。",
+      "severity": "major",
+      "kind": "overclaim",
+      "evidence": "paper.txt L196-198 §3.3 (c): \"Update. After the optimal A, B are found: (a) the base-weight update ... is applied, (b) the low-rank experts previously added ... are reset (synaptic pruning), and (c) the new expert {A,B} is activated\"。全文 grep 'verif' 只出現在 §A.2 的 \"verifiable rewards\" 和 §A.4 的 \"verified reasoning trace\"，兩處都不是 Sleep 協定的一部分。extract §6.2 #3 把「要先驗證成功」標成 harness 轉譯，這樣寫沒問題；錯在草稿 §3.4(a) 寫成論文本身的機制。"
+    },
+    {
+      "finding": "P1（improvement 復習集）掛在 sl.consolidate-before-update 與 sl.consolidate-then-dream 之下，方向和機制都和論文對不上。(a) 論文是在較快的 sender block 即將更新 base weight 之前觸發 consolidation，避免快層知識遺失；較慢的 receiver 原有參數被凍結，靠架構隔離保護，並不是「慢層被修改前先測舊能力」。(b) 論文完全沒有重跑舊任務的 regression 或 rehearsal 測試，而且明說 consolidation 不應只是 replay raw data。(c) 摘要的 rehearse 指 Dreaming 複習「新」知識，P1 複習的卻是「舊」的已接受 case。草稿 §3.14 自己也承認 P1 是經典 rehearsal、論文只提供動機，但 §1 總表和 §8 引用帳本仍寫「依據 §3.3 的 compute–consolidate–update、§3.4／§A.4 的兩階段動機」，等於把一般的 regression gate 記成論文的轉譯。",
+      "severity": "major",
+      "kind": "overclaim",
+      "evidence": "paper.txt L170：\"we need to perform memory consolidation step before updating its parameters\"（its 指較快的 block）。L216：\"we freeze all the parameters in the student model and only updates the expanded parameters. This ensures that the transferred knowledge does not interfere with the old knowledge\"。L207：\"the memory consolidation step should not simply replay raw data\"。L43 摘要：\"generate a curriculum of synthetic data to rehearse new knowledge\"。grep 'rehears' 只命中摘要。兩階段設計防 CF 的主張沒有對應實驗（L250 \"In our evaluation, we show...\" 找不到對應結果；草稿 §3.14 和 extract C10 也這樣判斷）。"
+    },
+    {
+      "finding": "草稿 §3.14(c) 寫「這正是 Fig 4 那個 trade-off（越持久就越不能適應）在 harness 的版本」，§8 也把「Fig 4 的 stability／plasticity 取捨」列為依據。但 Fig 4 只量到一側：最低頻率 512（最持久）在三個任務、每個 level 都是最好的，完全沒有量到持久性帶來的適應性代價。「less adaptive」是作者以 Intuitively 開頭的推測。而且 Fig 4 量的是單一 context 內的 long-context 表現，不是跨時間或跨 session 的 retention。用它來支撐 rehearsal_tolerance 的取捨並不成立；容許誤差的必要性完全來自草稿自己的雜訊模擬。",
+      "severity": "major",
+      "kind": "overclaim",
+      "evidence": "paper.txt L292：\"Intuitively, a lower frequency yields more persistent but less adaptive long-term memory\"，以及 \"(2) increasing the lowest frequency reduces performance, suggesting that making the most persistent memory more adaptive weakens retention\"。figs/obj858、obj859、obj854：freq=512 那條線在 MK-NIAH（約 92→100）、LongHealth（約 52.1→59.1）、QASPER ppl（約 2.42→2.10）每個點都最好，圖上沒有任何可塑性或適應性指標。"
+    },
+    {
+      "finding": "P2（memory sweep）以 sl.online-consolidation-gap 和 sl.wake-sleep-cycle 為依據，但只是借用名稱。論文對 online consolidation 的批評，是它只會強化反覆被 recall 的記憶、缺少新舊知識的高階整合；論文的對策是用自生資料主動 consolidate 近期記憶，而且強調 sleep 不是被動狀態。P2 是唯讀的引用有效性 lint（失效路徑、沒有來源、雜湊已變、重複），既不強化、不抽象，也不整合，處理的是「驗證」而不是「consolidation」。另外，批評只出現在 §1；§3.1 的 HTML 方框只是定義 online consolidation 是 wake 期間的 end-to-end 學習，草稿標成「§1／§3.1」並不精確。§1 總表寫「只依賴 retrieval」，也比原文的 \"selective and retrieval-dependent\" 說得更強。",
+      "severity": "major",
+      "kind": "overclaim",
+      "evidence": "paper.txt L61：\"(i) Is selective and retrieval-dependent: it depends on active retrieval and so strengthens the parts of a memory that are repeatedly recalled; (ii) Depends on the context ... misses the higher-level understanding of new knowledge with existing one\"。paper.html §3.1 方框：\"Offline Consolidation ... stops processing new data, but uses self-generated data to consolidate the recent memories\"。Fig 1 caption（L53）：\"Sleep time is not a passive state, rather it internally process the data to consolidate the memories\"。"
+    },
+    {
+      "finding": "草稿 §0.2 說論文想要的結構性質 OAW V2 已經具備，不需要新工作；§3.6 從 expansion 推出「不做 lossy 的就地摘要」這條約束。這和論文的立場有衝突。論文認為 lossy 抽象是 consolidation 的價值所在（它批評 Hope 沒有額外的 lossy compression），實際機制是把快層內容壓進 low-rank 的小 expert（d_low ≪ d），再重置 sender，也就是 lossy 壓縮之後丟掉來源。OAW 的 append-only 加上 renderer 逐字編譯，缺的正是論文的核心：週期性地把快層抽象進慢層（草稿自己也把 session-end consolidation 判 NO-GO）。所以「已具備」只在分層、慢層較穩、寫新位置這三個表面性質上成立，不能代表論文的主張。",
+      "severity": "minor",
+      "kind": "contradiction",
+      "evidence": "paper.txt L61：\"it still uses the same amount of model's capacity ... keep the knowledge at the same level of abstraction without any additional lossy compression\"。L59：\"The human brain is highly efficient, lossy but effective when it comes to consolidating memory\"。L172：低秩 expert，d_low ≪ d。L242：\"we reset all the low-rank parameters that previously ... have been added\"。L292：\"sleep enables better knowledge abstraction and compression\"。草稿 §2 表也寫明 renderer 是「逐字編譯 raw」。"
+    },
+    {
+      "finding": "extract §3.7 和 C9 說 Sleep「比 SEAL 多 1.4–3.0 分」，並把這段差距歸給「consolidation 與層數」，數字和歸因都有問題。Sleep (Transformer) 在 CPT 是 44.3，SEAL 是 43.2，只差 1.1，所以區間應該是 1.1–3.0。更大的問題是歸因：Sleep 那幾列同時包含 gradient selection 和 random expert。以 four-level 為基準，n=1 時這兩項的消融量合計 1.8+0.9=2.7，已經超過和 SEAL 的差距 2.2；CPT 時合計 1.0+1.5=2.5，差距是 3.0。沒有任何一列單獨隔離出 consolidation。extract §4.2 #6 的「consolidation 本身的邊際貢獻只有 1–3 分」因此無法驗證，很可能高估。另外，消融以 four-level 為基準是 extract 自己的假設，論文沒有寫明。",
+      "severity": "minor",
+      "kind": "wrong_fact",
+      "evidence": "paper.txt Table 3（L417-456）：SEAL 46.7/43.2；Sleep (Transformer) 48.1/44.3；Sleep (Transformer + four-level) 48.9/46.2；removing gradient-based selection 47.1/45.2；removing random expert 48.0/44.7；removing Dreaming 35.7/36.2。L478 作者把結果歸因於 consolidation 和對 SEAL 的改進兩者，沒有拆開。"
+    },
+    {
+      "finding": "Fig 4 的讀圖偏寬鬆。(a) extract C3 只舉出 LongHealth level 1 低於 Cartridges。實際上 MK-NIAH level 1 在 2K（約 90.3）和 8K（約 90.7）也低於 Cartridges（約 91）；LongHealth level 2 在 8K（約 51.3）低於 Cartridges，2K（約 52.0）大約打平。論文寫的 \"Hope outperforms Cartridges\" 例外比 extract 說的多。(b) 趨勢 (2)「最低頻率越高越差」在 MK-NIAH level 1 是反的（2K < 8K），extract C2 只提到 QASPER 8K 在 level 2 的例外。(c) 草稿 §2 和 §3.3 寫「層數越多越好」或「level 1→4 越來越好」，但實驗只測了 1–4 層，QASPER 8K 從 level 1 到 2 還變差（約 2.49→2.52），把它說成「越多越好」是過度外推。",
+      "severity": "minor",
+      "kind": "overclaim",
+      "evidence": "figs/obj858_818x566.png：level 1 的紅點（2K）和粉紅點（8K）都在綠色虛線（Cartridges，約 91）之下，而且紅點更低（我放大裁切後確認）。figs/obj859_800x566.png：level 2 的 8K 約 51.3，Cartridges 約 52。figs/obj854_814x556.png：8K 在 level 2 約 2.52，高於 level 1 的約 2.49。paper.txt L292 寫的是 \"two consistent trends\"。"
+    },
+    {
+      "finding": "草稿 §3.2(a) 寫「論文 §1／§3.1 批評 online consolidation 有兩個缺點：(ii) selective、retrieval-dependent；(iii) 只看當前 context」。這兩點在原文的編號是 (i) 和 (ii)，容量那一點是前面沒有編號的句子。(ii)/(iii) 是 extract 自己重新編號後延續下來的，草稿卻寫成像是論文的編號，屬於引用錯置。",
+      "severity": "minor",
+      "kind": "wrong_fact",
+      "evidence": "paper.txt L61：\"...without any additional lossy compression. Furthermore, this form of consolidation is not enough for robust continual learning: (i) Is selective and retrieval-dependent ... (ii) Depends on the context\"。extract.md L19 把它重新編成 (i)(ii)(iii)。"
+    },
+    {
+      "finding": "草稿 §3.10(c) 寫「論文本身是二元 reward 搭配小型評測集（ARC 只有 8 個 task，差距約 3/40），正是這種風險」，把兩種不同的風險混在一起。Eq. 5 的二元 reward 是在訓練 task 上，供 ReST^EM 篩選 dream 用來訓練，屬於 EM 式的過濾，本來就預期會有雜訊樣本混入。8 個 held-out task 是測試集，3/40 的差距是小樣本評估的問題，和「從 m 個候選中挑出看似進步者再接受」的選擇偏誤不是同一件事。另外，40 次是用 8×5 推算出來的，論文沒有直接寫總試次。",
+      "severity": "minor",
+      "kind": "unclear",
+      "evidence": "paper.txt L253-262：Eq. 5，\"reward the generation of DREAM(i) based on LM_θ'(i)'s performance improvement\"，以及 \"use ReST^EM algorithm ... to optimize\"。L2189 §B.3：\"11 tasks for training and 8 held-out tasks for evaluation ... For each task, we sample 60 dreams and reject 45 of them. At test time ... generates 5 dreams ... We report the fraction of dreams that yield a correct answer\"。"
+    },
+    {
+      "finding": "草稿 §3.11 有兩處問題。(a) 寫「論文 §A.4 提到 privileged teacher 會造成 information leakage」，省略了限定條件：原文是轉述他人的報告，而且前提是 naive 地反覆做 self-distillation。(b) 把 dream（論文中的自生「訓練」資料或 curriculum）對應成 improvement gate 的「復習題」（評估項目），這是類別錯置。論文的 τ 是外部提供的下游評估，dream 從來不是評估工具。",
+      "severity": "minor",
+      "kind": "overclaim",
+      "evidence": "paper.txt L2086-2089：\"Several recent OPSD works also report that naïvely iterating self-distillation in a long-horizon training pipeline can lead to information leakage from the privileged teacher and to training collapse (Wang et al., 2026; He et al., 2026)\"。L253：\"(C, τ) ... τ(·) is a measure to asses the performance in the downstream evaluation\"。L85：dream 的定義是 \"synthetically self-generated data to improve its own performance\"。"
+    },
+    {
+      "finding": "草稿 §3.12 判 sl.random-expert 為 NO-GO，理由是「隨機注入等於主動製造 decoy」，falsifier 是在 scoped-recall 推論時隨機注入一條不相關條目。但論文只在產生 dream（合成訓練資料）時讓 router 多挑一個隨機 expert，從來沒有在推論或 recall 時注入。結論本身仍可以靠「證據只有 0.9–1.5 分、而且是權重層」成立，但衝突論證打錯了對象：那不是論文提出的用法。",
+      "severity": "minor",
+      "kind": "unclear",
+      "evidence": "paper.txt L253：\"In the sampling process, each router in MoE blocks additionally chooses a random expert and so incorporates random irrelevant knowledge to the dreaming\"。Contribution 4（L103）：\"Random Expert Selection for Dreaming\"。"
+    },
+    {
+      "finding": "extract 在幾處把推論寫成定論，或標錯出處。(a) §2.4 斷言「實際上方法中沒有保存 raw wake data 的 replay buffer」。論文沒有交代 D 的 prompt x 從哪裡來，摘要的 \"with replay\" 也沒有定義，所以只能說「論文沒有描述」，無法驗證「沒有」。(b)「rehearse new knowledge（摘要、§3.4）」：rehearse 只出現在摘要，§3.4 沒有這個字。(c) QASPER 的 metric 是 perplexity，出處標成 §B.1，但 §B.1 沒提到 metric，perplexity 來自 Fig 4 的 y 軸「Perplexity (←)」。",
+      "severity": "minor",
+      "kind": "unstated_assumption",
+      "evidence": "paper.txt L209：\"We start with constructing a dataset D by sampling from the teacher model\"，沒有說明 x 的來源。L43：\"with replay\"。grep 'rehears' 只命中 L43。L2170 的 §B.1 QASPER 條目沒有提到 metric。figs/obj854 的 y 軸標示是 Perplexity (←)。"
+    },
+    {
+      "finding": "Table 1（消融）的語意不明，extract 卻沒有標出這個假設。這張表的 caption 照抄了 Table 2（\"Performance of different methods on mathematical reasoning benchmarks\"），沒有說明 '−' 列是各自從完整 Sleep 拿掉一項，還是累積拿掉；'+ Expansion' 指的是 OPSD 加 Expansion，也只是從排版推斷出來的。extract C7、C8 的差值都預設「從完整版各自拿掉一項」。此外，extract §3.6 寫「各元件的效果都在 0.2–2.4 分之間」，但 semantic reward 的差值是 +0.3／−0.2／+1.6，其中一格是負值，而且最大值 1.6 在 HMMT，這樣概括並不準確。",
+      "severity": "minor",
+      "kind": "unstated_assumption",
+      "evidence": "paper.html 的 figcaption 中，Table 1 和 Table 2 的 caption 完全相同。paper.txt L302-339：列名依序為 '- Imitation Learning'、'- Semantic Reward'、'- w/o Expansion'、'OPSD'、'+ Expansion'。L485：\"The results are reported in Figure 6. All the components contribute positively\"。"
+    }
+  ]
+}

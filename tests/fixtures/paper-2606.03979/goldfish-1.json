@@ -1,0 +1,137 @@
+{
+  "summary": "Goldfish #1 blind review of elephant-draft.md. I checked it against paper.txt, the arXiv abs page, the oaw-ref files it names (detached at fc5fda1), and its three simulation scripts. I re-ran those scripts read-only, and they reproduce the draft's numbers exactly. Correct: the four sha256 hashes; v2 dated 2026-07-10 under CC BY 4.0; the Lin et al. 2025 distinction in A.3 (also made in 2.3); the Table 1 expansion deltas (1.0-1.2) and Table 3 random-expert deltas (0.9-1.5); ARC 8 held-out tasks x 5 dreams, so 80% vs 72.5% is a 3/40 difference; the context_hub.py:818 makedirs; MINIMUM_TESTS=159; the named regression test exists; the exclusions quoted from the v2 plan. The main problems are in P1 (the GO item). (1) Its stated precondition, a pass-count comparison with tolerance, does not hold up against the draft's own simulation output once the rehearsal set grows, and the recommended 5-repeat setting raises per-row false rejection on non-rehearsal cases. (2) Within tolerance, losses build up across a chain of proposals. (3) The rehearsal set lives in the untracked, per-clone .oaw/improvements/ directory and treats accepted as if it meant applied. (4) Cases are matched only by name, and assertions are merged across cases into one union. (5) A sequential re-proposal path already exists, which contradicts the claim that the selection-bias guard has no receiving point. P2's paid test (5.3 S3->S4) targets supersession, which P2 v0 explicitly does not detect. Its K1/K3 heuristics are underspecified and will misfire. Smaller items: wrong author order in the citation draft, the minimal spec stated as 2 assertions (it is 1), the eligibility rule described as token-only (it covers tokens, latency and cost), the hook-allowlist claim, the exit codes, and the oaw-ref revision is not pinned. Probe script: goldfish1-sim/probe.py.",
+  "findings": [
+    {
+      "finding": "P1 is GO only on the precondition that rehearsal cases use a pass-count comparison with a pre-declared tolerance (sections 0.3, 3.14(e)). The draft's own simulation shows that tolerance 1 does not keep false blocking bounded as the global rehearsal set grows, and that the recommended 5-repeat setting increases false rejection from the unchanged per-row rule on non-rehearsal cases. The section 3.14 table leaves out the rows that show this. The precondition is therefore not sufficient, and P1 in practice depends on catalog P4 (the draft's own Q4).",
+      "severity": "blocker",
+      "kind": "contradiction",
+      "evidence": "Re-running sim/rehearsal_noise.py (seed 11) reproduces the draft's 4 rows, and the same output also gives, at p=0.8, repeats 5, count-t1: 2 cases 0.378, 4 cases 0.606, 8 cases 0.846. At p=0.95, repeats 5, 8 cases it gives 0.255, the only repeats-5/t1 row the draft shows. The per-row rule, kept for non-rehearsal cases (P1 scope item 4), at p=0.8 with 2 cases gives 0.876 at repeats 3 and 0.970 at repeats 5. goldfish1-sim/probe.py: a null candidate with 2 new cases, 5 repeats and tolerance 1 is rejected 0.969-0.995 at p=0.8, whatever the rehearsal size. A per-(case, assertion) test is a union over |R| x |assertions| tests, so with any fixed tolerance the family-wise false-block rate climbs toward 1 as R grows."
+    },
+    {
+      "finding": "P1 compares each rehearsal case only against the current baseline run. It never compares against the level recorded when that case was accepted, so losses that stay within tolerance on each proposal add up across successive accepted proposals. The claimed property, that self-improvement must not overwrite old capability (section 0.3), is not delivered.",
+      "severity": "major",
+      "kind": "missing_risk",
+      "evidence": "goldfish1-sim/probe.py [3]: with 5 repeats and tolerance 1, a 5-point true drop per proposal goes undetected at each step with probability 0.93, 0.89, 0.86, 0.84, 0.81 (about 0.48 for all five steps). The true pass rate goes from 0.95 to 0.70. With 10-point drops the per-step miss rate is 0.87-0.74 and the end rate is 0.45. P1 items 2 and 4 define a regression only as candidate < baseline - tolerance within one proposal, with no anchor to the accepted run."
+    },
+    {
+      "finding": "The rehearsal set is derived from .oaw/improvements/, which OAW keeps out of Git. That makes it per-machine or per-clone: two maintainers, CI, or a fresh clone each see a different (often empty) set. The draft's claim that accepted cases automatically become a rehearsal set every later proposal must re-run therefore holds only on the machine that recorded the acceptance.",
+      "severity": "major",
+      "kind": "unstated_assumption",
+      "evidence": "oaw-ref/.gitignore:44,48 ignores /.oaw/ and .oaw/improvements/. docs/SELF_IMPROVEMENT.md:85 says to keep `.oaw/improvements/` out of public Git history. AGENTS.md says to keep local improvement runs out of the public repository. Draft P1 item 1 reads only that directory."
+    },
+    {
+      "finding": "P1 treats an accepted proposal as if its patch were in the code. In OAW, accept never applies the patch, and applying it is a separate step that may never happen or may later be reverted. Decided records are immutable, and exclusions live in each spec, not globally. So a proposal that was never applied or was reverted stays in the rehearsal set forever, and every later spec has to exclude it again with its own reason.",
+      "severity": "major",
+      "kind": "unstated_assumption",
+      "evidence": "docs/SELF_IMPROVEMENT.md:81: 'applying it is a separate development action'. improvement.py:384-388 returns patch_applied False. improvement.py:235 only checks that the run's base_snapshot string equals the proposal's, with no link to which accepted patches the base contains. Draft P1 item 2 puts rehearsal_exclusions in the per-proposal spec."
+    },
+    {
+      "finding": "Rehearsal identity is just a case-name string. The spec stores no task content, and evaluation_sha256 hashes only the spec JSON. 'R.cases subset of spec.cases' therefore proves that a name was listed, not that the same task was re-run. A14's 'static-measured gate property' is a string-membership property, yet sections 0.3 and 3.14 present it as protection of earlier improvements. The draft raises this as open question Q2 but still states the benefit unconditionally.",
+      "severity": "major",
+      "kind": "overclaim",
+      "evidence": "improvement.py:74-91: validate_spec checks only that cases are nonempty, unique strings. improvement.py:206,221: evaluation_sha256 is the digest of the spec file. improvement.py:259: the run supplies case_id strings that are matched by name. Draft A14 and section 5 'static-measured: A14 gate property'."
+    },
+    {
+      "finding": "P1 takes the union of assertions across all accepted specs and requires R.assertions to be a subset of spec.assertions. OAW has one global assertion list that applies to every case, so every assertion ever used must then be graded on every new case. The union also loses which assertion belonged to which case, so the per-(case, assertion) regression rule ends up applied to pairs that were never accepted. How the rehearsal set pairs cases with assertions is unspecified.",
+      "severity": "major",
+      "kind": "unclear",
+      "evidence": "improvement.py:263-266: validate_run requires every case row to carry every spec assertion as a bool. Draft P1 item 1 ('evaluation.cases and evaluation.assertions taken as a union'), item 3 (R.assertions subset of spec.assertions), A4 (P2 omitting P1's assertion 'source' must fail)."
+    },
+    {
+      "finding": "Section 3.10(e) says the multi-candidate selection-bias guard has no receiving point until OAW has multi-candidate use. In fact the current tool already allows unlimited sequential re-proposal of the identical patch: each gets a new random id, there is no dedup by patch hash, and the docs tell users to make a new proposal after any non-eligible comparison. That is the m-candidate scenario run in series, so the incidental false-eligible finding already applies today.",
+      "severity": "major",
+      "kind": "contradiction",
+      "evidence": "improvement.py:210: candidate_id = uuid.uuid4().hex[:12]. propose() (193-228) never looks for earlier records with the same patch sha256. docs/SELF_IMPROVEMENT.md:79,87 ('a new proposal is required'; 'gather a targeted missing observation under a new proposal'). From the draft's own table, a null patch re-proposed 3 times at (2 cases, p=0.95) becomes eligible at least once with probability about 0.58."
+    },
+    {
+      "finding": "The 'already present, no new work' claims (sections 0.2, 2, 3.6) describe conventions and CLI behavior as if they were enforced invariants. They overstate the NO-GO justifications and how much P1 covers. AGENTS.md and skills can be changed by ordinary edits, and improvement.py is opt-in. Memory is 'append-only' only through memory add, while the file itself is freely editable. Knowledge pages are not always rebuildable from raw. The section 2 table also lists memory.md's owner as OAW, which contradicts README.",
+      "severity": "major",
+      "kind": "overclaim",
+      "evidence": "README.md:158: native 'Added whenever someone writes it' vs 'Optional oaw-improve'. docs/plans/v2.0.0-execution.md:38: --with-improve is optional. README.md:174: the default 'creates no memory log'. README.md:192: 'Memory, knowledge, raw notes ... stay yours'. evals/skill-value/fixtures.py:78 has a 'build_origin: manual' knowledge page. context_hub.py:255 annotate writes into knowledge pages."
+    },
+    {
+      "finding": "P2's paid behavioral test reuses SHARED_ACCEPTANCE_PROTOCOL 5.3 S3->S4. The main hazard there is supersession (ADR-044 supersedes ADR-040) plus decoys, and P2 v0 explicitly does not detect supersession. Its K1-K5 kinds (broken path, unsourced decision, hash change, duplicate) are not seeded in that fixture. The falsifier will mostly measure noise and cannot tell whether P2 adds value, at a cost of 40 sessions.",
+      "severity": "major",
+      "kind": "unclear",
+      "evidence": "docs/SHARED_ACCEPTANCE_PROTOCOL.md:249-265 (r2 is ADR-044 superseding 040; decoys are ADR-041 analytics, 40 unrelated drafts, and a quoted untrusted email). Draft P2 out-of-scope list: 'supersession detection: wait for te.fact-lifecycle'. Draft section 6 lists 40 sessions."
+    },
+    {
+      "finding": "The K1 and K3 heuristics are underspecified and will misfire, which puts the field-check precision gate of 0.7 at risk. K1, 'a backtick span containing / or an extension', also matches branch names, commands, globs, versions and URLs. K3's '7-40 hex' commit test is satisfied by any decimal number of 7 or more digits, such as dates or ticket numbers. K3 would also flag OAW's own recommended format, whose 'source revision' is usually an ADR id or revision rather than a path, URL or commit. B1-B4 test only the happy paths.",
+      "severity": "major",
+      "kind": "unclear",
+      "evidence": "templates/.agents/skills/oaw-evidence/SKILL.md:15: '[DECISION] Conclusion; scope; source revision; verification'. SHARED_ACCEPTANCE_PROTOCOL.md:251 cites sources as 'ADR-040' with tickets like 'EX-LARCH-731'. The draft's own backtick spans would trip K1: `origin/codex/oaw-2-native-upgrade`, `2.0.0+build.N.<hash>`, `python scripts/sync_examples.py --write`. A date like 20261030 matches [0-9a-f]{7,40}."
+    },
+    {
+      "finding": "The draft says improvement.py already requires the spec to be fixed before results are seen, and it relies on this for the integrity of rehearsal_tolerance and exclusions, and for section 3.11's 'frozen before the candidate exists'. In the code, the spec is only hashed at propose time and is submitted in the same call as the patch, so pre-registration is guidance, not enforced. A proposer can run pilots first, then set tolerance as high as repeats-1 (with 3 repeats a case can fall from 3/3 to 1/3 without counting as a regression), or exclude any rehearsal case with any non-empty reason, and nothing checks this independently.",
+      "severity": "major",
+      "kind": "overclaim",
+      "evidence": "improvement.py:196-221: patch and spec are read in one propose() call and only evaluation_sha256 is stored. docs/SELF_IMPROVEMENT.md:26: 'Define assertions and resource limits before observing candidate results' is advice. Draft P1 item 2 (0 <= tolerance <= repeats-1; reason nonempty and at most 500 characters)."
+    },
+    {
+      "finding": "The incidental finding misstates the gate it simulates. The minimal spec has 1 assertion, not 2. compare() marks a verdict eligible on a drop of 5% or more in any of tokens, latency_ms or cost_usd, not tokens only. The simulation and cross-check both held resource metrics noiseless, and the token_cv=0.3 rows the script also computes are not reported, so the 11-26% figure depends on that unstated assumption.",
+      "severity": "minor",
+      "kind": "wrong_fact",
+      "evidence": "improvement.py:80: names(assertions) has minimum 1. improvement.py:22: METRICS=(tokens, latency_ms, cost_usd). improvement.py:312-321 is the efficiency_gain path. crosscheck_real_compare.py fixes tokens 1000, latency 100, cost 0.01. null_eligible.py prints cv=0.3 rows, e.g. (2, 0.8) 0.083 and (2, 0.95) 0.295. probe.py: a 2 x 3 x 1-assertion spec at p=0.8 gives 0.249 null eligible."
+    },
+    {
+      "finding": "The section 8 citation draft lists the authors in the wrong order.",
+      "severity": "minor",
+      "kind": "wrong_fact",
+      "evidence": "The arXiv abs page citation_author order is Behrouz, Hashemi, Javanmard, Mirrokni (paper.txt header lists Hashemi second as well). The draft has 'Behrouz, Javanmard, Mirrokni, Hashemi'."
+    },
+    {
+      "finding": "Section 3.2 misnumbers the paper's critique of online consolidation and puts it partly in section 3.1. The paper labels the two points (i) selective/retrieval-dependent and (ii) context-dependent, and the critique appears in section 1 only.",
+      "severity": "minor",
+      "kind": "wrong_fact",
+      "evidence": "paper.txt:61: '(i) Is selective and retrieval-dependent ... (ii) Depends on the context'. paper.txt:158 (section 3.1) only names the two forms of consolidation."
+    },
+    {
+      "finding": "Section 3.4(a) describes compute-consolidate-update as 'apply only after verification', and section 8 cites section 3.3 as a basis for P1's regression gate. The paper's ordering has no verification or retention check: it optimizes A and B with the KS objective and then applies the update. P1 is an analogy, not a translation, and the citation should say so.",
+      "severity": "minor",
+      "kind": "overclaim",
+      "evidence": "paper.txt:176-200: (a) compute, (b) consolidate by optimizing A and B via the KS objective, (c) update 'after the optimal A, B are found'. The stated rationale is that 'the prospective weights ... are available for defining the student'."
+    },
+    {
+      "finding": "Section 3.5 says OAW's packaging allowlist rejects hooks. The only hook rejection in the named scripts is the EGM vendoring check on upstream plugin manifests, which is not a general OAW packaging rule.",
+      "severity": "minor",
+      "kind": "wrong_fact",
+      "evidence": "scripts/sync_egm.py:130 rejects upstream manifests with hooks/mcpServers/apps as 'Unreviewed upstream runtime dependencies'. A grep of scripts/*.py for 'hook' finds nothing else."
+    },
+    {
+      "finding": "P2 says argument errors exit 1. context_hub.py parses arguments with argparse, which exits 2 on bad arguments, and main() only maps ValueError/OSError/RuntimeError to 1.",
+      "severity": "minor",
+      "kind": "wrong_fact",
+      "evidence": "context_hub.py:815 (parser.parse_args()) and 845-850 (main catches only ValueError, OSError, RuntimeError and returns 1)."
+    },
+    {
+      "finding": "B13, a wall-clock bound of 2,000 entries in 2 seconds, risks being flaky on the CI matrix. harness_check also requires zero skips, so a slow runner would fail the gate.",
+      "severity": "minor",
+      "kind": "missing_risk",
+      "evidence": "README.md:86: the proof gate requires 'zero skips', with CI on Ubuntu, macOS and Windows under Python 3.10 and 3.13. Draft B13."
+    },
+    {
+      "finding": "The draft pins the paper by sha256 but does not pin the OAW revision it read, even though it relies on line numbers and counts that drift.",
+      "severity": "minor",
+      "kind": "unstated_assumption",
+      "evidence": "oaw-ref is detached at fc5fda1 (same as codex/oaw-2-native-upgrade). The draft cites context_hub.py line 818, Skill_Guide.md:40 and MINIMUM_TESTS 159 (harness_check.py:19 also notes 'POSIX count; Windows adds junction cases')."
+    },
+    {
+      "finding": "The section 3.7 HOLD test is under-defined. The named fixture has no 'consolidated' entries, so arm B is undefined. The falsifier also has no harm clause: an arm that loses accuracy but saves 5% or more of tokens would not be excreted.",
+      "severity": "minor",
+      "kind": "unclear",
+      "evidence": "evals/skill-value/fixtures.py:41-62: all 500 records are tagged [ARCHIVE] and none is marked consolidated. Draft 3.7(d) falsifier: 'accuracy did not rise AND token drop < 5% -> excrete'."
+    },
+    {
+      "finding": "The P1 acceptance tests reuse the prototype names P1, P2 and P3 as names of improvement proposals. That makes A3-A10 ambiguous next to the P2 memory-sweep prototype.",
+      "severity": "minor",
+      "kind": "unclear",
+      "evidence": "Draft A2 'after accepting P1 (cases: handoff, noaction)', A3 'P2's spec omits handoff', A9 'P2 and P3'. In the same section, P2 means memory sweep."
+    },
+    {
+      "finding": "The draft cites figure-level specifics without noting the paper's evidence-quality problems: broken figure and table cross-references, placeholder section references, no seeds or variance, and some figure claims that cannot be checked from the text. This does not change any verdict, since the draft already treats the paper's numbers as non-transferable, but the ledger should flag the evidence as weak.",
+      "severity": "minor",
+      "kind": "unclear",
+      "evidence": "paper.txt:344 says the language results are 'shown in Figure 6', but Figure 5's caption is CTNL (296) and Figure 6 is BABILong (300). paper.txt:485: the math ablation is 'reported in Figure 6' but is Table 1. paper.txt:354, 478 and 481 use 'Section 4.1'/'Table 4.1' placeholders. Section 3.3's 'Fig 4: levels 1 to 4' is not stated in the text (paper.txt:292)."
+    }
+  ]
+}

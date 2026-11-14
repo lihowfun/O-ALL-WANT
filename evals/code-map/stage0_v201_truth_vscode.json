@@ -1,0 +1,1587 @@
+{
+ "schema_version": 1,
+ "title": "Stage 0 v2.0.1 callers truth set: VS Code",
+ "repository": "VS Code (microsoft/vscode)",
+ "commit": "29ad5e7ec8d963aa67226f58a4472697b21d6f35",
+ "built": "2026-11-07 by grep and reading. Disclosure: during development, before this file existed, code_index callers was run on RPCProtocol._remoteCall, AbstractKeybindingService._doDispatch, KeybindingResolver.resolve, ExtensionHostManager._createExtensionHostCustomers and extHostNamedCustomer as engine sanity checks; entries were not copied from that output.",
+ "method": [
+  "whole-word search for the name over every .ts/.js file of a clean `git archive` of the commit (the hit count is recorded per symbol)",
+  "every hit read with its enclosing class or function; receivers traced to a declaration (new X(), a written type, a method's written return type, this in the class or a subclass)",
+  "symbols are the definitions named in the frozen VS Code questions (validation/v8/questions.json)"
+ ],
+ "rule": [
+  "A caller is a call site (file:line of the called name) that invokes this definition at run time: calls through imports, this/super in the class or a subclass that does not override it, static calls, decorator applications, and method calls on instances of the class even when the receiver's type is not written.",
+  "Not callers: the definition, imports, comments, strings, references that pass the function as a value (bind, invokeFunction), calls to other definitions with the same name (including overrides and interface members), which are listed as excluded or dynamic.",
+  "Tests and every other file in the tree count."
+ ],
+ "symbols": [
+  {
+   "symbol": "src/vs/workbench/services/extensions/common/rpcProtocol.ts::RPCProtocol._createProxy",
+   "question": "q1",
+   "grep_hits": 4,
+   "callers": [
+    {
+     "site": "src/vs/workbench/services/extensions/common/rpcProtocol.ts:244",
+     "how": "this._createProxy inside class RPCProtocol (same class) (getProxy)"
+    }
+   ],
+   "excluded": [
+    "testRPCProtocol.ts:96 calls TestRPCProtocol._createProxy (own definition, line 101)"
+   ],
+   "true_callers": 1
+  },
+  {
+   "symbol": "src/vs/workbench/services/extensions/common/rpcProtocol.ts::RPCProtocol._remoteCall",
+   "question": "q1",
+   "grep_hits": 4,
+   "callers": [
+    {
+     "site": "src/vs/workbench/services/extensions/common/rpcProtocol.ts:254",
+     "how": "this._remoteCall in an arrow function of the Proxy handler built by RPCProtocol._createProxy (this = the RPCProtocol)"
+    }
+   ],
+   "excluded": [
+    "testRPCProtocol.ts:106 calls TestRPCProtocol._remoteCall"
+   ],
+   "true_callers": 1
+  },
+  {
+   "symbol": "src/vs/workbench/services/extensions/common/rpcProtocol.ts::RPCProtocol._receiveOneMessage",
+   "question": "q1",
+   "grep_hits": 2,
+   "callers": [
+    {
+     "site": "src/vs/workbench/services/extensions/common/rpcProtocol.ts:159",
+     "how": "this._receiveOneMessage in an arrow function passed to onMessage in the RPCProtocol constructor"
+    }
+   ],
+   "excluded": [],
+   "true_callers": 1
+  },
+  {
+   "symbol": "src/vs/workbench/services/extensions/common/rpcProtocol.ts::RPCProtocol._receiveRequest",
+   "question": "q1",
+   "grep_hits": 3,
+   "callers": [
+    {
+     "site": "src/vs/workbench/services/extensions/common/rpcProtocol.ts:297",
+     "how": "this._receiveRequest inside class RPCProtocol (same class)"
+    },
+    {
+     "site": "src/vs/workbench/services/extensions/common/rpcProtocol.ts:306",
+     "how": "this._receiveRequest inside class RPCProtocol (same class)"
+    }
+   ],
+   "excluded": [],
+   "true_callers": 2
+  },
+  {
+   "symbol": "src/vs/workbench/services/extensions/common/rpcProtocol.ts::RPCProtocol._receiveReply",
+   "question": "q2",
+   "grep_hits": 5,
+   "callers": [
+    {
+     "site": "src/vs/workbench/services/extensions/common/rpcProtocol.ts:319",
+     "how": "this._receiveReply inside class RPCProtocol (same class)"
+    },
+    {
+     "site": "src/vs/workbench/services/extensions/common/rpcProtocol.ts:327",
+     "how": "this._receiveReply inside class RPCProtocol (same class)"
+    },
+    {
+     "site": "src/vs/workbench/services/extensions/common/rpcProtocol.ts:332",
+     "how": "this._receiveReply inside class RPCProtocol (same class)"
+    },
+    {
+     "site": "src/vs/workbench/services/extensions/common/rpcProtocol.ts:337",
+     "how": "this._receiveReply inside class RPCProtocol (same class)"
+    }
+   ],
+   "excluded": [],
+   "true_callers": 4
+  },
+  {
+   "symbol": "src/vs/workbench/services/extensions/common/rpcProtocol.ts::RPCProtocol.assertRegistered",
+   "question": "q3",
+   "grep_hits": 24,
+   "callers": [
+    {
+     "site": "src/vs/workbench/services/extensions/common/extensionHostManager.ts:269",
+     "how": "this._rpcProtocol!.assertRegistered; field _rpcProtocol: RPCProtocol | null (line 70)"
+    },
+    {
+     "site": "src/vs/workbench/services/extensions/common/extensionHostManager.ts:315",
+     "how": "this._rpcProtocol.assertRegistered; same field"
+    }
+   ],
+   "excluded": [
+    "test mocks that define their own assertRegistered (extHostDiagnostics.test.ts, mainThread*.test.ts, testRPCProtocol.ts)",
+    "extHostRpcService.ts:28 rpcProtocol.assertRegistered.bind(...) is a reference, not a call"
+   ],
+   "dynamic": [
+    "src/vs/workbench/api/common/extHost.api.impl.ts:278 rpcProtocol.assertRegistered(...) on IExtHostRpcService, whose property is a bound RPCProtocol.assertRegistered (extHostRpcService.ts:28)",
+    "extensions/copilot/.../test/fixtures/extHost.api.impl.ts:203, a copy of the same line in a test fixture"
+   ],
+   "true_callers": 2
+  },
+  {
+   "symbol": "src/vs/workbench/services/extensions/common/proxyIdentifier.ts::createProxyIdentifier",
+   "question": "q1",
+   "grep_hits": 173,
+   "callers": [
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4228",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4229",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4230",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4231",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4232",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4233",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4234",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4235",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4236",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4237",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4238",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4239",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4240",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4241",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4242",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4243",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4244",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4245",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4246",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4247",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4248",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4249",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4250",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4251",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4252",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4253",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4254",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4255",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4256",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4257",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4258",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4259",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4260",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4261",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4262",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4263",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4264",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4265",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4266",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4267",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4268",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4269",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4270",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4271",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4272",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4273",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4274",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4275",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4276",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4277",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4278",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4279",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4280",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4281",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4282",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4283",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4284",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4285",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4286",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4287",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4288",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4289",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4290",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4291",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4292",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4293",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4294",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4295",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4296",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4297",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4298",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4299",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4300",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4301",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4302",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4303",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4304",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4305",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4306",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4307",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4308",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4309",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4310",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4311",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4312",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4313",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4314",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4315",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4316",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4320",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4321",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4322",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4323",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4324",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4325",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4326",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4327",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4328",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4329",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4330",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4331",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4332",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4333",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4334",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4335",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4336",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4337",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4338",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4339",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4340",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4341",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4342",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4343",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4344",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4345",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4346",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4347",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4348",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4349",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4350",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4351",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4352",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4353",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4354",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4355",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4356",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4357",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4358",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4359",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4360",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4361",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4362",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4363",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4364",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4365",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4366",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4367",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4368",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4369",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4370",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4371",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4372",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4373",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4374",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4375",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4376",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4377",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4378",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4379",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4380",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4381",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4382",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4383",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4384",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4385",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4386",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4387",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4388",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4389",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4390",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4391",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4392",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4393",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4394",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4395",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4396",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4397",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4398",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4399",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4400",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    },
+    {
+     "site": "src/vs/workbench/api/common/extHost.protocol.ts:4401",
+     "how": "createProxyIdentifier<Shape>('Name') call in the MainContext/ExtHostContext tables"
+    }
+   ],
+   "excluded": [
+    "the definition (proxyIdentifier.ts:48) and the import line"
+   ],
+   "true_callers": 171
+  },
+  {
+   "symbol": "src/vs/workbench/services/extensions/common/extHostCustomers.ts::extHostNamedCustomer",
+   "question": "q1",
+   "grep_hits": 162,
+   "callers": [
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadAgentEditorComments.ts:22",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadAiEmbeddingVector.ts:12",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadAiRelatedInformation.ts:13",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadAiSettingsSearch.ts:11",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadAuthentication.ts:131",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadBrowserTunnelProxy.ts:21",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadBrowsers.ts:20",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadBulkEdits.ts:19",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadChatAgents2.ts:103",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadChatArtifactIntegrations.ts:22",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadChatCodeMapper.ts:14",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadChatContext.ts:28",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadChatDebug.ts:15",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadChatInputNotification.ts:11",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadChatQuota.ts:11",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadChatSessions.ts:680",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadChatStatus.ts:11",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadClipboard.ts:11",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadCodeInsets.ts:55",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadCommands.ts:16",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadComments.ts:540",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadConfiguration.ts:16",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadConsole.ts:14",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadDataChannels.ts:16",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadDebugService.ts:24",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadDecorations.ts:70",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadDiagnostics.ts:14",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadDialogs.ts:11",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadDocumentContentProviders.ts:20",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadDocumentDiff.ts:12",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadDownloadService.ts:12",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadEditorTabs.ts:38",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadEmbeddings.ts:74",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadErrors.ts:10",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadExtensionService.ts:33",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadFileSystem.ts:15",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadFileSystemEventService.ts:28",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadGitExtensionService.ts:70",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadGitHub.ts:51",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadInteractive.ts:12",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadLabelService.ts:11",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadLanguageFeatures.ts:45",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadLanguageModelTools.ts:20",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadLanguageModels.ts:51",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadLanguages.ts:22",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadLocalization.ts:13",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadLogService.ts:15",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadManagedSockets.ts:16",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadMcp.ts:41",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadMessageService.ts:20",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadMeteredConnection.ts:11",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadNotebook.ts:29",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadNotebookKernels.ts:111",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadNotebookRenderers.ts:11",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadOutputService.ts:19",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadPower.ts:11",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadProfileContentHandlers.ts:14",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadProgress.ts:17",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadQuickDiff.ts:14",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadQuickOpen.ts:28",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadSCM.ts:614",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadSearch.ts:19",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadSecretState.ts:14",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadShare.ts:13",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadSpeech.ts:26",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadStatusBar.ts:18",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadStorage.ts:16",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadTask.ts:454",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadTelemetry.ts:18",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadTerminalService.ts:35",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadTerminalShellIntegration.ts:16",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadTesting.ts:25",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadTheming.ts:11",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadTimeline.ts:16",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadTreeViews.ts:27",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadTunnelService.ts:24",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadUriOpeners.ts:31",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadUrls.ts:34",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadWindow.ts:16",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    },
+    {
+     "site": "src/vs/workbench/api/browser/mainThreadWorkspace.ts:34",
+     "how": "@extHostNamedCustomer(MainContext.X) decorator applied to a MainThread class (a call)"
+    }
+   ],
+   "excluded": [
+    "import lines, the definition, a JSON string in extHostDocumentData.test.perf-data.ts"
+   ],
+   "true_callers": 80
+  },
+  {
+   "symbol": "src/vs/workbench/services/extensions/common/extensionHostManager.ts::ExtensionHostManager._createExtensionHostCustomers",
+   "question": "q1",
+   "grep_hits": 2,
+   "callers": [
+    {
+     "site": "src/vs/workbench/services/extensions/common/extensionHostManager.ts:128",
+     "how": "this._createExtensionHostCustomers inside class ExtensionHostManager (same class)"
+    }
+   ],
+   "excluded": [],
+   "true_callers": 1
+  },
+  {
+   "symbol": "src/vs/workbench/services/extensions/electron-browser/localProcessExtensionHost.ts::NativeLocalProcessExtensionHost._establishProtocol",
+   "question": "q1",
+   "grep_hits": 2,
+   "callers": [
+    {
+     "site": "src/vs/workbench/services/extensions/electron-browser/localProcessExtensionHost.ts:376",
+     "how": "this._establishProtocol inside class NativeLocalProcessExtensionHost (same class)"
+    }
+   ],
+   "excluded": [],
+   "true_callers": 1
+  },
+  {
+   "symbol": "src/vs/workbench/services/extensions/electron-browser/localProcessExtensionHost.ts::NativeLocalProcessExtensionHost._performHandshake",
+   "question": "q1",
+   "grep_hits": 4,
+   "callers": [
+    {
+     "site": "src/vs/workbench/services/extensions/electron-browser/localProcessExtensionHost.ts:377",
+     "how": "this._performHandshake inside class NativeLocalProcessExtensionHost (same class)"
+    }
+   ],
+   "excluded": [
+    "webWorkerExtensionHost.ts:251 calls WebWorkerExtensionHost._performHandshake (line 254)"
+   ],
+   "true_callers": 1
+  },
+  {
+   "symbol": "src/vs/workbench/api/node/extensionHostProcess.ts::connectToRenderer",
+   "question": "q1",
+   "grep_hits": 4,
+   "callers": [
+    {
+     "site": "src/vs/workbench/api/node/extensionHostProcess.ts:441",
+     "how": "bare call in the same module (startExtensionHostProcess)"
+    }
+   ],
+   "excluded": [
+    "extensionHostWorker.ts:259 calls the worker's own connectToRenderer (line 226)"
+   ],
+   "true_callers": 1
+  },
+  {
+   "symbol": "src/vs/workbench/api/common/extHost.api.impl.ts::createApiFactoryAndRegisterActors",
+   "question": "q3",
+   "grep_hits": 8,
+   "callers": [],
+   "excluded": [
+    "copies of the definition in extensions/copilot test fixtures; import lines; a JSON string"
+   ],
+   "dynamic": [
+    "src/vs/workbench/api/node/extHostExtensionService.ts:156 and src/vs/workbench/api/worker/extHostExtensionService.ts:47 pass it to this._instaService.invokeFunction(...) (called by the instantiation service)"
+   ],
+   "true_callers": 0
+  },
+  {
+   "symbol": "src/vs/workbench/services/extensions/common/abstractExtensionService.ts::AbstractExtensionService._onExtensionHostCrashed",
+   "question": "q2",
+   "grep_hits": 4,
+   "callers": [
+    {
+     "site": "src/vs/workbench/services/extensions/common/abstractExtensionService.ts:880",
+     "how": "this._onExtensionHostCrashed inside class AbstractExtensionService (same class)"
+    },
+    {
+     "site": "src/vs/workbench/services/extensions/electron-browser/nativeExtensionService.ts:161",
+     "how": "super._onExtensionHostCrashed in NativeExtensionService (extends AbstractExtensionService), inside its override"
+    }
+   ],
+   "excluded": [
+    "nativeExtensionService.ts:150 is the override's definition"
+   ],
+   "true_callers": 2
+  },
+  {
+   "symbol": "src/vs/workbench/services/extensions/common/abstractExtensionService.ts::AbstractExtensionService._doStopExtensionHosts",
+   "question": "q2",
+   "grep_hits": 8,
+   "callers": [
+    {
+     "site": "src/vs/workbench/services/extensions/common/abstractExtensionService.ts:219",
+     "how": "this._doStopExtensionHosts inside class AbstractExtensionService (same class)"
+    },
+    {
+     "site": "src/vs/workbench/services/extensions/common/abstractExtensionService.ts:230",
+     "how": "this._doStopExtensionHosts inside class AbstractExtensionService (same class)"
+    },
+    {
+     "site": "src/vs/workbench/services/extensions/common/abstractExtensionService.ts:797",
+     "how": "this._doStopExtensionHosts inside class AbstractExtensionService (same class)"
+    },
+    {
+     "site": "src/vs/workbench/services/extensions/common/abstractExtensionService.ts:890",
+     "how": "this._doStopExtensionHosts inside class AbstractExtensionService (same class)"
+    },
+    {
+     "site": "src/vs/workbench/services/extensions/common/abstractExtensionService.ts:961",
+     "how": "this._doStopExtensionHosts inside class AbstractExtensionService (same class)"
+    },
+    {
+     "site": "src/vs/workbench/services/extensions/browser/extensionService.ts:213",
+     "how": "this._doStopExtensionHosts in ExtensionService (extends AbstractExtensionService, no override)"
+    },
+    {
+     "site": "src/vs/workbench/services/extensions/electron-browser/nativeExtensionService.ts:476",
+     "how": "this._doStopExtensionHosts in NativeExtensionService (extends AbstractExtensionService, no override)"
+    }
+   ],
+   "excluded": [],
+   "true_callers": 7
+  },
+  {
+   "symbol": "src/vs/platform/keybinding/common/abstractKeybindingService.ts::AbstractKeybindingService._doDispatch",
+   "question": "q4",
+   "grep_hits": 5,
+   "callers": [
+    {
+     "site": "src/vs/platform/keybinding/common/abstractKeybindingService.ts:233",
+     "how": "this._doDispatch inside class AbstractKeybindingService (same class)"
+    },
+    {
+     "site": "src/vs/platform/keybinding/common/abstractKeybindingService.ts:246",
+     "how": "this._doDispatch inside class AbstractKeybindingService (same class)"
+    },
+    {
+     "site": "src/vs/platform/keybinding/common/abstractKeybindingService.ts:284",
+     "how": "this._doDispatch inside class AbstractKeybindingService (same class)"
+    }
+   ],
+   "excluded": [
+    "a comment on line 147"
+   ],
+   "true_callers": 3
+  },
+  {
+   "symbol": "src/vs/platform/keybinding/common/abstractKeybindingService.ts::AbstractKeybindingService._leaveChordMode",
+   "question": "q4",
+   "grep_hits": 6,
+   "callers": [
+    {
+     "site": "src/vs/platform/keybinding/common/abstractKeybindingService.ts:181",
+     "how": "this._leaveChordMode inside class AbstractKeybindingService (same class)"
+    },
+    {
+     "site": "src/vs/platform/keybinding/common/abstractKeybindingService.ts:187",
+     "how": "this._leaveChordMode inside class AbstractKeybindingService (same class)"
+    },
+    {
+     "site": "src/vs/platform/keybinding/common/abstractKeybindingService.ts:350",
+     "how": "this._leaveChordMode inside class AbstractKeybindingService (same class)"
+    },
+    {
+     "site": "src/vs/platform/keybinding/common/abstractKeybindingService.ts:377",
+     "how": "this._leaveChordMode inside class AbstractKeybindingService (same class)"
+    },
+    {
+     "site": "src/vs/platform/keybinding/common/abstractKeybindingService.ts:383",
+     "how": "this._leaveChordMode inside class AbstractKeybindingService (same class)"
+    }
+   ],
+   "excluded": [],
+   "true_callers": 5
+  },
+  {
+   "symbol": "src/vs/platform/keybinding/common/keybindingResolver.ts::KeybindingResolver.resolve",
+   "question": "q4",
+   "grep_hits": "thousands of same-name resolve( calls; candidates were the 21 files that name KeybindingResolver or _getResolver, the only ways to hold one (checked with grep for ': KeybindingResolver' and functions returning it)",
+   "callers": [
+    {
+     "site": "src/vs/platform/keybinding/common/abstractKeybindingService.ts:172",
+     "how": "this._getResolver().resolve; abstract _getResolver(): KeybindingResolver (line 93)"
+    },
+    {
+     "site": "src/vs/platform/keybinding/common/abstractKeybindingService.ts:338",
+     "how": "this._getResolver().resolve; same"
+    },
+    {
+     "site": "src/vs/platform/keybinding/test/common/keybindingResolver.test.ts:57",
+     "how": "resolver = new KeybindingResolver(...) on line 55"
+    },
+    {
+     "site": "src/vs/platform/keybinding/test/common/keybindingResolver.test.ts:61",
+     "how": "same resolver (line 55)"
+    },
+    {
+     "site": "src/vs/platform/keybinding/test/common/keybindingResolver.test.ts:74",
+     "how": "resolver = new KeybindingResolver(...) on line 72"
+    },
+    {
+     "site": "src/vs/platform/keybinding/test/common/keybindingResolver.test.ts:490",
+     "how": "resolver = new KeybindingResolver(...) on line 468 (enclosing scope)"
+    },
+    {
+     "site": "src/vs/platform/actionWidget/test/browser/actionWidgetTestUtils.ts:30",
+     "how": "resolver = new KeybindingResolver(...) on line 21"
+    },
+    {
+     "site": "src/vs/sessions/contrib/layout/test/browser/baseSessionLayoutController.test.ts:120",
+     "how": "new KeybindingResolver(...).resolve(...)"
+    },
+    {
+     "site": "src/vs/sessions/contrib/sessions/test/browser/sessionsActions.test.ts:1537",
+     "how": "resolver = new KeybindingResolver(...) on line 1524"
+    },
+    {
+     "site": "src/vs/workbench/contrib/issue/test/electron-browser/nativeIssueFormService.test.ts:223",
+     "how": "resolver = new KeybindingResolver(...) on line 221"
+    },
+    {
+     "site": "src/vs/workbench/contrib/chat/test/browser/actions/chatFindActions.test.ts:102",
+     "how": "resolver = buildResolverForCommands(...), which returns KeybindingResolver (line 67), on line 100"
+    },
+    {
+     "site": "src/vs/workbench/contrib/chat/test/browser/actions/chatFindActions.test.ts:103",
+     "how": "same resolver (line 100)"
+    },
+    {
+     "site": "src/vs/workbench/contrib/chat/test/browser/actions/chatFindActions.test.ts:125",
+     "how": "resolver = buildResolverForCommands(...) on line 124"
+    },
+    {
+     "site": "src/vs/workbench/contrib/chat/test/browser/actions/chatExecuteActions.test.ts:91",
+     "how": "parameter resolver: KeybindingResolver (line 84)"
+    }
+   ],
+   "excluded": [
+    "chatExecuteActions.test.ts:105-110,129 call the test's local function resolve(resolver, ...)",
+    "Promise.resolve and other resolve methods"
+   ],
+   "true_callers": 14
+  },
+  {
+   "symbol": "src/vs/platform/keybinding/common/keybindingResolver.ts::KeybindingResolver.handleRemovals",
+   "question": "q4",
+   "grep_hits": 19,
+   "callers": [
+    {
+     "site": "src/vs/platform/keybinding/common/keybindingResolver.ts:71",
+     "how": "KeybindingResolver.handleRemovals (static) in the constructor"
+    },
+    {
+     "site": "src/vs/platform/keybinding/test/common/keybindingResolver.test.ts:88",
+     "how": "KeybindingResolver.handleRemovals (static), class imported from keybindingResolver.js"
+    },
+    {
+     "site": "src/vs/platform/keybinding/test/common/keybindingResolver.test.ts:103",
+     "how": "KeybindingResolver.handleRemovals (static), class imported from keybindingResolver.js"
+    },
+    {
+     "site": "src/vs/platform/keybinding/test/common/keybindingResolver.test.ts:119",
+     "how": "KeybindingResolver.handleRemovals (static), class imported from keybindingResolver.js"
+    },
+    {
+     "site": "src/vs/platform/keybinding/test/common/keybindingResolver.test.ts:134",
+     "how": "KeybindingResolver.handleRemovals (static), class imported from keybindingResolver.js"
+    },
+    {
+     "site": "src/vs/platform/keybinding/test/common/keybindingResolver.test.ts:149",
+     "how": "KeybindingResolver.handleRemovals (static), class imported from keybindingResolver.js"
+    },
+    {
+     "site": "src/vs/platform/keybinding/test/common/keybindingResolver.test.ts:163",
+     "how": "KeybindingResolver.handleRemovals (static), class imported from keybindingResolver.js"
+    },
+    {
+     "site": "src/vs/platform/keybinding/test/common/keybindingResolver.test.ts:177",
+     "how": "KeybindingResolver.handleRemovals (static), class imported from keybindingResolver.js"
+    },
+    {
+     "site": "src/vs/platform/keybinding/test/common/keybindingResolver.test.ts:191",
+     "how": "KeybindingResolver.handleRemovals (static), class imported from keybindingResolver.js"
+    },
+    {
+     "site": "src/vs/platform/keybinding/test/common/keybindingResolver.test.ts:204",
+     "how": "KeybindingResolver.handleRemovals (static), class imported from keybindingResolver.js"
+    },
+    {
+     "site": "src/vs/platform/keybinding/test/common/keybindingResolver.test.ts:218",
+     "how": "KeybindingResolver.handleRemovals (static), class imported from keybindingResolver.js"
+    },
+    {
+     "site": "src/vs/platform/keybinding/test/common/keybindingResolver.test.ts:232",
+     "how": "KeybindingResolver.handleRemovals (static), class imported from keybindingResolver.js"
+    },
+    {
+     "site": "src/vs/platform/keybinding/test/common/keybindingResolver.test.ts:246",
+     "how": "KeybindingResolver.handleRemovals (static), class imported from keybindingResolver.js"
+    },
+    {
+     "site": "src/vs/platform/keybinding/test/common/keybindingResolver.test.ts:259",
+     "how": "KeybindingResolver.handleRemovals (static), class imported from keybindingResolver.js"
+    },
+    {
+     "site": "src/vs/platform/keybinding/test/common/keybindingResolver.test.ts:270",
+     "how": "KeybindingResolver.handleRemovals (static), class imported from keybindingResolver.js"
+    },
+    {
+     "site": "src/vs/platform/keybinding/test/common/keybindingResolver.test.ts:281",
+     "how": "KeybindingResolver.handleRemovals (static), class imported from keybindingResolver.js"
+    },
+    {
+     "site": "src/vs/platform/keybinding/test/common/keybindingResolver.test.ts:309",
+     "how": "KeybindingResolver.handleRemovals (static), class imported from keybindingResolver.js"
+    },
+    {
+     "site": "src/vs/platform/keybinding/test/common/keybindingResolver.test.ts:320",
+     "how": "KeybindingResolver.handleRemovals (static), class imported from keybindingResolver.js"
+    }
+   ],
+   "excluded": [],
+   "true_callers": 18
+  },
+  {
+   "symbol": "src/vs/platform/keybinding/common/keybindingsRegistry.ts::KeybindingsRegistryImpl.getDefaultKeybindings",
+   "question": "q4",
+   "grep_hits": 36,
+   "callers": [
+    {
+     "site": "src/vs/editor/standalone/browser/standaloneServices.ts:468",
+     "how": "KeybindingsRegistry.getDefaultKeybindings(); KeybindingsRegistry: IKeybindingsRegistry = new KeybindingsRegistryImpl() (keybindingsRegistry.ts:253), imported from keybindingsRegistry.js"
+    },
+    {
+     "site": "src/vs/platform/actions/test/common/registryLeakCheck.ts:65",
+     "how": "KeybindingsRegistry.getDefaultKeybindings(); KeybindingsRegistry: IKeybindingsRegistry = new KeybindingsRegistryImpl() (keybindingsRegistry.ts:253), imported from keybindingsRegistry.js"
+    },
+    {
+     "site": "src/vs/sessions/contrib/agentFeedback/test/browser/agentFeedbackEditorActions.test.ts:34",
+     "how": "KeybindingsRegistry.getDefaultKeybindings(); KeybindingsRegistry: IKeybindingsRegistry = new KeybindingsRegistryImpl() (keybindingsRegistry.ts:253), imported from keybindingsRegistry.js"
+    },
+    {
+     "site": "src/vs/sessions/contrib/automations/test/browser/automationDialog.test.ts:5102",
+     "how": "KeybindingsRegistry.getDefaultKeybindings(); KeybindingsRegistry: IKeybindingsRegistry = new KeybindingsRegistryImpl() (keybindingsRegistry.ts:253), imported from keybindingsRegistry.js"
+    },
+    {
+     "site": "src/vs/sessions/contrib/chat/test/browser/modelPicker.test.ts:96",
+     "how": "KeybindingsRegistry.getDefaultKeybindings(); KeybindingsRegistry: IKeybindingsRegistry = new KeybindingsRegistryImpl() (keybindingsRegistry.ts:253), imported from keybindingsRegistry.js"
+    },
+    {
+     "site": "src/vs/sessions/contrib/chatWindow/test/browser/chatWindowContribution.test.ts:280",
+     "how": "KeybindingsRegistry.getDefaultKeybindings(); KeybindingsRegistry: IKeybindingsRegistry = new KeybindingsRegistryImpl() (keybindingsRegistry.ts:253), imported from keybindingsRegistry.js"
+    },
+    {
+     "site": "src/vs/sessions/contrib/chatWindow/test/browser/chatWindowEditorArea.test.ts:90",
+     "how": "KeybindingsRegistry.getDefaultKeybindings(); KeybindingsRegistry: IKeybindingsRegistry = new KeybindingsRegistryImpl() (keybindingsRegistry.ts:253), imported from keybindingsRegistry.js"
+    },
+    {
+     "site": "src/vs/sessions/contrib/editor/test/browser/editor.contribution.test.ts:856",
+     "how": "KeybindingsRegistry.getDefaultKeybindings(); KeybindingsRegistry: IKeybindingsRegistry = new KeybindingsRegistryImpl() (keybindingsRegistry.ts:253), imported from keybindingsRegistry.js"
+    },
+    {
+     "site": "src/vs/sessions/contrib/editor/test/browser/editor.contribution.test.ts:889",
+     "how": "KeybindingsRegistry.getDefaultKeybindings(); KeybindingsRegistry: IKeybindingsRegistry = new KeybindingsRegistryImpl() (keybindingsRegistry.ts:253), imported from keybindingsRegistry.js"
+    },
+    {
+     "site": "src/vs/sessions/contrib/openAgentsWindow/test/electron-browser/openAgentsWindow.contribution.test.ts:311",
+     "how": "KeybindingsRegistry.getDefaultKeybindings(); KeybindingsRegistry: IKeybindingsRegistry = new KeybindingsRegistryImpl() (keybindingsRegistry.ts:253), imported from keybindingsRegistry.js"
+    },
+    {
+     "site": "src/vs/sessions/contrib/openAgentsWindow/test/electron-browser/openAgentsWindow.contribution.test.ts:331",
+     "how": "KeybindingsRegistry.getDefaultKeybindings(); KeybindingsRegistry: IKeybindingsRegistry = new KeybindingsRegistryImpl() (keybindingsRegistry.ts:253), imported from keybindingsRegistry.js"
+    },
+    {
+     "site": "src/vs/sessions/contrib/sessionInputBanners/test/browser/sessionWorktreeCleanupEditor.test.ts:1305",
+     "how": "KeybindingsRegistry.getDefaultKeybindings(); KeybindingsRegistry: IKeybindingsRegistry = new KeybindingsRegistryImpl() (keybindingsRegistry.ts:253), imported from keybindingsRegistry.js"
+    },
+    {
+     "site": "src/vs/sessions/contrib/sessions/test/browser/customizationsToolbar.test.ts:146",
+     "how": "KeybindingsRegistry.getDefaultKeybindings(); KeybindingsRegistry: IKeybindingsRegistry = new KeybindingsRegistryImpl() (keybindingsRegistry.ts:253), imported from keybindingsRegistry.js"
+    },
+    {
+     "site": "src/vs/sessions/contrib/sessions/test/browser/customizationsToolbar.test.ts:224",
+     "how": "KeybindingsRegistry.getDefaultKeybindings(); KeybindingsRegistry: IKeybindingsRegistry = new KeybindingsRegistryImpl() (keybindingsRegistry.ts:253), imported from keybindingsRegistry.js"
+    },
+    {
+     "site": "src/vs/sessions/contrib/sessions/test/browser/sessionsActions.test.ts:108",
+     "how": "KeybindingsRegistry.getDefaultKeybindings(); KeybindingsRegistry: IKeybindingsRegistry = new KeybindingsRegistryImpl() (keybindingsRegistry.ts:253), imported from keybindingsRegistry.js"
+    },
+    {
+     "site": "src/vs/sessions/contrib/sessions/test/browser/sessionsActions.test.ts:1901",
+     "how": "KeybindingsRegistry.getDefaultKeybindings(); KeybindingsRegistry: IKeybindingsRegistry = new KeybindingsRegistryImpl() (keybindingsRegistry.ts:253), imported from keybindingsRegistry.js"
+    },
+    {
+     "site": "src/vs/sessions/contrib/sessions/test/browser/sessionsListChatMoveDnd.test.ts:940",
+     "how": "KeybindingsRegistry.getDefaultKeybindings(); KeybindingsRegistry: IKeybindingsRegistry = new KeybindingsRegistryImpl() (keybindingsRegistry.ts:253), imported from keybindingsRegistry.js"
+    },
+    {
+     "site": "src/vs/sessions/contrib/sessions/test/browser/sessionsListChatMoveDnd.test.ts:987",
+     "how": "KeybindingsRegistry.getDefaultKeybindings(); KeybindingsRegistry: IKeybindingsRegistry = new KeybindingsRegistryImpl() (keybindingsRegistry.ts:253), imported from keybindingsRegistry.js"
+    },
+    {
+     "site": "src/vs/sessions/contrib/sessions/test/browser/sessionsReopenKeybinding.test.ts:28",
+     "how": "KeybindingsRegistry.getDefaultKeybindings(); KeybindingsRegistry: IKeybindingsRegistry = new KeybindingsRegistryImpl() (keybindingsRegistry.ts:253), imported from keybindingsRegistry.js"
+    },
+    {
+     "site": "src/vs/sessions/contrib/terminal/test/browser/chatWindowTerminalActions.test.ts:81",
+     "how": "KeybindingsRegistry.getDefaultKeybindings(); KeybindingsRegistry: IKeybindingsRegistry = new KeybindingsRegistryImpl() (keybindingsRegistry.ts:253), imported from keybindingsRegistry.js"
+    },
+    {
+     "site": "src/vs/sessions/contrib/terminal/test/browser/chatWindowTerminalActions.test.ts:124",
+     "how": "KeybindingsRegistry.getDefaultKeybindings(); KeybindingsRegistry: IKeybindingsRegistry = new KeybindingsRegistryImpl() (keybindingsRegistry.ts:253), imported from keybindingsRegistry.js"
+    },
+    {
+     "site": "src/vs/workbench/services/keybinding/browser/keybindingService.ts:365",
+     "how": "KeybindingsRegistry.getDefaultKeybindings(); KeybindingsRegistry: IKeybindingsRegistry = new KeybindingsRegistryImpl() (keybindingsRegistry.ts:253), imported from keybindingsRegistry.js"
+    },
+    {
+     "site": "src/vs/workbench/services/keybinding/browser/keybindingService.ts:444",
+     "how": "KeybindingsRegistry.getDefaultKeybindings(); KeybindingsRegistry: IKeybindingsRegistry = new KeybindingsRegistryImpl() (keybindingsRegistry.ts:253), imported from keybindingsRegistry.js"
+    }
+   ],
+   "excluded": [
+    "abstractKeybindingService.ts:118 and keybindingService.ts:663, keybindingsExport.contribution.ts:100 call KeybindingResolver.getDefaultKeybindings",
+    "keybindingsEditorModel.ts:221 calls IKeybindingService.getDefaultKeybindings",
+    "test stubs naming it in strings",
+    "definitions and interface members"
+   ],
+   "true_callers": 23
+  }
+ ],
+ "total_true_callers": 338
+}

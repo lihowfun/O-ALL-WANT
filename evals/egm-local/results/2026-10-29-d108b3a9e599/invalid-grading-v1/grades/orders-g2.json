@@ -1,0 +1,231 @@
+{
+  "grades": [
+    {
+      "review_id": "R01",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        "The 120 ms p99 target at 2,000 requests/s remains unverified from the supplied sources. docs/design.md:20 explicitly describes concurrency and retry tests as planned. No tests or load measurements were executed in this review.",
+        "Concurrent same-order calls in src/reserve.py:3-6 check for an existing reservation before acquiring the stock lock. Whether duplicate allocations can commit depends on unspecified uniqueness constraints and isolation behavior, so this is a conditional risk rather than an additional confirmed defect.",
+        "Grader assessment: The 120 ms p99 target at 2,000 requests/s is explicit in docs/design.md:4, and line 20 explicitly labels concurrency and retry tests planned. The report treats these as verification limits, without falsely asserting a missing target or completed tests. Current reserve.py shows a transaction, row lock and prior-order lookup, but supplies neither database uniqueness constraints nor isolation semantics, so conditional concurrent same-order concerns do not establish another defect."
+      ],
+      "explanations": {
+        "C1": "F01 detects non-atomic check-and-reserve in docs/design.md:11-14: two requests can read the last unit, each create a reservation, and each overwrite availability with zero. The demonstrated lost decrement/oversell violates stock correctness at line 4. src/reserve.py:2,6-10 supplies the cited baseline transaction and inventory row lock. Partial-write inconsistency, where raised, belongs to the same allocation issue and is not double credited.",
+        "C2": "F02 detects repeated allocation for the same order: docs/design.md:7 creates a fresh UUID per request and lines 12-14 create a reservation and repeat all allocation steps on retry. With sufficient remaining stock, replay can deduct again. ADR-001 r2:3 requires per-order_id idempotency, and reserve.py:3-5 demonstrates the prior-order lookup. This is a semantic detection of repeated allocation, beyond a UUID keyword match.",
+        "M1": "F03 detects the explicit false permission claim and scheduled MongoDB rollout in docs/design.md:8,20. Accepted ADR-001 r2:2-3 requires PostgreSQL inventory/reservations and an accepted replacement ADR before a second persistent inventory database; README.md:4 establishes accepted-decision authority. No superseding accepted decision is supplied. Auxiliary memory agrees with r2 but is not independent authority.",
+        "M2": "F04 detects the direct contradiction in docs/design.md:17: the only reservation ledger is deleted after seven days, support must use it for thirty-day disputes, and no archive is planned. Evidence for days 8-30 is unavailable. The retention defect is grounded in the stated support requirement."
+      }
+    },
+    {
+      "review_id": "R02",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        "docs/design.md:4,20 states an end-to-end p99 target of 120 ms at 2,000 requests/s, but supplies no measurement. Its concurrency and retry tests are explicitly planned. No tests were executed during this review; neither performance nor test success is established.",
+        "src/reserve.py:3-6 checks order_id before taking the inventory lock. Concurrent duplicate-order behavior depends on database uniqueness constraints and transaction semantics not supplied here, so an additional current-implementation idempotency defect cannot be established.",
+        "Grader assessment: The 120 ms p99 target at 2,000 requests/s is explicit in docs/design.md:4, and line 20 explicitly labels concurrency and retry tests planned. The report treats these as verification limits, without falsely asserting a missing target or completed tests. Current reserve.py shows a transaction, row lock and prior-order lookup, but supplies neither database uniqueness constraints nor isolation semantics, so conditional concurrent same-order concerns do not establish another defect."
+      ],
+      "explanations": {
+        "C1": "F02 detects non-atomic check-and-reserve in docs/design.md:11-14: two requests can read the last unit, each create a reservation, and each overwrite availability with zero. The demonstrated lost decrement/oversell violates stock correctness at line 4. src/reserve.py:2,6-10 supplies the cited baseline transaction and inventory row lock. Partial-write inconsistency, where raised, belongs to the same allocation issue and is not double credited.",
+        "C2": "F03 detects repeated allocation for the same order: docs/design.md:7 creates a fresh UUID per request and lines 12-14 create a reservation and repeat all allocation steps on retry. With sufficient remaining stock, replay can deduct again. ADR-001 r2:3 requires per-order_id idempotency, and reserve.py:3-5 demonstrates the prior-order lookup. This is a semantic detection of repeated allocation, beyond a UUID keyword match.",
+        "M1": "F01 detects the explicit false permission claim and scheduled MongoDB rollout in docs/design.md:8,20. Accepted ADR-001 r2:2-3 requires PostgreSQL inventory/reservations and an accepted replacement ADR before a second persistent inventory database; README.md:4 establishes accepted-decision authority. No superseding accepted decision is supplied. Auxiliary memory agrees with r2 but is not independent authority.",
+        "M2": "F04 detects the direct contradiction in docs/design.md:17: the only reservation ledger is deleted after seven days, support must use it for thirty-day disputes, and no archive is planned. Evidence for days 8-30 is unavailable. The retention defect is grounded in the stated support requirement."
+      }
+    },
+    {
+      "review_id": "R03",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        "The regional stock-ownership and routing topology is unspecified. Independent overlapping writers would need coordination, but that topology is not established.",
+        "The 120 ms p99 target at 2,000 requests/s is measurable (design:4), but planned tests (design:20) are not performance or correctness results.",
+        "Alternatives, explicit risk treatment and non-goals are documentation gaps, rather than independent demonstrated runtime defects.",
+        "Implementation instructions lack file/schema/routing details, stable phases and explicit correctness assertions. These are readiness-standard gaps, not evidence that proposed files or tests should already exist.",
+        "Grader assessment: The 120 ms p99 target at 2,000 requests/s is explicit in docs/design.md:4, and line 20 explicitly labels concurrency and retry tests planned. The report treats these as verification limits, without falsely asserting a missing target or completed tests. Current reserve.py shows a transaction, row lock and prior-order lookup, but supplies neither database uniqueness constraints nor isolation semantics, so conditional concurrent same-order concerns do not establish another defect.",
+        "Grader assessment: The design does omit alternatives and explicit risk treatment, and its implementation paragraph gives little file/schema/routing/phase/assertion detail. The report explicitly separates these document and readiness observations from demonstrated behavioral defects. The assigned sources do not independently supply the referenced feature/review/readiness standards, so their applicability is unverified; these observations do not establish additional product requirements or mandatory headings. Regional topology is unspecified, so conditional regional concerns are not concrete false alarms."
+      ],
+      "explanations": {
+        "C1": "F01 detects non-atomic check-and-reserve in docs/design.md:11-14: two requests can read the last unit, each create a reservation, and each overwrite availability with zero. The demonstrated lost decrement/oversell violates stock correctness at line 4. src/reserve.py:2,6-10 supplies the cited baseline transaction and inventory row lock. Partial-write inconsistency, where raised, belongs to the same allocation issue and is not double credited.",
+        "C2": "F02 detects repeated allocation for the same order: docs/design.md:7 creates a fresh UUID per request and lines 12-14 create a reservation and repeat all allocation steps on retry. With sufficient remaining stock, replay can deduct again. ADR-001 r2:3 requires per-order_id idempotency, and reserve.py:3-5 demonstrates the prior-order lookup. This is a semantic detection of repeated allocation, beyond a UUID keyword match.",
+        "M1": "F03 detects the explicit false permission claim and scheduled MongoDB rollout in docs/design.md:8,20. Accepted ADR-001 r2:2-3 requires PostgreSQL inventory/reservations and an accepted replacement ADR before a second persistent inventory database; README.md:4 establishes accepted-decision authority. No superseding accepted decision is supplied. Auxiliary memory agrees with r2 but is not independent authority.",
+        "M2": "F04 detects the direct contradiction in docs/design.md:17: the only reservation ledger is deleted after seven days, support must use it for thirty-day disputes, and no archive is planned. Evidence for days 8-30 is unavailable. The retention defect is grounded in the stated support requirement."
+      }
+    },
+    {
+      "review_id": "R04",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        "Three-region stock authority, write routing, replication, failover and migration are unspecified. Their correctness and latency feasibility remain unresolved; no particular topology is mandated by supplied sources.",
+        "The feature standard's alternatives and risk coverage are missing. Readiness reviewers identify missing file/schema/interface actions, incremental cutover phases, correctness prerequisites and explicit test assertions. These are coverage/actionability gaps rather than additional demonstrated behavioral failures.",
+        "Design:4 defines 120 ms p99 at 2,000 requests/s end to end. Design:20 explicitly says concurrency/retry tests are planned. No performance or correctness tests were run or treated as passed.",
+        "Current reserve.py demonstrates useful transaction, inventory-lock and prior-order-lookup safeguards, but the excerpt does not prove every concurrent-idempotency guarantee. Memory was verified against accepted ADR r2 rather than treated as independent authority. No independent cosmetic or heading defect established.",
+        "Grader assessment: The 120 ms p99 target at 2,000 requests/s is explicit in docs/design.md:4, and line 20 explicitly labels concurrency and retry tests planned. The report treats these as verification limits, without falsely asserting a missing target or completed tests. Current reserve.py shows a transaction, row lock and prior-order lookup, but supplies neither database uniqueness constraints nor isolation semantics, so conditional concurrent same-order concerns do not establish another defect.",
+        "Grader assessment: The design does omit alternatives and explicit risk treatment, and its implementation paragraph gives little file/schema/routing/phase/assertion detail. The report explicitly separates these document and readiness observations from demonstrated behavioral defects. The assigned sources do not independently supply the referenced feature/review/readiness standards, so their applicability is unverified; these observations do not establish additional product requirements or mandatory headings. Regional topology is unspecified, so conditional regional concerns are not concrete false alarms."
+      ],
+      "explanations": {
+        "C1": "F01 detects non-atomic check-and-reserve in docs/design.md:11-14: two requests can read the last unit, each create a reservation, and each overwrite availability with zero. The demonstrated lost decrement/oversell violates stock correctness at line 4. src/reserve.py:2,6-10 supplies the cited baseline transaction and inventory row lock. Partial-write inconsistency, where raised, belongs to the same allocation issue and is not double credited.",
+        "C2": "F02 detects repeated allocation for the same order: docs/design.md:7 creates a fresh UUID per request and lines 12-14 create a reservation and repeat all allocation steps on retry. With sufficient remaining stock, replay can deduct again. ADR-001 r2:3 requires per-order_id idempotency, and reserve.py:3-5 demonstrates the prior-order lookup. This is a semantic detection of repeated allocation, beyond a UUID keyword match.",
+        "M1": "F03 detects the explicit false permission claim and scheduled MongoDB rollout in docs/design.md:8,20. Accepted ADR-001 r2:2-3 requires PostgreSQL inventory/reservations and an accepted replacement ADR before a second persistent inventory database; README.md:4 establishes accepted-decision authority. No superseding accepted decision is supplied. Auxiliary memory agrees with r2 but is not independent authority.",
+        "M2": "F04 detects the direct contradiction in docs/design.md:17: the only reservation ledger is deleted after seven days, support must use it for thirty-day disputes, and no archive is planned. Evidence for days 8-30 is unavailable. The retention defect is grounded in the stated support requirement."
+      }
+    },
+    {
+      "review_id": "R05",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        "Three-region inventory ownership, write routing, coordination and connectivity-failure behavior are unspecified. Their consequences depend on the intended topology.",
+        "The 120 ms p99 target at 2,000 requests/s is measurable, but neither attained nor disproved. The contention benefit is unmeasured; concurrency and replay tests are explicitly planned, not implemented or passing evidence. No tests were executed.",
+        "Alternative evaluation, explicit risk mitigation, file/API change mapping, ledger schema, migration/cutover phases and test assertions need clarification under supplied standards; they do not independently establish additional functional failures.",
+        "The design omits an existing-system explanation, but supplied baseline sources establish current behavior. No additional factual blocker or mandatory heading/style defect follows. Proposed ledger absence is not a nonexistent-current-file defect.",
+        "Grader assessment: The 120 ms p99 target at 2,000 requests/s is explicit in docs/design.md:4, and line 20 explicitly labels concurrency and retry tests planned. The report treats these as verification limits, without falsely asserting a missing target or completed tests. Current reserve.py shows a transaction, row lock and prior-order lookup, but supplies neither database uniqueness constraints nor isolation semantics, so conditional concurrent same-order concerns do not establish another defect.",
+        "Grader assessment: The design does omit alternatives and explicit risk treatment, and its implementation paragraph gives little file/schema/routing/phase/assertion detail. The report explicitly separates these document and readiness observations from demonstrated behavioral defects. The assigned sources do not independently supply the referenced feature/review/readiness standards, so their applicability is unverified; these observations do not establish additional product requirements or mandatory headings. Regional topology is unspecified, so conditional regional concerns are not concrete false alarms."
+      ],
+      "explanations": {
+        "C1": "F01 detects non-atomic check-and-reserve in docs/design.md:11-14: two requests can read the last unit, each create a reservation, and each overwrite availability with zero. The demonstrated lost decrement/oversell violates stock correctness at line 4. src/reserve.py:2,6-10 supplies the cited baseline transaction and inventory row lock. Partial-write inconsistency, where raised, belongs to the same allocation issue and is not double credited.",
+        "C2": "F02 detects repeated allocation for the same order: docs/design.md:7 creates a fresh UUID per request and lines 12-14 create a reservation and repeat all allocation steps on retry. With sufficient remaining stock, replay can deduct again. ADR-001 r2:3 requires per-order_id idempotency, and reserve.py:3-5 demonstrates the prior-order lookup. This is a semantic detection of repeated allocation, beyond a UUID keyword match.",
+        "M1": "F03 detects the explicit false permission claim and scheduled MongoDB rollout in docs/design.md:8,20. Accepted ADR-001 r2:2-3 requires PostgreSQL inventory/reservations and an accepted replacement ADR before a second persistent inventory database; README.md:4 establishes accepted-decision authority. No superseding accepted decision is supplied. Auxiliary memory agrees with r2 but is not independent authority.",
+        "M2": "F04 detects the direct contradiction in docs/design.md:17: the only reservation ledger is deleted after seven days, support must use it for thirty-day disputes, and no archive is planned. Evidence for days 8-30 is unavailable. The retention defect is grounded in the stated support requirement."
+      }
+    },
+    {
+      "review_id": "R06",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        "Three-region inventory authority, routing, coordination and failure behavior are unspecified (docs/design.md:4–14,20); no particular regional failure or latency miss is established.",
+        "Implementation line 20 leaves file changes, schema, migration/routing, phases and concrete test assertions unresolved. These are readiness questions, not evidence that proposed files should already exist.",
+        "Alternatives and explicit risks/limits are missing under the review standard; these content observations do not establish extra authoritative product requirements or mandatory header wording.",
+        "The 120 ms p99 at 2,000 requests/s is a measurable target. Concurrency/retry tests are explicitly planned; no tests or benchmarks were run or claimed to pass. The supplied existing-code snippet alone does not prove all current concurrency guarantees.",
+        "Grader assessment: The 120 ms p99 target at 2,000 requests/s is explicit in docs/design.md:4, and line 20 explicitly labels concurrency and retry tests planned. The report treats these as verification limits, without falsely asserting a missing target or completed tests. Current reserve.py shows a transaction, row lock and prior-order lookup, but supplies neither database uniqueness constraints nor isolation semantics, so conditional concurrent same-order concerns do not establish another defect.",
+        "Grader assessment: The design does omit alternatives and explicit risk treatment, and its implementation paragraph gives little file/schema/routing/phase/assertion detail. The report explicitly separates these document and readiness observations from demonstrated behavioral defects. The assigned sources do not independently supply the referenced feature/review/readiness standards, so their applicability is unverified; these observations do not establish additional product requirements or mandatory headings. Regional topology is unspecified, so conditional regional concerns are not concrete false alarms."
+      ],
+      "explanations": {
+        "C1": "F02 detects non-atomic check-and-reserve in docs/design.md:11-14: two requests can read the last unit, each create a reservation, and each overwrite availability with zero. The demonstrated lost decrement/oversell violates stock correctness at line 4. src/reserve.py:2,6-10 supplies the cited baseline transaction and inventory row lock. Partial-write inconsistency, where raised, belongs to the same allocation issue and is not double credited.",
+        "C2": "F03 detects repeated allocation for the same order: docs/design.md:7 creates a fresh UUID per request and lines 12-14 create a reservation and repeat all allocation steps on retry. With sufficient remaining stock, replay can deduct again. ADR-001 r2:3 requires per-order_id idempotency, and reserve.py:3-5 demonstrates the prior-order lookup. This is a semantic detection of repeated allocation, beyond a UUID keyword match.",
+        "M1": "F01 detects the explicit false permission claim and scheduled MongoDB rollout in docs/design.md:8,20. Accepted ADR-001 r2:2-3 requires PostgreSQL inventory/reservations and an accepted replacement ADR before a second persistent inventory database; README.md:4 establishes accepted-decision authority. No superseding accepted decision is supplied. Auxiliary memory agrees with r2 but is not independent authority.",
+        "M2": "F04 detects the direct contradiction in docs/design.md:17: the only reservation ledger is deleted after seven days, support must use it for thirty-day disputes, and no archive is planned. Evidence for days 8-30 is unavailable. The retention defect is grounded in the stated support requirement."
+      }
+    },
+    {
+      "review_id": "R07",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        "Concurrency, retry and load tests at docs/design.md:20 are planned, not executed or passed. No measured evidence establishes the latency target or an actual production incident.",
+        "Alternative evaluation and explicit risk coverage are missing. File scope, schema, migration, routing, rollback, checkpoints and test assertions remain underspecified. These review-standard and plan-depth observations are separate from demonstrated correctness defects.",
+        "No independent editorial or heading defect was established. Detailed three-region coordination behavior is unspecified and was not invented.",
+        "Grader assessment: The 120 ms p99 target at 2,000 requests/s is explicit in docs/design.md:4, and line 20 explicitly labels concurrency and retry tests planned. The report treats these as verification limits, without falsely asserting a missing target or completed tests. Current reserve.py shows a transaction, row lock and prior-order lookup, but supplies neither database uniqueness constraints nor isolation semantics, so conditional concurrent same-order concerns do not establish another defect.",
+        "Grader assessment: The design does omit alternatives and explicit risk treatment, and its implementation paragraph gives little file/schema/routing/phase/assertion detail. The report explicitly separates these document and readiness observations from demonstrated behavioral defects. The assigned sources do not independently supply the referenced feature/review/readiness standards, so their applicability is unverified; these observations do not establish additional product requirements or mandatory headings. Regional topology is unspecified, so conditional regional concerns are not concrete false alarms."
+      ],
+      "explanations": {
+        "C1": "F01 detects non-atomic check-and-reserve in docs/design.md:11-14: two requests can read the last unit, each create a reservation, and each overwrite availability with zero. The demonstrated lost decrement/oversell violates stock correctness at line 4. src/reserve.py:2,6-10 supplies the cited baseline transaction and inventory row lock. Partial-write inconsistency, where raised, belongs to the same allocation issue and is not double credited.",
+        "C2": "F02 detects repeated allocation for the same order: docs/design.md:7 creates a fresh UUID per request and lines 12-14 create a reservation and repeat all allocation steps on retry. With sufficient remaining stock, replay can deduct again. ADR-001 r2:3 requires per-order_id idempotency, and reserve.py:3-5 demonstrates the prior-order lookup. This is a semantic detection of repeated allocation, beyond a UUID keyword match.",
+        "M1": "F03 detects the explicit false permission claim and scheduled MongoDB rollout in docs/design.md:8,20. Accepted ADR-001 r2:2-3 requires PostgreSQL inventory/reservations and an accepted replacement ADR before a second persistent inventory database; README.md:4 establishes accepted-decision authority. No superseding accepted decision is supplied. Auxiliary memory agrees with r2 but is not independent authority.",
+        "M2": "F04 detects the direct contradiction in docs/design.md:17: the only reservation ledger is deleted after seven days, support must use it for thirty-day disputes, and no archive is planned. Evidence for days 8-30 is unavailable. The retention defect is grounded in the stated support requirement."
+      }
+    },
+    {
+      "review_id": "R08",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        "Regional inventory authority, routing, replication, partition and failover behavior are unspecified. The sources do not establish three-region latency feasibility or prove the 120 ms target impossible.",
+        "Alternatives and explicit risk/mitigation evaluation are missing under the supplied document standard; these completeness concerns are not additional factual product requirements or exact-heading defects.",
+        "Implementation files/actions, ledger schema, reservation/routing integration, and incremental phases/checkpoints remain open. These readiness gaps do not establish that an unsafe cutover occurred or require an invented implementation.",
+        "Concurrency/retry tests at design:20 are explicitly planned. No tests were run or passing results inferred. Existing source demonstrates safeguards and reuse opportunities but does not prove every concurrent same-order execution safe.",
+        "Grader assessment: The 120 ms p99 target at 2,000 requests/s is explicit in docs/design.md:4, and line 20 explicitly labels concurrency and retry tests planned. The report treats these as verification limits, without falsely asserting a missing target or completed tests. Current reserve.py shows a transaction, row lock and prior-order lookup, but supplies neither database uniqueness constraints nor isolation semantics, so conditional concurrent same-order concerns do not establish another defect.",
+        "Grader assessment: The design does omit alternatives and explicit risk treatment, and its implementation paragraph gives little file/schema/routing/phase/assertion detail. The report explicitly separates these document and readiness observations from demonstrated behavioral defects. The assigned sources do not independently supply the referenced feature/review/readiness standards, so their applicability is unverified; these observations do not establish additional product requirements or mandatory headings. Regional topology is unspecified, so conditional regional concerns are not concrete false alarms."
+      ],
+      "explanations": {
+        "C1": "F02 detects non-atomic check-and-reserve in docs/design.md:11-14: two requests can read the last unit, each create a reservation, and each overwrite availability with zero. The demonstrated lost decrement/oversell violates stock correctness at line 4. src/reserve.py:2,6-10 supplies the cited baseline transaction and inventory row lock. Partial-write inconsistency, where raised, belongs to the same allocation issue and is not double credited.",
+        "C2": "F03 detects repeated allocation for the same order: docs/design.md:7 creates a fresh UUID per request and lines 12-14 create a reservation and repeat all allocation steps on retry. With sufficient remaining stock, replay can deduct again. ADR-001 r2:3 requires per-order_id idempotency, and reserve.py:3-5 demonstrates the prior-order lookup. This is a semantic detection of repeated allocation, beyond a UUID keyword match.",
+        "M1": "F01 detects the explicit false permission claim and scheduled MongoDB rollout in docs/design.md:8,20. Accepted ADR-001 r2:2-3 requires PostgreSQL inventory/reservations and an accepted replacement ADR before a second persistent inventory database; README.md:4 establishes accepted-decision authority. No superseding accepted decision is supplied. Auxiliary memory agrees with r2 but is not independent authority.",
+        "M2": "F04 detects the direct contradiction in docs/design.md:17: the only reservation ledger is deleted after seven days, support must use it for thirty-day disputes, and no archive is planned. Evidence for days 8-30 is unavailable. The retention defect is grounded in the stated support requirement."
+      }
+    },
+    {
+      "review_id": "R09",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        "The p99 target of 120 ms at 2,000 requests/s is a stated end-to-end load-test target (docs/design.md:4,20), not a measured result. The supplied material establishes neither attainment nor impossibility.",
+        "Separate reservation and inventory writes also raise a partial-failure concern (docs/design.md:12-14): interruption after reservation creation could leave stock unchanged. Failure handling and recovery are unspecified, so this is an unresolved operational risk rather than a separate finding.",
+        "The supplied database interface does not expose uniqueness constraints or isolation semantics. An additional concurrent same-order idempotency defect in src/reserve.py cannot be established from these files alone.",
+        "Concurrency and retry tests are explicitly planned in docs/design.md:20. No tests were executed in this review.",
+        "Grader assessment: The 120 ms p99 target at 2,000 requests/s is explicit in docs/design.md:4, and line 20 explicitly labels concurrency and retry tests planned. The report treats these as verification limits, without falsely asserting a missing target or completed tests. Current reserve.py shows a transaction, row lock and prior-order lookup, but supplies neither database uniqueness constraints nor isolation semantics, so conditional concurrent same-order concerns do not establish another defect.",
+        "Grader assessment: Interruption between the separate writes in docs/design.md:12-14 can leave a reservation without its inventory deduction. This source-grounded partial-failure risk is part of the non-atomic allocation issue and receives no additional credit beyond C1."
+      ],
+      "explanations": {
+        "C1": "F02 detects non-atomic check-and-reserve in docs/design.md:11-14: two requests can read the last unit, each create a reservation, and each overwrite availability with zero. The demonstrated lost decrement/oversell violates stock correctness at line 4. src/reserve.py:2,6-10 supplies the cited baseline transaction and inventory row lock. Partial-write inconsistency, where raised, belongs to the same allocation issue and is not double credited.",
+        "C2": "F03 detects repeated allocation for the same order: docs/design.md:7 creates a fresh UUID per request and lines 12-14 create a reservation and repeat all allocation steps on retry. With sufficient remaining stock, replay can deduct again. ADR-001 r2:3 requires per-order_id idempotency, and reserve.py:3-5 demonstrates the prior-order lookup. This is a semantic detection of repeated allocation, beyond a UUID keyword match.",
+        "M1": "F01 detects the explicit false permission claim and scheduled MongoDB rollout in docs/design.md:8,20. Accepted ADR-001 r2:2-3 requires PostgreSQL inventory/reservations and an accepted replacement ADR before a second persistent inventory database; README.md:4 establishes accepted-decision authority. No superseding accepted decision is supplied. Auxiliary memory agrees with r2 but is not independent authority.",
+        "M2": "F04 detects the direct contradiction in docs/design.md:17: the only reservation ledger is deleted after seven days, support must use it for thirty-day disputes, and no archive is planned. Evidence for days 8-30 is unavailable. The retention defect is grounded in the stated support requirement."
+      }
+    }
+  ]
+}

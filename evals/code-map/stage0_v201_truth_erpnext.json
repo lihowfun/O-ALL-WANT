@@ -1,0 +1,675 @@
+{
+ "schema_version": 1,
+ "title": "Stage 0 v2.0.1 callers truth set: ERPNext",
+ "repository": "ERPNext (frappe/erpnext)",
+ "commit": "d9cb9169dcc144cba46f7ddfcf90b0ab7b1e6aa9",
+ "built": "2026-11-07, before running code_index callers on these 20 symbols",
+ "method": [
+  "grep -rnw NAME over every file of a clean `git archive` of the commit (the hit count is recorded per symbol)",
+  "every Python and JavaScript hit read by hand with its enclosing definition; the receiver of each method call was traced in the source (assignment, import, class body)",
+  "symbols are the definitions named in the frozen ERPNext questions (taste-graphify/erpnext/questions.json) and their direct helpers"
+ ],
+ "rule": [
+  "A caller is a call site (file:line of the called name) that invokes this definition by name at run time: bare calls through imports or the same module, self/super calls in the class (or its subclasses), and method calls on objects that are instances of the class even when the receiver's type is not written (documents fetched with frappe.get_doc, call results).",
+  "Not callers: the definition, imports, comments, docstrings, strings, calls to other definitions with the same name, and calls through string paths (hooks.py, frappe.get_attr, run_method), which are listed under dynamic.",
+  "Tests, patches and every other file in the tree count."
+ ],
+ "symbols": [
+  {
+   "symbol": "erpnext/stock/stock_balance.py::update_bin_qty",
+   "question": "q1",
+   "grep_hits": 33,
+   "callers": [
+    {
+     "site": "erpnext/accounts/services/child_item_update.py:686",
+     "how": "bare call; name imported from the defining module (function-local import, lines 669-674)"
+    },
+    {
+     "site": "erpnext/buying/doctype/purchase_order/purchase_order.py:423",
+     "how": "bare call; name imported from the defining module (line 27)"
+    },
+    {
+     "site": "erpnext/manufacturing/doctype/work_order/services/status.py:416",
+     "how": "bare call; name imported from the defining module (line 21)"
+    },
+    {
+     "site": "erpnext/patches/v12_0/recalculate_requested_qty_in_bin.py:17",
+     "how": "bare call; name imported from the defining module (line 3)"
+    },
+    {
+     "site": "erpnext/patches/v4_2/repost_reserved_qty.py:36",
+     "how": "bare call; name imported from the defining module (line 7)"
+    },
+    {
+     "site": "erpnext/patches/v4_2/update_requested_and_ordered_qty.py:22",
+     "how": "bare call; name imported from the defining module (function-local import, line 9)"
+    },
+    {
+     "site": "erpnext/selling/doctype/sales_order/services/reservation.py:60",
+     "how": "bare call; name imported from the defining module (line 16)"
+    },
+    {
+     "site": "erpnext/stock/stock_balance.py:62",
+     "how": "bare call inside the defining module (repost_stock)"
+    },
+    {
+     "site": "erpnext/stock/doctype/bin/test_bin.py:45",
+     "how": "bare call; name imported from the defining module (line 10)"
+    },
+    {
+     "site": "erpnext/stock/doctype/item/test_item.py:1304",
+     "how": "bare call; name imported from the defining module (function-local import, line 1298)"
+    },
+    {
+     "site": "erpnext/stock/doctype/item/test_item.py:1309",
+     "how": "bare call; name imported from the defining module (function-local import, line 1298)"
+    },
+    {
+     "site": "erpnext/stock/doctype/material_request/material_request.py:588",
+     "how": "bare call; name imported from the defining module (line 23)"
+    },
+    {
+     "site": "erpnext/subcontracting/doctype/subcontracting_order/subcontracting_order.py:327",
+     "how": "bare call; name imported from the defining module (line 23)"
+    }
+   ],
+   "excluded": [
+    "production_plan.py:336,387,396,511,528 and work_order/services/status.py:465 call ProductionPlan.update_bin_qty (self or a Production Plan doc)",
+    "bin.py:258 docstring; import lines"
+   ],
+   "true_callers": 13
+  },
+  {
+   "symbol": "erpnext/stock/stock_ledger.py::get_valuation_rate",
+   "question": "q2",
+   "grep_hits": 27,
+   "callers": [
+    {
+     "site": "erpnext/stock/stock_ledger.py:2284",
+     "how": "bare call inside the defining module (update_entries_after.get_fallback_rate)"
+    },
+    {
+     "site": "erpnext/stock/utils.py:473",
+     "how": "bare call; name imported from the defining module (function-local import, line 366)"
+    },
+    {
+     "site": "erpnext/stock/doctype/stock_entry/stock_entry.py:772",
+     "how": "bare call; name imported from the defining module (line 39)"
+    },
+    {
+     "site": "erpnext/stock/doctype/stock_entry/test_stock_entry.py:2718",
+     "how": "bare call; name imported from the defining module (function-local import, line 2712)"
+    },
+    {
+     "site": "erpnext/stock/tests/test_stock_ledger.py:38",
+     "how": "bare call; name imported from the defining module (function-local import, line 33)"
+    },
+    {
+     "site": "erpnext/subcontracting/doctype/subcontracting_receipt/subcontracting_receipt.py:485",
+     "how": "bare call; name imported from the defining module (line 19)"
+    },
+    {
+     "site": "erpnext/subcontracting/doctype/subcontracting_receipt/subcontracting_receipt.py:555",
+     "how": "bare call; name imported from the defining module (line 19)"
+    }
+   ],
+   "excluded": [
+    "bom.py:1340 and bom/services/costing.py:44 call bom.get_valuation_rate (bom.py:1378)",
+    "item_prices.py:26 calls its own get_valuation_rate (line 228)",
+    "test_get_item_details.py:167-173 use get_item_details.get_valuation_rate (imported lines 4-12)",
+    "comments"
+   ],
+   "true_callers": 7
+  },
+  {
+   "symbol": "erpnext/stock/stock_balance.py::repost_stock",
+   "question": "q1",
+   "grep_hits": 7,
+   "callers": [
+    {
+     "site": "erpnext/stock/stock_balance.py:30",
+     "how": "bare call inside the defining module (repost)"
+    },
+    {
+     "site": "erpnext/stock/doctype/bin/test_bin.py:65",
+     "how": "bare call; name imported from the defining module (function-local import, line 56)"
+    },
+    {
+     "site": "erpnext/stock/doctype/item/item.py:869",
+     "how": "bare call; name imported from the defining module (function-local import, line 850)"
+    },
+    {
+     "site": "erpnext/stock/doctype/item/item.py:872",
+     "how": "bare call; name imported from the defining module (function-local import, line 850)"
+    }
+   ],
+   "excluded": [],
+   "true_callers": 4
+  },
+  {
+   "symbol": "erpnext/buying/doctype/purchase_order/purchase_order.py::PurchaseOrder.update_ordered_qty",
+   "question": "q1",
+   "grep_hits": 15,
+   "callers": [
+    {
+     "site": "erpnext/buying/doctype/purchase_order/purchase_order.py:462",
+     "how": "self.update_ordered_qty inside the defining class (on_submit)"
+    },
+    {
+     "site": "erpnext/buying/doctype/purchase_order/purchase_order.py:508",
+     "how": "self.update_ordered_qty inside the defining class (on_cancel)"
+    },
+    {
+     "site": "erpnext/buying/doctype/purchase_order/services/status.py:35",
+     "how": "doc.update_ordered_qty(); doc = self.doc of the Purchase Order status service (read the class); receiver type not written"
+    },
+    {
+     "site": "erpnext/buying/doctype/purchase_order/services/status.py:50",
+     "how": "same as line 35"
+    },
+    {
+     "site": "erpnext/controllers/buying_controller.py:1378",
+     "how": "po_obj.update_ordered_qty(); po_obj is a Purchase Order document fetched by name (frappe.get_doc), dynamic receiver"
+    },
+    {
+     "site": "erpnext/accounts/services/child_item_update.py:234",
+     "how": "parent.update_ordered_qty() inside `if self.parent_doctype == \"Purchase Order\"`; parent fetched by doctype, dynamic receiver"
+    }
+   ],
+   "excluded": [
+    "stock_controller.py:420 and blanket_order.py:476 call BlanketOrder.update_ordered_qty",
+    "work_order.py:693,714,1280 call WorkOrder/StatusService.update_ordered_qty"
+   ],
+   "true_callers": 6
+  },
+  {
+   "symbol": "erpnext/subcontracting/doctype/subcontracting_order/subcontracting_order.py::SubcontractingOrder.update_ordered_qty_for_subcontracting",
+   "question": "q1",
+   "grep_hits": 3,
+   "callers": [
+    {
+     "site": "erpnext/subcontracting/doctype/subcontracting_order/subcontracting_order.py:450",
+     "how": "self.update_ordered_qty_for_subcontracting inside the defining class"
+    },
+    {
+     "site": "erpnext/controllers/subcontracting_controller.py:1435",
+     "how": "sco_doc.update_ordered_qty_for_subcontracting(); sco_doc is a Subcontracting Order document fetched by name, dynamic receiver; the only definition of the name"
+    }
+   ],
+   "excluded": [],
+   "true_callers": 2
+  },
+  {
+   "symbol": "erpnext/selling/doctype/sales_order/services/reservation.py::SalesOrderStockReservation.update_reserved_qty",
+   "question": "q1",
+   "grep_hits": 12,
+   "callers": [
+    {
+     "site": "erpnext/selling/doctype/sales_order/sales_order.py:686",
+     "how": "SalesOrderStockReservation(self).update_reserved_qty(...): method of a new instance (receiver is a call result)"
+    }
+   ],
+   "excluded": [
+    "selling_controller.py:620,791, sales_order.py:583,620, test_sales_order.py:2090, services/status.py:46,70 and child_item_update.py:255 call SalesOrder.update_reserved_qty or SellingController.update_reserved_qty"
+   ],
+   "true_callers": 1
+  },
+  {
+   "symbol": "erpnext/stock/doctype/material_request/material_request.py::MaterialRequest.update_requested_qty",
+   "question": "q1",
+   "grep_hits": 13,
+   "callers": [
+    {
+     "site": "erpnext/stock/doctype/material_request/material_request.py:353",
+     "how": "self.update_requested_qty inside the defining class"
+    },
+    {
+     "site": "erpnext/stock/doctype/material_request/material_request.py:405",
+     "how": "self.update_requested_qty inside the defining class"
+    },
+    {
+     "site": "erpnext/stock/doctype/material_request/material_request.py:436",
+     "how": "self.update_requested_qty inside the defining class"
+    },
+    {
+     "site": "erpnext/controllers/subcontracting_controller.py:1597",
+     "how": "mr_obj.update_requested_qty(); mr_obj is a Material Request document fetched by name, dynamic receiver"
+    },
+    {
+     "site": "erpnext/manufacturing/doctype/work_order/services/status.py:424",
+     "how": "mr_obj = frappe.get_doc(\"Material Request\", ...) on line 423, dynamic receiver"
+    },
+    {
+     "site": "erpnext/stock/doctype/stock_entry/stock_entry.py:2003",
+     "how": "mr_obj.update_requested_qty(); mr_obj is a Material Request document fetched by name, dynamic receiver"
+    }
+   ],
+   "excluded": [
+    "purchase_order.py:460,506, purchase_order/services/status.py:34, subcontracting_order.py:448 and child_item_update.py:233 call SubcontractingController.update_requested_qty (inherited by Purchase/Subcontracting Order)"
+   ],
+   "true_callers": 6
+  },
+  {
+   "symbol": "erpnext/manufacturing/doctype/work_order/services/status.py::StatusService.update_planned_qty",
+   "question": "q1",
+   "grep_hits": 7,
+   "callers": [
+    {
+     "site": "erpnext/manufacturing/doctype/work_order/work_order.py:1274",
+     "how": "StatusService(self).update_planned_qty(): method of a new instance (receiver is a call result)"
+    }
+   ],
+   "excluded": [
+    "work_order.py:696,713,1412 call WorkOrder.update_planned_qty"
+   ],
+   "dynamic": [
+    "erpnext/stock/doctype/stock_entry/services/manufacturing.py:1215 run_method(\"update_planned_qty\") on a Work Order (WorkOrder.update_planned_qty)"
+   ],
+   "true_callers": 1
+  },
+  {
+   "symbol": "erpnext/accounts/services/child_item_update.py::update_bin_on_delete",
+   "question": "q1",
+   "grep_hits": 2,
+   "callers": [
+    {
+     "site": "erpnext/accounts/services/child_item_update.py:760",
+     "how": "bare call inside the defining module"
+    }
+   ],
+   "excluded": [],
+   "true_callers": 1
+  },
+  {
+   "symbol": "erpnext/stock/utils.py::_get_incoming_rate",
+   "question": "q2",
+   "grep_hits": 36,
+   "callers": [
+    {
+     "site": "erpnext/accounts/doctype/sales_invoice/test_sales_invoice.py:3742",
+     "how": "bare call; name imported from the defining module (from erpnext.stock.utils)"
+    },
+    {
+     "site": "erpnext/accounts/report/gross_profit/gross_profit.py:1053",
+     "how": "bare call; name imported from the defining module (from erpnext.stock.utils)"
+    },
+    {
+     "site": "erpnext/assets/doctype/asset_capitalization/asset_capitalization.py:211",
+     "how": "bare call; name imported from the defining module (from erpnext.stock.utils)"
+    },
+    {
+     "site": "erpnext/assets/doctype/asset_capitalization/asset_capitalization.py:733",
+     "how": "bare call; name imported from the defining module (from erpnext.stock.utils)"
+    },
+    {
+     "site": "erpnext/controllers/buying_controller.py:376",
+     "how": "bare call; name imported from the defining module (from erpnext.stock.utils)"
+    },
+    {
+     "site": "erpnext/controllers/buying_controller.py:1003",
+     "how": "bare call; name imported from the defining module (from erpnext.stock.utils)"
+    },
+    {
+     "site": "erpnext/controllers/sales_and_purchase_return.py:997",
+     "how": "bare call; name imported from the defining module (from erpnext.stock.utils)"
+    },
+    {
+     "site": "erpnext/controllers/selling_controller.py:713",
+     "how": "bare call; name imported from the defining module (from erpnext.stock.utils)"
+    },
+    {
+     "site": "erpnext/controllers/subcontracting_controller.py:114",
+     "how": "bare call; name imported from the defining module (from erpnext.stock.utils)"
+    },
+    {
+     "site": "erpnext/controllers/subcontracting_controller.py:1071",
+     "how": "bare call; name imported from the defining module (from erpnext.stock.utils)"
+    },
+    {
+     "site": "erpnext/stock/doctype/item_standard_cost/test_item_standard_cost.py:889",
+     "how": "bare call; name imported from the defining module (from erpnext.stock.utils)"
+    },
+    {
+     "site": "erpnext/stock/doctype/stock_entry/stock_entry.py:815",
+     "how": "bare call; name imported from the defining module (from erpnext.stock.utils)"
+    },
+    {
+     "site": "erpnext/stock/doctype/stock_entry/stock_entry.py:2286",
+     "how": "bare call; name imported from the defining module (from erpnext.stock.utils)"
+    },
+    {
+     "site": "erpnext/stock/doctype/stock_ledger_entry/test_stock_ledger_entry.py:2020",
+     "how": "bare call; name imported from the defining module (from erpnext.stock.utils)"
+    },
+    {
+     "site": "erpnext/stock/doctype/stock_reconciliation/stock_reconciliation.py:1953",
+     "how": "bare call; name imported from the defining module (from erpnext.stock.utils)"
+    },
+    {
+     "site": "erpnext/stock/doctype/stock_reconciliation/test_stock_reconciliation.py:181",
+     "how": "bare call; name imported from the defining module (from erpnext.stock.utils)"
+    },
+    {
+     "site": "erpnext/stock/doctype/stock_reconciliation/test_stock_reconciliation.py:203",
+     "how": "bare call; name imported from the defining module (from erpnext.stock.utils)"
+    },
+    {
+     "site": "erpnext/stock/doctype/stock_reconciliation/test_stock_reconciliation.py:254",
+     "how": "bare call; name imported from the defining module (from erpnext.stock.utils)"
+    },
+    {
+     "site": "erpnext/utilities/transaction_base.py:449",
+     "how": "bare call; name imported from the defining module (from erpnext.stock.utils)"
+    },
+    {
+     "site": "erpnext/stock/utils.py:361",
+     "how": "bare call inside the defining module (get_incoming_rate)"
+    }
+   ],
+   "excluded": [
+    "import lines; comments at asset_capitalization.py:728 and stock_entry.py:2270"
+   ],
+   "true_callers": 20
+  },
+  {
+   "symbol": "erpnext/stock/doctype/stock_entry/stock_entry.py::StockEntry.get_row_valuation_rate",
+   "question": "q2",
+   "grep_hits": 3,
+   "callers": [
+    {
+     "site": "erpnext/stock/doctype/stock_entry/stock_entry.py:743",
+     "how": "self.get_row_valuation_rate inside the defining class"
+    },
+    {
+     "site": "erpnext/stock/doctype/stock_entry/stock_entry.py:765",
+     "how": "self.get_row_valuation_rate inside the defining class"
+    }
+   ],
+   "excluded": [],
+   "true_callers": 2
+  },
+  {
+   "symbol": "erpnext/subcontracting/doctype/subcontracting_receipt/subcontracting_receipt.py::SubcontractingReceipt.get_secondary_item_valuation_rate",
+   "question": "q2",
+   "grep_hits": 2,
+   "callers": [
+    {
+     "site": "erpnext/subcontracting/doctype/subcontracting_receipt/subcontracting_receipt.py:712",
+     "how": "self.get_secondary_item_valuation_rate inside the defining class"
+    }
+   ],
+   "excluded": [],
+   "true_callers": 1
+  },
+  {
+   "symbol": "erpnext/accounts/deferred_revenue.py::process_deferred_accounting",
+   "question": "q3",
+   "grep_hits": 510,
+   "callers": [],
+   "excluded": [
+    "the other hits are the Process Deferred Accounting doctype (JSON, field names, a test variable)"
+   ],
+   "dynamic": [
+    "erpnext/hooks.py:581 scheduler entry \"erpnext.accounts.deferred_revenue.process_deferred_accounting\" (string path)"
+   ],
+   "true_callers": 0
+  },
+  {
+   "symbol": "erpnext/accounts/deferred_revenue.py::book_deferred_income_or_expense",
+   "question": "q3",
+   "grep_hits": 3,
+   "callers": [
+    {
+     "site": "erpnext/accounts/deferred_revenue.py:106",
+     "how": "bare call inside the defining module"
+    },
+    {
+     "site": "erpnext/accounts/deferred_revenue.py:143",
+     "how": "bare call inside the defining module"
+    }
+   ],
+   "excluded": [],
+   "true_callers": 2
+  },
+  {
+   "symbol": "erpnext/accounts/deferred_revenue.py::book_revenue_via_journal_entry",
+   "question": "q3",
+   "grep_hits": 2,
+   "callers": [
+    {
+     "site": "erpnext/accounts/deferred_revenue.py:429",
+     "how": "bare call inside the defining module"
+    }
+   ],
+   "excluded": [],
+   "true_callers": 1
+  },
+  {
+   "symbol": "erpnext/accounts/deferred_revenue.py::send_mail",
+   "question": "q3",
+   "grep_hits": 5,
+   "callers": [
+    {
+     "site": "erpnext/accounts/deferred_revenue.py:109",
+     "how": "bare call inside the defining module"
+    },
+    {
+     "site": "erpnext/accounts/deferred_revenue.py:146",
+     "how": "bare call inside the defining module"
+    }
+   ],
+   "excluded": [
+    "email_campaign.py:166 calls email_campaign.send_mail (line 190)"
+   ],
+   "true_callers": 2
+  },
+  {
+   "symbol": "erpnext/stock/get_item_details.py::get_default_cost_center",
+   "question": "q4",
+   "grep_hits": 51,
+   "callers": [
+    {
+     "site": "erpnext/stock/get_item_details.py:660",
+     "how": "bare call inside the defining module (get_basic_details)"
+    },
+    {
+     "site": "erpnext/assets/doctype/asset_capitalization/asset_capitalization.py:612",
+     "how": "bare call; name imported from the defining module (from erpnext.stock.get_item_details)"
+    },
+    {
+     "site": "erpnext/assets/doctype/asset_capitalization/asset_capitalization.py:687",
+     "how": "bare call; name imported from the defining module (from erpnext.stock.get_item_details)"
+    },
+    {
+     "site": "erpnext/assets/doctype/asset_capitalization/asset_capitalization.py:782",
+     "how": "bare call; name imported from the defining module (from erpnext.stock.get_item_details)"
+    },
+    {
+     "site": "erpnext/assets/doctype/asset_capitalization/asset_capitalization.py:806",
+     "how": "bare call; name imported from the defining module (from erpnext.stock.get_item_details)"
+    },
+    {
+     "site": "erpnext/stock/doctype/stock_entry/stock_entry.py:307",
+     "how": "bare call; name imported from the defining module (from erpnext.stock.get_item_details)"
+    },
+    {
+     "site": "erpnext/stock/doctype/stock_entry/stock_entry.py:1571",
+     "how": "bare call; name imported from the defining module (from erpnext.stock.get_item_details)"
+    },
+    {
+     "site": "erpnext/subcontracting/doctype/subcontracting_receipt/subcontracting_receipt.py:377",
+     "how": "bare call; name imported from the defining module (from erpnext.stock.get_item_details)"
+    }
+   ],
+   "excluded": [
+    "erpnext.get_default_cost_center(...) and bare calls imported from erpnext (bank_reconciliation_tool.py, test_dunning.py, subscription.py, test_sales_order.py) call erpnext/__init__.py:34, a different function"
+   ],
+   "true_callers": 8
+  },
+  {
+   "symbol": "erpnext/setup/doctype/item_group/item_group.py::get_item_group_defaults",
+   "question": "q4",
+   "grep_hits": 43,
+   "callers": [
+    {
+     "site": "erpnext/assets/doctype/asset_capitalization/asset_capitalization.py:610",
+     "how": "bare call; name imported from the defining module (from erpnext.setup.doctype.item_group.item_group)"
+    },
+    {
+     "site": "erpnext/assets/doctype/asset_capitalization/asset_capitalization.py:685",
+     "how": "bare call; name imported from the defining module (from erpnext.setup.doctype.item_group.item_group)"
+    },
+    {
+     "site": "erpnext/assets/doctype/asset_capitalization/asset_capitalization.py:780",
+     "how": "bare call; name imported from the defining module (from erpnext.setup.doctype.item_group.item_group)"
+    },
+    {
+     "site": "erpnext/assets/doctype/asset_capitalization/asset_capitalization.py:802",
+     "how": "bare call; name imported from the defining module (from erpnext.setup.doctype.item_group.item_group)"
+    },
+    {
+     "site": "erpnext/buying/doctype/purchase_order/mapper.py:168",
+     "how": "bare call; name imported from the defining module (from erpnext.setup.doctype.item_group.item_group)"
+    },
+    {
+     "site": "erpnext/controllers/buying_controller.py:1722",
+     "how": "bare call; name imported from the defining module (from erpnext.setup.doctype.item_group.item_group)"
+    },
+    {
+     "site": "erpnext/controllers/stock_controller.py:1092",
+     "how": "bare call; name imported from the defining module (from erpnext.setup.doctype.item_group.item_group)"
+    },
+    {
+     "site": "erpnext/manufacturing/doctype/production_plan/services/material_request.py:667",
+     "how": "bare call; name imported from the defining module (from erpnext.setup.doctype.item_group.item_group)"
+    },
+    {
+     "site": "erpnext/manufacturing/doctype/work_order/work_order.py:646",
+     "how": "bare call; name imported from the defining module (from erpnext.setup.doctype.item_group.item_group)"
+    },
+    {
+     "site": "erpnext/manufacturing/doctype/work_order/services/required_items.py:146",
+     "how": "bare call; name imported from the defining module (from erpnext.setup.doctype.item_group.item_group)"
+    },
+    {
+     "site": "erpnext/selling/doctype/sales_order/mapper.py:329",
+     "how": "bare call; name imported from the defining module (from erpnext.setup.doctype.item_group.item_group)"
+    },
+    {
+     "site": "erpnext/selling/doctype/sales_order/mapper.py:556",
+     "how": "bare call; name imported from the defining module (from erpnext.setup.doctype.item_group.item_group)"
+    },
+    {
+     "site": "erpnext/stock/get_item_details.py:559",
+     "how": "bare call; name imported from the defining module (from erpnext.setup.doctype.item_group.item_group)"
+    },
+    {
+     "site": "erpnext/stock/get_item_details.py:785",
+     "how": "bare call; name imported from the defining module (from erpnext.setup.doctype.item_group.item_group)"
+    },
+    {
+     "site": "erpnext/stock/get_item_details.py:1162",
+     "how": "bare call; name imported from the defining module (from erpnext.setup.doctype.item_group.item_group)"
+    },
+    {
+     "site": "erpnext/stock/get_item_details.py:1995",
+     "how": "bare call; name imported from the defining module (from erpnext.setup.doctype.item_group.item_group)"
+    },
+    {
+     "site": "erpnext/stock/doctype/item/item.py:200",
+     "how": "bare call; name imported from the defining module (from erpnext.setup.doctype.item_group.item_group)"
+    },
+    {
+     "site": "erpnext/stock/doctype/item_standard_cost/item_standard_cost.py:427",
+     "how": "bare call; name imported from the defining module (from erpnext.setup.doctype.item_group.item_group)"
+    },
+    {
+     "site": "erpnext/stock/doctype/material_request/mapper.py:213",
+     "how": "bare call; name imported from the defining module (from erpnext.setup.doctype.item_group.item_group)"
+    },
+    {
+     "site": "erpnext/stock/doctype/stock_entry/stock_entry.py:310",
+     "how": "bare call; name imported from the defining module (from erpnext.setup.doctype.item_group.item_group)"
+    },
+    {
+     "site": "erpnext/stock/doctype/stock_entry/stock_entry.py:1503",
+     "how": "bare call; name imported from the defining module (from erpnext.setup.doctype.item_group.item_group)"
+    },
+    {
+     "site": "erpnext/stock/services/base_stock_gl_composer.py:303",
+     "how": "bare call; name imported from the defining module (from erpnext.setup.doctype.item_group.item_group)"
+    },
+    {
+     "site": "erpnext/subcontracting/doctype/subcontracting_receipt/subcontracting_receipt.py:299",
+     "how": "bare call; name imported from the defining module (from erpnext.setup.doctype.item_group.item_group)"
+    },
+    {
+     "site": "erpnext/subcontracting/doctype/subcontracting_receipt/subcontracting_receipt.py:313",
+     "how": "bare call; name imported from the defining module (from erpnext.setup.doctype.item_group.item_group)"
+    },
+    {
+     "site": "erpnext/subcontracting/doctype/subcontracting_receipt/subcontracting_receipt.py:380",
+     "how": "bare call; name imported from the defining module (from erpnext.setup.doctype.item_group.item_group)"
+    },
+    {
+     "site": "erpnext/subcontracting/doctype/subcontracting_receipt/subcontracting_receipt.py:413",
+     "how": "bare call; name imported from the defining module (from erpnext.setup.doctype.item_group.item_group)"
+    }
+   ],
+   "excluded": [
+    "import lines"
+   ],
+   "dynamic": [
+    "erpnext/stock/get_item_details.py:1196-1198 frappe.get_attr(f\"erpnext.stock.get_item_details.{method}\") over a list of names (string path)"
+   ],
+   "true_callers": 26
+  },
+  {
+   "symbol": "erpnext/stock/get_item_details.py::get_basic_details",
+   "question": "q4",
+   "grep_hits": 2,
+   "callers": [
+    {
+     "site": "erpnext/stock/get_item_details.py:143",
+     "how": "bare call inside the defining module (_get_item_details)"
+    }
+   ],
+   "excluded": [],
+   "true_callers": 1
+  },
+  {
+   "symbol": "erpnext/stock/stock_ledger.py::update_entries_after.get_fallback_rate",
+   "question": "q2",
+   "grep_hits": 7,
+   "callers": [
+    {
+     "site": "erpnext/stock/stock_ledger.py:1522",
+     "how": "self.get_fallback_rate inside the defining class (class update_entries_after spans lines 772-2386)"
+    },
+    {
+     "site": "erpnext/stock/stock_ledger.py:1965",
+     "how": "self.get_fallback_rate inside the defining class (class update_entries_after spans lines 772-2386)"
+    },
+    {
+     "site": "erpnext/stock/stock_ledger.py:2168",
+     "how": "self.get_fallback_rate inside the defining class (class update_entries_after spans lines 772-2386)"
+    },
+    {
+     "site": "erpnext/stock/stock_ledger.py:2195",
+     "how": "self.get_fallback_rate inside the defining class (class update_entries_after spans lines 772-2386)"
+    },
+    {
+     "site": "erpnext/stock/stock_ledger.py:2260",
+     "how": "self.get_fallback_rate inside the defining class (class update_entries_after spans lines 772-2386)"
+    },
+    {
+     "site": "erpnext/stock/serial_batch_bundle.py:801",
+     "how": "self.sle_self.get_fallback_rate(...): sle_self is never assigned by name in the repository (dynamic); the only definition of the name"
+    }
+   ],
+   "excluded": [],
+   "true_callers": 6
+  }
+ ],
+ "total_true_callers": 110
+}

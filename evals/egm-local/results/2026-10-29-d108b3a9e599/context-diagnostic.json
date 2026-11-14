@@ -1,0 +1,17 @@
+{
+  "test": "native_conversation_inheritance_canary",
+  "expected_nonsecret_marker": "OAW_CONTEXT_CANARY_dxi1q34u_mu234ea8_o5a8uvmx_ggw7ngof_sdqpsfn6",
+  "positive": {
+    "agent": "/root/context_positive",
+    "fork_turns": "all",
+    "response": "OAW_CONTEXT_CANARY_dxi1q34u_mu234ea8_o5a8uvmx_ggw7ngof_sdqpsfn6"
+  },
+  "negative": {
+    "agent": "/root/context_fresh",
+    "fork_turns": "none",
+    "response": "UNKNOWN"
+  },
+  "passed": true,
+  "tools_used_by_controls": false,
+  "scope": "Single conversation-inheritance diagnostic; not filesystem, memory-service or all-host isolation certification."
+}

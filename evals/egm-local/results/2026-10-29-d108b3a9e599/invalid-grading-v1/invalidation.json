@@ -1,0 +1,11 @@
+{
+  "status": "invalid-grading-context",
+  "cause": "Original grader packet omitted actual EGM method standards. Seven provisional unsupported claims were true descriptions of feature/implementation standards supplied to reviewers; grading/adjudication inferred nonexistent standards from an incomplete packet.",
+  "source_evidence": [
+    "resources/document_standards/feature-spec-standard.md:8-22",
+    "resources/document_standards/implementation-readiness-standard.md:22-33"
+  ],
+  "exclusion_scope": "All six first-round grades, its adjudication and aggregate excluded; 27 primary reviews preserved unchanged.",
+  "correction": "Supply full as-used method bundle as evidence to every fresh grader. All six grade all 27 reports anew with identical reports, cases, rubric and grade prompt; no arm mapping.",
+  "observed_utc": "2026-10-29T12:39:31.319959+00:00"
+}

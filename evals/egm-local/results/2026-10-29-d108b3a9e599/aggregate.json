@@ -1,0 +1,123 @@
+{
+  "spec_sha256": "d108b3a9e5993ef7aceabb9a790b3bad3e1d749bfe0ffe8336e2ff6454c66ad2",
+  "evidence_complete": true,
+  "problems": [],
+  "baseline_problems": [],
+  "counts": {
+    "orders": {
+      "A": {
+        "detections": {
+          "C1": 3,
+          "C2": 3,
+          "M1": 3,
+          "M2": 3
+        },
+        "unsupported_concrete_claims": 0,
+        "explicit_contradictions": 0,
+        "valid_additional_findings": 0
+      },
+      "B": {
+        "detections": {
+          "C1": 3,
+          "C2": 3,
+          "M1": 3,
+          "M2": 3
+        },
+        "unsupported_concrete_claims": 0,
+        "explicit_contradictions": 0,
+        "valid_additional_findings": 0
+      },
+      "C": {
+        "detections": {
+          "C1": 3,
+          "C2": 3,
+          "M1": 3,
+          "M2": 3
+        },
+        "unsupported_concrete_claims": 0,
+        "explicit_contradictions": 0,
+        "valid_additional_findings": 0
+      }
+    },
+    "events": {
+      "A": {
+        "detections": {
+          "C1": 3,
+          "C2": 3,
+          "M1": 3,
+          "M2": 3
+        },
+        "unsupported_concrete_claims": 0,
+        "explicit_contradictions": 0,
+        "valid_additional_findings": 0
+      },
+      "B": {
+        "detections": {
+          "C1": 3,
+          "C2": 3,
+          "M1": 3,
+          "M2": 3
+        },
+        "unsupported_concrete_claims": 1,
+        "explicit_contradictions": 1,
+        "valid_additional_findings": 0
+      },
+      "C": {
+        "detections": {
+          "C1": 3,
+          "C2": 3,
+          "M1": 3,
+          "M2": 3
+        },
+        "unsupported_concrete_claims": 0,
+        "explicit_contradictions": 0,
+        "valid_additional_findings": 0
+      }
+    },
+    "clean": {
+      "A": {
+        "detections": {},
+        "unsupported_concrete_claims": 0,
+        "explicit_contradictions": 0,
+        "valid_additional_findings": 0
+      },
+      "B": {
+        "detections": {},
+        "unsupported_concrete_claims": 0,
+        "explicit_contradictions": 0,
+        "valid_additional_findings": 0
+      },
+      "C": {
+        "detections": {},
+        "unsupported_concrete_claims": 0,
+        "explicit_contradictions": 0,
+        "valid_additional_findings": 0
+      }
+    }
+  },
+  "comparisons": [
+    {
+      "baseline": "A",
+      "treatment": "B",
+      "regressions": [
+        "events: unsupported claims +1"
+      ],
+      "gains": [],
+      "additional_finding_count_gains": [],
+      "observed_non_regression": false
+    },
+    {
+      "baseline": "B",
+      "treatment": "C",
+      "regressions": [],
+      "gains": [
+        "events: unsupported claims -1"
+      ],
+      "additional_finding_count_gains": [],
+      "observed_non_regression": true
+    }
+  ],
+  "quality_gate": "regression",
+  "index_attribution_controls_required": true,
+  "scope": "Observed fixed-suite non-regression only; no statistical equivalence, general superiority, cost or native-host discovery claim."
+}

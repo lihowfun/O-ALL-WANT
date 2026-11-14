@@ -1,0 +1,395 @@
+{
+  "reviews": [
+    {
+      "review_id": "R01",
+      "completed": true,
+      "findings": [
+        {
+          "location": "docs/design.md:11-14",
+          "claim": "Separate unconditional writes allow overselling and inconsistent allocations.",
+          "evidence": "The flow reads availability, inserts a reservation, then writes the previously read quantity minus the request quantity, without a transaction or conditional update. src/reserve.py:2,6-10 currently protects the allocation with a transaction and inventory row lock.",
+          "rationale": "Two requests can both read the last unit, create two successful reservations, and each write zero remaining stock. A failure between reservation creation and stock update can also leave an allocation without its stock decrement, violating the stock-correctness goal in docs/design.md:4.",
+          "severity": "P1",
+          "finding_id": "F01"
+        },
+        {
+          "location": "docs/design.md:7,12-14",
+          "claim": "Retrying a successful order reserves stock again.",
+          "evidence": "Every request receives a new UUID, and an HTTP retry repeats every allocation step. docs/adr-001-storage.md:3 requires idempotency per order_id; src/reserve.py:3-5 returns an existing reservation for that order.",
+          "rationale": "If the first allocation succeeds but its response is lost, retrying can insert another reservation and decrement stock again for the same order, contrary to the accepted retry contract.",
+          "severity": "P1",
+          "finding_id": "F02"
+        },
+        {
+          "location": "docs/design.md:8",
+          "claim": "The scheduled MongoDB rollout conflicts with the current accepted storage decision.",
+          "evidence": "The design claims ADR-001 permits MongoDB and schedules cutover without a replacement ADR. docs/adr-001-storage.md:2-3 is accepted revision r2 and specifies PostgreSQL, requiring an accepted replacement ADR before another persistent inventory database is implemented. README.md:4 makes the accepted decision authoritative.",
+          "rationale": "Implementing the stated rollout would introduce a persistent inventory store without the decision required by the governing architecture contract; the claim of authorization is false.",
+          "severity": "P2",
+          "finding_id": "F03"
+        },
+        {
+          "location": "docs/design.md:17",
+          "claim": "Seven-day ledger deletion prevents the required thirty-day dispute support.",
+          "evidence": "The only reservation ledger is deleted after seven days, support must use it for disputes covering thirty days, and no archive is planned.",
+          "rationale": "Reservations aged eight through thirty days have no retained ledger evidence, so support cannot satisfy the stated dispute requirement.",
+          "severity": "P2",
+          "finding_id": "F04"
+        }
+      ],
+      "uncertainties": [
+        "The 120 ms p99 target at 2,000 requests/s remains unverified from the supplied sources. docs/design.md:20 explicitly describes concurrency and retry tests as planned. No tests or load measurements were executed in this review.",
+        "Concurrent same-order calls in src/reserve.py:3-6 check for an existing reservation before acquiring the stock lock. Whether duplicate allocations can commit depends on unspecified uniqueness constraints and isolation behavior, so this is a conditional risk rather than an additional confirmed defect."
+      ]
+    },
+    {
+      "review_id": "R02",
+      "completed": true,
+      "findings": [
+        {
+          "location": "docs/design.md:8",
+          "claim": "The scheduled MongoDB cutover violates the current accepted storage decision.",
+          "evidence": "docs/design.md:8 claims ADR-001 permits MongoDB and schedules cutover without a replacement ADR. docs/adr-001-storage.md:2-3 is accepted revision r2 and requires PostgreSQL plus an accepted replacement ADR before implementing another persistent inventory database. README.md:4 makes the accepted decision authoritative.",
+          "rationale": "Implementing and routing traffic to this ledger (docs/design.md:20) would introduce the expressly unapproved storage change; the supplied documents contain no superseding accepted decision.",
+          "severity": "high",
+          "finding_id": "F01"
+        },
+        {
+          "location": "docs/design.md:11-14",
+          "claim": "Concurrent reservations can allocate more units than are available.",
+          "evidence": "The flow reads availability, creates a reservation, then writes the previously read quantity minus the request quantity, using separate writes without a transaction or conditional update. src/reserve.py:2,6-9 currently encloses allocation in a transaction and locks inventory.",
+          "rationale": "With one unit available, two requests can both read 1, both create successful reservations, and both write 0, allocating two units from one. This contradicts the stock-correctness goal in docs/design.md:4. Separate writes also leave reservation and stock state inconsistent if execution fails after reservation creation but before the decrement.",
+          "severity": "high",
+          "finding_id": "F02"
+        },
+        {
+          "location": "docs/design.md:7,14",
+          "claim": "Retrying a successful order can reserve stock a second time.",
+          "evidence": "docs/design.md:7 generates a new reservation UUID for every request; line 14 repeats all allocation steps on HTTP retry. docs/adr-001-storage.md:3 requires reserve(order_id, sku, quantity) to be idempotent per order_id. src/reserve.py:3-5 returns a previous reservation for an existing order.",
+          "rationale": "If a successful response is lost, retrying creates another reservation and consumes stock again when stock remains. The proposed flow lacks an order_id-based deduplication step and directly contradicts the accepted retry contract.",
+          "severity": "high",
+          "finding_id": "F03"
+        },
+        {
+          "location": "docs/design.md:17",
+          "claim": "The retention policy prevents support from fulfilling its stated dispute requirement.",
+          "evidence": "The sole reservation ledger is deleted after 7 days, while support must answer disputes for the last 30 days using that ledger; no archive is planned.",
+          "rationale": "Reservation evidence for days 8 through 30 has already been deleted when support needs it. The stated support window cannot be met by the proposed data lifecycle.",
+          "severity": "high",
+          "finding_id": "F04"
+        }
+      ],
+      "uncertainties": [
+        "docs/design.md:4,20 states an end-to-end p99 target of 120 ms at 2,000 requests/s, but supplies no measurement. Its concurrency and retry tests are explicitly planned. No tests were executed during this review; neither performance nor test success is established.",
+        "src/reserve.py:3-6 checks order_id before taking the inventory lock. Concurrent duplicate-order behavior depends on database uniqueness constraints and transaction semantics not supplied here, so an additional current-implementation idempotency defect cannot be established."
+      ]
+    },
+    {
+      "review_id": "R03",
+      "completed": true,
+      "findings": [
+        {
+          "location": "docs/design.md:11-14",
+          "claim": "Concurrent requests can allocate the same last unit.",
+          "evidence": "Both requests can read available=1, create successful reservations, then each write available=0. src/reserve.py:2,6-10 instead encloses allocation in a transaction with an inventory row lock.",
+          "rationale": "Two successful allocations are created against one unit, defeating the stock-correctness goal at docs/design.md:4. Failure between separate writes can also leave reservation and quantity inconsistent.",
+          "severity": "blocker",
+          "finding_id": "F01"
+        },
+        {
+          "location": "docs/design.md:7,12,14",
+          "claim": "A successful order replay can reserve stock again.",
+          "evidence": "Every request receives a new UUID and HTTP retries repeat all steps; no existing-order lookup is specified. docs/adr-001-storage.md:3 requires idempotency per order_id; src/reserve.py:3-5 returns the existing reservation.",
+          "rationale": "With sufficient remaining stock, one order consumes multiple allocations after retries, violating the accepted retry contract.",
+          "severity": "blocker",
+          "finding_id": "F02"
+        },
+        {
+          "location": "docs/design.md:8,20",
+          "claim": "The MongoDB permission claim and cutover conflict with the accepted storage decision.",
+          "evidence": "docs/adr-001-storage.md:2-3 is accepted revision r2, requires PostgreSQL and an accepted replacement ADR before another persistent inventory database. README.md:3-4 makes accepted decisions authoritative; no replacement is supplied.",
+          "rationale": "Implementing and routing traffic to the proposed ledger bypasses the governing storage prerequisite.",
+          "severity": "blocker",
+          "finding_id": "F03"
+        },
+        {
+          "location": "docs/design.md:17",
+          "claim": "Seven-day retention prevents the required thirty-day dispute support.",
+          "evidence": "The only reservation ledger is deleted after seven days, must support thirty days of disputes, and has no planned archive.",
+          "rationale": "Required evidence for days 8-30 is unavailable after deletion.",
+          "severity": "major",
+          "finding_id": "F04"
+        }
+      ],
+      "uncertainties": [
+        "The regional stock-ownership and routing topology is unspecified. Independent overlapping writers would need coordination, but that topology is not established.",
+        "The 120 ms p99 target at 2,000 requests/s is measurable (design:4), but planned tests (design:20) are not performance or correctness results.",
+        "Alternatives, explicit risk treatment and non-goals are documentation gaps, rather than independent demonstrated runtime defects.",
+        "Implementation instructions lack file/schema/routing details, stable phases and explicit correctness assertions. These are readiness-standard gaps, not evidence that proposed files or tests should already exist."
+      ]
+    },
+    {
+      "review_id": "R04",
+      "completed": true,
+      "findings": [
+        {
+          "location": "docs/design.md:11-14",
+          "claim": "The proposed allocation flow can oversell stock and lose decrements.",
+          "evidence": "Separate read, reservation creation and unconditional stock overwrite use a previously read quantity, explicitly without transaction or conditional update. src/reserve.py:2,6-10 currently uses a transaction and inventory lock.",
+          "rationale": "With one unit, two requests can each read one, create successful reservations, and write zero: two allocations consume one recorded unit. Partial failure can also separate ledger and inventory changes. This violates the stock-correctness goal at design:4.",
+          "severity": "Blocker",
+          "finding_id": "F01"
+        },
+        {
+          "location": "docs/design.md:7,12,14",
+          "claim": "Retries repeat allocation instead of preserving per-order idempotency.",
+          "evidence": "Each request receives a new UUID and a retried HTTP request repeats all allocation steps. No prior-order lookup appears in that flow. Accepted docs/adr-001-storage.md:3 requires idempotency per order_id; src/reserve.py:3-5 currently returns a prior reservation.",
+          "rationale": "After an allocation succeeds but its response is lost, replay can allocate again and decrement remaining stock again for the same order. The defect follows from the repeated flow; a new UUID alone would not establish it.",
+          "severity": "Blocker",
+          "finding_id": "F02"
+        },
+        {
+          "location": "docs/design.md:8,20",
+          "claim": "The MongoDB permission claim and scheduled cutover conflict with the accepted storage decision.",
+          "evidence": "Design:8 claims ADR-001 permits MongoDB and proceeds without replacement decision. docs/adr-001-storage.md:2-3 is accepted r2, requires PostgreSQL, and requires an accepted replacement ADR before implementing a second persistent inventory database. README.md:4 makes accepted decisions authoritative; no later ADR is supplied.",
+          "rationale": "Implementing and routing traffic to the proposed ledger bypasses an explicit current prerequisite. The cited ADR cannot authorize that rollout.",
+          "severity": "Major",
+          "finding_id": "F03"
+        },
+        {
+          "location": "docs/design.md:17",
+          "claim": "Ledger retention cannot support the required dispute window.",
+          "evidence": "The only ledger is deleted after seven days; support must answer 30 days of disputes using that ledger, with no archive planned.",
+          "rationale": "For disputes aged 8-30 days, the specified evidence source has been deleted, so the documented support requirement cannot be met.",
+          "severity": "Major",
+          "finding_id": "F04"
+        }
+      ],
+      "uncertainties": [
+        "Three-region stock authority, write routing, replication, failover and migration are unspecified. Their correctness and latency feasibility remain unresolved; no particular topology is mandated by supplied sources.",
+        "The feature standard's alternatives and risk coverage are missing. Readiness reviewers identify missing file/schema/interface actions, incremental cutover phases, correctness prerequisites and explicit test assertions. These are coverage/actionability gaps rather than additional demonstrated behavioral failures.",
+        "Design:4 defines 120 ms p99 at 2,000 requests/s end to end. Design:20 explicitly says concurrency/retry tests are planned. No performance or correctness tests were run or treated as passed.",
+        "Current reserve.py demonstrates useful transaction, inventory-lock and prior-order-lookup safeguards, but the excerpt does not prove every concurrent-idempotency guarantee. Memory was verified against accepted ADR r2 rather than treated as independent authority. No independent cosmetic or heading defect established."
+      ]
+    },
+    {
+      "review_id": "R05",
+      "completed": true,
+      "findings": [
+        {
+          "location": "docs/design.md:11-14",
+          "claim": "Allocation can promise the same last unit to two orders.",
+          "evidence": "Separate availability read, reservation creation and unconditional stock update; transactions and conditional updates expressly excluded. src/reserve.py:2,6-10 currently supplies a transaction and row lock.",
+          "rationale": "Two requests can both read availability 1, each insert a reservation, and both write 0. Two successful allocations consume one unit, violating stock correctness at docs/design.md:4. Failure between writes can also leave reservation and inventory inconsistent.",
+          "severity": "Blocker",
+          "finding_id": "F01"
+        },
+        {
+          "location": "docs/design.md:7,12,14",
+          "claim": "HTTP retries can reserve stock twice for one order.",
+          "evidence": "Each request receives a new UUID and retries repeat allocation. docs/adr-001-storage.md:3 requires idempotence per order_id; src/reserve.py:1-5,10 looks up and records that order identifier.",
+          "rationale": "After a successful allocation with a lost response, retrying can create another allocation when stock remains. Request-unique reservation identity does not enforce the accepted order-level retry contract.",
+          "severity": "Blocker",
+          "finding_id": "F02"
+        },
+        {
+          "location": "docs/design.md:8,20",
+          "claim": "MongoDB implementation and cutover contradict the accepted storage decision.",
+          "evidence": "The proposal claims ADR permission and schedules cutover without a replacement. docs/adr-001-storage.md:2-3 is accepted r2, requires PostgreSQL and an accepted replacement ADR before another persistent inventory database. README.md:4 establishes its authority.",
+          "rationale": "Following the implementation instruction introduces storage that the current accepted decision does not authorize. No superseding accepted decision is supplied.",
+          "severity": "Major",
+          "finding_id": "F03"
+        },
+        {
+          "location": "docs/design.md:17",
+          "claim": "Retention prevents the required thirty-day dispute support.",
+          "evidence": "The sole reservation ledger is deleted after seven days, support must use it for thirty-day disputes, and no archive is planned.",
+          "rationale": "Evidence for reservations aged eight through thirty days will no longer exist in the only permitted support source.",
+          "severity": "Major",
+          "finding_id": "F04"
+        }
+      ],
+      "uncertainties": [
+        "Three-region inventory ownership, write routing, coordination and connectivity-failure behavior are unspecified. Their consequences depend on the intended topology.",
+        "The 120 ms p99 target at 2,000 requests/s is measurable, but neither attained nor disproved. The contention benefit is unmeasured; concurrency and replay tests are explicitly planned, not implemented or passing evidence. No tests were executed.",
+        "Alternative evaluation, explicit risk mitigation, file/API change mapping, ledger schema, migration/cutover phases and test assertions need clarification under supplied standards; they do not independently establish additional functional failures.",
+        "The design omits an existing-system explanation, but supplied baseline sources establish current behavior. No additional factual blocker or mandatory heading/style defect follows. Proposed ledger absence is not a nonexistent-current-file defect."
+      ]
+    },
+    {
+      "review_id": "R06",
+      "completed": true,
+      "findings": [
+        {
+          "location": "docs/design.md:8,20",
+          "claim": "The storage rollout contradicts the current accepted decision.",
+          "evidence": "Line 8 claims MongoDB is permitted and schedules cutover without an exception or replacement ADR. docs/adr-001-storage.md:2–3 is accepted revision r2, mandates PostgreSQL, and requires an accepted replacement ADR before another persistent inventory database. README.md:4 makes accepted decisions authoritative.",
+          "rationale": "Following the implementation instruction would introduce the forbidden storage choice before its explicit prerequisite is satisfied.",
+          "severity": "Blocker",
+          "finding_id": "F01"
+        },
+        {
+          "location": "docs/design.md:11–14",
+          "claim": "The reservation flow can oversell stock and leave inventory and reservations inconsistent.",
+          "evidence": "The flow reads stock, creates a reservation and writes the previously read quantity minus the request quantity, using separate writes without transaction or conditional update. src/reserve.py:2,6–10 instead shows transactional row locking and allocation.",
+          "rationale": "Two requests can each read one unit, each allocate it, and each write zero, producing two allocations from one unit. Failure between writes can also leave only one side updated. This defeats the stock-correctness goal at line 4.",
+          "severity": "Blocker",
+          "finding_id": "F02"
+        },
+        {
+          "location": "docs/design.md:7,12–14",
+          "claim": "Retrying a successful order can allocate stock again.",
+          "evidence": "Every request gets a fresh reservation UUID, creates a reservation and repeats all steps on HTTP retry. No order-based deduplication is specified. docs/adr-001-storage.md:3 requires reserve to be idempotent per order_id; src/reserve.py:3–5 checks and returns an existing reservation.",
+          "rationale": "When stock remains sufficient, a replay creates another allocation and subtracts stock again for the same order, violating the accepted retry contract.",
+          "severity": "Blocker",
+          "finding_id": "F03"
+        },
+        {
+          "location": "docs/design.md:17",
+          "claim": "Ledger retention cannot satisfy the stated dispute-support window.",
+          "evidence": "The only ledger is deleted after seven days, support must answer disputes for thirty days using that ledger, and no archive is planned.",
+          "rationale": "Records needed for disputes about days 8–30 have already been deleted, making the stated support requirement impossible.",
+          "severity": "Major",
+          "finding_id": "F04"
+        }
+      ],
+      "uncertainties": [
+        "Three-region inventory authority, routing, coordination and failure behavior are unspecified (docs/design.md:4–14,20); no particular regional failure or latency miss is established.",
+        "Implementation line 20 leaves file changes, schema, migration/routing, phases and concrete test assertions unresolved. These are readiness questions, not evidence that proposed files should already exist.",
+        "Alternatives and explicit risks/limits are missing under the review standard; these content observations do not establish extra authoritative product requirements or mandatory header wording.",
+        "The 120 ms p99 at 2,000 requests/s is a measurable target. Concurrency/retry tests are explicitly planned; no tests or benchmarks were run or claimed to pass. The supplied existing-code snippet alone does not prove all current concurrency guarantees."
+      ]
+    },
+    {
+      "review_id": "R07",
+      "completed": true,
+      "findings": [
+        {
+          "location": "docs/design.md:11–14",
+          "claim": "Allocation is not atomic and can oversell stock.",
+          "evidence": "The design reads stock, creates a reservation, and unconditionally writes the previously read quantity minus the request in separate operations. src/reserve.py:2,6–10 instead encloses locking, decrement and insertion in a transaction.",
+          "rationale": "Two requests can each read one available unit, both create successful reservations and both write zero. Two units are allocated from one. Failure between writes can also leave inventory and reservations inconsistent, defeating the correctness goal in docs/design.md:4.",
+          "severity": "Blocker",
+          "finding_id": "F01"
+        },
+        {
+          "location": "docs/design.md:7,12–14",
+          "claim": "HTTP retries allocate stock again for the same order.",
+          "evidence": "Every request receives a new UUID and retries repeat reservation creation and decrement. docs/adr-001-storage.md:3 requires idempotency per order_id; src/reserve.py:3–5 returns the existing order reservation.",
+          "rationale": "After a successful request, a retry can create another reservation and consume additional stock when quantity remains. Request UUID uniqueness does not enforce order-level idempotency.",
+          "severity": "Major",
+          "finding_id": "F02"
+        },
+        {
+          "location": "docs/design.md:8,20",
+          "claim": "MongoDB rollout contradicts the accepted storage decision and falsely claims its permission.",
+          "evidence": "docs/adr-001-storage.md:2–3 is accepted revision r2, specifies PostgreSQL for inventory and reservations, and requires an accepted replacement ADR before a second persistent inventory database. README.md:4 establishes accepted-decision authority.",
+          "rationale": "The implementation and cutover instruction proceeds without the required replacement decision. Following it violates the current storage constraint; no later accepted ADR is supplied.",
+          "severity": "Major",
+          "finding_id": "F03"
+        },
+        {
+          "location": "docs/design.md:17",
+          "claim": "Seven-day deletion makes the stated thirty-day dispute-support obligation impossible.",
+          "evidence": "The same line requires support to use the only ledger for thirty days, deletes it after seven days, and excludes an archive.",
+          "rationale": "Disputes concerning days 8–30 lack the required reservation evidence. This contradiction follows directly from the specified retention and support windows.",
+          "severity": "Major",
+          "finding_id": "F04"
+        }
+      ],
+      "uncertainties": [
+        "Concurrency, retry and load tests at docs/design.md:20 are planned, not executed or passed. No measured evidence establishes the latency target or an actual production incident.",
+        "Alternative evaluation and explicit risk coverage are missing. File scope, schema, migration, routing, rollback, checkpoints and test assertions remain underspecified. These review-standard and plan-depth observations are separate from demonstrated correctness defects.",
+        "No independent editorial or heading defect was established. Detailed three-region coordination behavior is unspecified and was not invented."
+      ]
+    },
+    {
+      "review_id": "R08",
+      "completed": true,
+      "findings": [
+        {
+          "location": "docs/design.md:8,20",
+          "claim": "The MongoDB cutover contradicts the current accepted storage decision.",
+          "evidence": "Design line 8 claims ADR-001 permits MongoDB and omits a storage exception or replacement. ADR-001:2-3 is accepted r2, requires PostgreSQL, and requires an accepted replacement ADR before another persistent inventory database. README.md:3-4 establishes accepted-decision authority.",
+          "rationale": "Following the implementation and traffic-routing instruction bypasses an explicit architectural prerequisite. This is a false authorization claim, independent of MongoDB capabilities.",
+          "severity": "blocker",
+          "finding_id": "F01"
+        },
+        {
+          "location": "docs/design.md:11-14",
+          "claim": "Separate allocation writes permit overselling and inconsistent reservation/inventory state.",
+          "evidence": "The flow reads stock, creates a reservation, then overwrites availability from that earlier read without a transaction or conditional update. With one unit, two requests can both read one, both reserve, and both write zero. src/reserve.py:2,6-10 currently uses a transaction and stock-row lock.",
+          "rationale": "Two successful allocations can consume the same last unit, violating the stock-correctness goal at design:4. Failure between writes can also persist a reservation without its inventory deduction. The contention rationale supplies no equivalent correctness mechanism.",
+          "severity": "blocker",
+          "finding_id": "F02"
+        },
+        {
+          "location": "docs/design.md:7,12-14",
+          "claim": "Retrying a successful order can allocate stock again.",
+          "evidence": "Each request receives a new UUID and retries repeat every allocation step, without order-based deduplication. ADR-001:3 explicitly requires idempotency per order_id. src/reserve.py:3-5 returns an existing order reservation before allocating.",
+          "rationale": "When stock remains sufficient, an HTTP retry can create another reservation and deduct inventory twice for one order. Request UUID uniqueness does not satisfy the order idempotency contract.",
+          "severity": "blocker",
+          "finding_id": "F03"
+        },
+        {
+          "location": "docs/design.md:17",
+          "claim": "Seven-day deletion prevents the required thirty-day dispute support.",
+          "evidence": "The only ledger is deleted after seven days; support must answer thirty days of disputes using that ledger; no archive is planned.",
+          "rationale": "Records for days eight through thirty are unavailable under the stated design, making the explicit support obligation impossible.",
+          "severity": "major",
+          "finding_id": "F04"
+        }
+      ],
+      "uncertainties": [
+        "Regional inventory authority, routing, replication, partition and failover behavior are unspecified. The sources do not establish three-region latency feasibility or prove the 120 ms target impossible.",
+        "Alternatives and explicit risk/mitigation evaluation are missing under the supplied document standard; these completeness concerns are not additional factual product requirements or exact-heading defects.",
+        "Implementation files/actions, ledger schema, reservation/routing integration, and incremental phases/checkpoints remain open. These readiness gaps do not establish that an unsafe cutover occurred or require an invented implementation.",
+        "Concurrency/retry tests at design:20 are explicitly planned. No tests were run or passing results inferred. Existing source demonstrates safeguards and reuse opportunities but does not prove every concurrent same-order execution safe."
+      ]
+    },
+    {
+      "review_id": "R09",
+      "completed": true,
+      "findings": [
+        {
+          "location": "docs/design.md:8,20",
+          "severity": "high",
+          "rationale": "Implementing and routing traffic to the proposed ledger proceeds without the required accepted replacement decision; the stated permission is false.",
+          "claim": "The MongoDB rollout contradicts the current accepted storage decision.",
+          "evidence": "docs/design.md:8 claims ADR-001 permits MongoDB and schedules cutover without a replacement ADR. docs/adr-001-storage.md:2-3 identifies accepted revision r2, mandates PostgreSQL for quantities and reservations, and requires an accepted replacement ADR before implementing a second persistent inventory database. README.md:4 makes the accepted decision authoritative.",
+          "finding_id": "F01"
+        },
+        {
+          "location": "docs/design.md:11-14",
+          "severity": "high",
+          "rationale": "Two requests can both read one available unit, both create successful reservations, and both write zero. Two allocations then exist for one unit, violating the stock-correctness goal in docs/design.md:4.",
+          "claim": "The reservation flow can allocate the last unit to two orders.",
+          "evidence": "docs/design.md:11-14 reads stock, creates a reservation, then overwrites availability using the earlier read, with neither a transaction nor a conditional update. src/reserve.py:2,6-10 currently wraps the stock mutation and reservation in a transaction and locks the inventory row.",
+          "finding_id": "F02"
+        },
+        {
+          "location": "docs/design.md:7,12-14",
+          "severity": "high",
+          "rationale": "With sufficient remaining stock, replaying a successful request creates another reservation and decrements stock again. A fresh request UUID supplies no stable order identity for the required deduplication.",
+          "claim": "A successful HTTP request replay can reserve stock again for the same order.",
+          "evidence": "docs/design.md:7 assigns every request a fresh reservation UUID; docs/design.md:14 repeats all allocation steps on retry. docs/adr-001-storage.md:3 requires reserve to be idempotent per order_id. src/reserve.py:3-5 returns an existing order reservation.",
+          "finding_id": "F03"
+        },
+        {
+          "location": "docs/design.md:17",
+          "severity": "medium",
+          "rationale": "Reservations older than seven days but still within the support window have no retained ledger evidence, so the stated support requirement cannot be met.",
+          "claim": "Ledger deletion prevents the required thirty-day dispute support.",
+          "evidence": "docs/design.md:17 deletes the only reservation ledger after seven days, requires support to answer disputes covering thirty days using that ledger, and provides no archive.",
+          "finding_id": "F04"
+        }
+      ],
+      "uncertainties": [
+        "The p99 target of 120 ms at 2,000 requests/s is a stated end-to-end load-test target (docs/design.md:4,20), not a measured result. The supplied material establishes neither attainment nor impossibility.",
+        "Separate reservation and inventory writes also raise a partial-failure concern (docs/design.md:12-14): interruption after reservation creation could leave stock unchanged. Failure handling and recovery are unspecified, so this is an unresolved operational risk rather than a separate finding.",
+        "The supplied database interface does not expose uniqueness constraints or isolation semantics. An additional concurrent same-order idempotency defect in src/reserve.py cannot be established from these files alone.",
+        "Concurrency and retry tests are explicitly planned in docs/design.md:20. No tests were executed in this review."
+      ]
+    }
+  ]
+}

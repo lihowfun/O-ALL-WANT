@@ -1,0 +1,350 @@
+{
+  "reviews": [
+    {
+      "review_id": "R01",
+      "completed": true,
+      "findings": [
+        {
+          "location": "docs/design.md:7,13",
+          "claim": "Unconditional event application can regress both live and recovered shipment projections.",
+          "evidence": "docs/design.md:7 removes the version check and overwrites status/version for every event; line 13 allows replay without ordering or a version filter. Accepted docs/adr-004-events.md:3 states that delivery may reorder or repeat events and projections must never move to an older version. src/projector.py:2-7 currently locks the shipment and ignores versions less than or equal to the stored version.",
+          "rationale": "If version 12 is applied before delayed version 11, the proposed overwrite leaves support staff viewing version 11 and its obsolete status. The same sequence during recovery can leave replay completed with a stale projection. Parallel workers do not eliminate broker reordering or redelivery. Both paths require preserving the accepted monotonic-version invariant.",
+          "severity": "high",
+          "finding_id": "F01"
+        },
+        {
+          "location": "docs/design.md:10",
+          "claim": "Failure diagnostics persist authentication credentials in logs.",
+          "evidence": "docs/design.md:10 requires logging the complete received HTTP authorization header and retaining it for 14 days. Accepted docs/adr-004-events.md:3 explicitly prohibits writing authentication tokens to logs.",
+          "rationale": "For token-authenticated requests, a failed event records the token along with shipment_id, making the credential available through retained logs. Logging the complete header directly violates the accepted token-handling decision.",
+          "severity": "high",
+          "finding_id": "F02"
+        }
+      ],
+      "uncertainties": [
+        "docs/design.md:16 leaves Flux shim, production ready, and verification undefined. Delivery scope and acceptance criteria cannot be assessed; this is a planning ambiguity rather than an established runtime failure.",
+        "docs/design.md:4 provides throughput and lag targets, but no measurement or verification results are supplied. This review inspected sources only and ran no tests.",
+        "docs/design.md:13 enables all tenants together. This broadens potential rollout impact, but the supplied sources do not mandate staged deployment or establish that this choice alone causes failure.",
+        "Acknowledgement durability, retry implementation, and replay infrastructure are unspecified. Additional failures depending on those details are not established by the supplied sources."
+      ]
+    },
+    {
+      "review_id": "R02",
+      "completed": true,
+      "findings": [
+        {
+          "location": "docs/design.md:7,13",
+          "claim": "Unconditional overwrites and unfiltered replay allow shipment projections to regress to older versions.",
+          "evidence": "The processing rule overwrites status/version for every event and explicitly removes the version check (design.md:7). Rollback replay explicitly requires neither ordering nor a version filter (design.md:13). Accepted ADR-004 states that the broker may redeliver and reorder events and that projections must never move to older versions (docs/adr-004-events.md:2-3). The baseline locks the shipment row and ignores event.version <= row.version (src/projector.py:2-7).",
+          "rationale": "If shipment version 12 is applied before delayed version 11, the proposed worker stores version 11 and its older status. A duplicate of an earlier event can produce the same regression. Parallel workers do not eliminate either broker behavior. Replaying all events without ordering or version protection reproduces this problem during recovery, so replay does not establish a correct final projection. The design contradicts an accepted invariant and removes the baseline protection that enforces it.",
+          "severity": "high",
+          "finding_id": "F01"
+        },
+        {
+          "location": "docs/design.md:10",
+          "claim": "Failure diagnostics persist authentication credentials in logs.",
+          "evidence": "The design requires logging the complete received HTTP authorization header and retaining the logs for 14 days (docs/design.md:10). Accepted ADR-004 explicitly prohibits writing authentication tokens to logs (docs/adr-004-events.md:2-3).",
+          "rationale": "A failed event carrying a token in its Authorization header would copy that token into retained diagnostic storage. This exposes the credential to log readers and log processing systems and directly violates the accepted logging restriction. Recording shipment_id does not require recording the authorization credential.",
+          "severity": "high",
+          "finding_id": "F02"
+        }
+      ],
+      "uncertainties": [
+        {
+          "location": "docs/design.md:16",
+          "issue": "The delivery plan names a Flux shim and production readiness without defining the component or completion criteria. The intended implementation and verification scope cannot be determined from the supplied sources; no specific incorrect runtime behavior follows from this wording alone."
+        },
+        {
+          "location": "docs/design.md:4,16",
+          "issue": "The throughput and p99 lag objectives have no supplied measurement results, and verification is explicitly planned. Their achievement remains unverified; the sources do not establish that the objectives are impossible or already met."
+        },
+        {
+          "location": "docs/design.md:13",
+          "issue": "Enabling all tenants simultaneously increases exposure if the flow fails, but the supplied accepted decisions do not require a phased rollout. Treat the rollout scope as a conditional operational risk rather than a separate factual defect."
+        }
+      ]
+    },
+    {
+      "review_id": "R03",
+      "completed": true,
+      "findings": [
+        {
+          "location": "docs/design.md:7; docs/design.md:13",
+          "claim": "Unconditional overwrites can regress shipment state during normal processing and recovery replay.",
+          "evidence": "docs/design.md:7 removes the version check and writes every received event; docs/design.md:13 explicitly omits replay ordering and version filtering. Accepted docs/adr-004-events.md:3 permits broker reordering and redelivery and requires that projections never move to an older version. src/projector.py:2-7 currently locks the shipment row and rejects event.version <= row.version.",
+          "rationale": "If version 12 is applied before version 11, the proposed overwrite leaves support staff viewing the older status and version. Parallel workers do not eliminate reordering or redelivery. Replaying every source event without ordering or version protection can likewise finish with an older event applied last, so replay completeness does not establish correct recovery. These are consequences of the same missing monotonic-version protection.",
+          "severity": "high",
+          "finding_id": "F01"
+        },
+        {
+          "location": "docs/design.md:10",
+          "claim": "Failure logging copies authentication credentials into retained logs.",
+          "evidence": "docs/design.md:10 requires logging the complete received HTTP authorization header and retaining it for 14 days. Accepted docs/adr-004-events.md:3 explicitly prohibits writing authentication tokens to logs.",
+          "rationale": "For a failed event carrying an authentication token in that header, the proposal persists the credential alongside shipment_id. This directly violates the accepted decision and exposes the credential through the log store for the retention period. The exact authentication scheme and log readership do not need to be assumed to establish the contradiction.",
+          "severity": "high",
+          "finding_id": "F02"
+        }
+      ],
+      "uncertainties": [
+        "docs/design.md:13 enables all tenants simultaneously without describing containment or rollout validation. This creates a conditional blast-radius concern; the supplied sources do not require a staged rollout.",
+        "docs/design.md:16 leaves Flux shim and production ready undefined. Delivery scope and completion criteria remain unclear; the terminology alone does not demonstrate an implementation defect.",
+        "The supplied sources do not establish that the throughput and lag targets in docs/design.md:4 have been verified. docs/design.md:16 describes verification as future work. This review was static; no tests or performance measurements were run."
+      ]
+    },
+    {
+      "review_id": "R04",
+      "completed": true,
+      "findings": [
+        {
+          "location": "docs/design.md:7,13",
+          "claim": "Unconditional processing and unfiltered replay permit shipment projections to regress.",
+          "evidence": "Design line 7 removes the version check and overwrites every delivery; line 13 requires neither replay ordering nor filtering. Accepted docs/adr-004-events.md:2-3 permits redelivery/reordering and prohibits regression. src/projector.py:2-7 already uses a transaction, row lock and rejection of versions <= the stored version.",
+          "rationale": "Version 12 followed by version 11 leaves the proposed support-facing state at version 11. Parallel workers do not establish freshness; replay repeats the same failure. Preserve atomic newer-version-only application in both paths.",
+          "severity": "Blocker",
+          "finding_id": "F01"
+        },
+        {
+          "location": "docs/design.md:10",
+          "claim": "Diagnostics instruct persisting authentication credentials in logs.",
+          "evidence": "The design logs complete HTTP authorization headers for 14 days. docs/adr-004-events.md:3 prohibits writing authentication tokens to logs.",
+          "rationale": "A token-bearing failed event copies its credential into the logging system, exposing it to log readers and exports. Retention does not resolve the policy conflict. Use non-secret event identifiers and omit credentials.",
+          "severity": "Blocker",
+          "finding_id": "F02"
+        },
+        {
+          "location": "docs/design.md:15-16",
+          "claim": "The delivery plan leaves the implementation deliverable undefined.",
+          "evidence": "Line 16 requests a Flux shim and explicitly admits it is undefined. The complete design supplies no contract, responsibility, affected files or concrete changes. README.md:3 identifies src/projector.py:1-7 as the existing baseline; source searches found no shim definition.",
+          "rationale": "An implementer must decide what component to build or modify and how it relates to the projector. This is an actionable scope gap, not a claim that a proposed component must already exist.",
+          "severity": "Major",
+          "finding_id": "F03"
+        },
+        {
+          "location": "docs/design.md:16",
+          "claim": "Completion and verification cannot be assessed from the delivery plan.",
+          "evidence": "Production ready and run verification have no checks, procedure, assertions or acceptance criteria. docs/design.md:4 states throughput/lag targets; docs/adr-004-events.md:3 supplies consumption and logging constraints; none is translated into an executable completion gate.",
+          "rationale": "The implementer must choose coverage, measurement conditions and passing criteria independently, so the plan cannot establish whether delivery satisfies its stated requirements.",
+          "severity": "Major",
+          "finding_id": "F04"
+        }
+      ],
+      "uncertainties": [
+        "docs/design.md:4 leaves the five-minute lag budget breach ambiguous: threshold, sustained violation or evaluation window. The intended alert rule is an open question.",
+        "Throughput and p99 lag are targets, not demonstrated results. Planned verification has not been executed or shown to pass.",
+        "Queue acknowledgements, retry mechanics, source-event retention and replay capacity are absent from the supplied implementation; their behavior and recovery feasibility remain unverified.",
+        "All-tenant rollout at docs/design.md:13 increases conditional exposure, but current sources impose no particular staged-rollout policy.",
+        "The feature-specification standard requests alternatives and explicit risk treatment, which are absent. These standards observations do not establish additional runtime defects or mandatory heading names; no independent style/template defect was established."
+      ]
+    },
+    {
+      "review_id": "R05",
+      "completed": true,
+      "findings": [
+        {
+          "location": "docs/design.md:7",
+          "claim": "Removing the version guard allows shipment projections to regress.",
+          "evidence": "docs/adr-004-events.md:2–3 is accepted and permits broker redelivery/reordering while requiring nondecreasing projection versions. src/projector.py:2–7 locks the shipment row transactionally and ignores equal or older versions. The proposal instead overwrites every received event.",
+          "rationale": "An older event arriving after a newer event replaces the newer status/version. Parallel workers do not eliminate stale deliveries or duplicates; atomic version comparison and update remain necessary.",
+          "severity": "Blocker",
+          "finding_id": "F01"
+        },
+        {
+          "location": "docs/design.md:10",
+          "claim": "Failure diagnostics persist authentication credentials.",
+          "evidence": "The proposal logs the complete received HTTP authorization header for 14 days. docs/adr-004-events.md:3 explicitly prohibits logging authentication tokens.",
+          "rationale": "Requests carrying authentication tokens expose them to log readers and storage for the retention period. Safe shipment/error metadata can support diagnosis without credential material.",
+          "severity": "Blocker",
+          "finding_id": "F02"
+        },
+        {
+          "location": "docs/design.md:13",
+          "claim": "The proposed replay cannot reliably restore the latest shipment projection.",
+          "evidence": "The recovery procedure replays all source events without ordering or a version filter; docs/design.md:7 overwrites unconditionally. docs/adr-004-events.md:3 permits reordering and forbids regression.",
+          "rationale": "If an older event is processed last during replay, it becomes the final projection. Replaying all events is therefore insufficient to establish recovery; replay must preserve the monotonic-version invariant.",
+          "severity": "Major",
+          "finding_id": "F03"
+        },
+        {
+          "location": "docs/design.md:15–16",
+          "claim": "The delivery task lacks an identifiable component and executable completion conditions.",
+          "evidence": "Line 16 explicitly acknowledges that Flux shim and production ready are undefined. README.md:3, docs/adr-004-events.md:1–3 and src/projector.py:1–7 provide no shim definition. Run verification identifies no cases or pass criteria.",
+          "rationale": "An implementer must invent the component responsibility, integration/file changes and acceptance criteria. The task cannot establish when implementation or verification is complete. Its current-versus-proposed status is unspecified; absence alone does not prove a nonexistent-current-reference defect.",
+          "severity": "Major",
+          "finding_id": "F04"
+        }
+      ],
+      "uncertainties": [
+        "docs/design.md:13 activates all tenants together without a bounded rollout or failure trigger. This is conditional operational exposure, not evidence of an outage.",
+        "docs/design.md:4 states throughput/lag targets; workload assumptions, capacity evidence and verification results are absent. Infeasibility or successful verification is not established.",
+        "docs/design.md:1–14 omits alternatives evaluation and explicit risk/constraint treatment required by the supplied review standard. These are standard gaps; additional literal headings or a preferred template are not factual repository defects."
+      ]
+    },
+    {
+      "review_id": "R06",
+      "completed": true,
+      "findings": [
+        {
+          "location": "docs/design.md:7,13",
+          "claim": "Unconditional updates and unfiltered replay can regress shipment projections.",
+          "evidence": "ADR-004:3 permits redelivery/reordering and forbids older versions replacing newer ones. src/projector.py:2-7 currently locks the row transactionally and ignores versions at or below the stored version. The proposal removes this guard and applies every received or replayed event.",
+          "rationale": "Processing version 12 then 11 leaves support staff seeing version 11. Parallel workers do not prevent that delivery order; replay repeats the unsafe rule and cannot reliably restore the newest state.",
+          "severity": "blocker",
+          "finding_id": "F01"
+        },
+        {
+          "location": "docs/design.md:10",
+          "claim": "Diagnostics copy authentication credentials into retained logs.",
+          "evidence": "The design requires the complete received HTTP authorization header and fourteen-day retention. docs/adr-004-events.md:3 explicitly prohibits logging authentication tokens.",
+          "rationale": "Token-bearing requests expose credentials through diagnostic storage and access, directly violating the accepted constraint.",
+          "severity": "blocker",
+          "finding_id": "F02"
+        },
+        {
+          "location": "docs/design.md:15-16",
+          "claim": "The delivery instruction does not identify implementable scope or completion conditions.",
+          "evidence": "Line 16 expressly leaves Flux shim and production ready undefined. README.md:3 points to the ADR and projector baseline; neither docs/adr-004-events.md:1-3 nor src/projector.py:1-7 defines the component or its relationship to apply_event.",
+          "rationale": "An implementer must choose the component responsibility, affected files, behavior and readiness criteria. This is an undefined scope defect, not proof an existing shim is missing.",
+          "severity": "major",
+          "finding_id": "F03"
+        },
+        {
+          "location": "docs/design.md:16",
+          "claim": "Verification has no specified cases or expected outcomes.",
+          "evidence": "Run verification is the entire validation instruction. The supplied document specifies no procedure or acceptance assertions, despite ADR:3 delivery/security constraints and the version guard at src/projector.py:4-5.",
+          "rationale": "Implementers must independently decide how to establish completion, including reordered/duplicate-event behavior and credential exclusion; materially different checks can all satisfy the wording.",
+          "severity": "major",
+          "finding_id": "F04"
+        }
+      ],
+      "uncertainties": [
+        "docs/design.md:4 does not distinguish a five-minute lag threshold from a breach sustained five minutes; this is editorial ambiguity.",
+        "Capacity, workload skew, retry bounds and persistent-failure handling are unspecified. Throughput failure or retry overload is conditional, not measured.",
+        "docs/design.md:13 leaves the post-acknowledgement failure and detection mechanism unexplained. All-tenant rollout increases possible impact, but supplied sources do not require staged rollout.",
+        "Alternatives and explicit risk assessment are absent under the supplied review standard; no exact header/order or additional product requirement is inferred. No performance or tests were run, and planned verification is not a passing result."
+      ]
+    },
+    {
+      "review_id": "R07",
+      "completed": true,
+      "findings": [
+        {
+          "location": "docs/design.md:7",
+          "claim": "Unconditional application can regress a shipment to an older state.",
+          "evidence": "docs/adr-004-events.md:3 allows reordering/redelivery and requires monotonic projections. src/projector.py:2–7 currently locks the row and rejects event.version <= row.version.",
+          "rationale": "Receiving version 9 then version 8 overwrites version 9 with 8 under the proposed rule. Parallelism does not remove either redelivery or reordering.",
+          "severity": "Blocker",
+          "finding_id": "F01"
+        },
+        {
+          "location": "docs/design.md:13",
+          "claim": "Replay without ordering or version filtering cannot reliably recover the latest projection.",
+          "evidence": "The rollout explicitly says neither replay ordering nor filtering is required; docs/adr-004-events.md:3 permits reordered events and prohibits older projected versions.",
+          "rationale": "A replay finishing with an older event restores stale status, so replaying the full history does not establish the promised recovery. The existing version boundary in src/projector.py:2–7 addresses this failure.",
+          "severity": "Blocker",
+          "finding_id": "F02"
+        },
+        {
+          "location": "docs/design.md:10",
+          "claim": "Complete authorization-header logging exposes authentication tokens.",
+          "evidence": "The design requires full received HTTP authorization headers in logs for 14 days; docs/adr-004-events.md:3 prohibits writing authentication tokens to logs.",
+          "rationale": "A token-bearing authorization header is copied into retained diagnostic storage, violating the explicit credential-handling constraint.",
+          "severity": "Blocker",
+          "finding_id": "F03"
+        },
+        {
+          "location": "docs/design.md:16",
+          "claim": "The delivery task does not identify its component or implementation scope.",
+          "evidence": "The document explicitly leaves Flux shim undefined. README.md:3 names the baseline; src/projector.py:1–7 defines only apply_event and supplies no shim definition.",
+          "rationale": "An implementer cannot identify the shim's responsibility, integration or affected files without making additional design decisions. Absence of a proposed implementation is not itself the defect.",
+          "severity": "Major",
+          "finding_id": "F04"
+        },
+        {
+          "location": "docs/design.md:16",
+          "claim": "Completion and verification are undefined.",
+          "evidence": "Production ready and run verification have no checks or acceptance criteria anywhere in the document; design.md:4 supplies performance targets and ADR-004:3 supplies invariants without an associated verification procedure.",
+          "rationale": "The delivery plan cannot be accepted on stated evidence because the implementer must decide what to verify and what constitutes completion.",
+          "severity": "Major",
+          "finding_id": "F05"
+        }
+      ],
+      "uncertainties": [
+        "docs/design.md:4 leaves the five-minute lag alert ambiguous between lag magnitude and duration above the two-second objective; no actual alert behavior was demonstrated.",
+        "Throughput feasibility and all-tenant rollout impact are unverified conditional risks. Planned verification was not run or presumed passed.",
+        "Alternatives evaluation is absent under the supplied feature standard; literal template headings, non-goals and editorial title preferences are not independent factual runtime defects."
+      ]
+    },
+    {
+      "review_id": "R08",
+      "completed": true,
+      "findings": [
+        {
+          "location": "docs/design.md:7,13",
+          "claim": "Unconditional consumption and unfiltered replay can regress shipment projections.",
+          "evidence": "docs/adr-004-events.md:3 permits redelivery and reordering and prohibits regression. src/projector.py:2–7 locks the row in a transaction and rejects versions <= stored version; design.md:7 removes that check and line 13 rejects replay filtering/ordering.",
+          "rationale": "Receiving version 12 then delayed version 11 replaces newer status with older state. Parallel workers do not eliminate reordering. Recovery replay repeats the defect.",
+          "severity": "Major",
+          "finding_id": "F01"
+        },
+        {
+          "location": "docs/design.md:10",
+          "claim": "Diagnostics require retaining authentication credentials in logs.",
+          "evidence": "Line 10 requires the complete HTTP authorization header on failure and 14-day retention. docs/adr-004-events.md:3 prohibits writing authentication tokens to logs.",
+          "rationale": "Token-bearing authorization headers would persist credentials and expose them to log readers and retained copies, contrary to the current accepted decision.",
+          "severity": "Major",
+          "finding_id": "F02"
+        },
+        {
+          "location": "docs/design.md:16",
+          "claim": "The delivery instruction leaves its component and completion state undefined.",
+          "evidence": "Line 16 explicitly says Flux shim and production ready are undefined; it only directs making the shim ready and running verification. README.md:3 points to src/projector.py, whose lines 1–7 define apply_event without identifying such a shim.",
+          "rationale": "An implementer cannot identify the component, required changes, or verification outcome from supplied sources and must invent the deliverable. This is a concrete actionability gap, not a claim that proposed files must already exist.",
+          "severity": "Major",
+          "finding_id": "F03"
+        }
+      ],
+      "uncertainties": [
+        "docs/design.md:4 does not determine whether five minutes is a lag threshold, breach duration or evaluation window; intended alert semantics remain open.",
+        "Alternatives evaluation and risk/limit analysis are absent under the supplied review standard. Exact headings, templates and editorial preferences are not independent project defects.",
+        "docs/design.md:13 gives no replay capacity, duration or live-traffic interaction analysis. Large-history overload and all-tenant rollout hazards are conditional; no observed capacity failure or separate rollout prohibition is established.",
+        "Verification is unspecified and was not executed. Throughput and p99 lag are goals, not established results."
+      ]
+    },
+    {
+      "review_id": "R09",
+      "completed": true,
+      "findings": [
+        {
+          "location": "docs/design.md:7,13",
+          "claim": "Removing version protection in live processing and replay allows shipment state to regress.",
+          "evidence": "docs/design.md:7 overwrites every received status/version and removes the check; :13 permits replay without ordering or filtering. Accepted docs/adr-004-events.md:3 permits reordering/redelivery and prohibits older projections. src/projector.py:2-7 already locks, compares and updates atomically.",
+          "rationale": "For one shipment, version 12 followed by version 11 leaves version 11 stored. Parallel workers do not eliminate reordering or duplicate delivery; unfiltered replay repeats this failure.",
+          "severity": "Blocker",
+          "finding_id": "F01"
+        },
+        {
+          "location": "docs/design.md:10",
+          "claim": "The required complete authorization-header logging exposes authentication credentials.",
+          "evidence": "docs/design.md:10 requires logging the complete received HTTP authorization header and retaining logs for 14 days. Accepted docs/adr-004-events.md:3 says authentication tokens must never be logged.",
+          "rationale": "Failed authenticated events place token values in retained diagnostic records, violating the explicit accepted constraint and exposing them to log readers and copies.",
+          "severity": "Blocker",
+          "finding_id": "F02"
+        },
+        {
+          "location": "docs/design.md:15-16",
+          "claim": "The delivery plan leaves its implementation target and completion criteria undefined.",
+          "evidence": "docs/design.md:16 requires making the Flux shim production ready while explicitly acknowledging neither term is defined. The full target supplies no definition; src/projector.py:1-7 only supplies apply_event.",
+          "rationale": "A fresh implementer cannot determine the shim's responsibility, integration point or required finished behavior. This is an actionable scope gap, not a claim that a proposed new component must already exist or an observed runtime failure.",
+          "severity": "Major",
+          "finding_id": "F03"
+        }
+      ],
+      "uncertainties": [
+        "docs/design.md:4 does not specify the five-minute lag alert window/condition precisely.",
+        "Throughput/lag feasibility, concurrency bounds, retry/backpressure and recovery duration are unverified. Sources do not establish that parallelism or all-tenant rollout inherently fails, or that failure after acknowledgement inevitably loses data.",
+        "Feature-standard alternatives and risk coverage are missing; implementation-standard test cases, assertions and stable phases are absent. These are standard/documentation gaps rather than additional demonstrated runtime failures. Exact heading names are not mandated.",
+        "Run verification at docs/design.md:16 is planned work; no successful verification result is supplied. Production ready also raises a terminology/verifiability concern."
+      ]
+    }
+  ]
+}

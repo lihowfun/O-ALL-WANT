@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="referrer" content="no-referrer">
+<title>OAW 消化道</title>
+<link rel="stylesheet" href="style.css">
+<script src="app.js" defer></script>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <h1>OAW 消化道</h1>
+    <p class="sub" id="project-name">連線中…</p>
+    <p class="sub">每樣食物停在它真正消化到的位置。藍色驚嘆號＝在等你，灰色問號＝只有可選的決定，轉圈＝系統正在處理。</p>
+  </div>
+  <div class="tally" id="top-stats" aria-label="數量"></div>
+</header>
+
+<div id="busy" class="busy" hidden role="status" aria-live="polite">
+  <div class="busy-track"><div class="busy-fill" id="busy-fill"></div></div>
+  <p id="busy-text"></p>
+</div>
+<div id="banner" class="banner" hidden role="alert"></div>
+
+<main class="layout">
+  <section id="pipeline" class="tract" aria-labelledby="pipeline-title">
+    <h2 id="pipeline-title" class="tract-title">新增 skill 的流程：消化道</h2>
+    <svg id="tract" class="tract-svg" role="group" aria-labelledby="pipeline-title" focusable="false"></svg>
+    <p id="pipe-empty" class="pipe-empty" hidden></p>
+    <div class="legend" id="legend" aria-label="圖例"></div>
+    <div class="pipe-tools" id="pipe-tools"></div>
+  </section>
+
+  <div class="pick" id="pick" role="group" aria-label="選一樣食物"></div>
+
+  <div class="detail-grid">
+    <section id="detail" class="panel detail" aria-labelledby="detail-title" aria-live="polite">
+      <h2 id="detail-title">食物</h2>
+      <div id="detail-body"></div>
+    </section>
+
+    <section id="feed" class="panel feed" aria-labelledby="feed-title">
+      <h2 id="feed-title">餵一樣新食物</h2>
+      <p class="hint">兩條入口匯進「入口」（口）。你點名或勾選就是同意試吃：免費、固定版本、封存在專案外、只讀不執行。</p>
+      <div class="inlet" id="inlet-named">
+        <h3><span class="inlet-tag" aria-hidden="true">B</span> 你點名</h3>
+        <label for="feed-urls" class="label">貼上一個或多個 GitHub repo 或 arXiv 論文網址（一行一個；同一個 repo 寫兩次只收一次，同一篇論文的不同版本也只收一次）</label>
+        <textarea id="feed-urls" rows="2" spellcheck="false" autocomplete="off" placeholder="https://github.com/owner/repo&#10;arxiv.org/abs/2606.03979 或 arXiv:2606.03979"></textarea>
+        <div class="row">
+          <button type="button" id="feed-go" class="btn primary act">送去試吃</button>
+          <span class="hint">固定版本：repo 的 commit、論文的 arXiv 版本＋sha256</span>
+        </div>
+        <div id="feed-result" class="feed-result" aria-live="polite"></div>
+      </div>
+      <div class="inlet" id="inlet-scout">
+        <h3><span class="inlet-tag" aria-hidden="true">A</span> 每週偵查 → 相關性過濾 → 你確認</h3>
+        <p class="hint">每週按一次（沒有排程：漏掉的一週就不會再搜）。偵查依更新時間搜尋最近 7 天推送的 repo，只記錄候選；和 coding agent skill／harness 無關的不經審查就濾掉；星數只決定排序。你勾選就是同意試吃。</p>
+        <div class="row"><button type="button" id="scout-run" class="btn act">立即偵查</button></div>
+        <div id="scout-body"></div>
+      </div>
+      <details class="import-any" id="import-any">
+        <summary>計畫（十二指腸）：匯入已有的 Elephant／Goldfish 消化紀錄（歷史證據）</summary>
+        <p class="hint">匯入的紀錄只顯示成「歷史證據」，不計入任何判定。資料夾裡放 digest.json、verify.json、goldfish-*.json、components.json、integration.json、proposals.md；論文的紀錄放 components.json、goldfish-*.json、skeptic.json、digest.md 等。</p>
+        <label for="import-dir" class="label">報告資料夾路徑</label>
+        <input id="import-dir" type="text" spellcheck="false" autocomplete="off">
+        <label for="import-food" class="label">屬於哪樣食物（可空白：依資料夾裡的 scout.json，或論文紀錄 components.json 寫的 arXiv 編號判斷）</label>
+        <input id="import-food" type="text" spellcheck="false" autocomplete="off" placeholder="食物 id、owner/repo 或 arXiv:編號">
+        <div class="row"><button type="button" id="import-go" class="btn act">匯入</button></div>
+      </details>
+    </section>
+  </div>
+
+  <section id="my-oaw" class="panel my-oaw" aria-labelledby="my-oaw-title">
+    <h2 id="my-oaw-title">版本（全身）：我的 OAW</h2>
+    <div id="my-oaw-body"><p class="muted">讀取中…</p></div>
+  </section>
+
+  <details class="panel stage-guide">
+    <summary>每一站在做什麼（自動／需要你／部分自動／規劃中）</summary>
+    <ol id="stage-guide"></ol>
+  </details>
+  <details class="panel rules">
+    <summary>不會變的規則</summary>
+    <ul id="rules"></ul>
+  </details>
+  <details class="panel log">
+    <summary>動作紀錄（引擎原文）</summary>
+    <div id="log"></div>
+  </details>
+</main>
+
+<div id="toasts" class="toasts" aria-live="polite"></div>
+
+<dialog id="dialog" aria-labelledby="dialog-title">
+  <h3 id="dialog-title"></h3>
+  <div id="dialog-body" class="dialog-body"></div>
+  <div class="dialog-actions">
+    <button type="button" id="dialog-cancel" class="btn">取消</button>
+    <button type="button" id="dialog-ok" class="btn primary">確認</button>
+  </div>
+</dialog>
+</body>
+</html>

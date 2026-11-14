@@ -1,0 +1,258 @@
+{
+  "grades": [
+    {
+      "review_id": "R01",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        "The undefined Flux shim, readiness, implementation scope and acceptance criteria at docs/design.md:16 substantively detect M1 and M2, although reported as planning ambiguity rather than runtime failure.",
+        "Throughput/lag targets are unverified; sources provide no measurement results. Static-only review is not a claim of failed verification.",
+        "All-tenant rollout impact is conditional; no accepted staged-rollout requirement is supplied.",
+        "Acknowledgement durability, retry details and replay infrastructure are not established; no additional concrete failure is asserted."
+      ],
+      "explanations": {
+        "C1": "F01 identifies removal of the version guard and explains that an older delivery can replace a newer shipment version. This contradicts accepted docs/adr-004-events.md:3 and removes src/projector.py:2-7 protection.",
+        "C2": "F02 identifies complete authorization-header logging at docs/design.md:10 and its conflict with the accepted prohibition on logging authentication tokens at docs/adr-004-events.md:3.",
+        "M1": "The first uncertainty explicitly says Flux shim is undefined and explains that delivery/implementation scope cannot be determined. docs/design.md:16 confirms this; the semantic finding counts although outside the findings array.",
+        "M2": "The first uncertainty identifies unclear completion/acceptance criteria and unassessable delivery scope at docs/design.md:16. This is the actionable-plan defect, not merely a keyword or proposed-work question."
+      }
+    },
+    {
+      "review_id": "R02",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        "The first uncertainty substantively identifies undefined component, implementation scope and completion/verification criteria at docs/design.md:16; it detects M1 and M2 despite its classification as planning ambiguity.",
+        "Performance targets are unverified, not established failures or successes.",
+        "All-tenant rollout is correctly separated as a conditional risk; no staged-rollout requirement appears in the sources."
+      ],
+      "explanations": {
+        "C1": "F01 identifies removal of the version guard and explains that an older delivery can replace a newer shipment version. This contradicts accepted docs/adr-004-events.md:3 and removes src/projector.py:2-7 protection.",
+        "C2": "F02 identifies complete authorization-header logging at docs/design.md:10 and its conflict with the accepted prohibition on logging authentication tokens at docs/adr-004-events.md:3.",
+        "M1": "The first uncertainty explicitly says Flux shim is undefined and explains that delivery/implementation scope cannot be determined. docs/design.md:16 confirms this; the semantic finding counts although outside the findings array.",
+        "M2": "The first uncertainty identifies unclear completion/acceptance criteria and unassessable delivery scope at docs/design.md:16. This is the actionable-plan defect, not merely a keyword or proposed-work question."
+      }
+    },
+    {
+      "review_id": "R03",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        "All-tenant containment/validation concern is conditional; accepted sources impose no staged-rollout requirement.",
+        "The second uncertainty substantively detects undefined Flux shim and unclear delivery scope/completion criteria at docs/design.md:16, satisfying M1 and M2 without asserting a runtime defect.",
+        "No performance verification is supplied; future verification is not a passing result."
+      ],
+      "explanations": {
+        "C1": "F01 identifies removal of the version guard and explains that an older delivery can replace a newer shipment version. This contradicts accepted docs/adr-004-events.md:3 and removes src/projector.py:2-7 protection.",
+        "C2": "F02 identifies complete authorization-header logging at docs/design.md:10 and its conflict with the accepted prohibition on logging authentication tokens at docs/adr-004-events.md:3.",
+        "M1": "The second uncertainty explicitly says Flux shim is undefined and explains that delivery/implementation scope cannot be determined. docs/design.md:16 confirms this; the semantic finding counts although outside the findings array.",
+        "M2": "The second uncertainty identifies unclear completion/acceptance criteria and unassessable delivery scope at docs/design.md:16. This is the actionable-plan defect, not merely a keyword or proposed-work question."
+      }
+    },
+    {
+      "review_id": "R04",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [
+        {
+          "finding_id": "uncertainties[4]",
+          "type": "unsupported",
+          "reason": "Claim span: \"The feature-specification standard requests alternatives and explicit risk treatment\". No feature-specification standard is supplied to establish that claimed requirement. The only supplied auxiliary sources are AGENTS.md, CLAUDE.md, project memory and the OAW evidence skill; none supplies this review standard. README.md, accepted ADR-004, design.md and projector.py likewise contain no such standard. This scores the affirmative source/requirement assertion, not the preference for more document coverage."
+        }
+      ],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        "The five-minute lag budget phrase is ambiguous; no actual alert implementation is shown.",
+        "Performance targets are not verified results.",
+        "Queue acknowledgement, retry, retention and replay-capacity implementation details are absent from src/projector.py; feasibility is unresolved, not a demonstrated failure.",
+        "All-tenant rollout exposure is a conditional risk, not a separate mandated-rollout violation.",
+        "Absence of alternatives and explicit risk discussion is observable as a documentation/style concern; the asserted feature-standard requirement has no supplied source and is separately scored."
+      ],
+      "explanations": {
+        "C1": "F01 identifies removal of the version guard and explains that an older delivery can replace a newer shipment version. This contradicts accepted docs/adr-004-events.md:3 and removes src/projector.py:2-7 protection.",
+        "C2": "F02 identifies complete authorization-header logging at docs/design.md:10 and its conflict with the accepted prohibition on logging authentication tokens at docs/adr-004-events.md:3.",
+        "M1": "F03 explains that Flux shim has no contract or responsibility and that implementers must decide what component to build; docs/design.md:16 and the complete baseline support this.",
+        "M2": "F04 identifies absent completion checks, verification procedures/assertions and acceptance gates at docs/design.md:16; F03's undefined implementation scope also supports this. Award M2 only once."
+      }
+    },
+    {
+      "review_id": "R05",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [
+        {
+          "finding_id": "uncertainties[2]",
+          "type": "unsupported",
+          "reason": "Claim span: \"required by the supplied review standard\". No supplied review standard establishes an obligation to include alternatives evaluation and explicit risk/constraint treatment. The only supplied auxiliary sources are AGENTS.md, CLAUDE.md, project memory and the OAW evidence skill; none supplies this review standard. README.md, accepted ADR-004, design.md and projector.py likewise contain no such standard. This scores the affirmative source/requirement assertion, not the preference for more document coverage."
+        }
+      ],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        "All-tenant rollout creates conditional operational exposure; no outage is demonstrated.",
+        "Workload, capacity and performance verification remain unestablished; neither feasibility failure nor verification success is asserted.",
+        "Missing alternatives/risk discussion is a documentation observation; the claim that a supplied standard requires it lacks source evidence and is separately scored."
+      ],
+      "explanations": {
+        "C1": "F01 identifies removal of the version guard and explains that an older delivery can replace a newer shipment version. This contradicts accepted docs/adr-004-events.md:3 and removes src/projector.py:2-7 protection. F03 describes the same missing version protection during replay at design.md:13; no second credit.",
+        "C2": "F02 identifies complete authorization-header logging at docs/design.md:10 and its conflict with the accepted prohibition on logging authentication tokens at docs/adr-004-events.md:3.",
+        "M1": "F04 explicitly identifies undefined Flux shim/component responsibility; docs/design.md:16 and src/projector.py support this planning gap.",
+        "M2": "F04 identifies unimplementable scope and absent executable completion/verification conditions at docs/design.md:16. The combined finding detects M2 once."
+      }
+    },
+    {
+      "review_id": "R06",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [
+        {
+          "finding_id": "uncertainties[3]",
+          "type": "unsupported",
+          "reason": "Claim span: \"Alternatives and explicit risk assessment are absent under the supplied review standard\". The absence of that discussion is observable, but its claimed supplied-standard basis is not established. The only supplied auxiliary sources are AGENTS.md, CLAUDE.md, project memory and the OAW evidence skill; none supplies this review standard. README.md, accepted ADR-004, design.md and projector.py likewise contain no such standard. This scores the affirmative source/requirement assertion, not the preference for more document coverage."
+        }
+      ],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        "Five-minute lag alert wording is ambiguous.",
+        "Capacity, workload skew, retry bounds and persistent-failure details are unspecified; overload/failure remains conditional.",
+        "Post-acknowledgement detection and recovery details are unresolved; broad rollout impact is conditional and no staged-rollout policy is supplied.",
+        "Missing alternatives/risk analysis is a documentation observation; the claimed supplied-standard basis is unsupported and separately scored. No tests/performance runs or successful verification are asserted."
+      ],
+      "explanations": {
+        "C1": "F01 identifies removal of the version guard and explains that an older delivery can replace a newer shipment version. This contradicts accepted docs/adr-004-events.md:3 and removes src/projector.py:2-7 protection.",
+        "C2": "F02 identifies complete authorization-header logging at docs/design.md:10 and its conflict with the accepted prohibition on logging authentication tokens at docs/adr-004-events.md:3.",
+        "M1": "F03 identifies undefined Flux shim and no component relationship to apply_event, supported by design.md:16 and the baseline.",
+        "M2": "F03 identifies missing implementable scope/readiness criteria and F04 explains verification lacks cases/outcomes. Both support the same M2; award once."
+      }
+    },
+    {
+      "review_id": "R07",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [
+        {
+          "finding_id": "uncertainties[2]",
+          "type": "unsupported",
+          "reason": "Claim span: \"Alternatives evaluation is absent under the supplied feature standard\". The design has no alternatives evaluation, but no supplied feature standard establishes its required status. The only supplied auxiliary sources are AGENTS.md, CLAUDE.md, project memory and the OAW evidence skill; none supplies this review standard. README.md, accepted ADR-004, design.md and projector.py likewise contain no such standard. This scores the affirmative source/requirement assertion, not the preference for more document coverage."
+        }
+      ],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        "Five-minute lag alert semantics are ambiguous; no implementation behavior is established.",
+        "Performance feasibility and rollout impact remain conditional; planned verification was not represented as passing.",
+        "Missing alternatives analysis is a documentation observation; the alleged supplied feature-standard basis is unsupported and separately scored. Literal headings, non-goals and title preferences are correctly excluded."
+      ],
+      "explanations": {
+        "C1": "F01 identifies removal of the version guard and explains that an older delivery can replace a newer shipment version. This contradicts accepted docs/adr-004-events.md:3 and removes src/projector.py:2-7 protection. F02's replay regression is the same invariant defect at design.md:13; no second credit.",
+        "C2": "F03 identifies full authorization-header logging and token exposure, contrary to accepted docs/adr-004-events.md:3 and supported by design.md:10.",
+        "M1": "F04 identifies undefined Flux shim and missing responsibility/integration scope, confirmed by design.md:16 and src/projector.py.",
+        "M2": "F05 explains absent completion checks and acceptance/verification criteria at design.md:16; F04 also identifies undefined implementation scope. Award M2 once."
+      }
+    },
+    {
+      "review_id": "R08",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [
+        {
+          "finding_id": "uncertainties[1]",
+          "type": "unsupported",
+          "reason": "Claim span: \"Alternatives evaluation and risk/limit analysis are absent under the supplied review standard\". The document omits that analysis, but the asserted supplied review standard is absent from the evidence. The only supplied auxiliary sources are AGENTS.md, CLAUDE.md, project memory and the OAW evidence skill; none supplies this review standard. README.md, accepted ADR-004, design.md and projector.py likewise contain no such standard. This scores the affirmative source/requirement assertion, not the preference for more document coverage."
+        }
+      ],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        "Five-minute alert semantics remain ambiguous.",
+        "Absence of alternatives and risk/limit discussion is observable as documentation coverage; no supplied standard establishes the claimed requirement, separately scored.",
+        "Replay capacity, duration and live-traffic interactions are unestablished; overload and broad rollout impact are conditional.",
+        "Verification is unspecified and future work; throughput and lag are goals, not demonstrated results."
+      ],
+      "explanations": {
+        "C1": "F01 identifies removal of the version guard and explains that an older delivery can replace a newer shipment version. This contradicts accepted docs/adr-004-events.md:3 and removes src/projector.py:2-7 protection.",
+        "C2": "F02 identifies complete authorization-header logging at docs/design.md:10 and its conflict with the accepted prohibition on logging authentication tokens at docs/adr-004-events.md:3.",
+        "M1": "F03 explicitly identifies the undefined Flux shim and inability to determine component responsibility/integration from design.md:16 and the baseline.",
+        "M2": "F03 explains that required changes and completion/readiness criteria are undefined at design.md:16, making delivery unassessable. This satisfies M2 even though component and plan gaps share a finding."
+      }
+    },
+    {
+      "review_id": "R09",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [
+        {
+          "finding_id": "uncertainties[2].a",
+          "type": "unsupported",
+          "reason": "Claim span: \"Feature-standard alternatives and risk coverage are missing\". Missing discussion is observable, but its asserted feature-standard requirement is unsupported. The only supplied auxiliary sources are AGENTS.md, CLAUDE.md, project memory and the OAW evidence skill; none supplies this review standard. README.md, accepted ADR-004, design.md and projector.py likewise contain no such standard. This scores the affirmative source/requirement assertion, not the preference for more document coverage."
+        },
+        {
+          "finding_id": "uncertainties[2].b",
+          "type": "unsupported",
+          "reason": "Claim span: \"implementation-standard test cases, assertions and stable phases are absent\". The design has no such implementation detail, but no supplied implementation standard establishes these as required defects. This is independent of the feature-standard assertion. The only supplied auxiliary sources are AGENTS.md, CLAUDE.md, project memory and the OAW evidence skill; none supplies this review standard. README.md, accepted ADR-004, design.md and projector.py likewise contain no such standard. This scores the affirmative source/requirement assertion, not the preference for more document coverage."
+        }
+      ],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        "The five-minute alert window/condition is ambiguous.",
+        "Performance, concurrency, retry/backpressure and recovery details are unverified; neither inherent parallelism/rollout failure nor inevitable post-acknowledgement data loss is asserted.",
+        "Absent alternatives/risk coverage and test cases/assertions/phases are documentation observations. The claimed feature- and implementation-standard bases have no supplied source and are separately scored; exact headings are correctly excluded.",
+        "Verification is planned, not shown successful; undefined readiness is a valid verifiability concern already covered by M2."
+      ],
+      "explanations": {
+        "C1": "F01 identifies removal of the version guard and explains that an older delivery can replace a newer shipment version. This contradicts accepted docs/adr-004-events.md:3 and removes src/projector.py:2-7 protection.",
+        "C2": "F02 identifies complete authorization-header logging at docs/design.md:10 and its conflict with the accepted prohibition on logging authentication tokens at docs/adr-004-events.md:3.",
+        "M1": "F03 explicitly identifies the undefined Flux shim and inability to determine component responsibility/integration from design.md:16 and the baseline.",
+        "M2": "F03 explains that required changes and completion/readiness criteria are undefined at design.md:16, making delivery unassessable. This satisfies M2 even though component and plan gaps share a finding."
+      }
+    }
+  ]
+}

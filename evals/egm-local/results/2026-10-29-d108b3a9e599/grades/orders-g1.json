@@ -1,0 +1,316 @@
+{
+  "grades": [
+    {
+      "review_id": "R01",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        {
+          "finding_id": "uncertainties[0]",
+          "reason": "Measurement caveat: design.md:4 sets 120 ms p99 at 2,000 requests/s and :20 requests confirmation but supplies no result; :20 expressly calls concurrency/retry tests planned. No missing-target or completed-test defect is alleged."
+        },
+        {
+          "finding_id": "uncertainties[1]",
+          "reason": "Explicitly conditional current-code risk: reserve.py:3-5 checks order_id before :6 locks stock. No uniqueness or isolation implementation is supplied, so the review correctly declines to assert a confirmed additional current-code defect."
+        }
+      ],
+      "explanations": {
+        "C1": "F01 detects the concrete lost-update/oversell mechanism: design.md:11-14 reads availability, inserts a reservation and unconditionally overwrites the earlier quantity without atomicity. Two successful last-unit reservations can both write zero. reserve.py:2,6-10 supplies the contrasting transaction and stock-row lock. Any partial-write consequence is part of this same atomicity issue, not a second detection.",
+        "C2": "F02 detects repeat allocation under a fresh request UUID: design.md:7,12-14 generates a new identity and repeats all allocation steps on HTTP retry without order-based deduplication. With remaining stock, a lost-response retry reserves again, contrary to ADR-001:3 per-order idempotency and reserve.py:3-5 prior-order return.",
+        "M1": "F03 identifies the explicit false ADR permission claim and implementation/cutover conflict in design.md:8,20. Accepted ADR-001 r2:2-3 specifies PostgreSQL and requires an accepted replacement before a second persistent inventory database; README.md:4 makes that decision authoritative. This is more than questioning a proposed database alternative.",
+        "M2": "F04 identifies the direct retention/support contradiction in design.md:17: the only ledger is deleted after seven days, support must use it for thirty-day disputes, and no archive is planned. Days 8-30 lack the required evidence."
+      }
+    },
+    {
+      "review_id": "R02",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        {
+          "finding_id": "uncertainties[0]",
+          "reason": "Performance and verification caveat supported by design.md:4,20: a precise target and planned tests exist, but no measured or passing results are supplied."
+        },
+        {
+          "finding_id": "uncertainties[1]",
+          "reason": "Explicitly conditional current-code idempotency question; reserve.py:3-6 and the absence of database constraint/isolation definitions support leaving this unresolved."
+        }
+      ],
+      "explanations": {
+        "C1": "F02 detects the concrete lost-update/oversell mechanism: design.md:11-14 reads availability, inserts a reservation and unconditionally overwrites the earlier quantity without atomicity. Two successful last-unit reservations can both write zero. reserve.py:2,6-10 supplies the contrasting transaction and stock-row lock. Any partial-write consequence is part of this same atomicity issue, not a second detection.",
+        "C2": "F03 detects repeat allocation under a fresh request UUID: design.md:7,12-14 generates a new identity and repeats all allocation steps on HTTP retry without order-based deduplication. With remaining stock, a lost-response retry reserves again, contrary to ADR-001:3 per-order idempotency and reserve.py:3-5 prior-order return.",
+        "M1": "F01 identifies the explicit false ADR permission claim and implementation/cutover conflict in design.md:8,20. Accepted ADR-001 r2:2-3 specifies PostgreSQL and requires an accepted replacement before a second persistent inventory database; README.md:4 makes that decision authoritative. This is more than questioning a proposed database alternative.",
+        "M2": "F04 identifies the direct retention/support contradiction in design.md:17: the only ledger is deleted after seven days, support must use it for thirty-day disputes, and no archive is planned. Days 8-30 lack the required evidence."
+      }
+    },
+    {
+      "review_id": "R03",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        {
+          "finding_id": "uncertainties[0]",
+          "reason": "Regional authority and routing are not specified by design.md:4-20. The overlapping-writer coordination statement is conditional, not a claimed actual topology or additional demonstrated failure."
+        },
+        {
+          "finding_id": "uncertainties[1]",
+          "reason": "Correct distinction between the explicit measurable performance target in design.md:4 and future verification in :20; no missing target or completed-test claim."
+        },
+        {
+          "finding_id": "uncertainties[2]",
+          "reason": "Accurate document-coverage observation: design.md has no alternatives evaluation, explicit risks section/content, or non-goals. Feature-spec-standard.md.txt asks for alternatives and risks and lists goals/non-goals as applicable coverage examples. This is a method/completeness observation, not an independent runtime defect or mandatory heading requirement."
+        },
+        {
+          "finding_id": "uncertainties[3]",
+          "reason": "Accurate readiness observation: design.md:20 supplies broad implementation/test intentions but no file scope, ledger schema, routing steps, stable phases, or expected correctness assertions. Implementation-readiness-standard.md.txt discusses explicit scope/actions, predetermined design choices, phases/checkpoints, and specific test cases. This is scoped plan-actionability commentary, not a claim that planned files/tests must already exist."
+        }
+      ],
+      "explanations": {
+        "C1": "F01 detects the concrete lost-update/oversell mechanism: design.md:11-14 reads availability, inserts a reservation and unconditionally overwrites the earlier quantity without atomicity. Two successful last-unit reservations can both write zero. reserve.py:2,6-10 supplies the contrasting transaction and stock-row lock. Any partial-write consequence is part of this same atomicity issue, not a second detection.",
+        "C2": "F02 detects repeat allocation under a fresh request UUID: design.md:7,12-14 generates a new identity and repeats all allocation steps on HTTP retry without order-based deduplication. With remaining stock, a lost-response retry reserves again, contrary to ADR-001:3 per-order idempotency and reserve.py:3-5 prior-order return.",
+        "M1": "F03 identifies the explicit false ADR permission claim and implementation/cutover conflict in design.md:8,20. Accepted ADR-001 r2:2-3 specifies PostgreSQL and requires an accepted replacement before a second persistent inventory database; README.md:4 makes that decision authoritative. This is more than questioning a proposed database alternative.",
+        "M2": "F04 identifies the direct retention/support contradiction in design.md:17: the only ledger is deleted after seven days, support must use it for thirty-day disputes, and no archive is planned. Days 8-30 lack the required evidence."
+      }
+    },
+    {
+      "review_id": "R04",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        {
+          "finding_id": "uncertainties[0]",
+          "reason": "Regional authority, routing, replication, failover, and migration mechanics are absent from design.md; feasibility is left unresolved without inventing a required topology or declaring a latency failure."
+        },
+        {
+          "finding_id": "uncertainties[1].a",
+          "reason": "Alternatives and risk coverage are absent in design.md and are specifically addressed by feature-spec-standard.md.txt; this is a supported method-coverage observation."
+        },
+        {
+          "finding_id": "uncertainties[1].b",
+          "reason": "File/schema/interface actions, cutover phases, prerequisites for correct execution, and specific correctness assertions are not resolved by design.md:20. Implementation-readiness-standard.md.txt supports identifying these as actionability questions. No additional product requirement or demonstrated runtime failure is asserted."
+        },
+        {
+          "finding_id": "uncertainties[2]",
+          "reason": "Design.md:4 explicitly states the end-to-end p99/load target, and :20 explicitly labels concurrency/retry tests planned; no target-absence or passing-test false alarm."
+        },
+        {
+          "finding_id": "uncertainties[3]",
+          "reason": "Reserve.py:2-10 supplies transaction, stock-row lock, and prior-order lookup but no complete database semantics. Auxiliary memory matches accepted ADR r2 and expressly asks source verification. The review's qualification and authority distinction are supported; no cosmetic defect is alleged."
+        }
+      ],
+      "explanations": {
+        "C1": "F01 detects the concrete lost-update/oversell mechanism: design.md:11-14 reads availability, inserts a reservation and unconditionally overwrites the earlier quantity without atomicity. Two successful last-unit reservations can both write zero. reserve.py:2,6-10 supplies the contrasting transaction and stock-row lock. Any partial-write consequence is part of this same atomicity issue, not a second detection.",
+        "C2": "F02 detects repeat allocation under a fresh request UUID: design.md:7,12-14 generates a new identity and repeats all allocation steps on HTTP retry without order-based deduplication. With remaining stock, a lost-response retry reserves again, contrary to ADR-001:3 per-order idempotency and reserve.py:3-5 prior-order return.",
+        "M1": "F03 identifies the explicit false ADR permission claim and implementation/cutover conflict in design.md:8,20. Accepted ADR-001 r2:2-3 specifies PostgreSQL and requires an accepted replacement before a second persistent inventory database; README.md:4 makes that decision authoritative. This is more than questioning a proposed database alternative.",
+        "M2": "F04 identifies the direct retention/support contradiction in design.md:17: the only ledger is deleted after seven days, support must use it for thirty-day disputes, and no archive is planned. Days 8-30 lack the required evidence."
+      }
+    },
+    {
+      "review_id": "R05",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        {
+          "finding_id": "uncertainties[0]",
+          "reason": "Design.md does not specify regional authority/routing/coordination or partition behavior. Consequences are explicitly conditional on topology."
+        },
+        {
+          "finding_id": "uncertainties[1]",
+          "reason": "Design.md:4 supplies the measurable target; :14 offers lock-contention motivation without measurements, and :20 lists planned concurrency/retry tests. The review does not infer target attainment, impossibility, or completed tests."
+        },
+        {
+          "finding_id": "uncertainties[2]",
+          "reason": "Alternatives/risk mitigation are absent; implementation scope, schema, phases, and exact test assertions are also unresolved in design.md:20. Feature-spec-standard.md.txt and implementation-readiness-standard.md.txt support these scoped method-coverage observations; they are not independent functional defects."
+        },
+        {
+          "finding_id": "uncertainties[3]",
+          "reason": "Design.md contains no baseline-system explanation, but README.md, ADR-001 and reserve.py supply current authority/behavior. The review explicitly avoids turning a documentation observation or unimplemented proposal into another factual blocker."
+        }
+      ],
+      "explanations": {
+        "C1": "F01 detects the concrete lost-update/oversell mechanism: design.md:11-14 reads availability, inserts a reservation and unconditionally overwrites the earlier quantity without atomicity. Two successful last-unit reservations can both write zero. reserve.py:2,6-10 supplies the contrasting transaction and stock-row lock. Any partial-write consequence is part of this same atomicity issue, not a second detection.",
+        "C2": "F02 detects repeat allocation under a fresh request UUID: design.md:7,12-14 generates a new identity and repeats all allocation steps on HTTP retry without order-based deduplication. With remaining stock, a lost-response retry reserves again, contrary to ADR-001:3 per-order idempotency and reserve.py:3-5 prior-order return.",
+        "M1": "F03 identifies the explicit false ADR permission claim and implementation/cutover conflict in design.md:8,20. Accepted ADR-001 r2:2-3 specifies PostgreSQL and requires an accepted replacement before a second persistent inventory database; README.md:4 makes that decision authoritative. This is more than questioning a proposed database alternative.",
+        "M2": "F04 identifies the direct retention/support contradiction in design.md:17: the only ledger is deleted after seven days, support must use it for thirty-day disputes, and no archive is planned. Days 8-30 lack the required evidence."
+      }
+    },
+    {
+      "review_id": "R06",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        {
+          "finding_id": "uncertainties[0]",
+          "reason": "Regional authority/routing/coordination/failure details are absent from design.md:4-20. The review explicitly leaves actual regional failures and latency outcomes unestablished."
+        },
+        {
+          "finding_id": "uncertainties[1]",
+          "reason": "Design.md:20 leaves file scope/schema/migration/routing/phase details and exact test assertions unresolved. Implementation-readiness-standard.md.txt supports these as readiness questions, without implying that proposed artifacts must exist already."
+        },
+        {
+          "finding_id": "uncertainties[2]",
+          "reason": "Design.md has no alternatives evaluation or explicit risk/limit treatment. Feature-spec-standard.md.txt addresses both; the review correctly scopes these as content observations rather than additional binding product requirements or exact-heading defects."
+        },
+        {
+          "finding_id": "uncertainties[3]",
+          "reason": "The explicit target and planned tests are present at design.md:4,20. Reserve.py demonstrates safeguards but supplies no full database uniqueness/isolation semantics. This caveat avoids both rubric hard negatives and an unproved current-code guarantee."
+        }
+      ],
+      "explanations": {
+        "C1": "F02 detects the concrete lost-update/oversell mechanism: design.md:11-14 reads availability, inserts a reservation and unconditionally overwrites the earlier quantity without atomicity. Two successful last-unit reservations can both write zero. reserve.py:2,6-10 supplies the contrasting transaction and stock-row lock. Any partial-write consequence is part of this same atomicity issue, not a second detection.",
+        "C2": "F03 detects repeat allocation under a fresh request UUID: design.md:7,12-14 generates a new identity and repeats all allocation steps on HTTP retry without order-based deduplication. With remaining stock, a lost-response retry reserves again, contrary to ADR-001:3 per-order idempotency and reserve.py:3-5 prior-order return.",
+        "M1": "F01 identifies the explicit false ADR permission claim and implementation/cutover conflict in design.md:8,20. Accepted ADR-001 r2:2-3 specifies PostgreSQL and requires an accepted replacement before a second persistent inventory database; README.md:4 makes that decision authoritative. This is more than questioning a proposed database alternative.",
+        "M2": "F04 identifies the direct retention/support contradiction in design.md:17: the only ledger is deleted after seven days, support must use it for thirty-day disputes, and no archive is planned. Days 8-30 lack the required evidence."
+      }
+    },
+    {
+      "review_id": "R07",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        {
+          "finding_id": "uncertainties[0]",
+          "reason": "Design.md:20 plans concurrency/retry tests and directs p99 confirmation under the stated load; it supplies neither passing results nor production-incident evidence. The review preserves that distinction."
+        },
+        {
+          "finding_id": "uncertainties[1].a",
+          "reason": "Design.md contains no alternatives/risk evaluation; feature-spec-standard.md.txt explicitly addresses these. This remains a method-completeness observation."
+        },
+        {
+          "finding_id": "uncertainties[1].b",
+          "reason": "File/schema/migration/routing/rollback/checkpoint details and exact test assertions are unspecified in design.md:20. Implementation-readiness-standard.md.txt supports plan-depth scrutiny, including execution without edge-case design choices and stable phases, but does not itself impose an additional product behavior. The report presents these as separate plan-depth observations, not independent demonstrated failures."
+        },
+        {
+          "finding_id": "uncertainties[2]",
+          "reason": "Design.md leaves detailed regional coordination unspecified. No editorial/heading defect or actual invented topology is asserted."
+        }
+      ],
+      "explanations": {
+        "C1": "F01 detects the concrete lost-update/oversell mechanism: design.md:11-14 reads availability, inserts a reservation and unconditionally overwrites the earlier quantity without atomicity. Two successful last-unit reservations can both write zero. reserve.py:2,6-10 supplies the contrasting transaction and stock-row lock. Any partial-write consequence is part of this same atomicity issue, not a second detection.",
+        "C2": "F02 detects repeat allocation under a fresh request UUID: design.md:7,12-14 generates a new identity and repeats all allocation steps on HTTP retry without order-based deduplication. With remaining stock, a lost-response retry reserves again, contrary to ADR-001:3 per-order idempotency and reserve.py:3-5 prior-order return.",
+        "M1": "F03 identifies the explicit false ADR permission claim and implementation/cutover conflict in design.md:8,20. Accepted ADR-001 r2:2-3 specifies PostgreSQL and requires an accepted replacement before a second persistent inventory database; README.md:4 makes that decision authoritative. This is more than questioning a proposed database alternative.",
+        "M2": "F04 identifies the direct retention/support contradiction in design.md:17: the only ledger is deleted after seven days, support must use it for thirty-day disputes, and no archive is planned. Days 8-30 lack the required evidence."
+      }
+    },
+    {
+      "review_id": "R08",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        {
+          "finding_id": "uncertainties[0]",
+          "reason": "Design.md specifies three-region goals but no regional authority, replication, partition, or failover mechanics; the review correctly leaves latency feasibility open rather than declaring the target impossible."
+        },
+        {
+          "finding_id": "uncertainties[1]",
+          "reason": "Absent alternatives/risk evaluation is supported by design.md and feature-spec-standard.md.txt. This is explicitly a completeness observation, not a factual product requirement or heading violation."
+        },
+        {
+          "finding_id": "uncertainties[2]",
+          "reason": "Design.md:20 leaves implementation scope/actions, ledger schema, routing integration, and incremental phases open. Implementation-readiness-standard.md.txt supports those readiness observations; the review does not claim cutover has occurred or invent a mandatory implementation."
+        },
+        {
+          "finding_id": "uncertainties[3]",
+          "reason": "Design.md:20 expressly says planned tests. Reserve.py:2-10 shows reusable safeguards without exposing every concurrency guarantee. The caveat is grounded and does not allege missing targets or completed tests."
+        }
+      ],
+      "explanations": {
+        "C1": "F02 detects the concrete lost-update/oversell mechanism: design.md:11-14 reads availability, inserts a reservation and unconditionally overwrites the earlier quantity without atomicity. Two successful last-unit reservations can both write zero. reserve.py:2,6-10 supplies the contrasting transaction and stock-row lock. Any partial-write consequence is part of this same atomicity issue, not a second detection.",
+        "C2": "F03 detects repeat allocation under a fresh request UUID: design.md:7,12-14 generates a new identity and repeats all allocation steps on HTTP retry without order-based deduplication. With remaining stock, a lost-response retry reserves again, contrary to ADR-001:3 per-order idempotency and reserve.py:3-5 prior-order return.",
+        "M1": "F01 identifies the explicit false ADR permission claim and implementation/cutover conflict in design.md:8,20. Accepted ADR-001 r2:2-3 specifies PostgreSQL and requires an accepted replacement before a second persistent inventory database; README.md:4 makes that decision authoritative. This is more than questioning a proposed database alternative.",
+        "M2": "F04 identifies the direct retention/support contradiction in design.md:17: the only ledger is deleted after seven days, support must use it for thirty-day disputes, and no archive is planned. Days 8-30 lack the required evidence."
+      }
+    },
+    {
+      "review_id": "R09",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        {
+          "finding_id": "uncertainties[0]",
+          "reason": "Design.md:4,20 supplies a precise end-to-end performance target and future confirmation, with no measurement establishing attainment or impossibility."
+        },
+        {
+          "finding_id": "uncertainties[1]",
+          "reason": "Explicit partial-failure risk follows from design.md:12-14 separate writes. Recovery is unspecified. This overlaps the non-atomic allocation issue C1 and is not double-counted as an additional finding."
+        },
+        {
+          "finding_id": "uncertainties[2]",
+          "reason": "Reserve.py does not provide database constraints or isolation semantics, so declining to confirm a separate concurrent same-order defect is appropriate."
+        },
+        {
+          "finding_id": "uncertainties[3]",
+          "reason": "Design.md:20 explicitly marks concurrency/retry tests planned. The review does not claim implementation or execution success."
+        }
+      ],
+      "explanations": {
+        "C1": "F02 detects the concrete lost-update/oversell mechanism: design.md:11-14 reads availability, inserts a reservation and unconditionally overwrites the earlier quantity without atomicity. Two successful last-unit reservations can both write zero. reserve.py:2,6-10 supplies the contrasting transaction and stock-row lock. Any partial-write consequence is part of this same atomicity issue, not a second detection.",
+        "C2": "F03 detects repeat allocation under a fresh request UUID: design.md:7,12-14 generates a new identity and repeats all allocation steps on HTTP retry without order-based deduplication. With remaining stock, a lost-response retry reserves again, contrary to ADR-001:3 per-order idempotency and reserve.py:3-5 prior-order return.",
+        "M1": "F01 identifies the explicit false ADR permission claim and implementation/cutover conflict in design.md:8,20. Accepted ADR-001 r2:2-3 specifies PostgreSQL and requires an accepted replacement before a second persistent inventory database; README.md:4 makes that decision authoritative. This is more than questioning a proposed database alternative.",
+        "M2": "F04 identifies the direct retention/support contradiction in design.md:17: the only ledger is deleted after seven days, support must use it for thirty-day disputes, and no archive is planned. Days 8-30 lack the required evidence."
+      }
+    }
+  ]
+}
