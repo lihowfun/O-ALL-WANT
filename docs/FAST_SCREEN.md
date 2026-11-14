@@ -184,6 +184,11 @@ measurements or implement aggregate-score historical back-tests.
 
 On 2026-11-14 one small-model judge (Claude Haiku 5.5, low effort, one tool-free request per report) labelled 4 review reports × 30 known defects, two repeats. On the 114 cells where two full-price graders of different families agreed after a registered reconciliation, its detected / not-detected label matched 111 and 112 of 114; it missed no detection, and every mismatch counted a mention as a detection (3 and 2 cells). It took 84 and 70 seconds against 301 seconds for the full-price Claude grader, and 0.96 and 0.93 of that grader's logical tokens. One reviewed document; one of the two graders that made the labels is from the same model family.
 
+On 2026-11-15 the owner decided that this judge is stable enough to use (D51),
+setting aside the token condition below. The judge in use for the fast screen is
+therefore Claude Haiku 5.5 at low effort; another model needs the same calibration
+before it takes that role.
+
 That calibration is limited to its stated protocol and document. It used a
 three-label question (detected, mention-only, absent) covering 30 defects per
 request and scored the detected / not-detected split; the yes/no prompt printed
