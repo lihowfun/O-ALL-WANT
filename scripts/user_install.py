@@ -191,6 +191,17 @@ def load_verdicts(path: Path | None = None) -> dict:
             raise InstallError(f"Invalid tasting outcome for {food['id']}.")
         if tasting and not (tasting.get("commit") is None or re.fullmatch(r"[0-9a-f]{40}", str(tasting["commit"]))):
             raise InstallError(f"Invalid tasted commit for {food['id']}.")
+        owner = food.get("owner_decision")
+        if owner is not None:
+            try:
+                if not isinstance(owner, dict):
+                    raise core.RecordError("Owner decision must be an object.")
+                core.validate_owner_decision({"schema": core.OWNER_DECISION_SCHEMA,
+                                              **{k: v for k, v in owner.items() if k != "outcome_zh"}}, food["id"])
+                if owner.get("outcome_zh") != core.D29_OUTCOMES_ZH[owner["outcome"]]:
+                    raise core.RecordError("Owner decision label does not match its outcome.")
+            except core.RecordError as exc:
+                raise InstallError(f"Invalid owner decision for {food['id']}: {exc}") from exc
     return data
 
 
@@ -237,10 +248,13 @@ def tasting_status(target: Path, source: dict, verdicts: dict) -> dict:
     if found is None and food and food.get("tasting"):
         found = {**food["tasting"], "from": "shipped-verdicts"}  # the tasting's own commit, never the food's pin
     category = food.get("category") if food else None
+    owner = food.get("owner_decision") if food else None
+    effective = {"owner_decision": owner, "measured_outcome": found.get("outcome") if found else None,
+                 "outcome": owner["outcome"] if owner else found.get("outcome") if found else None}
     if not found:
-        return {"status": "untasted", "category": category}
+        return {"status": "untasted", "category": category, **effective}
     tasted, installed = found.get("commit"), source.get("commit")
-    return {"status": "tasted", "category": category, "from": found["from"], "outcome": found.get("outcome"),
+    return {"status": "tasted", "category": category, "from": found["from"], **effective,
             "label_zh": found["label_zh"], "date": found["date"], "conditions": found["conditions"],
             "evidence": found["evidence"], "reason_zh": found.get("reason_zh"), "tasted_commit": tasted,
             "same_version": bool(tasted and installed and tasted == installed)}
@@ -261,9 +275,11 @@ def stored_key(key: str) -> str:
 
 
 def tasting_text(tasting: dict, package: str) -> str:
+    owner = tasting.get("owner_decision")
+    prefix = (core.owner_decision_label(owner) + f" · {owner['reason_zh']}；實測：") if owner else ""
     if tasting["status"] != "tasted":
-        return f"未試吃（試吃：catalog.py taste {package}）"
-    text = f"{tasting['label_zh']}（{tasting['date']}，{conditions_short(tasting['conditions'])}）"
+        return prefix + f"未試吃（試吃：catalog.py taste {package}）"
+    text = prefix + f"{tasting['label_zh']}（{tasting['date']}，{conditions_short(tasting['conditions'])}）"
     if tasting.get("tasted_commit") and not tasting.get("same_version"):
         text += f"；試吃的是 {tasting['tasted_commit'][:7]}，不是你裝的版本"
     elif not tasting.get("tasted_commit"):
@@ -973,7 +989,12 @@ def _resolve_hosts(manifest: dict | None, host: str | None) -> list:
 
 
 def recommend(tasting: dict) -> tuple[str, str]:
-    """Choice 3, deterministic: (install | explicit | skip, one line of reason) from the tasting records only."""
+    """Choice 3: the owner's disposition takes precedence over the measured outcome."""
+    owner = tasting.get("owner_decision")
+    if owner:
+        action = "explicit" if owner["outcome"] == "optional" else "skip"
+        suffix = "：裝上，但只在你叫它時用" if action == "explicit" else "：不建議安裝"
+        return action, core.owner_decision_label(owner) + f" · {owner['reason_zh']}" + suffix
     if tasting["status"] != "tasted":
         return "install", "沒有試吃紀錄：照裝，清單上標「未試吃」"
     where = conditions_short(tasting["conditions"])
@@ -1424,7 +1445,7 @@ def _package_record(package: dict, plan: dict, stamp: str) -> dict:
                        "url": source["url"], "path": None, "ref": source["ref"], "commit": source.get("commit"),
                        "tree_sha256": source["tree_sha256"], "from_verdicts": source.get("from_verdicts")},
             "license": {"spdx": package["license"]["spdx"], "distribution": package["license"]["distribution"]},
-            "tasting_at_install": {k: package["tasting"].get(k) for k in ("status", "label_zh", "date", "from")},
+            "tasting_at_install": {k: package["tasting"].get(k) for k in ("status", "label_zh", "date", "from", "owner_decision")},
             "recommendation": package["recommendation"],
             "held_back": [part_key(p) for p in package["parts"] if p["status"] == "held"],
             "consents": sorted(plan["consents"] or ()), "dependencies": package["dependencies"],
@@ -1677,6 +1698,7 @@ def receipt_rows(target: Path, manifest: dict | None, record: dict, verdicts: di
             tasting = ({"status": "tasted", "label_zh": f"{at_install.get('label_zh')}（安裝時的紀錄）",
                         "date": at_install.get("date"), "conditions": {}} if at_install.get("status") == "tasted"
                        else {"status": "untasted"})
+            tasting["owner_decision"] = at_install.get("owner_decision")
         else:
             tasting = tasting_status(target, {"key": source["key"], "commit": source.get("commit")}, verdicts)
         for name, part in sorted(((part["name"], part) for part in entry["parts"].values()), key=lambda item: (item[0], item[1]["kind"])):

@@ -586,6 +586,36 @@ class MarkupSafetyTests(UiCase):
 
 @unittest.skipUnless(GIT, "git is required for local fixture repositories")
 class RoundTripTests(UiCase):
+    def test_page_view_keeps_owner_disposition_apart_from_measurement(self):
+        catalog.add_foods(self.project, ["https://github.com/owner/food"])
+        tasting = catalog.core.validate_tasting({
+            "schema": "oaw-tasting/1", "date": "2026-11-14",
+            "records": {"branch": "records", "path": "records/fixture", "commit": "a" * 40},
+            "protocol": {"models": ["fixture"], "corpus": "fixture", "repeats": 1,
+                         "questions": {"count": 12, "sha256": "b" * 64}},
+            "arms": [{"id": "N", "food_arm": False, "runs": 12, "graded_runs": 12},
+                     {"id": "F", "food_arm": True, "runs": 12, "graded_runs": 12}],
+            "food_arm_ran": {"graded_runs": 12}, "verdict": "optional", "verdict_zh": "未顯示收益。",
+            "judgment": {"quality": "same", "cost_ratio": 1.01, "cheaper": False, "grading": "mechanical",
+                         "conditions": 12, "basis": "12/12 on both arms"}}, "food")
+        catalog.save_evidence(self.project, "food", "tasting-fixture.json",
+                              {**tasting, "tasting_id": catalog.core.tasting_id(tasting), "provenance": "agent-tasting"})
+        catalog.cmd_decide(self.project, "food", "excrete", "D52", "從未顯示收益，因此移除。", "2026-11-15")
+        food = ui.UiApp(self.project, "test-token").view_payload()["view"]["foods"][0]
+        self.assertEqual(food["owner_decision"]["decision"], "D52")
+        self.assertEqual(food["effective_outcome"], "excrete")
+        self.assertEqual(food["measured_outcome"], "optional")
+        self.assertEqual(food["tasting"]["judgment"]["cost_ratio"], 1.01)
+        # The page renders these as text nodes in the current-outcome box (same safety convention as other views).
+        script = (UI / "app.js").read_text(encoding="utf-8")
+        self.assertIn("...ownerOutcome(food)", script)
+        renderer = script[script.index("function ownerOutcome(food)"):].split("\n  }", 1)[0]
+        self.assertIn("food.owner_decision", renderer)
+        self.assertIn("owner 決定 ${txt(owner.decision, 40)}，非實測判定", renderer)
+        self.assertIn("實測：", renderer)
+        self.assertIn("food.tasting", renderer)
+        self.assertIn("text:", renderer)
+
     def test_feed_absorb_restore_through_the_api(self):
         self.start()
         repo = self.make_food()

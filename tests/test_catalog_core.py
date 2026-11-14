@@ -1163,6 +1163,40 @@ def absorption_doc(**overrides):
     return doc
 
 
+class OwnerDecisionTests(unittest.TestCase):
+    def decision(self, **changes):
+        return {"schema": core.OWNER_DECISION_SCHEMA, "food": "a", "outcome": "excrete", "decision": "D52",
+                "date": "2026-11-15", "reason_zh": "從未顯示收益，因此移除。", **changes}
+
+    def test_decision_validation_and_no_evidence_promotion(self):
+        raw = self.decision()
+        decision = core.validate_owner_decision(raw, "a")
+        self.assertEqual(core.derive([decision]), core.derive([]))
+        self.assertEqual(core.owner_decision_entry(decision)["outcome_zh"], "排掉")
+        for changes in ({"outcome": "default"}, {"reason_zh": ""}, {"date": "2026-02-30"},
+                        {"decision": "D52/secret"}, {"food": "another"},
+                        {"reason_zh": "一。二。三。"}):
+            with self.subTest(changes=changes), self.assertRaises(core.RecordError):
+                core.validate_owner_decision(self.decision(**changes), "a")
+
+    def test_private_reasons_are_refused_without_echoing_them(self):
+        for reason in ("See /home/alice/project", "See /mnt/private/repo", "file:///tmp/foo", "private#1234",
+                       "See ~/private/repo", "See C:\\Users\\alice\\repo", "See ./private/repo",
+                       "ghp_" + "a" * 36, "https://alice:secret@example.invalid"):
+            with self.subTest(reason=reason), self.assertRaises(core.RecordError) as refusal:
+                core.validate_owner_decision(self.decision(reason_zh=reason), "a")
+            self.assertNotIn(reason, str(refusal.exception))
+
+    def test_edited_current_or_history_is_refused(self):
+        raw = self.decision()
+        record = {**raw, "owner_decision_id": "d-" + core.record_sha256(raw)[:12], "history": []}
+        self.assertEqual(core.food_records([record], "a")["owner_decision"], raw)
+        for changed in ({**record, "reason_zh": "變更理由。"}, {**record, "history": [{**raw, "outcome": "default"}]}):
+            records = core.food_records([changed], "a")
+            self.assertIsNone(records["owner_decision"])
+            self.assertEqual(records["refused"][0]["kind"], "owner-decision")
+
+
 class AgentRecordTests(unittest.TestCase):
     """D28: Claude's tastings and D21 absorptions in the ledger, and who each food waits on afterwards."""
 

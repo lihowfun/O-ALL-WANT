@@ -20,6 +20,7 @@ data: it is decoded and pattern-matched, never imported, executed or rendered.
 from __future__ import annotations
 
 import ast
+from datetime import date
 import hashlib
 import json
 from pathlib import PurePosixPath
@@ -27,6 +28,8 @@ import re
 import sys
 import unicodedata
 from urllib.parse import unquote, urlsplit
+
+import oaw_common
 
 SCHEMA_VERSION = 1
 RELEASE = "2.0.1"
@@ -1839,6 +1842,9 @@ def imported_record(food: str, docs: dict, source_files: list, recorded_at: str)
 
 TASTING_SCHEMA = "oaw-tasting/1"
 ABSORPTION_SCHEMA = "oaw-absorption/1"
+OWNER_DECISION_SCHEMA = "oaw-owner-decision/1"
+# Shared with the public verdicts builder; never echo private input on refusal.
+PRIVATE_REFERENCE = re.compile(r"(?i)(?:file://|private#|(?<![\w.])/(?:home|mnt|users|root|tmp|var|private|opt|srv)/|\b[a-z]:\\)")
 # verdict -> Traditional Chinese label. The latest tasting decides; every tasting stays on the card.
 TASTING_VERDICTS = {"absorb": "吸收", "plug-in": "插上（接上官方版，不吸收）", "optional": "可選用（不設預設，要用時才叫）",
                     "decline": "不收", "not-shown-better": "沒證明比原生好（不收）", "no-verdict": "沒有判定"}
@@ -1984,6 +1990,47 @@ def _check_stored(doc: dict, id_key: str, record: dict, prefix: str) -> None:
         expected = prefix + record_sha256(record)[:12]
         if doc[id_key] != expected:
             raise RecordError(f"{id_key} does not match the record's content: the file was edited after it was recorded.")
+
+
+def validate_owner_decision(doc, food: str, *, stored: bool = False) -> dict:
+    """An owner's disposition, independent of measured evidence; defaults cannot be granted here."""
+    kind = "Owner decision"
+    if not isinstance(doc, dict) or doc.get("schema") != OWNER_DECISION_SCHEMA:
+        raise RecordError(f"{kind}: schema must be {OWNER_DECISION_SCHEMA}.")
+    _keys(doc, {"schema", "food", "outcome", "decision", "date", "reason_zh"}
+          | ({"recorded_at", "provenance", "owner_decision_id", "history"} if stored else set()), "", kind)
+    _check_food(doc, food, kind)
+    if doc.get("outcome") not in ("optional", "excrete"):
+        raise RecordError(f"{kind}: outcome must be optional or excrete; default needs measured evidence.")
+    if not isinstance(doc.get("decision"), str) or not _ARM_ID.fullmatch(doc["decision"]):
+        raise RecordError(f"{kind}: decision must be a short reference such as D52.")
+    when = _rdate(doc, kind)
+    try:
+        date.fromisoformat(when)
+    except ValueError as exc:
+        raise RecordError(f"{kind}: date must be a valid YYYY-MM-DD.") from exc
+    reason = _rtext(doc, "reason_zh", "", kind, 600)
+    raw = doc["reason_zh"]
+    refusal = oaw_common.evidence_write_refusal(raw)
+    if refusal or PRIVATE_REFERENCE.search(raw) or re.search(r"(?:^|\s)(?:~/|\./|\.\./|/[^\s/]+/|[A-Za-z]:/|\\\\)", raw):
+        raise RecordError(f"{kind}: reason_zh looks like a local path, private reference or credential.")
+    if len([s for s in re.split(r"[。！？!?]+|\.(?:\s|$)", reason) if s.strip()]) not in (1, 2):
+        raise RecordError(f"{kind}: reason_zh must be one or two sentences.")
+    record = {"schema": OWNER_DECISION_SCHEMA, "food": food, "outcome": doc["outcome"],
+              "decision": doc["decision"], "date": when, "reason_zh": reason}
+    if stored:
+        _check_stored(doc, "owner_decision_id", record, "d-")
+    return record
+
+
+def owner_decision_entry(record: dict) -> dict:
+    """The public decision, with no ledger metadata or history."""
+    return {**{k: record[k] for k in ("outcome", "decision", "date", "reason_zh")},
+            "outcome_zh": D29_OUTCOMES_ZH[record["outcome"]]}
+
+
+def owner_decision_label(record: dict) -> str:
+    return f"{D29_OUTCOMES_ZH[record['outcome']]}（owner 決定 {record['decision']}，非實測判定）"
 
 
 def validate_tasting(doc, food: str, *, stored: bool = False) -> dict:
@@ -2278,7 +2325,23 @@ def food_records(evidence, food: str) -> dict:
                 refused.append({"kind": "absorption", "id": sanitize_text(record.get("absorption_id"), 20) or None,
                                 "reason": sanitize_text(str(exc), 300)})
     absorptions.sort(key=_record_order)
-    return {"tastings": tastings, "absorptions": absorptions, "refused": refused}
+    owner, history = None, []
+    for record in evidence or ():
+        if not isinstance(record, dict) or record.get("schema") != OWNER_DECISION_SCHEMA:
+            continue
+        try:
+            current = validate_owner_decision(record, food, stored=True)
+            prior = record.get("history", [])
+            if not isinstance(prior, list):
+                raise RecordError("Owner decision: history must be a list.")
+            validated = [validate_owner_decision(item, food, stored=True) for item in prior]
+            if owner is not None:
+                raise RecordError("Owner decision: multiple current decisions for one food.")
+            owner, history = current, validated
+        except RecordError as exc:
+            refused.append({"kind": "owner-decision", "id": None, "reason": str(exc)})
+    return {"tastings": tastings, "absorptions": absorptions, "refused": refused,
+            "owner_decision": owner, "owner_decision_history": history}
 
 
 def tasting_summary(record: dict) -> dict:
@@ -2888,6 +2951,8 @@ def food_card(entry: dict, evidence: list, decisions: list, plan: dict | None = 
     derived = derive(evidence, decisions)
     backlog = {cid for d in decisions if d.get("kind") == "absorb" and d.get("outcome") == "backlog" for cid in d.get("components") or []}
     records = food_records(evidence, entry["id"])
+    owner_decision = records["owner_decision"]
+    measured_outcome = (records["tastings"][-1].get("judgment") or {}).get("outcome") if records["tastings"] else None
     absorption = absorption_summary(records["absorptions"])
     # A unit a D21 absorption record settled, by every id it may carry (a component id or an imported hist: id).
     settled = {alias: {"outcome": u["outcome"], "branch": u["branch"], "tier": u.get("tier")}
@@ -2952,6 +3017,10 @@ def food_card(entry: dict, evidence: list, decisions: list, plan: dict | None = 
             # refuses are listed with why, never counted.
             "tastings": [tasting_summary(t) for t in records["tastings"]],
             "tasting": tasting_summary(records["tastings"][-1]) if records["tastings"] else None,
+            "owner_decision": owner_decision_entry(owner_decision) if owner_decision else None,
+            "owner_decision_history": records["owner_decision_history"],
+            "measured_outcome": measured_outcome,
+            "effective_outcome": owner_decision["outcome"] if owner_decision else measured_outcome,
             "absorption": absorption, "records_refused": records["refused"]}
 
 

@@ -1037,8 +1037,19 @@
     return el('div', { class: `now w-${bolus.running ? 'live' : bolus.waiting}` },
       el('div', { class: 'who', text: who }),
       el('p', { text: bolus.running ? '試吃中…（只顯示進度，不顯示分數）' : txt(pipeline.note_zh, 300) || '—' }),
+      ...ownerOutcome(food),
       ...stageNotes(table, pipeline),
       pipeline.parity ? el('p', { class: 'why', text: txt(pipeline.parity.label_zh, 60) }) : '');
+  }
+
+  function ownerOutcome(food) {
+    const owner = food.owner_decision;
+    if (!owner) return [];
+    const tasting = food.tasting || {};
+    const measured = (tasting.judgment || {}).outcome;
+    const outcomes = { optional: '可選用', excrete: '排掉', default: '進預設' };
+    return [el('p', { class: 'why', text: `適用：${outcomes[owner.outcome] || '未知'}（owner 決定 ${txt(owner.decision, 40)}，非實測判定） · ${txt(owner.reason_zh, 600)}` }),
+      el('p', { class: 'why', text: `實測：${outcomes[measured] || txt(tasting.verdict_label_zh, 80) || '沒有判定'}` })];
   }
 
   // 卡在哪 / 依據 / 你不處理會怎樣, straight from view.json (catalog_core.food_pipeline); nothing is made up here.
