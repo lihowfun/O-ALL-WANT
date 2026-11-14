@@ -9,6 +9,10 @@ accumulated (D50).
 
 ### Evaluation methods (D46, D49, D50)
 
+- `scripts/fast_screen.py` (source checkout only) prepares deterministic judge prompts, checks
+  answer quotes and applies D50's quick YES/NO intake rule with recorded costs and reopening
+  conditions. It runs no model and adds no startup rules; YES permits optional absorption and is
+  not evidence for a default. [Usage, calibration and limits](docs/FAST_SCREEN.md).
 - `scripts/eval_ledger.py` (source checkout only) reports the planned coverage of a harness
   comparison, the cost of failed and retried attempts, and the study overhead that is still
   unmeasured. Missing evidence stays missing and an unscored outcome is not a zero. `compare` passes

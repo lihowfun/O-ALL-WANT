@@ -19,7 +19,7 @@ REQUIRED_TEST_MODULES = ("test_context_hub", "test_gate", "test_improvement", "t
                          "test_catalog_core", "test_catalog", "test_catalog_ui", "test_cli_resolve",
                          "test_goldfish_review", "test_codemap_eval", "test_code_index", "test_digest_mod",
                          "test_oaw_mode", "test_eval_stats", "test_doctor_probe", "test_user_install",
-                         "test_judge_calibration", "test_eval_ledger", "test_eval_ledger_fixcheck")
+                         "test_judge_calibration", "test_eval_ledger", "test_fast_screen", "test_eval_ledger_fixcheck")
 MINIMUM_TESTS = 434  # POSIX count; Windows adds junction cases.
 SUMMARY_MARKER = "OAW-TEST-SUMMARY "
 # Optional platform limits, not required skips. Match both identity and reason so a new
