@@ -1,0 +1,19 @@
+{
+ "id": "R104-r2",
+ "reply": "{\"items\":[{\"id\":\"K01\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K02\",\"label\":\"detected\",\"quote\":\"The range is wrong. Graphify did not reliably save steps, and the OAW map did not save steps on Opus 4.8.\"},{\"id\":\"K03\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K04\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K05\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K06\",\"label\":\"detected\",\"quote\":\"Without a specified non-interactive preset (Step=uninterrupted) and a resolve policy, the deep path stops for user input. G1 is then not met.\"},{\"id\":\"K07\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K08\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K09\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K10\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K11\",\"label\":\"detected\",\"quote\":\"Auto-running EGM on about 56% of code commits at about 1.1M tokens each has an ongoing cost the plan does not estimate.\"},{\"id\":\"K12\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K13\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K14\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K15\",\"label\":\"detected\",\"quote\":\"The current engine refuses most of what W3 promises.\"},{\"id\":\"K16\",\"label\":\"detected\",\"quote\":\"Option ② needs a new install profile and doctor rules. As written, the manager either cannot run or reports the project as unhealthy.\"},{\"id\":\"K17\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K18\",\"label\":\"mention-only\",\"quote\":\"remove restores the pre-add state byte for byte, and OAW/EGM can be left out.\"},{\"id\":\"K19\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K20\",\"label\":\"mention-only\",\"quote\":\"W4 runs X3 before and after AGENTS.md deletions to confirm adherence is unchanged\"},{\"id\":\"K21\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K22\",\"label\":\"detected\",\"quote\":\"Real users upgrade from 1.1.0. G6 does not verify the 1.1.0 -> 2.0.1 path for the first V2 release.\"},{\"id\":\"K23\",\"label\":\"detected\",\"quote\":\"'Not worse' is undefined for undecided quality. Undecided quality with passing efficiency matches no branch, or promotes against principle 6.\"},{\"id\":\"K24\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K25\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K26\",\"label\":\"detected\",\"quote\":\"Keeping a ceiling case breaks the plan's own D32 rule.\"},{\"id\":\"K27\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K28\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K29\",\"label\":\"detected\",\"quote\":\"Two extra X3 runs (about 3M) are not in the 23M budget.\"},{\"id\":\"K30\",\"label\":\"absent\",\"quote\":\"\"}]}",
+ "usage": {
+  "id": "R104-r2",
+  "model": "claude-haiku-5-5",
+  "effort": "low",
+  "exit": 0,
+  "seconds": 19.3,
+  "logical_tokens": 34840,
+  "noncache_tokens": 34191,
+  "models_used": [
+   "claude-haiku-5-5"
+  ],
+  "is_error": false,
+  "reply_chars": 2328,
+  "api_ms": 18844
+ }
+}

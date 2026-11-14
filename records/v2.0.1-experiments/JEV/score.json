@@ -1,0 +1,112 @@
+{
+ "rule": {
+  "written": "2026-11-14, before any Jev output existed",
+  "decision": "D50",
+  "use": "the binary label (detected / not detected) that the fast screen consumes; the three-class result is reported for reference only",
+  "gold": "gold-egmcal.json: 114 cells of EGM-calibration batch 2 on which the two full-price graders agree after the registered reconciliation; 6 unresolved secondary cells excluded",
+  "min_binary_accuracy": 0.95,
+  "max_primary_binary_errors": 2,
+  "max_detected_count_difference": 3,
+  "max_logical_tokens": 69652,
+  "max_logical_tokens_basis": "50% of the full-price Claude grader's 139,304 logical tokens for the same four reports",
+  "repeats_required": 2,
+  "outcome": "admitted only if every check passes in both repeats; otherwise not admitted and the full-price graders keep the slot",
+  "not_covered": "one reviewed document; labels come from graders, one of them Claude-family; discovery of defects outside the key; any clearance (consent, safety, licence, isolation)"
+ },
+ "repeats": [
+  {
+   "repeat": 1,
+   "cells": 114,
+   "binary_accuracy": 0.9737,
+   "binary_errors": 3,
+   "primary_cells": 36,
+   "primary_binary_errors": 1,
+   "false_credit": 3,
+   "missed_detection": 0,
+   "detected_gold": 25,
+   "detected_jev": 28,
+   "unknown": 0,
+   "three_class_accuracy": 0.9211,
+   "three_class_macro_f1": 0.864,
+   "logical_tokens": 133418,
+   "noncache_tokens": 130822,
+   "seconds": 84.2,
+   "call_errors": 0,
+   "binary_errors_detail": [
+    {
+     "report_id": "R102",
+     "id": "K11",
+     "tier": "secondary",
+     "gold": "mention-only",
+     "jev": "detected"
+    },
+    {
+     "report_id": "R103",
+     "id": "K14",
+     "tier": "primary",
+     "gold": "mention-only",
+     "jev": "detected"
+    },
+    {
+     "report_id": "R104",
+     "id": "K11",
+     "tier": "secondary",
+     "gold": "mention-only",
+     "jev": "detected"
+    }
+   ],
+   "checks": {
+    "binary_accuracy": true,
+    "primary_errors": true,
+    "detected_count_difference": true,
+    "cost": false,
+    "no_call_error": true
+   },
+   "pass": false
+  },
+  {
+   "repeat": 2,
+   "cells": 114,
+   "binary_accuracy": 0.9825,
+   "binary_errors": 2,
+   "primary_cells": 36,
+   "primary_binary_errors": 1,
+   "false_credit": 2,
+   "missed_detection": 0,
+   "detected_gold": 25,
+   "detected_jev": 27,
+   "unknown": 0,
+   "three_class_accuracy": 0.9298,
+   "three_class_macro_f1": 0.8713,
+   "logical_tokens": 129760,
+   "noncache_tokens": 127164,
+   "seconds": 69.9,
+   "call_errors": 0,
+   "binary_errors_detail": [
+    {
+     "report_id": "R103",
+     "id": "K14",
+     "tier": "primary",
+     "gold": "mention-only",
+     "jev": "detected"
+    },
+    {
+     "report_id": "R104",
+     "id": "K11",
+     "tier": "secondary",
+     "gold": "mention-only",
+     "jev": "detected"
+    }
+   ],
+   "checks": {
+    "binary_accuracy": true,
+    "primary_errors": true,
+    "detected_count_difference": true,
+    "cost": false,
+    "no_call_error": true
+   },
+   "pass": false
+  }
+ ],
+ "admitted": false
+}

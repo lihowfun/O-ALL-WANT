@@ -1,0 +1,747 @@
+{
+ "source": "EGM-calibration batch 2: two graders, labels equal after the registered reconciliation; unresolved disagreements excluded",
+ "reports": {
+  "R101": {
+   "run": "codex-N1"
+  },
+  "R102": {
+   "run": "claude-N2"
+  },
+  "R103": {
+   "run": "codex-N2"
+  },
+  "R104": {
+   "run": "claude-N1"
+  }
+ },
+ "cells": [
+  {
+   "report_id": "R101",
+   "id": "K01",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R101",
+   "id": "K02",
+   "tier": "primary",
+   "label": "detected"
+  },
+  {
+   "report_id": "R101",
+   "id": "K04",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R101",
+   "id": "K05",
+   "tier": "primary",
+   "label": "detected"
+  },
+  {
+   "report_id": "R101",
+   "id": "K07",
+   "tier": "primary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R101",
+   "id": "K08",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R101",
+   "id": "K09",
+   "tier": "primary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R101",
+   "id": "K10",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R101",
+   "id": "K11",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R101",
+   "id": "K13",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R101",
+   "id": "K14",
+   "tier": "primary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R101",
+   "id": "K15",
+   "tier": "primary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R101",
+   "id": "K16",
+   "tier": "secondary",
+   "label": "detected"
+  },
+  {
+   "report_id": "R101",
+   "id": "K17",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R101",
+   "id": "K18",
+   "tier": "primary",
+   "label": "detected"
+  },
+  {
+   "report_id": "R101",
+   "id": "K19",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R101",
+   "id": "K20",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R101",
+   "id": "K21",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R101",
+   "id": "K22",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R101",
+   "id": "K23",
+   "tier": "secondary",
+   "label": "detected"
+  },
+  {
+   "report_id": "R101",
+   "id": "K24",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R101",
+   "id": "K25",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R101",
+   "id": "K26",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R101",
+   "id": "K27",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R101",
+   "id": "K28",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R101",
+   "id": "K29",
+   "tier": "primary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R101",
+   "id": "K30",
+   "tier": "primary",
+   "label": "detected"
+  },
+  {
+   "report_id": "R102",
+   "id": "K01",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R102",
+   "id": "K02",
+   "tier": "primary",
+   "label": "detected"
+  },
+  {
+   "report_id": "R102",
+   "id": "K03",
+   "tier": "secondary",
+   "label": "detected"
+  },
+  {
+   "report_id": "R102",
+   "id": "K04",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R102",
+   "id": "K05",
+   "tier": "primary",
+   "label": "mention-only"
+  },
+  {
+   "report_id": "R102",
+   "id": "K06",
+   "tier": "secondary",
+   "label": "mention-only"
+  },
+  {
+   "report_id": "R102",
+   "id": "K07",
+   "tier": "primary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R102",
+   "id": "K08",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R102",
+   "id": "K09",
+   "tier": "primary",
+   "label": "mention-only"
+  },
+  {
+   "report_id": "R102",
+   "id": "K11",
+   "tier": "secondary",
+   "label": "mention-only"
+  },
+  {
+   "report_id": "R102",
+   "id": "K12",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R102",
+   "id": "K13",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R102",
+   "id": "K14",
+   "tier": "primary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R102",
+   "id": "K15",
+   "tier": "primary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R102",
+   "id": "K16",
+   "tier": "secondary",
+   "label": "detected"
+  },
+  {
+   "report_id": "R102",
+   "id": "K17",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R102",
+   "id": "K18",
+   "tier": "primary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R102",
+   "id": "K19",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R102",
+   "id": "K20",
+   "tier": "secondary",
+   "label": "mention-only"
+  },
+  {
+   "report_id": "R102",
+   "id": "K21",
+   "tier": "secondary",
+   "label": "detected"
+  },
+  {
+   "report_id": "R102",
+   "id": "K22",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R102",
+   "id": "K23",
+   "tier": "secondary",
+   "label": "mention-only"
+  },
+  {
+   "report_id": "R102",
+   "id": "K24",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R102",
+   "id": "K25",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R102",
+   "id": "K26",
+   "tier": "secondary",
+   "label": "detected"
+  },
+  {
+   "report_id": "R102",
+   "id": "K27",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R102",
+   "id": "K28",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R102",
+   "id": "K29",
+   "tier": "primary",
+   "label": "detected"
+  },
+  {
+   "report_id": "R102",
+   "id": "K30",
+   "tier": "primary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R103",
+   "id": "K01",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R103",
+   "id": "K02",
+   "tier": "primary",
+   "label": "detected"
+  },
+  {
+   "report_id": "R103",
+   "id": "K03",
+   "tier": "secondary",
+   "label": "mention-only"
+  },
+  {
+   "report_id": "R103",
+   "id": "K04",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R103",
+   "id": "K05",
+   "tier": "primary",
+   "label": "detected"
+  },
+  {
+   "report_id": "R103",
+   "id": "K06",
+   "tier": "secondary",
+   "label": "mention-only"
+  },
+  {
+   "report_id": "R103",
+   "id": "K07",
+   "tier": "primary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R103",
+   "id": "K08",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R103",
+   "id": "K09",
+   "tier": "primary",
+   "label": "detected"
+  },
+  {
+   "report_id": "R103",
+   "id": "K10",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R103",
+   "id": "K11",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R103",
+   "id": "K12",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R103",
+   "id": "K13",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R103",
+   "id": "K14",
+   "tier": "primary",
+   "label": "mention-only"
+  },
+  {
+   "report_id": "R103",
+   "id": "K15",
+   "tier": "primary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R103",
+   "id": "K16",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R103",
+   "id": "K17",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R103",
+   "id": "K18",
+   "tier": "primary",
+   "label": "detected"
+  },
+  {
+   "report_id": "R103",
+   "id": "K19",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R103",
+   "id": "K20",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R103",
+   "id": "K21",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R103",
+   "id": "K22",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R103",
+   "id": "K23",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R103",
+   "id": "K24",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R103",
+   "id": "K25",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R103",
+   "id": "K26",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R103",
+   "id": "K27",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R103",
+   "id": "K28",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R103",
+   "id": "K29",
+   "tier": "primary",
+   "label": "mention-only"
+  },
+  {
+   "report_id": "R103",
+   "id": "K30",
+   "tier": "primary",
+   "label": "detected"
+  },
+  {
+   "report_id": "R104",
+   "id": "K01",
+   "tier": "secondary",
+   "label": "mention-only"
+  },
+  {
+   "report_id": "R104",
+   "id": "K02",
+   "tier": "primary",
+   "label": "detected"
+  },
+  {
+   "report_id": "R104",
+   "id": "K03",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R104",
+   "id": "K04",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R104",
+   "id": "K05",
+   "tier": "primary",
+   "label": "mention-only"
+  },
+  {
+   "report_id": "R104",
+   "id": "K06",
+   "tier": "secondary",
+   "label": "detected"
+  },
+  {
+   "report_id": "R104",
+   "id": "K07",
+   "tier": "primary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R104",
+   "id": "K08",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R104",
+   "id": "K09",
+   "tier": "primary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R104",
+   "id": "K10",
+   "tier": "secondary",
+   "label": "mention-only"
+  },
+  {
+   "report_id": "R104",
+   "id": "K11",
+   "tier": "secondary",
+   "label": "mention-only"
+  },
+  {
+   "report_id": "R104",
+   "id": "K12",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R104",
+   "id": "K13",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R104",
+   "id": "K14",
+   "tier": "primary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R104",
+   "id": "K15",
+   "tier": "primary",
+   "label": "detected"
+  },
+  {
+   "report_id": "R104",
+   "id": "K16",
+   "tier": "secondary",
+   "label": "detected"
+  },
+  {
+   "report_id": "R104",
+   "id": "K17",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R104",
+   "id": "K18",
+   "tier": "primary",
+   "label": "mention-only"
+  },
+  {
+   "report_id": "R104",
+   "id": "K19",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R104",
+   "id": "K20",
+   "tier": "secondary",
+   "label": "mention-only"
+  },
+  {
+   "report_id": "R104",
+   "id": "K21",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R104",
+   "id": "K22",
+   "tier": "secondary",
+   "label": "detected"
+  },
+  {
+   "report_id": "R104",
+   "id": "K23",
+   "tier": "secondary",
+   "label": "detected"
+  },
+  {
+   "report_id": "R104",
+   "id": "K25",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R104",
+   "id": "K26",
+   "tier": "secondary",
+   "label": "detected"
+  },
+  {
+   "report_id": "R104",
+   "id": "K28",
+   "tier": "secondary",
+   "label": "absent"
+  },
+  {
+   "report_id": "R104",
+   "id": "K29",
+   "tier": "primary",
+   "label": "detected"
+  },
+  {
+   "report_id": "R104",
+   "id": "K30",
+   "tier": "primary",
+   "label": "absent"
+  }
+ ],
+ "excluded": [
+  {
+   "report_id": "R101",
+   "id": "K03",
+   "tier": "secondary",
+   "codex": "mention-only",
+   "claude": "absent"
+  },
+  {
+   "report_id": "R101",
+   "id": "K06",
+   "tier": "secondary",
+   "codex": "mention-only",
+   "claude": "absent"
+  },
+  {
+   "report_id": "R101",
+   "id": "K12",
+   "tier": "secondary",
+   "codex": "mention-only",
+   "claude": "detected"
+  },
+  {
+   "report_id": "R102",
+   "id": "K10",
+   "tier": "secondary",
+   "codex": "mention-only",
+   "claude": "absent"
+  },
+  {
+   "report_id": "R104",
+   "id": "K24",
+   "tier": "secondary",
+   "codex": "mention-only",
+   "claude": "absent"
+  },
+  {
+   "report_id": "R104",
+   "id": "K27",
+   "tier": "secondary",
+   "codex": "absent",
+   "claude": "mention-only"
+  }
+ ]
+}

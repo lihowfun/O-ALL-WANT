@@ -1,0 +1,19 @@
+{
+ "id": "R103-r1",
+ "reply": "{\"items\":[{\"id\":\"K01\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K02\",\"label\":\"detected\",\"quote\":\"三個地圖都減少步數，呼叫次數為原生的 0.23–0.65 倍。\"},{\"id\":\"K03\",\"label\":\"mention-only\",\"quote\":\"12 題各跑一次，仍使用固定題目的題內配對 bootstrap 與合併題內變異下限產生判定區間。\"},{\"id\":\"K04\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K05\",\"label\":\"detected\",\"quote\":\"唯一政策入口改為做完改動才呼叫 oaw-review，但 deep 必須先寫計畫、審查修正，再實作。\"},{\"id\":\"K06\",\"label\":\"mention-only\",\"quote\":\"D32、自動啟動 EGM 與 X2 超額預算因此仍是提案，不能當成已生效決策\"},{\"id\":\"K07\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K08\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K09\",\"label\":\"detected\",\"quote\":\"每個題目／組別只有一筆作答，題內重抽樣只能抽回原值，也沒有重複觀測可估計新題的題內變異。\"},{\"id\":\"K10\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K11\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K12\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K13\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K14\",\"label\":\"detected\",\"quote\":\"現行 scripts/oaw.py:277-285 不會把 oaw.py 或 catalog 配送到目標專案\"},{\"id\":\"K15\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K16\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K17\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K18\",\"label\":\"detected\",\"quote\":\"現有快照不保存這些啟動設定，還原也不會撤銷其修改。\"},{\"id\":\"K19\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K20\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K21\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K22\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K23\",\"label\":\"mention-only\",\"quote\":\"X1 只要品質不差且呼叫次數比上界低於 0.8，就可進預設\"},{\"id\":\"K24\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K25\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K26\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K27\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K28\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K29\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K30\",\"label\":\"detected\",\"quote\":\"現有引擎無法保留等效與未定的區別，也不能依成本區間決策\"}]}",
+ "usage": {
+  "id": "R103-r1",
+  "model": "claude-haiku-5-5",
+  "effort": "low",
+  "exit": 0,
+  "seconds": 17.1,
+  "logical_tokens": 30815,
+  "noncache_tokens": 30166,
+  "models_used": [
+   "claude-haiku-5-5"
+  ],
+  "is_error": false,
+  "reply_chars": 1617,
+  "api_ms": 17160
+ }
+}

@@ -1,0 +1,19 @@
+{
+ "id": "R101-r2",
+ "reply": "{\"items\":[{\"id\":\"K01\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K02\",\"label\":\"detected\",\"quote\":\"evidence/codemap-comparison-2026-11-06.md:28,32,36,40 的 graphify 比值依次為 0.88、0.76、1.00、1.04；OAW 在 Opus 4.8 也是 1.04。\"},{\"id\":\"K03\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K04\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K05\",\"label\":\"detected\",\"quote\":\"唯一保留的政策入口是「做完改動用 oaw-review」，但 deep 必須先寫計畫、審完計畫，再實作。\"},{\"id\":\"K06\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K07\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K08\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K09\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K10\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K11\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K12\",\"label\":\"detected\",\"quote\":\"新格式應保留這些限制；0.95 的抽樣召回率不能單獨保證全庫完整。\"},{\"id\":\"K13\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K14\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K15\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K16\",\"label\":\"detected\",\"quote\":\"目前即使 skills=[]，仍產生 AGENTS.md、CLAUDE.md 與輔助腳本\"},{\"id\":\"K17\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K18\",\"label\":\"detected\",\"quote\":\"現有還原範圍不包含註冊 hook／MCP 所需的設定。\"},{\"id\":\"K19\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K20\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K21\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K22\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K23\",\"label\":\"detected\",\"quote\":\"X1 的「兩家都判不差」尚未定義為統計等價、非劣性，或只是未判變差\"},{\"id\":\"K24\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K25\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K26\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K27\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K28\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K29\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K30\",\"label\":\"detected\",\"quote\":\"工作項目只安排共用統計與新 SOP，沒有銜接帳本的判定契約。\"}]}",
+ "usage": {
+  "id": "R101-r2",
+  "model": "claude-haiku-5-5",
+  "effort": "low",
+  "exit": 0,
+  "seconds": 13.3,
+  "logical_tokens": 29394,
+  "noncache_tokens": 28745,
+  "models_used": [
+   "claude-haiku-5-5"
+  ],
+  "is_error": false,
+  "reply_chars": 1588,
+  "api_ms": 13309
+ }
+}

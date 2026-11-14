@@ -1,0 +1,225 @@
+{
+  "overall": "FAIL",
+  "recomputed": [
+    {
+      "claim": "Gold rebuilt independently, cell by cell",
+      "document": "114 included: primary 36, secondary 78; detected 25, mention-only 16, absent 73; six secondary exclusions",
+      "recomputed": "Four-report batch a3849ce46e10: 110 initially equal cells plus recorded agreements R102/K05=mention-only, R102/K18=absent, R103/K29=mention-only, R104/K05=mention-only. All 114 identities, tiers and labels match gold-egmcal.json; zero differences. KEY has 30 items, primary 9, secondary 21. Report/run mapping matches blind2-map.json.",
+      "match": true
+    },
+    {
+      "claim": "Excluded cells, including both graders' labels",
+      "document": "gold-egmcal.json: six secondary cells",
+      "recomputed": "All match. codex/claude: R101/K03 mention-only/absent; R101/K06 mention-only/absent; R101/K12 mention-only/detected; R102/K10 mention-only/absent; R104/K24 mention-only/absent; R104/K27 absent/mention-only.",
+      "match": true
+    },
+    {
+      "claim": "Binary agreement, repeats 1/2",
+      "document": "111/114 (0.9737); 112/114 (0.9825)",
+      "recomputed": "111/114=0.9736842105; 112/114=0.9824561404.",
+      "match": true
+    },
+    {
+      "claim": "Primary binary errors, repeats 1/2",
+      "document": "1/36; 1/36; threshold <=2",
+      "recomputed": "1/36 in each repeat: R103/K14. Both pass.",
+      "match": true
+    },
+    {
+      "claim": "Detected counts on gold cells, repeats 1/2",
+      "document": "28; 27; gold 25; difference <=3",
+      "recomputed": "28 and 27 among 114 included cells; differences +3 and +2, both pass. All 120 cells instead contain 29 and 28 detections; R101/K12 is excluded.",
+      "match": true
+    },
+    {
+      "claim": "Missed and extra detections, with cells",
+      "document": "Missed 0/0; extra 3/2; all mention-only -> detected",
+      "recomputed": "Missed: none. Repeat 1 extras: R102/K11 secondary, R103/K14 primary, R104/K11 secondary. Repeat 2 extras: R103/K14 primary, R104/K11 secondary. Every extra has gold mention-only.",
+      "match": true
+    },
+    {
+      "claim": "Sixteen gold mention-only cells",
+      "document": "3 and 2 become detected",
+      "recomputed": "Repeat 1: detected 3, mention-only 10, absent 3. Repeat 2: detected 2, mention-only 9, absent 5.",
+      "match": true
+    },
+    {
+      "claim": "Call errors and saved unknown labels",
+      "document": "Call errors 0/0; unknown 0/0",
+      "recomputed": "Each repeat has four unique calls, exit=0 and is_error=false throughout; 30 labels per call. Saved unknown count is zero on both 114 and 120 cells in each repeat; all notes are empty. Quote-based validation cannot be independently established.",
+      "match": true
+    },
+    {
+      "claim": "Three-class agreement, repeats 1/2",
+      "document": "0.9211; 0.9298",
+      "recomputed": "105/114=0.9210526316; 106/114=0.9298245614.",
+      "match": true
+    },
+    {
+      "claim": "Three-class macro-F1, repeats 1/2",
+      "document": "0.8640; 0.8713",
+      "recomputed": "Equal-weight mean across detected, mention-only, absent: repeat 1 F1=(50/53,20/29,140/146), macro=96940/112201=0.8639851695; repeat 2 F1=(50/52,18/26,144/150), macro=1699/1950=0.8712820513.",
+      "match": true
+    },
+    {
+      "claim": "JEV logical tokens, repeats 1/2",
+      "document": "133418; 129760",
+      "recomputed": "Repeat 1: 29984+36280+30815+36339=133418. Repeat 2: 29394+35180+30346+34840=129760. Noncache totals 130822 and 127164 also match score.json.",
+      "match": true
+    },
+    {
+      "claim": "JEV seconds, repeats 1/2",
+      "document": "84.2; 69.9",
+      "recomputed": "16.0+26.8+17.1+24.3=84.2; 13.3+21.7+15.6+19.3=69.9. Sums of recorded call durations, not independently timed executions.",
+      "match": true
+    },
+    {
+      "claim": "Between-repeat binary agreement",
+      "document": "119/120",
+      "recomputed": "119/120; only R102/K11 changes binary label, detected -> mention-only. Three-class agreement is 114/120.",
+      "match": true
+    },
+    {
+      "claim": "Full-price Claude comparison for batch 2",
+      "document": "139304 logical tokens; 301 seconds",
+      "recomputed": "Four completed calls: 32420+36624+31758+38502=139304 tokens; 60.019+85.819+55.707+99.954=301.499 seconds, rounding to 301. Noncache=129614. Including the failed R103 attempt: same tokens, 304.006 seconds. Reconciliation is separate: 37154 tokens, 25.120 seconds.",
+      "match": true
+    },
+    {
+      "claim": "Half-price token bound",
+      "document": "69652=139304/2",
+      "recomputed": "69652. Both repeat token totals exceed it.",
+      "match": true
+    },
+    {
+      "claim": "JEV/Claude token and time ratios, repeats 1/2",
+      "document": "Tokens 0.96/0.93; time 0.28/0.23",
+      "recomputed": "Tokens 133418/139304=0.9577470855 and 129760/139304=0.9314879688. Time against completed calls: 84.2/301.499=0.2792712414 and 69.9/301.499=0.2318415650. All round as reported.",
+      "match": true
+    },
+    {
+      "claim": "Full-price Codex batch-2 grading cost",
+      "document": "1142336 logical tokens; 693 seconds",
+      "recomputed": "Single batch-2 grading ledger row: 1142336 tokens, 692.510 seconds, rounding to 693; noncache=131136. Reconciliation separate: 230680 tokens, 56.119 seconds. One ledger row does not establish session topology.",
+      "match": true
+    },
+    {
+      "claim": "Two JEV repeats total",
+      "document": "263178 tokens",
+      "recomputed": "133418+129760=263178.",
+      "match": true
+    },
+    {
+      "claim": "Additional pilot cost",
+      "document": "3464 tokens",
+      "recomputed": "No pilot usage record is supplied; cannot recompute 3464 or independently substantiate the implied total 266642.",
+      "match": false
+    },
+    {
+      "claim": "RULE.json application and outcome",
+      "document": "Both repeats fail admission; three accuracy checks and no-call-error pass, token check fails",
+      "recomputed": "For each repeat: binary accuracy passes >=0.95; primary errors pass <=2; detected-count difference passes <=3; logical tokens fail <=69652. Two repeats exist; neither passes every explicit numeric check, so NOT ADMITTED. Observed no-call-error also passes, but is an additional script check absent from RULE.json.",
+      "match": true
+    },
+    {
+      "claim": "Five checks specified before the run in RULE.json",
+      "document": "RESULT.md:9 says five conditions, including no call errors",
+      "recomputed": "RULE.json explicitly specifies four numeric checks plus repeats_required=2; it does not state a no-call-error check. jev_calibrate.py:214-219 and score.json add it.",
+      "match": false
+    },
+    {
+      "claim": "score.json agreement",
+      "document": "All repeat metrics, check results and admitted=false",
+      "recomputed": "Every saved repeat field matches the independent recount, including binary error detail and noncache tokens; admitted=false matches. Its rule object equals RULE.json.",
+      "match": true
+    },
+    {
+      "claim": "Three frozen-input hashes",
+      "document": "RULE.json b98fb7bd6ca4684493aa74683da209cfb9dc3f36a8c046817edbb40819069afa; jev_calibrate.py 69d7059ae786b737c224d90f43b1844f5c6b35b7717334c481b2dc31d87a3754; gold-egmcal.json a914e0c052f241e9bd64743a349e2148d0895cf5573c9b75d489f92ca5cd5bb3",
+      "recomputed": "All three SHA-256 digests match. Manifest also contains 2026-11-14T14:07:09+0800, which is a self-reported timestamp, not evidence of ordering relative to calls.",
+      "match": true
+    },
+    {
+      "claim": "Historical macro-F1 comparison",
+      "document": "Current 0.864/0.871 below historical threshold 0.98",
+      "recomputed": "Current values round to 0.864/0.871 and both are below 0.98. The historical threshold's provenance is unavailable here.",
+      "match": true
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "severity": "medium",
+      "where": "JEV/RESULT.md:16-17,34; JEV/labels.jsonl",
+      "problem": "Quote checking cannot be independently audited; the publication omits every raw reply and quote. Zero saved unknown labels does not independently verify zero invalid quotes.",
+      "evidence": "Eight rows contain only report_id, repeat, labels, notes and usage. Their 43/38 detected-or-mention-only labels have no retained quotes; reply_chars is only a length.",
+      "suggested_fix": "Include sanitized raw replies with quotes, or state explicitly that quote validation is only reported by the original parser and cannot be checked from these artifacts."
+    },
+    {
+      "id": "F2",
+      "severity": "medium",
+      "where": "JEV/RESULT.md:9-10,54,60-61,66",
+      "problem": "Claims that rules were fixed before calls/back-testing, and remained unchanged, exceed the available chronological evidence.",
+      "evidence": "The three hashes verify current bytes only. RULE.json and frozen-inputs.sha256 assert pre-run timing; labels.jsonl has durations but no call start timestamps. FAST_SCREEN_RULE.md is not among the three hashed inputs.",
+      "suggested_fix": "Qualify the chronology as the author's statement, or provide independently dated pre-run records and timestamped call logs."
+    },
+    {
+      "id": "F3",
+      "severity": "medium",
+      "where": "JEV/RESULT.md:9; JEV/RULE.json; JEV/jev_calibrate.py:214",
+      "problem": "The claimed five predeclared checks are not all in RULE.json.",
+      "evidence": "The rule defines accuracy, primary errors, detected-count difference and token limits; no call-error condition appears. The script adds no_call_error. This discrepancy does not change NOT ADMITTED.",
+      "suggested_fix": "Describe four explicit rule checks and the additional execution-validity check; do not describe the fifth as present in the frozen rule."
+    },
+    {
+      "id": "F4",
+      "severity": "low",
+      "where": "JEV/RESULT.md:45",
+      "problem": "The additional 3464-token pilot cost has no supporting usage record.",
+      "evidence": "labels.jsonl contains exactly eight formal calls totaling 263178 tokens; neither JEV nor the source shared-cost ledger supplies this pilot measurement.",
+      "suggested_fix": "Publish the pilot usage record or label 3464 as an unverified author-reported amount."
+    },
+    {
+      "id": "F5",
+      "severity": "low",
+      "where": "JEV/RESULT.md:42-44",
+      "problem": "Comparison time and cost scope omit the failed Claude attempt and do not explicitly exclude reconciliation.",
+      "evidence": "301 seconds is rounded completed-call time 301.499; failed R103 adds 2.507 seconds, making 304.006. Claude reconciliation adds 37154 tokens/25.120 seconds; Codex reconciliation adds 230680/56.119. Token bound remains correct.",
+      "suggested_fix": "Label comparisons as initial completed grading calls, excluding the failed attempt and reconciliation; disclose failed-attempt time."
+    },
+    {
+      "id": "F6",
+      "severity": "low",
+      "where": "JEV/RESULT.md:17; JEV/jev_calibrate.py:107-122",
+      "problem": "The unqualified statement that evidence paths are not given is broader than the prompt construction supports.",
+      "evidence": "The separate KEY evidence arrays are omitted, but included K02 detected_if contains evidence/codemap-comparison-2026-11-06.md:52-53; other included criteria also contain paths. Saved prompts are absent.",
+      "suggested_fix": "Say that the separate evidence lists are omitted while paths embedded in defect descriptions/criteria remain."
+    },
+    {
+      "id": "F7",
+      "severity": "low",
+      "where": "JEV/RESULT.md:3-5,14,42,44,53",
+      "problem": "Historical and some execution details lack independently checkable records in this directory.",
+      "evidence": "D50, the 2026-11-08 intake record, scripts/judge_calibration.py and the source for the historical 0.98 threshold are absent. Labels support Haiku/low; source grades support grader models. No JEV CLI version log, actual invocation transcripts, billing record, Fable effort log or Codex session transcript is supplied.",
+      "suggested_fix": "Include the cited evidence locally or identify these details as author-reported; repair the source-report link to ../egmcal/RESULT.md."
+    },
+    {
+      "id": "F8",
+      "severity": "low",
+      "where": "JEV/RESULT.md:1",
+      "problem": "The title's unqualified 又快又便宜 is not established as a general outcome or monetary saving.",
+      "evidence": "Measured call time is lower on these four reports; logical tokens are 0.96/0.93 of the comparator and fail the specified half-token limit. No monetary cost comparison is recorded.",
+      "suggested_fix": "Use a neutral calibration title, or limit the claim to the measured timing and logical-token ratios."
+    }
+  ],
+  "could_not_check": [
+    "Any quote in the eight raw replies: raw replies and quotes are absent, so the substring/whitespace rule cannot be independently applied to any of the 81 retained positive labels.",
+    "Pre-run/pre-back-test chronology, prior versions and unchanged-rule history: matching current hashes and self-reported dates do not establish these.",
+    "The 3464-token pilot; historical D50/intake/admission claims and provenance of the 0.98 threshold; cited files outside this directory were not accessed.",
+    "Actual execution details beyond saved labels/usage and static script intent: CLI version, identical delivered prompts, fresh contexts/tool restrictions, subscription billing, Fable high effort and Codex single-session claim. Raw provider metering is absent."
+  ],
+  "privacy": [
+    "No local absolute path, user/account name or credential value found in any of the eight JEV files. Generic Path.home(), JEV_CREDENTIAL and .claude/.credentials.json references disclose no actual identity or secret."
+  ],
+  "notes": "Read local files only; used independent inline Python, never imported or executed jev_calibrate.py. Created only RECOUNT.json. Reconstructed all 120 grader cells, applied only mutually accepted recorded changes, then scored the 114 equal cells. Numerical table values reproduce at displayed precision; missing evidence is not proof a value is false. FAIL follows the medium findings. No explicit empirical causal finding or future performance prediction appears; the binary-screen rationale at RESULT.md:20 is a policy choice, not a validated transfer result. Current figures below 0.98 are verified, its historical provenance is not."
+}

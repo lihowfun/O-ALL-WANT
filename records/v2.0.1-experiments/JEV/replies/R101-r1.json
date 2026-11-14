@@ -1,0 +1,19 @@
+{
+ "id": "R101-r1",
+ "reply": "{\"items\":[{\"id\":\"K01\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K02\",\"label\":\"detected\",\"quote\":\"摘要把特定組合的最佳結果寫成三個地圖共同的量測範圍，掩蓋了沒有減少甚至增加呼叫的條件，誇大選擇吸收機制的效率依據。\"},{\"id\":\"K03\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K04\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K05\",\"label\":\"detected\",\"quote\":\"唯一保留的政策入口是「做完改動用 oaw-review」，但 deep 必須先寫計畫、審完計畫，再實作。\"},{\"id\":\"K06\",\"label\":\"mention-only\",\"quote\":\"Q1–Q3 仍是待決提案，證據沒有顯示已核准 D32、自動 EGM 或新增預算\"},{\"id\":\"K07\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K08\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K09\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K10\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K11\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K12\",\"label\":\"detected\",\"quote\":\"新格式應保留這些限制；0.95 的抽樣召回率不能單獨保證全庫完整。\"},{\"id\":\"K13\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K14\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K15\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K16\",\"label\":\"detected\",\"quote\":\"目前即使 skills=[]，仍產生 AGENTS.md、CLAUDE.md 與輔助腳本（scripts/oaw.py:270-280）\"},{\"id\":\"K17\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K18\",\"label\":\"detected\",\"quote\":\"現有還原範圍不包含註冊 hook／MCP 所需的設定。\"},{\"id\":\"K19\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K20\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K21\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K22\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K23\",\"label\":\"detected\",\"quote\":\"X1 的「兩家都判不差」尚未定義為統計等價、非劣性，或只是未判變差（docs/plans/v2.0.1-execution.md:233）。\"},{\"id\":\"K24\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K25\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K26\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K27\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K28\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K29\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K30\",\"label\":\"detected\",\"quote\":\"scripts/catalog_core.py:1847-1850 只接受 better／same／worse；2062-2070 仍用成本點估計 1.5 判定\"}]}",
+ "usage": {
+  "id": "R101-r1",
+  "model": "claude-haiku-5-5",
+  "effort": "low",
+  "exit": 0,
+  "seconds": 16.0,
+  "logical_tokens": 29984,
+  "noncache_tokens": 29335,
+  "models_used": [
+   "claude-haiku-5-5"
+  ],
+  "is_error": false,
+  "reply_chars": 1687,
+  "api_ms": 15283
+ }
+}

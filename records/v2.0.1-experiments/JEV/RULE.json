@@ -1,0 +1,14 @@
+{
+ "written": "2026-11-14, before any Jev output existed",
+ "decision": "D50",
+ "use": "the binary label (detected / not detected) that the fast screen consumes; the three-class result is reported for reference only",
+ "gold": "gold-egmcal.json: 114 cells of EGM-calibration batch 2 on which the two full-price graders agree after the registered reconciliation; 6 unresolved secondary cells excluded",
+ "min_binary_accuracy": 0.95,
+ "max_primary_binary_errors": 2,
+ "max_detected_count_difference": 3,
+ "max_logical_tokens": 69652,
+ "max_logical_tokens_basis": "50% of the full-price Claude grader's 139,304 logical tokens for the same four reports",
+ "repeats_required": 2,
+ "outcome": "admitted only if every check passes in both repeats; otherwise not admitted and the full-price graders keep the slot",
+ "not_covered": "one reviewed document; labels come from graders, one of them Claude-family; discovery of defects outside the key; any clearance (consent, safety, licence, isolation)"
+}

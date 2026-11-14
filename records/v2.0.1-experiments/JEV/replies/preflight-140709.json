@@ -1,0 +1,19 @@
+{
+ "id": "preflight-140709",
+ "reply": "{\"ok\": true}",
+ "usage": {
+  "id": "preflight-140709",
+  "model": "claude-haiku-5-5",
+  "effort": "low",
+  "exit": 0,
+  "seconds": 4.1,
+  "logical_tokens": 3464,
+  "noncache_tokens": 2815,
+  "models_used": [
+   "claude-haiku-5-5"
+  ],
+  "is_error": false,
+  "reply_chars": 12,
+  "api_ms": 948
+ }
+}

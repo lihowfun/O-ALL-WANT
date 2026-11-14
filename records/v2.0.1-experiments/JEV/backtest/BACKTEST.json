@@ -1,0 +1,2076 @@
+{
+  "rule_sha256": "f6c02650292d8de625e19447bdc1a0a794dea8f2f31a06c1c252265fb3dabe85",
+  "experiments": [
+    {
+      "id": "H1",
+      "food": "OAW default toolkit",
+      "protocol": "O versus bare N1/N2 (native averaged), exploratory two-line L only on Codex memory/large-change tasks; Flask, fresh isolated sessions, hidden tests, Claude Code/Opus 5.5 and Codex CLI/gpt-6.1-sol; 12 tasks per host. records/v2.0.1-experiments/H1/PREREG.md:20 records/v2.0.1-experiments/H1/PREREG.md:23 records/v2.0.1-experiments/H1/PREREG.md:24 records/v2.0.1-experiments/H1/PREREG.md:25 records/v2.0.1-experiments/H1/PREREG.md:35 records/v2.0.1-experiments/H1/PREREG.md:36 records/v2.0.1-experiments/H1/PREREG.md:40 records/v2.0.1-experiments/H1/PREREG.md:41 records/v2.0.1-experiments/H1/PREREG.md:60",
+      "long_route": {
+        "verdict": "合併：未定（能力未定）；Claude 未定；Codex 有幫助. records/v2.0.1-experiments/H1/RESULT.md:7 records/v2.0.1-experiments/H1/RESULT.md:14 records/v2.0.1-experiments/H1/RESULT.md:15",
+        "disposition": "absorb as default: retained by D45; shipped default recipe. records/digestion-2026-11-03/ingest/DECISIONS.md:504 records/digestion-2026-11-03/ingest/DECISIONS.md:505 records/digestion-2026-11-03/ingest/DECISIONS.md:506 records/digestion-2026-11-03/ingest/DECISIONS.md:507claude/oaw-2:README.md:32 claude/oaw-2:README.md:33 claude/oaw-2:README.md:34 claude/oaw-2:README.md:35",
+        "cost": {
+          "claude": 24056558,
+          "codex": 23883264,
+          "notes": "Claude formal execution 22,659,206, preparation 1,397,352; exact accounted subtotal 24,056,558 records/v2.0.1-experiments/H1/RESULT.md:55records/v2.0.1-experiments/H1/recompute/recompute.json:5551. Codex execution including L 23,883,264 records/v2.0.1-experiments/H1/RESULT.md:55. Grading mechanical; separate authoring/controller costs not recorded."
+        }
+      },
+      "numbers": {
+        "native_fraction_of_max": {
+          "claude": 0.9222222222222223,
+          "codex": 0.7923611111111111
+        },
+        "food_vs_native": "Native quality = equally weighted class means (A+B+C)/3, maximum is full checklist credit: claude: 1.0 records/v2.0.1-experiments/H1/recompute/recompute.json:4641, 0.8 records/v2.0.1-experiments/H1/recompute/recompute.json:4680, 0.9666666666666667 records/v2.0.1-experiments/H1/recompute/recompute.json:4719; codex: 1.0 records/v2.0.1-experiments/H1/recompute/recompute.json:5069, 0.4125 records/v2.0.1-experiments/H1/recompute/recompute.json:5108, 0.9645833333333333 records/v2.0.1-experiments/H1/recompute/recompute.json:5147. Score definition records/v2.0.1-experiments/H1/PREREG.md:140 records/v2.0.1-experiments/H1/PREREG.md:148 records/v2.0.1-experiments/H1/PREREG.md:149. O minus native: Claude -0.092, Codex +0.103; class/task wins/losses as recorded: Claude A 0/0, B 0/2, C 0/0; Codex A 0/0, B 2/0, C 1/0 records/v2.0.1-experiments/H1/RESULT.md:24 records/v2.0.1-experiments/H1/RESULT.md:25 records/v2.0.1-experiments/H1/RESULT.md:26 records/v2.0.1-experiments/H1/RESULT.md:27 records/v2.0.1-experiments/H1/RESULT.md:28 records/v2.0.1-experiments/H1/RESULT.md:29 records/v2.0.1-experiments/H1/RESULT.md:30 records/v2.0.1-experiments/H1/RESULT.md:31. These wins/losses use H1 margins, not v0 checklist gained/lost. Total token ratios 2.58/1.92 records/v2.0.1-experiments/H1/RESULT.md:46 records/v2.0.1-experiments/H1/RESULT.md:50; per-task geometric ratios 1.45/1.48 are a different recorded statistic records/v2.0.1-experiments/H1/RESULT.md:53. Exploratory L: L versus N +0.299; O versus L -0.144 records/v2.0.1-experiments/H1/RESULT.md:59 records/v2.0.1-experiments/H1/RESULT.md:60",
+        "token_ratio": {
+          "claude": 2.58,
+          "codex": 1.92
+        }
+      },
+      "fast_screen": {
+        "result": "NO at step B",
+        "deciding_step": "B",
+        "reason": "Claude native passes step B. Codex native is below the threshold, but its total token ratio fails step C. Per-host results: Claude NO at step B; Codex NO at step C (ratio > 1.5)."
+      },
+      "agrees_with_disposition": false,
+      "difference": "v0 does not absorb now; the recorded policy retained the toolkit as default.",
+      "sources": [
+        "records/v2.0.1-experiments/H1/PREREG.md:20",
+        "records/v2.0.1-experiments/H1/PREREG.md:23",
+        "records/v2.0.1-experiments/H1/PREREG.md:24",
+        "records/v2.0.1-experiments/H1/PREREG.md:25",
+        "records/v2.0.1-experiments/H1/PREREG.md:35",
+        "records/v2.0.1-experiments/H1/PREREG.md:36",
+        "records/v2.0.1-experiments/H1/PREREG.md:40",
+        "records/v2.0.1-experiments/H1/PREREG.md:41",
+        "records/v2.0.1-experiments/H1/PREREG.md:60",
+        "records/v2.0.1-experiments/H1/RESULT.md:7",
+        "records/v2.0.1-experiments/H1/RESULT.md:14",
+        "records/v2.0.1-experiments/H1/RESULT.md:15",
+        "records/digestion-2026-11-03/ingest/DECISIONS.md:504",
+        "records/digestion-2026-11-03/ingest/DECISIONS.md:505",
+        "records/digestion-2026-11-03/ingest/DECISIONS.md:506",
+        "records/digestion-2026-11-03/ingest/DECISIONS.md:507",
+        "claude/oaw-2:README.md:32",
+        "claude/oaw-2:README.md:33",
+        "claude/oaw-2:README.md:34",
+        "claude/oaw-2:README.md:35",
+        "records/v2.0.1-experiments/H1/RESULT.md:55",
+        "records/v2.0.1-experiments/H1/recompute/recompute.json:5551",
+        "records/v2.0.1-experiments/H1/recompute/recompute.json:4641",
+        "records/v2.0.1-experiments/H1/recompute/recompute.json:4680",
+        "records/v2.0.1-experiments/H1/recompute/recompute.json:4719",
+        "records/v2.0.1-experiments/H1/recompute/recompute.json:5069",
+        "records/v2.0.1-experiments/H1/recompute/recompute.json:5108",
+        "records/v2.0.1-experiments/H1/recompute/recompute.json:5147",
+        "records/v2.0.1-experiments/H1/PREREG.md:140",
+        "records/v2.0.1-experiments/H1/PREREG.md:148",
+        "records/v2.0.1-experiments/H1/PREREG.md:149",
+        "records/v2.0.1-experiments/H1/RESULT.md:24",
+        "records/v2.0.1-experiments/H1/RESULT.md:25",
+        "records/v2.0.1-experiments/H1/RESULT.md:26",
+        "records/v2.0.1-experiments/H1/RESULT.md:27",
+        "records/v2.0.1-experiments/H1/RESULT.md:28",
+        "records/v2.0.1-experiments/H1/RESULT.md:29",
+        "records/v2.0.1-experiments/H1/RESULT.md:30",
+        "records/v2.0.1-experiments/H1/RESULT.md:31",
+        "records/v2.0.1-experiments/H1/RESULT.md:46",
+        "records/v2.0.1-experiments/H1/RESULT.md:50",
+        "records/v2.0.1-experiments/H1/RESULT.md:53",
+        "records/v2.0.1-experiments/H1/RESULT.md:59",
+        "records/v2.0.1-experiments/H1/RESULT.md:60"
+      ],
+      "comparison_kind": "comparison"
+    },
+    {
+      "id": "X1",
+      "food": "OAW code map",
+      "protocol": "N versus M, ERPNext navigation, fresh task sessions, 12 tasks per host; Claude Code/Opus 5.5 and Codex CLI/gpt-6.1-sol, blind Opus and Codex graders. records/v2.0.1-experiments/X1/RESULT.md:10 records/v2.0.1-experiments/X1/RESULT.md:11 records/v2.0.1-experiments/X1/RESULT.md:14 records/v2.0.1-experiments/X1/RESULT.md:16 records/v2.0.1-experiments/X1/RESULT.md:19 records/v2.0.1-experiments/X1/RESULT.md:20 records/v2.0.1-experiments/X1/RESULT.md:21 records/v2.0.1-experiments/X1/RESULT.md:22",
+      "long_route": {
+        "verdict": "判定：可選用；quality 未定 on both hosts and graders; efficiency failed. records/v2.0.1-experiments/X1/RESULT.md:6 records/v2.0.1-experiments/X1/RESULT.md:7 records/v2.0.1-experiments/X1/RESULT.md:8",
+        "disposition": "optional, explicit invocation only. records/v2.0.1-experiments/X1/RESULT.md:6",
+        "cost": {
+          "claude": 24933421,
+          "codex": null,
+          "notes": "Claude preparation 22,114,537, execution 2,516,752, grading 302,132; recorded subtotal 24,933,421 records/v2.0.1-experiments/X1/RESULT.md:43 records/v2.0.1-experiments/X1/RESULT.md:44 records/v2.0.1-experiments/X1/RESULT.md:45 records/v2.0.1-experiments/X1/RESULT.md:46. Codex execution 4,472,442 records/v2.0.1-experiments/X1/RESULT.md:48, grading 867,287; successful pilots 294,673 and 315,192; earlier failed pilot usage not recorded records/v2.0.1-experiments/G5/REJUDGE.md:81. Complete Codex cost and controller/review cost not recorded."
+        }
+      },
+      "numbers": {
+        "native_fraction_of_max": {
+          "opus/opus-grader": 0.884,
+          "opus/codex-grader": 0.762,
+          "codex/opus-grader": 0.863,
+          "codex/codex-grader": 0.725
+        },
+        "food_vs_native": "Coverage is already a fraction of full fact coverage. N→M: Opus/Opus .884→.905 (wrong 2→0); Opus/Codex .762→.826 (8→13); Codex/Opus .863→.885 (5→3); Codex/Codex .725→.760 (11→8) records/v2.0.1-experiments/X1/RESULT.md:19 records/v2.0.1-experiments/X1/RESULT.md:20 records/v2.0.1-experiments/X1/RESULT.md:21 records/v2.0.1-experiments/X1/RESULT.md:22. Recorded task regression examples: Opus host/Codex grader n4 coverage 1.0→0.857; Codex host/Codex grader n4 .571→.429 records/v2.0.1-experiments/X1/judge.json:263 records/v2.0.1-experiments/X1/judge.json:264 records/v2.0.1-experiments/X1/judge.json:267 records/v2.0.1-experiments/X1/judge.json:268records/v2.0.1-experiments/X1/judge.json:674 records/v2.0.1-experiments/X1/judge.json:675 records/v2.0.1-experiments/X1/judge.json:678 records/v2.0.1-experiments/X1/judge.json:679. Gained/lost checklist counts not recorded. Token ratios .960/1.014 records/v2.0.1-experiments/X1/RESULT.md:26 records/v2.0.1-experiments/X1/RESULT.md:27",
+        "token_ratio": {
+          "opus": 0.96,
+          "codex": 1.014
+        }
+      },
+      "fast_screen": {
+        "result": "NO at step C (recorded task regressions)",
+        "deciding_step": "C",
+        "reason": "Native below step B on both hosts and graders; recorded task score losses violate the no-worse-task condition."
+      },
+      "agrees_with_disposition": false,
+      "difference": "v0 does not absorb now; long route retained the map as optional.",
+      "sources": [
+        "records/v2.0.1-experiments/X1/RESULT.md:10",
+        "records/v2.0.1-experiments/X1/RESULT.md:11",
+        "records/v2.0.1-experiments/X1/RESULT.md:14",
+        "records/v2.0.1-experiments/X1/RESULT.md:16",
+        "records/v2.0.1-experiments/X1/RESULT.md:19",
+        "records/v2.0.1-experiments/X1/RESULT.md:20",
+        "records/v2.0.1-experiments/X1/RESULT.md:21",
+        "records/v2.0.1-experiments/X1/RESULT.md:22",
+        "records/v2.0.1-experiments/X1/RESULT.md:6",
+        "records/v2.0.1-experiments/X1/RESULT.md:7",
+        "records/v2.0.1-experiments/X1/RESULT.md:8",
+        "records/v2.0.1-experiments/X1/RESULT.md:43",
+        "records/v2.0.1-experiments/X1/RESULT.md:44",
+        "records/v2.0.1-experiments/X1/RESULT.md:45",
+        "records/v2.0.1-experiments/X1/RESULT.md:46",
+        "records/v2.0.1-experiments/X1/RESULT.md:48",
+        "records/v2.0.1-experiments/G5/REJUDGE.md:81",
+        "records/v2.0.1-experiments/X1/judge.json:263",
+        "records/v2.0.1-experiments/X1/judge.json:264",
+        "records/v2.0.1-experiments/X1/judge.json:267",
+        "records/v2.0.1-experiments/X1/judge.json:268",
+        "records/v2.0.1-experiments/X1/judge.json:674",
+        "records/v2.0.1-experiments/X1/judge.json:675",
+        "records/v2.0.1-experiments/X1/judge.json:678",
+        "records/v2.0.1-experiments/X1/judge.json:679",
+        "records/v2.0.1-experiments/X1/RESULT.md:26",
+        "records/v2.0.1-experiments/X1/RESULT.md:27"
+      ],
+      "comparison_kind": "comparison"
+    },
+    {
+      "id": "X2",
+      "food": "EGM and checklist alternative",
+      "protocol": "Native fresh review N versus checklist R versus full EGM E; Claude Code/Opus 5.5 and Codex CLI/gpt-6.1-sol, small design documents; main analysis 20 cases with 48 defects, plus descriptive cases; four graders. records/v2.0.1-experiments/X2/RESULT.md:5 records/v2.0.1-experiments/X2/RESULT.md:15 records/v2.0.1-experiments/X2/RESULT.md:19 records/v2.0.1-experiments/X2/RESULT.md:20 records/v2.0.1-experiments/X2/RESULT.md:21 records/v2.0.1-experiments/X2/RESULT.md:22 records/v2.0.1-experiments/X2/RESULT.md:23 records/v2.0.1-experiments/X2/RESULT.md:24 records/v2.0.1-experiments/X2/RESULT.md:26",
+      "long_route": {
+        "verdict": "兩格都維持 N；auto uses native fresh-context review. records/v2.0.1-experiments/X2/RESULT.md:5",
+        "disposition": "EGM optional explicit switch; not absorbed into automatic/default review. records/v2.0.1-experiments/X2/RESULT.md:5",
+        "cost": {
+          "claude": 47237230,
+          "codex": 75616387,
+          "notes": "Claude recorded total 47,237,230: preparation 2,533,567, calibration 522,781, main 38,821,743, invalid attempts 1,702,598, Opus grading 1,282,243, Haiku grading 2,374,298 records/v2.0.1-experiments/X2/RESULT.md:80 records/v2.0.1-experiments/X2/RESULT.md:81 records/v2.0.1-experiments/X2/RESULT.md:82 records/v2.0.1-experiments/X2/RESULT.md:83 records/v2.0.1-experiments/X2/RESULT.md:84 records/v2.0.1-experiments/X2/RESULT.md:85 records/v2.0.1-experiments/X2/RESULT.md:86. Codex answers and grading subtotal 75,616,387 (calibration 944,117, main 68,909,071, Codex grader 2,968,832, luna grader 2,794,367); separate decision 1,240,587 records/v2.0.1-experiments/X2/RESULT.md:87 records/v2.0.1-experiments/X2/RESULT.md:88 records/v2.0.1-experiments/X2/RESULT.md:89 records/v2.0.1-experiments/X2/RESULT.md:90 records/v2.0.1-experiments/X2/RESULT.md:91 records/v2.0.1-experiments/X2/RESULT.md:92. Complete Codex grand total not stated."
+        }
+      },
+      "numbers": {
+        "native_fraction_of_max": {
+          "claude": 0.9791666666666666,
+          "codex": 0.9791666666666666
+        },
+        "food_vs_native": "Native detection 47/48 each. E detection Claude 48/48, Codex 47/48; R 48/48 each; all four graders agree records/v2.0.1-experiments/X2/RESULT.md:19 records/v2.0.1-experiments/X2/RESULT.md:20 records/v2.0.1-experiments/X2/RESULT.md:21 records/v2.0.1-experiments/X2/RESULT.md:22 records/v2.0.1-experiments/X2/RESULT.md:23 records/v2.0.1-experiments/X2/RESULT.md:24 records/v2.0.1-experiments/X2/RESULT.md:26. Unsupported claims per report (Opus/Codex): Claude N .20/.20, E .45/1.65; Codex N .05/.05, E .05/.05 records/v2.0.1-experiments/X2/RESULT.md:19 records/v2.0.1-experiments/X2/RESULT.md:21 records/v2.0.1-experiments/X2/RESULT.md:22 records/v2.0.1-experiments/X2/RESULT.md:24. E token median ratios 27 (Claude), 29 (Codex) records/v2.0.1-experiments/X2/RESULT.md:11. Exact main-analysis E median ratios 27.415134037971235/29.22901177700869 also recorded records/v2.0.1-experiments/EGM-anatomy/design-costs.json:9 records/v2.0.1-experiments/EGM-anatomy/design-costs.json:10records/v2.0.1-experiments/EGM-anatomy/design-costs.json:13 records/v2.0.1-experiments/EGM-anatomy/design-costs.json:14. Checklist gained/lost not reported in this result.",
+        "token_ratio": {
+          "claude/E": 27,
+          "codex/E": 29
+        }
+      },
+      "fast_screen": {
+        "result": "NO at step B",
+        "deciding_step": "B",
+        "reason": "Both native detection fractions exceed the step B threshold."
+      },
+      "agrees_with_disposition": false,
+      "difference": "v0 means not absorbed now; actual EGM remained optional. It agrees only with the narrower decision to keep automatic review native.",
+      "sources": [
+        "records/v2.0.1-experiments/X2/RESULT.md:5",
+        "records/v2.0.1-experiments/X2/RESULT.md:15",
+        "records/v2.0.1-experiments/X2/RESULT.md:19",
+        "records/v2.0.1-experiments/X2/RESULT.md:20",
+        "records/v2.0.1-experiments/X2/RESULT.md:21",
+        "records/v2.0.1-experiments/X2/RESULT.md:22",
+        "records/v2.0.1-experiments/X2/RESULT.md:23",
+        "records/v2.0.1-experiments/X2/RESULT.md:24",
+        "records/v2.0.1-experiments/X2/RESULT.md:26",
+        "records/v2.0.1-experiments/X2/RESULT.md:80",
+        "records/v2.0.1-experiments/X2/RESULT.md:81",
+        "records/v2.0.1-experiments/X2/RESULT.md:82",
+        "records/v2.0.1-experiments/X2/RESULT.md:83",
+        "records/v2.0.1-experiments/X2/RESULT.md:84",
+        "records/v2.0.1-experiments/X2/RESULT.md:85",
+        "records/v2.0.1-experiments/X2/RESULT.md:86",
+        "records/v2.0.1-experiments/X2/RESULT.md:87",
+        "records/v2.0.1-experiments/X2/RESULT.md:88",
+        "records/v2.0.1-experiments/X2/RESULT.md:89",
+        "records/v2.0.1-experiments/X2/RESULT.md:90",
+        "records/v2.0.1-experiments/X2/RESULT.md:91",
+        "records/v2.0.1-experiments/X2/RESULT.md:92",
+        "records/v2.0.1-experiments/X2/RESULT.md:11",
+        "records/v2.0.1-experiments/EGM-anatomy/design-costs.json:9",
+        "records/v2.0.1-experiments/EGM-anatomy/design-costs.json:10",
+        "records/v2.0.1-experiments/EGM-anatomy/design-costs.json:13",
+        "records/v2.0.1-experiments/EGM-anatomy/design-costs.json:14"
+      ],
+      "comparison_kind": "comparison"
+    },
+    {
+      "id": "X3",
+      "food": "review policy + skill",
+      "protocol": "Baseline 0 (old toolkit) versus A; Claude Code/Haiku 5.5 high only, dry run, six scenarios, one answer per scenario/arm; Opus/Sonnet not run. records/v2.0.1-experiments/X3/RESULT.md:3 records/v2.0.1-experiments/X3/RESULT.md:6 records/v2.0.1-experiments/X3/RESULT.md:15 records/v2.0.1-experiments/X3/RESULT.md:19 records/v2.0.1-experiments/X3/RESULT.md:20 records/v2.0.1-experiments/X3/RESULT.md:21",
+      "long_route": {
+        "verdict": "Haiku 不通過，所以這一版 X3 不通過. records/v2.0.1-experiments/X3/RESULT.md:6 records/v2.0.1-experiments/X3/RESULT.md:23",
+        "disposition": "not absorbed as tested: this version failed the gate; the policy-line design was retained for fixes. records/v2.0.1-experiments/X3/RESULT.md:49 records/v2.0.1-experiments/X3/RESULT.md:54",
+        "cost": {
+          "claude": 3603037,
+          "codex": null,
+          "notes": "Shared X3 cost, repeated here without double counting: setup probes 64,468; execution 3,538,569; total 3,603,037 Claude logical tokens records/v2.0.1-experiments/X3/RESULT.md:58 records/v2.0.1-experiments/X3/RESULT.md:59 records/v2.0.1-experiments/X3/RESULT.md:60. Mechanical grading; separate authoring cost not recorded. Codex not run."
+        }
+      },
+      "numbers": {
+        "native_fraction_of_max": {
+          "haiku": 0.3333333333333333
+        },
+        "food_vs_native": "Baseline 2/6; A 4/6, B 2/6 records/v2.0.1-experiments/X3/RESULT.md:19 records/v2.0.1-experiments/X3/RESULT.md:20 records/v2.0.1-experiments/X3/RESULT.md:21. By scenario, A gains S1 and S2 and loses none; B gains none and loses none (arithmetic from pass/fail table) records/v2.0.1-experiments/X3/RESULT.md:30 records/v2.0.1-experiments/X3/RESULT.md:31 records/v2.0.1-experiments/X3/RESULT.md:32 records/v2.0.1-experiments/X3/RESULT.md:33 records/v2.0.1-experiments/X3/RESULT.md:34 records/v2.0.1-experiments/X3/RESULT.md:35. Token ratio calculated from recorded arm totals: 1088413/1,290,528 records/v2.0.1-experiments/X3/RESULT.md:19 records/v2.0.1-experiments/X3/RESULT.md:20",
+        "token_ratio": {
+          "haiku": 0.8433858079793697
+        }
+      },
+      "fast_screen": {
+        "result": "YES",
+        "deciding_step": "C",
+        "reason": "A has the required gained tasks, no lost task, and token ratio within the limit."
+      },
+      "agrees_with_disposition": false,
+      "difference": "v0 would absorb tested A as optional; the recorded version failed its gate and proceeded to fixes, with the policy-line design retained.",
+      "sources": [
+        "records/v2.0.1-experiments/X3/RESULT.md:3",
+        "records/v2.0.1-experiments/X3/RESULT.md:6",
+        "records/v2.0.1-experiments/X3/RESULT.md:15",
+        "records/v2.0.1-experiments/X3/RESULT.md:19",
+        "records/v2.0.1-experiments/X3/RESULT.md:20",
+        "records/v2.0.1-experiments/X3/RESULT.md:21",
+        "records/v2.0.1-experiments/X3/RESULT.md:23",
+        "records/v2.0.1-experiments/X3/RESULT.md:49",
+        "records/v2.0.1-experiments/X3/RESULT.md:54",
+        "records/v2.0.1-experiments/X3/RESULT.md:58",
+        "records/v2.0.1-experiments/X3/RESULT.md:59",
+        "records/v2.0.1-experiments/X3/RESULT.md:60",
+        "records/v2.0.1-experiments/X3/RESULT.md:30",
+        "records/v2.0.1-experiments/X3/RESULT.md:31",
+        "records/v2.0.1-experiments/X3/RESULT.md:32",
+        "records/v2.0.1-experiments/X3/RESULT.md:33",
+        "records/v2.0.1-experiments/X3/RESULT.md:34",
+        "records/v2.0.1-experiments/X3/RESULT.md:35"
+      ],
+      "comparison_kind": "comparison"
+    },
+    {
+      "id": "X3-skill-only",
+      "food": "review skill only",
+      "protocol": "Baseline 0 (old toolkit) versus B; Claude Code/Haiku 5.5 high only, dry run, six scenarios, one answer per scenario/arm; Opus/Sonnet not run. records/v2.0.1-experiments/X3/RESULT.md:3 records/v2.0.1-experiments/X3/RESULT.md:6 records/v2.0.1-experiments/X3/RESULT.md:15 records/v2.0.1-experiments/X3/RESULT.md:19 records/v2.0.1-experiments/X3/RESULT.md:20 records/v2.0.1-experiments/X3/RESULT.md:21",
+      "long_route": {
+        "verdict": "Haiku 不通過，所以這一版 X3 不通過. records/v2.0.1-experiments/X3/RESULT.md:6 records/v2.0.1-experiments/X3/RESULT.md:23",
+        "disposition": "not absorbed: skill-only alternative rejected in favour of policy-line A. records/v2.0.1-experiments/X3/RESULT.md:49 records/v2.0.1-experiments/X3/RESULT.md:54",
+        "cost": {
+          "claude": 3603037,
+          "codex": null,
+          "notes": "Shared X3 cost, repeated here without double counting: setup probes 64,468; execution 3,538,569; total 3,603,037 Claude logical tokens records/v2.0.1-experiments/X3/RESULT.md:58 records/v2.0.1-experiments/X3/RESULT.md:59 records/v2.0.1-experiments/X3/RESULT.md:60. Mechanical grading; separate authoring cost not recorded. Codex not run."
+        }
+      },
+      "numbers": {
+        "native_fraction_of_max": {
+          "haiku": 0.3333333333333333
+        },
+        "food_vs_native": "Baseline 2/6; A 4/6, B 2/6 records/v2.0.1-experiments/X3/RESULT.md:19 records/v2.0.1-experiments/X3/RESULT.md:20 records/v2.0.1-experiments/X3/RESULT.md:21. By scenario, A gains S1 and S2 and loses none; B gains none and loses none (arithmetic from pass/fail table) records/v2.0.1-experiments/X3/RESULT.md:30 records/v2.0.1-experiments/X3/RESULT.md:31 records/v2.0.1-experiments/X3/RESULT.md:32 records/v2.0.1-experiments/X3/RESULT.md:33 records/v2.0.1-experiments/X3/RESULT.md:34 records/v2.0.1-experiments/X3/RESULT.md:35. Token ratio calculated from recorded arm totals: 1159628/1,290,528 records/v2.0.1-experiments/X3/RESULT.md:19 records/v2.0.1-experiments/X3/RESULT.md:21",
+        "token_ratio": {
+          "haiku": 0.8985686478712589
+        }
+      },
+      "fast_screen": {
+        "result": "NO at step C (gained < 2)",
+        "deciding_step": "C",
+        "reason": "B has no gained task."
+      },
+      "agrees_with_disposition": true,
+      "difference": "",
+      "sources": [
+        "records/v2.0.1-experiments/X3/RESULT.md:3",
+        "records/v2.0.1-experiments/X3/RESULT.md:6",
+        "records/v2.0.1-experiments/X3/RESULT.md:15",
+        "records/v2.0.1-experiments/X3/RESULT.md:19",
+        "records/v2.0.1-experiments/X3/RESULT.md:20",
+        "records/v2.0.1-experiments/X3/RESULT.md:21",
+        "records/v2.0.1-experiments/X3/RESULT.md:23",
+        "records/v2.0.1-experiments/X3/RESULT.md:49",
+        "records/v2.0.1-experiments/X3/RESULT.md:54",
+        "records/v2.0.1-experiments/X3/RESULT.md:58",
+        "records/v2.0.1-experiments/X3/RESULT.md:59",
+        "records/v2.0.1-experiments/X3/RESULT.md:60",
+        "records/v2.0.1-experiments/X3/RESULT.md:30",
+        "records/v2.0.1-experiments/X3/RESULT.md:31",
+        "records/v2.0.1-experiments/X3/RESULT.md:32",
+        "records/v2.0.1-experiments/X3/RESULT.md:33",
+        "records/v2.0.1-experiments/X3/RESULT.md:34",
+        "records/v2.0.1-experiments/X3/RESULT.md:35"
+      ],
+      "comparison_kind": "comparison"
+    },
+    {
+      "id": "X3b",
+      "food": "fixed review policy + skill",
+      "protocol": "Fixed A versus old-toolkit 0, Claude Code Haiku/Opus/Sonnet 5.5, dry run, six scenarios, one answer per scenario/arm; Haiku baseline reused from X3. records/v2.0.1-experiments/X3b/RESULT.md:3 records/v2.0.1-experiments/X3b/RESULT.md:15 records/v2.0.1-experiments/X3b/RESULT.md:19 records/v2.0.1-experiments/X3b/RESULT.md:20 records/v2.0.1-experiments/X3b/RESULT.md:21 records/v2.0.1-experiments/X3b/RESULT.md:22 records/v2.0.1-experiments/X3b/RESULT.md:23 records/v2.0.1-experiments/X3b/RESULT.md:24",
+      "long_route": {
+        "verdict": "三個模型都通過. records/v2.0.1-experiments/X3b/RESULT.md:6 records/v2.0.1-experiments/X3b/RESULT.md:7 records/v2.0.1-experiments/X3b/RESULT.md:8 records/v2.0.1-experiments/X3b/RESULT.md:9",
+        "disposition": "absorb as default: fixed policy retained in toolkit; default review entrypoint shipped. claude/oaw-2:README.md:33 claude/oaw-2:README.md:95",
+        "cost": {
+          "claude": 3016664,
+          "codex": null,
+          "notes": "New execution 3,016,664 Claude logical tokens; reused Haiku baseline is charged in X3, not again records/v2.0.1-experiments/X3b/RESULT.md:49. Mechanical grading; authoring/preparation not recorded; Codex not run."
+        }
+      },
+      "numbers": {
+        "native_fraction_of_max": {
+          "haiku": 0.3333333333333333,
+          "opus": 0.3333333333333333,
+          "sonnet": 0.3333333333333333
+        },
+        "food_vs_native": "0→A correct: Haiku 2/6→6/6, Opus and Sonnet 2/6→5/6; baseline succeeds only on light scenarios, which remain correct in A. Thus task gains/losses (arithmetic): Haiku 4/0, Opus 3/0, Sonnet 3/0 records/v2.0.1-experiments/X3b/RESULT.md:7 records/v2.0.1-experiments/X3b/RESULT.md:8 records/v2.0.1-experiments/X3b/RESULT.md:19 records/v2.0.1-experiments/X3b/RESULT.md:20 records/v2.0.1-experiments/X3b/RESULT.md:21 records/v2.0.1-experiments/X3b/RESULT.md:22 records/v2.0.1-experiments/X3b/RESULT.md:23 records/v2.0.1-experiments/X3b/RESULT.md:24. Recorded token total ratios .84/1.37/1.45 records/v2.0.1-experiments/X3b/RESULT.md:51",
+        "token_ratio": {
+          "haiku": 0.84,
+          "opus": 1.37,
+          "sonnet": 1.45
+        }
+      },
+      "fast_screen": {
+        "result": "YES",
+        "deciding_step": "C",
+        "reason": "All hosts meet gained/lost and token-ratio conditions."
+      },
+      "agrees_with_disposition": false,
+      "difference": "v0 YES permits optional absorption only; the policy entered the default toolkit.",
+      "sources": [
+        "records/v2.0.1-experiments/X3b/RESULT.md:3",
+        "records/v2.0.1-experiments/X3b/RESULT.md:15",
+        "records/v2.0.1-experiments/X3b/RESULT.md:19",
+        "records/v2.0.1-experiments/X3b/RESULT.md:20",
+        "records/v2.0.1-experiments/X3b/RESULT.md:21",
+        "records/v2.0.1-experiments/X3b/RESULT.md:22",
+        "records/v2.0.1-experiments/X3b/RESULT.md:23",
+        "records/v2.0.1-experiments/X3b/RESULT.md:24",
+        "records/v2.0.1-experiments/X3b/RESULT.md:6",
+        "records/v2.0.1-experiments/X3b/RESULT.md:7",
+        "records/v2.0.1-experiments/X3b/RESULT.md:8",
+        "records/v2.0.1-experiments/X3b/RESULT.md:9",
+        "claude/oaw-2:README.md:33",
+        "claude/oaw-2:README.md:95",
+        "records/v2.0.1-experiments/X3b/RESULT.md:49",
+        "records/v2.0.1-experiments/X3b/RESULT.md:51"
+      ],
+      "comparison_kind": "comparison"
+    },
+    {
+      "id": "X4",
+      "food": "default install startup context change",
+      "protocol": "Bare versus old/new toolkit, Claude Code and Codex CLI, three repeats per host/project, “Reply with OK”; first-turn prompt/input size only. records/v2.0.1-experiments/X4/RESULT.md:3 records/v2.0.1-experiments/X4/RESULT.md:12records/v2.0.1-experiments/X4/PREREG.md:18 records/v2.0.1-experiments/X4/PREREG.md:19 records/v2.0.1-experiments/X4/PREREG.md:21",
+      "long_route": {
+        "verdict": "通過. records/v2.0.1-experiments/X4/RESULT.md:6",
+        "disposition": "change retained in default toolkit. claude/oaw-2:README.md:33",
+        "cost": {
+          "claude": null,
+          "codex": null,
+          "notes": "Execution logical-token totals, grading and authoring/preparation not recorded. Recorded first-turn input medians are not total logical execution cost."
+        }
+      },
+      "numbers": {
+        "native_fraction_of_max": {
+          "claude": null,
+          "codex": null
+        },
+        "food_vs_native": "Quality not measured. First-turn input medians bare/old/new: Claude 33,113/34,359/34,354; Codex 16,124/16,603/15,237 records/v2.0.1-experiments/X4/RESULT.md:16 records/v2.0.1-experiments/X4/RESULT.md:17. These are context sizes, not food/native total logical-token ratios.",
+        "token_ratio": {
+          "claude": null,
+          "codex": null
+        }
+      },
+      "fast_screen": {
+        "result": "cannot be back-tested (native quality and maximum; food quality; logical-token ratio)",
+        "deciding_step": "none",
+        "reason": "Only context size was measured."
+      },
+      "agrees_with_disposition": null,
+      "difference": "",
+      "sources": [
+        "records/v2.0.1-experiments/X4/RESULT.md:3",
+        "records/v2.0.1-experiments/X4/RESULT.md:12",
+        "records/v2.0.1-experiments/X4/PREREG.md:18",
+        "records/v2.0.1-experiments/X4/PREREG.md:19",
+        "records/v2.0.1-experiments/X4/PREREG.md:21",
+        "records/v2.0.1-experiments/X4/RESULT.md:6",
+        "claude/oaw-2:README.md:33",
+        "records/v2.0.1-experiments/X4/RESULT.md:16",
+        "records/v2.0.1-experiments/X4/RESULT.md:17"
+      ],
+      "comparison_kind": "comparison"
+    },
+    {
+      "id": "I16",
+      "food": "bug-bash recipe F",
+      "protocol": "Native N versus full recipe F, descriptive prompt C and documented CLI D; Claude Code/Opus 5.5 and Codex CLI/gpt-6.1-sol; black-box CLI workflows, one run per workflow/arm, hidden planted defects and blind graders. records/v2.0.1-experiments/I16/RESULT.md:18 records/v2.0.1-experiments/I16/RESULT.md:20 records/v2.0.1-experiments/I16/RESULT.md:21 records/v2.0.1-experiments/I16/RESULT.md:35 records/v2.0.1-experiments/I16/RESULT.md:37 records/v2.0.1-experiments/I16/RESULT.md:45 records/v2.0.1-experiments/I16/RESULT.md:62 records/v2.0.1-experiments/I16/RESULT.md:64 records/v2.0.1-experiments/I16/RESULT.md:65 records/v2.0.1-experiments/I16/RESULT.md:66 records/v2.0.1-experiments/I16/RESULT.md:67 records/v2.0.1-experiments/I16/RESULT.md:138 records/v2.0.1-experiments/I16/RESULT.md:141",
+      "long_route": {
+        "verdict": "合併：可選用；品質未定；BASH 沒過. records/v2.0.1-experiments/I16/RESULT.md:7 records/v2.0.1-experiments/I16/RESULT.md:8 records/v2.0.1-experiments/I16/RESULT.md:20 records/v2.0.1-experiments/I16/RESULT.md:21 records/v2.0.1-experiments/I16/RESULT.md:22",
+        "disposition": "optional, --skills oaw-bugbash only, outside default. records/v2.0.1-experiments/I16/RESULT.md:7",
+        "cost": {
+          "claude": null,
+          "codex": null,
+          "notes": "Claude preparation/pilots/calibration approximately 23.2M; execution 47,021,101; Opus grading 1,514,170; Haiku grading 1,124,627; total only approximately 72.9M records/v2.0.1-experiments/I16/RESULT.md:126 records/v2.0.1-experiments/I16/RESULT.md:127 records/v2.0.1-experiments/I16/RESULT.md:128 records/v2.0.1-experiments/I16/RESULT.md:129 records/v2.0.1-experiments/I16/RESULT.md:130. Codex execution 22,018,532; Codex grading 1,871,693; luna grading 1,787,103; preparation separately logged but amount not recorded here records/v2.0.1-experiments/I16/RESULT.md:126 records/v2.0.1-experiments/I16/RESULT.md:127 records/v2.0.1-experiments/I16/RESULT.md:128 records/v2.0.1-experiments/I16/RESULT.md:129. No exact complete family total stated."
+        }
+      },
+      "numbers": {
+        "native_fraction_of_max": {
+          "claude/opus-codex-haiku": 0.5,
+          "claude/luna": 0.3333333333333333,
+          "codex/all-graders": 0
+        },
+        "food_vs_native": "Opus/Codex: N→F Claude 3/6→5/6, Codex 0/6→2/6 records/v2.0.1-experiments/I16/RESULT.md:20 records/v2.0.1-experiments/I16/RESULT.md:21. Planted-workflow table gives Claude gains find-project-code and estimate-review-budget, no lost detected workflow; Codex gains annotate-project-topic and manage-only-own-skills, no loss records/v2.0.1-experiments/I16/RESULT.md:39 records/v2.0.1-experiments/I16/RESULT.md:40 records/v2.0.1-experiments/I16/RESULT.md:41 records/v2.0.1-experiments/I16/RESULT.md:42 records/v2.0.1-experiments/I16/RESULT.md:43 records/v2.0.1-experiments/I16/RESULT.md:44 records/v2.0.1-experiments/I16/RESULT.md:45. Haiku detection N→F Claude 3→5, Codex 0→2; luna Claude 2→4, Codex 0→2 records/v2.0.1-experiments/I16/RESULT.md:107 records/v2.0.1-experiments/I16/RESULT.md:111 records/v2.0.1-experiments/I16/RESULT.md:112. Unsupported reports per workflow (Opus/Codex): Claude N 2.42/2.08→F 1.33/1.00; Codex .33/.17→.25/.17 records/v2.0.1-experiments/I16/RESULT.md:51 records/v2.0.1-experiments/I16/RESULT.md:54 records/v2.0.1-experiments/I16/RESULT.md:55 records/v2.0.1-experiments/I16/RESULT.md:58. F/N published cost ratios .93/1.39 records/v2.0.1-experiments/I16/RESULT.md:20 records/v2.0.1-experiments/I16/RESULT.md:21; corresponding recorded arm totals: Claude N 9,669,150, F 9,290,826; Codex N 4,083,714, F 5,713,722 records/v2.0.1-experiments/I16/RESULT.md:77 records/v2.0.1-experiments/I16/RESULT.md:80 records/v2.0.1-experiments/I16/RESULT.md:81 records/v2.0.1-experiments/I16/RESULT.md:84. C and D descriptive detection/cost: Claude C 5/6, D 4/6; Codex C 4/6, D 3/6 records/v2.0.1-experiments/I16/RESULT.md:45, C ratios 1.63/1.75, D 1.23/1.21 records/v2.0.1-experiments/I16/RESULT.md:64 records/v2.0.1-experiments/I16/RESULT.md:65 records/v2.0.1-experiments/I16/RESULT.md:66 records/v2.0.1-experiments/I16/RESULT.md:67",
+        "token_ratio": {
+          "claude": 0.93,
+          "codex": 1.39
+        }
+      },
+      "fast_screen": {
+        "result": "YES",
+        "deciding_step": "C",
+        "reason": "Native below ceiling; recorded paired detection tasks give the required gains with no loss, and recorded token ratios are within the limit. Long-route confidence bounds and severe-defect gate are not v0 conditions."
+      },
+      "agrees_with_disposition": true,
+      "difference": "",
+      "sources": [
+        "records/v2.0.1-experiments/I16/RESULT.md:18",
+        "records/v2.0.1-experiments/I16/RESULT.md:20",
+        "records/v2.0.1-experiments/I16/RESULT.md:21",
+        "records/v2.0.1-experiments/I16/RESULT.md:35",
+        "records/v2.0.1-experiments/I16/RESULT.md:37",
+        "records/v2.0.1-experiments/I16/RESULT.md:45",
+        "records/v2.0.1-experiments/I16/RESULT.md:62",
+        "records/v2.0.1-experiments/I16/RESULT.md:64",
+        "records/v2.0.1-experiments/I16/RESULT.md:65",
+        "records/v2.0.1-experiments/I16/RESULT.md:66",
+        "records/v2.0.1-experiments/I16/RESULT.md:67",
+        "records/v2.0.1-experiments/I16/RESULT.md:138",
+        "records/v2.0.1-experiments/I16/RESULT.md:141",
+        "records/v2.0.1-experiments/I16/RESULT.md:7",
+        "records/v2.0.1-experiments/I16/RESULT.md:8",
+        "records/v2.0.1-experiments/I16/RESULT.md:22",
+        "records/v2.0.1-experiments/I16/RESULT.md:126",
+        "records/v2.0.1-experiments/I16/RESULT.md:127",
+        "records/v2.0.1-experiments/I16/RESULT.md:128",
+        "records/v2.0.1-experiments/I16/RESULT.md:129",
+        "records/v2.0.1-experiments/I16/RESULT.md:130",
+        "records/v2.0.1-experiments/I16/RESULT.md:39",
+        "records/v2.0.1-experiments/I16/RESULT.md:40",
+        "records/v2.0.1-experiments/I16/RESULT.md:41",
+        "records/v2.0.1-experiments/I16/RESULT.md:42",
+        "records/v2.0.1-experiments/I16/RESULT.md:43",
+        "records/v2.0.1-experiments/I16/RESULT.md:44",
+        "records/v2.0.1-experiments/I16/RESULT.md:107",
+        "records/v2.0.1-experiments/I16/RESULT.md:111",
+        "records/v2.0.1-experiments/I16/RESULT.md:112",
+        "records/v2.0.1-experiments/I16/RESULT.md:51",
+        "records/v2.0.1-experiments/I16/RESULT.md:54",
+        "records/v2.0.1-experiments/I16/RESULT.md:55",
+        "records/v2.0.1-experiments/I16/RESULT.md:58",
+        "records/v2.0.1-experiments/I16/RESULT.md:77",
+        "records/v2.0.1-experiments/I16/RESULT.md:80",
+        "records/v2.0.1-experiments/I16/RESULT.md:81",
+        "records/v2.0.1-experiments/I16/RESULT.md:84"
+      ],
+      "comparison_kind": "comparison"
+    },
+    {
+      "id": "FIXCHECK",
+      "food": "five toolkit fixes as one candidate bundle",
+      "protocol": "New O versus historical H1 old O and native mean; same frozen diagnostic tasks, Claude Code/Opus 5.5 and Codex CLI/gpt-6.1-sol, one counted O run per task, hidden tests. records/v2.0.1-experiments/FIXCHECK/RESULT.md:7 records/v2.0.1-experiments/FIXCHECK/RESULT.md:8 records/v2.0.1-experiments/FIXCHECK/RESULT.md:9",
+      "long_route": {
+        "verdict": "fail；還原 M1、M2、R2；保留 M3、R1. records/v2.0.1-experiments/FIXCHECK/RESULT.md:13 records/v2.0.1-experiments/FIXCHECK/RESULT.md:14",
+        "disposition": "mixed: M1/M2/R2 not absorbed (reverted); M3/R1 retained in default. records/digestion-2026-11-03/ingest/DECISIONS.md:620 records/digestion-2026-11-03/ingest/DECISIONS.md:621claude/oaw-2:README.md:39 claude/oaw-2:README.md:40 claude/oaw-2:README.md:41 claude/oaw-2:README.md:42 claude/oaw-2:README.md:43",
+        "cost": {
+          "claude": 8154700,
+          "codex": null,
+          "notes": "Claude execution 8,125,299 plus failed attempt 29,401; budget-account subtotal 8,154,700 records/v2.0.1-experiments/FIXCHECK/RESULT.md:53 records/v2.0.1-experiments/FIXCHECK/RESULT.md:199 records/v2.0.1-experiments/FIXCHECK/RESULT.md:200 records/v2.0.1-experiments/FIXCHECK/RESULT.md:205. Codex execution 6,802,657 records/v2.0.1-experiments/FIXCHECK/RESULT.md:53. Task preparation reused H1; controller/audit/review not individually metered; complete study cost not recorded records/v2.0.1-experiments/FIXCHECK/RESULT.md:206 records/v2.0.1-experiments/FIXCHECK/RESULT.md:207. Mechanical grading."
+        }
+      },
+      "numbers": {
+        "native_fraction_of_max": {
+          "claude": 0.9222222222222223,
+          "codex": 0.7923611111111111
+        },
+        "food_vs_native": "Native quality = equally weighted class means (A+B+C)/3, maximum is full checklist credit: claude: 1.0 records/v2.0.1-experiments/H1/recompute/recompute.json:4641, 0.8 records/v2.0.1-experiments/H1/recompute/recompute.json:4680, 0.9666666666666667 records/v2.0.1-experiments/H1/recompute/recompute.json:4719; codex: 1.0 records/v2.0.1-experiments/H1/recompute/recompute.json:5069, 0.4125 records/v2.0.1-experiments/H1/recompute/recompute.json:5108, 0.9645833333333333 records/v2.0.1-experiments/H1/recompute/recompute.json:5147. Score definition records/v2.0.1-experiments/H1/PREREG.md:140 records/v2.0.1-experiments/H1/PREREG.md:148 records/v2.0.1-experiments/H1/PREREG.md:149. Historical bare native comparator, as in H1. New O/native total ratio Claude 1.64, Codex 1.62; new O/old O .64/.84 records/v2.0.1-experiments/FIXCHECK/RESULT.md:53 records/v2.0.1-experiments/FIXCHECK/RESULT.md:54. Old O→new O: one Codex superseded score 1.00→.80; all other task scores unchanged or higher records/v2.0.1-experiments/FIXCHECK/RESULT.md:55. Recall counts Claude 1→3, Codex 2→1 records/v2.0.1-experiments/FIXCHECK/RESULT.md:46. New O/native per-task quality is recorded in the comparison table records/v2.0.1-experiments/FIXCHECK/RESULT.md:74 records/v2.0.1-experiments/FIXCHECK/RESULT.md:75 records/v2.0.1-experiments/FIXCHECK/RESULT.md:76 records/v2.0.1-experiments/FIXCHECK/RESULT.md:77 records/v2.0.1-experiments/FIXCHECK/RESULT.md:78 records/v2.0.1-experiments/FIXCHECK/RESULT.md:79 records/v2.0.1-experiments/FIXCHECK/RESULT.md:80 records/v2.0.1-experiments/FIXCHECK/RESULT.md:81 records/v2.0.1-experiments/FIXCHECK/RESULT.md:82 records/v2.0.1-experiments/FIXCHECK/RESULT.md:83 records/v2.0.1-experiments/FIXCHECK/RESULT.md:84 records/v2.0.1-experiments/FIXCHECK/RESULT.md:85 records/v2.0.1-experiments/FIXCHECK/RESULT.md:86 records/v2.0.1-experiments/FIXCHECK/RESULT.md:87 records/v2.0.1-experiments/FIXCHECK/RESULT.md:88 records/v2.0.1-experiments/FIXCHECK/RESULT.md:89 records/v2.0.1-experiments/FIXCHECK/RESULT.md:90 records/v2.0.1-experiments/FIXCHECK/RESULT.md:91 records/v2.0.1-experiments/FIXCHECK/RESULT.md:92 records/v2.0.1-experiments/FIXCHECK/RESULT.md:93 records/v2.0.1-experiments/FIXCHECK/RESULT.md:94 records/v2.0.1-experiments/FIXCHECK/RESULT.md:95 records/v2.0.1-experiments/FIXCHECK/RESULT.md:96 records/v2.0.1-experiments/FIXCHECK/RESULT.md:97. No per-fix causal gained/lost counts recorded.",
+        "token_ratio": {
+          "claude/new-native": 1.64,
+          "codex/new-native": 1.62,
+          "claude/new-old": 0.64,
+          "codex/new-old": 0.84
+        }
+      },
+      "fast_screen": {
+        "result": "NO at step B",
+        "deciding_step": "B",
+        "reason": "Against historical bare native: Claude stops at B; Codex fails C on token ratio. Against old O baseline, the recorded Codex task regression fails C. The tested bundle was only partly retained."
+      },
+      "agrees_with_disposition": null,
+      "difference": "The actual disposition splits the bundle; a single NO cannot agree with both retained and reverted fixes. The record does not attribute the measured differences to individual fixes.",
+      "sources": [
+        "records/v2.0.1-experiments/FIXCHECK/RESULT.md:7",
+        "records/v2.0.1-experiments/FIXCHECK/RESULT.md:8",
+        "records/v2.0.1-experiments/FIXCHECK/RESULT.md:9",
+        "records/v2.0.1-experiments/FIXCHECK/RESULT.md:13",
+        "records/v2.0.1-experiments/FIXCHECK/RESULT.md:14",
+        "records/digestion-2026-11-03/ingest/DECISIONS.md:620",
+        "records/digestion-2026-11-03/ingest/DECISIONS.md:621",
+        "claude/oaw-2:README.md:39",
+        "claude/oaw-2:README.md:40",
+        "claude/oaw-2:README.md:41",
+        "claude/oaw-2:README.md:42",
+        "claude/oaw-2:README.md:43",
+        "records/v2.0.1-experiments/FIXCHECK/RESULT.md:53",
+        "records/v2.0.1-experiments/FIXCHECK/RESULT.md:199",
+        "records/v2.0.1-experiments/FIXCHECK/RESULT.md:200",
+        "records/v2.0.1-experiments/FIXCHECK/RESULT.md:205",
+        "records/v2.0.1-experiments/FIXCHECK/RESULT.md:206",
+        "records/v2.0.1-experiments/FIXCHECK/RESULT.md:207",
+        "records/v2.0.1-experiments/H1/recompute/recompute.json:4641",
+        "records/v2.0.1-experiments/H1/recompute/recompute.json:4680",
+        "records/v2.0.1-experiments/H1/recompute/recompute.json:4719",
+        "records/v2.0.1-experiments/H1/recompute/recompute.json:5069",
+        "records/v2.0.1-experiments/H1/recompute/recompute.json:5108",
+        "records/v2.0.1-experiments/H1/recompute/recompute.json:5147",
+        "records/v2.0.1-experiments/H1/PREREG.md:140",
+        "records/v2.0.1-experiments/H1/PREREG.md:148",
+        "records/v2.0.1-experiments/H1/PREREG.md:149",
+        "records/v2.0.1-experiments/FIXCHECK/RESULT.md:54",
+        "records/v2.0.1-experiments/FIXCHECK/RESULT.md:55",
+        "records/v2.0.1-experiments/FIXCHECK/RESULT.md:46",
+        "records/v2.0.1-experiments/FIXCHECK/RESULT.md:74",
+        "records/v2.0.1-experiments/FIXCHECK/RESULT.md:75",
+        "records/v2.0.1-experiments/FIXCHECK/RESULT.md:76",
+        "records/v2.0.1-experiments/FIXCHECK/RESULT.md:77",
+        "records/v2.0.1-experiments/FIXCHECK/RESULT.md:78",
+        "records/v2.0.1-experiments/FIXCHECK/RESULT.md:79",
+        "records/v2.0.1-experiments/FIXCHECK/RESULT.md:80",
+        "records/v2.0.1-experiments/FIXCHECK/RESULT.md:81",
+        "records/v2.0.1-experiments/FIXCHECK/RESULT.md:82",
+        "records/v2.0.1-experiments/FIXCHECK/RESULT.md:83",
+        "records/v2.0.1-experiments/FIXCHECK/RESULT.md:84",
+        "records/v2.0.1-experiments/FIXCHECK/RESULT.md:85",
+        "records/v2.0.1-experiments/FIXCHECK/RESULT.md:86",
+        "records/v2.0.1-experiments/FIXCHECK/RESULT.md:87",
+        "records/v2.0.1-experiments/FIXCHECK/RESULT.md:88",
+        "records/v2.0.1-experiments/FIXCHECK/RESULT.md:89",
+        "records/v2.0.1-experiments/FIXCHECK/RESULT.md:90",
+        "records/v2.0.1-experiments/FIXCHECK/RESULT.md:91",
+        "records/v2.0.1-experiments/FIXCHECK/RESULT.md:92",
+        "records/v2.0.1-experiments/FIXCHECK/RESULT.md:93",
+        "records/v2.0.1-experiments/FIXCHECK/RESULT.md:94",
+        "records/v2.0.1-experiments/FIXCHECK/RESULT.md:95",
+        "records/v2.0.1-experiments/FIXCHECK/RESULT.md:96",
+        "records/v2.0.1-experiments/FIXCHECK/RESULT.md:97"
+      ],
+      "comparison_kind": "comparison"
+    },
+    {
+      "id": "G5",
+      "food": "independent rejudgment of codegraph/OAW map, TokenEconomizer and graphify",
+      "protocol": "Offline evidence-eligibility audit of existing comparisons; no new model answers or new adoption calculation. records/v2.0.1-experiments/G5/REJUDGE.md:3 records/v2.0.1-experiments/G5/REJUDGE.md:7 records/v2.0.1-experiments/G5/REJUDGE.md:8 records/v2.0.1-experiments/G5/REJUDGE.md:9 records/v2.0.1-experiments/G5/REJUDGE.md:17 records/v2.0.1-experiments/G5/REJUDGE.md:39",
+      "long_route": {
+        "verdict": "三項正式重判都是「沒有結論」. records/v2.0.1-experiments/G5/REJUDGE.md:3 records/v2.0.1-experiments/G5/REJUDGE.md:7 records/v2.0.1-experiments/G5/REJUDGE.md:8 records/v2.0.1-experiments/G5/REJUDGE.md:9 records/v2.0.1-experiments/G5/REJUDGE.md:17 records/v2.0.1-experiments/G5/REJUDGE.md:39",
+        "disposition": "no decision from this audit; catalog and product policy unchanged. records/v2.0.1-experiments/G5/REJUDGE.md:11",
+        "cost": {
+          "claude": null,
+          "codex": null,
+          "notes": "Audit execution/authoring cost not recorded. Historical cost inventory overlaps earlier experiments and is not an additional experiment cost records/v2.0.1-experiments/G5/REJUDGE.md:43 records/v2.0.1-experiments/G5/REJUDGE.md:45."
+        }
+      },
+      "numbers": {
+        "native_fraction_of_max": {},
+        "food_vs_native": "Evidence audit, not a new food comparison; underlying comparisons are listed separately.",
+        "token_ratio": {}
+      },
+      "fast_screen": {
+        "result": "cannot be back-tested (not a food comparison)",
+        "deciding_step": "none",
+        "reason": "Not a food comparison; Evidence audit, not a new food comparison; underlying comparisons are listed separately."
+      },
+      "agrees_with_disposition": null,
+      "difference": "",
+      "sources": [
+        "records/v2.0.1-experiments/G5/REJUDGE.md:3",
+        "records/v2.0.1-experiments/G5/REJUDGE.md:7",
+        "records/v2.0.1-experiments/G5/REJUDGE.md:8",
+        "records/v2.0.1-experiments/G5/REJUDGE.md:9",
+        "records/v2.0.1-experiments/G5/REJUDGE.md:17",
+        "records/v2.0.1-experiments/G5/REJUDGE.md:39",
+        "records/v2.0.1-experiments/G5/REJUDGE.md:11",
+        "records/v2.0.1-experiments/G5/REJUDGE.md:43",
+        "records/v2.0.1-experiments/G5/REJUDGE.md:45"
+      ],
+      "comparison_kind": "method check"
+    },
+    {
+      "id": "EGM-anatomy",
+      "food": "EGM trace anatomy",
+      "protocol": "Offline analysis of existing X2 and plan-review traces, no model execution or regrading. records/v2.0.1-experiments/EGM-anatomy/ANATOMY.md:5 records/v2.0.1-experiments/EGM-anatomy/ANATOMY.md:7 records/v2.0.1-experiments/EGM-anatomy/ANATOMY.md:19 records/v2.0.1-experiments/EGM-anatomy/ANATOMY.md:105 records/v2.0.1-experiments/EGM-anatomy/ANATOMY.md:108",
+      "long_route": {
+        "verdict": "沒有證據支持自動啟用 EGM；candidates are untested hypotheses. records/v2.0.1-experiments/EGM-anatomy/ANATOMY.md:5 records/v2.0.1-experiments/EGM-anatomy/ANATOMY.md:7 records/v2.0.1-experiments/EGM-anatomy/ANATOMY.md:19 records/v2.0.1-experiments/EGM-anatomy/ANATOMY.md:105 records/v2.0.1-experiments/EGM-anatomy/ANATOMY.md:108",
+        "disposition": "no new adoption decision; explicit opt-in retained. records/v2.0.1-experiments/EGM-anatomy/ANATOMY.md:90",
+        "cost": {
+          "claude": null,
+          "codex": null,
+          "notes": "New analysis cost not recorded. Reused E execution subtotals: X2 Claude 33,413,778, Codex 58,994,320; historical large-plan Claude 18,480,203 records/v2.0.1-experiments/EGM-anatomy/ANATOMY.md:3. These are reused spend, not the cost of a new comparison."
+        }
+      },
+      "numbers": {
+        "native_fraction_of_max": {},
+        "food_vs_native": "Cost/provenance analysis; no independent stage-quality grading or tested variant.",
+        "token_ratio": {}
+      },
+      "fast_screen": {
+        "result": "cannot be back-tested (not a food comparison)",
+        "deciding_step": "none",
+        "reason": "Not a food comparison; Cost/provenance analysis; no independent stage-quality grading or tested variant."
+      },
+      "agrees_with_disposition": null,
+      "difference": "",
+      "sources": [
+        "records/v2.0.1-experiments/EGM-anatomy/ANATOMY.md:5",
+        "records/v2.0.1-experiments/EGM-anatomy/ANATOMY.md:7",
+        "records/v2.0.1-experiments/EGM-anatomy/ANATOMY.md:19",
+        "records/v2.0.1-experiments/EGM-anatomy/ANATOMY.md:105",
+        "records/v2.0.1-experiments/EGM-anatomy/ANATOMY.md:108",
+        "records/v2.0.1-experiments/EGM-anatomy/ANATOMY.md:90",
+        "records/v2.0.1-experiments/EGM-anatomy/ANATOMY.md:3"
+      ],
+      "comparison_kind": "method check"
+    },
+    {
+      "id": "EGM-calibration",
+      "food": "EGM native-only calibration",
+      "protocol": "Same large real plan, fresh-context native review twice per host; Claude Code/Opus 5.5 and Codex CLI/gpt-6.1-sol; blind gpt-6-astra and Claude Fable 5.2 graders. EGM arm not run. records/v2.0.1-experiments/EGM-calibration/RESULT.md:6 records/v2.0.1-experiments/EGM-calibration/RESULT.md:7 records/v2.0.1-experiments/EGM-calibration/RESULT.md:8 records/v2.0.1-experiments/EGM-calibration/RESULT.md:9 records/v2.0.1-experiments/EGM-calibration/RESULT.md:33",
+      "long_route": {
+        "verdict": "形式判定：兩格都是「無結論」；descriptive labels 有空間. records/v2.0.1-experiments/EGM-calibration/RESULT.md:15 records/v2.0.1-experiments/EGM-calibration/RESULT.md:22 records/v2.0.1-experiments/EGM-calibration/RESULT.md:27 records/v2.0.1-experiments/EGM-calibration/RESULT.md:28",
+        "disposition": "no decision on EGM; study closed, EGM remains explicit opt-in. records/v2.0.1-experiments/EGM-calibration/RESULT.md:143",
+        "cost": {
+          "claude": 7207968,
+          "codex": 8191441,
+          "notes": "Recorded stage totals; native N1/N2 Claude 1,745,930/1,568,970, Codex 1,666,167/1,236,092 records/v2.0.1-experiments/EGM-calibration/RESULT.md:70 records/v2.0.1-experiments/EGM-calibration/RESULT.md:71. Curator Codex 2,046,318; independent key check Claude 3,398,755; grading Claude 243,863/Codex 2,635,840; disagreement Claude 69,835/Codex 541,880; preflight Claude 180,615/Codex 65,144; totals Claude 7,207,968/Codex 8,191,441 records/v2.0.1-experiments/EGM-calibration/RESULT.md:73 records/v2.0.1-experiments/EGM-calibration/RESULT.md:74 records/v2.0.1-experiments/EGM-calibration/RESULT.md:75 records/v2.0.1-experiments/EGM-calibration/RESULT.md:76 records/v2.0.1-experiments/EGM-calibration/RESULT.md:77 records/v2.0.1-experiments/EGM-calibration/RESULT.md:78. Earlier Codex preflights 365,387 excluded; preparation engineering, lead and audit cost not fully metered records/v2.0.1-experiments/EGM-calibration/RESULT.md:81 records/v2.0.1-experiments/EGM-calibration/RESULT.md:129."
+        }
+      },
+      "numbers": {
+        "native_fraction_of_max": {
+          "claude/native-blocker-union": 0.3333333333333333,
+          "codex/native-blocker-union": 0.5555555555555556
+        },
+        "food_vs_native": "Blocking-key detection union across native reviews: Claude 3/9, Codex 5/9 records/v2.0.1-experiments/EGM-calibration/RESULT.md:27 records/v2.0.1-experiments/EGM-calibration/RESULT.md:28. This is a union of native runs, not a food/native result. No EGM quality or matched token ratio records/v2.0.1-experiments/EGM-calibration/RESULT.md:33 records/v2.0.1-experiments/EGM-calibration/RESULT.md:50 records/v2.0.1-experiments/EGM-calibration/RESULT.md:51",
+        "token_ratio": {
+          "claude": null,
+          "codex": null
+        }
+      },
+      "fast_screen": {
+        "result": "cannot be back-tested (not a food comparison)",
+        "deciding_step": "none",
+        "reason": "Native-only calibration; no food arm."
+      },
+      "agrees_with_disposition": null,
+      "difference": "",
+      "sources": [
+        "records/v2.0.1-experiments/EGM-calibration/RESULT.md:6",
+        "records/v2.0.1-experiments/EGM-calibration/RESULT.md:7",
+        "records/v2.0.1-experiments/EGM-calibration/RESULT.md:8",
+        "records/v2.0.1-experiments/EGM-calibration/RESULT.md:9",
+        "records/v2.0.1-experiments/EGM-calibration/RESULT.md:33",
+        "records/v2.0.1-experiments/EGM-calibration/RESULT.md:15",
+        "records/v2.0.1-experiments/EGM-calibration/RESULT.md:22",
+        "records/v2.0.1-experiments/EGM-calibration/RESULT.md:27",
+        "records/v2.0.1-experiments/EGM-calibration/RESULT.md:28",
+        "records/v2.0.1-experiments/EGM-calibration/RESULT.md:143",
+        "records/v2.0.1-experiments/EGM-calibration/RESULT.md:70",
+        "records/v2.0.1-experiments/EGM-calibration/RESULT.md:71",
+        "records/v2.0.1-experiments/EGM-calibration/RESULT.md:73",
+        "records/v2.0.1-experiments/EGM-calibration/RESULT.md:74",
+        "records/v2.0.1-experiments/EGM-calibration/RESULT.md:75",
+        "records/v2.0.1-experiments/EGM-calibration/RESULT.md:76",
+        "records/v2.0.1-experiments/EGM-calibration/RESULT.md:77",
+        "records/v2.0.1-experiments/EGM-calibration/RESULT.md:78",
+        "records/v2.0.1-experiments/EGM-calibration/RESULT.md:81",
+        "records/v2.0.1-experiments/EGM-calibration/RESULT.md:129",
+        "records/v2.0.1-experiments/EGM-calibration/RESULT.md:50",
+        "records/v2.0.1-experiments/EGM-calibration/RESULT.md:51"
+      ],
+      "comparison_kind": "method check"
+    },
+    {
+      "id": "U2",
+      "food": "minimal-change card B",
+      "protocol": "N bare, A existing improvement skill, B A+card; Codex CLI/gpt-6.1-sol high only; development tasks and incomplete frozen pilot, mechanical checks; human-read quality items ungraded. records/v2.0.1-experiments/U2/PILOT_STATUS.md:12 records/v2.0.1-experiments/U2/PILOT_STATUS.md:13 records/v2.0.1-experiments/U2/PILOT_STATUS.md:14 records/v2.0.1-experiments/U2/PILOT_STATUS.md:15 records/v2.0.1-experiments/U2/PILOT_STATUS.md:16 records/v2.0.1-experiments/U2/PILOT_STATUS.md:18 records/v2.0.1-experiments/U2/PILOT_STATUS.md:19 records/v2.0.1-experiments/U2/PILOT_STATUS.md:20",
+      "long_route": {
+        "verdict": "pilot stopped, 未通過試跑關卡；對照卡有沒有效果，沒有判定. records/v2.0.1-experiments/U2/PILOT_STATUS.md:3",
+        "disposition": "no decision: candidate unjudged, outside default and shipping. Later D49 orders continuation of pilot; no later result in this folder. records/v2.0.1-experiments/U2/PILOT_STATUS.md:117records/digestion-2026-11-03/ingest/DECISIONS.md:653 records/digestion-2026-11-03/ingest/DECISIONS.md:654 records/digestion-2026-11-03/ingest/DECISIONS.md:655 records/digestion-2026-11-03/ingest/DECISIONS.md:656 records/digestion-2026-11-03/ingest/DECISIONS.md:657 records/digestion-2026-11-03/ingest/DECISIONS.md:658 records/digestion-2026-11-03/ingest/DECISIONS.md:659",
+        "cost": {
+          "claude": 0,
+          "codex": 5119897,
+          "notes": "Recorded Codex subtotal/lower bound 5,119,897: development 1,306,638, earlier development attempts 395,249, pilot 3,027,282, preflight 390,728 records/v2.0.1-experiments/U2/PILOT_STATUS.md:79 records/v2.0.1-experiments/U2/PILOT_STATUS.md:80 records/v2.0.1-experiments/U2/PILOT_STATUS.md:81 records/v2.0.1-experiments/U2/PILOT_STATUS.md:82 records/v2.0.1-experiments/U2/PILOT_STATUS.md:83. Pilot interrupted attempt is a lower bound; unmetered engineering/authoring and lead not included; Claude runner account 0 records/v2.0.1-experiments/U2/PILOT_STATUS.md:47 records/v2.0.1-experiments/U2/PILOT_STATUS.md:85. No model grading."
+        }
+      },
+      "numbers": {
+        "native_fraction_of_max": {
+          "codex/development": 1,
+          "codex/completed-pilot-mechanical": 1
+        },
+        "food_vs_native": "Development N 8/8 and 9/9, A/B same records/v2.0.1-experiments/U2/PILOT_STATUS.md:26 records/v2.0.1-experiments/U2/PILOT_STATUS.md:27 records/v2.0.1-experiments/U2/PILOT_STATUS.md:28 records/v2.0.1-experiments/U2/PILOT_STATUS.md:29 records/v2.0.1-experiments/U2/PILOT_STATUS.md:30 records/v2.0.1-experiments/U2/PILOT_STATUS.md:31. Completed pilot N 11/11 on both tasks; A/B 10/11, each loses k; human-read items ungraded records/v2.0.1-experiments/U2/PILOT_STATUS.md:16 records/v2.0.1-experiments/U2/PILOT_STATUS.md:41 records/v2.0.1-experiments/U2/PILOT_STATUS.md:42 records/v2.0.1-experiments/U2/PILOT_STATUS.md:43 records/v2.0.1-experiments/U2/PILOT_STATUS.md:44 records/v2.0.1-experiments/U2/PILOT_STATUS.md:45 records/v2.0.1-experiments/U2/PILOT_STATUS.md:46 records/v2.0.1-experiments/U2/PILOT_STATUS.md:53. B/N per task P1 3.67, P2 2.16; A/N 3.33/2.04. Development B/N 1.48/2.06; A/N 1.45/1.27 records/v2.0.1-experiments/U2/PILOT_STATUS.md:62 records/v2.0.1-experiments/U2/PILOT_STATUS.md:63. No recorded pooled logical-token ratio.",
+        "token_ratio": {
+          "codex/B-N/P1": 3.67,
+          "codex/B-N/P2": 2.16,
+          "codex/A-N/P1": 3.33,
+          "codex/A-N/P2": 2.04
+        }
+      },
+      "fast_screen": {
+        "result": "NO at step B",
+        "deciding_step": "B",
+        "reason": "On the recorded mechanical measure, native meets its full maximum. This is a back-test of observed pilot checks, not a formal card-effect finding; human-read quality was not measured."
+      },
+      "agrees_with_disposition": null,
+      "difference": "v0 rejects on the recorded mechanical ceiling; the recorded disposition remains no decision, and later instructions continue the pilot.",
+      "sources": [
+        "records/v2.0.1-experiments/U2/PILOT_STATUS.md:12",
+        "records/v2.0.1-experiments/U2/PILOT_STATUS.md:13",
+        "records/v2.0.1-experiments/U2/PILOT_STATUS.md:14",
+        "records/v2.0.1-experiments/U2/PILOT_STATUS.md:15",
+        "records/v2.0.1-experiments/U2/PILOT_STATUS.md:16",
+        "records/v2.0.1-experiments/U2/PILOT_STATUS.md:18",
+        "records/v2.0.1-experiments/U2/PILOT_STATUS.md:19",
+        "records/v2.0.1-experiments/U2/PILOT_STATUS.md:20",
+        "records/v2.0.1-experiments/U2/PILOT_STATUS.md:3",
+        "records/v2.0.1-experiments/U2/PILOT_STATUS.md:117",
+        "records/digestion-2026-11-03/ingest/DECISIONS.md:653",
+        "records/digestion-2026-11-03/ingest/DECISIONS.md:654",
+        "records/digestion-2026-11-03/ingest/DECISIONS.md:655",
+        "records/digestion-2026-11-03/ingest/DECISIONS.md:656",
+        "records/digestion-2026-11-03/ingest/DECISIONS.md:657",
+        "records/digestion-2026-11-03/ingest/DECISIONS.md:658",
+        "records/digestion-2026-11-03/ingest/DECISIONS.md:659",
+        "records/v2.0.1-experiments/U2/PILOT_STATUS.md:79",
+        "records/v2.0.1-experiments/U2/PILOT_STATUS.md:80",
+        "records/v2.0.1-experiments/U2/PILOT_STATUS.md:81",
+        "records/v2.0.1-experiments/U2/PILOT_STATUS.md:82",
+        "records/v2.0.1-experiments/U2/PILOT_STATUS.md:83",
+        "records/v2.0.1-experiments/U2/PILOT_STATUS.md:47",
+        "records/v2.0.1-experiments/U2/PILOT_STATUS.md:85",
+        "records/v2.0.1-experiments/U2/PILOT_STATUS.md:26",
+        "records/v2.0.1-experiments/U2/PILOT_STATUS.md:27",
+        "records/v2.0.1-experiments/U2/PILOT_STATUS.md:28",
+        "records/v2.0.1-experiments/U2/PILOT_STATUS.md:29",
+        "records/v2.0.1-experiments/U2/PILOT_STATUS.md:30",
+        "records/v2.0.1-experiments/U2/PILOT_STATUS.md:31",
+        "records/v2.0.1-experiments/U2/PILOT_STATUS.md:41",
+        "records/v2.0.1-experiments/U2/PILOT_STATUS.md:42",
+        "records/v2.0.1-experiments/U2/PILOT_STATUS.md:43",
+        "records/v2.0.1-experiments/U2/PILOT_STATUS.md:44",
+        "records/v2.0.1-experiments/U2/PILOT_STATUS.md:45",
+        "records/v2.0.1-experiments/U2/PILOT_STATUS.md:46",
+        "records/v2.0.1-experiments/U2/PILOT_STATUS.md:53",
+        "records/v2.0.1-experiments/U2/PILOT_STATUS.md:62",
+        "records/v2.0.1-experiments/U2/PILOT_STATUS.md:63"
+      ],
+      "comparison_kind": "comparison"
+    },
+    {
+      "id": "capability",
+      "food": "OfficeCLI, huashu-design, professional-pptx",
+      "protocol": "PPT native Codex calibration and feasibility/probes only; stopped before freeze or formal candidate arms. records/v2.0.1-experiments/capability/CLOSURE.md:5 records/v2.0.1-experiments/capability/CLOSURE.md:11 records/v2.0.1-experiments/capability/CLOSURE.md:17 records/v2.0.1-experiments/capability/CLOSURE.md:19 records/v2.0.1-experiments/capability/CLOSURE.md:27 records/v2.0.1-experiments/capability/CLOSURE.md:28 records/v2.0.1-experiments/capability/CLOSURE.md:29",
+      "long_route": {
+        "verdict": "停止，候選未判定. records/v2.0.1-experiments/capability/CLOSURE.md:1 records/v2.0.1-experiments/capability/CLOSURE.md:27 records/v2.0.1-experiments/capability/CLOSURE.md:28 records/v2.0.1-experiments/capability/CLOSURE.md:29",
+        "disposition": "no decision; no installation changes, no adopt or decline. records/v2.0.1-experiments/capability/CLOSURE.md:27 records/v2.0.1-experiments/capability/CLOSURE.md:28 records/v2.0.1-experiments/capability/CLOSURE.md:29 records/v2.0.1-experiments/capability/CLOSURE.md:31",
+        "cost": {
+          "claude": null,
+          "codex": null,
+          "notes": "Codex authoring 2,303,470 and calibration 5,019,891; Claude probes/warmup 712,093. Experiment-external Fable code review 1,195,171 separately reported; controller engineering and closure review not metered records/v2.0.1-experiments/capability/CLOSURE.md:34 records/v2.0.1-experiments/capability/CLOSURE.md:35 records/v2.0.1-experiments/capability/CLOSURE.md:36 records/v2.0.1-experiments/capability/CLOSURE.md:37. No candidate runs records/v2.0.1-experiments/capability/CLOSURE.md:19."
+        }
+      },
+      "numbers": {
+        "native_fraction_of_max": {
+          "codex/native-checker-task-pass": 0.5
+        },
+        "food_vs_native": "Native checker passed 6/12; other failures are described as checker issues; no candidate comparison records/v2.0.1-experiments/capability/CLOSURE.md:11 records/v2.0.1-experiments/capability/CLOSURE.md:12 records/v2.0.1-experiments/capability/CLOSURE.md:13 records/v2.0.1-experiments/capability/CLOSURE.md:14 records/v2.0.1-experiments/capability/CLOSURE.md:15 records/v2.0.1-experiments/capability/CLOSURE.md:17 records/v2.0.1-experiments/capability/CLOSURE.md:19.",
+        "token_ratio": {
+          "codex": null
+        }
+      },
+      "fast_screen": {
+        "result": "cannot be back-tested (not a food comparison)",
+        "deciding_step": "none",
+        "reason": "Native-only calibration/feasibility; no food arm."
+      },
+      "agrees_with_disposition": null,
+      "difference": "",
+      "sources": [
+        "records/v2.0.1-experiments/capability/CLOSURE.md:5",
+        "records/v2.0.1-experiments/capability/CLOSURE.md:11",
+        "records/v2.0.1-experiments/capability/CLOSURE.md:17",
+        "records/v2.0.1-experiments/capability/CLOSURE.md:19",
+        "records/v2.0.1-experiments/capability/CLOSURE.md:27",
+        "records/v2.0.1-experiments/capability/CLOSURE.md:28",
+        "records/v2.0.1-experiments/capability/CLOSURE.md:29",
+        "records/v2.0.1-experiments/capability/CLOSURE.md:1",
+        "records/v2.0.1-experiments/capability/CLOSURE.md:31",
+        "records/v2.0.1-experiments/capability/CLOSURE.md:34",
+        "records/v2.0.1-experiments/capability/CLOSURE.md:35",
+        "records/v2.0.1-experiments/capability/CLOSURE.md:36",
+        "records/v2.0.1-experiments/capability/CLOSURE.md:37",
+        "records/v2.0.1-experiments/capability/CLOSURE.md:12",
+        "records/v2.0.1-experiments/capability/CLOSURE.md:13",
+        "records/v2.0.1-experiments/capability/CLOSURE.md:14",
+        "records/v2.0.1-experiments/capability/CLOSURE.md:15"
+      ],
+      "comparison_kind": "method check"
+    },
+    {
+      "id": "V1",
+      "food": "resolution and statistical reclassification",
+      "protocol": "Validation round: resolution and statistical reclassification. records/digestion-2026-11-07/validation/RESULT.md:33 records/digestion-2026-11-07/validation/RESULT.md:34 records/digestion-2026-11-07/validation/RESULT.md:35 records/digestion-2026-11-07/validation/RESULT.md:38 records/digestion-2026-11-07/validation/RESULT.md:39 records/digestion-2026-11-07/validation/RESULT.md:44 records/digestion-2026-11-07/validation/RESULT.md:45 records/digestion-2026-11-07/validation/RESULT.md:46",
+      "long_route": {
+        "verdict": "Method-check findings recorded. records/digestion-2026-11-07/validation/RESULT.md:33 records/digestion-2026-11-07/validation/RESULT.md:34 records/digestion-2026-11-07/validation/RESULT.md:35 records/digestion-2026-11-07/validation/RESULT.md:38 records/digestion-2026-11-07/validation/RESULT.md:39 records/digestion-2026-11-07/validation/RESULT.md:44 records/digestion-2026-11-07/validation/RESULT.md:45 records/digestion-2026-11-07/validation/RESULT.md:46",
+        "disposition": "no new absorption decision from this method check.",
+        "cost": {
+          "claude": null,
+          "codex": null,
+          "notes": "Individual complete family cost not recorded. No model tokens used for this check records/digestion-2026-11-07/validation/RESULT.md:33"
+        }
+      },
+      "numbers": {
+        "native_fraction_of_max": {},
+        "food_vs_native": "Reanalysis of historical measurement resolution and verdict categories; no new food/baseline comparison. Recorded Opus 4.8 codegraph token statistics differ: log mean 1.50 versus median ratio 1.72.",
+        "token_ratio": {}
+      },
+      "fast_screen": {
+        "result": "cannot be back-tested (not a food comparison)",
+        "deciding_step": "none",
+        "reason": "Not a food comparison; Reanalysis of historical measurement resolution and verdict categories; no new food/baseline comparison. Recorded Opus 4.8 codegraph token statistics differ: log mean 1.50 versus median ratio 1.72."
+      },
+      "agrees_with_disposition": null,
+      "difference": "",
+      "sources": [
+        "records/digestion-2026-11-07/validation/RESULT.md:33",
+        "records/digestion-2026-11-07/validation/RESULT.md:34",
+        "records/digestion-2026-11-07/validation/RESULT.md:35",
+        "records/digestion-2026-11-07/validation/RESULT.md:38",
+        "records/digestion-2026-11-07/validation/RESULT.md:39",
+        "records/digestion-2026-11-07/validation/RESULT.md:44",
+        "records/digestion-2026-11-07/validation/RESULT.md:45",
+        "records/digestion-2026-11-07/validation/RESULT.md:46"
+      ],
+      "comparison_kind": "method check"
+    },
+    {
+      "id": "V2",
+      "food": "task validation",
+      "protocol": "Validation round: task validation. records/digestion-2026-11-07/validation/RESULT.md:48 records/digestion-2026-11-07/validation/RESULT.md:49 records/digestion-2026-11-07/validation/RESULT.md:50 records/digestion-2026-11-07/validation/RESULT.md:51 records/digestion-2026-11-07/validation/RESULT.md:52 records/digestion-2026-11-07/validation/RESULT.md:53 records/digestion-2026-11-07/validation/RESULT.md:54",
+      "long_route": {
+        "verdict": "Method-check findings recorded. records/digestion-2026-11-07/validation/RESULT.md:48 records/digestion-2026-11-07/validation/RESULT.md:49 records/digestion-2026-11-07/validation/RESULT.md:50 records/digestion-2026-11-07/validation/RESULT.md:51 records/digestion-2026-11-07/validation/RESULT.md:52 records/digestion-2026-11-07/validation/RESULT.md:53 records/digestion-2026-11-07/validation/RESULT.md:54",
+        "disposition": "no new absorption decision from this method check.",
+        "cost": {
+          "claude": null,
+          "codex": null,
+          "notes": "Individual complete family cost not recorded. No model tokens used for this check records/digestion-2026-11-07/validation/RESULT.md:48"
+        }
+      },
+      "numbers": {
+        "native_fraction_of_max": {},
+        "food_vs_native": "Task ceiling and hidden-test validity checks; no new food arm.",
+        "token_ratio": {}
+      },
+      "fast_screen": {
+        "result": "cannot be back-tested (not a food comparison)",
+        "deciding_step": "none",
+        "reason": "Not a food comparison; Task ceiling and hidden-test validity checks; no new food arm."
+      },
+      "agrees_with_disposition": null,
+      "difference": "",
+      "sources": [
+        "records/digestion-2026-11-07/validation/RESULT.md:48",
+        "records/digestion-2026-11-07/validation/RESULT.md:49",
+        "records/digestion-2026-11-07/validation/RESULT.md:50",
+        "records/digestion-2026-11-07/validation/RESULT.md:51",
+        "records/digestion-2026-11-07/validation/RESULT.md:52",
+        "records/digestion-2026-11-07/validation/RESULT.md:53",
+        "records/digestion-2026-11-07/validation/RESULT.md:54"
+      ],
+      "comparison_kind": "method check"
+    },
+    {
+      "id": "V3",
+      "food": "grader calibration",
+      "protocol": "Validation round: grader calibration. records/digestion-2026-11-07/validation/RESULT.md:56 records/digestion-2026-11-07/validation/RESULT.md:57 records/digestion-2026-11-07/validation/RESULT.md:58 records/digestion-2026-11-07/validation/RESULT.md:59 records/digestion-2026-11-07/validation/RESULT.md:60 records/digestion-2026-11-07/validation/RESULT.md:61 records/digestion-2026-11-07/validation/RESULT.md:62",
+      "long_route": {
+        "verdict": "Method-check findings recorded. records/digestion-2026-11-07/validation/RESULT.md:56 records/digestion-2026-11-07/validation/RESULT.md:57 records/digestion-2026-11-07/validation/RESULT.md:58 records/digestion-2026-11-07/validation/RESULT.md:59 records/digestion-2026-11-07/validation/RESULT.md:60 records/digestion-2026-11-07/validation/RESULT.md:61 records/digestion-2026-11-07/validation/RESULT.md:62",
+        "disposition": "no new absorption decision from this method check.",
+        "cost": {
+          "claude": null,
+          "codex": null,
+          "notes": "Individual complete family cost not recorded. Round-wide Claude grading 625,960; authoring and V7 work 365,746; pooled Codex grading 9.9M (not assigned to this check) records/digestion-2026-11-07/validation/RESULT.md:143 records/digestion-2026-11-07/validation/RESULT.md:144 records/digestion-2026-11-07/validation/RESULT.md:146"
+        }
+      },
+      "numbers": {
+        "native_fraction_of_max": {},
+        "food_vs_native": "Known-answer grading calibration; not a food comparison.",
+        "token_ratio": {}
+      },
+      "fast_screen": {
+        "result": "cannot be back-tested (not a food comparison)",
+        "deciding_step": "none",
+        "reason": "Not a food comparison; Known-answer grading calibration; not a food comparison."
+      },
+      "agrees_with_disposition": null,
+      "difference": "",
+      "sources": [
+        "records/digestion-2026-11-07/validation/RESULT.md:56",
+        "records/digestion-2026-11-07/validation/RESULT.md:57",
+        "records/digestion-2026-11-07/validation/RESULT.md:58",
+        "records/digestion-2026-11-07/validation/RESULT.md:59",
+        "records/digestion-2026-11-07/validation/RESULT.md:60",
+        "records/digestion-2026-11-07/validation/RESULT.md:61",
+        "records/digestion-2026-11-07/validation/RESULT.md:62",
+        "records/digestion-2026-11-07/validation/RESULT.md:143",
+        "records/digestion-2026-11-07/validation/RESULT.md:144",
+        "records/digestion-2026-11-07/validation/RESULT.md:146"
+      ],
+      "comparison_kind": "method check"
+    },
+    {
+      "id": "V4",
+      "food": "cross-family regrading",
+      "protocol": "Validation round: cross-family regrading. records/digestion-2026-11-07/validation/RESULT.md:64 records/digestion-2026-11-07/validation/RESULT.md:67 records/digestion-2026-11-07/validation/RESULT.md:68 records/digestion-2026-11-07/validation/RESULT.md:69 records/digestion-2026-11-07/validation/RESULT.md:70 records/digestion-2026-11-07/validation/RESULT.md:71 records/digestion-2026-11-07/validation/RESULT.md:72 records/digestion-2026-11-07/validation/RESULT.md:74 records/digestion-2026-11-07/validation/RESULT.md:75 records/digestion-2026-11-07/validation/RESULT.md:76 records/digestion-2026-11-07/validation/RESULT.md:78 records/digestion-2026-11-07/validation/RESULT.md:79 records/digestion-2026-11-07/validation/RESULT.md:80",
+      "long_route": {
+        "verdict": "Method-check findings recorded. records/digestion-2026-11-07/validation/RESULT.md:64 records/digestion-2026-11-07/validation/RESULT.md:67 records/digestion-2026-11-07/validation/RESULT.md:68 records/digestion-2026-11-07/validation/RESULT.md:69 records/digestion-2026-11-07/validation/RESULT.md:70 records/digestion-2026-11-07/validation/RESULT.md:71 records/digestion-2026-11-07/validation/RESULT.md:72 records/digestion-2026-11-07/validation/RESULT.md:74 records/digestion-2026-11-07/validation/RESULT.md:75 records/digestion-2026-11-07/validation/RESULT.md:76 records/digestion-2026-11-07/validation/RESULT.md:78 records/digestion-2026-11-07/validation/RESULT.md:79 records/digestion-2026-11-07/validation/RESULT.md:80",
+        "disposition": "no new absorption decision from this method check.",
+        "cost": {
+          "claude": null,
+          "codex": null,
+          "notes": "Individual complete family cost not recorded. Round-wide Claude grading 625,960; authoring and V7 work 365,746; pooled Codex grading 9.9M (not assigned to this check) records/digestion-2026-11-07/validation/RESULT.md:143 records/digestion-2026-11-07/validation/RESULT.md:144 records/digestion-2026-11-07/validation/RESULT.md:146"
+        }
+      },
+      "numbers": {
+        "native_fraction_of_max": {},
+        "food_vs_native": "Regrading of earlier answers; no new food execution. Food/native findings are represented in the original comparison entries; revisions retained in caveats.",
+        "token_ratio": {}
+      },
+      "fast_screen": {
+        "result": "cannot be back-tested (not a food comparison)",
+        "deciding_step": "none",
+        "reason": "Not a food comparison; Regrading of earlier answers; no new food execution. Food/native findings are represented in the original comparison entries; revisions retained in caveats."
+      },
+      "agrees_with_disposition": null,
+      "difference": "",
+      "sources": [
+        "records/digestion-2026-11-07/validation/RESULT.md:64",
+        "records/digestion-2026-11-07/validation/RESULT.md:67",
+        "records/digestion-2026-11-07/validation/RESULT.md:68",
+        "records/digestion-2026-11-07/validation/RESULT.md:69",
+        "records/digestion-2026-11-07/validation/RESULT.md:70",
+        "records/digestion-2026-11-07/validation/RESULT.md:71",
+        "records/digestion-2026-11-07/validation/RESULT.md:72",
+        "records/digestion-2026-11-07/validation/RESULT.md:74",
+        "records/digestion-2026-11-07/validation/RESULT.md:75",
+        "records/digestion-2026-11-07/validation/RESULT.md:76",
+        "records/digestion-2026-11-07/validation/RESULT.md:78",
+        "records/digestion-2026-11-07/validation/RESULT.md:79",
+        "records/digestion-2026-11-07/validation/RESULT.md:80",
+        "records/digestion-2026-11-07/validation/RESULT.md:143",
+        "records/digestion-2026-11-07/validation/RESULT.md:144",
+        "records/digestion-2026-11-07/validation/RESULT.md:146"
+      ],
+      "comparison_kind": "method check"
+    },
+    {
+      "id": "V7",
+      "food": "review-trigger history check",
+      "protocol": "Validation round: review-trigger history check. records/digestion-2026-11-07/validation/RESULT.md:96 records/digestion-2026-11-07/validation/RESULT.md:97 records/digestion-2026-11-07/validation/RESULT.md:98 records/digestion-2026-11-07/validation/RESULT.md:99 records/digestion-2026-11-07/validation/RESULT.md:100 records/digestion-2026-11-07/validation/RESULT.md:101 records/digestion-2026-11-07/validation/RESULT.md:102 records/digestion-2026-11-07/validation/RESULT.md:103 records/digestion-2026-11-07/validation/RESULT.md:104 records/digestion-2026-11-07/validation/RESULT.md:105 records/digestion-2026-11-07/validation/RESULT.md:106",
+      "long_route": {
+        "verdict": "Method-check findings recorded. records/digestion-2026-11-07/validation/RESULT.md:96 records/digestion-2026-11-07/validation/RESULT.md:97 records/digestion-2026-11-07/validation/RESULT.md:98 records/digestion-2026-11-07/validation/RESULT.md:99 records/digestion-2026-11-07/validation/RESULT.md:100 records/digestion-2026-11-07/validation/RESULT.md:101 records/digestion-2026-11-07/validation/RESULT.md:102 records/digestion-2026-11-07/validation/RESULT.md:103 records/digestion-2026-11-07/validation/RESULT.md:104 records/digestion-2026-11-07/validation/RESULT.md:105 records/digestion-2026-11-07/validation/RESULT.md:106",
+        "disposition": "no new absorption decision from this method check.",
+        "cost": {
+          "claude": null,
+          "codex": null,
+          "notes": "Individual complete family cost not recorded. No model tokens used for this check records/digestion-2026-11-07/validation/RESULT.md:96"
+        }
+      },
+      "numbers": {
+        "native_fraction_of_max": {},
+        "food_vs_native": "Historical commit/SZZ association check; no matched food/native quality arms.",
+        "token_ratio": {}
+      },
+      "fast_screen": {
+        "result": "cannot be back-tested (not a food comparison)",
+        "deciding_step": "none",
+        "reason": "Not a food comparison; Historical commit/SZZ association check; no matched food/native quality arms."
+      },
+      "agrees_with_disposition": null,
+      "difference": "",
+      "sources": [
+        "records/digestion-2026-11-07/validation/RESULT.md:96",
+        "records/digestion-2026-11-07/validation/RESULT.md:97",
+        "records/digestion-2026-11-07/validation/RESULT.md:98",
+        "records/digestion-2026-11-07/validation/RESULT.md:99",
+        "records/digestion-2026-11-07/validation/RESULT.md:100",
+        "records/digestion-2026-11-07/validation/RESULT.md:101",
+        "records/digestion-2026-11-07/validation/RESULT.md:102",
+        "records/digestion-2026-11-07/validation/RESULT.md:103",
+        "records/digestion-2026-11-07/validation/RESULT.md:104",
+        "records/digestion-2026-11-07/validation/RESULT.md:105",
+        "records/digestion-2026-11-07/validation/RESULT.md:106"
+      ],
+      "comparison_kind": "method check"
+    },
+    {
+      "id": "EGM-selftest",
+      "food": "EGM official plugin",
+      "protocol": "EGM E versus native N (toolkit with EGM removed), positive control P; Claude Code/Opus 5.5 high, three cases, two repeats, blind Opus grading. records/digestion-2026-11-06/egm-selftest/RESULT.md:10 records/digestion-2026-11-06/egm-selftest/RESULT.md:12 records/digestion-2026-11-06/egm-selftest/RESULT.md:16 records/digestion-2026-11-06/egm-selftest/RESULT.md:17 records/digestion-2026-11-06/egm-selftest/RESULT.md:18 records/digestion-2026-11-06/egm-selftest/RESULT.md:66",
+      "long_route": {
+        "verdict": "更好；吸收（absorb）under original SOP. records/digestion-2026-11-06/egm-selftest/RESULT.md:3 records/digestion-2026-11-06/egm-selftest/RESULT.md:29 records/digestion-2026-11-06/egm-selftest/RESULT.md:30 records/digestion-2026-11-06/egm-selftest/RESULT.md:31",
+        "disposition": "optional under later D29; EGM remains explicit invocation. records/digestion-2026-11-07/validation/RESULT.md:28claude/oaw-2:README.md:32 claude/oaw-2:README.md:33 claude/oaw-2:README.md:34 claude/oaw-2:README.md:35",
+        "cost": {
+          "claude": null,
+          "codex": null,
+          "notes": "Execution 7,660,376; interrupted E 291,284; food subtotal 7,951,660. Preparation pilots 1,987,477, blind grading 113,361; overhead subtotal 2,100,838 records/digestion-2026-11-06/egm-selftest/RESULT.md:80 records/digestion-2026-11-06/egm-selftest/RESULT.md:81. Complete study total not stated; separate authoring not recorded. Codex not used in this original round."
+        }
+      },
+      "numbers": {
+        "native_fraction_of_max": {
+          "claude/opus-grader": 0.75
+        },
+        "food_vs_native": "N→E detection 12/16→16/16, severe 8/8→8/8, major 4/8→8/8, unsupported 0→0 records/digestion-2026-11-06/egm-selftest/RESULT.md:16 records/digestion-2026-11-06/egm-selftest/RESULT.md:17. Reported gained 4 defects, none of the severe defects lost records/digestion-2026-11-06/egm-selftest/RESULT.md:30. Per-case rows show no detection decrease records/digestion-2026-11-06/egm-selftest/RESULT.md:24 records/digestion-2026-11-06/egm-selftest/RESULT.md:25 records/digestion-2026-11-06/egm-selftest/RESULT.md:26. Median token ratio 28 records/digestion-2026-11-06/egm-selftest/RESULT.md:7 records/digestion-2026-11-06/egm-selftest/RESULT.md:67; P is a leaked-checklist control, not a real food records/digestion-2026-11-06/egm-selftest/RESULT.md:69",
+        "token_ratio": {
+          "claude": 28
+        }
+      },
+      "fast_screen": {
+        "result": "NO at step C (ratio > 1.5)",
+        "deciding_step": "C",
+        "reason": "Native below ceiling; EGM token ratio exceeds the limit."
+      },
+      "agrees_with_disposition": false,
+      "difference": "v0 does not absorb now; original SOP absorbed EGM and subsequent disposition retained it as optional.",
+      "sources": [
+        "records/digestion-2026-11-06/egm-selftest/RESULT.md:10",
+        "records/digestion-2026-11-06/egm-selftest/RESULT.md:12",
+        "records/digestion-2026-11-06/egm-selftest/RESULT.md:16",
+        "records/digestion-2026-11-06/egm-selftest/RESULT.md:17",
+        "records/digestion-2026-11-06/egm-selftest/RESULT.md:18",
+        "records/digestion-2026-11-06/egm-selftest/RESULT.md:66",
+        "records/digestion-2026-11-06/egm-selftest/RESULT.md:3",
+        "records/digestion-2026-11-06/egm-selftest/RESULT.md:29",
+        "records/digestion-2026-11-06/egm-selftest/RESULT.md:30",
+        "records/digestion-2026-11-06/egm-selftest/RESULT.md:31",
+        "records/digestion-2026-11-07/validation/RESULT.md:28",
+        "claude/oaw-2:README.md:32",
+        "claude/oaw-2:README.md:33",
+        "claude/oaw-2:README.md:34",
+        "claude/oaw-2:README.md:35",
+        "records/digestion-2026-11-06/egm-selftest/RESULT.md:80",
+        "records/digestion-2026-11-06/egm-selftest/RESULT.md:81",
+        "records/digestion-2026-11-06/egm-selftest/RESULT.md:24",
+        "records/digestion-2026-11-06/egm-selftest/RESULT.md:25",
+        "records/digestion-2026-11-06/egm-selftest/RESULT.md:26",
+        "records/digestion-2026-11-06/egm-selftest/RESULT.md:7",
+        "records/digestion-2026-11-06/egm-selftest/RESULT.md:67",
+        "records/digestion-2026-11-06/egm-selftest/RESULT.md:69"
+      ],
+      "comparison_kind": "comparison"
+    },
+    {
+      "id": "codegraph-ERPNext",
+      "food": "codegraph official installation",
+      "protocol": "Native N, Bash control NB, codegraph C, graphify G and OAW map S; ERPNext, Claude Code, Opus 5.5/Sonnet 5.5/Opus 4.8/Haiku 5.5; four tasks and repeated fresh sessions, blind Opus grades, Haiku later completed and regraded. records/digestion-2026-11-06/taste-codegraph/RESULT.md:3 records/digestion-2026-11-06/taste-codegraph/RESULT.md:26 records/digestion-2026-11-06/taste-codegraph/RESULT.md:45 records/digestion-2026-11-06/taste-codegraph/RESULT.md:54 records/digestion-2026-11-06/taste-codegraph/RESULT.md:63 records/digestion-2026-11-06/taste-codegraph/RESULT.md:139 records/digestion-2026-11-06/taste-codegraph/RESULT.md:140",
+      "long_route": {
+        "verdict": "initial 字面上算有提升 but 帳本不收；completed Haiku 因成本不採用（能力未定）. records/digestion-2026-11-06/taste-codegraph/RESULT.md:81 records/digestion-2026-11-06/taste-codegraph/RESULT.md:85 records/digestion-2026-11-06/taste-codegraph/RESULT.md:149",
+        "disposition": "not absorbed; later shipped codegraph excrete (home-turf quality); G5 evidence rejudgment says no conclusion without changing catalog. claude/oaw-2:catalog/verdicts.json:57 claude/oaw-2:catalog/verdicts.json:58 claude/oaw-2:catalog/verdicts.json:60 claude/oaw-2:catalog/verdicts.json:64records/v2.0.1-experiments/G5/REJUDGE.md:7 records/v2.0.1-experiments/G5/REJUDGE.md:11",
+        "cost": {
+          "claude": null,
+          "codex": null,
+          "notes": "New C execution initially 3,889,502; later 1,518,745; recorded cumulative 5,408,247 records/digestion-2026-11-06/taste-codegraph/RESULT.md:124 records/digestion-2026-11-06/taste-codegraph/RESULT.md:156. Failed Opus 4.8 execution usage not recorded records/digestion-2026-11-06/taste-codegraph/RESULT.md:116 records/digestion-2026-11-06/taste-codegraph/RESULT.md:124. NB execution 1,032,229; initial grading 928,835, pilot 43,368; later grading about .53M records/digestion-2026-11-06/taste-codegraph/RESULT.md:125 records/digestion-2026-11-06/taste-codegraph/RESULT.md:127 records/digestion-2026-11-06/taste-codegraph/RESULT.md:128 records/digestion-2026-11-06/taste-codegraph/RESULT.md:157. Authoring/shared predecessor costs not isolated; no complete total."
+        }
+      },
+      "numbers": {
+        "native_fraction_of_max": {
+          "opus55": 0.923,
+          "sonnet55": 0.897,
+          "opus48": 0.833,
+          "haiku55-initial": 0.891,
+          "haiku55-final/A": 0.871,
+          "haiku55-final/B": 0.859
+        },
+        "food_vs_native": "Coverage N→C: Opus 5.5 .923→.934 (wrong 2→1); Sonnet .897→.876 (4→6); Opus 4.8 .833→.844 (9→11); initial Haiku .891→.855 (1→2) records/digestion-2026-11-06/taste-codegraph/RESULT.md:30 records/digestion-2026-11-06/taste-codegraph/RESULT.md:32 records/digestion-2026-11-06/taste-codegraph/RESULT.md:49 records/digestion-2026-11-06/taste-codegraph/RESULT.md:50 records/digestion-2026-11-06/taste-codegraph/RESULT.md:58 records/digestion-2026-11-06/taste-codegraph/RESULT.md:59 records/digestion-2026-11-06/taste-codegraph/RESULT.md:67 records/digestion-2026-11-06/taste-codegraph/RESULT.md:68. Final Haiku A .871→.859, B .859→.859; wrong A 2→3, B 3→4 records/digestion-2026-11-06/taste-codegraph/RESULT.md:144 records/digestion-2026-11-06/taste-codegraph/RESULT.md:145. Token median ratios: Opus 1.20, Sonnet 1.31, Opus 4.8 1.72 (later 1.722), initial Haiku 1.48, final Haiku 1.585 records/digestion-2026-11-06/taste-codegraph/RESULT.md:75 records/digestion-2026-11-06/taste-codegraph/RESULT.md:77 records/digestion-2026-11-06/taste-codegraph/RESULT.md:78 records/digestion-2026-11-06/taste-codegraph/RESULT.md:79 records/digestion-2026-11-06/taste-codegraph/RESULT.md:145 records/digestion-2026-11-06/taste-codegraph/RESULT.md:149. Earlier/final grading batches are distinct; gained/lost checklist totals not recorded.",
+        "token_ratio": {
+          "opus55": 1.2,
+          "sonnet55": 1.31,
+          "opus48": 1.722,
+          "haiku55-initial": 1.48,
+          "haiku55-final": 1.585
+        }
+      },
+      "fast_screen": {
+        "result": "NO at step B",
+        "deciding_step": "B",
+        "reason": "Opus 5.5 native stops at B. Other hosts: Sonnet fails C on lower coverage/increased wrong claims; Opus 4.8 fails C on ratio and wrong claims; Haiku fails C on no improvement/wrong claims and final ratio."
+      },
+      "agrees_with_disposition": true,
+      "difference": "",
+      "sources": [
+        "records/digestion-2026-11-06/taste-codegraph/RESULT.md:3",
+        "records/digestion-2026-11-06/taste-codegraph/RESULT.md:26",
+        "records/digestion-2026-11-06/taste-codegraph/RESULT.md:45",
+        "records/digestion-2026-11-06/taste-codegraph/RESULT.md:54",
+        "records/digestion-2026-11-06/taste-codegraph/RESULT.md:63",
+        "records/digestion-2026-11-06/taste-codegraph/RESULT.md:139",
+        "records/digestion-2026-11-06/taste-codegraph/RESULT.md:140",
+        "records/digestion-2026-11-06/taste-codegraph/RESULT.md:81",
+        "records/digestion-2026-11-06/taste-codegraph/RESULT.md:85",
+        "records/digestion-2026-11-06/taste-codegraph/RESULT.md:149",
+        "claude/oaw-2:catalog/verdicts.json:57",
+        "claude/oaw-2:catalog/verdicts.json:58",
+        "claude/oaw-2:catalog/verdicts.json:60",
+        "claude/oaw-2:catalog/verdicts.json:64",
+        "records/v2.0.1-experiments/G5/REJUDGE.md:7",
+        "records/v2.0.1-experiments/G5/REJUDGE.md:11",
+        "records/digestion-2026-11-06/taste-codegraph/RESULT.md:124",
+        "records/digestion-2026-11-06/taste-codegraph/RESULT.md:156",
+        "records/digestion-2026-11-06/taste-codegraph/RESULT.md:116",
+        "records/digestion-2026-11-06/taste-codegraph/RESULT.md:125",
+        "records/digestion-2026-11-06/taste-codegraph/RESULT.md:127",
+        "records/digestion-2026-11-06/taste-codegraph/RESULT.md:128",
+        "records/digestion-2026-11-06/taste-codegraph/RESULT.md:157",
+        "records/digestion-2026-11-06/taste-codegraph/RESULT.md:30",
+        "records/digestion-2026-11-06/taste-codegraph/RESULT.md:32",
+        "records/digestion-2026-11-06/taste-codegraph/RESULT.md:49",
+        "records/digestion-2026-11-06/taste-codegraph/RESULT.md:50",
+        "records/digestion-2026-11-06/taste-codegraph/RESULT.md:58",
+        "records/digestion-2026-11-06/taste-codegraph/RESULT.md:59",
+        "records/digestion-2026-11-06/taste-codegraph/RESULT.md:67",
+        "records/digestion-2026-11-06/taste-codegraph/RESULT.md:68",
+        "records/digestion-2026-11-06/taste-codegraph/RESULT.md:144",
+        "records/digestion-2026-11-06/taste-codegraph/RESULT.md:145",
+        "records/digestion-2026-11-06/taste-codegraph/RESULT.md:75",
+        "records/digestion-2026-11-06/taste-codegraph/RESULT.md:77",
+        "records/digestion-2026-11-06/taste-codegraph/RESULT.md:78",
+        "records/digestion-2026-11-06/taste-codegraph/RESULT.md:79"
+      ],
+      "comparison_kind": "comparison"
+    },
+    {
+      "id": "V5",
+      "food": "EGM multi-seed validation",
+      "protocol": "events case only; Claude Code/Opus 5.5, E/P completed to three seeds, native to six; Opus and Codex blind detection graders. records/digestion-2026-11-07/validation/RESULT.md:3 records/digestion-2026-11-07/validation/RESULT.md:82 records/digestion-2026-11-07/validation/RESULT.md:83 records/digestion-2026-11-07/validation/RESULT.md:84 records/digestion-2026-11-07/validation/RESULT.md:85",
+      "long_route": {
+        "verdict": "站得住；更好 stands under both graders. records/digestion-2026-11-07/validation/RESULT.md:28 records/digestion-2026-11-07/validation/RESULT.md:84 records/digestion-2026-11-07/validation/RESULT.md:85",
+        "disposition": "optional. records/digestion-2026-11-07/validation/RESULT.md:28",
+        "cost": {
+          "claude": null,
+          "codex": null,
+          "notes": "New food execution 1,632,164; cumulative EGM food spend 9,583,824 (includes earlier self-test) records/digestion-2026-11-07/validation/RESULT.md:139. Grading/authoring not separately totaled for V5; pooled round costs are not a V5 cost records/digestion-2026-11-07/validation/RESULT.md:143 records/digestion-2026-11-07/validation/RESULT.md:144 records/digestion-2026-11-07/validation/RESULT.md:146."
+        }
+      },
+      "numbers": {
+        "native_fraction_of_max": {
+          "claude/opus-grader-task-success": 0.16666666666666666,
+          "claude/codex-grader-task-success": 0.16666666666666666
+        },
+        "food_vs_native": "Primary complete-case success: E 3/3, N 1/6, both graders records/digestion-2026-11-07/validation/RESULT.md:85. Shared seeds: native false on all, E true on all; task gained 3, lost 0 by arithmetic from recorded booleans records/digestion-2026-11-07/validation/v5/judge.json:9 records/digestion-2026-11-07/validation/v5/judge.json:10 records/digestion-2026-11-07/validation/v5/judge.json:11 records/digestion-2026-11-07/validation/v5/judge.json:12 records/digestion-2026-11-07/validation/v5/judge.json:13 records/digestion-2026-11-07/validation/v5/judge.json:14records/digestion-2026-11-07/validation/v5/judge.json:4 records/digestion-2026-11-07/validation/v5/judge.json:5 records/digestion-2026-11-07/validation/v5/judge.json:6records/digestion-2026-11-07/validation/v5/judge.json:33 records/digestion-2026-11-07/validation/v5/judge.json:34 records/digestion-2026-11-07/validation/v5/judge.json:35 records/digestion-2026-11-07/validation/v5/judge.json:36 records/digestion-2026-11-07/validation/v5/judge.json:37 records/digestion-2026-11-07/validation/v5/judge.json:38records/digestion-2026-11-07/validation/v5/judge.json:28 records/digestion-2026-11-07/validation/v5/judge.json:29 records/digestion-2026-11-07/validation/v5/judge.json:30. Exact token arrays recorded for N/E/P records/digestion-2026-11-07/validation/v5/judge.json:53 records/digestion-2026-11-07/validation/v5/judge.json:54 records/digestion-2026-11-07/validation/v5/judge.json:55 records/digestion-2026-11-07/validation/v5/judge.json:56 records/digestion-2026-11-07/validation/v5/judge.json:57 records/digestion-2026-11-07/validation/v5/judge.json:58records/digestion-2026-11-07/validation/v5/judge.json:61 records/digestion-2026-11-07/validation/v5/judge.json:62 records/digestion-2026-11-07/validation/v5/judge.json:63records/digestion-2026-11-07/validation/v5/judge.json:66 records/digestion-2026-11-07/validation/v5/judge.json:67 records/digestion-2026-11-07/validation/v5/judge.json:68. Shared-seed ratio uses sum(E seeds)/sum(N seeds shared with E); no pooled ratio is stated in the report.",
+        "token_ratio": {
+          "claude/shared-seeds-E-N": 30.61526258386489
+        }
+      },
+      "fast_screen": {
+        "result": "NO at step C (ratio > 1.5)",
+        "deciding_step": "C",
+        "reason": "The complete-case success endpoint is below the native ceiling; exact shared-seed logical-token ratio exceeds the limit."
+      },
+      "agrees_with_disposition": false,
+      "difference": "v0 does not absorb now; EGM remained optional.",
+      "sources": [
+        "records/digestion-2026-11-07/validation/RESULT.md:3",
+        "records/digestion-2026-11-07/validation/RESULT.md:82",
+        "records/digestion-2026-11-07/validation/RESULT.md:83",
+        "records/digestion-2026-11-07/validation/RESULT.md:84",
+        "records/digestion-2026-11-07/validation/RESULT.md:85",
+        "records/digestion-2026-11-07/validation/RESULT.md:28",
+        "records/digestion-2026-11-07/validation/RESULT.md:139",
+        "records/digestion-2026-11-07/validation/RESULT.md:143",
+        "records/digestion-2026-11-07/validation/RESULT.md:144",
+        "records/digestion-2026-11-07/validation/RESULT.md:146",
+        "records/digestion-2026-11-07/validation/v5/judge.json:9",
+        "records/digestion-2026-11-07/validation/v5/judge.json:10",
+        "records/digestion-2026-11-07/validation/v5/judge.json:11",
+        "records/digestion-2026-11-07/validation/v5/judge.json:12",
+        "records/digestion-2026-11-07/validation/v5/judge.json:13",
+        "records/digestion-2026-11-07/validation/v5/judge.json:14",
+        "records/digestion-2026-11-07/validation/v5/judge.json:4",
+        "records/digestion-2026-11-07/validation/v5/judge.json:5",
+        "records/digestion-2026-11-07/validation/v5/judge.json:6",
+        "records/digestion-2026-11-07/validation/v5/judge.json:33",
+        "records/digestion-2026-11-07/validation/v5/judge.json:34",
+        "records/digestion-2026-11-07/validation/v5/judge.json:35",
+        "records/digestion-2026-11-07/validation/v5/judge.json:36",
+        "records/digestion-2026-11-07/validation/v5/judge.json:37",
+        "records/digestion-2026-11-07/validation/v5/judge.json:38",
+        "records/digestion-2026-11-07/validation/v5/judge.json:28",
+        "records/digestion-2026-11-07/validation/v5/judge.json:29",
+        "records/digestion-2026-11-07/validation/v5/judge.json:30",
+        "records/digestion-2026-11-07/validation/v5/judge.json:53",
+        "records/digestion-2026-11-07/validation/v5/judge.json:54",
+        "records/digestion-2026-11-07/validation/v5/judge.json:55",
+        "records/digestion-2026-11-07/validation/v5/judge.json:56",
+        "records/digestion-2026-11-07/validation/v5/judge.json:57",
+        "records/digestion-2026-11-07/validation/v5/judge.json:58",
+        "records/digestion-2026-11-07/validation/v5/judge.json:61",
+        "records/digestion-2026-11-07/validation/v5/judge.json:62",
+        "records/digestion-2026-11-07/validation/v5/judge.json:63",
+        "records/digestion-2026-11-07/validation/v5/judge.json:66",
+        "records/digestion-2026-11-07/validation/v5/judge.json:67",
+        "records/digestion-2026-11-07/validation/v5/judge.json:68"
+      ],
+      "comparison_kind": "comparison"
+    },
+    {
+      "id": "V6",
+      "food": "court-skill under user pressure",
+      "protocol": "Native N, description-only D, full installed F without explicit /court; Claude Code/Opus 5.5, pressure cases, blind Opus/Codex graders; F fewer completed repeats than N/D. records/digestion-2026-11-07/validation/RESULT.md:3 records/digestion-2026-11-07/validation/RESULT.md:90 records/digestion-2026-11-07/validation/RESULT.md:91 records/digestion-2026-11-07/validation/RESULT.md:92 records/digestion-2026-11-07/validation/RESULT.md:93 records/digestion-2026-11-07/validation/RESULT.md:94",
+      "long_route": {
+        "verdict": "前提不成立；F never self-invoked; disposition 不變. records/digestion-2026-11-07/validation/RESULT.md:27 records/digestion-2026-11-07/validation/RESULT.md:92 records/digestion-2026-11-07/validation/RESULT.md:93",
+        "disposition": "not absorbed; shipped decline. claude/oaw-2:catalog/verdicts.json:98 claude/oaw-2:catalog/verdicts.json:99 claude/oaw-2:catalog/verdicts.json:105",
+        "cost": {
+          "claude": null,
+          "codex": null,
+          "notes": "Valid new execution 469,056; invalid/aborted 81,719; cumulative court food spend 6,200,404 records/digestion-2026-11-07/validation/RESULT.md:91 records/digestion-2026-11-07/validation/RESULT.md:140. Per-arm totals N 168,724, D 185,031, F 115,301 records/digestion-2026-11-07/validation/v6/out/judge.json:418records/digestion-2026-11-07/validation/v6/out/judge.json:427records/digestion-2026-11-07/validation/v6/out/judge.json:436. Grading/authoring separate V6 totals not recorded; pooled round totals not assigned."
+        }
+      },
+      "numbers": {
+        "native_fraction_of_max": {
+          "claude/anti-sycophancy-opus-grader": 1,
+          "claude/anti-sycophancy-codex-grader": 1
+        },
+        "food_vs_native": "Primary anti-sycophancy outcome: native 0/9 sycophantic, both graders; no over-negativity on c4 records/digestion-2026-11-07/validation/RESULT.md:92records/digestion-2026-11-07/validation/v6/out/judge.json:3records/digestion-2026-11-07/validation/v6/out/judge.json:206. F coverage comparison +.0418, concentrated in c4; D coverage -.0139 (Opus) / -.0416 (Codex) records/digestion-2026-11-07/validation/v6/out/judge.json:116records/digestion-2026-11-07/validation/v6/out/judge.json:118 records/digestion-2026-11-07/validation/v6/out/judge.json:119 records/digestion-2026-11-07/validation/v6/out/judge.json:120 records/digestion-2026-11-07/validation/v6/out/judge.json:121records/digestion-2026-11-07/validation/v6/out/judge.json:23records/digestion-2026-11-07/validation/v6/out/judge.json:226. F/N median ratio 1.04 report; geometric ratio_point 1.027 in judge output (different statistic) records/digestion-2026-11-07/validation/RESULT.md:93records/digestion-2026-11-07/validation/v6/out/judge.json:193. Native absolute fact-coverage mean not reported in result; the ceiling here uses the stated primary behavior endpoint.",
+        "token_ratio": {
+          "claude/F-N": 1.04
+        }
+      },
+      "fast_screen": {
+        "result": "NO at step B",
+        "deciding_step": "B",
+        "reason": "Native is perfect on the recorded primary anti-sycophancy outcome; coverage endpoint is secondary here."
+      },
+      "agrees_with_disposition": true,
+      "difference": "",
+      "sources": [
+        "records/digestion-2026-11-07/validation/RESULT.md:3",
+        "records/digestion-2026-11-07/validation/RESULT.md:90",
+        "records/digestion-2026-11-07/validation/RESULT.md:91",
+        "records/digestion-2026-11-07/validation/RESULT.md:92",
+        "records/digestion-2026-11-07/validation/RESULT.md:93",
+        "records/digestion-2026-11-07/validation/RESULT.md:94",
+        "records/digestion-2026-11-07/validation/RESULT.md:27",
+        "claude/oaw-2:catalog/verdicts.json:98",
+        "claude/oaw-2:catalog/verdicts.json:99",
+        "claude/oaw-2:catalog/verdicts.json:105",
+        "records/digestion-2026-11-07/validation/RESULT.md:140",
+        "records/digestion-2026-11-07/validation/v6/out/judge.json:418",
+        "records/digestion-2026-11-07/validation/v6/out/judge.json:427",
+        "records/digestion-2026-11-07/validation/v6/out/judge.json:436",
+        "records/digestion-2026-11-07/validation/v6/out/judge.json:3",
+        "records/digestion-2026-11-07/validation/v6/out/judge.json:206",
+        "records/digestion-2026-11-07/validation/v6/out/judge.json:116",
+        "records/digestion-2026-11-07/validation/v6/out/judge.json:118",
+        "records/digestion-2026-11-07/validation/v6/out/judge.json:119",
+        "records/digestion-2026-11-07/validation/v6/out/judge.json:120",
+        "records/digestion-2026-11-07/validation/v6/out/judge.json:121",
+        "records/digestion-2026-11-07/validation/v6/out/judge.json:23",
+        "records/digestion-2026-11-07/validation/v6/out/judge.json:226",
+        "records/digestion-2026-11-07/validation/v6/out/judge.json:193"
+      ],
+      "comparison_kind": "comparison"
+    },
+    {
+      "id": "V8",
+      "food": "codegraph on its home turf",
+      "protocol": "N versus official codegraph C, VS Code corpus, Claude Code/Opus 4.8 high, four tasks × three repeats, blind Opus/Codex grading. records/digestion-2026-11-07/validation/RESULT.md:3 records/digestion-2026-11-07/validation/RESULT.md:108 records/digestion-2026-11-07/validation/RESULT.md:109",
+      "long_route": {
+        "verdict": "品質變差 → 排掉, both graders. records/digestion-2026-11-07/validation/RESULT.md:116 records/digestion-2026-11-07/validation/RESULT.md:120",
+        "disposition": "not absorbed; shipped excrete/decline. claude/oaw-2:catalog/verdicts.json:57 claude/oaw-2:catalog/verdicts.json:58 claude/oaw-2:catalog/verdicts.json:60 claude/oaw-2:catalog/verdicts.json:64",
+        "cost": {
+          "claude": null,
+          "codex": null,
+          "notes": "Execution N/C 2,225,935; cumulative codegraph food spend 7,634,182 records/digestion-2026-11-07/validation/RESULT.md:141. V8 grading Opus 160,473, Codex 430,683 records/v2.0.1-experiments/G5/REJUDGE.md:79. Authoring not separated from pooled round overhead records/digestion-2026-11-07/validation/RESULT.md:144."
+        }
+      },
+      "numbers": {
+        "native_fraction_of_max": {
+          "opus48/opus-grader": 0.469,
+          "opus48/codex-grader": 0.396
+        },
+        "food_vs_native": "Native/C coverage Opus .469/.417, Codex .396/.281 records/digestion-2026-11-07/validation/v8/out/judge.json:60records/digestion-2026-11-07/validation/v8/out/judge.json:65records/digestion-2026-11-07/validation/v8/out/judge.json:129records/digestion-2026-11-07/validation/v8/out/judge.json:134. Wrong claims N→C Opus 7→15, Codex 12→24 records/digestion-2026-11-07/validation/RESULT.md:117. Coverage differences -.05/-.11 reported records/digestion-2026-11-07/validation/RESULT.md:118. Token median .73 in report, .726 in judge; geometric ratio .795 in judge records/digestion-2026-11-07/validation/RESULT.md:112records/digestion-2026-11-07/validation/v8/out/judge.json:237records/digestion-2026-11-07/validation/v8/out/judge.json:167. Recorded per-task coverage losses records/digestion-2026-11-07/validation/v8/out/judge.json:8 records/digestion-2026-11-07/validation/v8/out/judge.json:9 records/digestion-2026-11-07/validation/v8/out/judge.json:10 records/digestion-2026-11-07/validation/v8/out/judge.json:11records/digestion-2026-11-07/validation/v8/out/judge.json:77 records/digestion-2026-11-07/validation/v8/out/judge.json:78 records/digestion-2026-11-07/validation/v8/out/judge.json:79 records/digestion-2026-11-07/validation/v8/out/judge.json:80. Gained/lost checklist totals not recorded.",
+        "token_ratio": {
+          "opus48": 0.726
+        }
+      },
+      "fast_screen": {
+        "result": "NO at step C (food quality lower; recorded task losses)",
+        "deciding_step": "C",
+        "reason": "Both native coverage fractions below ceiling; food loses quality on both graders and has recorded task losses."
+      },
+      "agrees_with_disposition": true,
+      "difference": "",
+      "sources": [
+        "records/digestion-2026-11-07/validation/RESULT.md:3",
+        "records/digestion-2026-11-07/validation/RESULT.md:108",
+        "records/digestion-2026-11-07/validation/RESULT.md:109",
+        "records/digestion-2026-11-07/validation/RESULT.md:116",
+        "records/digestion-2026-11-07/validation/RESULT.md:120",
+        "claude/oaw-2:catalog/verdicts.json:57",
+        "claude/oaw-2:catalog/verdicts.json:58",
+        "claude/oaw-2:catalog/verdicts.json:60",
+        "claude/oaw-2:catalog/verdicts.json:64",
+        "records/digestion-2026-11-07/validation/RESULT.md:141",
+        "records/v2.0.1-experiments/G5/REJUDGE.md:79",
+        "records/digestion-2026-11-07/validation/RESULT.md:144",
+        "records/digestion-2026-11-07/validation/v8/out/judge.json:60",
+        "records/digestion-2026-11-07/validation/v8/out/judge.json:65",
+        "records/digestion-2026-11-07/validation/v8/out/judge.json:129",
+        "records/digestion-2026-11-07/validation/v8/out/judge.json:134",
+        "records/digestion-2026-11-07/validation/RESULT.md:117",
+        "records/digestion-2026-11-07/validation/RESULT.md:118",
+        "records/digestion-2026-11-07/validation/RESULT.md:112",
+        "records/digestion-2026-11-07/validation/v8/out/judge.json:237",
+        "records/digestion-2026-11-07/validation/v8/out/judge.json:167",
+        "records/digestion-2026-11-07/validation/v8/out/judge.json:8",
+        "records/digestion-2026-11-07/validation/v8/out/judge.json:9",
+        "records/digestion-2026-11-07/validation/v8/out/judge.json:10",
+        "records/digestion-2026-11-07/validation/v8/out/judge.json:11",
+        "records/digestion-2026-11-07/validation/v8/out/judge.json:77",
+        "records/digestion-2026-11-07/validation/v8/out/judge.json:78",
+        "records/digestion-2026-11-07/validation/v8/out/judge.json:79",
+        "records/digestion-2026-11-07/validation/v8/out/judge.json:80"
+      ],
+      "comparison_kind": "comparison"
+    },
+    {
+      "id": "codemap-stage0",
+      "food": "OAW stdlib code index",
+      "protocol": "Native search R versus code index S; Windows/Python, deterministic file-location benchmark, no model; four task classes. records/digestion-2026-11-03/codemap-stage0/RESULT.md:3 records/digestion-2026-11-03/codemap-stage0/RESULT.md:5 records/digestion-2026-11-03/codemap-stage0/RESULT.md:6 records/digestion-2026-11-03/codemap-stage0/RESULT.md:7",
+      "long_route": {
+        "verdict": "通過; tool-level gate. records/digestion-2026-11-03/codemap-stage0/RESULT.md:10 records/digestion-2026-11-03/codemap-stage0/RESULT.md:31",
+        "disposition": "no absorption decision from this tool check; proceed to Stage 1. records/digestion-2026-11-03/codemap-stage0/RESULT.md:31 records/digestion-2026-11-03/codemap-stage0/RESULT.md:33",
+        "cost": {
+          "claude": 0,
+          "codex": 0,
+          "notes": "Model tokens 0; deterministic execution records/digestion-2026-11-03/codemap-stage0/RESULT.md:3. Authoring/preparation model cost not recorded."
+        }
+      },
+      "numbers": {
+        "native_fraction_of_max": {
+          "tool/R-top5": 0.8717948717948718
+        },
+        "food_vs_native": "Native top-5 hits per class: 9/12, 9/9, 11/13, 5/5; S 12/12, 9/9, 12/13, 0/5. Native fraction is arithmetic over all recorded classes; S top-5 total is lower than R records/digestion-2026-11-03/codemap-stage0/RESULT.md:16 records/digestion-2026-11-03/codemap-stage0/RESULT.md:17 records/digestion-2026-11-03/codemap-stage0/RESULT.md:18 records/digestion-2026-11-03/codemap-stage0/RESULT.md:19. S d-class scored 0/5; direct reading 5/5 is separately reported but not substituted records/digestion-2026-11-03/codemap-stage0/RESULT.md:28. Logical token ratio undefined (no model runs).",
+        "token_ratio": {
+          "tool": null
+        }
+      },
+      "fast_screen": {
+        "result": "cannot be back-tested (logical-token ratio undefined for zero-token tool comparison)",
+        "deciding_step": "none",
+        "reason": "Tool output quality exists, but there is no model-token ratio."
+      },
+      "agrees_with_disposition": null,
+      "difference": "",
+      "sources": [
+        "records/digestion-2026-11-03/codemap-stage0/RESULT.md:3",
+        "records/digestion-2026-11-03/codemap-stage0/RESULT.md:5",
+        "records/digestion-2026-11-03/codemap-stage0/RESULT.md:6",
+        "records/digestion-2026-11-03/codemap-stage0/RESULT.md:7",
+        "records/digestion-2026-11-03/codemap-stage0/RESULT.md:10",
+        "records/digestion-2026-11-03/codemap-stage0/RESULT.md:31",
+        "records/digestion-2026-11-03/codemap-stage0/RESULT.md:33",
+        "records/digestion-2026-11-03/codemap-stage0/RESULT.md:16",
+        "records/digestion-2026-11-03/codemap-stage0/RESULT.md:17",
+        "records/digestion-2026-11-03/codemap-stage0/RESULT.md:18",
+        "records/digestion-2026-11-03/codemap-stage0/RESULT.md:19",
+        "records/digestion-2026-11-03/codemap-stage0/RESULT.md:28"
+      ],
+      "comparison_kind": "comparison"
+    },
+    {
+      "id": "graphify-tool",
+      "food": "graphify code graph",
+      "protocol": "R native search versus G graphify and S code index, WSL deterministic tool-output benchmark on the same frozen questions; graph construction used no LLM. records/digestion-2026-11-03/taste-graphify/TASTE.md:6 records/digestion-2026-11-03/taste-graphify/TASTE.md:7 records/digestion-2026-11-03/taste-graphify/TASTE.md:18",
+      "long_route": {
+        "verdict": "G gate FAIL; corrected verdict 暫緩. records/digestion-2026-11-03/taste-graphify/TASTE.md:29 records/digestion-2026-11-03/taste-graphify/TASTE.md:32 records/digestion-2026-11-03/taste-graphify/TASTE.md:33",
+        "disposition": "no decision; wait for agent comparison. records/digestion-2026-11-03/taste-graphify/TASTE.md:33",
+        "cost": {
+          "claude": 0,
+          "codex": 0,
+          "notes": "Graph extraction has no LLM and benchmark is deterministic records/digestion-2026-11-03/taste-graphify/TASTE.md:7. Authoring/preparation model costs not recorded."
+        }
+      },
+      "numbers": {
+        "native_fraction_of_max": {
+          "tool/R-top5": 0.8717948717948718
+        },
+        "food_vs_native": "Top-5 R/S/G by class: concept .750/1.000/.667, callers 1.000/1.000/1.000, impact .846/.923/.615, path 1.000/.000/.000 records/digestion-2026-11-03/taste-graphify/TASTE.md:21 records/digestion-2026-11-03/taste-graphify/TASTE.md:22 records/digestion-2026-11-03/taste-graphify/TASTE.md:23 records/digestion-2026-11-03/taste-graphify/TASTE.md:24. Exact R/G hits 9/8, 9/9, 11/8, 5/0 records/digestion-2026-11-03/taste-graphify/results.md:10 records/digestion-2026-11-03/taste-graphify/results.md:11 records/digestion-2026-11-03/taste-graphify/results.md:12 records/digestion-2026-11-03/taste-graphify/results.md:13 records/digestion-2026-11-03/taste-graphify/results.md:18 records/digestion-2026-11-03/taste-graphify/results.md:19 records/digestion-2026-11-03/taste-graphify/results.md:20 records/digestion-2026-11-03/taste-graphify/results.md:21. G path scored 0/5, direct reading 3/5 reported separately records/digestion-2026-11-03/taste-graphify/TASTE.md:28. Native fraction uses recorded hits divided by total questions. No logical-token ratio.",
+        "token_ratio": {
+          "tool": null
+        }
+      },
+      "fast_screen": {
+        "result": "cannot be back-tested (logical-token ratio undefined for zero-token tool comparison)",
+        "deciding_step": "none",
+        "reason": "Tool comparison only; no model-token ratio."
+      },
+      "agrees_with_disposition": null,
+      "difference": "",
+      "sources": [
+        "records/digestion-2026-11-03/taste-graphify/TASTE.md:6",
+        "records/digestion-2026-11-03/taste-graphify/TASTE.md:7",
+        "records/digestion-2026-11-03/taste-graphify/TASTE.md:18",
+        "records/digestion-2026-11-03/taste-graphify/TASTE.md:29",
+        "records/digestion-2026-11-03/taste-graphify/TASTE.md:32",
+        "records/digestion-2026-11-03/taste-graphify/TASTE.md:33",
+        "records/digestion-2026-11-03/taste-graphify/TASTE.md:21",
+        "records/digestion-2026-11-03/taste-graphify/TASTE.md:22",
+        "records/digestion-2026-11-03/taste-graphify/TASTE.md:23",
+        "records/digestion-2026-11-03/taste-graphify/TASTE.md:24",
+        "records/digestion-2026-11-03/taste-graphify/results.md:10",
+        "records/digestion-2026-11-03/taste-graphify/results.md:11",
+        "records/digestion-2026-11-03/taste-graphify/results.md:12",
+        "records/digestion-2026-11-03/taste-graphify/results.md:13",
+        "records/digestion-2026-11-03/taste-graphify/results.md:18",
+        "records/digestion-2026-11-03/taste-graphify/results.md:19",
+        "records/digestion-2026-11-03/taste-graphify/results.md:20",
+        "records/digestion-2026-11-03/taste-graphify/results.md:21",
+        "records/digestion-2026-11-03/taste-graphify/TASTE.md:28"
+      ],
+      "comparison_kind": "comparison"
+    },
+    {
+      "id": "graphify-agent-G",
+      "food": "graphify on OAW repository",
+      "protocol": "N/G/S fresh sessions, Claude Code/Opus 5.5, OAW repository, six tasks once per arm, blind fact coverage and wrong-claim grading. records/digestion-2026-11-03/taste-graphify/agent/RESULT.md:3 records/digestion-2026-11-03/taste-graphify/agent/RESULT.md:7 records/digestion-2026-11-03/taste-graphify/agent/RESULT.md:8 records/digestion-2026-11-03/taste-graphify/agent/RESULT.md:9",
+      "long_route": {
+        "verdict": "沒有證明比原生好 records/digestion-2026-11-03/taste-graphify/agent/RESULT.md:12 records/digestion-2026-11-03/taste-graphify/agent/RESULT.md:13",
+        "disposition": "not absorbed by this tasting; later graphify excluded; OAW index retained optional in subsequent route. records/digestion-2026-11-03/REPORT_2026-11-05.md:14 records/digestion-2026-11-03/REPORT_2026-11-05.md:15",
+        "cost": {
+          "claude": null,
+          "codex": null,
+          "notes": "Shared N/G/S execution 3,790,470 records/digestion-2026-11-03/taste-graphify/erpnext/RESULT.md:31. Arm execution N 1,432,773, G 1,413,267, S 944,430 records/digestion-2026-11-03/taste-graphify/agent/RESULT.md:7 records/digestion-2026-11-03/taste-graphify/agent/RESULT.md:8 records/digestion-2026-11-03/taste-graphify/agent/RESULT.md:9. Grading and authoring/preparation costs not recorded in result. Shared cost repeated, not additional spend."
+        }
+      },
+      "numbers": {
+        "native_fraction_of_max": {
+          "opus55": 0.955
+        },
+        "food_vs_native": "N coverage .955; G .955, wrong 0→3; S .921, wrong 0→3; essentials all 6/6 records/digestion-2026-11-03/taste-graphify/agent/RESULT.md:7 records/digestion-2026-11-03/taste-graphify/agent/RESULT.md:8 records/digestion-2026-11-03/taste-graphify/agent/RESULT.md:9. G median tokens +14%, S -22% (reported percentages); total tokens differ from median statistic records/digestion-2026-11-03/taste-graphify/agent/RESULT.md:12 records/digestion-2026-11-03/taste-graphify/agent/RESULT.md:13. Checklist gained/lost not recorded.",
+        "token_ratio": {
+          "opus55": 1.14
+        }
+      },
+      "fast_screen": {
+        "result": "NO at step B",
+        "deciding_step": "B",
+        "reason": "Native fact coverage exceeds the ceiling."
+      },
+      "agrees_with_disposition": true,
+      "difference": "",
+      "sources": [
+        "records/digestion-2026-11-03/taste-graphify/agent/RESULT.md:3",
+        "records/digestion-2026-11-03/taste-graphify/agent/RESULT.md:7",
+        "records/digestion-2026-11-03/taste-graphify/agent/RESULT.md:8",
+        "records/digestion-2026-11-03/taste-graphify/agent/RESULT.md:9",
+        "records/digestion-2026-11-03/taste-graphify/agent/RESULT.md:12",
+        "records/digestion-2026-11-03/taste-graphify/agent/RESULT.md:13",
+        "records/digestion-2026-11-03/REPORT_2026-11-05.md:14",
+        "records/digestion-2026-11-03/REPORT_2026-11-05.md:15",
+        "records/digestion-2026-11-03/taste-graphify/erpnext/RESULT.md:31"
+      ],
+      "comparison_kind": "comparison"
+    },
+    {
+      "id": "graphify-agent-S",
+      "food": "OAW code index on OAW repository",
+      "protocol": "N/G/S fresh sessions, Claude Code/Opus 5.5, OAW repository, six tasks once per arm, blind fact coverage and wrong-claim grading. records/digestion-2026-11-03/taste-graphify/agent/RESULT.md:3 records/digestion-2026-11-03/taste-graphify/agent/RESULT.md:7 records/digestion-2026-11-03/taste-graphify/agent/RESULT.md:8 records/digestion-2026-11-03/taste-graphify/agent/RESULT.md:9",
+      "long_route": {
+        "verdict": "沒有證明比原生好 records/digestion-2026-11-03/taste-graphify/agent/RESULT.md:12 records/digestion-2026-11-03/taste-graphify/agent/RESULT.md:13",
+        "disposition": "not absorbed by this tasting; later graphify excluded; OAW index retained optional in subsequent route. records/digestion-2026-11-03/REPORT_2026-11-05.md:14 records/digestion-2026-11-03/REPORT_2026-11-05.md:15",
+        "cost": {
+          "claude": null,
+          "codex": null,
+          "notes": "Shared N/G/S execution 3,790,470 records/digestion-2026-11-03/taste-graphify/erpnext/RESULT.md:31. Arm execution N 1,432,773, G 1,413,267, S 944,430 records/digestion-2026-11-03/taste-graphify/agent/RESULT.md:7 records/digestion-2026-11-03/taste-graphify/agent/RESULT.md:8 records/digestion-2026-11-03/taste-graphify/agent/RESULT.md:9. Grading and authoring/preparation costs not recorded in result. Shared cost repeated, not additional spend."
+        }
+      },
+      "numbers": {
+        "native_fraction_of_max": {
+          "opus55": 0.955
+        },
+        "food_vs_native": "N coverage .955; G .955, wrong 0→3; S .921, wrong 0→3; essentials all 6/6 records/digestion-2026-11-03/taste-graphify/agent/RESULT.md:7 records/digestion-2026-11-03/taste-graphify/agent/RESULT.md:8 records/digestion-2026-11-03/taste-graphify/agent/RESULT.md:9. G median tokens +14%, S -22% (reported percentages); total tokens differ from median statistic records/digestion-2026-11-03/taste-graphify/agent/RESULT.md:12 records/digestion-2026-11-03/taste-graphify/agent/RESULT.md:13. Checklist gained/lost not recorded.",
+        "token_ratio": {
+          "opus55": 0.78
+        }
+      },
+      "fast_screen": {
+        "result": "NO at step B",
+        "deciding_step": "B",
+        "reason": "Native fact coverage exceeds the ceiling."
+      },
+      "agrees_with_disposition": false,
+      "difference": "v0 does not absorb now; subsequent disposition retained OAW index as optional.",
+      "sources": [
+        "records/digestion-2026-11-03/taste-graphify/agent/RESULT.md:3",
+        "records/digestion-2026-11-03/taste-graphify/agent/RESULT.md:7",
+        "records/digestion-2026-11-03/taste-graphify/agent/RESULT.md:8",
+        "records/digestion-2026-11-03/taste-graphify/agent/RESULT.md:9",
+        "records/digestion-2026-11-03/taste-graphify/agent/RESULT.md:12",
+        "records/digestion-2026-11-03/taste-graphify/agent/RESULT.md:13",
+        "records/digestion-2026-11-03/REPORT_2026-11-05.md:14",
+        "records/digestion-2026-11-03/REPORT_2026-11-05.md:15",
+        "records/digestion-2026-11-03/taste-graphify/erpnext/RESULT.md:31"
+      ],
+      "comparison_kind": "comparison"
+    },
+    {
+      "id": "graphify-ERPNext-initial",
+      "food": "graphify on ERPNext",
+      "protocol": "N/G, Claude Code/Opus 5.5 high, four frozen questions once per arm, blind fact coverage. records/digestion-2026-11-03/taste-graphify/erpnext/RESULT.md:3 records/digestion-2026-11-03/taste-graphify/erpnext/RESULT.md:7 records/digestion-2026-11-03/taste-graphify/erpnext/RESULT.md:8",
+      "long_route": {
+        "verdict": "沒有證明比原生好. records/digestion-2026-11-03/taste-graphify/erpnext/RESULT.md:13",
+        "disposition": "not absorbed at this intake; later whole-food shipped decline. records/digestion-2026-11-03/REPORT_2026-11-05.md:14claude/oaw-2:catalog/verdicts.json:139 claude/oaw-2:catalog/verdicts.json:140 claude/oaw-2:catalog/verdicts.json:146",
+        "cost": {
+          "claude": null,
+          "codex": null,
+          "notes": "Execution 982,659; authoring 1,518,689; grading 44,711; isolation probe 2,531 records/digestion-2026-11-03/taste-graphify/erpnext/RESULT.md:3 records/digestion-2026-11-03/taste-graphify/erpnext/RESULT.md:32. Cumulative graphify execution reported 4,773,129 (includes prior experiment) records/digestion-2026-11-03/taste-graphify/erpnext/RESULT.md:31. Complete total not stated."
+        }
+      },
+      "numbers": {
+        "native_fraction_of_max": {
+          "opus55": 0.933
+        },
+        "food_vs_native": "N/G coverage .933/.933, wrong 2/1, essentials 4/4 each records/digestion-2026-11-03/taste-graphify/erpnext/RESULT.md:7 records/digestion-2026-11-03/taste-graphify/erpnext/RESULT.md:8. Per-task coverage identical and missing facts identical records/digestion-2026-11-03/taste-graphify/erpnext/RESULT.md:10. Median token increase 38%, total increase 43% records/digestion-2026-11-03/taste-graphify/erpnext/RESULT.md:13. Gained/lost coverage items 0/0 by explicit identical-facts statement.",
+        "token_ratio": {
+          "opus55": 1.38
+        }
+      },
+      "fast_screen": {
+        "result": "NO at step B",
+        "deciding_step": "B",
+        "reason": "Native fact coverage exceeds the ceiling."
+      },
+      "agrees_with_disposition": true,
+      "difference": "",
+      "sources": [
+        "records/digestion-2026-11-03/taste-graphify/erpnext/RESULT.md:3",
+        "records/digestion-2026-11-03/taste-graphify/erpnext/RESULT.md:7",
+        "records/digestion-2026-11-03/taste-graphify/erpnext/RESULT.md:8",
+        "records/digestion-2026-11-03/taste-graphify/erpnext/RESULT.md:13",
+        "records/digestion-2026-11-03/REPORT_2026-11-05.md:14",
+        "claude/oaw-2:catalog/verdicts.json:139",
+        "claude/oaw-2:catalog/verdicts.json:140",
+        "claude/oaw-2:catalog/verdicts.json:146",
+        "records/digestion-2026-11-03/taste-graphify/erpnext/RESULT.md:32",
+        "records/digestion-2026-11-03/taste-graphify/erpnext/RESULT.md:31",
+        "records/digestion-2026-11-03/taste-graphify/erpnext/RESULT.md:10"
+      ],
+      "comparison_kind": "comparison"
+    },
+    {
+      "id": "codemap-confirm-G",
+      "food": "graphify confirmation",
+      "protocol": "N/S/G, ERPNext, Claude Code/Opus 5.5 and Sonnet 5.5; four tasks × three repeats; blind Opus 5.5 grades. Initial N/G Opus answers reused and regraded. records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:3 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:7 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:24 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:81",
+      "long_route": {
+        "verdict": "G：沒有提升；S：Opus 比較省工具呼叫, Sonnet 沒有證明；combined with weaker extension 不算有提升. records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:44 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:48 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:51 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:54 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:57 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:58",
+        "disposition": "not absorbed",
+        "cost": {
+          "claude": null,
+          "codex": null,
+          "notes": "Shared new execution Opus 2,780,848, Sonnet 2,119,494, total 4,900,342; grading 402,581, pilot 23,782 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:86 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:89. G share reported 1,790,000 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:87; weaker result reports 1,789,999 from rows records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:118. Authoring not separately recorded; no complete study total. Shared cost repeated for both candidate rows."
+        }
+      },
+      "numbers": {
+        "native_fraction_of_max": {
+          "opus55": 0.923,
+          "sonnet55": 0.897
+        },
+        "food_vs_native": "Coverage N/S/G Opus .923/.933/.912; wrong 4/1/3; Sonnet .897/.895/.909, wrong 4/5/4 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:11 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:12 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:13 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:28 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:29 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:30. Sonnet S q2 coverage .944→.889; G q4 .809→.762 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:37 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:39. Gained/lost checklist counts not recorded; recorded task regressions preserved. Median token ratios S Opus 1.17, Sonnet .90; G Opus 1.28, Sonnet 1.22 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:47 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:48 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:52 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:54",
+        "token_ratio": {
+          "opus55": 1.28,
+          "sonnet55": 1.22
+        }
+      },
+      "fast_screen": {
+        "result": "NO at step B",
+        "deciding_step": "B",
+        "reason": "Opus native stops at B. Sonnet candidate has a recorded task regression, so fails C."
+      },
+      "agrees_with_disposition": true,
+      "difference": "",
+      "sources": [
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:3",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:7",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:24",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:81",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:44",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:48",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:51",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:54",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:57",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:58",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:86",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:89",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:87",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:118",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:11",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:12",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:13",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:28",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:29",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:30",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:37",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:39",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:47",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:52"
+      ],
+      "comparison_kind": "comparison"
+    },
+    {
+      "id": "codemap-confirm-S",
+      "food": "OAW code map confirmation",
+      "protocol": "N/S/G, ERPNext, Claude Code/Opus 5.5 and Sonnet 5.5; four tasks × three repeats; blind Opus 5.5 grades. Initial N/G Opus answers reused and regraded. records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:3 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:7 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:24 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:81",
+      "long_route": {
+        "verdict": "G：沒有提升；S：Opus 比較省工具呼叫, Sonnet 沒有證明；combined with weaker extension 不算有提升. records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:44 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:48 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:51 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:54 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:57 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:58",
+        "disposition": "optional OAW code map; mandatory first-map policy not shipped. records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:69 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:70 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:71",
+        "cost": {
+          "claude": null,
+          "codex": null,
+          "notes": "Shared new execution Opus 2,780,848, Sonnet 2,119,494, total 4,900,342; grading 402,581, pilot 23,782 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:86 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:89. G share reported 1,790,000 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:87; weaker result reports 1,789,999 from rows records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:118. Authoring not separately recorded; no complete study total. Shared cost repeated for both candidate rows."
+        }
+      },
+      "numbers": {
+        "native_fraction_of_max": {
+          "opus55": 0.923,
+          "sonnet55": 0.897
+        },
+        "food_vs_native": "Coverage N/S/G Opus .923/.933/.912; wrong 4/1/3; Sonnet .897/.895/.909, wrong 4/5/4 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:11 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:12 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:13 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:28 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:29 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:30. Sonnet S q2 coverage .944→.889; G q4 .809→.762 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:37 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:39. Gained/lost checklist counts not recorded; recorded task regressions preserved. Median token ratios S Opus 1.17, Sonnet .90; G Opus 1.28, Sonnet 1.22 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:47 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:48 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:52 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:54",
+        "token_ratio": {
+          "opus55": 1.17,
+          "sonnet55": 0.9
+        }
+      },
+      "fast_screen": {
+        "result": "NO at step B",
+        "deciding_step": "B",
+        "reason": "Opus native stops at B. Sonnet candidate has a recorded task regression, so fails C."
+      },
+      "agrees_with_disposition": false,
+      "difference": "v0 does not absorb now; OAW map was retained optional.",
+      "sources": [
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:3",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:7",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:24",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:81",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:44",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:48",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:51",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:54",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:57",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:58",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:69",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:70",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:71",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:86",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:89",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:87",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:118",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:11",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:12",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:13",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:28",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:29",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:30",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:37",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:39",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:47",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:52"
+      ],
+      "comparison_kind": "comparison"
+    },
+    {
+      "id": "codemap-weaker-G",
+      "food": "graphify weaker-model extension",
+      "protocol": "N/S/G, ERPNext, Claude Code/Opus 4.8 and Haiku 5.5; four tasks × three repeats after Haiku completion, blind Opus 5.5 grading, Haiku graded twice. records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:3 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:8 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:9 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:11 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:56",
+      "long_route": {
+        "verdict": "G：排掉（品質變差 in Haiku）；S：品質一樣 under D29, 可選用 if treated as food. records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:24 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:25 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:36 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:43",
+        "disposition": "not absorbed; shipped excrete. claude/oaw-2:catalog/verdicts.json:139 claude/oaw-2:catalog/verdicts.json:140 claude/oaw-2:catalog/verdicts.json:146",
+        "cost": {
+          "claude": null,
+          "codex": null,
+          "notes": "Shared initial execution Opus 4.8 2,331,389, Haiku 1,861,420; initial grading 257,537, model probe 45,284, turn-limit verification 86,204 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:116 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:117 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:120. Added Haiku execution 3,867,327; grading A 130,534/B 196,606 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:46 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:49. Graphify cumulative food execution 9,511,482, shared with earlier experiments records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:47. Authoring and complete total not recorded. Shared cost repeated for both candidate rows."
+        }
+      },
+      "numbers": {
+        "native_fraction_of_max": {
+          "opus48": 0.833,
+          "haiku55-final": 0.871,
+          "haiku55-initial": 0.891
+        },
+        "food_vs_native": "Original Opus N/G/S coverage .833/.742/.799, wrong 8/10/11 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:60 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:61 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:62. Original Haiku .891/.855/.860, wrong 1/2/2 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:70 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:71 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:72. Final Haiku .871/.837/.872, wrong A 3/8/4, B 2/7/6 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:15 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:16 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:17. Recorded per-task loss: Haiku q3 N .958, G/S .917; Opus q4 N .67, G .62, S .57 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:20 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:64. G token ratios Opus 1.405, final Haiku 1.419; S Opus 1.40 and Haiku 1.332 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:25 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:33 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:34 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:43. G initial Haiku cost 1.627 is stated in the historical disposition records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:37. Gained/lost checklist counts not recorded. Later regrading reports different coverage and wrong-claim figures; both retained in caveats.",
+        "token_ratio": {
+          "opus48": 1.405,
+          "haiku55-final": 1.419
+        }
+      },
+      "fast_screen": {
+        "result": "NO at step C (recorded task losses; food not better on every grader)",
+        "deciding_step": "C",
+        "reason": "Both native fractions below ceiling; recorded coverage losses violate the no-worse-task condition."
+      },
+      "agrees_with_disposition": true,
+      "difference": "",
+      "sources": [
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:3",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:8",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:9",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:11",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:56",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:24",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:25",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:36",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:43",
+        "claude/oaw-2:catalog/verdicts.json:139",
+        "claude/oaw-2:catalog/verdicts.json:140",
+        "claude/oaw-2:catalog/verdicts.json:146",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:116",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:117",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:120",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:46",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:49",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:47",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:60",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:61",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:62",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:70",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:71",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:72",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:15",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:16",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:17",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:20",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:64",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:33",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:34",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:37"
+      ],
+      "comparison_kind": "comparison"
+    },
+    {
+      "id": "codemap-weaker-S",
+      "food": "OAW code map weaker-model extension",
+      "protocol": "N/S/G, ERPNext, Claude Code/Opus 4.8 and Haiku 5.5; four tasks × three repeats after Haiku completion, blind Opus 5.5 grading, Haiku graded twice. records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:3 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:8 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:9 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:11 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:56",
+      "long_route": {
+        "verdict": "G：排掉（品質變差 in Haiku）；S：品質一樣 under D29, 可選用 if treated as food. records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:24 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:25 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:36 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:43",
+        "disposition": "optional; no mandatory first-map policy. records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:71",
+        "cost": {
+          "claude": null,
+          "codex": null,
+          "notes": "Shared initial execution Opus 4.8 2,331,389, Haiku 1,861,420; initial grading 257,537, model probe 45,284, turn-limit verification 86,204 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:116 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:117 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:120. Added Haiku execution 3,867,327; grading A 130,534/B 196,606 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:46 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:49. Graphify cumulative food execution 9,511,482, shared with earlier experiments records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:47. Authoring and complete total not recorded. Shared cost repeated for both candidate rows."
+        }
+      },
+      "numbers": {
+        "native_fraction_of_max": {
+          "opus48": 0.833,
+          "haiku55-final": 0.871,
+          "haiku55-initial": 0.891
+        },
+        "food_vs_native": "Original Opus N/G/S coverage .833/.742/.799, wrong 8/10/11 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:60 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:61 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:62. Original Haiku .891/.855/.860, wrong 1/2/2 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:70 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:71 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:72. Final Haiku .871/.837/.872, wrong A 3/8/4, B 2/7/6 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:15 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:16 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:17. Recorded per-task loss: Haiku q3 N .958, G/S .917; Opus q4 N .67, G .62, S .57 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:20 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:64. G token ratios Opus 1.405, final Haiku 1.419; S Opus 1.40 and Haiku 1.332 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:25 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:33 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:34 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:43. G initial Haiku cost 1.627 is stated in the historical disposition records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:37. Gained/lost checklist counts not recorded. Later regrading reports different coverage and wrong-claim figures; both retained in caveats.",
+        "token_ratio": {
+          "opus48": 1.4,
+          "haiku55-final": 1.332
+        }
+      },
+      "fast_screen": {
+        "result": "NO at step C (recorded task losses; food not better on every grader)",
+        "deciding_step": "C",
+        "reason": "Both native fractions below ceiling; recorded coverage losses violate the no-worse-task condition."
+      },
+      "agrees_with_disposition": false,
+      "difference": "v0 does not absorb now; OAW map remained optional.",
+      "sources": [
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:3",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:8",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:9",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:11",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:56",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:24",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:25",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:36",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:43",
+        "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:71",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:116",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:117",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:120",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:46",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:49",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:47",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:60",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:61",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:62",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:70",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:71",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:72",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:15",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:16",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:17",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:20",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:64",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:33",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:34",
+        "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:37"
+      ],
+      "comparison_kind": "comparison"
+    },
+    {
+      "id": "court-skill-explicit",
+      "food": "court-skill /court",
+      "protocol": "Native direct question N, counterargument prompt P, explicit /court C; Claude Code/Opus 5.5 high for parent/children, four scored cases plus descriptive owner case, once per arm/case, blind grading. records/digestion-2026-11-03/taste-court-skill/RESULT.md:8 records/digestion-2026-11-03/taste-court-skill/RESULT.md:11 records/digestion-2026-11-03/taste-court-skill/RESULT.md:12 records/digestion-2026-11-03/taste-court-skill/RESULT.md:13 records/digestion-2026-11-03/taste-court-skill/RESULT.md:15 records/digestion-2026-11-03/taste-court-skill/RESULT.md:37 records/digestion-2026-11-03/taste-court-skill/RESULT.md:39",
+      "long_route": {
+        "verdict": "不收（多此一舉）. records/digestion-2026-11-03/taste-court-skill/RESULT.md:3",
+        "disposition": "not absorbed; all listed components declined. records/digestion-2026-11-03/taste-court-skill/RESULT.md:51 records/digestion-2026-11-03/taste-court-skill/RESULT.md:52 records/digestion-2026-11-03/taste-court-skill/RESULT.md:53 records/digestion-2026-11-03/taste-court-skill/RESULT.md:54",
+        "cost": {
+          "claude": null,
+          "codex": null,
+          "notes": "Execution 5,649,629 (C 5,526,019; N+P 123,610); authoring 23,072+6,122; grading 101,346 records/digestion-2026-11-03/taste-court-skill/RESULT.md:69 records/digestion-2026-11-03/taste-court-skill/RESULT.md:70. No complete family total stated."
+        }
+      },
+      "numbers": {
+        "native_fraction_of_max": {
+          "opus55": 0.958
+        },
+        "food_vs_native": "Main-case N/P/C coverage .958/.958/.858; essential points and conclusion counts each 4/4; C false positives 1/11 versus N 0/11; wrong N/P/C 0/2/1 records/digestion-2026-11-03/taste-court-skill/RESULT.md:19 records/digestion-2026-11-03/taste-court-skill/RESULT.md:20 records/digestion-2026-11-03/taste-court-skill/RESULT.md:21. c5 N/P .857 versus C .714, outside original decision set records/digestion-2026-11-03/taste-court-skill/RESULT.md:37 records/digestion-2026-11-03/taste-court-skill/RESULT.md:39. C/N median token ratio about 90 in this report, about 94 in shipped catalog; C/P 79.7 records/digestion-2026-11-03/taste-court-skill/RESULT.md:3 records/digestion-2026-11-03/taste-court-skill/RESULT.md:27claude/oaw-2:catalog/verdicts.json:75 claude/oaw-2:catalog/verdicts.json:90. No checklist gained/lost totals recorded.",
+        "token_ratio": {
+          "opus55/C-N": 94,
+          "opus55/C-P": 79.7
+        }
+      },
+      "fast_screen": {
+        "result": "NO at step B",
+        "deciding_step": "B",
+        "reason": "Main scored cases have native coverage above ceiling."
+      },
+      "agrees_with_disposition": true,
+      "difference": "",
+      "sources": [
+        "records/digestion-2026-11-03/taste-court-skill/RESULT.md:8",
+        "records/digestion-2026-11-03/taste-court-skill/RESULT.md:11",
+        "records/digestion-2026-11-03/taste-court-skill/RESULT.md:12",
+        "records/digestion-2026-11-03/taste-court-skill/RESULT.md:13",
+        "records/digestion-2026-11-03/taste-court-skill/RESULT.md:15",
+        "records/digestion-2026-11-03/taste-court-skill/RESULT.md:37",
+        "records/digestion-2026-11-03/taste-court-skill/RESULT.md:39",
+        "records/digestion-2026-11-03/taste-court-skill/RESULT.md:3",
+        "records/digestion-2026-11-03/taste-court-skill/RESULT.md:51",
+        "records/digestion-2026-11-03/taste-court-skill/RESULT.md:52",
+        "records/digestion-2026-11-03/taste-court-skill/RESULT.md:53",
+        "records/digestion-2026-11-03/taste-court-skill/RESULT.md:54",
+        "records/digestion-2026-11-03/taste-court-skill/RESULT.md:69",
+        "records/digestion-2026-11-03/taste-court-skill/RESULT.md:70",
+        "records/digestion-2026-11-03/taste-court-skill/RESULT.md:19",
+        "records/digestion-2026-11-03/taste-court-skill/RESULT.md:20",
+        "records/digestion-2026-11-03/taste-court-skill/RESULT.md:21",
+        "records/digestion-2026-11-03/taste-court-skill/RESULT.md:27",
+        "claude/oaw-2:catalog/verdicts.json:75",
+        "claude/oaw-2:catalog/verdicts.json:90"
+      ],
+      "comparison_kind": "comparison"
+    },
+    {
+      "id": "TokenEconomizer-T",
+      "food": "TokenEconomizer microskills=on",
+      "protocol": "Flask small-code-change session streams, N versus T/T2, Claude Code/Opus 5.5 high, one ordered stream per arm, fresh session per task; T sidecalls Haiku 5.5; mechanical hidden and existing tests. records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:11 records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:12 records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:13 records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:14 records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:15 records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:16 records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:17",
+      "long_route": {
+        "verdict": "T decline; T2 not-shown-better; combined not-shown-better, 不收. records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:3 records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:4 records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:5 records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:6",
+        "disposition": "optional in shipped catalog (later D29 rejudgment); G5 says no evidential conclusion, catalog unchanged. claude/oaw-2:catalog/verdicts.json:180 claude/oaw-2:catalog/verdicts.json:181 claude/oaw-2:catalog/verdicts.json:185 claude/oaw-2:catalog/verdicts.json:187records/v2.0.1-experiments/G5/REJUDGE.md:8 records/v2.0.1-experiments/G5/REJUDGE.md:11",
+        "cost": {
+          "claude": null,
+          "codex": null,
+          "notes": "Shared execution all arms 8,037,820; authoring 6,539,760; verification/grading model tokens 0 records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:69 records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:70. Recorded arm totals N 2,700,325, T 2,629,145 (includes Haiku sidecalls 53,678), T2 2,708,350 records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:44. Complete family study total not separately stated; cost repeated for T and T2 rows."
+        }
+      },
+      "numbers": {
+        "native_fraction_of_max": {
+          "opus55": 1
+        },
+        "food_vs_native": "Every arm 12/12 correct; all existing tests pass records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:3 records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:17. No lost or gained task (all succeed). Logical token ratio is calculated from recorded all-session arm totals, not the effective-token weights records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:44. Effective late-phase ratios 1.25 (T) and .98 (T2) are separate recorded measures records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:19 records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:24 records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:25. Shipped catalog reports T2 median cost ratio 1.01 claude/oaw-2:catalog/verdicts.json:157 claude/oaw-2:catalog/verdicts.json:172.",
+        "token_ratio": {
+          "opus55": 0.9736402099747252
+        }
+      },
+      "fast_screen": {
+        "result": "NO at step B",
+        "deciding_step": "B",
+        "reason": "Native task quality meets maximum; no food run is needed by v0."
+      },
+      "agrees_with_disposition": false,
+      "difference": "v0 does not absorb now; original result declined, but actual shipped disposition is optional.",
+      "sources": [
+        "records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:11",
+        "records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:12",
+        "records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:13",
+        "records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:14",
+        "records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:15",
+        "records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:16",
+        "records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:17",
+        "records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:3",
+        "records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:4",
+        "records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:5",
+        "records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:6",
+        "claude/oaw-2:catalog/verdicts.json:180",
+        "claude/oaw-2:catalog/verdicts.json:181",
+        "claude/oaw-2:catalog/verdicts.json:185",
+        "claude/oaw-2:catalog/verdicts.json:187",
+        "records/v2.0.1-experiments/G5/REJUDGE.md:8",
+        "records/v2.0.1-experiments/G5/REJUDGE.md:11",
+        "records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:69",
+        "records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:70",
+        "records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:44",
+        "records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:19",
+        "records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:24",
+        "records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:25",
+        "claude/oaw-2:catalog/verdicts.json:157",
+        "claude/oaw-2:catalog/verdicts.json:172"
+      ],
+      "comparison_kind": "comparison"
+    },
+    {
+      "id": "TokenEconomizer-T2",
+      "food": "TokenEconomizer envfacts",
+      "protocol": "Flask small-code-change session streams, N versus T/T2, Claude Code/Opus 5.5 high, one ordered stream per arm, fresh session per task; T sidecalls Haiku 5.5; mechanical hidden and existing tests. records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:11 records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:12 records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:13 records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:14 records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:15 records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:16 records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:17",
+      "long_route": {
+        "verdict": "T decline; T2 not-shown-better; combined not-shown-better, 不收. records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:3 records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:4 records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:5 records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:6",
+        "disposition": "optional in shipped catalog (later D29 rejudgment); G5 says no evidential conclusion, catalog unchanged. claude/oaw-2:catalog/verdicts.json:180 claude/oaw-2:catalog/verdicts.json:181 claude/oaw-2:catalog/verdicts.json:185 claude/oaw-2:catalog/verdicts.json:187records/v2.0.1-experiments/G5/REJUDGE.md:8 records/v2.0.1-experiments/G5/REJUDGE.md:11",
+        "cost": {
+          "claude": null,
+          "codex": null,
+          "notes": "Shared execution all arms 8,037,820; authoring 6,539,760; verification/grading model tokens 0 records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:69 records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:70. Recorded arm totals N 2,700,325, T 2,629,145 (includes Haiku sidecalls 53,678), T2 2,708,350 records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:44. Complete family study total not separately stated; cost repeated for T and T2 rows."
+        }
+      },
+      "numbers": {
+        "native_fraction_of_max": {
+          "opus55": 1
+        },
+        "food_vs_native": "Every arm 12/12 correct; all existing tests pass records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:3 records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:17. No lost or gained task (all succeed). Logical token ratio is calculated from recorded all-session arm totals, not the effective-token weights records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:44. Effective late-phase ratios 1.25 (T) and .98 (T2) are separate recorded measures records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:19 records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:24 records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:25. Shipped catalog reports T2 median cost ratio 1.01 claude/oaw-2:catalog/verdicts.json:157 claude/oaw-2:catalog/verdicts.json:172.",
+        "token_ratio": {
+          "opus55": 1.0029718644977919
+        }
+      },
+      "fast_screen": {
+        "result": "NO at step B",
+        "deciding_step": "B",
+        "reason": "Native task quality meets maximum; no food run is needed by v0."
+      },
+      "agrees_with_disposition": false,
+      "difference": "v0 does not absorb now; original result declined, but actual shipped disposition is optional.",
+      "sources": [
+        "records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:11",
+        "records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:12",
+        "records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:13",
+        "records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:14",
+        "records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:15",
+        "records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:16",
+        "records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:17",
+        "records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:3",
+        "records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:4",
+        "records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:5",
+        "records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:6",
+        "claude/oaw-2:catalog/verdicts.json:180",
+        "claude/oaw-2:catalog/verdicts.json:181",
+        "claude/oaw-2:catalog/verdicts.json:185",
+        "claude/oaw-2:catalog/verdicts.json:187",
+        "records/v2.0.1-experiments/G5/REJUDGE.md:8",
+        "records/v2.0.1-experiments/G5/REJUDGE.md:11",
+        "records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:69",
+        "records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:70",
+        "records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:44",
+        "records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:19",
+        "records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:24",
+        "records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:25",
+        "claude/oaw-2:catalog/verdicts.json:157",
+        "claude/oaw-2:catalog/verdicts.json:172"
+      ],
+      "comparison_kind": "comparison"
+    },
+    {
+      "id": "first-intake-static",
+      "food": "static component intake and memory-check",
+      "protocol": "Static mechanism/component review and implementation tests, including claude-mem, graphify, TokenEconomizer and paper memory-check. records/digestion-2026-11-03/REPORT_2026-11-05.md:5 records/digestion-2026-11-03/REPORT_2026-11-05.md:6 records/digestion-2026-11-03/REPORT_2026-11-05.md:18 records/digestion-2026-11-03/REPORT_2026-11-05.md:19records/digestion-2026-11-03/RELEASE_v1.md:3 records/digestion-2026-11-03/RELEASE_v1.md:23 records/digestion-2026-11-03/RELEASE_v1.md:24",
+      "long_route": {
+        "verdict": "Static bounded components absorbed; claude-mem runtime not tasted. records/digestion-2026-11-03/REPORT_2026-11-05.md:5 records/digestion-2026-11-03/REPORT_2026-11-05.md:6 records/digestion-2026-11-03/REPORT_2026-11-05.md:18 records/digestion-2026-11-03/REPORT_2026-11-05.md:19records/digestion-2026-11-03/RELEASE_v1.md:3 records/digestion-2026-11-03/RELEASE_v1.md:23 records/digestion-2026-11-03/RELEASE_v1.md:24",
+        "disposition": "bounded components absorbed; no whole-food comparative finding. records/digestion-2026-11-03/RELEASE_v1.md:9 records/digestion-2026-11-03/RELEASE_v1.md:10 records/digestion-2026-11-03/RELEASE_v1.md:11 records/digestion-2026-11-03/RELEASE_v1.md:12 records/digestion-2026-11-03/RELEASE_v1.md:13 records/digestion-2026-11-03/RELEASE_v1.md:14 records/digestion-2026-11-03/RELEASE_v1.md:15 records/digestion-2026-11-03/RELEASE_v1.md:16 records/digestion-2026-11-03/RELEASE_v1.md:23",
+        "cost": {
+          "claude": null,
+          "codex": null,
+          "notes": "Review/authoring/preparation model cost not recorded as a complete per-family experiment cost."
+        }
+      },
+      "numbers": {
+        "native_fraction_of_max": {},
+        "food_vs_native": "No matched native/food behavioral comparison. Static output-size observation is not a recorded quality measure.",
+        "token_ratio": {}
+      },
+      "fast_screen": {
+        "result": "cannot be back-tested (not a food comparison)",
+        "deciding_step": "none",
+        "reason": "Not a food comparison; No matched native/food behavioral comparison. Static output-size observation is not a recorded quality measure."
+      },
+      "agrees_with_disposition": null,
+      "difference": "",
+      "sources": [
+        "records/digestion-2026-11-03/REPORT_2026-11-05.md:5",
+        "records/digestion-2026-11-03/REPORT_2026-11-05.md:6",
+        "records/digestion-2026-11-03/REPORT_2026-11-05.md:18",
+        "records/digestion-2026-11-03/REPORT_2026-11-05.md:19",
+        "records/digestion-2026-11-03/RELEASE_v1.md:3",
+        "records/digestion-2026-11-03/RELEASE_v1.md:23",
+        "records/digestion-2026-11-03/RELEASE_v1.md:24",
+        "records/digestion-2026-11-03/RELEASE_v1.md:9",
+        "records/digestion-2026-11-03/RELEASE_v1.md:10",
+        "records/digestion-2026-11-03/RELEASE_v1.md:11",
+        "records/digestion-2026-11-03/RELEASE_v1.md:12",
+        "records/digestion-2026-11-03/RELEASE_v1.md:13",
+        "records/digestion-2026-11-03/RELEASE_v1.md:14",
+        "records/digestion-2026-11-03/RELEASE_v1.md:15",
+        "records/digestion-2026-11-03/RELEASE_v1.md:16"
+      ],
+      "comparison_kind": "method check"
+    }
+  ],
+  "summary": {
+    "back_testable": 24,
+    "agree": 10,
+    "disagree": 12,
+    "cannot": 13,
+    "stopped_at_step_B": 14
+  },
+  "caveats": [
+    "Sources are local read-only records and release files. Source lists use absolute file:line locators. Inline markers resolve to those same locators. No network or external evidence was used.",
+    "Numeric normalization is arithmetic on recorded measurements: count/max, equally weighted recorded class means, or recorded token totals. No missing run, score, token cost, gained/lost item, or maximum was imputed. Rounded published numbers remain rounded; derived ratios are labeled. Native fractions are per host and, where applicable, per grader.",
+    "Each row is a candidate comparison or an explicitly identified method check. Multi-candidate trials are split where their fast decisions or dispositions differ; shared costs are repeated and must not be added across rows. H1 exploratory L, X2 R and I16 C/D controls remain described in their parent entries. G5, anatomy, V1/V2/V3/V4/V7 and native-only capability/calibration are method checks, not additional independent food trials.",
+    "For multiple hosts, each host is evaluated separately. If a host stops at B, that host is not continued to C. Other hosts are reported in the reason; any rejecting host prevents a joint YES. A row with any B stop and no joint YES is labeled NO at step B, with other host results explicitly stated. This reporting convention is not an added empirical result.",
+    "Agreement compares the actual recorded disposition, including the shipped catalog when later than the result. YES only permits optional absorption under v0; YES versus default is a disagreement. NO versus optional is a disagreement even when automatic/default use was rejected. No decision, mixed disposition, method checks and untestable rows have null agreement; null is not a disagreement.",
+    "The summary counts rows, including split candidate comparisons. back_testable counts determinate v0 comparison results; cannot counts all other rows, including explicitly marked method checks. agree/disagree count only boolean agreement; back_testable can exceed their sum when disposition is mixed or has no decision.",
+    "Step A is not reconstructed from the mere presence of runtime code or dependencies in a tested arm. The historical policies distinguished owner-authorized tier C tasting from a static block records/digestion-2026-11-03/ingest/DECISIONS.md:193 records/digestion-2026-11-03/ingest/DECISIONS.md:194 records/digestion-2026-11-03/ingest/DECISIONS.md:195 records/digestion-2026-11-03/ingest/DECISIONS.md:239 records/digestion-2026-11-03/ingest/DECISIONS.md:240 records/digestion-2026-11-03/ingest/DECISIONS.md:241 records/digestion-2026-11-03/ingest/DECISIONS.md:287. No confirmed unresolved static blocker is substituted for the measured comparisons.",
+    "No historical prefix of a v0 screen with its own task ordering, model-family budget and runtime was recorded. The long-route totals are not treated as a v0 budget stop; no budget savings or v0 runtime is calculated. Historical quotation checks and unknown-label conversion were not rerun; this is the retrospective rule on recorded scores FAST_SCREEN_RULE.md:34 FAST_SCREEN_RULE.md:35 FAST_SCREEN_RULE.md:36 FAST_SCREEN_RULE.md:37 FAST_SCREEN_RULE.md:38 FAST_SCREEN_RULE.md:39 FAST_SCREEN_RULE.md:40 FAST_SCREEN_RULE.md:41 FAST_SCREEN_RULE.md:42.",
+    "H1 native normalization uses its recorded per-unit/class quality, not its binary memory count. FIXCHECK includes historical bare-native and old-O baselines; it did not rerun native and does not separate effects by fix records/v2.0.1-experiments/H1/PREREG.md:140 records/v2.0.1-experiments/H1/PREREG.md:148 records/v2.0.1-experiments/H1/PREREG.md:149records/v2.0.1-experiments/FIXCHECK/RESULT.md:9 records/v2.0.1-experiments/FIXCHECK/RESULT.md:29 records/v2.0.1-experiments/FIXCHECK/RESULT.md:34 records/v2.0.1-experiments/FIXCHECK/RESULT.md:35 records/v2.0.1-experiments/FIXCHECK/RESULT.md:55. U2 uses only its recorded mechanical measure; human-read quality items were not graded, and D49 later authorizes continuation after the reported stop records/v2.0.1-experiments/U2/PILOT_STATUS.md:16 records/v2.0.1-experiments/U2/PILOT_STATUS.md:89 records/v2.0.1-experiments/U2/PILOT_STATUS.md:90records/digestion-2026-11-03/ingest/DECISIONS.md:653 records/digestion-2026-11-03/ingest/DECISIONS.md:654 records/digestion-2026-11-03/ingest/DECISIONS.md:655 records/digestion-2026-11-03/ingest/DECISIONS.md:656 records/digestion-2026-11-03/ingest/DECISIONS.md:657 records/digestion-2026-11-03/ingest/DECISIONS.md:658 records/digestion-2026-11-03/ingest/DECISIONS.md:659.",
+    "V5 uses recorded full-case success as the quality endpoint and shared seeds for its derived token ratio; it does not equate missing a full-case success with missing every defect. V6 uses the stated anti-sycophancy endpoint; native absolute fact coverage was not reported in its result records/digestion-2026-11-07/validation/RESULT.md:84 records/digestion-2026-11-07/validation/RESULT.md:85 records/digestion-2026-11-07/validation/RESULT.md:92 records/digestion-2026-11-07/validation/RESULT.md:93. These endpoints are not interchangeable with item coverage.",
+    "Historical results and catalog dispositions differ: TokenEconomizer result not-shown-better/not absorbed versus shipped optional records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:3 records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:6 records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:64claude/oaw-2:catalog/verdicts.json:180 claude/oaw-2:catalog/verdicts.json:181 claude/oaw-2:catalog/verdicts.json:185 claude/oaw-2:catalog/verdicts.json:187; G5 later formally records no conclusion for codegraph/OAW map, TokenEconomizer and graphify and explicitly leaves catalog unchanged records/v2.0.1-experiments/G5/REJUDGE.md:3 records/v2.0.1-experiments/G5/REJUDGE.md:7 records/v2.0.1-experiments/G5/REJUDGE.md:8 records/v2.0.1-experiments/G5/REJUDGE.md:9 records/v2.0.1-experiments/G5/REJUDGE.md:11.",
+    "Regrading records differ and are not merged: Opus 4.8 graphify coverage .742 in the weaker result versus .730 in codegraph regrading; native wrong claims 8 versus 9, G 10 versus 9 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:60 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:61records/digestion-2026-11-06/taste-codegraph/RESULT.md:58 records/digestion-2026-11-06/taste-codegraph/RESULT.md:61 records/digestion-2026-11-06/taste-codegraph/RESULT.md:118 records/digestion-2026-11-06/taste-codegraph/RESULT.md:119 records/digestion-2026-11-06/taste-codegraph/RESULT.md:120 records/digestion-2026-11-06/taste-codegraph/RESULT.md:121. Initial Haiku S coverage .860 in the weaker result versus .824 in codegraph result records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:72records/digestion-2026-11-06/taste-codegraph/RESULT.md:69. Completed Haiku N/G/S coverage .871/.837/.872 in the weaker result versus A .871/.813/.860 and B .859/.825/.872 in codegraph regrading; wrong counts N/G/S A 3/8/4 and B 2/7/6 versus codegraph A 2/9/5 and B 3/6/4 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:15 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:16 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:17 records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:19records/digestion-2026-11-06/taste-codegraph/RESULT.md:144 records/digestion-2026-11-06/taste-codegraph/RESULT.md:145 records/digestion-2026-11-06/taste-codegraph/RESULT.md:146 records/digestion-2026-11-06/taste-codegraph/RESULT.md:147.",
+    "Cost statistics differ within records. H1 total-token ratios 2.58/1.92 versus per-task geometric 1.45/1.48 records/v2.0.1-experiments/H1/RESULT.md:46 records/v2.0.1-experiments/H1/RESULT.md:50 records/v2.0.1-experiments/H1/RESULT.md:53; V1 codegraph Opus 4.8 log mean 1.50 versus median 1.72 records/digestion-2026-11-07/validation/RESULT.md:38 records/digestion-2026-11-07/validation/RESULT.md:39; V8 median .726 versus geometric .795 records/digestion-2026-11-07/validation/v8/out/judge.json:237records/digestion-2026-11-07/validation/v8/out/judge.json:167. TokenEconomizer effective late-phase costs are not whole-stream logical tokens records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:19 records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:24 records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:25 records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:44. Code-map confirmation reports G new execution 1,790,000 whereas weaker result gives 1,789,999 records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:87records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:118. Both are retained.",
+    "Cost integers are recorded account totals or stated subtotals (X2 Codex excludes its separately reported decision run), not an assertion that unmetered work cost zero. Null means no exact complete family total is recorded; notes retain execution, grading, preparation, failures and approximate totals separately. Model families are never added. Reused answers, repeated grading and cumulative food budgets overlap records/v2.0.1-experiments/G5/REJUDGE.md:43 records/v2.0.1-experiments/G5/REJUDGE.md:45. Tool-only zero-token ratios are undefined; bytes are not substituted for logical tokens.",
+    "The static first-intake release describes absorbed mechanisms and expressly reports no measured gain over default records/digestion-2026-11-03/RELEASE_v1.md:3 records/digestion-2026-11-03/RELEASE_v1.md:23 records/digestion-2026-11-03/RELEASE_v1.md:24. Whole-food dispositions are separate from those bounded components records/v2.0.1-experiments/G5/REJUDGE.md:11."
+  ]
+}

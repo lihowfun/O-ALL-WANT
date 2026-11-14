@@ -1,0 +1,19 @@
+{
+ "id": "R102-r2",
+ "reply": "{\"items\":[{\"id\":\"K01\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K02\",\"label\":\"detected\",\"quote\":\"graphify never went below 0.76x and was at or above 1.0x in two conditions. OAW was 1.04x on Opus 4.8.\"},{\"id\":\"K03\",\"label\":\"detected\",\"quote\":\"V1 found coverage resolution adequate. Moving to 12×1 improves the detectable difference only from 0.10 to 0.089.\"},{\"id\":\"K04\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K05\",\"label\":\"mention-only\",\"quote\":\"Whether an agent can enter plan mode by itself, not just raise effort, is not covered by the W1 spike.\"},{\"id\":\"K06\",\"label\":\"mention-only\",\"quote\":\"egm-review is disable-model-invocation and the vendored runtime is hash-pinned (scripts/oaw.py:244-265).\"},{\"id\":\"K07\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K08\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K09\",\"label\":\"mention-only\",\"quote\":\"With one run per case and 3 clean cases, X2's 'lower bound > 0' requirement may lack power.\"},{\"id\":\"K10\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K11\",\"label\":\"mention-only\",\"quote\":\"With the current triggers, auto-EGM would spend about 1.1M tokens and about 8 minutes on more than half of code changes\"},{\"id\":\"K12\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K13\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K14\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K15\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K16\",\"label\":\"detected\",\"quote\":\"Option ② ('no OAW policy text') would require changes, because install always writes AGENTS.md and CLAUDE.md (scripts/oaw.py:277-279).\"},{\"id\":\"K17\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K18\",\"label\":\"mention-only\",\"quote\":\"W3's byte-identical remove check uses only fixture skills and would not confirm this case.\"},{\"id\":\"K19\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K20\",\"label\":\"mention-only\",\"quote\":\"W4 (plan:198) runs X3 before and after the AGENTS.md cut; X3 is budgeted once (1.5M).\"},{\"id\":\"K21\",\"label\":\"detected\",\"quote\":\"Under current behavior, projects with an explicit skill selection will not receive oaw-review or oaw-codemap.\"},{\"id\":\"K22\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K23\",\"label\":\"mention-only\",\"quote\":\"It is unclear whether a single family's 'worse' blocks a default.\"},{\"id\":\"K24\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K25\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K26\",\"label\":\"detected\",\"quote\":\"orders cannot discriminate between E, S and N, so X2 has 8 seeded cases that can show a difference, not 9. The plan's own SOP requires replacing ceiling items.\"},{\"id\":\"K27\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K28\",\"label\":\"absent\",\"quote\":\"\"},{\"id\":\"K29\",\"label\":\"detected\",\"quote\":\"The Claude total of about 23M omits a second X3 run and Opus grading.\"},{\"id\":\"K30\",\"label\":\"absent\",\"quote\":\"\"}]}",
+ "usage": {
+  "id": "R102-r2",
+  "model": "claude-haiku-5-5",
+  "effort": "low",
+  "exit": 0,
+  "seconds": 21.7,
+  "logical_tokens": 35180,
+  "noncache_tokens": 34531,
+  "models_used": [
+   "claude-haiku-5-5"
+  ],
+  "is_error": false,
+  "reply_chars": 2637,
+  "api_ms": 21265
+ }
+}
