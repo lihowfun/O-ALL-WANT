@@ -1,0 +1,364 @@
+{
+  "overall": "FAIL",
+  "recomputed": [
+    {
+      "claim": "development-D2-B-r1 result",
+      "document": "completed; logical=341487, noncache=34159, seconds=not shown (PREREG: 170), mechanical=9/9, unmet=none",
+      "recomputed": "completed/exit 0; logical=341487, noncache=34159, seconds=169.668777 (rounded 170), mechanical=9/9, unmet=none",
+      "match": true
+    },
+    {
+      "claim": "development-D2-N-r1 result",
+      "document": "completed; logical=165435, noncache=32315, seconds=not shown (PREREG: 146), mechanical=9/9, unmet=none",
+      "recomputed": "completed/exit 0; logical=165435, noncache=32315, seconds=146.375479 (rounded 146), mechanical=9/9, unmet=none",
+      "match": true
+    },
+    {
+      "claim": "development-D2-A-r1 result",
+      "document": "completed; logical=209889, noncache=29025, seconds=not shown (PREREG: 182), mechanical=9/9, unmet=none",
+      "recomputed": "completed/exit 0; logical=209889, noncache=29025, seconds=182.213046 (rounded 182), mechanical=9/9, unmet=none",
+      "match": true
+    },
+    {
+      "claim": "development-D1-N-r1 result",
+      "document": "completed; logical=150073, noncache=19385, seconds=not shown (PREREG: 85), mechanical=8/8, unmet=none",
+      "recomputed": "completed/exit 0; logical=150073, noncache=19385, seconds=84.773163 (rounded 85), mechanical=8/8, unmet=none",
+      "match": true
+    },
+    {
+      "claim": "development-D1-A-r1 result",
+      "document": "completed; logical=217819, noncache=25563, seconds=not shown (PREREG: 133), mechanical=8/8, unmet=none",
+      "recomputed": "completed/exit 0; logical=217819, noncache=25563, seconds=132.593903 (rounded 133), mechanical=8/8, unmet=none",
+      "match": true
+    },
+    {
+      "claim": "development-D1-B-r1 result",
+      "document": "completed; logical=221935, noncache=22895, seconds=not shown (PREREG: 130), mechanical=8/8, unmet=none",
+      "recomputed": "completed/exit 0; logical=221935, noncache=22895, seconds=129.584664 (rounded 130), mechanical=8/8, unmet=none",
+      "match": true
+    },
+    {
+      "claim": "pilot-P2-N-r3 result",
+      "document": "completed; logical=218467, noncache=29539, seconds=134, mechanical=11/11, unmet=none",
+      "recomputed": "completed/exit 0; logical=218467, noncache=29539, seconds=134.177214 (rounded 134), mechanical=11/11, unmet=none",
+      "match": true
+    },
+    {
+      "claim": "pilot-P2-A-r3 result",
+      "document": "completed; logical=445771, noncache=44747, seconds=251, mechanical=10/11, unmet=k",
+      "recomputed": "completed/exit 0; logical=445771, noncache=44747, seconds=251.335099 (rounded 251), mechanical=10/11, unmet=k",
+      "match": true
+    },
+    {
+      "claim": "pilot-P2-B-r3 result",
+      "document": "completed; logical=472670, noncache=68702, seconds=262, mechanical=10/11, unmet=k",
+      "recomputed": "completed/exit 0; logical=472670, noncache=68702, seconds=261.657569 (rounded 262), mechanical=10/11, unmet=k",
+      "match": true
+    },
+    {
+      "claim": "pilot-P1-B-r3 result",
+      "document": "completed; logical=576941, noncache=44461, seconds=214, mechanical=10/11, unmet=k",
+      "recomputed": "completed/exit 0; logical=576941, noncache=44461, seconds=213.644748 (rounded 214), mechanical=10/11, unmet=k",
+      "match": true
+    },
+    {
+      "claim": "pilot-P1-A-r3 result",
+      "document": "completed; logical=523455, noncache=51007, seconds=293, mechanical=10/11, unmet=k",
+      "recomputed": "completed/exit 0; logical=523455, noncache=51007, seconds=293.334741 (rounded 293), mechanical=10/11, unmet=k",
+      "match": true
+    },
+    {
+      "claim": "pilot-P1-N-r3 result",
+      "document": "completed; logical=157097, noncache=22697, seconds=113, mechanical=11/11, unmet=none",
+      "recomputed": "completed/exit 0; logical=157097, noncache=22697, seconds=113.143503 (rounded 113), mechanical=11/11, unmet=none",
+      "match": true
+    },
+    {
+      "claim": "pilot-P2-A-r2 result",
+      "document": "interrupted, lower bounds; logical=632881, noncache=57137, seconds=283, mechanical=10/11, unmet=k",
+      "recomputed": "failed/token_ceiling, lower bounds; logical=632881, noncache=57137, seconds=283.489313 (rounded 283), mechanical=10/11, unmet=k",
+      "match": true
+    },
+    {
+      "claim": "Development total",
+      "document": "1,306,638",
+      "recomputed": "1,306,638",
+      "match": true
+    },
+    {
+      "claim": "Pilot total",
+      "document": "3,027,282, lower bound",
+      "recomputed": "3,027,282, lower bound",
+      "match": true
+    },
+    {
+      "claim": "Stage counts and execution order",
+      "document": "Development 6 complete; pilot 18 planned, 6 complete, seventh interrupted, 11 unstarted; table order",
+      "recomputed": "Development 6 complete; pilot 6 complete + 1 failed attempt, 11 unstarted; pilot-P2-N-r3, pilot-P2-A-r3, pilot-P2-B-r3, pilot-P1-B-r3, pilot-P1-A-r3, pilot-P1-N-r3, pilot-P2-A-r2",
+      "match": true
+    },
+    {
+      "claim": "CLI/model/billing/token policy",
+      "document": "Codex 0.167.2, gpt-6.1-sol, effort high, subscription; development/pilot ceiling 600,000",
+      "recomputed": "All 13 meters: CLI 0.167.2, gpt-6.1-sol, chatgpt/openai; native turn contexts specify high effort; pilot freeze ceiling 600,000, in-flight allowance 1,000,000",
+      "match": true
+    },
+    {
+      "claim": "pilot-P2-N-r3 item k / retained extra files",
+      "document": "N: no extra files",
+      "recomputed": "0 extra files: none",
+      "match": true
+    },
+    {
+      "claim": "pilot-P2-A-r3 item k / retained extra files",
+      "document": "A/B: one improvement record, one lock, 3–6 additional review_out files",
+      "recomputed": "5 extra files: .oaw/improvements/.18e08c38405b.json.oaw.lock, .oaw/improvements/18e08c38405b.json, review_out/evaluation.json, review_out/replay.json, review_out/replay.py",
+      "match": true
+    },
+    {
+      "claim": "pilot-P2-B-r3 item k / retained extra files",
+      "document": "A/B: one improvement record, one lock, 3–6 additional review_out files",
+      "recomputed": "5 extra files: .oaw/improvements/.f0d9b995f9fa.json.oaw.lock, .oaw/improvements/f0d9b995f9fa.json, review_out/evaluation.json, review_out/evidence.json, review_out/proposal.json",
+      "match": true
+    },
+    {
+      "claim": "pilot-P1-B-r3 item k / retained extra files",
+      "document": "A/B: one improvement record, one lock, 3–6 additional review_out files",
+      "recomputed": "5 extra files: .oaw/improvements/.b510a0107d02.json.oaw.lock, .oaw/improvements/b510a0107d02.json, review_out/evaluation.json, review_out/replay.json, review_out/replay.py",
+      "match": true
+    },
+    {
+      "claim": "pilot-P1-A-r3 item k / retained extra files",
+      "document": "A/B: one improvement record, one lock, 3–6 additional review_out files",
+      "recomputed": "5 extra files: .oaw/improvements/.23dc8f56af1e.json.oaw.lock, .oaw/improvements/23dc8f56af1e.json, review_out/evaluation.json, review_out/evidence.json, review_out/replay.py",
+      "match": true
+    },
+    {
+      "claim": "pilot-P1-N-r3 item k / retained extra files",
+      "document": "N: no extra files",
+      "recomputed": "0 extra files: none",
+      "match": true
+    },
+    {
+      "claim": "pilot-P2-A-r2 item k / retained extra files",
+      "document": "A/B: one improvement record, one lock, 3–6 additional review_out files",
+      "recomputed": "8 extra files: .oaw/improvements/.12658d48a6b1.json.oaw.lock, .oaw/improvements/12658d48a6b1.json, review_out/evaluate.py, review_out/evaluation.json, review_out/post-review.json, review_out/proposal.json, review_out/replay.json, review_out/snapshot.json",
+      "match": true
+    },
+    {
+      "claim": "Development retained output files",
+      "document": "Six runs only named outputs",
+      "recomputed": "D1 N/A/B: decision.md only; D2 N/A/B: decision.md and proposed.patch only (workspace files and delivery diffs agree); this describes retained changes",
+      "match": true
+    },
+    {
+      "claim": "Mechanical a–j, severe, reader items",
+      "document": "All seven a–j true; no severe; pilot 4 reader items per task ungraded; development 8/9 checks",
+      "recomputed": "All seven a–j true; severe=[] for all 13 runs; pilot 4 grader items per run null; development 8 checks for D1, 9 for D2, with 3 grader items null",
+      "match": true
+    },
+    {
+      "claim": "P1 patch byte identity",
+      "document": "All A/B identical within task; N differs",
+      "recomputed": "A/B sha256=11dc95b95f2299a3409d57d4945e9468f179a521587333409261f2c1e192a0f8; all 2 A/B equal=True; N differs=True",
+      "match": true
+    },
+    {
+      "claim": "P2 patch byte identity",
+      "document": "All A/B identical within task; N differs",
+      "recomputed": "A/B sha256=5dc66e38ffbd4b5f67b188f3a191a95afb5a478c2c25bd84c9b85b8235ca161b; all 3 A/B equal=True; N differs=True",
+      "match": true
+    },
+    {
+      "claim": "D1 burden (files,+lines,-lines,+words,-words)",
+      "document": "(0, 0, 0, 0, 0)",
+      "recomputed": "3 runs: [(0, 0, 0, 0, 0)]",
+      "match": true
+    },
+    {
+      "claim": "D2 burden (files,+lines,-lines,+words,-words)",
+      "document": "(1, 0, 3, 0, 48)",
+      "recomputed": "3 runs: [(1, 0, 3, 0, 48)]",
+      "match": true
+    },
+    {
+      "claim": "P1 burden (files,+lines,-lines,+words,-words)",
+      "document": "(1, 4, 2, 5, 3)",
+      "recomputed": "3 runs: [(1, 4, 2, 5, 3)]",
+      "match": true
+    },
+    {
+      "claim": "P2 burden (files,+lines,-lines,+words,-words)",
+      "document": "(1, 4, 2, 5, 3)",
+      "recomputed": "4 runs: [(1, 4, 2, 5, 3)]",
+      "match": true
+    },
+    {
+      "claim": "development-D2-B-r1 card exposure",
+      "document": "Full read; all 72 nonblank lines",
+      "recomputed": "Exact full card text in decoded model-facing tool output; 72/72 lines; successful command event ordinal 37, exit 0",
+      "match": true
+    },
+    {
+      "claim": "development-D1-B-r1 card exposure",
+      "document": "Full read; all 72 nonblank lines",
+      "recomputed": "Exact full card text in decoded model-facing tool output; 72/72 lines; successful command event ordinal 35, exit 0",
+      "match": true
+    },
+    {
+      "claim": "pilot-P2-B-r3 card exposure",
+      "document": "Full read; all 72 nonblank lines",
+      "recomputed": "Exact full card text in decoded model-facing tool output; 72/72 lines; successful command event ordinal 47, exit 0",
+      "match": true
+    },
+    {
+      "claim": "pilot-P1-B-r3 card exposure",
+      "document": "沒有讀; 6/72 lines, path only in SKILL pointer, no read command",
+      "recomputed": "6/72 generic lines only; no observed card-reading command or card-specific returned text; instrument unknown. Supports no observed explicit read, not categorical absence of any read.",
+      "match": false
+    },
+    {
+      "claim": "B exposure summary",
+      "document": "Three of four B runs fully read card",
+      "recomputed": "Three of four retained B runs returned the exact full card in a tool output",
+      "match": true
+    },
+    {
+      "claim": "Installed improve-skill A/B contrast",
+      "document": "B adds card and one SKILL.md pointer line",
+      "recomputed": "Each retained A/B pair has exactly the one stated SKILL.md line difference; card present in B baseline-skill and absent in A/N baseline-skill",
+      "match": true
+    },
+    {
+      "claim": "Development ratios to N",
+      "document": "D1 A=1.45, B=1.48; D2 A=1.27, B=2.06",
+      "recomputed": "development-D2-B-r1=2.06; development-D2-A-r1=1.27; development-D1-A-r1=1.45; development-D1-B-r1=1.48",
+      "match": true
+    },
+    {
+      "claim": "Pilot ratios to N",
+      "document": "P1 A=3.33, B=3.67; P2 A=2.04, B=2.16; interrupted A>=2.90",
+      "recomputed": "pilot-P2-A-r3=2.04; pilot-P2-B-r3=2.16; pilot-P1-B-r3=3.67; pilot-P1-A-r3=3.33; pilot-P2-A-r2=2.90",
+      "match": true
+    },
+    {
+      "claim": "Preregistered lead rules",
+      "document": "All 6 cells mechanically perfect over 3 repeats; B full reads <2/3 on either task; highest arm mean ×108×1.3 >60M",
+      "recomputed": "Exact three rules found after \"apply this lead rule\"; cost boundary strictly greater than 60M",
+      "match": true
+    },
+    {
+      "claim": "Partial stop-rule interpretation",
+      "document": "18 incomplete, so all three rules cannot literally be determined; every cell at most one attempt",
+      "recomputed": "Mechanical-ceiling rule already false: five recorded attempts fail k; P2/A has two scored attempts (one complete, one interrupted). Full-repeat read rate and final arm means remain incomplete.",
+      "match": false
+    },
+    {
+      "claim": "Cost projection A including interrupted lower bound",
+      "document": "mean 534,036 -> 74,978,608",
+      "recomputed": "mean 534,035.666667 -> 74,978,607.6; rounded 74,978,608",
+      "match": true
+    },
+    {
+      "claim": "Cost projection B",
+      "document": "mean 524,806 -> 73,682,692",
+      "recomputed": "mean 524,805.500000 -> 73,682,692.2; rounded 73,682,692",
+      "match": true
+    },
+    {
+      "claim": "Cost projection A completed only",
+      "document": "mean 484,613 -> 68,039,665",
+      "recomputed": "mean 484,613.000000 -> 68,039,665.2; rounded 68,039,665",
+      "match": true
+    },
+    {
+      "claim": "60M equivalent arm mean",
+      "document": "427,350",
+      "recomputed": "427,350.427350427 (427,350 rounded; boundary is strict >)",
+      "match": true
+    },
+    {
+      "claim": "Actual stop and pilot-gate consequence",
+      "document": "Seventh observed 632,881>600,000; truncated meter incomplete; nonretryable stage stop; retained, no redraw; cannot pass 18-complete-row gate",
+      "recomputed": "exit=token_ceiling, status=failed, reason=meter_incomplete, truncated=True, meter.complete=False, result_seen=False, subagents_included=False; last live total=632881; stderr=\"U2 refused: nonretryable attempt; stop stage\"; protocol forbids redraw and requires 18 complete metered rows",
+      "match": true
+    },
+    {
+      "claim": "Earlier attempts spending and failures",
+      "document": "395,249; ceiling interruption and runner defect",
+      "recomputed": "395,249=216,182+179,067; first exit token_ceiling/truncated, second checker broken/exit 2",
+      "match": true
+    },
+    {
+      "claim": "Five preflights",
+      "document": "390,728",
+      "recomputed": "390,728 = 78019 + 77796 + 83615 + 75685 + 75613",
+      "match": true
+    },
+    {
+      "claim": "Total spending",
+      "document": "5,119,897",
+      "recomputed": "5,119,897, lower bound because final pilot attempt incomplete",
+      "match": true
+    },
+    {
+      "claim": "Claude ledger / unmeasured overhead",
+      "document": "Claude 0; engineering and lead sessions unmetered",
+      "recomputed": "No Claude attempts or charges in supplied ledger; budget spent-before=0; engineering and lead session costs absent (cannot independently quantify)",
+      "match": true
+    },
+    {
+      "claim": "Option 2 arithmetic",
+      "document": "N mean 187,782; A/B mean 530,344; six N + twelve A/B + one preflight ~=7.6M",
+      "recomputed": "N mean 187,782; pooled observed A/B mean 530,343.6 including lower bound; rounded means: 6×187,782+12×530,344=7,490,820; plus latest preflight 75,613 =7,566,433 (~7.6M); exact unrounded subtotal=7,566,428.2",
+      "match": true
+    },
+    {
+      "claim": "Protocol/freeze hashes",
+      "document": "protocol b26abe09a56239447551d9114e9b47f63e5e521982952de8ffe87ea8795e5a94; freeze 97397d9a07ffc90b759274255157b4da5bc232e41d7bedf9784ea6a8a8e64338",
+      "recomputed": "protocol b26abe09a56239447551d9114e9b47f63e5e521982952de8ffe87ea8795e5a94; freeze canonical JSON 97397d9a07ffc90b759274255157b4da5bc232e41d7bedf9784ea6a8a8e64338; freeze.protocol_sha256 matches=True",
+      "match": true
+    },
+    {
+      "claim": "Retained draft reference",
+      "document": "PREREG.draft.md is retained for comparison",
+      "recomputed": "PREREG.draft.md is absent from this review directory",
+      "match": false
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "severity": "medium",
+      "where": "試跑表「沒有讀」；對照卡的讀取",
+      "problem": "「沒有讀」把未觀察到明確讀取提升成確定未讀；原始紀錄支持沒有卡片專屬文字回傳、沒有明確讀卡命令，但不能排除隱式預載或間接讀取。",
+      "evidence": "evidence/state5/runs/pilot-P1-B-r3/all-native.jsonl: 6/72 相符行僅為 JSON/Markdown 通用片段，路徑只在 SKILL pointer；trigger.json 為 unknown，另列 incomplete_or_unrecognized_trace、opaque_read_scope。PREREG.v1.md 的 Trigger instrument 明說 unknown 不能作 not_at_all，且無法偵測 preload/工具外讀取。",
+      "suggested_fix": "將「沒有讀」改為「紀錄中未觀察到明確讀卡或卡片內容回傳；凍結 instrument 為 unknown，不能證明完全未讀」。"
+    },
+    {
+      "id": "F2",
+      "severity": "low",
+      "where": "事先定的三條停止規則：前言與第一列",
+      "problem": "「三條都不能照字面判定」過於籠統：全機械滿分這條已被 k 失敗否定；「每格最多一次」也漏掉 P2/A 已有兩次可計機械項目的作答。",
+      "evidence": "evidence/state5/attempts-codex.jsonl 與各 checker-result.json：五次 k=false；pilot-P2-A-r3 與 pilot-P2-A-r2 均有 10/11。PREREG.v1.md 第一條要求所有 repeat 全項通過。",
+      "suggested_fix": "寫明機械天花板條件已不成立，完整讀卡率與最終平均成本尚缺資料，並將每格次數限定為完成作答。"
+    },
+    {
+      "id": "F3",
+      "severity": "low",
+      "where": "開頭 PREREG.draft.md 連結",
+      "problem": "聲稱舊草稿留作對照，但本目錄沒有該檔，連結無法核查。",
+      "evidence": "目前目錄僅有 PILOT_STATUS.md、PREREG.v1.md 與 evidence/ 等，無 PREREG.draft.md。",
+      "suggested_fix": "補入所引用的草稿，或移除本審查包無法提供的對照連結及其日期敘述。"
+    }
+  ],
+  "beyond_measurement": [
+    "用這次量到的平均估（N 六次 × 187,782，A、B 十二次 × 530,344，加一次 preflight），約 7.6M Codex token；這是估計，而且 530,344 裡含一筆下限。",
+    "它能補齊三條規則需要的資料；測試階段（108 次）另計，照上表的式子是 68M 到 75M。"
+  ],
+  "omissions": [
+    "附件讀取的觀測邊界：full 證明文字回傳，不證明理解或採用；P1/B 的 unknown 除了多指令包裝，還包含不完整／不識別的 trace 與 opaque read scopes，不能排除工具外或隱式讀取。"
+  ],
+  "privacy": [],
+  "notes": "以獨立 Python 解析 JSONL、原始 cumulative usage、工具回傳內嵌 JSON、workspace、patch 與協定；未執行 evidence helper、未連網。所有表列用量、秒數、burden、比率、費用算術與雜湊相符，427,350 為取整值。成本預估明列為預估；重跑能補齊資料須以全部完成及計量／觀測有效為條件。未見可識別的本機絕對路徑、帳號、主機名或憑證；協定的 /tmp 僅為通用 sandbox 路徑。"
+}

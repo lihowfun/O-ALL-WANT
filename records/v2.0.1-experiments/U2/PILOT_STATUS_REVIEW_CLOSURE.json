@@ -1,0 +1,86 @@
+{
+  "overall": "NOT_CLOSED",
+  "items": [
+    {
+      "id": "F1",
+      "status": "closed",
+      "evidence": "The table and explanation now say no read was observed, retain instrument=unknown, and explicitly exclude proof of no reading."
+    },
+    {
+      "id": "F2",
+      "status": "partly",
+      "evidence": "PREREG.v1.md requires every mechanical item in all repeats and five pilot checker results fail k, so the revised first-rule conclusion is correct, but lines 62 and 89 still say one attempt per cell despite two scored P2/A attempts."
+    },
+    {
+      "id": "F3",
+      "status": "closed",
+      "evidence": "PREREG.draft.md now exists at the linked path and its header confirms 2026-11-13."
+    },
+    {
+      "id": "BM1",
+      "status": "closed",
+      "evidence": "The unchanged 7.6M sentence already labels the calculation an estimate and discloses the lower-bound observation in its mean."
+    },
+    {
+      "id": "BM2",
+      "status": "closed",
+      "evidence": "The replacement conditions rule evaluation on 18 completed runs with valid metering and observation, and identifies 68M–75M as projections from current observations."
+    },
+    {
+      "id": "OM1",
+      "status": "closed",
+      "evidence": "The revision states that full proves returned text rather than understanding/use and includes incomplete/unrecognized traces, opaque scopes, preload and outside-tool limitations."
+    }
+  ],
+  "revision_changes": [
+    {
+      "change": "Adds P2/B instrument classification as full.",
+      "supported": true,
+      "note": "pilot-P2-B-r3/trigger.json has attachment_read=full."
+    },
+    {
+      "change": "Adds review totals 54/51, FAIL and three finding summaries/severities.",
+      "supported": true,
+      "note": "REVIEW.round1.json contains 54 recomputed entries, 51 true matches, and matching findings."
+    },
+    {
+      "change": "Adds that the reviewer independently programmed the recomputation.",
+      "supported": true,
+      "note": "REVIEW.round1.json notes independent Python parsing and recomputation."
+    },
+    {
+      "change": "Identifies the reviewer as fresh-context Codex gpt-6.1-sol.",
+      "supported": false,
+      "note": "Supplied review/evidence do not establish reviewer model or context."
+    },
+    {
+      "change": "Locates the review at PILOT_STATUS_REVIEW.json.",
+      "supported": false,
+      "note": "That file is absent; the supplied review is REVIEW.round1.json."
+    },
+    {
+      "change": "Explains that the draft is local but absent from the first review package.",
+      "supported": true,
+      "note": "The draft exists here; F3 records its absence from the earlier review directory."
+    }
+  ],
+  "review_section_accurate": true,
+  "new_issues": [
+    {
+      "severity": "low",
+      "problem": "New review link is broken.",
+      "evidence": "PILOT_STATUS.md:98 links to absent PILOT_STATUS_REVIEW.json."
+    },
+    {
+      "severity": "low",
+      "problem": "New reviewer model/context attribution is unverified.",
+      "evidence": "PILOT_STATUS.md:97 adds provenance absent from REVIEW.round1.json and evidence/."
+    },
+    {
+      "severity": "low",
+      "problem": "Residual attempt counts understate P2/A.",
+      "evidence": "Lines 62 and 89 say one per cell; pilot-P2-A-r3 and pilot-P2-A-r2 both have scored checker results."
+    }
+  ],
+  "notes": "No measured numeric values changed or were dropped; review_section_accurate refers to the requested counts and finding descriptions, not its broken link or unverified provenance."
+}
