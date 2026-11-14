@@ -657,3 +657,28 @@ P2 in the order release, EGM, U2):
   implemented by a lead wrapper outside the frozen files and recorded in the state before the first
   continued launch. The stops for a severe violation or a broken checker stay. No test split is
   authorized by this.
+
+## D50. Fast yes/no intake with a Jev-like judge; normal version iteration (2026-11-14)
+
+Owner in chat, after being told that the evaluation ledger was not in 2.0.1 and that the lead was
+merging it in before the release:
+「效率審查 不是審的沒完沒了 要最快最有效率的知道好或壞 然後判斷吸收不吸收 如果每次到要繞一大圈還是無法 判斷 那目前還不是很穩
+請把之前提過 JEV 加入工作流 判斷 YeS or no 不用執著2.0.1 照著正常的版本迭代 更新到一定程度就換代」.
+
+- Versions: nothing more is added to 2.0.1. PR #16 is released as reviewed. The evaluation ledger, the
+  overview of measurement methods and the work below go into the next version; a new version is cut
+  when enough has accumulated. This supersedes the lead's reading of D49 that "this version" must carry
+  the ledger.
+- Intake must answer quickly whether a food is good or bad, and then absorb or not. A process that
+  takes a long detour and still cannot decide is not stable enough. Reviews are not to run without end.
+- "JEV": the fast, cheap yes/no judge from the Figma PM OS intake of 2026-11-08 (source idea "Jev";
+  the owner's question then was whether review and other steps could use such a model for a more
+  precise yes or no). Only the offline calibration tool (I18, `scripts/judge_calibration.py`) was
+  built at the time; no judge was admitted. The owner now wants it in the workflow, giving YES or NO.
+- Lead reading, to be confirmed by measurement before it becomes the documented flow: a fast screen
+  that stops at the first decision (native already does it: NO; the food fixes what native misses
+  without breaking anything and within the cost ratio: YES; anything else: NO for now, with one line
+  of reason and a reopening condition); the judge answers narrow present/absent questions with a
+  verbatim quote that code checks; the YES/NO itself is computed by a fixed rule, not by the judge.
+  The 2026-11-08 screen's limits on what a cheap judge may decide (no consent, safety, licence or
+  isolation clearance) stay.
