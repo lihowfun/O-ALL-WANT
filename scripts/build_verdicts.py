@@ -37,7 +37,7 @@ FOOD_CATEGORIES = {
 }
 # OAW's own skills that do one of those jobs. A user skill of the same category overlaps them.
 BUILTIN_CATEGORIES = {"oaw-codemap": "code-map", "oaw-review": "review"}
-_PRIVATE = re.compile(r"(?i)(?:file://|private#|(?<![\w.])/(?:home|mnt|users|root|tmp|var|private|opt|srv)/|\b[a-z]:\\)")
+_PRIVATE = core.PRIVATE_REFERENCE
 
 
 class BuildError(Exception):
@@ -120,6 +120,8 @@ def build(ledger: Path) -> dict:
                 if isinstance(value, dict):
                     evidence.append(value)
         records = core.food_records(evidence, fid)
+        if any(r["kind"] == "owner-decision" for r in records["refused"]):
+            raise BuildError(f"Invalid owner decision for {fid}.")
         latest = records["tastings"][-1] if records["tastings"] else None
         tasting = tasting_entry(latest, tasted_commit(evidence, latest)) if latest else None
         owner, repo = source["owner"], source["repo"]
@@ -128,6 +130,7 @@ def build(ledger: Path) -> dict:
             "id": fid, "repo": f"{owner}/{repo}", "key": source["key"], "url": f"https://github.com/{owner}/{repo}",
             "commit": (tasting or {}).get("commit") or source.get("commit"), "category": FOOD_CATEGORIES.get(source["key"]),
             "tasting": tasting,
+            **({"owner_decision": core.owner_decision_entry(records["owner_decision"])} if records["owner_decision"] else {}),
         }, fid))
     return {
         "schema": SCHEMA,

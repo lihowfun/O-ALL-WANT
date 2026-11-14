@@ -1204,6 +1204,49 @@ class UserInstallTests(unittest.TestCase):
 
     # ------------------------------------------------------------------ review round 18
 
+    def test_owner_decision_controls_recommendation_add_and_list(self):
+        document = json.loads(self.verdicts.read_text(encoding="utf-8"))
+        food = document["foods"][2]
+        food["owner_decision"] = {"outcome": "excrete", "outcome_zh": "排掉", "decision": "D52",
+                                  "date": "2026-11-15", "reason_zh": "從未顯示收益，因此移除。"}
+        self.verdicts.write_text(json.dumps(document), encoding="utf-8")
+        package = self.add("mapper", choice="recommended")["packages"][0]
+        self.assertEqual(package["recommendation"]["action"], "skip")
+        self.assertIn("owner 決定 D52", package["recommendation"]["reason"])
+        self.assertEqual((package["tasting"]["outcome"], package["tasting"]["measured_outcome"]), ("excrete", "optional"))
+        # An explicit install still reports the decision and the original measurement.
+        self.add("mapper", choice="oaw", on_conflict=["mapper=keep-both"], apply=True)
+        listing = json.dumps(self.cli("list"), ensure_ascii=False)
+        self.assertIn("owner 決定 D52", listing)
+        self.assertIn("實測：可選用", listing)
+        # GitHub receipts use the latest shipped owner decision even after installation.
+        record = user_install.load_record(self.project)
+        source = record["packages"]["mapper"]["source"]
+        source.update(kind="github", key="github.com/owner/mapper", url="https://github.com/owner/mapper")
+        food["key"] = source["key"]
+        food["owner_decision"].update(outcome="optional", outcome_zh="可選用", decision="D53")
+        rows = user_install.receipt_rows(self.project, oaw.read_manifest(self.project), record, document)
+        shown = next(row["tasting"] for row in rows if row.get("package") == "mapper")
+        self.assertIn("可選用（owner 決定 D53", shown)
+        self.assertIn("實測：可選用", shown)
+        self.assertEqual(user_install.recommend(user_install.tasting_status(self.project, source, document))[0], "explicit")
+        food["tasting"] = None
+        status = user_install.tasting_status(self.project, source, document)
+        self.assertEqual(status["status"], "untasted")
+        self.assertIn("owner 決定 D53", user_install.tasting_text(status, "mapper"))
+        self.assertEqual(user_install.recommend(status)[0], "explicit")
+
+    def test_verdict_reader_refuses_invalid_owner_decisions(self):
+        document = json.loads(self.verdicts.read_text(encoding="utf-8"))
+        owner = {"outcome": "excrete", "outcome_zh": "排掉", "decision": "D52",
+                 "date": "2026-11-15", "reason_zh": "移除。"}
+        for changes in ({"outcome": "default"}, {"reason_zh": ""}, {"reason_zh": "/home/me/private"},
+                        {"outcome_zh": "可選用"}):
+            document["foods"][0]["owner_decision"] = {**owner, **changes}
+            self.verdicts.write_text(json.dumps(document), encoding="utf-8")
+            with self.subTest(changes=changes), self.assertRaises(user_install.InstallError):
+                user_install.load_verdicts()
+
     def test_an_optional_source_under_recommended_keeps_its_auto_running_parts_off(self):
         verdicts = json.loads(self.verdicts.read_text(encoding="utf-8"))
         verdicts["foods"][0]["tasting"].update(outcome="optional", label_zh="可選用（能力未定）", verdict="optional")
@@ -1313,6 +1356,9 @@ class VerdictsTests(unittest.TestCase):
                 (catalog / "evidence" / "graphify" / "tasting-0123456789ab.json").write_text(json.dumps(stored), encoding="utf-8")
             store(tasting)
             document = build_verdicts.build(ledger)
+            # Frozen from the pre-owner-decision builder: old ledgers remain byte-identical.
+            self.assertEqual(hashlib.sha256(build_verdicts.render(document)).hexdigest(),
+                             "a963a5115c3becc2191f1843df3bfad84d3fdc25092c091525c4c989c5c0650d")
             self.assertEqual(build_verdicts.render(document), build_verdicts.render(build_verdicts.build(ledger)))
             foods = {food["id"]: food for food in document["foods"]}
             self.assertEqual(sorted(foods), ["graphify", "untasted"])
@@ -1320,6 +1366,32 @@ class VerdictsTests(unittest.TestCase):
             self.assertEqual((foods["graphify"]["tasting"]["outcome"], foods["graphify"]["tasting"]["label_zh"]), ("excrete", "排掉（比原生差）"))
             self.assertEqual(foods["graphify"]["tasting"]["conditions"]["food_arm"], "graphify 0.9")
             self.assertIsNone(foods["untasted"]["tasting"])
+            decision = {"schema": core.OWNER_DECISION_SCHEMA, "food": "graphify", "outcome": "optional",
+                        "decision": "D52", "date": "2026-11-15", "reason_zh": "保留明確呼叫的選項。"}
+            decision_path = catalog / "evidence" / "graphify" / "owner-decision.json"
+            decision_path.write_text(json.dumps({**decision, "history": []}), encoding="utf-8")
+            overridden = build_verdicts.build(ledger)
+            self.assertEqual(overridden["schema"], "oaw-verdicts/1")
+            self.assertEqual(overridden["foods"][0]["tasting"], foods["graphify"]["tasting"])
+            self.assertEqual(overridden["foods"][0]["owner_decision"], core.owner_decision_entry(decision))
+            self.assertNotIn("owner_decision", overridden["foods"][1])
+            output = ledger / "shipped.json"
+            for built in (document, overridden):
+                decision_path.unlink(missing_ok=True)
+                if built is overridden:
+                    decision_path.write_text(json.dumps({**decision, "history": []}), encoding="utf-8")
+                output.write_bytes(build_verdicts.render(built))
+                before = output.read_bytes()
+                with patch.object(build_verdicts, "OUTPUT", output), redirect_stdout(io.StringIO()):
+                    for _ in range(2):
+                        self.assertEqual(build_verdicts.main(["--ledger", str(ledger), "--check"]), 0)
+                    output.write_bytes(b"stale")
+                    self.assertEqual(build_verdicts.main(["--ledger", str(ledger), "--check"]), 1)
+                self.assertEqual(before, build_verdicts.render(build_verdicts.build(ledger)))
+            decision_path.write_text(json.dumps({**decision, "outcome": "default"}), encoding="utf-8")
+            with self.assertRaises(build_verdicts.BuildError):
+                build_verdicts.build(ledger)
+            decision_path.unlink()
             tasting["protocol"]["corpus"] = "/home/me/private/repo"
             store(tasting)
             with self.assertRaises(build_verdicts.BuildError):

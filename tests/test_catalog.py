@@ -1322,6 +1322,51 @@ class CatalogCliTests(unittest.TestCase):
         path.write_text(json.dumps(doc, ensure_ascii=False), encoding="utf-8")
         return path
 
+    def test_owner_decision_replacement_history_and_readers_preserve_tasting(self):
+        self.cli("add", "https://github.com/microsoft/TokenEconomizer", "--no-taste")
+        name = "tokeneconomizer"
+        judgment = {"quality": "same", "cost_ratio": 1.01, "cheaper": False, "grading": "mechanical",
+                    "conditions": 4, "basis": "same quality as native"}
+        self.cli("record-tasting", "--food", name, "--file", str(self.tasting_file(
+            verdict="optional", judgment=judgment)), "--apply")
+        evidence = self.project / ".oaw/catalog/evidence" / name
+        before = {p.name: p.read_bytes() for p in evidence.glob("tasting-*.json")}
+        self.cli("decide", name, "--outcome", "excrete", "--decision", "D52",
+                 "--reason-zh", "從未顯示收益，因此移除。", "--date", "2026-11-15")
+        current = json.loads((evidence / "owner-decision.json").read_text(encoding="utf-8"))
+        self.assertEqual((current["decision"], current["history"]), ("D52", []))
+        for result in (self.cli("show", name)["card"], self.cli("list")["foods"][0],
+                       self.cli("why", name), self.cli("why")["foods"][0]):
+            self.assertEqual((result["effective_outcome"], result["measured_outcome"]), ("excrete", "optional"))
+            self.assertEqual(result["owner_decision"]["decision"], "D52")
+        for result in (catalog.cmd_list(self.project), catalog.cmd_show(self.project, name),
+                       catalog.cmd_why(self.project, name), catalog.cmd_why(self.project)):
+            text = "\n".join(result["lines"])
+            self.assertIn("owner 決定 D52", text)
+            self.assertIn("實測", text)
+            self.assertIn("可選用", text)
+        self.cli("decide", name, "--outcome", "optional", "--decision", "D53", "--reason-zh", "保留明確呼叫的選項。")
+        current = json.loads((evidence / "owner-decision.json").read_text(encoding="utf-8"))
+        self.assertEqual((current["decision"], current["history"][0]["decision"]), ("D53", "D52"))
+        self.assertNotIn("history", current["history"][0])
+        self.assertEqual({p.name: p.read_bytes() for p in evidence.glob("tasting-*.json")}, before)
+        self.assertEqual(self.cli("show", name)["card"]["effective_outcome"], "optional")
+
+    def test_owner_decision_refusals_write_nothing(self):
+        self.cli("add", "https://github.com/owner/untasted", "--no-taste")
+        args = ["decide", "untasted", "--outcome", "excrete", "--decision", "D52"]
+        before = self.project_snapshot(exclude_layer=False)
+        for reason in ("", "See /home/me/private", "ghp_" + "a" * 36):
+            self.cli(*args, "--reason-zh", reason, code=2)
+        self.cli("decide", "unknown", "--outcome", "excrete", "--decision", "D52", "--reason-zh", "未顯示收益。", code=2)
+        for extra in ([], ["--reason-zh", "未顯示收益。", "--outcome", "default"]):
+            with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as refusal:
+                catalog.main([*args, *extra, "--target", str(self.project)])
+            self.assertEqual(refusal.exception.code, 2)
+        self.assertEqual(self.project_snapshot(exclude_layer=False), before)
+        self.cli(*args, "--reason-zh", "先不收。")
+        self.assertEqual(self.cli("show", "untasted")["card"]["effective_outcome"], "excrete")
+
     def test_record_tasting_previews_then_applies_and_refuses_a_verdict_without_the_food_arm(self):
         name = self.clean_food()
         self.cli("taste", name)

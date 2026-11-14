@@ -152,6 +152,13 @@
       "commit": "d58755d849cd9157d29aef539f2beab3d5fee0fc",
       "id": "tokeneconomizer",
       "key": "github.com/microsoft/tokeneconomizer",
+      "owner_decision": {
+        "date": "2026-11-15",
+        "decision": "D52",
+        "outcome": "excrete",
+        "outcome_zh": "排掉",
+        "reason_zh": "owner 決定排掉：試吃的品質和原生相同、token 是原生的 1.01 倍，從來沒有量到好處。"
+      },
       "repo": "microsoft/TokenEconomizer",
       "tasting": {
         "basis": "hidden pytest per task (mechanical); token median T2 209,315 vs N 207,731; late-phase cheaper rule (15%) not met",

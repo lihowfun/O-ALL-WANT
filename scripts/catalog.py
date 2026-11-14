@@ -842,12 +842,23 @@ def cmd_list(target: Path) -> dict:
     decisions = load_decisions(target)
     rows = []
     for fid, entry in sorted(registry.get("foods", {}).items()):
-        derived = core.derive(load_evidence(target, fid), food_decisions(decisions, fid))
+        evidence = load_evidence(target, fid)
+        derived = core.derive(evidence, food_decisions(decisions, fid))
+        records = core.food_records(evidence, fid)
+        owner = records["owner_decision"]
+        measured = records["tastings"][-1].get("judgment") if records["tastings"] else None
         rows.append({"id": fid, "display": core.sanitize_text(entry["display"], 80), "lifecycle": entry.get("lifecycle"),
                      "commit": (entry["source"].get("commit") or "")[:7] or None, "version": entry["source"].get("version"),
-                     "verdict": derived["headline"], "symbol": derived["symbol"]})
+                     "verdict": derived["headline"], "symbol": derived["symbol"],
+                     "owner_decision": core.owner_decision_entry(owner) if owner else None,
+                     "measured_outcome": (measured or {}).get("outcome"),
+                     "effective_outcome": owner["outcome"] if owner else (measured or {}).get("outcome")})
     lines = [f"{r['symbol']} {r['id']:28} {r['lifecycle'] or '':8} {r['commit'] or r['version'] or '-':8} {r['display']}" for r in rows]
     lines = lines or ["no foods yet: catalog.py add URL (a GitHub repository or an arXiv paper)"]
+    for row in rows:
+        if row["owner_decision"]:
+            lines.append(f"  {row['id']}: " + core.owner_decision_label(row["owner_decision"])
+                         + f"；實測：{core.D29_OUTCOMES_ZH.get(row['measured_outcome'], '沒有判定')}")
     return {"status": "list", "foods": rows, "lines": lines}
 
 
@@ -872,6 +883,7 @@ def cmd_show(target: Path, ident: str) -> dict:
              f"  next: {stage['note_zh']}" + "".join(f" · [{a['label_zh']}]" for a in stage["actions"]),
              f"  reasons: {'; '.join(v['reasons'])}" + (f" · chips: {', '.join(v['chips'])}" if v["chips"] else "")]
     paper = card.get("paper")
+    lines.extend(owner_outcome_lines(card))
     if paper:
         source = "" if paper.get("from") == "static" else " (as the imported record states; not tasted)"
         lines.append(f"  paper{source}: {paper.get('title') or '(no title)'} · {', '.join(paper.get('authors') or []) or 'authors not recorded'}"
@@ -943,6 +955,15 @@ def _result_text(results: dict) -> str:
     return "、".join(parts)
 
 
+def owner_outcome_lines(card: dict) -> list:
+    owner = card.get("owner_decision")
+    if not owner:
+        return []
+    tasting = card.get("tasting") or {}
+    return ["  適用：" + core.owner_decision_label(owner) + f" · {owner['reason_zh']}",
+            "  實測：" + (core.d29_label(tasting.get("judgment")) or tasting.get("verdict_label_zh") or "沒有判定")]
+
+
 def cmd_why(target: Path, ident=None) -> dict:
     """Plain answers for the owner: what was decided about a food, why, whether its own arm really ran, the
     numbers, where the evidence is and who it waits on. Without a food: one line per food. Read-only."""
@@ -964,7 +985,13 @@ def cmd_why(target: Path, ident=None) -> dict:
                 decided, reason = "還沒試吃", core.sanitize_text(pipe["note_zh"], 90)
             if absorption and tasting:
                 decided += f"；吸收 {absorption['absorbed']} 個單位"
+            if card.get("owner_decision"):
+                measured = (core.d29_label(tasting.get("judgment")) or tasting["verdict_label_zh"]) if tasting else "沒有判定"
+                decided = core.owner_decision_label(card["owner_decision"]) + "；實測：" + measured
+                reason = card["owner_decision"]["reason_zh"]
             rows.append({"id": fid, "display": card["display"], "decided_zh": decided, "reason_zh": reason,
+                         "owner_decision": card["owner_decision"], "measured_outcome": card["measured_outcome"],
+                         "effective_outcome": card["effective_outcome"],
                          "waiting_zh": pipe["waiting_zh"], "tastings": len(card["tastings"])})
             lines.append(f"{card['display']}（{fid}）：{decided} · {pipe['waiting_zh']}" + (f"\n    {reason}" if reason else ""))
         lines = lines or ["帳本裡還沒有食物：catalog.py add <網址>"]
@@ -974,12 +1001,13 @@ def cmd_why(target: Path, ident=None) -> dict:
     card, plan = _food_card(target, entry)
     fid, pipe = entry["id"], card["pipeline"]
     lines = [f"{card['display']}（{fid}）", f"  現在：{pipe['stage_label_zh']}・{pipe['state_zh']}・{pipe['waiting_zh']}"]
+    lines.extend(owner_outcome_lines(card))
     if pipe["waiting_on"] != "none":
         lines.append(f"  下一步：{core.sanitize_text(pipe['note_zh'], 300)}")
     if card["tastings"]:
         latest = card["tastings"][-1]
         ran = latest["food_arm_graded_runs"]
-        lines += [f"  判定：{core.d29_label(latest.get('judgment')) or latest['verdict_label_zh']}（{latest['date']}，最新的一次試吃決定）",
+        lines += [f"  實測判定：{core.d29_label(latest.get('judgment')) or latest['verdict_label_zh']}（{latest['date']}，最新的一次試吃）",
                   f"  為什麼：{core.sanitize_text(latest['verdict_zh'], 400)}",
                   ("  食物本身有沒有真的裝起來跑：有，食物組 " + core.sanitize_text(latest["food_arm"], 40)
                    + f" 有 {ran} 次評分過的執行" if ran else
@@ -1026,7 +1054,9 @@ def cmd_why(target: Path, ident=None) -> dict:
     lines.append(f"  靜態檢查：{card['safety_text']}（只供參考，不擋食物，D28）")
     lines.append(f"  所有細節：catalog.py show {fid}")
     return {"status": "why", "food": fid, "pipeline": {k: pipe[k] for k in ("stage", "state", "waiting_on", "waiting_zh", "note_zh")},
-            "tastings": card["tastings"], "absorption": absorption, "answer_zh": "\n".join(lines), "lines": lines}
+            "tastings": card["tastings"], "absorption": absorption, "owner_decision": card["owner_decision"],
+            "measured_outcome": card["measured_outcome"], "effective_outcome": card["effective_outcome"],
+            "answer_zh": "\n".join(lines), "lines": lines}
 
 
 # --------------------------------------------------------------------------- owner confirmation codes
@@ -1313,6 +1343,34 @@ def _store_record(target: Path, entry: dict, record: dict, id_key: str, ident: s
     lines.append(f"recorded {path}")
     return {"status": "recorded", "food": fid, id_key: ident, "path": path, "waiting_on": after["waiting_on"], "stage": after["stage"],
             "lines": lines}
+
+
+def cmd_decide(target: Path, ident: str, outcome: str, decision: str, reason_zh: str, date=None) -> dict:
+    """Replace the current owner disposition atomically, retaining the previous decisions."""
+    entry = resolve_food(load_registry(target), ident)
+    fid = entry["id"]
+    record = core.validate_owner_decision({"schema": core.OWNER_DECISION_SCHEMA, "food": fid,
+                                          "outcome": outcome, "decision": decision, "reason_zh": reason_zh,
+                                          "date": date or now_iso()[:10]}, fid)
+
+    def replace(previous):
+        history = []
+        if previous:
+            core.validate_owner_decision(previous, fid, stored=True)
+            history = previous.get("history", [])
+            if not isinstance(history, list):
+                raise core.RecordError("Owner decision: history must be a list.")
+            for item in history:
+                core.validate_owner_decision(item, fid, stored=True)
+            history = history + [{k: v for k, v in previous.items() if k != "history"}]
+        previous.clear()
+        previous.update({**record, "history": history, "recorded_at": now_iso(), "provenance": "owner-decision",
+                         "owner_decision_id": "d-" + core.record_sha256(record)[:12]})
+
+    update_json(target, ("evidence", core.slug(fid), "owner-decision.json"), replace, {})
+    update_view(target)
+    return {"status": "recorded", "food": fid, "owner_decision": core.owner_decision_entry(record),
+            "lines": [fid + ": " + core.owner_decision_label(record) + " · " + record["reason_zh"]]}
 
 
 def cmd_record_tasting(target: Path, ident: str, file: str, apply: bool) -> dict:
@@ -2565,6 +2623,12 @@ def parser() -> argparse.ArgumentParser:
                                    help="import a digestion record directory (a repository's or a paper's) as historical-prior evidence")
     imported.add_argument("food")
     imported.add_argument("directory")
+    decide = commands.add_parser("decide", parents=[common], help="record an owner decision without changing measured evidence")
+    decide.add_argument("food")
+    decide.add_argument("--outcome", required=True, choices=("optional", "excrete"))
+    decide.add_argument("--decision", required=True, help="short owner decision reference, e.g. D52")
+    decide.add_argument("--reason-zh", required=True, help="one or two sentences explaining the decision")
+    decide.add_argument("--date", help="YYYY-MM-DD; defaults to today's UTC date")
     tasting = commands.add_parser("record-tasting", parents=[common],
                                   help="record an agent tasting (schema oaw-tasting/1); a verdict needs a graded food-arm run (D28)")
     tasting.add_argument("--food", required=True, help="the food id (or its URL)")
@@ -2646,6 +2710,8 @@ def dispatch(args) -> dict:
         return cmd_import_report(target, args.food, args.directory)
     if command == "record-tasting":
         return cmd_record_tasting(target, args.food, args.file, args.apply)
+    if command == "decide":
+        return cmd_decide(target, args.food, args.outcome, args.decision, args.reason_zh, args.date)
     if command == "record-absorption":
         return cmd_record_absorption(target, args.food, args.file, args.apply)
     if command == "plan":

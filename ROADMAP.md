@@ -53,19 +53,24 @@ changes still need separate behavior evidence. On 2026-11-14 the owner asked whe
 release carries the project's evaluation methods (D49) and then chose normal version
 iteration (D50): 2.0.1 ships as reviewed, and the ledger together with the overview of
 the four measurement methods in [the measurement rules](docs/EVAL_PROTOCOL.md) goes
-into the next version. The 2.0.1 line is already merged into this branch.
+into the next version. Both are on `main`, listed under Unreleased in the changelog.
 
 ## Next: after the release
 
-The owner lifted the pre-release experiment restriction for EGM calibration
-(#20) and the U2 comparison in D48.
+Settled on 2026-11-14 and 2026-11-15 (D49 to D52): the EGM calibration closed at no conclusion (#20);
+the Harness2 U2 comparison ended with the minimal-change card not absorbed (#24); the presentation
+tasting stopped before a candidate comparison (#13); three earlier verdicts were re-judged on
+existing data (#15); TokenEconomizer was removed from the optional list by owner decision; EGM keeps
+its switch and the code map stays.
 
-1. Finish capability tasting of presentation skills and its reusable tasting kit. #13, #9
-2. Verdict list (#19); independent re-judging of three earlier intake verdicts on existing data (#15).
-3. EGM calibration. #20
-4. The Harness² U2 comparison.
-5. Release-review follow-ups. #21, #22, #23
-6. 2.0.2, driven by feedback from real use.
+1. Use the fast decision ([flow](docs/SKILL_INTAKE.md), [tool](docs/FAST_SCREEN.md)) on a new food, and
+   settle its open rule question: gains without losses at more than 1.5 times the tokens.
+2. EGM: let the default `auto` judge per review, with a cost estimate and the user's confirmation. #27
+3. Code map: when to refresh and redraw it, cheaper updates, and the tasks where it helps. #28
+4. Verdict list: sync the three re-judged entries. #19
+5. Release-review follow-ups and the Windows concurrent-writers test. #21, #22, #23, #26
+6. A reusable tasting kit from the H1 runner. #9
+7. The next version, cut when enough has accumulated (D50).
 
 ## Parked (each with a restart condition in the plan)
 
