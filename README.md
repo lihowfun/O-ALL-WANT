@@ -272,6 +272,17 @@ python3 scripts/harness_check.py
 python3 scripts/sync_examples.py --write
 ```
 
+The four ways OAW measures a harness or a skill, and the rules they share, open the
+[measurement rules](docs/EVAL_PROTOCOL.md) (Traditional Chinese).
+From a source checkout, [evaluation accounting](docs/EVAL_LEDGER.md) reports
+planned coverage, failed-attempt costs and missing study overhead, with an
+optional bridge to the existing paired comparator. It runs no model and adds
+no installed startup rules:
+
+```bash
+python3 scripts/eval_ledger.py report bundle.json --format markdown
+```
+
 See [CONTRIBUTING](CONTRIBUTING.md) and [CHANGELOG](CHANGELOG.md).
 
 ---

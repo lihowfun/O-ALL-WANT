@@ -1,20 +1,21 @@
 # OAW roadmap
 
-Updated 2026-11-14. The working plan is
+Updated 2026-11-15. The working plan is
 [docs/plans/v2.0.1-release-path.md](docs/plans/v2.0.1-release-path.md);
 work items are GitHub issues grouped by milestone.
 
-## Now: v2.0.1 release line completed through review
+## Released: v2.0.1
 
-v2.0.1 is the first V2 release; 2.0.0 was never released. Steps 1–5 are complete;
-the owner's merge and tag are step 6.
+v2.0.1 is the first V2 release; 2.0.0 was never released. It was merged as `dd91780` and
+tagged `v2.0.1` on 2026-11-14 (UTC). Later work is listed under Unreleased in the changelog
+and ships with the next version, cut when enough has accumulated (D50).
 
 1. Done: all six CI jobs (Ubuntu, macOS, Windows × Python 3.10, 3.13) green at `7504eca`, run `43510582580`. #18
 2. Done: FIXCHECK disposition applied in `5c4e53b`; M1/M2/R2 reverted, M3/R1 and the path fix retained, with CI fixes through `b898e4d`. #17, #18
 3. Done: the one FIXCHECK check on frozen H1 tasks; [result](https://github.com/lihowfun/O-ALL-WANT/blob/e05c4d5a9238fe3ef4529552a27ce9095ead6a3b/records/v2.0.1-experiments/FIXCHECK/RESULT.md). #17
 4. Done: measured README claims, version files, upgrade notes and skill-intake SOP synchronized for release. #10, #12
 5. Done: three cross-family review rounds; fixes in `b4ca559`, `73fb8f7` and `7504eca`, final review without a blocker. #11
-6. Owner: merge pull request #16 and tag `v2.0.1`. #11
+6. Done: pull request #16 merged and `v2.0.1` tagged and released by the lead under the owner's delegation of pull-request decisions (D51). #11
 
 Disposition (2026-11-13, confirmed by the owner on 2026-11-14 as D48): M1 (session-end saving), M2 (empty-recall host guidance) and R2 (one deep
 code-review round) were implemented, failed the preregistered regression
@@ -39,6 +40,20 @@ to `c2d9852`. At `7504eca`, the Linux gate passed 9/9 with 718 tests and 0 skips
 on Python 3.10.12; the final six-job CI and three review rounds are complete.
 Follow-ups are tracked in #21, #22 and #23; see the
 [final validation](docs/validation/v2.0.1-final.md).
+
+## Evaluation accounting (U1): next version
+
+On 2026-11-13 the owner explicitly moved Harness2 U1 accounting work forward
+(D46), on `codex/harness2-evaluation-u1`, based on release-polish 5af21f6.
+It adds an optional read-only ledger/report/comparator bridge, not a model
+experiment or a change to the frozen FIXCHECK candidate. Review and validation
+are tracked in [U1 validation](docs/validation/harness2-u1.md); usage and evidence
+limits are in [evaluation accounting](docs/EVAL_LEDGER.md). U2/U3 model-facing
+changes still need separate behavior evidence. On 2026-11-14 the owner asked whether the
+release carries the project's evaluation methods (D49) and then chose normal version
+iteration (D50): 2.0.1 ships as reviewed, and the ledger together with the overview of
+the four measurement methods in [the measurement rules](docs/EVAL_PROTOCOL.md) goes
+into the next version. The 2.0.1 line is already merged into this branch.
 
 ## Next: after the release
 

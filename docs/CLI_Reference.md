@@ -349,6 +349,16 @@ Candidate JSONL rows require `key` and `verdict: {"facts": {"fact-id": "label"},
 
 Reports include gold-row/prediction-column confusion, abstention/coverage, covered accuracy, false credit (`present` against non-present gold), critical errors/abstentions separately, wrong-claim checks, signed f−e deltas and recorded tokens. Archived accuracy is rounded to three decimals: exact matches/all known cells; abstentions reduce it but are separate from label errors. Full injection detection uses the gold threshold; partial means delta ≥1. e/f consistency averages per-pair fact agreement, not gold accuracy. V3 has four questions, 24 answers and 116 known cells; e/f lack gold labels. Exit 0: scored; 2: rejected input (other valid candidates still receive reports).
 
+### Fast intake screen (D50)
+
+```bash
+python3 scripts/fast_screen.py prompt --checklist CHECKLIST.json --answer ANSWER.txt [--format json|text]
+python3 scripts/fast_screen.py labels --checklist CHECKLIST.json --answer ANSWER.txt --reply REPLY.json [--out LABELS.json] [--judge NAME] [--judge-tokens N] [--format json|text]
+python3 scripts/fast_screen.py verdict --screen SCREEN.json [--format json|text]
+```
+
+Source checkout only; runs no model, approves no judge, is not installed into projects and adds no startup rules. `prompt` deterministically prepares a checklist question; `labels` checks quoted evidence and records byte hashes and unknowns; `verdict` applies the static, budget, native and food checks to at least three tasks. Label paths are relative to the screen directory and cannot escape it through symlinks. Output defaults to text. Exit 0: valid prompt/labels or YES/NO; 2: INCOMPLETE, run the food arm; 1: invalid input, no partial verdict. YES permits optional absorption only, with full measurement still required for a default. See [FAST_SCREEN.md](FAST_SCREEN.md) for contracts, worked commands, judge calibration and limits.
+
 ## Goldfish code review (D21)
 
 Run from the OAW source checkout. It packages the one zero-context Goldfish round on a code diff that D21 intake uses (the D15 recipe); the Elephant still resolves the findings.

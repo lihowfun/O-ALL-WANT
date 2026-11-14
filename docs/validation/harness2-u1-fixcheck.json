@@ -1,0 +1,1873 @@
+{
+  "schema_version": 1,
+  "study_id": "H1-FIXCHECK-2026-11-13",
+  "manifest_sha256": "a4e94a8258b2569c7131cfa2f6a94e39ef84406f7415a6a71debb61e6ced5a68",
+  "status": "incomplete",
+  "benefit_verdict": null,
+  "coverage": {
+    "planned": 24,
+    "started": 13,
+    "completed": 12,
+    "scored": 12,
+    "missing_outcomes": 12,
+    "not_run_attempts": 1,
+    "interrupted_attempts": 0
+  },
+  "scopes": {
+    "execution": {
+      "logical_tokens": {
+        "observed": 6802657,
+        "complete": false,
+        "unknown_entries": 168,
+        "total": null
+      },
+      "noncache_tokens": {
+        "observed": 596449,
+        "complete": false,
+        "unknown_entries": 168,
+        "total": null
+      },
+      "cost_usd": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 168,
+        "total": null
+      },
+      "elapsed_seconds": {
+        "observed": 2225.3,
+        "complete": false,
+        "unknown_entries": 168,
+        "total": null
+      }
+    },
+    "grading": {
+      "logical_tokens": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 24,
+        "total": null
+      },
+      "noncache_tokens": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 24,
+        "total": null
+      },
+      "cost_usd": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 24,
+        "total": null
+      },
+      "elapsed_seconds": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 24,
+        "total": null
+      }
+    },
+    "study_overhead": {
+      "logical_tokens": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 3,
+        "total": null
+      },
+      "noncache_tokens": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 3,
+        "total": null
+      },
+      "cost_usd": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 3,
+        "total": null
+      },
+      "elapsed_seconds": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 3,
+        "total": null
+      }
+    }
+  },
+  "whole_study": {
+    "logical_tokens": {
+      "observed": 6802657,
+      "complete": false,
+      "unknown_entries": 195,
+      "total": null
+    },
+    "noncache_tokens": {
+      "observed": 596449,
+      "complete": false,
+      "unknown_entries": 195,
+      "total": null
+    },
+    "cost_usd": {
+      "observed": 0,
+      "complete": false,
+      "unknown_entries": 195,
+      "total": null
+    },
+    "elapsed_seconds": {
+      "observed": 2225.3,
+      "complete": false,
+      "unknown_entries": 195,
+      "total": null
+    }
+  },
+  "stages": {
+    "answer": {
+      "logical_tokens": {
+        "observed": 6802657,
+        "complete": false,
+        "unknown_entries": 24,
+        "total": null
+      },
+      "noncache_tokens": {
+        "observed": 596449,
+        "complete": false,
+        "unknown_entries": 24,
+        "total": null
+      },
+      "cost_usd": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 24,
+        "total": null
+      },
+      "elapsed_seconds": {
+        "observed": 2225.3,
+        "complete": false,
+        "unknown_entries": 24,
+        "total": null
+      }
+    },
+    "proposal": {
+      "logical_tokens": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 24,
+        "total": null
+      },
+      "noncache_tokens": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 24,
+        "total": null
+      },
+      "cost_usd": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 24,
+        "total": null
+      },
+      "elapsed_seconds": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 24,
+        "total": null
+      }
+    },
+    "probe": {
+      "logical_tokens": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 24,
+        "total": null
+      },
+      "noncache_tokens": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 24,
+        "total": null
+      },
+      "cost_usd": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 24,
+        "total": null
+      },
+      "elapsed_seconds": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 24,
+        "total": null
+      }
+    },
+    "compose": {
+      "logical_tokens": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 24,
+        "total": null
+      },
+      "noncache_tokens": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 24,
+        "total": null
+      },
+      "cost_usd": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 24,
+        "total": null
+      },
+      "elapsed_seconds": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 24,
+        "total": null
+      }
+    },
+    "selection": {
+      "logical_tokens": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 24,
+        "total": null
+      },
+      "noncache_tokens": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 24,
+        "total": null
+      },
+      "cost_usd": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 24,
+        "total": null
+      },
+      "elapsed_seconds": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 24,
+        "total": null
+      }
+    },
+    "reflection": {
+      "logical_tokens": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 24,
+        "total": null
+      },
+      "noncache_tokens": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 24,
+        "total": null
+      },
+      "cost_usd": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 24,
+        "total": null
+      },
+      "elapsed_seconds": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 24,
+        "total": null
+      }
+    },
+    "retry": {
+      "logical_tokens": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 24,
+        "total": null
+      },
+      "noncache_tokens": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 24,
+        "total": null
+      },
+      "cost_usd": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 24,
+        "total": null
+      },
+      "elapsed_seconds": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 24,
+        "total": null
+      }
+    },
+    "grading": {
+      "logical_tokens": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 24,
+        "total": null
+      },
+      "noncache_tokens": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 24,
+        "total": null
+      },
+      "cost_usd": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 24,
+        "total": null
+      },
+      "elapsed_seconds": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 24,
+        "total": null
+      }
+    },
+    "authoring": {
+      "logical_tokens": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 1,
+        "total": null
+      },
+      "noncache_tokens": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 1,
+        "total": null
+      },
+      "cost_usd": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 1,
+        "total": null
+      },
+      "elapsed_seconds": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 1,
+        "total": null
+      }
+    },
+    "review": {
+      "logical_tokens": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 1,
+        "total": null
+      },
+      "noncache_tokens": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 1,
+        "total": null
+      },
+      "cost_usd": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 1,
+        "total": null
+      },
+      "elapsed_seconds": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 1,
+        "total": null
+      }
+    },
+    "controller": {
+      "logical_tokens": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 1,
+        "total": null
+      },
+      "noncache_tokens": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 1,
+        "total": null
+      },
+      "cost_usd": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 1,
+        "total": null
+      },
+      "elapsed_seconds": {
+        "observed": 0,
+        "complete": false,
+        "unknown_entries": 1,
+        "total": null
+      }
+    }
+  },
+  "groups": [
+    {
+      "condition": "claude",
+      "arm": "O",
+      "execution": {
+        "logical_tokens": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 84,
+          "total": null
+        },
+        "noncache_tokens": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 84,
+          "total": null
+        },
+        "cost_usd": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 84,
+          "total": null
+        },
+        "elapsed_seconds": {
+          "observed": 4.5,
+          "complete": false,
+          "unknown_entries": 84,
+          "total": null
+        }
+      }
+    },
+    {
+      "condition": "codex",
+      "arm": "O",
+      "execution": {
+        "logical_tokens": {
+          "observed": 6802657,
+          "complete": false,
+          "unknown_entries": 84,
+          "total": null
+        },
+        "noncache_tokens": {
+          "observed": 596449,
+          "complete": false,
+          "unknown_entries": 84,
+          "total": null
+        },
+        "cost_usd": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 84,
+          "total": null
+        },
+        "elapsed_seconds": {
+          "observed": 2220.8,
+          "complete": false,
+          "unknown_entries": 84,
+          "total": null
+        }
+      }
+    }
+  ],
+  "runs": [
+    {
+      "id": "claude:design-1-c1",
+      "task_id": "design-1-c1",
+      "arm": "O",
+      "condition": "claude",
+      "repeat": 1,
+      "split": "development",
+      "started": false,
+      "completed": false,
+      "scored": false,
+      "artifact_identity_complete": false,
+      "grading_evidence_complete": false,
+      "score": null,
+      "not_run_attempts": 0,
+      "interrupted_attempts": 0,
+      "missing_stages": [
+        "answer",
+        "proposal",
+        "probe",
+        "compose",
+        "selection",
+        "reflection",
+        "retry",
+        "grading"
+      ],
+      "reasons": [
+        "No completed outcome"
+      ],
+      "cost": {
+        "logical_tokens": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "noncache_tokens": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "cost_usd": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "elapsed_seconds": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        }
+      }
+    },
+    {
+      "id": "claude:design-3-c1",
+      "task_id": "design-3-c1",
+      "arm": "O",
+      "condition": "claude",
+      "repeat": 1,
+      "split": "development",
+      "started": false,
+      "completed": false,
+      "scored": false,
+      "artifact_identity_complete": false,
+      "grading_evidence_complete": false,
+      "score": null,
+      "not_run_attempts": 0,
+      "interrupted_attempts": 0,
+      "missing_stages": [
+        "answer",
+        "proposal",
+        "probe",
+        "compose",
+        "selection",
+        "reflection",
+        "retry",
+        "grading"
+      ],
+      "reasons": [
+        "No completed outcome"
+      ],
+      "cost": {
+        "logical_tokens": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "noncache_tokens": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "cost_usd": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "elapsed_seconds": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        }
+      }
+    },
+    {
+      "id": "claude:explicit-1-b1",
+      "task_id": "explicit-1-b1",
+      "arm": "O",
+      "condition": "claude",
+      "repeat": 1,
+      "split": "development",
+      "started": false,
+      "completed": false,
+      "scored": false,
+      "artifact_identity_complete": false,
+      "grading_evidence_complete": false,
+      "score": null,
+      "not_run_attempts": 0,
+      "interrupted_attempts": 0,
+      "missing_stages": [
+        "answer",
+        "proposal",
+        "probe",
+        "compose",
+        "selection",
+        "reflection",
+        "retry",
+        "grading"
+      ],
+      "reasons": [
+        "No completed outcome"
+      ],
+      "cost": {
+        "logical_tokens": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "noncache_tokens": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "cost_usd": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "elapsed_seconds": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        }
+      }
+    },
+    {
+      "id": "claude:handoff-1-b1",
+      "task_id": "handoff-1-b1",
+      "arm": "O",
+      "condition": "claude",
+      "repeat": 1,
+      "split": "development",
+      "started": false,
+      "completed": false,
+      "scored": false,
+      "artifact_identity_complete": false,
+      "grading_evidence_complete": false,
+      "score": null,
+      "not_run_attempts": 0,
+      "interrupted_attempts": 0,
+      "missing_stages": [
+        "answer",
+        "proposal",
+        "probe",
+        "compose",
+        "selection",
+        "reflection",
+        "retry",
+        "grading"
+      ],
+      "reasons": [
+        "No completed outcome"
+      ],
+      "cost": {
+        "logical_tokens": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "noncache_tokens": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "cost_usd": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "elapsed_seconds": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        }
+      }
+    },
+    {
+      "id": "claude:large-2-c1",
+      "task_id": "large-2-c1",
+      "arm": "O",
+      "condition": "claude",
+      "repeat": 1,
+      "split": "development",
+      "started": false,
+      "completed": false,
+      "scored": false,
+      "artifact_identity_complete": false,
+      "grading_evidence_complete": false,
+      "score": null,
+      "not_run_attempts": 0,
+      "interrupted_attempts": 0,
+      "missing_stages": [
+        "answer",
+        "proposal",
+        "probe",
+        "compose",
+        "selection",
+        "reflection",
+        "retry",
+        "grading"
+      ],
+      "reasons": [
+        "No completed outcome"
+      ],
+      "cost": {
+        "logical_tokens": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "noncache_tokens": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "cost_usd": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "elapsed_seconds": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        }
+      }
+    },
+    {
+      "id": "claude:large-3-c2",
+      "task_id": "large-3-c2",
+      "arm": "O",
+      "condition": "claude",
+      "repeat": 1,
+      "split": "development",
+      "started": false,
+      "completed": false,
+      "scored": false,
+      "artifact_identity_complete": false,
+      "grading_evidence_complete": false,
+      "score": null,
+      "not_run_attempts": 0,
+      "interrupted_attempts": 0,
+      "missing_stages": [
+        "answer",
+        "proposal",
+        "probe",
+        "compose",
+        "selection",
+        "reflection",
+        "retry",
+        "grading"
+      ],
+      "reasons": [
+        "No completed outcome"
+      ],
+      "cost": {
+        "logical_tokens": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "noncache_tokens": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "cost_usd": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "elapsed_seconds": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        }
+      }
+    },
+    {
+      "id": "claude:passing-1-b1",
+      "task_id": "passing-1-b1",
+      "arm": "O",
+      "condition": "claude",
+      "repeat": 1,
+      "split": "development",
+      "started": false,
+      "completed": false,
+      "scored": false,
+      "artifact_identity_complete": false,
+      "grading_evidence_complete": false,
+      "score": null,
+      "not_run_attempts": 0,
+      "interrupted_attempts": 0,
+      "missing_stages": [
+        "answer",
+        "proposal",
+        "probe",
+        "compose",
+        "selection",
+        "reflection",
+        "retry",
+        "grading"
+      ],
+      "reasons": [
+        "No completed outcome"
+      ],
+      "cost": {
+        "logical_tokens": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "noncache_tokens": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "cost_usd": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "elapsed_seconds": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        }
+      }
+    },
+    {
+      "id": "claude:superseded-2-b1",
+      "task_id": "superseded-2-b1",
+      "arm": "O",
+      "condition": "claude",
+      "repeat": 1,
+      "split": "development",
+      "started": false,
+      "completed": false,
+      "scored": false,
+      "artifact_identity_complete": false,
+      "grading_evidence_complete": false,
+      "score": null,
+      "not_run_attempts": 0,
+      "interrupted_attempts": 0,
+      "missing_stages": [
+        "answer",
+        "proposal",
+        "probe",
+        "compose",
+        "selection",
+        "reflection",
+        "retry",
+        "grading"
+      ],
+      "reasons": [
+        "No completed outcome"
+      ],
+      "cost": {
+        "logical_tokens": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "noncache_tokens": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "cost_usd": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "elapsed_seconds": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        }
+      }
+    },
+    {
+      "id": "claude:t01",
+      "task_id": "t01",
+      "arm": "O",
+      "condition": "claude",
+      "repeat": 1,
+      "split": "development",
+      "started": true,
+      "completed": false,
+      "scored": false,
+      "artifact_identity_complete": false,
+      "grading_evidence_complete": false,
+      "score": null,
+      "not_run_attempts": 1,
+      "interrupted_attempts": 0,
+      "missing_stages": [
+        "proposal",
+        "probe",
+        "compose",
+        "selection",
+        "reflection",
+        "retry",
+        "grading"
+      ],
+      "reasons": [
+        "Frozen runner reports an uncounted attempt",
+        "No completed outcome"
+      ],
+      "cost": {
+        "logical_tokens": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "noncache_tokens": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "cost_usd": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "elapsed_seconds": {
+          "observed": 4.5,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        }
+      }
+    },
+    {
+      "id": "claude:t04",
+      "task_id": "t04",
+      "arm": "O",
+      "condition": "claude",
+      "repeat": 1,
+      "split": "development",
+      "started": false,
+      "completed": false,
+      "scored": false,
+      "artifact_identity_complete": false,
+      "grading_evidence_complete": false,
+      "score": null,
+      "not_run_attempts": 0,
+      "interrupted_attempts": 0,
+      "missing_stages": [
+        "answer",
+        "proposal",
+        "probe",
+        "compose",
+        "selection",
+        "reflection",
+        "retry",
+        "grading"
+      ],
+      "reasons": [
+        "No completed outcome"
+      ],
+      "cost": {
+        "logical_tokens": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "noncache_tokens": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "cost_usd": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "elapsed_seconds": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        }
+      }
+    },
+    {
+      "id": "claude:t09",
+      "task_id": "t09",
+      "arm": "O",
+      "condition": "claude",
+      "repeat": 1,
+      "split": "development",
+      "started": false,
+      "completed": false,
+      "scored": false,
+      "artifact_identity_complete": false,
+      "grading_evidence_complete": false,
+      "score": null,
+      "not_run_attempts": 0,
+      "interrupted_attempts": 0,
+      "missing_stages": [
+        "answer",
+        "proposal",
+        "probe",
+        "compose",
+        "selection",
+        "reflection",
+        "retry",
+        "grading"
+      ],
+      "reasons": [
+        "No completed outcome"
+      ],
+      "cost": {
+        "logical_tokens": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "noncache_tokens": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "cost_usd": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "elapsed_seconds": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        }
+      }
+    },
+    {
+      "id": "claude:t12",
+      "task_id": "t12",
+      "arm": "O",
+      "condition": "claude",
+      "repeat": 1,
+      "split": "development",
+      "started": false,
+      "completed": false,
+      "scored": false,
+      "artifact_identity_complete": false,
+      "grading_evidence_complete": false,
+      "score": null,
+      "not_run_attempts": 0,
+      "interrupted_attempts": 0,
+      "missing_stages": [
+        "answer",
+        "proposal",
+        "probe",
+        "compose",
+        "selection",
+        "reflection",
+        "retry",
+        "grading"
+      ],
+      "reasons": [
+        "No completed outcome"
+      ],
+      "cost": {
+        "logical_tokens": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "noncache_tokens": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "cost_usd": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "elapsed_seconds": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        }
+      }
+    },
+    {
+      "id": "codex:design-1-c1",
+      "task_id": "design-1-c1",
+      "arm": "O",
+      "condition": "codex",
+      "repeat": 1,
+      "split": "development",
+      "started": true,
+      "completed": true,
+      "scored": true,
+      "artifact_identity_complete": false,
+      "grading_evidence_complete": false,
+      "score": 1.0,
+      "not_run_attempts": 0,
+      "interrupted_attempts": 0,
+      "missing_stages": [
+        "proposal",
+        "probe",
+        "compose",
+        "selection",
+        "reflection",
+        "retry",
+        "grading"
+      ],
+      "reasons": [
+        "No complete grading evidence"
+      ],
+      "cost": {
+        "logical_tokens": {
+          "observed": 1121239,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "noncache_tokens": {
+          "observed": 115159,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "cost_usd": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "elapsed_seconds": {
+          "observed": 298.3,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        }
+      }
+    },
+    {
+      "id": "codex:design-3-c1",
+      "task_id": "design-3-c1",
+      "arm": "O",
+      "condition": "codex",
+      "repeat": 1,
+      "split": "development",
+      "started": true,
+      "completed": true,
+      "scored": true,
+      "artifact_identity_complete": false,
+      "grading_evidence_complete": false,
+      "score": 1.0,
+      "not_run_attempts": 0,
+      "interrupted_attempts": 0,
+      "missing_stages": [
+        "proposal",
+        "probe",
+        "compose",
+        "selection",
+        "reflection",
+        "retry",
+        "grading"
+      ],
+      "reasons": [
+        "No complete grading evidence"
+      ],
+      "cost": {
+        "logical_tokens": {
+          "observed": 889732,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "noncache_tokens": {
+          "observed": 75524,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "cost_usd": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "elapsed_seconds": {
+          "observed": 339.4,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        }
+      }
+    },
+    {
+      "id": "codex:explicit-1-b1",
+      "task_id": "explicit-1-b1",
+      "arm": "O",
+      "condition": "codex",
+      "repeat": 1,
+      "split": "development",
+      "started": true,
+      "completed": true,
+      "scored": true,
+      "artifact_identity_complete": false,
+      "grading_evidence_complete": false,
+      "score": 1.0,
+      "not_run_attempts": 0,
+      "interrupted_attempts": 0,
+      "missing_stages": [
+        "proposal",
+        "probe",
+        "compose",
+        "selection",
+        "reflection",
+        "retry",
+        "grading"
+      ],
+      "reasons": [
+        "No complete grading evidence"
+      ],
+      "cost": {
+        "logical_tokens": {
+          "observed": 373236,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "noncache_tokens": {
+          "observed": 40180,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "cost_usd": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "elapsed_seconds": {
+          "observed": 122.6,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        }
+      }
+    },
+    {
+      "id": "codex:handoff-1-b1",
+      "task_id": "handoff-1-b1",
+      "arm": "O",
+      "condition": "codex",
+      "repeat": 1,
+      "split": "development",
+      "started": true,
+      "completed": true,
+      "scored": true,
+      "artifact_identity_complete": false,
+      "grading_evidence_complete": false,
+      "score": 0.5,
+      "not_run_attempts": 0,
+      "interrupted_attempts": 0,
+      "missing_stages": [
+        "proposal",
+        "probe",
+        "compose",
+        "selection",
+        "reflection",
+        "retry",
+        "grading"
+      ],
+      "reasons": [
+        "No complete grading evidence"
+      ],
+      "cost": {
+        "logical_tokens": {
+          "observed": 410563,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "noncache_tokens": {
+          "observed": 42179,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "cost_usd": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "elapsed_seconds": {
+          "observed": 138.2,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        }
+      }
+    },
+    {
+      "id": "codex:large-2-c1",
+      "task_id": "large-2-c1",
+      "arm": "O",
+      "condition": "codex",
+      "repeat": 1,
+      "split": "development",
+      "started": true,
+      "completed": true,
+      "scored": true,
+      "artifact_identity_complete": false,
+      "grading_evidence_complete": false,
+      "score": 1.0,
+      "not_run_attempts": 0,
+      "interrupted_attempts": 0,
+      "missing_stages": [
+        "proposal",
+        "probe",
+        "compose",
+        "selection",
+        "reflection",
+        "retry",
+        "grading"
+      ],
+      "reasons": [
+        "No complete grading evidence"
+      ],
+      "cost": {
+        "logical_tokens": {
+          "observed": 1278518,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "noncache_tokens": {
+          "observed": 85046,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "cost_usd": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "elapsed_seconds": {
+          "observed": 449.5,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        }
+      }
+    },
+    {
+      "id": "codex:large-3-c2",
+      "task_id": "large-3-c2",
+      "arm": "O",
+      "condition": "codex",
+      "repeat": 1,
+      "split": "development",
+      "started": true,
+      "completed": true,
+      "scored": true,
+      "artifact_identity_complete": false,
+      "grading_evidence_complete": false,
+      "score": 1.0,
+      "not_run_attempts": 0,
+      "interrupted_attempts": 0,
+      "missing_stages": [
+        "proposal",
+        "probe",
+        "compose",
+        "selection",
+        "reflection",
+        "retry",
+        "grading"
+      ],
+      "reasons": [
+        "No complete grading evidence"
+      ],
+      "cost": {
+        "logical_tokens": {
+          "observed": 1023412,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "noncache_tokens": {
+          "observed": 69172,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "cost_usd": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "elapsed_seconds": {
+          "observed": 460.5,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        }
+      }
+    },
+    {
+      "id": "codex:passing-1-b1",
+      "task_id": "passing-1-b1",
+      "arm": "O",
+      "condition": "codex",
+      "repeat": 1,
+      "split": "development",
+      "started": true,
+      "completed": true,
+      "scored": true,
+      "artifact_identity_complete": false,
+      "grading_evidence_complete": false,
+      "score": 0.25,
+      "not_run_attempts": 0,
+      "interrupted_attempts": 0,
+      "missing_stages": [
+        "proposal",
+        "probe",
+        "compose",
+        "selection",
+        "reflection",
+        "retry",
+        "grading"
+      ],
+      "reasons": [
+        "No complete grading evidence"
+      ],
+      "cost": {
+        "logical_tokens": {
+          "observed": 428278,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "noncache_tokens": {
+          "observed": 37238,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "cost_usd": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "elapsed_seconds": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        }
+      }
+    },
+    {
+      "id": "codex:superseded-2-b1",
+      "task_id": "superseded-2-b1",
+      "arm": "O",
+      "condition": "codex",
+      "repeat": 1,
+      "split": "development",
+      "started": true,
+      "completed": true,
+      "scored": true,
+      "artifact_identity_complete": false,
+      "grading_evidence_complete": false,
+      "score": 0.8,
+      "not_run_attempts": 0,
+      "interrupted_attempts": 0,
+      "missing_stages": [
+        "proposal",
+        "probe",
+        "compose",
+        "selection",
+        "reflection",
+        "retry",
+        "grading"
+      ],
+      "reasons": [
+        "No complete grading evidence"
+      ],
+      "cost": {
+        "logical_tokens": {
+          "observed": 534115,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "noncache_tokens": {
+          "observed": 50275,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "cost_usd": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "elapsed_seconds": {
+          "observed": 165.2,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        }
+      }
+    },
+    {
+      "id": "codex:t01",
+      "task_id": "t01",
+      "arm": "O",
+      "condition": "codex",
+      "repeat": 1,
+      "split": "development",
+      "started": true,
+      "completed": true,
+      "scored": true,
+      "artifact_identity_complete": false,
+      "grading_evidence_complete": false,
+      "score": 1.0,
+      "not_run_attempts": 0,
+      "interrupted_attempts": 0,
+      "missing_stages": [
+        "proposal",
+        "probe",
+        "compose",
+        "selection",
+        "reflection",
+        "retry",
+        "grading"
+      ],
+      "reasons": [
+        "No complete grading evidence"
+      ],
+      "cost": {
+        "logical_tokens": {
+          "observed": 196707,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "noncache_tokens": {
+          "observed": 21731,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "cost_usd": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "elapsed_seconds": {
+          "observed": 61.2,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        }
+      }
+    },
+    {
+      "id": "codex:t04",
+      "task_id": "t04",
+      "arm": "O",
+      "condition": "codex",
+      "repeat": 1,
+      "split": "development",
+      "started": true,
+      "completed": true,
+      "scored": true,
+      "artifact_identity_complete": false,
+      "grading_evidence_complete": false,
+      "score": 1.0,
+      "not_run_attempts": 0,
+      "interrupted_attempts": 0,
+      "missing_stages": [
+        "proposal",
+        "probe",
+        "compose",
+        "selection",
+        "reflection",
+        "retry",
+        "grading"
+      ],
+      "reasons": [
+        "No complete grading evidence"
+      ],
+      "cost": {
+        "logical_tokens": {
+          "observed": 150956,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "noncache_tokens": {
+          "observed": 17580,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "cost_usd": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "elapsed_seconds": {
+          "observed": 57.9,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        }
+      }
+    },
+    {
+      "id": "codex:t09",
+      "task_id": "t09",
+      "arm": "O",
+      "condition": "codex",
+      "repeat": 1,
+      "split": "development",
+      "started": true,
+      "completed": true,
+      "scored": true,
+      "artifact_identity_complete": false,
+      "grading_evidence_complete": false,
+      "score": 1.0,
+      "not_run_attempts": 0,
+      "interrupted_attempts": 0,
+      "missing_stages": [
+        "proposal",
+        "probe",
+        "compose",
+        "selection",
+        "reflection",
+        "retry",
+        "grading"
+      ],
+      "reasons": [
+        "No complete grading evidence"
+      ],
+      "cost": {
+        "logical_tokens": {
+          "observed": 220854,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "noncache_tokens": {
+          "observed": 22838,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "cost_usd": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "elapsed_seconds": {
+          "observed": 67.0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        }
+      }
+    },
+    {
+      "id": "codex:t12",
+      "task_id": "t12",
+      "arm": "O",
+      "condition": "codex",
+      "repeat": 1,
+      "split": "development",
+      "started": true,
+      "completed": true,
+      "scored": true,
+      "artifact_identity_complete": false,
+      "grading_evidence_complete": false,
+      "score": 1.0,
+      "not_run_attempts": 0,
+      "interrupted_attempts": 0,
+      "missing_stages": [
+        "proposal",
+        "probe",
+        "compose",
+        "selection",
+        "reflection",
+        "retry",
+        "grading"
+      ],
+      "reasons": [
+        "No complete grading evidence"
+      ],
+      "cost": {
+        "logical_tokens": {
+          "observed": 175047,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "noncache_tokens": {
+          "observed": 19527,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "cost_usd": {
+          "observed": 0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        },
+        "elapsed_seconds": {
+          "observed": 61.0,
+          "complete": false,
+          "unknown_entries": 8,
+          "total": null
+        }
+      }
+    }
+  ],
+  "sources": {
+    "attempts-claude": {
+      "sha256": "e8ff7a55533e3ae1f2585a8af6bd00fd17515e13cdbf39f18e1650e6ce17394c"
+    },
+    "attempts-codex": {
+      "sha256": "721ca47fdf6d2fee3bdd2dce91e6abdade307549459bd800befc46d50f725d59"
+    },
+    "budget": {
+      "sha256": "f39a65c901751c1b4b30bfe4d39d71b2595d0699330d4900e288a5652d43016b"
+    },
+    "claude-meter": {
+      "sha256": "3468b8d141bb9285fddcbcc12886c4b98a6900e33936e7e1eab7e4b20c8e1077"
+    },
+    "fixcheck-manifest": {
+      "sha256": "d1bec84b95004f7d27f9adf6a1acc07ae53be41f45fcbb50943c334f1ea5b80e"
+    },
+    "frozen-FIXCHECK.md": {
+      "sha256": "0e09094942186146bf54fce1e3461009571b5fe627cfed3e3d29de7a25d7a58b"
+    },
+    "frozen-baselines": {
+      "sha256": "5a3b9161ca763d695083f8d547b3f9f60b1051e37edc656c32c8be62574fa59b"
+    },
+    "frozen-fixcheck.py": {
+      "sha256": "de58c02952ba17152a563dee9f674b2add56b155d9d582ba71f1eaaa184d4984"
+    },
+    "frozen-test_fixcheck.py": {
+      "sha256": "f6a0e02db6aa2403ebfe9e8518f5f94c6f02874036ee0517cad92a44c08d1b16"
+    },
+    "frozen-thresholds.py": {
+      "sha256": "b985e1e339408da82ce392d2cc09c51b7aea9a5ae05e858072d7dc05194d37e3"
+    },
+    "rows-codex": {
+      "sha256": "721ca47fdf6d2fee3bdd2dce91e6abdade307549459bd800befc46d50f725d59"
+    },
+    "starts-claude": {
+      "sha256": "7afdad102f31f10d9c2fbee087478d64fd74b7da2fc3a812a2dffc390bb35378"
+    },
+    "starts-codex": {
+      "sha256": "eeb8eb7fe759b77c2802807ab527b31561cd8804b389df773ef55ab72518a791"
+    },
+    "state-binding": {
+      "sha256": "340bb5ca54bdb00efdf3e83537e4a9303f094f690f37a590e16eb5a3e4370ddc"
+    },
+    "units-A": {
+      "sha256": "38a5d55c34b2ce65262c46da6d6746cc0d342be0ee1ac152a2f3bc9ce263e933"
+    },
+    "units-B": {
+      "sha256": "25c437cbf7e3555c42f58bd58f4ef59778849691726ee1116b72ef4fc103fe87"
+    },
+    "units-C": {
+      "sha256": "98c4ff2aaa37b0fc692e9e37119db967a670cda55fae03ab2d068be0621f7630"
+    }
+  },
+  "record_sha256": {
+    "claude:t01:a1": "8e48bb2de09f9c1e046491283a9284a097683140a583d6c75d249469b947067e",
+    "codex:design-1-c1:a1": "1f38db924a60368a49a80bac2ff8e5d16ec7fac15336aff82ef4b4ee2ff509b8",
+    "codex:design-3-c1:a1": "19caf31545a3806188ad54107d7b0c1a84dfa9e97d8cc0ae62e0958580b4cac1",
+    "codex:explicit-1-b1:a1": "a117ab19686636321e5e9ea04b334642ddceb6209fab1c9153b95eb1dffc3f3d",
+    "codex:handoff-1-b1:a1": "33056366be4fdf34509422f383ab90f9022277a7f5add3001bf5111869cb0068",
+    "codex:large-2-c1:a1": "43a26edf688451604f962d1475c9bf85b918cce49240f2c46b9533ac5e1bbacd",
+    "codex:large-3-c2:a1": "26ed10f635aa454cb72f16901ec6807167ec8264d8169e3d24befe5da743688d",
+    "codex:passing-1-b1:a1": "ec764092a5988c5a4db92dc84bc99b36df1b6236f0f6c98bcd65d7a9bca4ee1d",
+    "codex:superseded-2-b1:a1": "f02b680a413742d8ef5c992e67637ea22ba595012af05888521d704269625237",
+    "codex:t01:a1": "7abc6e19b5b842f753986f159af318d0f1eb79cbe5db8fd4700897a7e4028835",
+    "codex:t04:a1": "cc0c0c55bda664cf5d8534f3f0e59d0eb6eeec3a8974567a3607db3b2b9a73b3",
+    "codex:t09:a1": "945596b583e4de2801f4774a68db9503a0062a955d7a5f19e63535ebf9315632",
+    "codex:t12:a1": "58af142a7aa4bcd5cf163ac7a43642b9e0ea918a31c8ddd1dce175217e17691b"
+  },
+  "limitation": "Verified bytes and declared coverage do not authenticate meter/grader independence or prove that no work was omitted. Observed subtotals are not complete study costs. Summed elapsed_seconds are stage durations, not experiment wall-clock time.",
+  "adapter": {
+    "format": "h1-fixcheck",
+    "source_manifest_sha256": "d1bec84b95004f7d27f9adf6a1acc07ae53be41f45fcbb50943c334f1ea5b80e",
+    "candidate_commit": "c2d9852bf8cabf13fd86a4340ab89f69044cae5a",
+    "counted_rows": {
+      "codex": 12,
+      "claude": 0
+    },
+    "claude_meter_observed_tokens": 0,
+    "claude_outstanding_reserve": 0,
+    "recovered_attempts": [
+      {
+        "run_id": "codex:passing-1-b1",
+        "attempt": 1,
+        "logical_tokens": 428278,
+        "row_sha256": "a8d402d140baaef17e0109015ed5b26db0a0b672f964b65e0a612a98b08a38e8",
+        "elapsed_seconds": null,
+        "note": "Preserved recovered attempt total; no new answer or regrading. Missing metadata remains unknown."
+      }
+    ],
+    "limitation": "Runner-reported observations, not independent native-trace replay. All cost completeness remains unverified. Study/reviewer/grading overhead is unknown; no FIXCHECK threshold or effectiveness judgment was run."
+  }
+}
