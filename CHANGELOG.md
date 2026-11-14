@@ -7,8 +7,20 @@ All notable changes to this project will be documented in this file.
 Changes after 2.0.1. They ship with the next version; the owner cuts a new version when enough has
 accumulated (D50).
 
+### Catalogue
+
+- Add `catalog.py decide` for recorded owner dispositions with replacement history; catalogue views,
+  shipped verdicts and install recommendations distinguish the effective owner decision from unchanged
+  tasting evidence. Owner decisions cannot grant default status.
+- TokenEconomizer is removed from the optional list by owner decision D52 (2026-11-15). Its measured
+  tasting is unchanged: the same quality as native on 12 tasks and 1.01 times the tokens, never a
+  measured gain. The shipped verdict list shows the decision beside the measurement.
+
 ### Evaluation methods (D46, D49, D50)
 
+- `docs/FAST_SCREEN.md` gains the first real example of the fast screen (the minimal-change card,
+  NO at the native step) and what it showed: checklist items must be things an answer shows; an item
+  that needs execution belongs to a mechanical check.
 - `scripts/fast_screen.py` (source checkout only) prepares deterministic judge prompts, checks
   answer quotes and applies D50's quick YES/NO intake rule with recorded costs and reopening
   conditions. It runs no model and adds no startup rules; YES permits optional absorption and is

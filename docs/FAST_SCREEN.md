@@ -169,6 +169,40 @@ measurements null. Invalid input prints an error and never a partial verdict.
 | 2 | INCOMPLETE screen: run the missing food arms |
 | 1 | Invalid or unreadable input; no usable result |
 
+## A real example (2026-11-15)
+
+The first use on real answers was the minimal-change card for `oaw-improve`. The answers already
+existed (three tasks, one run per task and arm, Codex CLI 0.167.2 with gpt-6.1-sol); the judge and
+the verdict were run on 2026-11-15, with the choices written down before the first judge call.
+Record: `records` branch, `records/v2.0.1-experiments/JEV/example-card/EXAMPLE.md`.
+
+| Step | What was done | Result |
+|---|---|---|
+| A: static | The card is one Markdown reference file: no code, dependency or licence question | clear |
+| Checklist | Per task, the items an answer should show: 8 + 8 + 5 | 21 items |
+| B: native | The arm without the card. Claude Haiku 5.5 at low effort labelled each answer; every `yes` carried a quote that `labels` found in the answer | 19 of 21 met, 0.905 |
+| Verdict | 0.905 is at least 0.90 | **NO at B**; reopen with a task the arm without the card fails |
+
+The judge used 78,587 logical tokens and 53 seconds over six requests. The food arm was not judged,
+because the rule stops at B.
+
+Two things this example showed:
+
+- Both items the judge marked `no` were "supplies an applicable, schema-valid proposal". The
+  mechanical checker of those tasks had applied the patch and validated it, and found the item met.
+  A judge that must quote a passage cannot show that something applies or runs. **Write checklist
+  items as things an answer shows; decide anything that needs execution with a mechanical check, not
+  with the judge.**
+- The result was one item from the threshold. With one more `no` the screen would have gone on to the
+  food arm, and the six runs together (2,515,716 logical tokens) would have exceeded the 2,000,000
+  budget: a NO as too expensive to screen. Tasks of this size leave little room in the budget.
+
+The example reaches no YES. Applying the rule to the recorded numbers of EGM's 2026-11-06 self-test
+shows a case the rule turns down on price alone: native found 12 of 16 planted defects, EGM 16 of 16
+with none lost, at about 28 times the tokens, so step C says NO because the ratio exceeds 1.5. The
+owner kept EGM as an explicit switch (D52). Whether the rule should say "optional, with the ratio
+stated" for such a case is not decided; the rule is unchanged.
+
 ## Meaning and limits
 
 YES means absorbed as optional, available on explicit call. It is not evidence

@@ -18,8 +18,10 @@
 - **YES** 是吸收成可選用（明確呼叫才用）。要變成預設，仍然要走下面的流程和[量測規則](EVAL_PROTOCOL.md)。
 - **NO** 是現在不吸收，不是判定它沒用。紀錄留下原因和重開條件。
 - 判定模型不做放行類的判斷：同意、授權、安全、隔離仍然由程式或 owner 決定。
+- **檢查清單只寫「答案裡看得到的東西」。** 要執行才知道的項目（patch 套不套得上、測試過不過）交給程式檢查，不交給判定模型：
+  第一個實例裡，判定模型答「否」的兩項都是這一種，而程式實際套過、是可以的。
 
-用法、判定模型第一次校準的數字與限制見 [FAST_SCREEN.md](FAST_SCREEN.md)。
+用法、第一個實例（最小改動對照卡，結果 NO）、判定模型第一次校準的數字與限制見 [FAST_SCREEN.md](FAST_SCREEN.md)。
 
 ## 一頁版（2026-11-13 整理，D32–D45）
 
@@ -76,6 +78,9 @@ D38 的能力型門檻是草案：成品通過數增加、閒置啟動 token 不
 - **自動**：原型 v0 已經自己會做，不用你啟動。
 - **自動（Claude 接手）**：由 Claude 做（試吃、重跑、重建、記錄），不用你啟動（D28）；沒有排程，在下一次 Claude 工作階段處理。
 - **需要你**：要 owner 決定或啟動。系統不會替你決定。
+- An owner decision (`catalog.py decide`) may remove or keep a food against the measured rule outcome.
+  It is shown as an owner decision with its reference ID, alongside the unchanged measured result;
+  it never makes a food a default. Replacing a decision preserves its history.
 - **部分自動**：一部分自動，其餘需要你或還在規劃中。
 - **規劃中**：屬於這個流程，但還沒自動化。畫面上畫出來、標「規劃中」、沒有按鈕，也不會被當成已經做過。
 
