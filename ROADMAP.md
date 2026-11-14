@@ -40,7 +40,7 @@ on Python 3.10.12; the final six-job CI and three review rounds are complete.
 Follow-ups are tracked in #21, #22 and #23; see the
 [final validation](docs/validation/v2.0.1-final.md).
 
-## Evaluation accounting: owner-authorized U1 work
+## Evaluation accounting (U1): next version
 
 On 2026-11-13 the owner explicitly moved Harness2 U1 accounting work forward
 (D46), on `codex/harness2-evaluation-u1`, based on release-polish 5af21f6.
@@ -48,7 +48,11 @@ It adds an optional read-only ledger/report/comparator bridge, not a model
 experiment or a change to the frozen FIXCHECK candidate. Review and validation
 are tracked in [U1 validation](docs/validation/harness2-u1.md); usage and evidence
 limits are in [evaluation accounting](docs/EVAL_LEDGER.md). U2/U3 model-facing
-changes still need separate behavior evidence. Release integration is pending.
+changes still need separate behavior evidence. On 2026-11-14 the owner asked whether the
+release carries the project's evaluation methods (D49) and then chose normal version
+iteration (D50): 2.0.1 ships as reviewed, and the ledger together with the overview of
+the four measurement methods in [the measurement rules](docs/EVAL_PROTOCOL.md) goes
+into the next version. The 2.0.1 line is already merged into this branch.
 
 ## Next: after the release
 

@@ -2,7 +2,8 @@
 
 Date: 2026-11-13. Branch: `codex/harness2-evaluation-u1`, based on release-polish
 `5af21f61d1d30d844ead3169081532842d3fe375`. The owner explicitly authorized this
-method-engineering work before release (D46). Integration/release is pending.
+method-engineering work before release (D46). It ships with the version after 2.0.1 (D50); see
+"Merged with the 2.0.1 line" at the end.
 
 Implemented: optional stdlib evaluation accounting, JSON/Markdown reports,
 read-only historical FIXCHECK import, and a bridge to existing `eval_stats`.
@@ -111,3 +112,16 @@ findings in the Markdown output, both fixed with a test):
 Measured on Linux x86_64, `/usr/bin/python3` 3.10.12: the two ledger test files, 33 tests, pass. The
 full gate result for the commit that carries this change is recorded in its commit message. These are
 synthetic fixtures; they are not model measurements and establish no benefit.
+
+## Merged with the 2.0.1 line — 2026-11-14
+
+The ledger ships with the version after 2.0.1 (D49, D50). The 2.0.1 release line (`036a3e6`) was
+merged into this branch; the only conflict was a ROADMAP heading. No ledger
+source or test changed in the merge.
+
+Measured by the lead on Linux x86_64, `/usr/bin/python3` 3.10.12, at the merge: the full offline
+gate passed **9/9 checks, 751 tests, 0 skipped** (718 tests of the release line plus the 33 ledger
+tests). The ledger had not run on macOS or Windows before this merge; the six-job CI runs on the
+pull request that carries this branch. The earlier gate snapshot
+[harness2-u1-gate.json](harness2-u1-gate.json) binds the sources of the pre-merge branch and is
+kept as history.

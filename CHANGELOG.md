@@ -4,6 +4,30 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+Changes after 2.0.1. They ship with the next version; the owner cuts a new version when enough has
+accumulated (D50).
+
+### Evaluation methods (D46, D49, D50)
+
+- `scripts/eval_ledger.py` (source checkout only) reports the planned coverage of a harness
+  comparison, the cost of failed and retried attempts, and the study overhead that is still
+  unmeasured. Missing evidence stays missing and an unscored outcome is not a zero. `compare` passes
+  the paired test runs to the existing `eval_stats` comparator (pilot and development runs stay in
+  the cost total and are reported as left out) and refuses incomplete execution usage, self-reported
+  or unknown grading, and two arms with the same harness identity. It runs no model, is not
+  installed into projects and adds no startup rules.
+  [Usage and limits](docs/EVAL_LEDGER.md) · [validation](docs/validation/harness2-u1.md).
+  It is an independent implementation informed by the ledger and report concepts of
+  [Harness2 at 6868817](https://github.com/google-research/harness2/tree/6868817518876de8fd170c6a8354daca273b6191);
+  no upstream runtime is bundled.
+- [`docs/EVAL_PROTOCOL.md`](docs/EVAL_PROTOCOL.md) now opens with the four ways OAW has measured a
+  harness or a skill (tasting, installed against not installed, native calibration before paying for
+  an expensive arm, evaluation accounting), which question each answers, and the rules they share.
+- This is method engineering. It establishes no model-quality or token-saving benefit, and the
+  whole-toolkit result is unchanged: H1 is undetermined.
+- Merged with the 2.0.1 line for the next version. At the merge, the Linux gate passed 9/9 checks
+  with 751 tests and 0 skips on Python 3.10.12.
+
 ## [2.0.1] — 2026-11-14
 
 2.0.1 is the first release of the V2 line: it contains the unreleased 2.0.0

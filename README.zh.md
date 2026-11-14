@@ -269,6 +269,12 @@ python3 scripts/harness_check.py
 python3 scripts/sync_examples.py --write
 ```
 
+要評估一個 harness 或一個 skill，先看[量測規則](docs/EVAL_PROTOCOL.md)開頭的四種量法。其中[評估帳本](docs/EVAL_LEDGER.md)從原始碼 checkout 執行：列出計畫內每一次作答有沒有跑、失敗的花費、還沒量到的研究成本，並可以接到既有的配對比較。它不呼叫模型，也不會安裝到你的專案裡：
+
+```bash
+python3 scripts/eval_ledger.py report bundle.json --format markdown
+```
+
 見 [CONTRIBUTING](CONTRIBUTING.md) 和 [CHANGELOG](CHANGELOG.md)。
 
 ---
