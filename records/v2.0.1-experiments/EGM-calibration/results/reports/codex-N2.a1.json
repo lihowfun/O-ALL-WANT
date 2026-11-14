@@ -1,0 +1,53 @@
+{
+ "completed": true,
+ "findings": [
+  {
+   "location": "docs/plans/v2.0.1-execution.md:96,233-234,300,305",
+   "claim": "12 題各跑一次，仍使用固定題目的題內配對 bootstrap 與合併題內變異下限產生判定區間。",
+   "evidence": "計畫第 96、305 行指定題內 bootstrap，第 233-234、300 行指定每題一次。evidence/validation-2026-11-07-RESULT.md:34-44 區分固定題目與隨機題目，並指出題內分數相同會使區間退化；第 127 行的保護依賴合併題內變異。",
+   "rationale": "每個題目／組別只有一筆作答，題內重抽樣只能抽回原值，也沒有重複觀測可估計新題的題內變異。原樣搬用這套統計不能得到有效的區間，會使 X1 效率上界、X2 增益下界及等效判定失去依據。需要指定與單次作答相容的抽樣單位及變異來源，或保留足夠重複。",
+   "severity": "high"
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:174-175,192",
+   "claim": "支援安裝 hook、MCP、背景程式，沿用既有 builds／restore 即可建立還原點並達成逐位元組移除還原。",
+   "evidence": "scripts/catalog.py:1374-1375,1407-1428 明確排除 .mcp.json、.claude/settings*.json、.codex/ 等設定；第 1431-1450 行的快照只收允許路徑，第 1644-1646 行的還原刪除也受相同限制。計畫第 192 行要求帶 hook 的 fixture 與 byte 相同的還原。",
+   "rationale": "現有快照不保存這些啟動設定，還原也不會撤銷其修改。直接沿用無法兌現移除承諾，可能留下仍會啟動的 hook 或 MCP 註冊。W3 必須明訂這些設定的備份、所有權、局部撤銷與使用者後續修改保護，並納入驗收。",
+   "severity": "high"
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:95-96,274,305-306",
+   "claim": "加入四類判定及成本區間後，仍由既有帳本引擎驗證並記錄新判定。",
+   "evidence": "scripts/catalog_core.py:1847-1854 只定義 better／same／worse；第 2084-2098 行只接受單一 cost_ratio 且限制 cheaper 的組合；第 2062-2070、2105-2109 行按點估計強制計算結果。evidence/validation-2026-11-07-RESULT.md:129 要求區間下界超過 1.5 才算確定太貴。",
+   "rationale": "W0 只安排統計與文件，沒有安排帳本判定契約的更新。現有引擎無法保留等效與未定的區別，也不能依成本區間決策；例如 same、成本 1.6、區間 1.3–1.8 仍被強制排掉，而新規格只能稱成本未定。新結果會被拒收或被迫壓回舊判法，需要同步設計資料格式、判定驗證及舊紀錄相容性。",
+   "severity": "medium"
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:83,108",
+   "claim": "唯一政策入口改為做完改動才呼叫 oaw-review，但 deep 必須先寫計畫、審查修正，再實作。",
+   "evidence": "計畫第 83 行明訂做完改動才呼叫，第 108 行將實作放在計畫審查之後。evidence/DECISIONS-D21-D31.md:165-170 規定 deep 先進 plan mode 並以改動分類；scripts/oaw_mode.py:402-403 已支援以預定路徑分類。",
+   "rationale": "依這條政策執行時，首次分類發生在實作完成後，無法讓計畫審查先修正深度任務的設計。這會將承諾的實作前把關變成事後補計畫。入口需要在動工前分類，完成改動後再核對分類與執行程式碼審查。",
+   "severity": "medium"
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:233,274",
+   "claim": "X1 只要品質不差且呼叫次數比上界低於 0.8，就可進預設，不要求 token 成本通過。",
+   "evidence": "evidence/DECISIONS-D21-D31.md:136-145 以 token 成本及品質決定預設／可選／排掉；計畫第 274 行只提出成本改看區間，沒有取消成本限制。scripts/catalog_core.py:2093-2098 更明確要求 cheaper 必須同時滿足成本比低於 1。",
+   "rationale": "呼叫次數分支可以讓 token 確定超過 1.5 倍的地圖進預設；按既有決策，品質較好但很貴應可選，品質相同但很貴應排掉。這是 X1 判定規則與沿用決策的直接衝突。應加入 token 成本條件，或明確提出這項成本政策變更。",
+   "severity": "medium"
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:37",
+   "claim": "三個地圖都減少步數，呼叫次數為原生的 0.23–0.65 倍。",
+   "evidence": "evidence/codemap-comparison-2026-11-06.md:28,32,36,40 的 graphify 比值依序為 0.88、0.76、1.00、1.04；OAW 在第 36 行為 1.04。evidence/validation-2026-11-07-RESULT.md:108-114 的 0.23 只屬於 VS Code 上的 codegraph。",
+   "rationale": "所列範圍沒有涵蓋 graphify 的任何模型條件，也省略 OAW 未減少步數的條件，將部分條件的收益寫成三者共同結果。這使吸收設計所依據的效率基線失真；應按產品、模型及 repo 列出適用結果。",
+   "severity": "low"
+  }
+ ],
+ "uncertainties": [
+  "Q1–Q3 在 docs/plans/v2.0.1-execution.md:272-276 明列待決；所附來源沒有後續同意紀錄。D32、自動啟動 EGM 與 X2 超額預算因此仍是提案，不能當成已生效決策；提出這些選項本身不是違規。",
+  "不中斷 session 提升 effort、Codex 原生端到端流程，以及 doctor 如何確認實際載入，仍待實測（計畫第 120-124、199 行）。檔案或結構通過不足以證明原生發現能力；X1–X5 與 Windows 驗收也尚無本計畫的完成結果。",
+  "舊作答沿用只寫 CLI／模型版本相同（計畫第 212、234 行）。沿用前仍需確認提示、effort、限制與來源版本匹配；原 EGM 自測使用 high（evidence/egm-selftest-2026-11-06-RESULT.md:10），而 deep 的既有決策要求最高 effort（evidence/DECISIONS-D21-D31.md:165）。目前不能認定將來一定會混用不匹配資料。",
+  "使用者命令在已安裝專案或框架 checkout 執行，以及管理功能如何配送，尚未明確。現行 scripts/oaw.py:277-285 不會把 oaw.py 或 catalog 配送到目標專案；若 W3 預期在目標專案直接執行第 157-160 行命令，需補上配送設計。"
+ ]
+}

@@ -1,0 +1,41 @@
+{
+ "completed": true,
+ "findings": [
+  {
+   "location": "docs/plans/v2.0.1-execution.md:173-175,192",
+   "claim": "安裝 hook、MCP 等元件後，沿用 catalog 的 builds／restore 即可還原；移除後受管檔案逐 byte 相同即可驗收。",
+   "evidence": "scripts/catalog.py:1374-1375,1407-1428 明確排除 .mcp.json、.claude/settings*.json 與主機設定；1431-1451 的快照只收允許的安裝層，1620-1646 的還原亦限於該層。計畫第 174 行允許勾選安裝會自動執行的元件。",
+   "rationale": "現有還原範圍不包含註冊 hook／MCP 所需的設定。直接沿用它，移除 skill 後仍可能留下有效的執行設定，而第 192 行只比較受管檔案仍可通過。必須把這些設定的變更、原值與移除責任納入安裝收據及還原設計，才能成立所承諾的還原效果。",
+   "severity": "P2"
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:95-96,305-306",
+   "claim": "採用四類判定、成本區間與未定不等於相同的新規則，再用現有 record-tasting 記錄並由引擎檢查一致性。",
+   "evidence": "計畫第 77、274 行要求區分未定並採成本區間。scripts/catalog_core.py:1847-1850 只接受 better／same／worse；2062-2070 仍用成本點估計 1.5 判定；2084-2088 不接受新的品質值或區間欄位，2105-2109 強制舊判定。scripts/catalog.py:1315-1322 直接呼叫此驗證。evidence/validation-2026-11-07-RESULT.md:123-129 將成本區間列為待同意的新規則。",
+   "rationale": "工作項目只安排共用統計與新 SOP，沒有銜接帳本的判定契約。例如品質未定、成本比 1.6、區間 [1.3,1.9] 的可選用結果，現有引擎會拒收；壓成 same 又會依點估計強制排掉。需要同步設計記錄格式、判定與舊紀錄相容方式，否則新尺無法走完宣稱的記錄流程。",
+   "severity": "P2"
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:83,108",
+   "claim": "唯一保留的政策入口是「做完改動用 oaw-review」，但 deep 必須先寫計畫、審完計畫，再實作。",
+   "evidence": "計畫第 41、83 行以政策補足單靠 skill description 的不足；第 108 行明列計畫→EGM→實作的順序。evidence/DECISIONS-D21-D31.md:165-170 要求 deep 先進入規劃，且自動依改動判定。scripts/oaw_mode.py:144-161,400-403 已支援用預計路徑判定，並不限於完成後的 diff。",
+   "rationale": "照這條政策執行時，強制入口出現在實作之後，無法保證 deep 的計畫審查先於實作；事後再寫計畫會失去阻止錯誤設計落地的作用。需要在動工前加入可執行的深度判定入口，並將完成後的程式碼審查接在其後。",
+   "severity": "P2"
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:37",
+   "claim": "三個地圖都少走步，工具呼叫是原生的 0.23–0.65 倍。",
+   "evidence": "evidence/codemap-comparison-2026-11-06.md:28,32,36,40 的 graphify 比值依次為 0.88、0.76、1.00、1.04；OAW 在 Opus 4.8 也是 1.04。evidence/validation-2026-11-07-RESULT.md:108-115 的 0.23 僅屬於 VS Code／codegraph 條件。",
+   "rationale": "摘要把特定組合的最佳結果寫成三個地圖共同的量測範圍，掩蓋了沒有減少甚至增加呼叫的條件，誇大選擇吸收機制的效率依據。應依產品與條件分開陳述，不能以此範圍概括三者。",
+   "severity": "P3"
+  }
+ ],
+ "uncertainties": [
+  "X1 的「兩家都判不差」尚未定義為統計等價、非劣性，或只是未判變差（docs/plans/v2.0.1-execution.md:233）。若包含未定，效率通過時能否進預設便與第 77 行衝突；應在登記時明確定義，目前不能斷言將發生錯誤升級。",
+  "地圖的「完整」究竟只表示索引結果沒有被輸出上限截斷，還是宣稱呼叫關係完整，尚不清楚（計畫:138,148）。現有 callers 保留 resolved 標記及未知接收者警告（scripts/code_index.py:1502-1504,1542-1549,1733-1734），且會略過大型檔案（946-949）。新格式應保留這些限制；0.95 的抽樣召回率不能單獨保證全庫完整。",
+  "② 的管理專用安裝模式尚無具體封裝方式（計畫:170）。目前即使 skills=[]，仍產生 AGENTS.md、CLAUDE.md 與輔助腳本（scripts/oaw.py:270-280）；catalog 的還原又要求既有安裝 manifest（scripts/catalog.py:1364-1371）。需釐清新專案與既有 OAW 專案如何只保留管理功能，不能僅將空配方視為已滿足。",
+  "沿用原生組或舊案的條件只寫 CLI／模型版本相同（計畫:212,234）。提示、effort、來源、工具或設定若有變動，仍會失去配對條件；現有原則要求匹配環境與來源（docs/plans/v2.0.0-execution.md:45-48；evidence/DECISIONS-D21-D31.md:89-90）。是否能沿用須逐案核對，不能直接判定舊作答已失效。",
+  "Q1–Q3 仍是待決提案，證據沒有顯示已核准 D32、自動 EGM 或新增預算（計畫:272-276；evidence/validation-2026-11-07-RESULT.md:123）。這些變更本身不應當成違反現行決策；實作時需依決定落實分支。",
+  "effort 切換與主機實際發現 skill 的能力仍待驗證（計畫:120-124,199）。現有 doctor 明列 enabled 為 UNKNOWN（scripts/oaw.py:794-796）；既有 Linux 量測不能替代此次主機端及 Windows 驗收（evidence/DECISIONS-D21-D31.md:179-181）。X1–X5 與新增 E2E 都是計畫中的驗收，尚無通過證據。"
+ ]
+}

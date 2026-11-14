@@ -1,0 +1,102 @@
+{
+ "completed": true,
+ "findings": [
+  {
+   "location": "docs/plans/v2.0.1-execution.md:229, :244, :276",
+   "claim": "D13 is a per-experiment 10M cap, only X2 exceeds it, and cutting X2 from 9 to 8 new cases keeps it within 10M.",
+   "evidence": "evidence/validation-2026-11-07-RESULT.md:138-139 ('食物（D13 每份 10M）… EGM 自測：累計 9,583,824'); evidence/DECISIONS-D21-D31.md:94,127 ('D13 caps per food stay', 'over a cap the loop stops and asks'); evidence/egm-selftest-2026-11-06-RESULT.md:73 and validation:87 (E costs 1.07–1.43M per run).",
+   "rationale": "The sources define D13 as a cumulative cap per food. EGM has already used 9.58M of its 10M, so about 0.42M is left. X2's roughly 11M of EGM runs would bring EGM to about 20.6M, double its cap, not 11M against 10M. The fallback also fails: 8 new E runs at the observed 1.43M upper bound cost 11.4M on their own. Q3 asks the owner to approve a budget on a wrong premise.",
+   "severity": "high"
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:37",
+   "claim": "All three maps reduced steps, with tool calls at 0.23–0.65x native.",
+   "evidence": "evidence/codemap-comparison-2026-11-06.md:28-40 (graphify 76–104%, OAW 104% on Opus 4.8), :6 ('graphify 兩樣都沒贏'), :57 ('OAW…在 Opus 4.8 上沒有少走步').",
+   "rationale": "graphify never went below 0.76x and was at or above 1.0x in two conditions. OAW was 1.04x on Opus 4.8. The quoted range leaves out the conditions where these maps did not save steps. Treating them as 'efficiency tools' rests on that misstatement.",
+   "severity": "medium"
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:131",
+   "claim": "The plan absorbs codegraph's 'one-step symbol query' (tool calls 0.23x) and drops its prompt injection.",
+   "evidence": "evidence/codemap-comparison-2026-11-06.md:52-53 (on ERPNext the prompt hook injected about 8k tokens and the agent never called codegraph's tools); validation:109,115 (V8 setup with hook and MCP; 0.23x).",
+   "rationale": "On ERPNext, codegraph's step savings came from the injected context, which the plan explicitly rejects. V8 did not separate the effect of the query tool from the effect of the hook. The 0.23x figure therefore does not show that a query-only rebuild will deliver it.",
+   "severity": "low"
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:233 (X1 pass rule)",
+   "claim": "The map becomes a default when quality is 'not worse' and the upper bound of the tool-call ratio is below 0.8, OR the upper bound of the token ratio is below 1.0.",
+   "evidence": "evidence/DECISIONS-D21-D31.md:140-143 (D29: cost is the token median ratio; 'same' becomes default only if cheaper; same at ≤1.5x is optional); codemap-comparison:27,35,39 (OAW token use was 117%, 140% and 127%), :71 (recommendation: do not make 'check the map first' a default rule).",
+   "rationale": "Under the tool-call branch, a map that uses more tokens than native (as OAW did in three of four conditions) would become a default and be auto-invoked. D29 rates that outcome 'optional'. Q1/D32 does not change the cost axis, so the rule conflicts with the current accepted decision.",
+   "severity": "medium"
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:44, :300",
+   "claim": "The resolution of 4 questions × 3 runs is poor, which is why the plan switches to 12 × 1.",
+   "evidence": "evidence/validation-2026-11-07-RESULT.md:16 ('覆蓋率的解析度不差'), :41-42 (4×3 ≈0.10 when questions are treated as random; 12×1 = 0.089).",
+   "rationale": "V1 found coverage resolution adequate. Moving to 12×1 improves the detectable difference only from 0.10 to 0.089. The measured problems were zero-variance intervals, ceiling questions and grader reliability. The stated rationale misreports the evidence and overstates what X1 and X2 can resolve.",
+   "severity": "low"
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:34",
+   "claim": "Under EGM, unsupported accusations are 0, and Opus and Codex agree.",
+   "evidence": "evidence/validation-2026-11-07-RESULT.md:71 (EGM detection, unsupported accusations Opus 1 / Codex 7); egm-selftest:17 (0 from a single Opus grader).",
+   "rationale": "'0' comes from single-grader scoring. Cross-family regrading found 7 unsupported accusations by Codex, and the evidence does not attribute them by arm. X2's pass condition ('no more unsupported accusations') relies on this baseline.",
+   "severity": "low"
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:234 (X2 cases), :300",
+   "claim": "X2 reuses orders, events and clean as 3 of its 12 cases.",
+   "evidence": "evidence/validation-2026-11-07-RESULT.md:52 (orders: all arms hit everything, a ceiling), :82 (orders excluded from V5 for this reason); plan:300 and validation:126 (ceiling questions must be replaced).",
+   "rationale": "orders cannot discriminate between E, S and N, so X2 has 8 seeded cases that can show a difference, not 9. The plan's own SOP requires replacing ceiling items.",
+   "severity": "low"
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:108, :234, :275",
+   "claim": "If E beats N, deep runs EGM automatically. No cost or frequency term is attached.",
+   "evidence": "evidence/validation-2026-11-07-RESULT.md:102 (56% of code-touching commits are classified deep); scripts/oaw_mode.py:36,231-237 (any AGENTS.md/CLAUDE.md or templates/ edit is deep); egm-selftest:67 ('規則裡沒有答案' on whether 28x is worth it); DECISIONS:161 (D31's intent: not 'EGM審半天' every time).",
+   "rationale": "With the current triggers, auto-EGM would spend about 1.1M tokens and about 8 minutes on more than half of code changes, and on any one-line policy edit in a user project. Neither the X2 rule nor Q2 shows the owner this per-project cost. The owner's 'worth it if correctness is high' is left unquantified.",
+   "severity": "medium"
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:115",
+   "claim": "Deep calls 'the 9 installed egm agents'.",
+   "evidence": "templates/.claude/agents/ (9 files, including egm-bootstrap-orchestrator); vendor/egm/skills/egm-review/SKILL.md:263-270 (review uses egm-synthesizer plus reviewer personas); egm-selftest:50-51.",
+   "rationale": "egm-bootstrap-orchestrator belongs to egm-bootstrap, not to review. The review flow uses 8 agents.",
+   "severity": "low"
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:198, :235, :241-244, :255",
+   "claim": "The budget totals cover the planned work.",
+   "evidence": "W4 (plan:198) runs X3 before and after the AGENTS.md cut; X3 is budgeted once (1.5M). plan:241 charges 1.2M of Claude tokens for an EGM implementation review, but W6 (plan:219) specifies a cross-family code review. Opus blind grading (plan:227) is not costed; validation:143 records 625,960 Claude grading tokens for one round.",
+   "rationale": "The Claude total of about 23M omits a second X3 run and Opus grading. It also charges the implementation review to the wrong family/tool. The real spend is higher than the figure the owner approves.",
+   "severity": "low"
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:217",
+   "claim": "Migrate adds the new skills and scripts to 2.0.0 projects.",
+   "evidence": "scripts/oaw.py:352-357 (an explicit recipe is preserved on re-init/migrate), :177-179 (only BUNDLED_SKILLS names are accepted).",
+   "rationale": "Under current behavior, projects with an explicit skill selection will not receive oaw-review or oaw-codemap. The plan does not say whether migrate should override an explicit recipe or leave it alone.",
+   "severity": "low"
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:291",
+   "claim": "'At most 3 C-level questions at a time' comes from D21 and D28.",
+   "evidence": "evidence/DECISIONS-D21-D31.md:56-57 (D24-2: 'at most 3 questions per round'); D21 (:6-32) and D28 (:110-130) set no such limit.",
+   "rationale": "The SOP cites the wrong source decision.",
+   "severity": "low"
+  }
+ ],
+ "uncertainties": [
+  "'D32' is not a recorded decision. It names the six rules recommended at validation:123-129. Parts of the plan (lines 23, 44, 222) treat it as adopted before Q1 is answered.",
+  "X1 requires both graders to judge quality 'not worse', while the common rule (plan:227) counts false statements only when both families agree. It is unclear whether a single family's 'worse' blocks a default.",
+  "The OAW map's Haiku cell already showed more false statements in 2 of 3 gradings (validation:29). Under X1's 'any cell worse' rule this is a likely outcome, but the risk table lists only 'undecided'.",
+  "egm-review is disable-model-invocation and the vendored runtime is hash-pinned (scripts/oaw.py:244-265). oaw-review would have to orchestrate the upstream flow itself (preset, GoldfishContext prompts). X2's E arm may not exercise that path; the self-test used the official plugin.",
+  "Whether an agent can enter plan mode by itself, not just raise effort, is not covered by the W1 spike.",
+  "The self-test found that removing EGM leaves the runtime and the AGENTS.md text in place (egm-selftest:59-63). Current code (scripts/oaw.py:310, :719-720) suggests partial handling. W3's byte-identical remove check uses only fixture skills and would not confirm this case.",
+  "Option ② ('no OAW policy text') would require changes, because install always writes AGENTS.md and CLAUDE.md (scripts/oaw.py:277-279). The plan does not list that change.",
+  "CI already runs on PRs into main (.github/workflows/test.yml:4-7). The intent of 'CI also runs claude/oaw-2 PRs' is unclear given D22's one-branch layout.",
+  "Windows host verification may need owner access, which conflicts with 'the owner appears only twice'.",
+  "With one run per case and 3 clean cases, X2's 'lower bound > 0' requirement may lack power.",
+  "codemap-comparison:59 attributes the largest losses from truncated subgraphs to Opus 4.8, not Haiku as plan:38 says."
+ ]
+}

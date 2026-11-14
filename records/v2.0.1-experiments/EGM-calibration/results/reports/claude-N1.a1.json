@@ -1,0 +1,123 @@
+{
+ "completed": true,
+ "findings": [
+  {
+   "location": "docs/plans/v2.0.1-execution.md:89,164,169,173-175",
+   "claim": "oaw.py add/list/remove is a thin wrapper around existing catalog add/taste/builds/restore and can install user skills, hooks and MCP servers with consent, including same-name skills ('use theirs').",
+   "evidence": "scripts/catalog.py:2519-2522 (add only registers and tastes); scripts/catalog_core.py:1242-1248 (skills with scripts held, 'never run on this machine'), 1259-1263 (skill text held until behavior A/B), 1268-1270 ('OAW never installs hooks or MCP servers'), 1276-1281 (dependency manifests excreted, 'final'); scripts/catalog.py:1374-1375 (.mcp.json and .codex/ are denied paths), 1869-1870 (name collision with a bundled skill refused).",
+   "rationale": "The current engine refuses most of what W3 promises. Without new install paths and reversed engine rules, which W3 does not list as work, the W3 E2E fixtures (hook skill, OAW same-name skill) and option ① 'use theirs' cannot pass.",
+   "severity": "high"
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:170",
+   "claim": "Option ② installs no OAW skills or policy text, with OAW acting only as manager (list, remove, restore).",
+   "evidence": "scripts/catalog.py:1364-1371 (every catalog action needs .oaw/install.json from oaw.py init); scripts/oaw.py:745,774-778 (doctor FAILs without AGENTS.md, CLAUDE.md, context_hub.py, oaw_common.py).",
+   "rationale": "Option ② needs a new install profile and doctor rules. As written, the manager either cannot run or reports the project as unhealthy.",
+   "severity": "medium"
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:159,170,192",
+   "claim": "remove restores the pre-add state byte for byte, and OAW/EGM can be left out.",
+   "evidence": "evidence/egm-selftest-2026-11-06-RESULT.md:58-63: both removal routes leave .oaw/integrations/egm (66 files) and the AGENTS.md EGM line, with the note 'this needs a separate fix'.",
+   "rationale": "No work item schedules this known removal defect, but option ② and the byte-identical remove criterion depend on it.",
+   "severity": "medium"
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:37",
+   "claim": "All three maps reduce steps: tool calls 0.23-0.65x native.",
+   "evidence": "evidence/codemap-comparison-2026-11-06.md:28,32,36,40 (graphify 88%,76%,100%,104%; OAW 104% on Opus 4.8); :6 'graphify won neither'; 0.23x is codegraph on VS Code (validation-2026-11-07-RESULT.md:113).",
+   "rationale": "The range is wrong. Graphify did not reliably save steps, and the OAW map did not save steps on Opus 4.8. This overstates the case for a map as an efficiency tool.",
+   "severity": "medium"
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:34",
+   "claim": "EGM: Opus and Codex agree and there are 0 unfounded accusations.",
+   "evidence": "evidence/validation-2026-11-07-RESULT.md:71 (EGM detection, unfounded accusations Opus 1 / Codex 7); the 0 comes from the single-grader self-test (egm-selftest:17,66).",
+   "rationale": "Under the cross-family rule the plan adopts, the 0 is not established. X2's 'no more unfounded accusations' gate starts from an overstated baseline.",
+   "severity": "low"
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:234",
+   "claim": "X2 reuses orders, events and clean among its 12 cases.",
+   "evidence": "evidence/validation-2026-11-07-RESULT.md:52 (orders: all arms at ceiling), :53 (clean measures false positives only); plan's own rules at :274 and :300 say to replace ceiling items.",
+   "rationale": "Keeping a ceiling case breaks the plan's own D32 rule. It also cuts the discriminating defect cases from 8 to 7, which weakens the E>N interval test.",
+   "severity": "medium"
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:234",
+   "claim": "Old-case answers are reused when CLI and model version match.",
+   "evidence": "evidence/egm-selftest-2026-11-06-RESULT.md:17 (E arm was the official egm plugin), :10,:66 (one grader, 2 repeats); S arm never existed.",
+   "rationale": "X2's E arm is 2.0.1's oaw-review deep path, not the plugin, so it is a different arm. S must be run on the old cases anyway. The reuse saving is not real, and the old answers measure a different arm.",
+   "severity": "medium"
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:229,244,276",
+   "claim": "D13 is 'at most 10M per experiment', so only X2 (11M) exceeds it, and cutting to 8 new cases stays within the cap.",
+   "evidence": "evidence/validation-2026-11-07-RESULT.md:138-141 lists D13 as a per-food cumulative cap: EGM self-test cumulative 9,583,824, codegraph 7,634,182.",
+   "rationale": "If D13 is cumulative per food, EGM has about 0.4M left. Q3 then misstates how far over the cap X2 goes, and the owner is asked to approve a smaller exception than the one they are actually granting.",
+   "severity": "medium"
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:198,235,244",
+   "claim": "W4 runs X3 before and after AGENTS.md deletions to confirm adherence is unchanged; the X3 budget is 1.5M; X3 picks the shorter rule set when both groups are 'equally good'.",
+   "evidence": "Total at :244 counts X3 once; X3 has 6 scenarios x 1 run per model (:235); principle 6 at :77 says inconclusive is not 'equally good'.",
+   "rationale": "Two extra X3 runs (about 3M) are not in the 23M budget. Six scenarios cannot confirm 'no change'. The tie rule contradicts principle 6.",
+   "severity": "medium"
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:233",
+   "claim": "X1 promotes the map when quality is 'not worse' and the tool-call ratio upper bound is below 0.8.",
+   "evidence": "evidence/DECISIONS-D21-D31.md:62-63 (D24.5: tool calls must drop by at least 30%, i.e. 0.7); plan :77 (undecided is not promoted).",
+   "rationale": "The plan loosens the accepted D24 threshold without saying so. 'Not worse' is undefined for undecided quality. Undecided quality with passing efficiency matches no branch, or promotes against principle 6.",
+   "severity": "medium"
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:83,275",
+   "claim": "Only the two suggest/show lines change in AGENTS.md; EGM auto-runs in deep after Q2.",
+   "evidence": "templates/AGENTS.md:5-6,12-14 and example/minimal-project/AGENTS.md:5,8: 'EGM keeps its explicit invocation policy', 'Run the full EGM review only when `suggest` says deep'.",
+   "rationale": "If those lines are left as they are, the policy contradicts auto-run and refers to the retired `suggest` flow. The model would see conflicting rules.",
+   "severity": "medium"
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:55,108,115",
+   "claim": "oaw-review runs the upstream egm-review flow automatically with no owner action.",
+   "evidence": "templates/.agents/skills/egm-review/SKILL.md:5,16 (disable-model-invocation; 'Preserve all upstream ... human checkpoint requirements'); vendor/egm/skills/egm-review/SKILL.md:77-79,110-113,213-233 (preset gate when Step omitted, checkpoint gates, egm-resolve applies 'approved edits').",
+   "rationale": "Without a specified non-interactive preset (Step=uninterrupted) and a resolve policy, the deep path stops for user input. G1 is then not met.",
+   "severity": "medium"
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:76,108",
+   "claim": "Second opinions switch model family; same-family review is used only when no other family is available.",
+   "evidence": "evidence/egm-selftest-2026-11-06-RESULT.md:50 (all EGM subagents are Opus 5.5 on Claude).",
+   "rationale": "On a Claude host with Codex available, deep's plan review is same-family EGM. This contradicts principle 5 inside the same plan.",
+   "severity": "low"
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:60,217",
+   "claim": "Release scope includes migration 2.0.0 -> 2.0.1 only.",
+   "evidence": "VERSION.json:5-6 and plan :3 (2.0.0 never released); CHANGELOG.md:337,426 (last release 1.1.0); docs/UPGRADING.md:31 (v1 migration path).",
+   "rationale": "Real users upgrade from 1.1.0. G6 does not verify the 1.1.0 -> 2.0.1 path for the first V2 release.",
+   "severity": "medium"
+  },
+  {
+   "location": "docs/plans/v2.0.1-execution.md:241,250-255,275",
+   "claim": "2.4M for EGM plan and implementation review; stage costs; Q2 can be turned off per project.",
+   "evidence": "Stage rows sum to about 21.2M against 23M; W6 (:219) uses cross-family code review, not EGM, for implementation; scripts/oaw_mode.py:308-311 has no setting, only checks file presence.",
+   "rationale": "The budget items and the review method do not match. The opt-out setting promised in Q2 has no work item.",
+   "severity": "low"
+  }
+ ],
+ "uncertainties": [
+  "Deep asks the agent to enter plan mode itself and then run EGM, which writes report files. Whether the host lets an agent enter plan mode, and still write files while in it, cannot be confirmed from the repository.",
+  "The measured EGM gain came entirely from Stage 9 (egm-selftest:42-45), which runs only when the document has an Implementation Plan heading (vendor egm-review SKILL.md:168-189). The plan does not require agent-written plans to have that heading.",
+  "X2 measures review of design documents. Most deep triggers are harness or code changes (V7: 56% of code commits). Whether X2's results carry over to those changes is open.",
+  "Auto-running EGM on about 56% of code commits at about 1.1M tokens each has an ongoing cost the plan does not estimate. The owner's request accepts the cost only if accuracy is high.",
+  "Q3 fallback: 8 new cases at 1.07-1.43M per E run (validation:87) leaves almost no room under 10M.",
+  "Map cache in the user's cache directory: if HOME is itself on NFS, the NFS clock-skew problem the plan wants to avoid can come back.",
+  "X5 needs `suggest` recorded for every commit, but the plan adds no hook and retires the `suggest` policy lines. How the recording happens is unspecified.",
+  "In X2, if E beats N and S also matches E cheaply, both branches apply and the plan does not say which wins.",
+  "Section 4 makes oaw-codemap auto-invocable unless X1 fails, while G3 enables it only after X1 passes and X1's 'worse' branch keeps the CLI only. The default before X1 runs is ambiguous.",
+  "Whether a custom Claude agent (oaw-goldfish) can be kept from reading CLAUDE.md is a host-behavior question not answerable from the repository.",
+  "Opus grading tokens for X1 and X2 are not itemized in the Claude budget."
+ ]
+}

@@ -1,0 +1,29 @@
+{
+ "batch": 1,
+ "reports": {
+  "R001": {
+   "cell": "codex",
+   "arm": "N2",
+   "attempt_id": "codex-N2.a1",
+   "original_report_sha256": "f1b37da99b84b7546f38b42a91a9a9ceb4ced0c6667cd0a9eb7eabef0c6a5661",
+   "anonymous_sha256": "5aaba920c8e28b94149a5dfd0690ce03aed4ac6cb9a55a9b201da8c27bdae0c9",
+   "path_rewrite_count": 0
+  },
+  "R002": {
+   "cell": "claude",
+   "arm": "N1",
+   "attempt_id": "claude-N1.a1",
+   "original_report_sha256": "7b61978deb8d5b1eaac1a20b97b8512367bc27b30a5fb33724b550debaf61d7c",
+   "anonymous_sha256": "326630d2e2c84f956d0055e2e7f7ef0e4fad1ffeec3e237d11f545f149ded84f",
+   "path_rewrite_count": 0
+  },
+  "R003": {
+   "cell": "codex",
+   "arm": "N1",
+   "attempt_id": "codex-N1.a1",
+   "original_report_sha256": "34d6e970951745aca6cdb252a53405fc2343728f734a5d5e9adfaa8cd2caf649",
+   "anonymous_sha256": "2563eddde513c3868d976ce753883bac1ebe53764be0660d8f86b03f868a9427",
+   "path_rewrite_count": 0
+  }
+ }
+}

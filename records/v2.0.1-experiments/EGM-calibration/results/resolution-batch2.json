@@ -1,0 +1,231 @@
+{
+  "schema_version": 1,
+  "input_grade_sha256": [
+    "ea5595c18e93aa70761f51261fa4c853ea1913fdadfffb893b836957590b76fd",
+    "a90939a0a82235b1507eb7cf87bf033378e780c905d6a3471e7dd5da7eb82f62"
+  ],
+  "blind_pack_sha256": "a3849ce46e108429957821cd5e66a875fec725e93af62ad9d4960c3f492b0df2",
+  "unblinding_occurred": false,
+  "rounds": 1,
+  "changes": [
+    {
+      "scope": "item",
+      "report_id": "R102",
+      "id": "K05",
+      "label": "mention-only",
+      "reason": "The plan-mode uncertainty meets the key's mention-only criterion but does not identify the conflict between post-change invocation and pre-implementation plan review in packet/docs/plans/v2.0.1-execution.md:83,108. / The report explicitly mentions plan mode and deep triggers, which the key's mention_only_if names as mention-only, but it never identifies that invoking oaw-review after changes is too late for pre-implementation plan review.",
+      "report_evidence": [
+        "uncertainties[4]: Whether an agent can enter plan mode by itself, not just raise effort, is not covered by the W1 spike.",
+        "U05: Whether an agent can enter plan mode by itself, not just raise effort, is not covered by the W1 spike.",
+        "F008.evidence: scripts/oaw_mode.py:36,231-237 (any AGENTS.md/CLAUDE.md or templates/ edit is deep)"
+      ],
+      "accepted_by": [
+        "grader-claude-a3849ce46e10.a1",
+        "grader-codex-a3849ce46e10.a1"
+      ]
+    },
+    {
+      "scope": "item",
+      "report_id": "R102",
+      "id": "K18",
+      "label": "absent",
+      "reason": "The removal concern is limited to allowlisted EGM runtime and policy files under packet/scripts/catalog.py:1407-1428, which the key explicitly treats as absent, and never raises excluded host/MCP settings or shared-configuration rollback. / U06 concerns a named EGM removal residue (the .oaw EGM runtime and AGENTS.md text), not hook/MCP or host settings excluded from restore points, so it falls under the key's rule that a remark clearly about non-excluded files is absent.",
+      "report_evidence": [
+        "uncertainties[5]: The self-test found that removing EGM leaves the runtime and the AGENTS.md text in place (egm-selftest:59-63). Current code (scripts/oaw.py:310, :719-720) suggests partial handling. W3's byte-identical remove check uses only fixture skills and would not confirm this case."
+      ],
+      "accepted_by": [
+        "grader-claude-a3849ce46e10.a1",
+        "grader-codex-a3849ce46e10.a1"
+      ]
+    },
+    {
+      "scope": "item",
+      "report_id": "R103",
+      "id": "K29",
+      "label": "mention-only",
+      "reason": "The passage notes only the pending X2 over-cap proposal already raised in packet/docs/plans/v2.0.1-execution.md:244,276, satisfying the key's mention-only criterion without identifying an omitted cost or demonstrating that the fallback lacks budget headroom. / The report notes only that X2's over-cap budget is a pending proposal the draft already raises, which the key's mention_only_if assigns to mention-only, and it names no omitted required cost or cost-range counterexample.",
+      "report_evidence": [
+        "uncertainties[0]: D32、自動啟動 EGM 與 X2 超額預算因此仍是提案，不能當成已生效決策；提出這些選項本身不是違規。"
+      ],
+      "accepted_by": [
+        "grader-claude-a3849ce46e10.a1",
+        "grader-codex-a3849ce46e10.a1"
+      ]
+    },
+    {
+      "scope": "item",
+      "report_id": "R104",
+      "id": "K05",
+      "label": "mention-only",
+      "reason": "The deep-flow plan-mode uncertainty meets the key's mention-only criterion but does not identify the post-change versus pre-implementation review conflict in packet/docs/plans/v2.0.1-execution.md:83,108. / The report mentions plan mode in the deep flow, which the key's mention_only_if names as mention-only, but only as a host-capability uncertainty and without identifying the after-versus-before implementation timing conflict.",
+      "report_evidence": [
+        "uncertainties[0]: Deep asks the agent to enter plan mode itself and then run EGM, which writes report files. Whether the host lets an agent enter plan mode, and still write files while in it, cannot be confirmed from the repository.",
+        "U01: Deep asks the agent to enter plan mode itself and then run EGM, which writes report files. Whether the host lets an agent enter plan mode, and still write files while in it, cannot be confirmed from the repository."
+      ],
+      "accepted_by": [
+        "grader-claude-a3849ce46e10.a1",
+        "grader-codex-a3849ce46e10.a1"
+      ]
+    }
+  ],
+  "responses": [
+    [
+      {
+        "report_id": "R102",
+        "id": "K05",
+        "action": "change",
+        "label": "mention-only",
+        "report_evidence": [
+          "uncertainties[4]: Whether an agent can enter plan mode by itself, not just raise effort, is not covered by the W1 spike."
+        ],
+        "reason": "The plan-mode uncertainty meets the key's mention-only criterion but does not identify the conflict between post-change invocation and pre-implementation plan review in packet/docs/plans/v2.0.1-execution.md:83,108."
+      },
+      {
+        "report_id": "R102",
+        "id": "K18",
+        "action": "keep",
+        "label": "absent",
+        "report_evidence": [
+          "uncertainties[5]: The self-test found that removing EGM leaves the runtime and the AGENTS.md text in place (egm-selftest:59-63). Current code (scripts/oaw.py:310, :719-720) suggests partial handling. W3's byte-identical remove check uses only fixture skills and would not confirm this case."
+        ],
+        "reason": "The removal concern is limited to allowlisted EGM runtime and policy files under packet/scripts/catalog.py:1407-1428, which the key explicitly treats as absent, and never raises excluded host/MCP settings or shared-configuration rollback."
+      },
+      {
+        "report_id": "R103",
+        "id": "K29",
+        "action": "change",
+        "label": "mention-only",
+        "report_evidence": [
+          "uncertainties[0]: D32、自動啟動 EGM 與 X2 超額預算因此仍是提案，不能當成已生效決策；提出這些選項本身不是違規。"
+        ],
+        "reason": "The passage notes only the pending X2 over-cap proposal already raised in packet/docs/plans/v2.0.1-execution.md:244,276, satisfying the key's mention-only criterion without identifying an omitted cost or demonstrating that the fallback lacks budget headroom."
+      },
+      {
+        "report_id": "R104",
+        "id": "K05",
+        "action": "change",
+        "label": "mention-only",
+        "report_evidence": [
+          "uncertainties[0]: Deep asks the agent to enter plan mode itself and then run EGM, which writes report files. Whether the host lets an agent enter plan mode, and still write files while in it, cannot be confirmed from the repository."
+        ],
+        "reason": "The deep-flow plan-mode uncertainty meets the key's mention-only criterion but does not identify the post-change versus pre-implementation review conflict in packet/docs/plans/v2.0.1-execution.md:83,108."
+      }
+    ],
+    [
+      {
+        "report_id": "R102",
+        "id": "K05",
+        "action": "keep",
+        "label": "mention-only",
+        "report_evidence": [
+          "U05: Whether an agent can enter plan mode by itself, not just raise effort, is not covered by the W1 spike.",
+          "F008.evidence: scripts/oaw_mode.py:36,231-237 (any AGENTS.md/CLAUDE.md or templates/ edit is deep)"
+        ],
+        "reason": "The report explicitly mentions plan mode and deep triggers, which the key's mention_only_if names as mention-only, but it never identifies that invoking oaw-review after changes is too late for pre-implementation plan review."
+      },
+      {
+        "report_id": "R102",
+        "id": "K18",
+        "action": "change",
+        "label": "absent",
+        "report_evidence": [],
+        "reason": "U06 concerns a named EGM removal residue (the .oaw EGM runtime and AGENTS.md text), not hook/MCP or host settings excluded from restore points, so it falls under the key's rule that a remark clearly about non-excluded files is absent."
+      },
+      {
+        "report_id": "R103",
+        "id": "K29",
+        "action": "keep",
+        "label": "mention-only",
+        "report_evidence": [
+          "uncertainties[0]: D32、自動啟動 EGM 與 X2 超額預算因此仍是提案，不能當成已生效決策；提出這些選項本身不是違規。"
+        ],
+        "reason": "The report notes only that X2's over-cap budget is a pending proposal the draft already raises, which the key's mention_only_if assigns to mention-only, and it names no omitted required cost or cost-range counterexample."
+      },
+      {
+        "report_id": "R104",
+        "id": "K05",
+        "action": "keep",
+        "label": "mention-only",
+        "report_evidence": [
+          "U01: Deep asks the agent to enter plan mode itself and then run EGM, which writes report files. Whether the host lets an agent enter plan mode, and still write files while in it, cannot be confirmed from the repository."
+        ],
+        "reason": "The report mentions plan mode in the deep flow, which the key's mention_only_if names as mention-only, but only as a host-capability uncertainty and without identifying the after-versus-before implementation timing conflict."
+      }
+    ]
+  ],
+  "disagreements": [
+    {
+      "report_id": "R102",
+      "id": "K05",
+      "positions": {
+        "openai": {
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report does not identify the conflict between post-change invocation and prerequisite plan review."
+        },
+        "anthropic": {
+          "label": "mention-only",
+          "report_evidence": [
+            "U05: Whether an agent can enter plan mode by itself, not just raise effort, is not covered by the W1 spike.",
+            "F008.evidence: scripts/oaw_mode.py:36,231-237 (any AGENTS.md/CLAUDE.md or templates/ edit is deep)"
+          ],
+          "reason": "The report mentions plan mode and deep triggers, which meets mention_only_if, but never identifies that invoking oaw-review after changes is too late for pre-implementation plan review."
+        }
+      }
+    },
+    {
+      "report_id": "R102",
+      "id": "K18",
+      "positions": {
+        "openai": {
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report's removal concern concerns allowlisted EGM runtime and policy files, not excluded hook/MCP settings or shared-configuration rollback."
+        },
+        "anthropic": {
+          "label": "mention-only",
+          "report_evidence": [
+            "U06: The self-test found that removing EGM leaves the runtime and the AGENTS.md text in place (egm-selftest:59-63). Current code (scripts/oaw.py:310, :719-720) suggests partial handling. W3's byte-identical remove check uses only fixture skills and would not confirm this case."
+          ],
+          "reason": "The report questions whether removal really restores state against the byte-identical promise, but does not identify that catalog restore points exclude the host settings and MCP configuration written by the installer."
+        }
+      }
+    },
+    {
+      "report_id": "R103",
+      "id": "K29",
+      "positions": {
+        "openai": {
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report notes pending budget approval but identifies no required omitted expense or cost-range counterexample."
+        },
+        "anthropic": {
+          "label": "mention-only",
+          "report_evidence": [
+            "uncertainties[0]: D32、自動啟動 EGM 與 X2 超額預算因此仍是提案，不能當成已生效決策；提出這些選項本身不是違規。"
+          ],
+          "reason": "It notes only that the X2 over-cap budget is a pending open question the draft already raises, with no concrete omitted cost and no showing that the eight-case fallback exceeds 10M."
+        }
+      }
+    },
+    {
+      "report_id": "R104",
+      "id": "K05",
+      "positions": {
+        "openai": {
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report's policy-conflict finding does not identify the after-implementation versus before-implementation review timing conflict."
+        },
+        "anthropic": {
+          "label": "mention-only",
+          "report_evidence": [
+            "U01: Deep asks the agent to enter plan mode itself and then run EGM, which writes report files. Whether the host lets an agent enter plan mode, and still write files while in it, cannot be confirmed from the repository."
+          ],
+          "reason": "The report mentions plan mode in the deep flow only as a host-capability uncertainty and does not identify that invoking review after changes is too late for the pre-implementation plan review."
+        }
+      }
+    }
+  ]
+}

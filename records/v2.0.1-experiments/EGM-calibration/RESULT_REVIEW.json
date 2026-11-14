@@ -1,0 +1,1098 @@
+{
+  "verdict": "FAIL",
+  "criteria": {
+    "decisions": "fail",
+    "descriptive": "fail",
+    "costs": "pass",
+    "corrections": "fail",
+    "wording": "fail",
+    "privacy": "pass"
+  },
+  "findings": [
+    {
+      "id": "F1",
+      "severity": "high",
+      "where": "RESULT.md:88-91；lead/egmcal_lead_wrap3.py:65-168；PREREG.md:127-147,256-260",
+      "what": "第三項 correction 不是修復違反 PREREG 的 script，而是事後放寬 grader retry 與 metering 規則。因此最終兩格不能以 preregistered R1 定案，應為 no conclusion / NC1。",
+      "evidence": "PREREG 只允許 native 的一次 fully metered transport/service retry，明確排除 quota，並要求 failed grading request 保留用量後 stop, without redraw；缺少 final modelUsage 應為 incomplete metering。實際 R103 為 HTTP 429，final usage counters 全為 0、modelUsage={}，無有效評分答案，shared-cost row 的 metering_complete 與 subagents_included 都是 false。wrapper 重發為 R103.reissue1，並將該 row 在記憶體中改為兩旗標 true，讓 launch guard 與 final accounting 通過。零用量的實際證據充分，但預先登記沒有這個例外；FIXCHECK precedent 也不是本研究的 preregistered rule。completed R101/R102 確實沿用，實際只重發一次；程式 n+=1 的迴圈則沒有設定總重發次數上限。它不直接修改 key、label 或 decision table，卻改變優先級最高的 NC1 條件。",
+      "fix": "將這項如實列為 post-data protocol change，移除「只是修正與 PREREG 矛盾的 script」的暗示；依 frozen metering 規則將最終兩格列為 NC1，保留現有標籤與 R1 計算作描述，勿當作 preregistered final outcome。"
+    },
+    {
+      "id": "F2",
+      "severity": "high",
+      "where": "RESULT.md:87,90；PREREG.md:231-242；lead/egmcal_lead_wrap2.py:35-62；cal_grade.py:75-96",
+      "what": "第二項 correction 改變明文的 blind-pack rejection rule，且放寬範圍超過該分支名稱；不能宣稱是 frozen script 違反 preregistered text 的合法修復。",
+      "evidence": "PREREG 明列拒絕 codex/claude/N1/N2 作為 path components；frozen cal_grade.check_blind_paths 正是實作此規則。claude/oaw-2 確實是 frozen plan 第 3、216 行的 branch，Claude N2 uncertainties 也確實引用它，所以 RESULT 的誤擋原因與「不更正無法打包」都正確。然而 wrapper 刪除全部四種 bare-word 檢查：獨立執行兩個 check_blind_paths，claude/oaw-2、codex/other、N1/other、N2/other 都由 rejected 變 allowed；codex-N1、claude-N2.a1 仍 rejected。這是 general rule change，並非只豁免已核實的 branch。保留 technical text 的要求與 path-component 禁令在這份資料上相衝突，不能事後默默選擇較寬鬆者。",
+      "fix": "明列為 post-data blinding-procedure deviation，不稱為單純恢復 PREREG 的實作。嚴格依 frozen packing rule，batch 2 無法成立、Claude 為 NC1；此項本身不推翻已完成的 batch-1 Codex R1。最終全域 metering 的 NC1 另見 F1。"
+    },
+    {
+      "id": "F3",
+      "severity": "medium",
+      "where": "RESULT.md:82,86-91（correction 撰寫／評分／解盲先後的斷言）",
+      "what": "現存 file times 無法獨立驗證「在評分或解盲前寫好並記下雜湊」。第三項發生時，第二批已有評分產出；應把「未讀」與「尚未產生」分開。這不是發現已解盲或已讀標籤的證據。",
+      "evidence": "所有時間以下為 UTC。private state 的 batch-1 resolution mtime=2026-11-13 22:44:33，decision=22:46:50；現存 dispatch score wrapper 的 mtime/ctime=23:14:45。batch-2 Codex aggregate=23:05:54，Claude R101/R102 responses=23:06:54/23:08:21；現存 wrap2=23:22:12，wrap3=2026-11-14 03:14:18；batch-2 final decision=02:50:33。公開 lead 副本的三個 mtime/ctime 都更晚，為03:20:34。現存各 wrapper 的 SHA-256 與 RESULT 所列前綴完全相符，但這些是現存版本的最後修改／metadata-change 時間，不能證明原始撰寫或 hash 記錄的時間。map mtime 只顯示 packing 寫檔，不能顯示首次讀取或 unblinding。",
+      "fix": "將順序改列為 lead 的 custody attestation，註明現存 file times 無法證明；將第三項「第二批任何標籤都還沒有」改成「已有部分評分產出，據 lead 陳述尚未讀取／解盲」，不要把產出前與讀取前混為一談。"
+    },
+    {
+      "id": "F4",
+      "severity": "medium",
+      "where": "RESULT.md:48-49；results/grades/grade-56a72221753f-codex.json 的 R002.unsupported_claims[U02]",
+      "what": "unsupported-claim 總數正確，但省略 severe false alarm 的結果，對評估後續 funding 的讀者有實質影響。",
+      "evidence": "第一次獨立評分：Claude N1 4 條，其中 U02 的 severe=true；Claude N2 1 條 severe=false；Codex N1/N2 都 0。U02 把 packet 中已修復的 EGM runtime/policy removal 當成仍阻擋 option-2/removal acceptance 的問題。第二批同一 Claude N1 被列 5 條，但 severe 全為 false。PREREG 要求描述性列出 unsupported claims/severe alarms；RESULT 只報 4→5，未交代 1→0 的 severity 差異。這只是單一 grader 的評估，不是已確立的品質因果或 EGM verdict。",
+      "fix": "補述第一次 Claude N1 有 1 條 severe false alarm、第二批同報告為 0，其他報告為 0；仍明確歸屬 Codex-family grader，並保留 raw assessments，勿當成雙 grader 共識。"
+    }
+  ],
+  "recomputed": {
+    "claude": {
+      "primary_denominator": 9,
+      "reports": {
+        "N1": {
+          "primary_labels_before_reconciliation": {
+            "codex": {
+              "K02": "detected",
+              "K05": "absent",
+              "K07": "absent",
+              "K09": "absent",
+              "K14": "absent",
+              "K15": "detected",
+              "K18": "mention-only",
+              "K29": "detected",
+              "K30": "absent"
+            },
+            "claude": {
+              "K02": "detected",
+              "K05": "mention-only",
+              "K07": "absent",
+              "K09": "mention-only",
+              "K14": "absent",
+              "K15": "detected",
+              "K18": "mention-only",
+              "K29": "detected",
+              "K30": "absent"
+            }
+          },
+          "primary_labels_after_reconciliation": {
+            "codex": {
+              "K02": "detected",
+              "K05": "mention-only",
+              "K07": "absent",
+              "K09": "mention-only",
+              "K14": "absent",
+              "K15": "detected",
+              "K18": "mention-only",
+              "K29": "detected",
+              "K30": "absent"
+            },
+            "claude": {
+              "K02": "detected",
+              "K05": "mention-only",
+              "K07": "absent",
+              "K09": "mention-only",
+              "K14": "absent",
+              "K15": "detected",
+              "K18": "mention-only",
+              "K29": "detected",
+              "K30": "absent"
+            }
+          },
+          "detected_primary_by_grader": {
+            "codex": [
+              "K02",
+              "K15",
+              "K29"
+            ],
+            "claude": [
+              "K02",
+              "K15",
+              "K29"
+            ]
+          }
+        },
+        "N2": {
+          "primary_labels_before_reconciliation": {
+            "codex": {
+              "K02": "detected",
+              "K05": "absent",
+              "K07": "absent",
+              "K09": "mention-only",
+              "K14": "absent",
+              "K15": "absent",
+              "K18": "absent",
+              "K29": "detected",
+              "K30": "absent"
+            },
+            "claude": {
+              "K02": "detected",
+              "K05": "mention-only",
+              "K07": "absent",
+              "K09": "mention-only",
+              "K14": "absent",
+              "K15": "absent",
+              "K18": "mention-only",
+              "K29": "detected",
+              "K30": "absent"
+            }
+          },
+          "primary_labels_after_reconciliation": {
+            "codex": {
+              "K02": "detected",
+              "K05": "mention-only",
+              "K07": "absent",
+              "K09": "mention-only",
+              "K14": "absent",
+              "K15": "absent",
+              "K18": "absent",
+              "K29": "detected",
+              "K30": "absent"
+            },
+            "claude": {
+              "K02": "detected",
+              "K05": "mention-only",
+              "K07": "absent",
+              "K09": "mention-only",
+              "K14": "absent",
+              "K15": "absent",
+              "K18": "absent",
+              "K29": "detected",
+              "K30": "absent"
+            }
+          },
+          "detected_primary_by_grader": {
+            "codex": [
+              "K02",
+              "K29"
+            ],
+            "claude": [
+              "K02",
+              "K29"
+            ]
+          }
+        }
+      },
+      "batch1_before": {
+        "outcome_given_complete_evidence": "NC4",
+        "detected_union_by_grader": {
+          "codex": [
+            "K02",
+            "K15",
+            "K29"
+          ],
+          "claude": [
+            "K02",
+            "K15",
+            "K29"
+          ]
+        },
+        "both_reports_both_graders_absent": []
+      },
+      "batch1_after": {
+        "outcome_given_complete_evidence": "NC4",
+        "detected_union_by_grader": {
+          "codex": [
+            "K02",
+            "K15",
+            "K29"
+          ],
+          "claude": [
+            "K02",
+            "K15",
+            "K29"
+          ]
+        },
+        "both_reports_both_graders_absent": []
+      },
+      "final_before": {
+        "outcome_given_complete_evidence": "R1",
+        "detected_union_by_grader": {
+          "codex": [
+            "K02",
+            "K15",
+            "K29"
+          ],
+          "claude": [
+            "K02",
+            "K15",
+            "K29"
+          ]
+        },
+        "both_reports_both_graders_absent": [
+          "K07",
+          "K14",
+          "K30"
+        ]
+      },
+      "final_after": {
+        "outcome_given_complete_evidence": "R1",
+        "detected_union_by_grader": {
+          "codex": [
+            "K02",
+            "K15",
+            "K29"
+          ],
+          "claude": [
+            "K02",
+            "K15",
+            "K29"
+          ]
+        },
+        "both_reports_both_graders_absent": [
+          "K07",
+          "K14",
+          "K30"
+        ]
+      },
+      "run_to_run": {
+        "same_primary_labels": 7,
+        "intersection": [
+          "K02",
+          "K29"
+        ],
+        "union": [
+          "K02",
+          "K15",
+          "K29"
+        ],
+        "jaccard": 0.6666666666666666
+      },
+      "three_six_split": {
+        "catalog": {
+          "denominator": 3,
+          "N1": 1,
+          "N2": 0,
+          "union": 1
+        },
+        "other": {
+          "denominator": 6,
+          "N1": 2,
+          "N2": 2,
+          "union": 2
+        }
+      },
+      "secondary_detected": {
+        "N1": {
+          "codex": [
+            "K06",
+            "K16",
+            "K22",
+            "K23",
+            "K26"
+          ],
+          "claude": [
+            "K06",
+            "K16",
+            "K22",
+            "K23",
+            "K26"
+          ]
+        },
+        "N2": {
+          "codex": [
+            "K03",
+            "K16",
+            "K21",
+            "K26"
+          ],
+          "claude": [
+            "K03",
+            "K16",
+            "K21",
+            "K26"
+          ]
+        }
+      },
+      "unsupported_by_codex_grader": {
+        "batch1-N1": {
+          "count": 4,
+          "severe": 1
+        },
+        "batch2-N2": {
+          "count": 1,
+          "severe": 0
+        },
+        "batch2-N1": {
+          "count": 5,
+          "severe": 0
+        }
+      },
+      "test_retest": {
+        "N1": {
+          "codex": {
+            "primary_same": 9,
+            "all_same": 29
+          },
+          "claude": {
+            "primary_same": 8,
+            "all_same": 28
+          }
+        }
+      },
+      "costs": {
+        "native": {
+          "N1": {
+            "logical": 1745930,
+            "noncache": 155456,
+            "seconds": 286.783
+          },
+          "N2": {
+            "logical": 1568970,
+            "noncache": 132283,
+            "seconds": 249.411
+          }
+        },
+        "native_mean_exact": {
+          "logical": 1657450.0,
+          "noncache": 143869.5
+        },
+        "curation": {
+          "logical": 3398755,
+          "noncache": 359512,
+          "seconds": 972.138,
+          "records": 1
+        },
+        "grading": {
+          "logical": 243863,
+          "noncache": 227713,
+          "seconds": 538.234,
+          "records": 8
+        },
+        "reconciliation": {
+          "logical": 69835,
+          "noncache": 63375,
+          "seconds": 49.303,
+          "records": 2
+        },
+        "preflight_in_final_root": {
+          "logical": 56546,
+          "noncache": 8568
+        },
+        "final_root_logical_total": 7083899,
+        "outside_root_included": 124069,
+        "reported_stage_total": 7207968,
+        "preflight_included": 180615,
+        "native_to_historical_egm_ratio": 0.08968786760621623,
+        "funding_projection": 31732231.900000002,
+        "historical_cost_scenario": 26188171
+      },
+      "strict_final_outcome": {
+        "outcome": "no conclusion",
+        "rule": "NC1",
+        "reason": "F1：全域 shared grading row 依 frozen 規則為 incomplete metering；R1 僅為假定接納 post-data corrections 後的 label-based result。"
+      },
+      "comparison_with_RESULT": "逐項 9×2 labels、detected sets、union、all-four-absent items、reconciliation 前後 label result 均一致。正式 decision 的程序有效性不通過，見 F1/F2。",
+      "secondary_denominator": 21,
+      "test_retest_denominators": {
+        "primary": 9,
+        "all": 30
+      },
+      "audit": {
+        "method": "以 review_recompute.py 直接讀四個 raw grades、兩個 resolution、兩個 blind maps 與 KEY，獨立實作 label rules；未 import 或呼叫 study scorer。只另外執行 freeze_tools.py --check，及抽出 path-guard function 驗證 correction 範圍。",
+        "frozen_package": {
+          "check": "pass",
+          "manifest_files": 38,
+          "freeze_sha256": "469e78bd8a7e475c40e17c799ed7cdc9d299b8daba3cd859bf8cee56856c21b9",
+          "key_sha256": "6d7497e90b9baf7f872bfd04c4750fee77a523e69169fd840d48df02d8e1f99e",
+          "note": "hash check 不涵蓋套件外 wrappers 的程序正當性，也不證明 custody 時序。"
+        },
+        "corrections": {
+          "score": {
+            "sha256": "2d220cec36a624c7411ce588a16cd71e36bcf0f9971a9ba9832d684620b99ec0",
+            "judgement": "legitimate fix",
+            "description_accurate": true,
+            "effect": "只重算 isolation_complete_for_recorded_work，排除 preflight rows；保留 native、unsettled intents 與 shared rows。logical/noncache totals、metering flags、labels、key、decision table 不變。",
+            "basis": "PREREG 明文要求 preflight 成功覆寫 source.py 並偵測到，因此 probe 原始 isolation_complete=false 是預期結果；preflight 各 17 個 gate checks 皆 pass，native source isolation 皆 true。將這個預期 probe mutation 當成正式資料 isolation failure，確實與預先登記的 probe 設計矛盾。",
+            "without_correction": "frozen-as-is 的 batch1 兩格均 NC1；results/decision-batch1.frozen-as-is.json 與此吻合。",
+            "beyond_description": "沒有發現額外變更；修正適用所有 preflight rows，不刪成本或完整性稽核。",
+            "direct_label_key_or_table_change": false
+          },
+          "wrap2": {
+            "sha256": "ff834023d299cc8630ee344b5611381cec6007503d5461a55664ed00ef18c565",
+            "judgement": "post-data protocol change；嚴格 frozen protocol 下 Claude 應為 no conclusion",
+            "description_accurate": "誤擋 branch 的原因及仍擋 state root/attempt IDs/cell-arm tokens 正確；未充分說明它與 PREREG path-component 禁令衝突。",
+            "effect": "沿用 score correction，另全面移除 bare codex/claude/N1/N2 tokens 的拒絕檢查。",
+            "without_correction": "實際 Claude N2 report 含 claude/oaw-2，frozen guard 拒絕，batch2 無法打包。",
+            "beyond_description": "不只允許 claude/oaw-2，也允許其他 bare cell/arm path components；不是窄範圍白名單。",
+            "direct_label_key_or_table_change": false
+          },
+          "wrap3": {
+            "sha256": "e1c836aa67024ff5b007f969043ccb81adf8130f9eb9b5f04f1041942b27265c",
+            "judgement": "post-data retry/metering rule change；最終兩格均應 no conclusion / NC1",
+            "description_accurate": "HTTP 429、zero usage、沒有有效 grading answer、沿用兩份完成的回答、實際重發一次、原失敗紀錄保留，均吻合。稱為只修 script 與 PREREG 的矛盾則不成立。",
+            "effect": "沿用前兩個 corrections，新增 completed-request resume、quota-stop reissue、audit allowlist，並把 listed zero rows 在 ledger/launch guards 中視為 fully metered。",
+            "without_correction": "frozen loop 因既有 request directory 拒絕 resume；即使人工讀取既有完成檔，失敗 row 的 metering_complete=false 仍會讓兩格 NC1。",
+            "beyond_description": "程式可於多次外部 resume 時繼續建立 .reissue2/.reissue3，沒有一次上限；實際 evidence 只有 .reissue1。它更改的是資料接納與 accounting 的前置條件。",
+            "direct_label_key_or_table_change": false
+          }
+        },
+        "grader_disagreements": {
+          "1": {
+            "before": [
+              {
+                "report_id": "R002",
+                "id": "K05",
+                "codex": "absent",
+                "claude": "mention-only"
+              },
+              {
+                "report_id": "R002",
+                "id": "K09",
+                "codex": "absent",
+                "claude": "mention-only"
+              },
+              {
+                "report_id": "R003",
+                "id": "K29",
+                "codex": "mention-only",
+                "claude": "absent"
+              }
+            ],
+            "after_count": 0
+          },
+          "2": {
+            "before": [
+              {
+                "report_id": "R102",
+                "id": "K05",
+                "codex": "absent",
+                "claude": "mention-only"
+              },
+              {
+                "report_id": "R102",
+                "id": "K18",
+                "codex": "absent",
+                "claude": "mention-only"
+              },
+              {
+                "report_id": "R103",
+                "id": "K29",
+                "codex": "absent",
+                "claude": "mention-only"
+              },
+              {
+                "report_id": "R104",
+                "id": "K05",
+                "codex": "absent",
+                "claude": "mention-only"
+              }
+            ],
+            "after_count": 0
+          }
+        },
+        "provenance": {
+          "all_nine_rows_match_LEDGER": true,
+          "items": {
+            "K02": [
+              "codex",
+              "egm"
+            ],
+            "K05": [
+              "codex",
+              "egm"
+            ],
+            "K07": [
+              "egm"
+            ],
+            "K09": [
+              "codex"
+            ],
+            "K14": [
+              "codex"
+            ],
+            "K15": [
+              "codex",
+              "egm"
+            ],
+            "K18": [
+              "codex",
+              "egm"
+            ],
+            "K29": [
+              "egm"
+            ],
+            "K30": [
+              "codex"
+            ]
+          },
+          "caveat_adequate": true,
+          "note": "歷史來源欄不是此次 detection；key 由歷史聯集選成，不能以該欄宣稱 EGM 比 native 找得多。LEDGER 的早期 tier/counts snapshot 不是最後 KEY 的 primary 集合，本核對只採其 historical_sources。"
+        },
+        "cost_scope": {
+          "all_displayed_numeric_cells_match": true,
+          "earlier_claude_preflights_included": [
+            69446,
+            54623
+          ],
+          "earlier_codex_preflights_excluded": [
+            105633,
+            69287,
+            62706,
+            64830,
+            62931
+          ],
+          "earlier_codex_preflights_excluded_total": 365387,
+          "exclusions": "RESULT 已揭露較早 Codex preflight、Codex 工程／審查及未逐筆計量的 lead sessions 未計入；已列合計是這些 ledger 的 subtotal，不能用作整個研究成本。未計量部分無法從 rows 重建，也不能宣稱已證明其不影響任何 Claude cap。",
+          "rounding": "means 依最近整數呈現：Claude noncache=143869.5；Codex logical=1451129.5、noncache=115001.5。沒有算術錯誤。",
+          "funding": "已列 Claude subtotal 加 1.3×historical EGM 與 0.5M reserve = 31,732,231.9；historical-cost scenario =26,188,171。RESULT 的 31.7M／約26M 與 0.090 ratio 均正確，是條件式預算情境而非新實測。"
+        },
+        "wording": {
+          "no_EGM_effectiveness_verdict": true,
+          "no_supported_causal_or_population_claim_found": true,
+          "note": "一文件、兩次 native、key-recall 而非 precision 的界線清楚；成本 scenario 有標條件，sandbox 說明有 tool restrictions 支持。主要措辭問題是 F1/F2 將 protocol changes 稱 corrections，以及 F3 對 custody 順序過度確定。Jaccard 未寫入 RESULT 正文，本次重算為 Claude 2/3、Codex 4/5，沒有與現有數字矛盾。"
+        },
+        "privacy": {
+          "credential_or_actual_account_identifier_found": false,
+          "actual_private_host_path_found": false,
+          "neutral_absolute_paths_remain": [
+            "/home/dev/proj",
+            "/home/dev/settings.json",
+            "/home/dev/.codex/**",
+            "/home/dev/.claude/**",
+            "/home/user/oaw-canary/u2-canary.txt",
+            "/opt/egmcal-runtime",
+            "/home/.../oaw-egmcal/"
+          ],
+          "note": "整個公開 folder 已掃描，沒有找到實際 credential、account name 或本機私有路徑。確有 absolute paths：上述為 sandbox／匿名 fixture／佔位字；另有 /etc、/usr、/tmp 等系統路徑。這些不構成使用者隱私洩漏，不能概括宣稱 folder 完全沒有 absolute paths。沒有開啟 fresh-HOME credential placeholders，也沒有複製 private transcripts。"
+        }
+      }
+    },
+    "codex": {
+      "primary_denominator": 9,
+      "reports": {
+        "N2": {
+          "primary_labels_before_reconciliation": {
+            "codex": {
+              "K02": "detected",
+              "K05": "detected",
+              "K07": "absent",
+              "K09": "detected",
+              "K14": "mention-only",
+              "K15": "absent",
+              "K18": "detected",
+              "K29": "mention-only",
+              "K30": "detected"
+            },
+            "claude": {
+              "K02": "detected",
+              "K05": "detected",
+              "K07": "absent",
+              "K09": "detected",
+              "K14": "mention-only",
+              "K15": "absent",
+              "K18": "detected",
+              "K29": "mention-only",
+              "K30": "detected"
+            }
+          },
+          "primary_labels_after_reconciliation": {
+            "codex": {
+              "K02": "detected",
+              "K05": "detected",
+              "K07": "absent",
+              "K09": "detected",
+              "K14": "mention-only",
+              "K15": "absent",
+              "K18": "detected",
+              "K29": "mention-only",
+              "K30": "detected"
+            },
+            "claude": {
+              "K02": "detected",
+              "K05": "detected",
+              "K07": "absent",
+              "K09": "detected",
+              "K14": "mention-only",
+              "K15": "absent",
+              "K18": "detected",
+              "K29": "mention-only",
+              "K30": "detected"
+            }
+          },
+          "detected_primary_by_grader": {
+            "codex": [
+              "K02",
+              "K05",
+              "K09",
+              "K18",
+              "K30"
+            ],
+            "claude": [
+              "K02",
+              "K05",
+              "K09",
+              "K18",
+              "K30"
+            ]
+          }
+        },
+        "N1": {
+          "primary_labels_before_reconciliation": {
+            "codex": {
+              "K02": "detected",
+              "K05": "detected",
+              "K07": "absent",
+              "K09": "absent",
+              "K14": "absent",
+              "K15": "absent",
+              "K18": "detected",
+              "K29": "mention-only",
+              "K30": "detected"
+            },
+            "claude": {
+              "K02": "detected",
+              "K05": "detected",
+              "K07": "absent",
+              "K09": "absent",
+              "K14": "absent",
+              "K15": "absent",
+              "K18": "detected",
+              "K29": "absent",
+              "K30": "detected"
+            }
+          },
+          "primary_labels_after_reconciliation": {
+            "codex": {
+              "K02": "detected",
+              "K05": "detected",
+              "K07": "absent",
+              "K09": "absent",
+              "K14": "absent",
+              "K15": "absent",
+              "K18": "detected",
+              "K29": "absent",
+              "K30": "detected"
+            },
+            "claude": {
+              "K02": "detected",
+              "K05": "detected",
+              "K07": "absent",
+              "K09": "absent",
+              "K14": "absent",
+              "K15": "absent",
+              "K18": "detected",
+              "K29": "absent",
+              "K30": "detected"
+            }
+          },
+          "detected_primary_by_grader": {
+            "codex": [
+              "K02",
+              "K05",
+              "K18",
+              "K30"
+            ],
+            "claude": [
+              "K02",
+              "K05",
+              "K18",
+              "K30"
+            ]
+          }
+        }
+      },
+      "batch1_before": {
+        "outcome_given_complete_evidence": "R1",
+        "detected_union_by_grader": {
+          "codex": [
+            "K02",
+            "K05",
+            "K09",
+            "K18",
+            "K30"
+          ],
+          "claude": [
+            "K02",
+            "K05",
+            "K09",
+            "K18",
+            "K30"
+          ]
+        },
+        "both_reports_both_graders_absent": [
+          "K07",
+          "K15"
+        ]
+      },
+      "batch1_after": {
+        "outcome_given_complete_evidence": "R1",
+        "detected_union_by_grader": {
+          "codex": [
+            "K02",
+            "K05",
+            "K09",
+            "K18",
+            "K30"
+          ],
+          "claude": [
+            "K02",
+            "K05",
+            "K09",
+            "K18",
+            "K30"
+          ]
+        },
+        "both_reports_both_graders_absent": [
+          "K07",
+          "K15"
+        ]
+      },
+      "final_before": {
+        "outcome_given_complete_evidence": "R1",
+        "detected_union_by_grader": {
+          "codex": [
+            "K02",
+            "K05",
+            "K09",
+            "K18",
+            "K30"
+          ],
+          "claude": [
+            "K02",
+            "K05",
+            "K09",
+            "K18",
+            "K30"
+          ]
+        },
+        "both_reports_both_graders_absent": [
+          "K07",
+          "K15"
+        ]
+      },
+      "final_after": {
+        "outcome_given_complete_evidence": "R1",
+        "detected_union_by_grader": {
+          "codex": [
+            "K02",
+            "K05",
+            "K09",
+            "K18",
+            "K30"
+          ],
+          "claude": [
+            "K02",
+            "K05",
+            "K09",
+            "K18",
+            "K30"
+          ]
+        },
+        "both_reports_both_graders_absent": [
+          "K07",
+          "K15"
+        ]
+      },
+      "run_to_run": {
+        "same_primary_labels": 6,
+        "intersection": [
+          "K02",
+          "K05",
+          "K18",
+          "K30"
+        ],
+        "union": [
+          "K02",
+          "K05",
+          "K09",
+          "K18",
+          "K30"
+        ],
+        "jaccard": 0.8
+      },
+      "three_six_split": {
+        "catalog": {
+          "denominator": 3,
+          "N1": 1,
+          "N2": 1,
+          "union": 1
+        },
+        "other": {
+          "denominator": 6,
+          "N1": 3,
+          "N2": 4,
+          "union": 4
+        }
+      },
+      "secondary_detected": {
+        "N2": {
+          "codex": [],
+          "claude": []
+        },
+        "N1": {
+          "codex": [
+            "K12",
+            "K16",
+            "K23"
+          ],
+          "claude": [
+            "K12",
+            "K16",
+            "K23"
+          ]
+        }
+      },
+      "unsupported_by_codex_grader": {
+        "batch1-N2": {
+          "count": 0,
+          "severe": 0
+        },
+        "batch1-N1": {
+          "count": 0,
+          "severe": 0
+        },
+        "batch2-N1": {
+          "count": 0,
+          "severe": 0
+        },
+        "batch2-N2": {
+          "count": 0,
+          "severe": 0
+        }
+      },
+      "test_retest": {
+        "N1": {
+          "codex": {
+            "primary_same": 8,
+            "all_same": 27
+          },
+          "claude": {
+            "primary_same": 9,
+            "all_same": 30
+          }
+        },
+        "N2": {
+          "codex": {
+            "primary_same": 8,
+            "all_same": 29
+          },
+          "claude": {
+            "primary_same": 9,
+            "all_same": 30
+          }
+        }
+      },
+      "costs": {
+        "native": {
+          "N1": {
+            "logical": 1666167,
+            "noncache": 121079,
+            "seconds": 341.896
+          },
+          "N2": {
+            "logical": 1236092,
+            "noncache": 108924,
+            "seconds": 301.532
+          }
+        },
+        "native_mean_exact": {
+          "logical": 1451129.5,
+          "noncache": 115001.5
+        },
+        "curation": {
+          "logical": 2046318,
+          "noncache": 132846,
+          "seconds": 1042.867,
+          "records": 1
+        },
+        "grading": {
+          "logical": 2635840,
+          "noncache": 259776,
+          "seconds": 1307.313,
+          "records": 2
+        },
+        "reconciliation": {
+          "logical": 541880,
+          "noncache": 75832,
+          "seconds": 107.60499999999999,
+          "records": 2
+        },
+        "preflight_in_final_root": {
+          "logical": 65144,
+          "noncache": 8568
+        },
+        "final_root_logical_total": 8191441,
+        "outside_root_included": 0,
+        "reported_stage_total": 8191441,
+        "preflight_included": 65144
+      },
+      "strict_final_outcome": {
+        "outcome": "no conclusion",
+        "rule": "NC1",
+        "reason": "F1：全域 shared grading row 依 frozen 規則為 incomplete metering；R1 僅為假定接納 post-data corrections 後的 label-based result。"
+      },
+      "comparison_with_RESULT": "逐項 9×2 labels、detected sets、union、all-four-absent items、reconciliation 前後 label result 均一致。正式 decision 的程序有效性不通過，見 F1/F2。",
+      "secondary_denominator": 21,
+      "test_retest_denominators": {
+        "primary": 9,
+        "all": 30
+      },
+      "audit": {
+        "method": "以 review_recompute.py 直接讀四個 raw grades、兩個 resolution、兩個 blind maps 與 KEY，獨立實作 label rules；未 import 或呼叫 study scorer。只另外執行 freeze_tools.py --check，及抽出 path-guard function 驗證 correction 範圍。",
+        "frozen_package": {
+          "check": "pass",
+          "manifest_files": 38,
+          "freeze_sha256": "469e78bd8a7e475c40e17c799ed7cdc9d299b8daba3cd859bf8cee56856c21b9",
+          "key_sha256": "6d7497e90b9baf7f872bfd04c4750fee77a523e69169fd840d48df02d8e1f99e",
+          "note": "hash check 不涵蓋套件外 wrappers 的程序正當性，也不證明 custody 時序。"
+        },
+        "corrections": {
+          "score": {
+            "sha256": "2d220cec36a624c7411ce588a16cd71e36bcf0f9971a9ba9832d684620b99ec0",
+            "judgement": "legitimate fix",
+            "description_accurate": true,
+            "effect": "只重算 isolation_complete_for_recorded_work，排除 preflight rows；保留 native、unsettled intents 與 shared rows。logical/noncache totals、metering flags、labels、key、decision table 不變。",
+            "basis": "PREREG 明文要求 preflight 成功覆寫 source.py 並偵測到，因此 probe 原始 isolation_complete=false 是預期結果；preflight 各 17 個 gate checks 皆 pass，native source isolation 皆 true。將這個預期 probe mutation 當成正式資料 isolation failure，確實與預先登記的 probe 設計矛盾。",
+            "without_correction": "frozen-as-is 的 batch1 兩格均 NC1；results/decision-batch1.frozen-as-is.json 與此吻合。",
+            "beyond_description": "沒有發現額外變更；修正適用所有 preflight rows，不刪成本或完整性稽核。",
+            "direct_label_key_or_table_change": false
+          },
+          "wrap2": {
+            "sha256": "ff834023d299cc8630ee344b5611381cec6007503d5461a55664ed00ef18c565",
+            "judgement": "post-data protocol change；嚴格 frozen protocol 下 Claude 應為 no conclusion",
+            "description_accurate": "誤擋 branch 的原因及仍擋 state root/attempt IDs/cell-arm tokens 正確；未充分說明它與 PREREG path-component 禁令衝突。",
+            "effect": "沿用 score correction，另全面移除 bare codex/claude/N1/N2 tokens 的拒絕檢查。",
+            "without_correction": "實際 Claude N2 report 含 claude/oaw-2，frozen guard 拒絕，batch2 無法打包。",
+            "beyond_description": "不只允許 claude/oaw-2，也允許其他 bare cell/arm path components；不是窄範圍白名單。",
+            "direct_label_key_or_table_change": false
+          },
+          "wrap3": {
+            "sha256": "e1c836aa67024ff5b007f969043ccb81adf8130f9eb9b5f04f1041942b27265c",
+            "judgement": "post-data retry/metering rule change；最終兩格均應 no conclusion / NC1",
+            "description_accurate": "HTTP 429、zero usage、沒有有效 grading answer、沿用兩份完成的回答、實際重發一次、原失敗紀錄保留，均吻合。稱為只修 script 與 PREREG 的矛盾則不成立。",
+            "effect": "沿用前兩個 corrections，新增 completed-request resume、quota-stop reissue、audit allowlist，並把 listed zero rows 在 ledger/launch guards 中視為 fully metered。",
+            "without_correction": "frozen loop 因既有 request directory 拒絕 resume；即使人工讀取既有完成檔，失敗 row 的 metering_complete=false 仍會讓兩格 NC1。",
+            "beyond_description": "程式可於多次外部 resume 時繼續建立 .reissue2/.reissue3，沒有一次上限；實際 evidence 只有 .reissue1。它更改的是資料接納與 accounting 的前置條件。",
+            "direct_label_key_or_table_change": false
+          }
+        },
+        "grader_disagreements": {
+          "1": {
+            "before": [
+              {
+                "report_id": "R002",
+                "id": "K05",
+                "codex": "absent",
+                "claude": "mention-only"
+              },
+              {
+                "report_id": "R002",
+                "id": "K09",
+                "codex": "absent",
+                "claude": "mention-only"
+              },
+              {
+                "report_id": "R003",
+                "id": "K29",
+                "codex": "mention-only",
+                "claude": "absent"
+              }
+            ],
+            "after_count": 0
+          },
+          "2": {
+            "before": [
+              {
+                "report_id": "R102",
+                "id": "K05",
+                "codex": "absent",
+                "claude": "mention-only"
+              },
+              {
+                "report_id": "R102",
+                "id": "K18",
+                "codex": "absent",
+                "claude": "mention-only"
+              },
+              {
+                "report_id": "R103",
+                "id": "K29",
+                "codex": "absent",
+                "claude": "mention-only"
+              },
+              {
+                "report_id": "R104",
+                "id": "K05",
+                "codex": "absent",
+                "claude": "mention-only"
+              }
+            ],
+            "after_count": 0
+          }
+        },
+        "provenance": {
+          "all_nine_rows_match_LEDGER": true,
+          "items": {
+            "K02": [
+              "codex",
+              "egm"
+            ],
+            "K05": [
+              "codex",
+              "egm"
+            ],
+            "K07": [
+              "egm"
+            ],
+            "K09": [
+              "codex"
+            ],
+            "K14": [
+              "codex"
+            ],
+            "K15": [
+              "codex",
+              "egm"
+            ],
+            "K18": [
+              "codex",
+              "egm"
+            ],
+            "K29": [
+              "egm"
+            ],
+            "K30": [
+              "codex"
+            ]
+          },
+          "caveat_adequate": true,
+          "note": "歷史來源欄不是此次 detection；key 由歷史聯集選成，不能以該欄宣稱 EGM 比 native 找得多。LEDGER 的早期 tier/counts snapshot 不是最後 KEY 的 primary 集合，本核對只採其 historical_sources。"
+        },
+        "cost_scope": {
+          "all_displayed_numeric_cells_match": true,
+          "earlier_claude_preflights_included": [
+            69446,
+            54623
+          ],
+          "earlier_codex_preflights_excluded": [
+            105633,
+            69287,
+            62706,
+            64830,
+            62931
+          ],
+          "earlier_codex_preflights_excluded_total": 365387,
+          "exclusions": "RESULT 已揭露較早 Codex preflight、Codex 工程／審查及未逐筆計量的 lead sessions 未計入；已列合計是這些 ledger 的 subtotal，不能用作整個研究成本。未計量部分無法從 rows 重建，也不能宣稱已證明其不影響任何 Claude cap。",
+          "rounding": "means 依最近整數呈現：Claude noncache=143869.5；Codex logical=1451129.5、noncache=115001.5。沒有算術錯誤。",
+          "funding": "已列 Claude subtotal 加 1.3×historical EGM 與 0.5M reserve = 31,732,231.9；historical-cost scenario =26,188,171。RESULT 的 31.7M／約26M 與 0.090 ratio 均正確，是條件式預算情境而非新實測。"
+        },
+        "wording": {
+          "no_EGM_effectiveness_verdict": true,
+          "no_supported_causal_or_population_claim_found": true,
+          "note": "一文件、兩次 native、key-recall 而非 precision 的界線清楚；成本 scenario 有標條件，sandbox 說明有 tool restrictions 支持。主要措辭問題是 F1/F2 將 protocol changes 稱 corrections，以及 F3 對 custody 順序過度確定。Jaccard 未寫入 RESULT 正文，本次重算為 Claude 2/3、Codex 4/5，沒有與現有數字矛盾。"
+        },
+        "privacy": {
+          "credential_or_actual_account_identifier_found": false,
+          "actual_private_host_path_found": false,
+          "neutral_absolute_paths_remain": [
+            "/home/dev/proj",
+            "/home/dev/settings.json",
+            "/home/dev/.codex/**",
+            "/home/dev/.claude/**",
+            "/home/user/oaw-canary/u2-canary.txt",
+            "/opt/egmcal-runtime",
+            "/home/.../oaw-egmcal/"
+          ],
+          "note": "整個公開 folder 已掃描，沒有找到實際 credential、account name 或本機私有路徑。確有 absolute paths：上述為 sandbox／匿名 fixture／佔位字；另有 /etc、/usr、/tmp 等系統路徑。這些不構成使用者隱私洩漏，不能概括宣稱 folder 完全沒有 absolute paths。沒有開啟 fresh-HOME credential placeholders，也沒有複製 private transcripts。"
+        }
+      }
+    }
+  }
+}

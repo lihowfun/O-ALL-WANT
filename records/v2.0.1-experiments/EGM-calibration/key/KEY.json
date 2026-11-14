@@ -1,0 +1,473 @@
+{
+ "schema_version": 1,
+ "packet_sha256": "3f61293d1b071118f73eb4590dfcefc437ecd12da735c1bd6025b4f24dd21bc1",
+ "items": [
+  {
+   "id": "K01",
+   "tier": "secondary",
+   "cluster": "Grader agreement extrapolated to code review",
+   "claim": "The rationale for mandatory cross-family code review treats agreement between graders of fixed answers as evidence about independent defect-finding reviewers. The packet measures the former, not a reviewer-family comparison; the benefit of the latter remains a hypothesis.",
+   "evidence": [
+    "docs/plans/v2.0.1-execution.md:36 — uses grader kappa to justify changing both reviewers and graders.",
+    "docs/plans/v2.0.1-execution.md:76 — mandates a different family for the second code-review opinion.",
+    "evidence/validation-2026-11-07-RESULT.md:56-72 — calibration and cross-family regrading concern existing answers and fact labels.",
+    "evidence/DECISIONS-D21-D31.md:175-180 — cross-family code-review rounds and adherence smoke tests provide no reviewer-family control arm."
+   ],
+   "detected_if": "Identifies the grader-versus-reviewer inference: acceptable equivalents are that kappa on fixed-answer grading does not establish better defect finding, or that the reviewer-family default lacks the comparison claimed by its rationale.",
+   "mention_only_if": "Requests more cross-family tests, discusses kappa, vendor choice, or privacy without distinguishing answer grading from code review.",
+   "not_adjudicable_if": "The report relies solely on alleged external vendor-consent requirements or later reviewer comparisons. Those claims cannot establish this item from the frozen packet."
+  },
+  {
+   "id": "K02",
+   "tier": "primary",
+   "cluster": "Map efficiency evidence overstatement",
+   "claim": "The draft says all three maps reduced tool calls to 0.23–0.65 of native, although several measured conditions were 0.76–1.04. It also attributes codegraph’s aggregate 0.23 ratio to symbol lookup without a measurement isolating that mechanism.",
+   "evidence": [
+    "docs/plans/v2.0.1-execution.md:37 — universal three-map efficiency claim used to motivate the design.",
+    "docs/plans/v2.0.1-execution.md:131-132 — attributes 0.23 to symbol lookup and proposes absorbing map features.",
+    "evidence/codemap-comparison-2026-11-06.md:28-40 — graphify ratios 0.88, 0.76, 1.00, 1.04; OAW reaches 1.04.",
+    "evidence/validation-2026-11-07-RESULT.md:109-115 — 0.23 is the aggregate VS Code codegraph experiment.",
+    "evidence/codemap-comparison-2026-11-06.md:52-53 — the step saving has another measured cause (the prompt hook)."
+   ],
+   "detected_if": "Says the all-three/0.23–0.65 claim is contradicted by the measurements, with at least one correct counterexample from the packet (graphify 0.76-1.04, or OAW 1.04 on Opus 4.8). Equivalent: some graphify/OAW conditions did not save tool calls. Also sufficient: shows from the packet that the step saving credited to symbol lookup had another measured cause (evidence/codemap-comparison-2026-11-06.md:52-53, the prompt hook that the draft refuses to absorb).",
+   "mention_only_if": "Says maps may hurt quality, graphify is expensive, or the evidence needs more testing without identifying the false efficiency generalization or attribution. Also mention-only: says only that 0.23 is an aggregate or not isolated, without packet evidence of another cause; or does not say which ratios it means.",
+   "not_adjudicable_if": "Not applicable on packet grounds: the packet contains what is needed to decide. Use only if the report's text on this point is unreadable or cut off; a report that is merely vague is mention-only or absent."
+  },
+  {
+   "id": "K03",
+   "tier": "secondary",
+   "cluster": "Misstated resolution rationale",
+   "claim": "The draft repeatedly describes the old 4-question × 3-run coverage design as having poor resolution, whereas the cited validation explicitly says coverage resolution is not poor. Zero-variance collapse and noisy wrong-claim grading are separate, supported problems.",
+   "evidence": [
+    "docs/plans/v2.0.1-execution.md:44 — describes 4 × 3 resolution as poor.",
+    "docs/plans/v2.0.1-execution.md:300 — repeats the rationale.",
+    "evidence/validation-2026-11-07-RESULT.md:16-20 — distinguishes adequate coverage resolution from unreliable wrong-claim labels.",
+    "evidence/validation-2026-11-07-RESULT.md:34-44 — fixed-question resolution 0.02–0.09; random-question comparison about 0.10 versus 0.089."
+   ],
+   "detected_if": "Distinguishes the false broad resolution criticism from zero-variance or grader-noise problems, citing the validation’s adequate coverage resolution or the modest 0.10-to-0.089 change.",
+   "mention_only_if": "Discusses sample size, bootstrap, or pending D32 approval without identifying the contradicted resolution rationale.",
+   "not_adjudicable_if": "The report uses an outside power calculation without connecting it to the packet’s coverage metric and fixed-versus-random-question distinction."
+  },
+  {
+   "id": "K04",
+   "tier": "secondary",
+   "cluster": "Inaccurate current footprint counts",
+   "claim": "The baseline size descriptions are inaccurate: the rendered minimal policy has 25 lines, and catalog has 23 top-level commands (plus four nested commands), not the stated 26 lines and 25 commands.",
+   "evidence": [
+    "docs/plans/v2.0.1-execution.md:45 — claims 25 catalog subcommands.",
+    "docs/plans/v2.0.1-execution.md:83 — claims a 26-line current policy.",
+    "docs/plans/v2.0.1-execution.md:189 — repeats 25 catalog subcommands.",
+    "example/minimal-project/AGENTS.md:1-25 — complete rendered minimal policy.",
+    "scripts/oaw.py:188-210 — rendering removes conditional markers.",
+    "scripts/catalog.py:2512-2601 — 23 commands.add_parser declarations, two policy and two scout subcommands."
+   ],
+   "detected_if": "Corrects either current baseline with its counting convention: 25 rendered minimal-policy lines, or 23 top-level catalog commands / 27 including the four nested commands. Treat both corrections as one footprint-audit item.",
+   "mention_only_if": "Says the policy or CLI is too long or complex without identifying an incorrect baseline count.",
+   "not_adjudicable_if": "Only a template/raw-file count or an unspecified mix of nested and top-level commands is given, so the claimed correction cannot be compared with the rendered/top-level baseline."
+  },
+  {
+   "id": "K05",
+   "tier": "primary",
+   "cluster": "Review invoked after its prerequisite implementation",
+   "claim": "The replacement policy invokes oaw-review after changes are made, but deep review requires a plan and its EGM review before implementation. Classifying only the finished diff cannot supply that prerequisite review.",
+   "evidence": [
+    "docs/plans/v2.0.1-execution.md:83 — replacement policy invokes review after making changes.",
+    "docs/plans/v2.0.1-execution.md:108 — deep sequence is plan, EGM review, implementation, then code review.",
+    "scripts/oaw_mode.py:115-141 — default classification reads existing working-tree changes.",
+    "scripts/oaw_mode.py:402-403 — planned paths are already a possible input."
+   ],
+   "detected_if": "Identifies that the after-change invocation is too late for pre-implementation plan review. Equivalent: classify planned work before editing and reserve post-diff review for completed code. A fix-only statement counts if it explicitly connects these two phases.",
+   "mention_only_if": "Mentions deep triggers, plan mode, or reviewing before release without identifying the after-versus-before implementation conflict. Also mention-only: does not distinguish plan review from final code review, so the timing it challenges cannot be told.",
+   "not_adjudicable_if": "Not applicable on packet grounds: the packet contains what is needed to decide. Use only if the report's text on this point is unreadable or cut off; a report that is merely vague is mention-only or absent."
+  },
+  {
+   "id": "K06",
+   "tier": "secondary",
+   "cluster": "Automatic EGM conflicts with retained manual contracts",
+   "claim": "Q2 proposes authorizing automatic EGM, but the specified implementation still follows the installed upstream/manual workflow without binding the inputs and preset that avoid owner prompts or reconciling the retained invocation policy. As specified, the owner-free deep flow can stop at mandatory human gates.",
+   "evidence": [
+    "docs/plans/v2.0.1-execution.md:83 — only the suggest/show policy lines are explicitly replaced.",
+    "docs/plans/v2.0.1-execution.md:114-120 — delegates to the installed upstream workflow on both hosts.",
+    "docs/plans/v2.0.1-execution.md:275 — Q2 changes permission in principle, not the upstream intake contract.",
+    "templates/AGENTS.md:6-13 — retained explicit-invocation policy and suggest-dependent EGM rule.",
+    "templates/.agents/skills/egm-review/SKILL.md:5-16 — manual entrypoint; preserve upstream human checkpoints or stop.",
+    "vendor/egm/skills/egm-review/SKILL.md:73-113 — context and omitted Step lead to user prompts.",
+    "vendor/egm/skills/egm-review/SKILL.md:179-189 — ambiguous or missing implementation split also prompts."
+   ],
+   "detected_if": "Identifies a concrete retained manual requirement that contradicts unattended deep review: an omitted Step/context binding causes upstream intake prompts; unresolved split checkpoints still require a person; or the unchanged explicit-invocation/suggest-dependent policy conflicts with the new automatic path. Must connect the requirement to the owner-free promise, not merely ask which preset is preferred.",
+   "mention_only_if": "Asks for an EGM preset, report directory, more documentation, or Q2 approval without stating the resulting manual gate or invocation-policy conflict.",
+   "not_adjudicable_if": "The alleged blocker depends only on live host capabilities (entering plan mode, changing effort, or dispatch mechanics) unavailable in the packet. Do not infer that all automatic EGM is impossible."
+  },
+  {
+   "id": "K07",
+   "tier": "primary",
+   "cluster": "New agent violates exact generated inventory",
+   "claim": "Adding templates/.claude/agents/oaw-goldfish.md as specified violates the exact EGM adapter inventory enforced by the existing harness gate. The plan does not change that ownership/checking contract.",
+   "evidence": [
+    "docs/plans/v2.0.1-execution.md:87 — introduces oaw-goldfish.",
+    "docs/plans/v2.0.1-execution.md:112 — places it in templates/.claude/agents.",
+    "scripts/sync_egm.py:153-158 — every file in that agent directory must equal the generated EGM bridge set.",
+    "scripts/harness_check.py:183-188 — required gate calls --check-bundled.",
+    "scripts/goldfish_review.py:34-41 — an existing isolated-review runner provides a possible reuse path."
+   ],
+   "detected_if": "Connects the proposed new agent file to the exact EGM inventory check and resulting gate failure. Equivalent: separate OAW-owned agents from the generated EGM directory or change its validator before adding oaw-goldfish.",
+   "mention_only_if": "Suggests reusing goldfish_review.py, or says the new reviewer duplicates functionality, without identifying the inventory/gate conflict.",
+   "not_adjudicable_if": "The report assumes an already modified generator or validator from a later revision rather than the packet’s exact-set check."
+  },
+  {
+   "id": "K08",
+   "tier": "secondary",
+   "cluster": "Undefined review-plan command contract",
+   "claim": "The new oaw_mode.py plan command is an interface shared by the skill and X3 dry-run tests, but its inputs, JSON shape, and dry-run behavior are left unspecified. This is an implementation-contract gap rather than proof the command cannot be built.",
+   "evidence": [
+    "docs/plans/v2.0.1-execution.md:88 — proposes JSON steps.",
+    "docs/plans/v2.0.1-execution.md:113-124 — schedules the command and trigger fixtures without a schema.",
+    "docs/plans/v2.0.1-execution.md:235 — X3 requires dry-run review decisions.",
+    "scripts/oaw_mode.py:337-372 — existing instructions data structure.",
+    "scripts/oaw_mode.py:397-408 — existing suggest/show inputs and JSON flags."
+   ],
+   "detected_if": "Connects the missing input/output or dry-run contract of plan to its skill/X3 consumers. Equivalent: specify the executable versus observational step schema, or define how X3 requests a nonexecuting plan.",
+   "mention_only_if": "Says add plan tests, reuse show --json, or define more APIs without identifying this shared missing contract.",
+   "not_adjudicable_if": "The report refers to an implementation or schema outside the frozen packet and does not describe the contract missing from the draft."
+  },
+  {
+   "id": "K09",
+   "tier": "primary",
+   "cluster": "Within-question inference without repeated observations",
+   "claim": "The planned within-question paired bootstrap and pooled within-question variance floor have no repeat observations to resample or estimate in X1/X2’s one-run-per-question-per-arm design. The plan must change the resampling unit or explicitly supply a defensible external variance source.",
+   "evidence": [
+    "docs/plans/v2.0.1-execution.md:96 — specifies within-question paired bootstrap and a zero-variance floor.",
+    "docs/plans/v2.0.1-execution.md:233-234 — X1 and X2 use one run per question/case per arm.",
+    "docs/plans/v2.0.1-execution.md:274 — adopts the proposed D32 rules.",
+    "evidence/validation-2026-11-07-RESULT.md:34-44 — earlier within-question bootstrap used repeated runs and collapsed on constant cells.",
+    "evidence/validation-2026-11-07-RESULT.md:126-127 — proposes singleton questions alongside pooled within-question variance."
+   ],
+   "detected_if": "States that one observation per arm per question cannot estimate within-question run variance or support the stated within-question resampling/floor. Equivalents: bootstrap paired questions instead of repeats; add repeats; or preregister an external variance floor. Must identify the singleton-versus-within-question mismatch.",
+   "mention_only_if": "Says twelve cases are small, asks for confidence intervals, or warns generally about zero variance without tying the problem to the singleton design.",
+   "not_adjudicable_if": "The report’s claim depends on the absent records-branch statistical implementation rather than the method and sampling design explicitly stated here. Do not assume any hidden fallback estimator."
+  },
+  {
+   "id": "K10",
+   "tier": "secondary",
+   "cluster": "New-plan trigger narrower than promised",
+   "claim": "The unchanged classifier does not implement the advertised deep trigger for new design documents generally: it recognizes only added docs/designs/*.md paths or design*.md filenames. A new docs/plans/v2.0.1-execution.md alone falls through as light despite the plan’s stated trigger.",
+   "evidence": [
+    "docs/plans/v2.0.1-execution.md:104-108 — promises unchanged triggers including new design documents.",
+    "scripts/oaw_mode.py:246-249 — restricted added-Markdown matcher.",
+    "scripts/oaw_mode.py:261-290 — no matched trigger yields light; size counts code, not documentation.",
+    "evidence/DECISIONS-D21-D31.md:166-170 — describes the new-design-document trigger.",
+    "scripts/oaw_mode.py:29-42 — thresholds and harness filename patterns do not match the example plan.",
+    "scripts/oaw_mode.py:227-237 — docs count as documentation; ordinary docs/plans paths are not harness paths."
+   ],
+   "detected_if": "Identifies the path/name restriction and a design/plan document that consequently misses deep. Equivalent: docs/plans is not covered although the draft says new design documents trigger deep; expand the matcher or narrow the advertised contract.",
+   "mention_only_if": "Asks whether triggers are accurate, suggests more fixtures, or discusses historical deep frequency without describing a missed design-document path.",
+   "not_adjudicable_if": "The report refers to an unspecified change set or hook configuration, so it is impossible to tell whether it is testing the design-document rule alone. If all paths are supplied, trace the frozen classifier and decide normally."
+  },
+  {
+   "id": "K11",
+   "tier": "secondary",
+   "cluster": "Automatic deep lacks a per-task budget contract",
+   "claim": "Making expensive EGM automatic leaves its per-task estimate, spending cap, and over-cap authorization unspecified. The draft does address interrupted runs and experiment budgets, so the narrower gap is the ordinary shipped deep workflow’s spending policy.",
+   "evidence": [
+    "docs/plans/v2.0.1-execution.md:108 — full EGM once per deep task, about 1.1M tokens.",
+    "docs/plans/v2.0.1-execution.md:229 — 10M cap applies to experiments.",
+    "docs/plans/v2.0.1-execution.md:266 — explicitly addresses interruption and continuation.",
+    "docs/plans/v2.0.1-execution.md:275 — enables automatic deep with a project opt-out.",
+    "evidence/validation-2026-11-07-RESULT.md:102 — 56% of code commits classified deep.",
+    "evidence/egm-selftest-2026-11-06-RESULT.md:74-75 — measured subscription-limit interruptions."
+   ],
+   "detected_if": "Distinguishes experiment budgets from the automatic user-task path and identifies missing estimation/cap/over-cap behavior for that path. Equivalent: automatic EGM needs an explicit per-task spending limit, not merely a deep-frequency watch.",
+   "mention_only_if": "Says EGM is expensive, cites 28× or 56%, or claims the draft has no interruption handling without identifying the task-level spending gap.",
+   "not_adjudicable_if": "The claim rests on later costs for this plan or an external subscription policy, rather than the frozen automatic-flow design."
+  },
+  {
+   "id": "K12",
+   "tier": "secondary",
+   "cluster": "Completeness confused with resolution certainty",
+   "claim": "Reducing map output to locations/signatures and complete-versus-truncated labels omits the existing distinction between resolved callers and same-name candidates with unknown receiver types. An untruncated indexed result also remains bounded by language and traversal scope.",
+   "evidence": [
+    "docs/plans/v2.0.1-execution.md:138 — specifies location/signature-only output and complete/truncated labels.",
+    "scripts/code_index.py:1540-1549 — results include unresolved same-name candidates and resolved counts.",
+    "scripts/code_index.py:1577-1596 — affected has hop and language limits.",
+    "scripts/code_index.py:1721-1734 — current output marks uncertain candidates and warns to check them."
+   ],
+   "detected_if": "Identifies that untruncated/complete is not equivalent to all actual callers, with unresolved receiver matches or language/hop limits as the mechanism. Equivalent: preserve resolved/uncertain status and qualify complete as complete indexed matches.",
+   "mention_only_if": "Says maps can hallucinate, asks for source verification, or requests a truncation count without the uncertainty-versus-truncation distinction.",
+   "not_adjudicable_if": "The report relies only on a future TS resolver’s unobserved accuracy or on unspecified live repository contents."
+  },
+  {
+   "id": "K13",
+   "tier": "secondary",
+   "cluster": "TS parsing understates call-graph scope",
+   "claim": "The existing callers/affected engine only traverses Python records, so strengthening TS/JS parsing alone does not supply the TS call-graph resolution needed by the VS Code recall gate and call-ranked overview. The plan schedules TS call-point work but leaves that separate engine scope implicit.",
+   "evidence": [
+    "docs/plans/v2.0.1-execution.md:137-139 — call-ranked overview and stronger TS/JS parsing/call points.",
+    "docs/plans/v2.0.1-execution.md:146-148 — demands callers recall at least 0.95 on both ERPNext and VS Code.",
+    "scripts/code_index.py:1525-1534 — callers skips every non-Python record and resolves Python calls.",
+    "scripts/code_index.py:1594-1596 — affected explicitly reports Python-only tracking.",
+    "evidence/codemap-comparison-2026-11-06.md:9 — existing map comparison is ERPNext only.",
+    "scripts/code_index.py:763-811 — JavaScript extraction emits search units; only Python gets the graph record."
+   ],
+   "detected_if": "Identifies the Python-only traversal/resolution engine and connects a required TS call graph (not just token parsing) to VS Code recall or call-ranked overview. Equivalent: explicitly scope a new TS/JS resolver or restrict Stage 0 callers to supported languages.",
+   "mention_only_if": "Says improve TS parsing, implement the already planned feature, or asks if 0.95 is realistic without identifying the Python-only engine dependency.",
+   "not_adjudicable_if": "The report asserts that a stdlib TS resolver is impossible, or predicts its attainable recall without packet evidence. The key credits the missing scope, not that impossibility claim."
+  },
+  {
+   "id": "K14",
+   "tier": "primary",
+   "cluster": "Management commands absent from project payload",
+   "claim": "The documented project-relative add/list/remove commands and /oaw-add backend have no delivery path: oaw.py stays in the framework checkout and is not part of the installed project. The draft must provide an installed launcher and dependencies or a checkout-based command with an explicit project target.",
+   "evidence": [
+    "docs/plans/v2.0.1-execution.md:157-160 — advertises python3 scripts/oaw.py and conversational add.",
+    "docs/plans/v2.0.1-execution.md:88-89 — installed script additions list code_index but management verbs wrap catalog.",
+    "scripts/oaw.py:2 — CLI stays in framework checkout.",
+    "scripts/oaw.py:277-285 — project payload omits oaw.py and catalog.py.",
+    "scripts/oaw.py:854-856 — existing checkout management takes --target and otherwise targets current directory."
+   ],
+   "detected_if": "Explains that a separately installed project lacks scripts/oaw.py/catalog backend, or that running the shown command from the checkout lacks the intended project target. Equivalent: define and test either an installed management launcher or an explicit checkout/--target invocation.",
+   "mention_only_if": "Requests packaging tests or command aliases without identifying the framework-versus-installed-project location mismatch.",
+   "not_adjudicable_if": "The report depends on a management executable or deployment layout outside the packet and its location/target behavior cannot be established. A mere observation that proposed new verbs are not implemented is not detection, not a reason to abstain."
+  },
+  {
+   "id": "K15",
+   "tier": "primary",
+   "cluster": "User installation reuses an incompatible absorption engine",
+   "claim": "W3 promises installation before tasting, script-bearing/runtime components, and bundled-name conflict choices through a wrapper around catalog. Its reused absorption engine instead holds untasted text and executable components, never installs hooks/MCP, and rejects bundled-name collisions; the installation and default-promotion contracts must be separated or changed.",
+   "evidence": [
+    "docs/plans/v2.0.1-execution.md:163-176 — untasted installation, conflict choices and runtime consent.",
+    "docs/plans/v2.0.1-execution.md:89 — wraps the existing catalog.",
+    "docs/plans/v2.0.1-execution.md:192 — hook and bundled-name fixtures are required.",
+    "scripts/catalog_core.py:1242-1284 — executable/text A/B holds and hook/MCP/agent restrictions.",
+    "scripts/catalog.py:1863-1873 — absorption-only copying and bundled-name rejection.",
+    "scripts/catalog_core.py:78 — installed skill-file suffix allowlist is .md/.txt."
+   ],
+   "detected_if": "Connects at least one W3 installation promise to a concrete incompatible catalog rule: untasted text needs A/B, executable/hook/MCP parts cannot be installed, or bundled-name replacement is rejected. Equivalent: user-directed installation needs a distinct path from quality-gated default absorption. Generic calls to implement add are insufficient.",
+   "mention_only_if": "Discusses static scanning, consent, skill safety, or UI simplicity without identifying a reused engine rule that prevents a promised installation. A remark only about restore points or snapshots not covering settings belongs to K18, not to this item.",
+   "not_adjudicable_if": "The report relies only on whether later owner authorization was granted. Q2/Q3 or a user checkbox do not themselves change the frozen engine; conversely, do not require a universal new Q4 based solely on maintainer-tier rules."
+  },
+  {
+   "id": "K16",
+   "tier": "secondary",
+   "cluster": "No policy-free management installation",
+   "claim": "Option 2 promises only A/B/C, with no OAW skills or policy, but an empty skill recipe still installs OAW policy/helpers and doctor requires them. A management-only manifest/install/health-check mode is needed; --skills none alone cannot deliver this option.",
+   "evidence": [
+    "docs/plans/v2.0.1-execution.md:170 — promises no OAW skills or policy text.",
+    "scripts/oaw.py:277-279 — policy and helpers are unconditional.",
+    "scripts/oaw.py:745-778 — doctor requires policy/helpers.",
+    "scripts/oaw.py:863 — none is only a bundled-skill selection."
+   ],
+   "detected_if": "Says option 2 cannot be implemented merely by selecting no skills because policy/helpers still install or doctor rejects their absence. Equivalent: define a separate management-only install contract that preserves project-owned policy.",
+   "mention_only_if": "Requests support for option 2, notes --skills none, or says old EGM runtime remains without identifying unconditional OAW policy requirements.",
+   "not_adjudicable_if": "The report concerns only project-owned customized policy whose intended disposition is not specified, rather than the installer’s unconditional framework policy."
+  },
+  {
+   "id": "K17",
+   "tier": "secondary",
+   "cluster": "Free installation overpromises semantic conflict detection",
+   "claim": "The zero-agent-token add path promises functional-overlap and contradictory-policy detection without specifying a semantic representation, declared metadata, or a bounded rule set. The reused static pattern scanner does not establish that general capability, so the promise needs a narrower deterministic scope or an explicit optional analysis step.",
+   "evidence": [
+    "docs/plans/v2.0.1-execution.md:173 — conflict checks include contradictory policy text.",
+    "docs/plans/v2.0.1-execution.md:163 — only AI composition spends agent tokens.",
+    "docs/plans/v2.0.1-execution.md:169 — option 1 identifies functional overlap.",
+    "scripts/catalog_core.py:1-15 — static checks decode and pattern-match bytes, not a specified policy-comparison engine."
+   ],
+   "detected_if": "Connects the free deterministic path to the unsupported semantic overlap/policy-contradiction promise. Equivalents: bound free detection to structural conflicts or declared metadata; make semantic comparison an optional paid agent operation. Do not require proof that all semantic analysis inherently needs a model.",
+   "mention_only_if": "Mentions skill conflicts, scanning false positives, token cost, or generic AI composition without the semantic-versus-structural detection mismatch.",
+   "not_adjudicable_if": "The claim depends on a semantic ontology, overlap metadata or conflict-analysis component outside the packet whose contents are unavailable. A universal impossibility assertion is not needed to detect the specified missing mechanism."
+  },
+  {
+   "id": "K18",
+   "tier": "primary",
+   "cluster": "Restore snapshots exclude promised runtime configuration",
+   "claim": "W3 reuses catalog builds/restore while permitting hooks and MCP installation and promising byte-identical removal. Those restore points explicitly exclude host settings and MCP files, so they cannot restore configuration written by the promised installer.",
+   "evidence": [
+    "docs/plans/v2.0.1-execution.md:174-175 — permits runtime components and reuses catalog restore points.",
+    "docs/plans/v2.0.1-execution.md:192 — removal must restore managed files byte for byte.",
+    "scripts/catalog.py:1374-1375 — MCP and host paths are denied.",
+    "scripts/catalog.py:1407-1428 — build/restore layer excludes host settings and MCP configuration.",
+    "docs/SKILL_INTAKE.md:308 — documents the same restore boundary."
+   ],
+   "detected_if": "Identifies that existing snapshots/restore cannot cover hook/MCP settings the new installer changes. Equivalent: record per-component/shared-file edits and preserve pre-existing settings plus other skills when removing B. Must connect missing configuration coverage to the rollback promise.",
+   "mention_only_if": "Says add backups, make remove safe, or points out hooks cannot currently install without identifying the separate restore-layer exclusion. Also mention-only: speaks of an unnamed component's configuration without establishing that excluded or shared files are involved. If it clearly concerns only allowlisted files, it is absent.",
+   "not_adjudicable_if": "Not applicable on packet grounds: the packet contains what is needed to decide. Use only if the report's text on this point is unreadable or cut off; a report that is merely vague is mention-only or absent."
+  },
+  {
+   "id": "K19",
+   "tier": "secondary",
+   "cluster": "Tasting prompt violates one-question flow",
+   "claim": "An untested skill causes a tasting question after the required composition question, but the add/remove usability gate allows only one answered question. The plan must bundle or defer that optional prompt to meet its own interaction target.",
+   "evidence": [
+    "docs/plans/v2.0.1-execution.md:176 — untested skills prompt for tasting afterward.",
+    "docs/plans/v2.0.1-execution.md:165-171 — required composition choice.",
+    "docs/plans/v2.0.1-execution.md:193 — one-answer add A/B/C, option 1, remove B acceptance scenario."
+   ],
+   "detected_if": "Identifies the composition question plus later tasting question as two interactions conflicting with the one-question acceptance rule. Equivalent: integrate tasting consent into the first prompt or defer it outside the measured install flow.",
+   "mention_only_if": "Says the interface is complicated or has too many choices without identifying the separate mandatory-flow prompts.",
+   "not_adjudicable_if": "A report about a particular usability fixture omits whether any input is untasted, and its claimed extra interaction depends on that missing fact. A general report explicitly identifying the untasted-skill branch is decidable."
+  },
+  {
+   "id": "K20",
+   "tier": "secondary",
+   "cluster": "Policy-cut validation scheduled after the cut",
+   "claim": "W4 requires X3 before and after cutting policy, yet all W4 work is placed in segment 1 and X3 in segment 2. The baseline capture and second invocation need explicit placement; otherwise the scheduled X3 cannot establish the required before/after comparison.",
+   "evidence": [
+    "docs/plans/v2.0.1-execution.md:198 — requires X3 before and after deletion.",
+    "docs/plans/v2.0.1-execution.md:235 — defines a single X3 experiment.",
+    "docs/plans/v2.0.1-execution.md:252-253 — W4 precedes the scheduled X3 phase."
+   ],
+   "detected_if": "Identifies the W4-before-X3 ordering conflict with W4’s required pre-cut baseline. Equivalent: split W4 so the first X3 runs before edits and the second afterward. Budget-only observations belong to the budget item.",
+   "mention_only_if": "Says run X3 twice, add tests, or add contingency without connecting the pre-cut baseline requirement to the scheduled order.",
+   "not_adjudicable_if": "The report assumes a particular unprovided schedule or an already captured baseline and does not address the draft’s explicit W4/segment ordering."
+  },
+  {
+   "id": "K21",
+   "tier": "secondary",
+   "cluster": "New default skills do not enter explicit recipes",
+   "claim": "The migration promise that new skills will be added is incompatible with preserving prior explicit skill selections. The plan needs a rule distinguishing default-recipe upgrades from user exclusions; merely adding new templates does not add those skills to existing explicit recipes.",
+   "evidence": [
+    "docs/plans/v2.0.1-execution.md:217 — promises new skills/scripts during migration while protecting custom policy.",
+    "scripts/oaw.py:352-360 — prior explicit skills are reused and select the payload.",
+    "docs/UPGRADING.md:63-69 — custom selection persists when the skill flag is omitted."
+   ],
+   "detected_if": "Identifies that preserved explicit skill recipes prevent automatic addition of the promised new skills. Equivalent: define migration behavior for default versus custom recipes and user-disabled skills; changing the default list alone is insufficient.",
+   "mention_only_if": "Says test migrations, preserve customization, or support v1 without identifying selection persistence as the mechanism.",
+   "not_adjudicable_if": "The report describes a particular installed recipe whose explicit/default/custom selection state is unavailable and essential to its claim. The general explicit-recipe mismatch is decidable from the packet."
+  },
+  {
+   "id": "K22",
+   "tier": "secondary",
+   "cluster": "Release checklist omits existing upgrade and metadata contracts",
+   "claim": "The release checklist centers on the unreleased 2.0.0 baseline rather than explicitly validating the supported v1 upgrade path. It also leaves the synchronized installer-version/source-ledger requirements implicit when saying to update VERSION.",
+   "evidence": [
+    "docs/plans/v2.0.1-execution.md:217-218 — migration and metadata checklist.",
+    "docs/plans/v2.0.1-execution.md:3 — 2.0.0 was never released; 2.0.1 is the first V2 release.",
+    "docs/plans/v2.0.1-execution.md:60 — release goal names only 2.0.0 to 2.0.1 migration.",
+    "docs/UPGRADING.md:7-33 — existing v1 migration behavior, including customized routers.",
+    "scripts/harness_check.py:148-158 — VERSION.json, FRAMEWORK_VERSION and versioned sources ledger must agree."
+   ],
+   "detected_if": "Identifies either the missing v1-to-first-V2 release validation or the required installer-version/source-ledger synchronization omitted from the VERSION checklist. Equivalent: validate legacy/custom-router migrations, or update the versioned source ledger and installer constant alongside VERSION.json.",
+   "mention_only_if": "Says update documentation, run CI, or correct the VERSION filename without identifying an existing release/migration contract.",
+   "not_adjudicable_if": "The report depends on an unavailable installed v1 project or release artifact to claim an actual failed migration/release. The draft’s omitted validation and metadata checklist are directly decidable."
+  },
+  {
+   "id": "K23",
+   "tier": "secondary",
+   "cluster": "X1 quality decision table is underspecified",
+   "claim": "X1 uses undefined quality “not worse” and supplies no explicit outcome for equivalent quality without the efficiency win. The global rule forbids promoting undetermined quality, but the experiment table should distinguish equivalence, improvement and uncertainty explicitly so its decisions are reproducible.",
+   "evidence": [
+    "docs/plans/v2.0.1-execution.md:233 — not-worse-plus-efficiency promotion and only some fallback combinations.",
+    "docs/plans/v2.0.1-execution.md:77 — undetermined results must never become defaults or be treated as equal.",
+    "evidence/DECISIONS-D21-D31.md:136-145 — old D29 merged uncertainty into same, motivating an explicit new mapping."
+   ],
+   "detected_if": "Identifies that X1’s not-worse test must distinguish demonstrated equivalence/improvement from uncertainty, or identifies the omitted equivalent-quality/no-efficiency outcome. Equivalent: provide a complete quality-by-efficiency decision table consistent with the no-undetermined-promotion rule.",
+   "mention_only_if": "Repeats that uncertainty should not be promoted without connecting it to X1’s ambiguous not-worse wording or missing outcome.",
+   "not_adjudicable_if": "The report refers to an external definition of not-worse or an unavailable preregistered decision table that could resolve the ambiguity. Otherwise apply line 77 and the frozen X1 table; a mere preferred alternative threshold is not detection."
+  },
+  {
+   "id": "K24",
+   "tier": "secondary",
+   "cluster": "X2 standard arm has the wrong input contract",
+   "claim": "X2 tests S on design documents and may use it for deep plan review, but the only defined standard treatment reviews a code diff and tests. The experiment lacks an executable design-review S treatment tied to the behavior that would ship.",
+   "evidence": [
+    "docs/plans/v2.0.1-execution.md:234 — compares N/S/E on design documents and can replace deep with S.",
+    "docs/plans/v2.0.1-execution.md:107 — standard receives diff and tests.",
+    "docs/plans/v2.0.1-execution.md:264 — failed generalization also switches deep to S."
+   ],
+   "detected_if": "Identifies that standard is defined for code diffs/tests but X2 applies it to design documents and/or deploys it as a plan reviewer. Equivalent: freeze the design-review S prompt, inputs and host invocation, and distinguish it from post-implementation code review.",
+   "mention_only_if": "Suggests more arms, asks what S means, or disputes EGM value without explaining the input/treatment mismatch.",
+   "not_adjudicable_if": "The asserted treatment definition exists only in an unavailable prompt or preregistration outside the packet. The mismatch between the draft’s diff/tests treatment and design-document input is directly decidable."
+  },
+  {
+   "id": "K25",
+   "tier": "secondary",
+   "cluster": "S replacement bypasses review-quality eligibility",
+   "claim": "The S-for-E replacement rule checks detection equivalence and price but not S’s false-positive safety. The separate E-fails-to-generalize fallback also chooses S without an acceptable S-versus-N result, so the plan can install a treatment that has never met its own review-quality requirements.",
+   "evidence": [
+    "docs/plans/v2.0.1-execution.md:234 — E must improve detection, not increase unfounded claims and make zero clean-case errors; S replacement lists only equivalence and cost.",
+    "docs/plans/v2.0.1-execution.md:264 — switches deep to S whenever E fails to generalize."
+   ],
+   "detected_if": "Identifies either an S replacement that can pass despite extra false positives/clean-case errors, or the fallback that selects unqualified S merely because E did not beat N. Equivalent: apply explicit quality and false-positive eligibility to S before either replacement path.",
+   "mention_only_if": "Says EGM needs false-positive controls or standard should be cheaper, without identifying the missing S eligibility check.",
+   "not_adjudicable_if": "The report’s objection requires particular unseen experimental results. The item is the rule’s admitted unsafe outcome, not a prediction that S will actually be worse."
+  },
+  {
+   "id": "K26",
+   "tier": "secondary",
+   "cluster": "Known ceiling case retained in the detection panel",
+   "claim": "X2 retains orders although the packet identifies it as saturated and the SOP says to replace ceiling questions. It can still be useful as a regression/control case, but its role in the detection analysis needs separation from improvement-sensitive cases.",
+   "evidence": [
+    "docs/plans/v2.0.1-execution.md:234 — explicitly retains orders.",
+    "docs/plans/v2.0.1-execution.md:300 — says ceiling questions must be replaced.",
+    "evidence/validation-2026-11-07-RESULT.md:49-53 — orders is fully detected by all three groups.",
+    "evidence/validation-2026-11-07-RESULT.md:83 — follow-up detection test excludes orders for that reason."
+   ],
+   "detected_if": "Identifies orders as a known ceiling case and connects its inclusion to the stated ceiling-replacement rule or dilution of an improvement-sensitive detection panel. Equivalent: replace it or explicitly analyze it as a separate regression/false-positive control.",
+   "mention_only_if": "Says twelve cases are too few, add harder cases, or notes clean cases have no defects without identifying the saturated orders case.",
+   "not_adjudicable_if": "The report relies on unspecified revised orders cases or changed scoring to say the ceiling disappeared. The historical saturation and its inclusion in the draft are directly decidable."
+  },
+  {
+   "id": "K27",
+   "tier": "secondary",
+   "cluster": "X3 cannot establish improvement over current routing",
+   "claim": "X3 compares the new review skill with and without a policy line but has no existing-policy/no-new-skill arm. It can test the line’s contribution to the new skill, but not whether replacing the existing suggest/show routing with that skill is necessary or improves adherence.",
+   "evidence": [
+    "docs/plans/v2.0.1-execution.md:235 — A and B both contain the new skill.",
+    "docs/plans/v2.0.1-execution.md:83 — replaces existing suggest/show guidance.",
+    "evidence/DECISIONS-D21-D31.md:174-180 — current routing exists and a small adherence smoke test followed it 2/2."
+   ],
+   "detected_if": "Explains that both X3 arms use the new skill, so neither represents the existing suggest/show policy and the design cannot isolate the value of adding/replacing with the skill. Equivalent: retain a status-quo control to assess the upgrade.",
+   "mention_only_if": "Requests an additional experiment or says 2/2 or 5/6 is too small without identifying the missing current-routing comparison.",
+   "not_adjudicable_if": "The report depends on an unavailable definition of an X3 arm that allegedly includes the current policy without the new skill. Do not treat the earlier 2/2 adherence result as proof that the skill cannot help."
+  },
+  {
+   "id": "K28",
+   "tier": "secondary",
+   "cluster": "Context gate precedes the shipping configuration",
+   "claim": "X4 measures the new context footprint before X1 and X3 finalize automatic skills and policy text, with no scheduled final remeasurement. Its early result therefore does not by itself validate G5 for the configuration that ships.",
+   "evidence": [
+    "docs/plans/v2.0.1-execution.md:235-236 — X3 determines policy-line retention; X4 measures footprint.",
+    "docs/plans/v2.0.1-execution.md:59 — G5 limits startup context growth to 600 tokens.",
+    "docs/plans/v2.0.1-execution.md:84 — X1 determines automatic codemap invocation.",
+    "docs/plans/v2.0.1-execution.md:253-255 — X4 occurs before later experiment decisions and release."
+   ],
+   "detected_if": "Connects the early X4 measurement to later changes in shipped skill descriptions/policy and calls for measurement of the final configuration. Equivalent: repeat G5 at release after X1/X3 decide defaults.",
+   "mention_only_if": "Says context must stay under 600 tokens or suggests more measurements without identifying configuration drift after X4.",
+   "not_adjudicable_if": "The report predicts an actual 600-token overrun without measured final content. This is a gate-coverage gap, not a demonstrated overrun."
+  },
+  {
+   "id": "K29",
+   "tier": "primary",
+   "cluster": "Approval budget omits required work and overstates fallback certainty",
+   "claim": "The approximately 23M approval budget leaves required work uncosted, including the second X3 pass, live deep E2E, and Claude grading/question preparation; its listed approximately 22.5M subtotal leaves little room for these. The eight-new-case fallback is also not demonstrably within 10M at the observed EGM cost range.",
+   "evidence": [
+    "docs/plans/v2.0.1-execution.md:227-244 — two graders, experiment costs, additional costs and approximate total; X3 budgeted once.",
+    "docs/plans/v2.0.1-execution.md:124 — live deep E2E required.",
+    "docs/plans/v2.0.1-execution.md:198 — two X3 passes required.",
+    "docs/plans/v2.0.1-execution.md:276 — claims eight new X2 cases stay within 10M.",
+    "evidence/validation-2026-11-07-RESULT.md:87 — E runs cost 1.07–1.43M; eight upper-range runs alone cost 11.44M.",
+    "evidence/validation-2026-11-07-RESULT.md:143-144 — Claude grading and question preparation consumed tokens previously."
+   ],
+   "detected_if": "Identifies at least one concrete required omitted cost (second X3, live deep E2E, Claude grading or question creation), or shows that eight EGM runs plus other arms/overhead are not guaranteed to fit 10M using the packet cost range. Merely recomputing the rounded subtotal is insufficient.",
+   "mention_only_if": "Says the budget is optimistic, EGM is expensive, or 19.8M is not 23M while ignoring the separately listed 2.7M costs; or cites only a mislabeled review type. Also mention-only: notes only that the 10M per-experiment cap and X2's 11M differ, which the draft already raises as its own open question (plan:244, 276).",
+   "not_adjudicable_if": "The proposed overrun depends on later actual costs for this document, new subscriptions, or an assumed fixed per-case cost outside the packet. The packet proves omissions and lack of a guaranteed fallback, not an exact future total."
+  },
+  {
+   "id": "K30",
+   "tier": "primary",
+   "cluster": "New verdict semantics cannot be enforced by the reused ledger",
+   "claim": "The new protocol separates equivalence from uncertainty and uses cost intervals, but record-tasting still accepts only better/same/worse and derives outcomes from a point cost ratio. A statistics module alone cannot make the old catalog record and enforce the new decisions without an explicit mapping or validator/schema change.",
+   "evidence": [
+    "docs/plans/v2.0.1-execution.md:305-306 — four-way/interval rules followed by claimed catalog consistency enforcement.",
+    "docs/plans/v2.0.1-execution.md:77 — undetermined is neither equivalence nor eligible for default.",
+    "docs/plans/v2.0.1-execution.md:96 — new statistics module.",
+    "scripts/catalog_core.py:1847-1857 — three quality states; same explicitly includes uncertainty.",
+    "scripts/catalog_core.py:2062-2070 — point-ratio outcome function.",
+    "scripts/catalog_core.py:2084-2111 — schema rejects other quality/interval fields and validates against old outcomes.",
+    "evidence/validation-2026-11-07-RESULT.md:129 — proposed cost-too-high rule uses the interval lower bound."
+   ],
+   "detected_if": "Connects the four-state/interval protocol to the catalog’s three-state/point-ratio validator and the missing integration. Equivalents: mapping undetermined to same can promote it when cheaper; an interval-straddling cost can be rejected by the old point rule; add a compatible judgment/schema mapping before claiming consistent recording.",
+   "mention_only_if": "Says implement eval_stats, use four categories, retain historical data, or improve catalog without identifying that the existing validator cannot represent/enforce the proposed decisions.",
+   "not_adjudicable_if": "The report relies on an unprovided records-branch implementation or later catalog schema. Grade against the frozen validator and explicit new protocol only."
+  }
+ ]
+}

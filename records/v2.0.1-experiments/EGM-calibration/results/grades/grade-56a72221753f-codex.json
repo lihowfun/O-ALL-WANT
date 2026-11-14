@@ -1,0 +1,1110 @@
+{
+  "schema_version": 1,
+  "grader_id": "grader-codex-56a72221753f.a1",
+  "family": "openai",
+  "model": "gpt-6-astra",
+  "independent": true,
+  "blinded": true,
+  "key_sha256": "6d7497e90b9baf7f872bfd04c4750fee77a523e69169fd840d48df02d8e1f99e",
+  "packet_sha256": "3f61293d1b071118f73eb4590dfcefc437ecd12da735c1bd6025b4f24dd21bc1",
+  "rubric_sha256": "0217e8158e0316691182c013826f2d950b62c9eafcf49bcdb7a83ba043ea632a",
+  "blind_pack_sha256": "56a72221753f7216c05d83c5821d12367753d9b8de2a1fcb50d8becc29c8f657",
+  "reports": [
+    {
+      "report_id": "R001",
+      "report_sha256": "5aaba920c8e28b94149a5dfd0690ce03aed4ac6cb9a55a9b201da8c27bdae0c9",
+      "valid_review": true,
+      "items": [
+        {
+          "id": "K01",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:36 applies grading agreement to both reviewers and graders.",
+            "packet/evidence/validation-2026-11-07-RESULT.md:64 describes regrading existing answers, not a reviewer-family comparison."
+          ],
+          "reason": "The report does not distinguish fixed-answer grader agreement from independent code-review defect finding."
+        },
+        {
+          "id": "K02",
+          "label": "detected",
+          "report_evidence": [
+            "findings[5].evidence: evidence/codemap-comparison-2026-11-06.md:28,32,36,40 的 graphify 比值依序為 0.88、0.76、1.00、1.04；OAW 在第 36 行為 1.04。",
+            "findings[5].rationale: 所列範圍沒有涵蓋 graphify 的任何模型條件，也省略 OAW 未減少步數的條件，將部分條件的收益寫成三者共同結果。"
+          ],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:37 claims all three maps use 0.23–0.65 times native tool calls.",
+            "packet/evidence/codemap-comparison-2026-11-06.md:28 shows graphify at 0.88; lines 32, 36 and 40 show 0.76, 1.00 and 1.04, and line 36 shows OAW at 1.04."
+          ],
+          "reason": "The report explicitly rejects the universal efficiency range using correct graphify and OAW counterexamples."
+        },
+        {
+          "id": "K03",
+          "label": "mention-only",
+          "report_evidence": [
+            "findings[0].evidence: evidence/validation-2026-11-07-RESULT.md:34-44 區分固定題目與隨機題目，並指出題內分數相同會使區間退化；第 127 行的保護依賴合併題內變異。"
+          ],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:44 calls the old 4-by-3 resolution poor.",
+            "packet/evidence/validation-2026-11-07-RESULT.md:16 says coverage resolution is not poor; lines 35 and 41–42 quantify adequate resolution and the modest design change."
+          ],
+          "reason": "The report discusses sampling and bootstrap collapse without identifying the false broad criticism of the old coverage resolution."
+        },
+        {
+          "id": "K04",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/example/minimal-project/AGENTS.md:25 is the final line of the rendered policy, contrary to the plan's 26-line baseline at packet/docs/plans/v2.0.1-execution.md:83.",
+            "packet/scripts/catalog.py:2512 begins the parser whose declarations through line 2601 comprise 23 top-level and four nested commands."
+          ],
+          "reason": "The report corrects neither the rendered policy line count nor the catalog command count."
+        },
+        {
+          "id": "K05",
+          "label": "detected",
+          "report_evidence": [
+            "findings[3].claim: 唯一政策入口改為做完改動才呼叫 oaw-review，但 deep 必須先寫計畫、審查修正，再實作。",
+            "findings[3].rationale: 依這條政策執行時，首次分類發生在實作完成後，無法讓計畫審查先修正深度任務的設計。"
+          ],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:83 invokes oaw-review after changes, while line 108 places EGM plan review before implementation.",
+            "packet/scripts/oaw_mode.py:402 already permits classifying planned paths."
+          ],
+          "reason": "The report identifies the after-implementation entrypoint as too late for the required pre-implementation plan review."
+        },
+        {
+          "id": "K06",
+          "label": "mention-only",
+          "report_evidence": [
+            "uncertainties[0]: D32、自動啟動 EGM 與 X2 超額預算因此仍是提案，不能當成已生效決策；提出這些選項本身不是違規。"
+          ],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:115 retains the upstream EGM workflow and line 275 proposes automatic invocation.",
+            "packet/templates/.agents/skills/egm-review/SKILL.md:16 preserves human checkpoints; packet/vendor/egm/skills/egm-review/SKILL.md:110 requires a user preset gate when Step is omitted."
+          ],
+          "reason": "The report notes Q2's pending authorization but does not identify a retained manual requirement that would interrupt the authorized automatic flow."
+        },
+        {
+          "id": "K07",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:112 adds templates/.claude/agents/oaw-goldfish.md.",
+            "packet/scripts/sync_egm.py:153 compares every file in that agent directory with the exact generated bridge set, and packet/scripts/harness_check.py:187 invokes that check."
+          ],
+          "reason": "The report does not identify the new agent's conflict with the exact generated EGM inventory."
+        },
+        {
+          "id": "K08",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:88 proposes JSON steps for the skill without an input/output schema.",
+            "packet/docs/plans/v2.0.1-execution.md:235 requires nonexecuting X3 review decisions, while packet/scripts/oaw_mode.py:397 defines only the existing suggest/show interfaces."
+          ],
+          "reason": "The report does not identify the missing shared plan-command schema or dry-run contract."
+        },
+        {
+          "id": "K09",
+          "label": "detected",
+          "report_evidence": [
+            "findings[0].claim: 12 題各跑一次，仍使用固定題目的題內配對 bootstrap 與合併題內變異下限產生判定區間。",
+            "findings[0].rationale: 每個題目／組別只有一筆作答，題內重抽樣只能抽回原值，也沒有重複觀測可估計新題的題內變異。"
+          ],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:96 specifies within-question paired bootstrap and a variance floor, whereas lines 233–234 specify one run per question/case per arm.",
+            "packet/evidence/validation-2026-11-07-RESULT.md:127 proposes a pooled within-question variance floor."
+          ],
+          "reason": "The report explicitly explains why singleton cells cannot supply the within-question resampling or variance required by the stated method."
+        },
+        {
+          "id": "K10",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:108 promises deep for new design documents.",
+            "packet/scripts/oaw_mode.py:246 restricts that trigger to added docs/designs paths or design*.md names, and line 290 otherwise defaults to light."
+          ],
+          "reason": "The report's discussion of planned-path classification does not identify the restricted design-document matcher or a missed plan path."
+        },
+        {
+          "id": "K11",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:108 assigns approximately 1.1M tokens to each deep task without a task spending limit.",
+            "packet/docs/plans/v2.0.1-execution.md:229 caps experiments, and line 266 addresses interruption rather than task-level spending authorization."
+          ],
+          "reason": "The report does not identify missing spending limits or over-cap behavior for ordinary automatic deep tasks."
+        },
+        {
+          "id": "K12",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:138 reduces map output to locations/signatures and complete/truncated labels.",
+            "packet/scripts/code_index.py:1542 includes unresolved same-name candidates and line 1733 emits their uncertainty warning independently of truncation."
+          ],
+          "reason": "The report does not distinguish output completeness from call-resolution certainty or indexed scope."
+        },
+        {
+          "id": "K13",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:139 schedules TS/JS parsing and line 148 requires caller recall on both repositories.",
+            "packet/scripts/code_index.py:1525 skips non-Python graph records and line 1594 restricts affected traversal to Python."
+          ],
+          "reason": "The report does not identify the Python-only call-graph engine as a dependency of the VS Code recall requirement."
+        },
+        {
+          "id": "K14",
+          "label": "mention-only",
+          "report_evidence": [
+            "uncertainties[3]: 使用者命令在已安裝專案或框架 checkout 執行，以及管理功能如何配送，尚未明確。現行 scripts/oaw.py:277-285 不會把 oaw.py 或 catalog 配送到目標專案；若 W3 預期在目標專案直接執行第 157-160 行命令，需補上配送設計。"
+          ],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:157 advertises project-relative management commands and line 160 the conversational equivalent.",
+            "packet/scripts/oaw.py:277 omits oaw.py and catalog from the payload, while line 856 defaults checkout commands to the current directory unless --target is provided."
+          ],
+          "reason": "The report accurately notes the payload omission but presents the resulting command-delivery failure conditionally on an unresolved intended execution location."
+        },
+        {
+          "id": "K15",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:174 permits consented runtime installation and line 176 permits tasting afterward.",
+            "packet/scripts/catalog_core.py:1242 holds executable skills, line 1259 holds untasted text and line 1268 refuses hook/MCP installation; packet/scripts/catalog.py:1869 rejects bundled names."
+          ],
+          "reason": "The restore-layer finding does not identify an absorption-engine rule that prevents the promised installation itself."
+        },
+        {
+          "id": "K16",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:170 promises an option without OAW policy.",
+            "packet/scripts/oaw.py:277 installs policy/helpers unconditionally and line 745 makes them doctor requirements."
+          ],
+          "reason": "The report does not identify the lack of a policy-free management installation mode."
+        },
+        {
+          "id": "K17",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:163 promises a zero-agent-token path, while lines 169 and 173 promise functional-overlap and policy-contradiction detection.",
+            "packet/scripts/catalog_core.py:3 describes byte decoding and static pattern matching rather than a specified semantic comparison contract."
+          ],
+          "reason": "The report does not identify the missing mechanism for semantic conflict detection in the free deterministic path."
+        },
+        {
+          "id": "K18",
+          "label": "detected",
+          "report_evidence": [
+            "findings[1].evidence: scripts/catalog.py:1374-1375,1407-1428 明確排除 .mcp.json、.claude/settings*.json、.codex/ 等設定；第 1431-1450 行的快照只收允許路徑，第 1644-1646 行的還原刪除也受相同限制。",
+            "findings[1].rationale: 現有快照不保存這些啟動設定，還原也不會撤銷其修改。直接沿用無法兌現移除承諾，可能留下仍會啟動的 hook 或 MCP 註冊。"
+          ],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:174 permits runtime components, line 175 reuses catalog restore and line 192 requires byte-identical removal.",
+            "packet/scripts/catalog.py:1407 excludes host settings and MCP files from builds/restores, and line 1645 restricts restoration deletions to that same layer."
+          ],
+          "reason": "The report connects excluded hook/MCP configuration to the reused restore mechanism's inability to fulfill the removal promise."
+        },
+        {
+          "id": "K19",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:165 requires a composition choice and line 176 adds a later tasting question.",
+            "packet/docs/plans/v2.0.1-execution.md:193 permits only one answered question in the add/remove acceptance flow."
+          ],
+          "reason": "The report does not identify the extra tasting prompt's conflict with the one-question interaction target."
+        },
+        {
+          "id": "K20",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:198 requires X3 before and after policy deletion.",
+            "packet/docs/plans/v2.0.1-execution.md:252 schedules W4 in segment 1, before X3 in segment 2 at line 253."
+          ],
+          "reason": "The report does not identify the schedule's failure to place the required pre-cut X3 baseline before W4."
+        },
+        {
+          "id": "K21",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:217 promises that migration adds new skills.",
+            "packet/scripts/oaw.py:352 preserves previous explicit skill selections, which determine the payload at line 360."
+          ],
+          "reason": "The report does not connect persisted explicit recipes to the migration promise of adding new skills."
+        },
+        {
+          "id": "K22",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:3 calls 2.0.1 the first V2 release, but line 217 names only a 2.0.0 upgrade.",
+            "packet/docs/UPGRADING.md:31 defines supported v1 migration, and packet/scripts/harness_check.py:148 requires synchronized installer version and source-ledger metadata."
+          ],
+          "reason": "The report's general validation uncertainty identifies neither the missing v1 upgrade validation nor the omitted metadata synchronization."
+        },
+        {
+          "id": "K23",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:233 uses undefined not-worse quality and omits the equivalent-quality/no-efficiency outcome.",
+            "packet/docs/plans/v2.0.1-execution.md:77 distinguishes uncertainty from equivalence and forbids promoting uncertainty."
+          ],
+          "reason": "The X1 finding challenges the token-cost condition rather than the meaning of not-worse quality or the missing quality-by-efficiency outcome."
+        },
+        {
+          "id": "K24",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:107 defines standard review as examining a code diff and tests.",
+            "packet/docs/plans/v2.0.1-execution.md:234 applies S to design documents and permits it to replace deep review."
+          ],
+          "reason": "The report does not identify the mismatch between standard's defined code-review inputs and X2's design-review treatment."
+        },
+        {
+          "id": "K25",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:234 gives E false-positive eligibility conditions but omits them from the cheaper equivalent S replacement.",
+            "packet/docs/plans/v2.0.1-execution.md:264 falls back to S when E fails without requiring S to qualify against N."
+          ],
+          "reason": "The report does not identify missing false-positive or baseline-quality eligibility for either S replacement path."
+        },
+        {
+          "id": "K26",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:234 retains orders although line 300 says to replace ceiling questions.",
+            "packet/evidence/validation-2026-11-07-RESULT.md:52 identifies orders as fully detected by all three groups."
+          ],
+          "reason": "The report does not identify orders as a saturated case retained in the detection panel."
+        },
+        {
+          "id": "K27",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:235 includes the new skill in both X3 arms.",
+            "packet/docs/plans/v2.0.1-execution.md:83 replaces suggest/show guidance, whose existing adherence smoke test is described at packet/evidence/DECISIONS-D21-D31.md:180."
+          ],
+          "reason": "The report does not identify the missing existing-routing control in X3."
+        },
+        {
+          "id": "K28",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:253 puts X4 before later X1 decisions at line 254.",
+            "packet/docs/plans/v2.0.1-execution.md:84 and line 235 let X1 and X3 alter automatic invocation and policy after the early context measurement."
+          ],
+          "reason": "The report does not connect X4's early measurement to later changes in the shipping configuration."
+        },
+        {
+          "id": "K29",
+          "label": "mention-only",
+          "report_evidence": [
+            "uncertainties[0]: D32、自動啟動 EGM 與 X2 超額預算因此仍是提案，不能當成已生效決策；提出這些選項本身不是違規。"
+          ],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:239 lists additional costs but omits the second required X3 pass from line 198 and live deep E2E from line 124.",
+            "packet/docs/plans/v2.0.1-execution.md:276 asserts that eight new cases fit 10M, while packet/evidence/validation-2026-11-07-RESULT.md:87 reports E runs up to 1.43M each."
+          ],
+          "reason": "The report acknowledges pending excess-budget approval without identifying a required omitted cost or disproving the eight-case fallback guarantee."
+        },
+        {
+          "id": "K30",
+          "label": "detected",
+          "report_evidence": [
+            "findings[2].evidence: scripts/catalog_core.py:1847-1854 只定義 better／same／worse；第 2084-2098 行只接受單一 cost_ratio 且限制 cheaper 的組合；第 2062-2070、2105-2109 行按點估計強制計算結果。",
+            "findings[2].rationale: 現有引擎無法保留等效與未定的區別，也不能依成本區間決策；例如 same、成本 1.6、區間 1.3–1.8 仍被強制排掉，而新規格只能稱成本未定。"
+          ],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:305 adopts four-state/interval judgments and line 306 claims catalog consistency enforcement.",
+            "packet/scripts/catalog_core.py:1848 allows only three quality states, line 2084 excludes interval fields and line 2062 derives outcomes from point cost ratios."
+          ],
+          "reason": "The report connects the proposed four-state interval protocol to the incompatible existing ledger schema and enforced point-ratio outcomes."
+        }
+      ],
+      "unsupported_claims": [],
+      "blinding_risks": [
+        "Traditional Chinese prose, English high/medium/low severity labels, and the consistent claim/evidence/rationale format are potentially recognizable stylistic features; no author, arm or cell was inferred."
+      ],
+      "secondary_notes": [
+        "All 30 key items were considered, including the full uncertainties array; array anchors are zero-based.",
+        "The additional X1 token-cost finding is supported by the plan's tool-call alternative and the retained D29 token-cost rules, and is not treated as unsupported merely because it is outside the key.",
+        "Astra also curated the key, so key familiarity is a disclosed limitation; unsupported-claim assessments are descriptive judgments from this one grader."
+      ]
+    },
+    {
+      "report_id": "R002",
+      "report_sha256": "326630d2e2c84f956d0055e2e7f7ef0e4fad1ffeec3e237d11f545f149ded84f",
+      "valid_review": true,
+      "items": [
+        {
+          "id": "K01",
+          "label": "mention-only",
+          "report_evidence": [
+            "findings[12].rationale: On a Claude host with Codex available, deep's plan review is same-family EGM. This contradicts principle 5 inside the same plan."
+          ],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:36 uses grader kappa to justify changing both reviewers and graders.",
+            "packet/evidence/validation-2026-11-07-RESULT.md:64 concerns regrading existing answers, not comparative defect discovery by code reviewers."
+          ],
+          "reason": "The report discusses reviewer-family selection without identifying the inference from fixed-answer grading to code-review effectiveness."
+        },
+        {
+          "id": "K02",
+          "label": "detected",
+          "report_evidence": [
+            "findings[3].evidence: evidence/codemap-comparison-2026-11-06.md:28,32,36,40 (graphify 88%,76%,100%,104%; OAW 104% on Opus 4.8); :6 'graphify won neither'; 0.23x is codegraph on VS Code (validation-2026-11-07-RESULT.md:113).",
+            "findings[3].rationale: The range is wrong. Graphify did not reliably save steps, and the OAW map did not save steps on Opus 4.8."
+          ],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:37 asserts the universal 0.23–0.65 tool-call range.",
+            "packet/evidence/codemap-comparison-2026-11-06.md:36 shows OAW at 1.04 and graphify at 1.00, while line 40 shows graphify at 1.04."
+          ],
+          "reason": "The report rejects the all-three efficiency claim using correct measured conditions that did not save calls."
+        },
+        {
+          "id": "K03",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:44 and line 300 call the old 4-by-3 resolution poor.",
+            "packet/evidence/validation-2026-11-07-RESULT.md:16 expressly says coverage resolution is not poor and lines 35–42 quantify the fixed/random-question distinction."
+          ],
+          "reason": "The report's criticism of six X3 scenarios does not identify the contradicted resolution rationale for the old coverage design."
+        },
+        {
+          "id": "K04",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/example/minimal-project/AGENTS.md:25 ends the 25-line rendered policy, contrary to packet/docs/plans/v2.0.1-execution.md:83.",
+            "packet/scripts/catalog.py:2512 begins the parser whose declarations through line 2601 define 23 top-level and four nested commands."
+          ],
+          "reason": "The report does not correct either inaccurate baseline footprint count."
+        },
+        {
+          "id": "K05",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:83 invokes review after changes, whereas line 108 requires EGM plan review before implementation.",
+            "packet/scripts/oaw_mode.py:402 supports classification using planned paths."
+          ],
+          "reason": "The report discusses automatic deep review but never identifies its after-change invocation as too late for pre-implementation plan review."
+        },
+        {
+          "id": "K06",
+          "label": "detected",
+          "report_evidence": [
+            "findings[10].rationale: If those lines are left as they are, the policy contradicts auto-run and refers to the retired `suggest` flow. The model would see conflicting rules.",
+            "findings[11].rationale: Without a specified non-interactive preset (Step=uninterrupted) and a resolve policy, the deep path stops for user input. G1 is then not met."
+          ],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:83 replaces only suggest/show guidance and line 115 retains the upstream EGM workflow.",
+            "packet/templates/AGENTS.md:6 retains explicit invocation; packet/templates/.agents/skills/egm-review/SKILL.md:16 preserves human checkpoints; packet/vendor/egm/skills/egm-review/SKILL.md:110 requires a preset prompt when Step is omitted."
+          ],
+          "reason": "The report connects retained invocation rules and a concrete omitted upstream preset binding to human intervention that defeats the owner-free deep promise."
+        },
+        {
+          "id": "K07",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:112 places oaw-goldfish in the generated agent directory.",
+            "packet/scripts/sync_egm.py:153 enforces an exact bridge inventory over that directory, and packet/scripts/harness_check.py:187 runs the check."
+          ],
+          "reason": "The uncertainty about preventing CLAUDE.md reads does not identify the exact inventory check or resulting harness failure."
+        },
+        {
+          "id": "K08",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:88 proposes a JSON plan consumed by the skill without defining its schema.",
+            "packet/docs/plans/v2.0.1-execution.md:235 requires dry-run decisions, while packet/scripts/oaw_mode.py:397 defines only the current suggest/show interfaces."
+          ],
+          "reason": "The report does not connect a missing plan-command interface or dry-run schema to its skill and X3 consumers."
+        },
+        {
+          "id": "K09",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:96 specifies within-question resampling and a variance floor, but lines 233–234 specify singleton observations per arm and question.",
+            "packet/evidence/validation-2026-11-07-RESULT.md:127 requires pooled within-question variance for the proposed floor."
+          ],
+          "reason": "The report never links the X1/X2 singleton design to the inability to estimate within-question variance or perform the stated bootstrap."
+        },
+        {
+          "id": "K10",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:108 promises a deep trigger for new design documents.",
+            "packet/scripts/oaw_mode.py:246 limits the added-document match to docs/designs or design*.md, and line 290 otherwise permits light."
+          ],
+          "reason": "The report does not identify a design/plan path missed by the restricted matcher."
+        },
+        {
+          "id": "K11",
+          "label": "mention-only",
+          "report_evidence": [
+            "uncertainties[3]: Auto-running EGM on about 56% of code commits at about 1.1M tokens each has an ongoing cost the plan does not estimate. The owner's request accepts the cost only if accuracy is high."
+          ],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:108 provides a per-deep-task estimate without a spending cap or over-cap authorization rule.",
+            "packet/docs/plans/v2.0.1-execution.md:229 caps experiments, and line 266 handles interruptions rather than ordinary task spending limits."
+          ],
+          "reason": "The report raises recurring expense and deep frequency but does not specify the missing per-task spending or authorization contract distinct from experimental budgets."
+        },
+        {
+          "id": "K12",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:138 specifies complete/truncated location-and-signature output.",
+            "packet/scripts/code_index.py:1542 includes unresolved receiver matches and line 1733 warns about their uncertainty independently of truncation."
+          ],
+          "reason": "The report does not identify the distinction between complete indexed output and resolved actual callers."
+        },
+        {
+          "id": "K13",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:139 proposes stronger TS/JS parsing and line 148 requires callers recall on VS Code.",
+            "packet/scripts/code_index.py:1525 traverses only Python graph records and line 1594 explicitly limits affected to Python."
+          ],
+          "reason": "The report does not identify the missing TS/JS call-graph resolution scope behind the VS Code recall gate."
+        },
+        {
+          "id": "K14",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:157 advertises project-relative oaw.py management commands.",
+            "packet/scripts/oaw.py:277 omits oaw.py and catalog from the installed payload, and line 856 requires an explicit target when operating from a separate checkout."
+          ],
+          "reason": "The report challenges catalog installation rules and manifests without identifying the checkout-versus-installed-project command location mismatch."
+        },
+        {
+          "id": "K15",
+          "label": "detected",
+          "report_evidence": [
+            "findings[0].evidence: scripts/catalog.py:2519-2522 (add only registers and tastes); scripts/catalog_core.py:1242-1248 (skills with scripts held, 'never run on this machine'), 1259-1263 (skill text held until behavior A/B), 1268-1270 ('OAW never installs hooks or MCP servers'), 1276-1281 (dependency manifests excreted, 'final'); scripts/catalog.py:1374-1375 (.mcp.json and .codex/ are denied paths), 1869-1870 (name collision with a bundled skill refused).",
+            "findings[0].rationale: The current engine refuses most of what W3 promises. Without new install paths and reversed engine rules, which W3 does not list as work, the W3 E2E fixtures (hook skill, OAW same-name skill) and option ① 'use theirs' cannot pass."
+          ],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:169 offers use-theirs conflict resolution, line 174 allows consented runtime installation and line 176 defers tasting.",
+            "packet/scripts/catalog_core.py:1242 holds executable components, line 1259 requires A/B for text and line 1268 refuses hook/MCP installation; packet/scripts/catalog.py:1869 rejects bundled-name collisions."
+          ],
+          "reason": "The report ties several W3 promises directly to catalog rules that prevent those installations through the reused absorption path."
+        },
+        {
+          "id": "K16",
+          "label": "detected",
+          "report_evidence": [
+            "findings[1].claim: Option ② installs no OAW skills or policy text, with OAW acting only as manager (list, remove, restore).",
+            "findings[1].evidence: scripts/catalog.py:1364-1371 (every catalog action needs .oaw/install.json from oaw.py init); scripts/oaw.py:745,774-778 (doctor FAILs without AGENTS.md, CLAUDE.md, context_hub.py, oaw_common.py).",
+            "findings[1].rationale: Option ② needs a new install profile and doctor rules. As written, the manager either cannot run or reports the project as unhealthy."
+          ],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:170 promises no OAW policy text.",
+            "packet/scripts/oaw.py:277 unconditionally includes policy/helpers and line 745 requires them for doctor, with failure at line 778."
+          ],
+          "reason": "The report identifies mandatory policy/helper health checks as incompatible with option 2 and calls for a separate install profile despite an overbroad ancillary manifest claim."
+        },
+        {
+          "id": "K17",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:163 makes ordinary installation free of agent tokens while lines 169 and 173 promise semantic overlap and policy-conflict checks.",
+            "packet/scripts/catalog_core.py:3 describes static byte pattern matching without a semantic comparison contract."
+          ],
+          "reason": "The report does not identify the unsupported semantic-detection scope of the deterministic free installation path."
+        },
+        {
+          "id": "K18",
+          "label": "mention-only",
+          "report_evidence": [
+            "findings[0].evidence: scripts/catalog.py:1374-1375 (.mcp.json and .codex/ are denied paths)",
+            "findings[2].claim: remove restores the pre-add state byte for byte, and OAW/EGM can be left out."
+          ],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:174 allows runtime configuration changes and line 175 reuses builds/restore.",
+            "packet/scripts/catalog.py:1407 excludes host settings and MCP files from restore points, so the byte-identical removal promise at packet/docs/plans/v2.0.1-execution.md:192 needs a different configuration contract."
+          ],
+          "reason": "The report mentions denied configuration paths and removal but uses them for installation refusal and an EGM-removal allegation rather than establishing the separate restore-coverage gap."
+        },
+        {
+          "id": "K19",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:165 requires the composition question and line 176 asks an additional tasting question for untasted skills.",
+            "packet/docs/plans/v2.0.1-execution.md:193 limits the acceptance flow to one answered question."
+          ],
+          "reason": "The report does not identify the second tasting prompt's conflict with the one-answer flow."
+        },
+        {
+          "id": "K20",
+          "label": "mention-only",
+          "report_evidence": [
+            "findings[8].claim: W4 runs X3 before and after AGENTS.md deletions to confirm adherence is unchanged; the X3 budget is 1.5M; X3 picks the shorter rule set when both groups are 'equally good'.",
+            "findings[8].rationale: Two extra X3 runs (about 3M) are not in the 23M budget."
+          ],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:198 requires before/after X3 runs.",
+            "packet/docs/plans/v2.0.1-execution.md:252 schedules W4 before the X3 phase at line 253, leaving the required pre-cut baseline unplaced."
+          ],
+          "reason": "The report notices repeated X3 work only as a budget issue and does not connect the pre-cut baseline to the contradictory segment ordering."
+        },
+        {
+          "id": "K21",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:217 promises new skills during migration.",
+            "packet/scripts/oaw.py:352 reuses previous explicit selections, and packet/docs/UPGRADING.md:69 documents that an omitted skill flag preserves custom recipes."
+          ],
+          "reason": "The report does not identify persistent explicit recipes as preventing automatic addition of the promised new skills."
+        },
+        {
+          "id": "K22",
+          "label": "detected",
+          "report_evidence": [
+            "findings[13].claim: Release scope includes migration 2.0.0 -> 2.0.1 only.",
+            "findings[13].rationale: Real users upgrade from 1.1.0. G6 does not verify the 1.1.0 -> 2.0.1 path for the first V2 release."
+          ],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:3 says 2.0.0 was never released, while lines 60 and 217 name only the 2.0.0-to-2.0.1 upgrade.",
+            "packet/docs/UPGRADING.md:31 specifies the supported v1 migration and line 33 covers customized legacy routers."
+          ],
+          "reason": "The report identifies missing validation of the released v1-to-first-V2 upgrade path."
+        },
+        {
+          "id": "K23",
+          "label": "detected",
+          "report_evidence": [
+            "findings[9].rationale: 'Not worse' is undefined for undecided quality. Undecided quality with passing efficiency matches no branch, or promotes against principle 6."
+          ],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:233 uses not-worse quality for X1 promotion without defining its relationship to uncertainty.",
+            "packet/docs/plans/v2.0.1-execution.md:77 forbids promoting undetermined quality or treating it as equally good."
+          ],
+          "reason": "The report explicitly connects X1's undefined not-worse test to the distinction between uncertainty and promotable quality."
+        },
+        {
+          "id": "K24",
+          "label": "mention-only",
+          "report_evidence": [
+            "uncertainties[2]: X2 measures review of design documents. Most deep triggers are harness or code changes (V7: 56% of code commits). Whether X2's results carry over to those changes is open."
+          ],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:107 defines standard using diff and tests.",
+            "packet/docs/plans/v2.0.1-execution.md:234 applies S to design documents and permits S to replace deep plan review."
+          ],
+          "reason": "The report raises generalization from design documents to deep tasks without identifying S's incompatible diff-and-tests treatment or specifying a design-review S contract."
+        },
+        {
+          "id": "K25",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:234 requires false-positive safety for E but not the cheaper equivalent S replacement.",
+            "packet/docs/plans/v2.0.1-execution.md:264 selects S when E fails without qualifying S against N."
+          ],
+          "reason": "The report questions branch precedence but does not identify missing S false-positive or baseline-quality eligibility."
+        },
+        {
+          "id": "K26",
+          "label": "detected",
+          "report_evidence": [
+            "findings[5].evidence: evidence/validation-2026-11-07-RESULT.md:52 (orders: all arms at ceiling), :53 (clean measures false positives only); plan's own rules at :274 and :300 say to replace ceiling items.",
+            "findings[5].rationale: Keeping a ceiling case breaks the plan's own D32 rule. It also cuts the discriminating defect cases from 8 to 7, which weakens the E>N interval test."
+          ],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:234 retains orders and line 300 requires replacement of ceiling questions.",
+            "packet/evidence/validation-2026-11-07-RESULT.md:52 identifies orders as saturated and line 83 excludes it from the improvement-sensitive follow-up."
+          ],
+          "reason": "The report identifies orders as a known ceiling case and connects its retention to the replacement rule and reduced discrimination."
+        },
+        {
+          "id": "K27",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:235 gives both X3 groups the new skill.",
+            "packet/docs/plans/v2.0.1-execution.md:83 replaces existing suggest/show routing, for which packet/evidence/DECISIONS-D21-D31.md:180 reports an adherence smoke test."
+          ],
+          "reason": "The report does not identify the missing status-quo routing arm needed to assess the skill's value over the existing policy."
+        },
+        {
+          "id": "K28",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:253 schedules X4 before X1's later default decisions at line 254.",
+            "packet/docs/plans/v2.0.1-execution.md:84 and line 235 allow X1 and X3 to change the skill/policy configuration measured by the G5 context gate."
+          ],
+          "reason": "The report does not identify the need to remeasure startup context after final defaults and policy are chosen."
+        },
+        {
+          "id": "K29",
+          "label": "detected",
+          "report_evidence": [
+            "uncertainties[10]: Opus grading tokens for X1 and X2 are not itemized in the Claude budget.",
+            "uncertainties[4]: Q3 fallback: 8 new cases at 1.07-1.43M per E run (validation:87) leaves almost no room under 10M.",
+            "findings[8].evidence: Total at :244 counts X3 once; X3 has 6 scenarios x 1 run per model (:235); principle 6 at :77 says inconclusive is not 'equally good'."
+          ],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:227 requires Opus grading, but the budget at lines 233–244 itemizes Codex grading and only one X3 allocation; line 198 requires two X3 passes.",
+            "packet/evidence/validation-2026-11-07-RESULT.md:87 reports E costs of 1.07–1.43M, so eight upper-range E runs alone exceed the 10M guarantee at packet/docs/plans/v2.0.1-execution.md:276."
+          ],
+          "reason": "The report identifies omitted Claude grading and repeated X3 work and challenges the fallback using the packet cost range, independently of its erroneous count of extra X3 runs."
+        },
+        {
+          "id": "K30",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:305 introduces four-state/interval decisions and line 306 claims existing catalog enforcement.",
+            "packet/scripts/catalog_core.py:1848 admits only three quality states, line 2084 rejects interval fields and line 2062 uses point-ratio outcomes."
+          ],
+          "reason": "The report does not connect the new statistical verdict semantics to the existing ledger's incompatible schema and outcome validator."
+        }
+      ],
+      "unsupported_claims": [
+        {
+          "id": "U01",
+          "claim": "Every catalog action requires an OAW installation manifest.",
+          "reason": "The cited function enforces a manifest for managed-layer operations, but catalog list directly reads registry and decision data and can return an empty listing without an install manifest.",
+          "report_evidence": [
+            "findings[1].evidence: scripts/catalog.py:1364-1371 (every catalog action needs .oaw/install.json from oaw.py init)"
+          ],
+          "source_evidence": [
+            "packet/scripts/catalog.py:840 implements list without calling install_manifest and line 850 provides the empty-registry result.",
+            "packet/scripts/catalog.py:94 returns defaults for missing JSON data and line 263 returns an empty decisions list when its file is absent.",
+            "packet/scripts/catalog.py:1364 defines the manifest requirement used by managed-layer operations such as remove at line 2046, not every command."
+          ],
+          "severe": false,
+          "severe_effect": "No concrete breaking change or blocking directive follows from this overgeneralization; the separate policy/doctor incompatibility remains supported."
+        },
+        {
+          "id": "U02",
+          "claim": "The historical EGM runtime/policy removal defect remains unfixed and must be scheduled before option 2 and byte-identical removal can work.",
+          "reason": "The historical result accurately described its earlier observation, but the frozen implementation now conditionally installs EGM, retires owned runtime files through migration, and renders policy without EGM text when no EGM skill remains.",
+          "report_evidence": [
+            "findings[2].evidence: evidence/egm-selftest-2026-11-06-RESULT.md:58-63: both removal routes leave .oaw/integrations/egm (66 files) and the AGENTS.md EGM line, with the note 'this needs a separate fix'.",
+            "findings[2].rationale: No work item schedules this known removal defect, but option ② and the byte-identical remove criterion depend on it."
+          ],
+          "source_evidence": [
+            "packet/scripts/oaw.py:310 installs runtime only when EGM is selected and line 319 renders policy for that selection.",
+            "packet/scripts/oaw.py:433 retires owned unchanged EGM runtime and native agents when no EGM entrypoint is retained.",
+            "packet/scripts/catalog.py:2052 routes bundled EGM removal through migration and line 2070 applies that plan.",
+            "packet/tests/test_catalog.py:531 defines the regression test for runtime/policy removal and byte-preserving re-add/restore, including assertions at lines 544–555; these tests were read, not executed.",
+            "packet/docs/UPGRADING.md:70 explicitly documents runtime, native-agent and unedited-policy retirement."
+          ],
+          "severe": true,
+          "severe_effect": "The report presents this already-fixed defect as a prerequisite blocking option-2/removal acceptance, which would falsely withhold acceptance pending redundant removal work."
+        },
+        {
+          "id": "U03",
+          "claim": "X2 necessarily uses a different E treatment, so the old answers measure a different arm and the reuse saving is not real.",
+          "reason": "The packet establishes the need to verify comparability but does not establish that the upstream EGM treatment or every reusable N/E answer necessarily changes, and the absence of an old S arm does not eliminate N/E reuse savings.",
+          "report_evidence": [
+            "findings[6].rationale: X2's E arm is 2.0.1's oaw-review deep path, not the plugin, so it is a different arm. S must be run on the old cases anyway. The reuse saving is not real, and the old answers measure a different arm."
+          ],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:234 defines E as full EGM and conditional old-answer reuse, without specifying an E prompt or treatment change that proves all old N/E answers invalid.",
+            "packet/docs/plans/v2.0.1-execution.md:115 instructs the new skill to follow the upstream EGM workflow.",
+            "packet/templates/.agents/skills/egm-review/SKILL.md:10 requires the unmodified upstream entry and line 16 preserves its stages, tools and isolation; line 18 says it is an adapter rather than a rewritten workflow.",
+            "packet/evidence/egm-selftest-2026-11-06-RESULT.md:16 records an old native arm and line 17 an official EGM arm; the missing historical S arm only establishes that S needs new runs."
+          ],
+          "severe": false,
+          "severe_effect": "The unsupported categorical conclusion would discard potentially comparable answers and increase rerun costs, but it is not presented as an explicit blocker and does not itself prescribe breaking a required behavior."
+        },
+        {
+          "id": "U04",
+          "claim": "The plan necessarily requires two additional X3 runs costing about 3M beyond its existing X3 allocation.",
+          "reason": "The packet requires two X3 passes total and budgets one, establishing one omitted pass rather than two extra passes unless a separate third invocation is supplied.",
+          "report_evidence": [
+            "findings[8].rationale: Two extra X3 runs (about 3M) are not in the 23M budget."
+          ],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:198 specifies one X3 before and one after policy deletion.",
+            "packet/docs/plans/v2.0.1-execution.md:235 budgets X3 at approximately 1.5M and line 253 schedules X3 without demanding a third independent invocation.",
+            "packet/docs/plans/v2.0.1-execution.md:244 includes the existing X3 allocation in the total; the exhaustive X3 requirements at lines 125, 198, 235 and 253 do not require a separate third pass."
+          ],
+          "severe": false,
+          "severe_effect": "This overstates the specifically omitted X3 cost by about 1.5M; the underlying omission of a required second pass remains real."
+        }
+      ],
+      "blinding_risks": [
+        "English prose with retained circled Chinese option numbers, high/medium/low severity labels, and a long uncertainties list are potentially recognizable stylistic features; no author, arm or cell was inferred."
+      ],
+      "secondary_notes": [
+        "All 30 key items were considered, including the full uncertainties array; array anchors are zero-based.",
+        "A detected key item can coexist with an unsupported ancillary assertion, as in the management-only profile and X3 budget findings.",
+        "The cumulative-per-food D13 concern is supported by packet/evidence/DECISIONS-D21-D31.md:94 and packet/evidence/validation-2026-11-07-RESULT.md:138 and is not automatically an unsupported claim because it is outside the key.",
+        "Astra also curated the key, so key familiarity is a disclosed limitation; unsupported and severe-claim assessments are descriptive judgments from this one grader, not two-grader counts or a quality verdict."
+      ]
+    },
+    {
+      "report_id": "R003",
+      "report_sha256": "2563eddde513c3868d976ce753883bac1ebe53764be0660d8f86b03f868a9427",
+      "valid_review": true,
+      "items": [
+        {
+          "id": "K01",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:36 generalizes grader agreement to reviewers as well as graders.",
+            "packet/evidence/validation-2026-11-07-RESULT.md:64 describes fixed-answer regrading rather than a code-review family comparison."
+          ],
+          "reason": "The report does not identify the unsupported inference from answer-grading agreement to code-review defect discovery."
+        },
+        {
+          "id": "K02",
+          "label": "detected",
+          "report_evidence": [
+            "findings[3].evidence: evidence/codemap-comparison-2026-11-06.md:28,32,36,40 的 graphify 比值依次為 0.88、0.76、1.00、1.04；OAW 在 Opus 4.8 也是 1.04。",
+            "findings[3].rationale: 摘要把特定組合的最佳結果寫成三個地圖共同的量測範圍，掩蓋了沒有減少甚至增加呼叫的條件，誇大選擇吸收機制的效率依據。"
+          ],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:37 asserts all three maps reduced calls to 0.23–0.65 of native.",
+            "packet/evidence/codemap-comparison-2026-11-06.md:28 and lines 32, 36 and 40 give graphify ratios outside that range, with OAW also at 1.04 on line 36."
+          ],
+          "reason": "The report identifies the false universal efficiency range and supplies correct measured counterexamples."
+        },
+        {
+          "id": "K03",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:44 and line 300 describe the old 4-by-3 resolution as poor.",
+            "packet/evidence/validation-2026-11-07-RESULT.md:16 says coverage resolution is not poor and lines 35–42 quantify the fixed/random-question comparison."
+          ],
+          "reason": "The report does not distinguish the false coverage-resolution rationale from the supported variance-collapse and grading-noise problems."
+        },
+        {
+          "id": "K04",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/example/minimal-project/AGENTS.md:25 ends the rendered 25-line policy, contrary to packet/docs/plans/v2.0.1-execution.md:83.",
+            "packet/scripts/catalog.py:2512 begins the parser defining 23 top-level commands and four nested commands through line 2601."
+          ],
+          "reason": "The report does not correct either policy-line or catalog-command baseline counts."
+        },
+        {
+          "id": "K05",
+          "label": "detected",
+          "report_evidence": [
+            "findings[2].claim: 唯一保留的政策入口是「做完改動用 oaw-review」，但 deep 必須先寫計畫、審完計畫，再實作。",
+            "findings[2].rationale: 照這條政策執行時，強制入口出現在實作之後，無法保證 deep 的計畫審查先於實作；事後再寫計畫會失去阻止錯誤設計落地的作用。"
+          ],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:83 places the policy invocation after changes and line 108 requires EGM before implementation.",
+            "packet/scripts/oaw_mode.py:402 permits planned-path classification before implementation."
+          ],
+          "reason": "The report explicitly connects the after-change entrypoint to losing the required pre-implementation plan-review safeguard."
+        },
+        {
+          "id": "K06",
+          "label": "mention-only",
+          "report_evidence": [
+            "uncertainties[4]: Q1–Q3 仍是待決提案，證據沒有顯示已核准 D32、自動 EGM 或新增預算（計畫:272-276；evidence/validation-2026-11-07-RESULT.md:123）。這些變更本身不應當成違反現行決策；實作時需依決定落實分支。"
+          ],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:115 follows the upstream workflow and line 275 proposes automatic EGM.",
+            "packet/templates/.agents/skills/egm-review/SKILL.md:16 preserves human checkpoints and packet/vendor/egm/skills/egm-review/SKILL.md:110 requires an intake prompt when Step is missing."
+          ],
+          "reason": "The report notes pending automatic-EGM approval without identifying any retained manual gate that would obstruct the authorized automatic path."
+        },
+        {
+          "id": "K07",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:112 proposes the new oaw-goldfish agent inside the EGM adapter directory.",
+            "packet/scripts/sync_egm.py:153 requires that directory's complete inventory to equal generated bridges, and packet/scripts/harness_check.py:187 invokes the check."
+          ],
+          "reason": "The report does not identify the new agent's exact-inventory conflict or resulting gate failure."
+        },
+        {
+          "id": "K08",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:88 proposes JSON steps without an input/output contract.",
+            "packet/docs/plans/v2.0.1-execution.md:235 requires dry-run decisions for X3, while packet/scripts/oaw_mode.py:397 provides only existing suggest/show contracts."
+          ],
+          "reason": "The report does not identify the missing plan-command contract shared by the skill and dry-run experiment."
+        },
+        {
+          "id": "K09",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:96 requires within-question paired bootstrap and a variance floor, but lines 233–234 provide one observation per question/case and arm.",
+            "packet/evidence/validation-2026-11-07-RESULT.md:127 proposes pooling within-question variance, which the singleton design cannot estimate internally."
+          ],
+          "reason": "The report does not identify the singleton-versus-within-question-resampling mismatch."
+        },
+        {
+          "id": "K10",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:108 advertises new design documents as deep triggers.",
+            "packet/scripts/oaw_mode.py:246 matches only added docs/designs paths or design*.md names, and line 290 otherwise defaults to light."
+          ],
+          "reason": "The report mentions planned-path classification but not the design-path restriction that misses ordinary docs/plans documents."
+        },
+        {
+          "id": "K11",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:108 estimates deep-task cost without specifying a task cap or over-cap authorization.",
+            "packet/docs/plans/v2.0.1-execution.md:229 caps experiments and line 266 addresses interruptions rather than ordinary task spending."
+          ],
+          "reason": "The report does not identify the missing per-task spending policy for automatic deep review."
+        },
+        {
+          "id": "K12",
+          "label": "detected",
+          "report_evidence": [
+            "uncertainties[1]: 地圖的「完整」究竟只表示索引結果沒有被輸出上限截斷，還是宣稱呼叫關係完整，尚不清楚（計畫:138,148）。現有 callers 保留 resolved 標記及未知接收者警告（scripts/code_index.py:1502-1504,1542-1549,1733-1734），且會略過大型檔案（946-949）。新格式應保留這些限制；0.95 的抽樣召回率不能單獨保證全庫完整。"
+          ],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:138 replaces richer output with locations/signatures and complete/truncated labels.",
+            "packet/scripts/code_index.py:1542 includes unresolved same-name receiver candidates, line 1546 records resolved status and line 1733 warns about uncertainty independently of output truncation."
+          ],
+          "reason": "The report explicitly distinguishes untruncated output from call-relationship certainty, identifies unresolved receivers, and requires the new format to preserve those qualifications."
+        },
+        {
+          "id": "K13",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:139 schedules TS/JS parsing and line 148 requires VS Code caller recall.",
+            "packet/scripts/code_index.py:1525 skips non-Python graph records, and line 1594 restricts affected traversal to Python."
+          ],
+          "reason": "The report's completeness discussion does not identify the Python-only traversal engine or the missing TS/JS resolver scope."
+        },
+        {
+          "id": "K14",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:157 advertises project-relative management commands and line 160 a conversational backend.",
+            "packet/scripts/oaw.py:277 omits oaw.py/catalog from the installed payload, and line 856 uses the current directory unless an explicit checkout target is supplied."
+          ],
+          "reason": "The report's management-only packaging discussion concerns policy and manifests rather than the missing project-relative management executable."
+        },
+        {
+          "id": "K15",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:169 permits bundled-name replacement, line 174 permits runtime installation and line 176 defers tasting.",
+            "packet/scripts/catalog_core.py:1242 and line 1259 hold executable and untasted text components, line 1268 rejects hooks/MCP, and packet/scripts/catalog.py:1869 rejects bundled-name collisions."
+          ],
+          "reason": "The report identifies restore exclusions but not an absorption-engine rule preventing a promised W3 installation."
+        },
+        {
+          "id": "K16",
+          "label": "detected",
+          "report_evidence": [
+            "uncertainties[2]: ② 的管理專用安裝模式尚無具體封裝方式（計畫:170）。目前即使 skills=[]，仍產生 AGENTS.md、CLAUDE.md 與輔助腳本（scripts/oaw.py:270-280）；catalog 的還原又要求既有安裝 manifest（scripts/catalog.py:1364-1371）。需釐清新專案與既有 OAW 專案如何只保留管理功能，不能僅將空配方視為已滿足。"
+          ],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:170 requires no OAW skill or policy text in option 2.",
+            "packet/scripts/oaw.py:277 installs policy/helpers even for an empty skill list, and packet/scripts/catalog.py:1364 requires an installation manifest for restore operations."
+          ],
+          "reason": "The report establishes that an empty skill recipe still installs OAW policy/helpers and therefore cannot fulfill the management-only option."
+        },
+        {
+          "id": "K17",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:163 promises no agent tokens for ordinary add, while lines 169 and 173 promise functional-overlap and contradictory-policy detection.",
+            "packet/scripts/catalog_core.py:3 describes static byte pattern matching without a specified semantic conflict mechanism."
+          ],
+          "reason": "The report does not identify the mismatch between the free deterministic path and its semantic-conflict promises."
+        },
+        {
+          "id": "K18",
+          "label": "detected",
+          "report_evidence": [
+            "findings[0].evidence: scripts/catalog.py:1374-1375,1407-1428 明確排除 .mcp.json、.claude/settings*.json 與主機設定；1431-1451 的快照只收允許的安裝層，1620-1646 的還原亦限於該層。",
+            "findings[0].rationale: 現有還原範圍不包含註冊 hook／MCP 所需的設定。直接沿用它，移除 skill 後仍可能留下有效的執行設定，而第 192 行只比較受管檔案仍可通過。"
+          ],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:174 allows hook/MCP installation, line 175 reuses catalog restore and line 192 requires byte-identical managed-file restoration.",
+            "packet/scripts/catalog.py:1407 excludes host settings and MCP files from build/restore coverage, with deletion likewise restricted at line 1645."
+          ],
+          "reason": "The report directly links excluded runtime-registration settings to incomplete rollback and an acceptance check that could miss leftover execution configuration."
+        },
+        {
+          "id": "K19",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:165 requires a composition answer and line 176 adds a subsequent tasting prompt.",
+            "packet/docs/plans/v2.0.1-execution.md:193 permits only one answered question during the add/remove scenario."
+          ],
+          "reason": "The report does not identify the separate tasting question as violating the one-answer flow."
+        },
+        {
+          "id": "K20",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:198 requires X3 before and after the policy cut.",
+            "packet/docs/plans/v2.0.1-execution.md:252 schedules W4 in segment 1 and line 253 schedules X3 only afterward in segment 2."
+          ],
+          "reason": "The report does not identify the missing scheduled pre-cut X3 baseline."
+        },
+        {
+          "id": "K21",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:217 promises addition of new skills during migration.",
+            "packet/scripts/oaw.py:352 preserves prior explicit skill selections and line 360 builds the payload from those selections."
+          ],
+          "reason": "The report does not identify preserved explicit recipes as conflicting with automatic addition of new skills."
+        },
+        {
+          "id": "K22",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:3 says 2.0.1 is the first V2 release, while line 217 names only 2.0.0 migration.",
+            "packet/docs/UPGRADING.md:31 defines v1 migration and packet/scripts/harness_check.py:148 requires version/installer/source-ledger synchronization."
+          ],
+          "reason": "The report's general validation caveat identifies neither omitted v1 migration testing nor the synchronized release metadata contract."
+        },
+        {
+          "id": "K23",
+          "label": "detected",
+          "report_evidence": [
+            "uncertainties[0]: X1 的「兩家都判不差」尚未定義為統計等價、非劣性，或只是未判變差（docs/plans/v2.0.1-execution.md:233）。若包含未定，效率通過時能否進預設便與第 77 行衝突；應在登記時明確定義，目前不能斷言將發生錯誤升級。"
+          ],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:233 uses undefined not-worse quality to govern promotion.",
+            "packet/docs/plans/v2.0.1-execution.md:77 forbids promoting uncertainty or equating it with demonstrated sameness."
+          ],
+          "reason": "The report affirmatively identifies X1's missing quality definition and the need to distinguish demonstrated acceptability from uncertainty without predicting an actual future mispromotion."
+        },
+        {
+          "id": "K24",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:107 defines standard review using a code diff and tests.",
+            "packet/docs/plans/v2.0.1-execution.md:234 applies S to design documents and may deploy it instead of deep plan review."
+          ],
+          "reason": "The report does not identify the missing design-review treatment for the code-diff-defined standard arm."
+        },
+        {
+          "id": "K25",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:234 omits S false-positive eligibility from the equivalence-and-cost replacement rule.",
+            "packet/docs/plans/v2.0.1-execution.md:264 selects S on E's failure without requiring an acceptable S-versus-N result."
+          ],
+          "reason": "The report does not identify the unqualified S replacement paths."
+        },
+        {
+          "id": "K26",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:234 keeps orders even though line 300 requires replacing ceiling cases.",
+            "packet/evidence/validation-2026-11-07-RESULT.md:52 reports that all three groups fully detect orders."
+          ],
+          "reason": "The report does not identify orders as a saturated case that needs separation or replacement in the detection analysis."
+        },
+        {
+          "id": "K27",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:235 includes the new skill in both X3 arms.",
+            "packet/docs/plans/v2.0.1-execution.md:83 replaces existing suggest/show routing, whose smoke-test adherence is described at packet/evidence/DECISIONS-D21-D31.md:180."
+          ],
+          "reason": "The report does not identify the lack of an existing-policy/no-new-skill control."
+        },
+        {
+          "id": "K28",
+          "label": "absent",
+          "report_evidence": [],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:253 schedules X4 before X1 decisions at line 254.",
+            "packet/docs/plans/v2.0.1-execution.md:84 and line 235 let later experiments alter automatic skills and policy text without a scheduled final G5 measurement."
+          ],
+          "reason": "The report does not identify context measurement preceding final shipping configuration choices."
+        },
+        {
+          "id": "K29",
+          "label": "mention-only",
+          "report_evidence": [
+            "uncertainties[4]: Q1–Q3 仍是待決提案，證據沒有顯示已核准 D32、自動 EGM 或新增預算（計畫:272-276；evidence/validation-2026-11-07-RESULT.md:123）。"
+          ],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:239 itemizes additional costs without covering the second X3 required at line 198 or the live deep E2E required at line 124.",
+            "packet/docs/plans/v2.0.1-execution.md:276 guarantees eight cases within 10M despite E costs up to 1.43M per run at packet/evidence/validation-2026-11-07-RESULT.md:87."
+          ],
+          "reason": "The report mentions pending budget approval without identifying any specific omitted required cost or the unsupported eight-case budget guarantee."
+        },
+        {
+          "id": "K30",
+          "label": "detected",
+          "report_evidence": [
+            "findings[1].evidence: scripts/catalog_core.py:1847-1850 只接受 better／same／worse；2062-2070 仍用成本點估計 1.5 判定；2084-2088 不接受新的品質值或區間欄位，2105-2109 強制舊判定。",
+            "findings[1].rationale: 工作項目只安排共用統計與新 SOP，沒有銜接帳本的判定契約。例如品質未定、成本比 1.6、區間 [1.3,1.9] 的可選用結果，現有引擎會拒收；壓成 same 又會依點估計強制排掉。"
+          ],
+          "source_evidence": [
+            "packet/docs/plans/v2.0.1-execution.md:305 specifies four-state and interval judgments but line 306 relies on catalog consistency enforcement.",
+            "packet/scripts/catalog_core.py:1848 allows only better/same/worse, line 2084 omits interval fields and line 2062 forces outcomes from point cost ratios."
+          ],
+          "reason": "The report explains how the unchanged three-state point-ratio ledger rejects or misrepresents the newly proposed four-state interval decisions."
+        }
+      ],
+      "unsupported_claims": [],
+      "blinding_risks": [
+        "Traditional Chinese prose and P2/P3 severity labels are potentially recognizable stylistic features; no author, arm or cell was inferred."
+      ],
+      "secondary_notes": [
+        "All 30 key items were considered, including the full uncertainties array; array anchors are zero-based.",
+        "Uncertainty about a future outcome was distinguished from an affirmative identification of an existing specification gap: the map-status, policy-free-install and X1-definition passages establish their respective key mechanisms despite their location in uncertainties.",
+        "Astra also curated the key, so key familiarity is a disclosed limitation; unsupported-claim assessments are descriptive judgments from this one grader."
+      ]
+    }
+  ]
+}

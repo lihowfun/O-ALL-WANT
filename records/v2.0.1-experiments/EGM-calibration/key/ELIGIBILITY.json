@@ -1,0 +1,309 @@
+{
+  "schema_version": 1,
+  "key_sha256": "41efe96a84ada8b87321fbbf70474e39c5f98273f6d522ae2141dea093429ca4",
+  "primary": [
+    {
+      "id": "K02",
+      "claim_holds": "yes",
+      "is_blocking": "borderline",
+      "evidence_ok": true,
+      "rules_ok": false,
+      "verdict": "keep_primary_with_edit",
+      "reason": "The range claim is contradicted by the packet: graphify's tool-call ratios are 0.88, 0.76, 1.00, 1.04 and OAW's is 1.04 on Opus 4.8, so 'all three, 0.23-0.65x' is false. No plan step fails because of it (the map is still gated by Stage 0 and X1), so it is primary only through the 'number the evidence contradicts' limb of the tier definition. The second half of the claim (0.23 is not isolated to symbol lookup) is true but weaker, and as worded it lets a generic 'that is an aggregate' remark score a primary. K03 (secondary) is the same class of defect; the two should sit at the same tier. Confidence: primary status 0.6; need for the edit 0.8.",
+      "evidence_checked": [
+        "docs/plans/v2.0.1-execution.md:37 — '三個地圖…都少走步：工具呼叫是原生的 0.23–0.65 倍'",
+        "docs/plans/v2.0.1-execution.md:131 — codegraph row: '符號查詢一步到位（工具呼叫 0.23 倍）'",
+        "evidence/codemap-comparison-2026-11-06.md:28,32,36,40 — tool calls: OAW 65/56/104/48%, graphify 88/76/100/104%, codegraph 50/56/43/30%",
+        "evidence/validation-2026-11-07-RESULT.md:113 — 0.23 is the VS Code home-turf codegraph run as a whole (line 115: its tools were called 23 times in 12 runs)",
+        "evidence/codemap-comparison-2026-11-06.md:52-53 — on ERPNext the step saving came from the prompt hook; the agent never called codegraph's tools (not cited by the key, and it is the strongest support for the attribution half)"
+      ],
+      "edits": "detected_if: replace 'with at least one correct counterexample or correct attribution of the 0.23 result' by 'with at least one correct counterexample from the packet (graphify 0.76-1.04, or OAW 1.04 on Opus 4.8)'. Replace the sentence 'Also sufficient: identifies that the quoted 0.23 measures the full treatment, not an isolated symbol-query feature.' by 'Also sufficient: shows from the packet that the step saving credited to symbol lookup had another measured cause (codemap-comparison:52-53, the prompt hook that the draft refuses to absorb).' mention_only_if: add 'or says only that 0.23 is an aggregate / not isolated, without packet evidence of another cause'. not_adjudicable_if: delete; a report that does not say which ratios it means is not detected. evidence: add 'evidence/codemap-comparison-2026-11-06.md:52-53'."
+    },
+    {
+      "id": "K05",
+      "claim_holds": "yes",
+      "is_blocking": "yes",
+      "evidence_ok": true,
+      "rules_ok": true,
+      "verdict": "keep_primary",
+      "reason": "The only policy line tells the agent to call oaw-review after the change is made, while deep's own sequence puts the plan and its EGM review before implementation. Both statements are in the draft and cannot both hold; the skill, the policy line, the classifier input and the X3 scenarios all depend on which one is meant, so it has to be settled before W1 can be written.",
+      "evidence_checked": [
+        "docs/plans/v2.0.1-execution.md:83 — '那兩行換成一行「做完改動用 oaw-review」'",
+        "docs/plans/v2.0.1-execution.md:108 — deep: plan mode, EGM reviews the plan, implement, cross-family code review",
+        "scripts/oaw_mode.py:115-141 — default input is the working tree against HEAD (an existing diff)",
+        "scripts/oaw_mode.py:402-403 — --paths already accepts planned paths"
+      ],
+      "edits": "Optional: the not_adjudicable_if clause describes a vague report, not a gap in the packet; score that case as not detected."
+    },
+    {
+      "id": "K06",
+      "claim_holds": "narrower",
+      "is_blocking": "no",
+      "evidence_ok": true,
+      "rules_ok": true,
+      "verdict": "demote_to_secondary",
+      "reason": "What is really in the draft: it says the skill follows the upstream egm-review flow but does not bind TargetFile, GoldfishContext or Step, and upstream prompts the user when they are omitted. That is a missing binding, not a contradiction: upstream has an 'uninterrupted' preset with no gates, and the packet's own self-test shows EGM running unattended to a consolidated report in every run. The other half of the claim (retained explicit-invocation policy not reconciled) does not hold as stated, because Q2 itself says it changes the 'EGM explicit invocation only' wording and puts that to the owner. The key's own mention_only rule already treats 'asks for a preset' as a non-detection, which shows how close this is to a missing detail. Confidence in the demotion: 0.65.",
+      "evidence_checked": [
+        "docs/plans/v2.0.1-execution.md:115 — 'skill 照 runtime 裡上游 egm-review 的流程做，呼叫已安裝的 9 個 egm agent'",
+        "docs/plans/v2.0.1-execution.md:275 — Q2: '這會改 D31 第 3 條和 V2「EGM 只能明確呼叫」的寫法'",
+        "vendor/egm/skills/egm-review/SKILL.md:77-79,105-113 — Step omitted leads to a user prompt; given, the gate is bypassed",
+        "vendor/egm/skills/egm-review/SKILL.md:92-101,179-189 — context prompt and ambiguous-split gate",
+        "vendor/egm/skills/egm-review/SKILL.md:261-293 — uninterrupted full flow: no checkpoint gates, ends with a notification",
+        "evidence/egm-selftest-2026-11-06-RESULT.md:50-53 — six unattended E runs, each wrote stage reports and the consolidated report",
+        "templates/.agents/skills/egm-review/SKILL.md:5,16 — disable-model-invocation: true; preserve upstream human checkpoints or stop",
+        "templates/AGENTS.md:6,13 — 'EGM keeps its explicit invocation policy'; 'only when suggest says deep'"
+      ],
+      "edits": "If kept at any tier, narrow the claim to: 'The automatic deep path does not bind the upstream inputs (TargetFile, GoldfishContext, Step); with them omitted upstream prompts the user, so the owner-free flow is not specified.' Drop 'or reconciling the retained invocation policy' and the third detected_if route (unchanged explicit-invocation policy), since plan:275 raises exactly that with the owner."
+    },
+    {
+      "id": "K07",
+      "claim_holds": "yes",
+      "is_blocking": "yes",
+      "evidence_ok": true,
+      "rules_ok": true,
+      "verdict": "keep_primary",
+      "reason": "verify_bundled() compares every file under templates/.claude/agents with the generated EGM bridge set and raises on any difference; harness_check runs it. Adding oaw-goldfish.md at the path the draft names makes the mandatory gate fail, and the draft lists no change to that check. The fix is small, but the step as written cannot pass the gate that W0 and AGENTS.md require. Also seen: that directory is installed only through the EGM agent mapping, so a non-EGM agent there has no install path either.",
+      "evidence_checked": [
+        "docs/plans/v2.0.1-execution.md:87,112 — new agent oaw-goldfish at templates/.claude/agents/oaw-goldfish.md",
+        "scripts/sync_egm.py:147-158 — actual file set of templates/.claude/agents must equal the generated set, else 'EGM adapter inventory differs from the pinned generator'",
+        "scripts/harness_check.py:187 — egm-integration check runs sync_egm.py --check-bundled",
+        "scripts/oaw.py:223-235,286-288 — .claude/agents files are installed only via egm_native_agents() when EGM is selected on the Claude host"
+      ],
+      "edits": ""
+    },
+    {
+      "id": "K09",
+      "claim_holds": "yes",
+      "is_blocking": "yes",
+      "evidence_ok": true,
+      "rules_ok": true,
+      "verdict": "keep_primary",
+      "reason": "The draft's shared statistics are a within-question bootstrap with a pooled within-question variance floor, and the design is one run per question per arm. With one observation per cell there is nothing to resample within a question and no within-question variance to pool, so every cell is the 'all scores identical' case that the validation names as the flaw. X1 and X2 decide on interval bounds, so their decisions cannot be computed as specified. The packet text is enough to see this; the records-branch code is not needed.",
+      "evidence_checked": [
+        "docs/plans/v2.0.1-execution.md:96 — '題內配對 bootstrap、四類判定、零變異下限、成本看區間'",
+        "docs/plans/v2.0.1-execution.md:233-234 — X1 12 questions x 1 run per cell; X2 one run per case",
+        "docs/plans/v2.0.1-execution.md:274 — Q1 adopts '12 題各跑 1 次、零變異保護'",
+        "evidence/validation-2026-11-07-RESULT.md:34 — '區間用題內 bootstrap、題目固定'",
+        "evidence/validation-2026-11-07-RESULT.md:44 — identical scores in a cell collapse the interval to a point",
+        "evidence/validation-2026-11-07-RESULT.md:126-127 — rule 3 (12 x 1) next to rule 4 (pooled within-question variance as the floor)"
+      ],
+      "edits": ""
+    },
+    {
+      "id": "K10",
+      "claim_holds": "yes",
+      "is_blocking": "no",
+      "evidence_ok": true,
+      "rules_ok": true,
+      "verdict": "demote_to_secondary",
+      "reason": "The matcher is as narrow as the item says: only added .md files under docs/designs/ or named design*.md, so a new docs/plans/*.md is light. But the draft deliberately keeps the D31 triggers unchanged and schedules X5 to re-check them; the narrowness is a pre-existing recall limit of a heuristic that the draft re-advertises in D31's own words. No plan step fails or gives a wrong result because of it (the 2.0.1 change itself is deep through the harness rule). This is an inaccurate advertised contract, which is secondary by the definition. Confidence in the demotion: 0.75.",
+      "evidence_checked": [
+        "docs/plans/v2.0.1-execution.md:104,108 — 'D31 觸發，不變'; deep on '新的設計文件'",
+        "scripts/oaw_mode.py:246-249 — design_rule: status A, .md, docs/designs/ or design*.md",
+        "scripts/oaw_mode.py:227-228,269,290 — docs/ paths are documentation; no trigger means light",
+        "evidence/DECISIONS-D21-D31.md:166-170 — D31 lists 'a new design document' in the same words"
+      ],
+      "edits": "Change tier to secondary; no text change needed."
+    },
+    {
+      "id": "K14",
+      "claim_holds": "yes",
+      "is_blocking": "yes",
+      "evidence_ok": true,
+      "rules_ok": true,
+      "verdict": "keep_primary",
+      "reason": "The draft documents the user commands as python3 scripts/oaw.py add/list/remove, and a /oaw-add inside the project conversation. oaw.py and catalog.py stay in the framework checkout and are not in the project payload; the draft's own section 4 adds only code_index.py to the installed scripts. Run from the project the file does not exist; run from the checkout without --target the target is the checkout itself, which the installer refuses. Where the management CLI lives is an architectural choice the draft does not raise, and the three-command usability target depends on it.",
+      "evidence_checked": [
+        "docs/plans/v2.0.1-execution.md:157-160 — the three verbs and /oaw-add",
+        "docs/plans/v2.0.1-execution.md:88-89 — installed scripts gain code_index.py only; add/list/remove 'wrap the existing catalog'",
+        "scripts/oaw.py:2 — 'Run from the framework checkout; this CLI stays there.'",
+        "scripts/oaw.py:277-279 — payload: AGENTS.md, CLAUDE.md, context_hub.py, oaw_common.py, oaw_mode.py",
+        "scripts/oaw.py:114-115,854-856 — --target defaults to '.'; installing into the framework repository is refused",
+        "scripts/catalog.py:4 — 'Run from the framework checkout, like oaw.py'"
+      ],
+      "edits": ""
+    },
+    {
+      "id": "K15",
+      "claim_holds": "yes",
+      "is_blocking": "yes",
+      "evidence_ok": true,
+      "rules_ok": true,
+      "verdict": "keep_primary",
+      "reason": "W3 promises install-before-tasting, installation of hook/MCP/script-bearing parts after a checkbox, and a choice when a skill has a bundled name, all as a wrapper around the existing catalog. The catalog's only install path holds untasted text behind an A/B, holds executable parts, states that OAW never installs hooks or MCP servers, and rejects bundled-name collisions; SKILL_INTAKE.md lists these as rules that must be kept. The draft's three owner questions do not include relaxing them, so this is a contradiction with existing rules that has to be resolved first. Wording note: the draft never says it reuses 'absorb'; it says it wraps the catalog and names add, taste, builds and restore. 'The only install path of the wrapped catalog' is the accurate phrasing.",
+      "evidence_checked": [
+        "docs/plans/v2.0.1-execution.md:89,164,169,174,176,192 — wrapper around catalog; untasted install; conflict choice; hook consent; hook and same-name fixtures",
+        "scripts/catalog_core.py:1242-1248 — X1 and X1-inline skills are held",
+        "scripts/catalog_core.py:1259-1263 — X0 text held behind a behavior A/B (D17)",
+        "scripts/catalog_core.py:1268-1270 — 'OAW never installs hooks or MCP servers'",
+        "scripts/catalog.py:1863-1870 — only parts proposed for absorption install; bundled-name collision raises",
+        "scripts/catalog_core.py:78 — install allowlist is .md and .txt",
+        "docs/SKILL_INTAKE.md:304,306 — must-keep rules: food is not installed or run before approval; model-facing text needs an A/B"
+      ],
+      "edits": "Optional wording in claim: replace 'Its reused absorption engine' by 'The only install path of the catalog it wraps'."
+    },
+    {
+      "id": "K16",
+      "claim_holds": "yes",
+      "is_blocking": "borderline",
+      "evidence_ok": true,
+      "rules_ok": true,
+      "verdict": "demote_to_secondary",
+      "reason": "The code facts are right: policy and helpers install unconditionally, doctor requires them, and --skills none only empties the skill list. But the draft never says option 2 is done with --skills none; it promises a new behavior and does not list the installer/doctor work it needs. No documented rule and no other statement in the draft is contradicted, and an implementer can add a management-only mode without an owner decision. That is an unlisted work item (missing detail), not a step that is wrong as written. Argument for keeping it primary: the catalog the draft wraps needs .oaw/install.json, which only init writes, and init on a project with its own AGENTS.md ends in a conflict, so option 2's target user is exactly the case the current installer cannot serve. Confidence in the demotion: 0.55 (closest call of the seven).",
+      "evidence_checked": [
+        "docs/plans/v2.0.1-execution.md:170 — option 2: no OAW skills or policy text; OAW only manages",
+        "scripts/oaw.py:277-279 — unconditional policy and helper mappings",
+        "scripts/oaw.py:745-778 — doctor's required list and FAIL on missing or unmanaged",
+        "scripts/oaw.py:863,884 — 'none' selects no bundled skills only",
+        "scripts/catalog.py:1364-1371 — catalog refuses to work without an OAW install manifest (not cited by the key; it is what would make the item blocking)"
+      ],
+      "edits": "Change tier to secondary. If the curator keeps it primary, add 'scripts/catalog.py:1364-1371' to evidence and state in the claim that the wrapped catalog requires an install whose contract includes the policy."
+    },
+    {
+      "id": "K17",
+      "claim_holds": "yes",
+      "is_blocking": "no",
+      "evidence_ok": true,
+      "rules_ok": true,
+      "verdict": "demote_to_secondary",
+      "reason": "The draft does promise functional-overlap and contradictory-policy detection on a path it says costs no agent tokens, and names no mechanism. That is an unspecified mechanism and an overpromise, which the item itself frames as 'needs a narrower deterministic scope or an optional analysis step'. Nothing in the code or the decisions is contradicted, and the acceptance fixture can be met by a bounded structural rule. By the tier definitions this is a missing detail. Confidence in the demotion: 0.65.",
+      "evidence_checked": [
+        "docs/plans/v2.0.1-execution.md:163 — 'agent 不花 token，只有 AI 幫你配會花'",
+        "docs/plans/v2.0.1-execution.md:169 — option 1 lists functional overlap with OAW",
+        "docs/plans/v2.0.1-execution.md:173 — checked conflicts include '政策文字互相矛盾'",
+        "scripts/catalog_core.py:1-15 — static checks decode and pattern-match bytes"
+      ],
+      "edits": "Change tier to secondary; no text change needed."
+    },
+    {
+      "id": "K18",
+      "claim_holds": "yes",
+      "is_blocking": "yes",
+      "evidence_ok": true,
+      "rules_ok": true,
+      "verdict": "keep_primary",
+      "reason": "The draft names catalog builds/restore as the restore point for an installer that may install hooks and MCP servers, and promises that remove returns the project to its earlier state. The build layer excludes host settings and MCP files by code and by a documented must-keep rule, so a hook or MCP registration written by the new installer would survive remove. Reusing the named mechanism gives a wrong result on the hook fixture the draft itself requires.",
+      "evidence_checked": [
+        "docs/plans/v2.0.1-execution.md:174-175 — runtime parts installed after consent; restore point reuses catalog builds and restore",
+        "docs/plans/v2.0.1-execution.md:159,192 — remove returns to the pre-add state; managed files byte-identical",
+        "scripts/catalog.py:1374-1375 — denied prefixes and paths include .codex/ and .mcp.json",
+        "scripts/catalog.py:1407-1428 — layer_path_allowed: host settings and MCP files are never part of a build",
+        "docs/SKILL_INTAKE.md:308 — restore never touches host settings (.claude/settings*.json, .codex/, .mcp.json)"
+      ],
+      "edits": "Optional: the not_adjudicable_if clause ('unnamed component ... does not establish whether excluded files are involved') describes a vague report; score that as not detected."
+    },
+    {
+      "id": "K21",
+      "claim_holds": "yes",
+      "is_blocking": "no",
+      "evidence_ok": true,
+      "rules_ok": true,
+      "verdict": "demote_to_secondary",
+      "reason": "True only for installs with an explicit skill recipe, where preserving the selection is the documented behavior. Default installs record skills_explicit false and pick up a changed default list on migrate, so the main path works once the default list is extended. The draft also states that 2.0.0 was never released, so explicit 2.0.0 recipes in the field are close to none. A missing rule for an edge case. Confidence in the demotion: 0.85.",
+      "evidence_checked": [
+        "docs/plans/v2.0.1-execution.md:217 — '新的 skill 和 script 會加進去'",
+        "scripts/oaw.py:352-357 — explicit recipes reuse previous['skills']; otherwise default_skills() is used",
+        "scripts/oaw.py:505,580 and scripts/sync_examples.py:27 — manifest stores skills_explicit; the default example has it false",
+        "docs/UPGRADING.md:64-69 — 'An omitted flag preserves a prior custom recipe'",
+        "docs/plans/v2.0.1-execution.md:3 — 2.0.0 was never published"
+      ],
+      "edits": "Change tier to secondary; no text change needed."
+    },
+    {
+      "id": "K24",
+      "claim_holds": "yes",
+      "is_blocking": "borderline",
+      "evidence_ok": true,
+      "rules_ok": true,
+      "verdict": "demote_to_secondary",
+      "reason": "Standard is defined only as a zero-context review of a diff and tests, and X2 runs an S arm on design documents and may make S the deep reviewer, so the S treatment for a document is not defined in the draft. This is a gap in an experiment outline whose arms are fixed in a PREREG before any run (the draft's own rule), and the natural reading (one zero-context reviewer reads the document) makes both the experiment and the shipped fallback coherent. Nothing fails or is contradicted; it is a missing definition. Argument for keeping it primary: X2 is the largest budget line and decides the EGM default, so an undefined arm there is costly if it is not caught at PREREG. Confidence in the demotion: 0.6.",
+      "evidence_checked": [
+        "docs/plans/v2.0.1-execution.md:107 — standard: one zero-context reviewer of the diff and tests; codex review or oaw-goldfish",
+        "docs/plans/v2.0.1-execution.md:234 — X2: 12 design-document cases, arms N / S / E; 'S 和 E 等價 … deep 改用 S'",
+        "docs/plans/v2.0.1-execution.md:264 — risk row: deep switches to S",
+        "docs/plans/v2.0.1-execution.md:225,300 — PREREG fixes arms and rules before running"
+      ],
+      "edits": "Change tier to secondary; no text change needed."
+    },
+    {
+      "id": "K25",
+      "claim_holds": "yes",
+      "is_blocking": "no",
+      "evidence_ok": true,
+      "rules_ok": true,
+      "verdict": "demote_to_secondary",
+      "reason": "Both halves are in the draft: the S-for-E rule asks only for equivalence and cost, and the risk row sends deep to S when E fails without any S-versus-N result. This is an incomplete decision rule, which the tier definitions name as secondary ('weaker acceptance rule'), and the secondary item K23 is the same kind of gap in X1's table; the two should sit at the same tier. The fallback also moves deep down to the existing D31 standard level rather than promoting something new. Confidence in the demotion: 0.7.",
+      "evidence_checked": [
+        "docs/plans/v2.0.1-execution.md:234 — E's rule includes unfounded accusations and clean-case false reports; S's rule lists only ±0.10 equivalence and cost below 0.2 of E",
+        "docs/plans/v2.0.1-execution.md:264 — 'EGM 仍內附但不自動跑，deep 改用 S'",
+        "evidence/DECISIONS-D21-D31.md:164 — standard (one fresh-context reviewer) is an existing D31 level"
+      ],
+      "edits": "Change tier to secondary; no text change needed."
+    },
+    {
+      "id": "K29",
+      "claim_holds": "narrower",
+      "is_blocking": "yes",
+      "evidence_ok": true,
+      "rules_ok": false,
+      "verdict": "keep_primary_with_edit",
+      "reason": "Holds: the listed costs sum to about 22.5M and leave out work the draft itself requires (a second X3 pass, a live deep E2E with a full EGM run, Opus grading, question writing), and the 'eight cases stay within 10M' fallback is not supported by the packet's 1.07-1.43M per EGM run (8 runs are 8.6-11.4M before the N and S arms). Q3 asks the owner to approve this number, so it rests on figures the packet contradicts. Does not hold: 'the blanket per-experiment cap is not reconciled with X2's exception'. The draft states that X2 alone exceeds the cap and takes it to the owner as Q3; a report that only notices 10M versus 11M has found nothing the draft hides, yet the current rule scores it as a detection. Confidence: primary status 0.7; need for the edit 0.8.",
+      "evidence_checked": [
+        "docs/plans/v2.0.1-execution.md:233-236,240-244 — 7 + 11 + 1.5 + 0.3 + 0.3 + 2.4 = 22.5M; 'only X2 exceeds the D13 cap, so it is in Q3'",
+        "docs/plans/v2.0.1-execution.md:198 — X3 before and after the cut",
+        "docs/plans/v2.0.1-execution.md:124 — E2E of all three modes, deep included",
+        "docs/plans/v2.0.1-execution.md:227 — Opus and Codex both grade; only Codex grading is costed (line 242)",
+        "docs/plans/v2.0.1-execution.md:276 — fallback: eight new cases, within 10M",
+        "evidence/validation-2026-11-07-RESULT.md:87 — E runs cost 1.07-1.43M each",
+        "evidence/validation-2026-11-07-RESULT.md:143-144 — Claude grading 625,960 and question writing 365,746 in the previous round"
+      ],
+      "edits": "claim: delete ', and the blanket per-experiment cap is not reconciled with X2's exception'. detected_if: delete the sentence 'Also sufficient: connects the blanket 10M stop rule to the separately requested 11M X2 exception and asks which rule the runner enforces.' mention_only_if: add 'or notes only that the 10M per-experiment cap and X2's 11M differ, which the draft already raises as Q3 (plan:244, 276)'. evidence: the plan:252 line ('nearly zero tokens') is an interpretation and can be dropped."
+    },
+    {
+      "id": "K30",
+      "claim_holds": "yes",
+      "is_blocking": "borderline",
+      "evidence_ok": true,
+      "rules_ok": true,
+      "verdict": "keep_primary",
+      "reason": "The SOP in the draft says tastings judged with four classes and cost intervals are recorded with catalog.py record-tasting and that the engine blocks inconsistent verdicts. The engine accepts only better/same/worse, treats 'same' as including 'cannot tell', and derives the outcome from a point cost ratio with a 1.5 cap; it refuses a verdict that follows the new rules when the point ratio is above 1.5 but the interval is not, and it lets 'same and cheaper' become default, which the draft's principle 6 forbids for an undetermined result. The draft's statement about what the engine enforces is false under the ruler it adopts, and W0 lists only a statistics module. It is confined to the ledger path (appendix A steps 9-10 and W5), which is why it is borderline rather than a clear yes. Confidence in keeping it primary: 0.6 (weakest of the kept items).",
+      "evidence_checked": [
+        "docs/plans/v2.0.1-execution.md:305-306 — four-class judgment and cost interval, mapped to D29; 'the engine blocks inconsistent verdicts'",
+        "docs/plans/v2.0.1-execution.md:77 — undetermined is not promoted to default and not treated as equal",
+        "docs/plans/v2.0.1-execution.md:96 — W0 adds scripts/eval_stats.py only",
+        "scripts/catalog_core.py:1847-1857 — three quality states; 'same' reads as undetermined",
+        "scripts/catalog_core.py:2062-2070 — d29_outcome from a point cost ratio",
+        "scripts/catalog_core.py:2084-2111 — unknown judgment fields are rejected; verdict must match the old outcome",
+        "evidence/validation-2026-11-07-RESULT.md:129 — proposed rule: too expensive only when the interval's lower bound exceeds 1.5"
+      ],
+      "edits": ""
+    }
+  ],
+  "secondary_flags": [
+    {
+      "id": "K03",
+      "flag": "should_be_primary",
+      "reason": "Conditional, for tier consistency rather than because it blocks a step. K03 is the same class as K02: a statement in the draft's rationale that the cited evidence contradicts (plan:44 and :300 say 4 x 3 has poor resolution; validation:16 says coverage resolution is not poor, and :41-42 gives 0.10 versus 0.089). It is also the stated reason for an owner decision (Q1). If K02 is primary through the 'claim the evidence contradicts' limb, K03 qualifies by the same limb; if that limb is not enough on its own, K02 should go down instead. Either way the two should share a tier."
+    }
+  ],
+  "overlaps": [
+    {
+      "ids": [
+        "K24",
+        "K25"
+      ],
+      "reason": "Partial. Both are about the S arm of X2 and both cite plan:264. One sentence such as 'deep falls back to S although S was never validated as a reviewer of plans' can satisfy K24 (S deployed as a plan reviewer without a matching treatment) and K25 (fallback selects an unqualified S). The mechanisms differ (input contract versus eligibility rule), so either merge them or require the grader to credit each only on its own mechanism. I recommend demoting both, which removes the double credit from the primary score."
+    },
+    {
+      "ids": [
+        "K15",
+        "K18"
+      ],
+      "reason": "Partial. Same root (the catalog's managed layer is text-only by design, so W3's hook/MCP promise fails), seen at install (K15) and at restore (K18). K18's mention_only rule already keeps out 'hooks cannot be installed'; K15 has no matching guard against 'restore does not cover settings'. They are two code facts and two promises, so keeping both is defensible, but a reviewer who makes the single point 'the catalog never touches hooks, MCP or host settings' will be credited twice unless the grader holds each to its own mechanism."
+    }
+  ],
+  "appendix_unlisted": [
+    "plan:34 says unfounded accusations were 0 with Opus and Codex agreeing, while validation:71 reports unfounded-accusation totals of 1 (Opus) against 7 (Codex) on the EGM data; the per-arm split is not in the packet, so this cannot be settled from the packet, and no key item covers it.",
+    "plan:234 decides 'S equals E within ±0.10' from 12 cases run once each, where one case is 0.083 of the scale; the packet's own resolution figures (validation:41-43) put the detectable difference near 0.09-0.10, so that branch can hardly be shown. Adjacent to K09 but not covered by it."
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "F1": {
+    "verdict": "closed",
+    "evidence": "RESULT.md:15–30、99、106、150 將第 3 項列為 post-data retry/metering rule change，最終兩格均為 NC1，label-based R1 僅作描述。符合 PREREG.md:127–147、260、282–290，以及 lead/egmcal_lead_wrap3.py:91–101、119–162：quota-stop reissue 與將 incomplete row 視為 metered 都不是 frozen exception。結論的「計量與隔離完整」依前句指四次 native attempts，其 results/rows-*.jsonl flags 均為 true；第 20 行另明載 grading row 計量不完整，並未將全域 accounting 判為完整。RESULT.md:30–33、133–141 明列 owner 接受的是 post-data changes，且不對本階段未執行的 EGM 作 effectiveness verdict；偏差與例外、獨立結果審查亦未新增相反判定。"
+  },
+  "F2": {
+    "verdict": "closed",
+    "evidence": "RESULT.md:17–20、30、98、151 明列第 2 項改變 preregistered blinding rule，且放寬範圍超過 claude/oaw-2；不再稱為恢復 PREREG 的實作。符合 PREREG.md:230–246、cal_grade.py:75–94 與 lead/egmcal_lead_wrap2.py:33–56：刪除全部四種 bare-token checks。嚴格 frozen packing 下 batch 2 無法成立、Claude 為 NC1；Codex 的 batch-1 R1 保留，最終 NC1 另歸因於全域 metering。"
+  },
+  "F3": {
+    "verdict": "closed",
+    "evidence": "RESULT.md:108–113、152 已將順序列為 lead custody attestation，明言現存 file times 無法證明。第 112–113 行明確區分 batch-2 Codex grades 與兩個 Claude responses 已產生，以及據 lead 陳述尚未讀取／解盲；不再把未讀寫成未產生。三支 lead wrappers 的現存 SHA-256 前綴與正文相符，但 hash 不被當作時序證明，符合 RESULT_REVIEW.json F3 的 fix。"
+  },
+  "F4": {
+    "verdict": "closed",
+    "evidence": "RESULT.md:58–60、153 已補 Claude N1 severe false alarm 為首次 1、重複評分 0，其他三份報告為 0，並明確歸屬同一 Codex-family grader，非雙 grader 共識。直接核對 grade-56a72221753f-codex.json 的 R002：4 條 unsupported claims，僅 U02 severe=true；grade-a3849ce46e10-codex.json 的 R104：5 條且全部 severe=false。U02 內容確為將已修復的 runtime/policy removal 問題當成仍阻擋驗收；raw assessments 仍保留於 results/grades/。"
+  },
+  "new_issues": [],
+  "added_facts": {
+    "only_refused_string": "true — 直接執行從 frozen cal_grade.py:75–94 抽出的原 check_blind_paths，依 pack 的 findings/uncertainties 範圍、匿名檔名及四個 attempt IDs 掃描 results/reports/ 四份報告；blind2-map.json 顯示四份 path_rewrite_count 均為 0。僅 claude-N2.a1.json 的 uncertainties[7] 含 claude/oaw-2 而被拒，其他三份通過；只替換此字串後該份亦通過。checker SHA-256 為 8fe05f74fa46928041f8bb09820021fb3003cda99f92adc4fb69ca7ff33e668b，與 final freeze manifest 相符。這只證實本批資料的實際觸發點，不縮小 rule change 的範圍。",
+    "single_grader_absent_items": "true — 直接按 blind1-map.json／blind2-map.json 對照兩批 Codex-family raw grades，未套 reconciliation：Claude N1 的 batch-1 R002、batch-2 R104 與 Claude N2 的 batch-2 R102，K07/K14/K30 全為 absent；Codex N1 的 R003/R101 與 Codex N2 的 R001/R103，K07/K15 全為 absent。對應檔案為 results/grades/grade-56a72221753f-codex.json 與 grade-a3849ce46e10-codex.json。這項描述不使 post-data procedure 合於 frozen protocol。"
+  },
+  "overall": "CLOSED"
+}

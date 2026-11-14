@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "limit_stops": [
+    {
+      "id": "grader-claude-a3849ce46e10.a1-R103",
+      "evidence_sha256": [
+        "ab24ff7a663a829ede6559119a7f5cd5a2aa24a666418fb6dc246463740e2ecb"
+      ],
+      "logical_tokens": 0,
+      "reason": "HTTP 429 usage limit before any model output; zero tokens"
+    }
+  ]
+}

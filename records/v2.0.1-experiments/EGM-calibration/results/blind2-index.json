@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "reports": [
+    {
+      "report_id": "R101",
+      "report_sha256": "2563eddde513c3868d976ce753883bac1ebe53764be0660d8f86b03f868a9427"
+    },
+    {
+      "report_id": "R102",
+      "report_sha256": "bc6f3d35a266e56209e671ecf7a99bf9761001c4a474bee0119ce268fc6a933f"
+    },
+    {
+      "report_id": "R103",
+      "report_sha256": "5aaba920c8e28b94149a5dfd0690ce03aed4ac6cb9a55a9b201da8c27bdae0c9"
+    },
+    {
+      "report_id": "R104",
+      "report_sha256": "326630d2e2c84f956d0055e2e7f7ef0e4fad1ffeec3e237d11f545f149ded84f"
+    }
+  ],
+  "packet_sha256": "3f61293d1b071118f73eb4590dfcefc437ecd12da735c1bd6025b4f24dd21bc1",
+  "key_sha256": "6d7497e90b9baf7f872bfd04c4750fee77a523e69169fd840d48df02d8e1f99e",
+  "rubric_sha256": "0217e8158e0316691182c013826f2d950b62c9eafcf49bcdb7a83ba043ea632a"
+}

@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "freeze_sha256": "469e78bd8a7e475c40e17c799ed7cdc9d299b8daba3cd859bf8cee56856c21b9",
+  "decision_sha256": "dd79e2096ca416f216095e949ab64faf896e0a3e4e97582c46dcc1d19780dc29",
+  "stage_spent": 5462540,
+  "n1_actual": 1745930,
+  "n2_projection": 2269709,
+  "remaining_claude_grading_reserve": 750000,
+  "threshold": 15000000,
+  "funded": true,
+  "rule": "funded"
+}

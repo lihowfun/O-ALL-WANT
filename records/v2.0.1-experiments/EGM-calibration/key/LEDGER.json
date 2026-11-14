@@ -1,0 +1,2370 @@
+{
+  "schema_version": 1,
+  "visibility": "private provenance; do not show to graders",
+  "packet_root": "<work>/egmcal-src/packet",
+  "packet_sha256": "5f00e34d8e05f9c8fe244f74a5c692574517710ca6ffd9a46b898464eaadfad1",
+  "packet_sha256_basis": "User-supplied packet identifier, copied verbatim; no canonical directory-hash algorithm was supplied, so it was not independently recomputed.",
+  "evidence_cutoff": "2026-11-07",
+  "source_report_root": "<workspace>/OAW-records/records/plan-review-2026-11-07",
+  "source_index_convention": "One-based index in report.json findings array; questions and uncertainties are not extra findings.",
+  "source_report_sha256": {
+    "egm": "4e5452d391093acbfec2e0b20ddce5cce5dbe057e4aa4ca73a782de5f10b9afa",
+    "codex": "291ea099de72b441d74e125aac9100d3dcd209860016589a9238b32a7c852e7c"
+  },
+  "author_context": {
+    "path": "<workspace>/OAW-release-final/docs/plans/v2.0.1-execution.md",
+    "lines": "460-519",
+    "appendix_sha256": "1583ccd142c77782814f793e2c567fd6e1637573e472f406c7e43a709bc9dd2b",
+    "role": "Dispositions only. Neither later edits, decisions, experiments nor author acceptance establish any item."
+  },
+  "packet_evidence_file_sha256": {
+    "docs/SKILL_INTAKE.md": "6667acb201da40dd624a7209ad0f0d024b289e035776a23c9f4ec7434764cf55",
+    "docs/UPGRADING.md": "031f586540e86f05ce8dffd78cdb7193eeebbf9a03c9c9460d3b723d179380de",
+    "docs/plans/v2.0.1-execution.md": "03cebf62535efbeaa04e5535c1020b52d976202e18c114fa55b66ffd4c35b34a",
+    "evidence/DECISIONS-D21-D31.md": "ad3bb46bac1aadec52fab954499b186d555c5300a3f4767e0ef21f01bf22de35",
+    "evidence/codemap-comparison-2026-11-06.md": "c788812d728af86691fed7c39937e83d4936852c32aa6475efd2ab2de03fab67",
+    "evidence/egm-selftest-2026-11-06-RESULT.md": "a547f197f135432f72a7333088ef9e0c23d284859227eb835daa5dba1fe40964",
+    "evidence/validation-2026-11-07-RESULT.md": "554ed6d52cad68a57ce20ff098fd8c0b9b39fa2308dbbf18adde84e080ca09ad",
+    "example/minimal-project/AGENTS.md": "5d05fd073dbf701d1376ddf5dc462178dca7c2ff21d22957b1dc4c84a58d410b",
+    "scripts/catalog.py": "7189f22d6dc4f1558456ef65c6a36db982cab0307dae5386fab7760b21570330",
+    "scripts/catalog_core.py": "8580373c21bf59abb2da4b6cb70830923be2e57ed597725dad821e8eae1c3807",
+    "scripts/code_index.py": "67e2d48dfdc6d58e7971df9d59b4a5edd90c3b8499aea8d926616a97206bcd5a",
+    "scripts/goldfish_review.py": "15c1d4c04bff052d9be6f7ff79f861bdad8dfd7fbcf6a78ad5d3222f1feb5d67",
+    "scripts/harness_check.py": "1331cd72b5c6b380b130a7622ecbc2811c554cf0153c4d4e46070687c7868cb0",
+    "scripts/oaw.py": "ffd54ca946a2c25eb3c4a77e83b718349054894ef26d565e84b93a8b96b22c6f",
+    "scripts/oaw_mode.py": "2002176656aeb7e795a8c674c4648e6021bb4e0689b6d0441d4790700e327590",
+    "scripts/sync_egm.py": "572a0d1e6e3da61f84cf21be9ca8c588629edb3f6541e8da79a61fb14fb919fd",
+    "templates/.agents/skills/egm-review/SKILL.md": "a268af361aeceb1e7bf49a3112ffa20727953e024e7453717a56d313b73770c1",
+    "templates/AGENTS.md": "ec687cd7fe5a0ae83be682a41b5d957b75c99a925e18bf0429056c5895aa375b",
+    "tests/test_oaw_mode.py": "7c060d2c9d6867e914378679880419ff0049e2e065ad0a861e98444b0cfe35d5",
+    "vendor/egm/skills/egm-review/SKILL.md": "5e96e3b586a086c7c87b4f0185303a49adc9486028134d258827e9bbfb89e986"
+  },
+  "verification_method": "Read cited source lines and trace branches by inspection only. No packet code or tests were run. No network or later incident records were used.",
+  "flag_semantics": {
+    "hindsight": "Requires evidence dated after 2026-11-07; never eligible for primary. No retained item required this flag.",
+    "needs-context": "Some historical subclaim needs host, authorization or unavailable source context. Only independently verified narrower claims, if any, are retained.",
+    "duplicate-of": "Shares one or more listed cluster mechanisms with peer findings; symmetric overlap, not an assertion that the whole historical finding is a duplicate."
+  },
+  "item_order": [
+    {
+      "id": "K01",
+      "main_draft_line": 36
+    },
+    {
+      "id": "K02",
+      "main_draft_line": 37
+    },
+    {
+      "id": "K03",
+      "main_draft_line": 44
+    },
+    {
+      "id": "K04",
+      "main_draft_line": 45
+    },
+    {
+      "id": "K05",
+      "main_draft_line": 83
+    },
+    {
+      "id": "K06",
+      "main_draft_line": 83
+    },
+    {
+      "id": "K07",
+      "main_draft_line": 87
+    },
+    {
+      "id": "K08",
+      "main_draft_line": 88
+    },
+    {
+      "id": "K09",
+      "main_draft_line": 96
+    },
+    {
+      "id": "K10",
+      "main_draft_line": 108
+    },
+    {
+      "id": "K11",
+      "main_draft_line": 108
+    },
+    {
+      "id": "K12",
+      "main_draft_line": 138
+    },
+    {
+      "id": "K13",
+      "main_draft_line": 139
+    },
+    {
+      "id": "K14",
+      "main_draft_line": 157
+    },
+    {
+      "id": "K15",
+      "main_draft_line": 164
+    },
+    {
+      "id": "K16",
+      "main_draft_line": 170
+    },
+    {
+      "id": "K17",
+      "main_draft_line": 173
+    },
+    {
+      "id": "K18",
+      "main_draft_line": 175
+    },
+    {
+      "id": "K19",
+      "main_draft_line": 176
+    },
+    {
+      "id": "K20",
+      "main_draft_line": 198
+    },
+    {
+      "id": "K21",
+      "main_draft_line": 217
+    },
+    {
+      "id": "K22",
+      "main_draft_line": 218
+    },
+    {
+      "id": "K23",
+      "main_draft_line": 233
+    },
+    {
+      "id": "K24",
+      "main_draft_line": 234
+    },
+    {
+      "id": "K25",
+      "main_draft_line": 234
+    },
+    {
+      "id": "K26",
+      "main_draft_line": 234
+    },
+    {
+      "id": "K27",
+      "main_draft_line": 235
+    },
+    {
+      "id": "K28",
+      "main_draft_line": 236
+    },
+    {
+      "id": "K29",
+      "main_draft_line": 239
+    },
+    {
+      "id": "K30",
+      "main_draft_line": 305
+    }
+  ],
+  "counts": {
+    "egm": {
+      "findings": 18,
+      "statuses": {
+        "partly": 13,
+        "verified": 4,
+        "not verified": 1
+      },
+      "findings_with_retained_defect": 17,
+      "unique_items_by_tier": {
+        "secondary": 12,
+        "primary": 9
+      },
+      "item_ids": [
+        "K01",
+        "K02",
+        "K03",
+        "K04",
+        "K05",
+        "K06",
+        "K07",
+        "K08",
+        "K11",
+        "K13",
+        "K15",
+        "K18",
+        "K20",
+        "K21",
+        "K22",
+        "K23",
+        "K24",
+        "K26",
+        "K27",
+        "K28",
+        "K29"
+      ]
+    },
+    "codex": {
+      "findings": 15,
+      "statuses": {
+        "verified": 14,
+        "not adjudicable": 1
+      },
+      "findings_with_retained_defect": 14,
+      "unique_items_by_tier": {
+        "primary": 12,
+        "secondary": 3
+      },
+      "item_ids": [
+        "K02",
+        "K04",
+        "K05",
+        "K09",
+        "K10",
+        "K12",
+        "K14",
+        "K15",
+        "K16",
+        "K17",
+        "K18",
+        "K19",
+        "K24",
+        "K25",
+        "K30"
+      ]
+    },
+    "union": {
+      "findings": 33,
+      "statuses": {
+        "partly": 13,
+        "verified": 18,
+        "not verified": 1,
+        "not adjudicable": 1
+      },
+      "findings_with_retained_defect": 31,
+      "unique_items_by_tier": {
+        "secondary": 14,
+        "primary": 16
+      },
+      "items": 30
+    },
+    "overlap": {
+      "shared": [
+        "K02",
+        "K04",
+        "K05",
+        "K15",
+        "K18",
+        "K24"
+      ],
+      "egm_only": [
+        "K01",
+        "K03",
+        "K06",
+        "K07",
+        "K08",
+        "K11",
+        "K13",
+        "K20",
+        "K21",
+        "K22",
+        "K23",
+        "K26",
+        "K27",
+        "K28",
+        "K29"
+      ],
+      "codex_only": [
+        "K09",
+        "K10",
+        "K12",
+        "K14",
+        "K16",
+        "K17",
+        "K19",
+        "K25",
+        "K30"
+      ]
+    }
+  },
+  "findings": [
+    {
+      "source_report": "egm/report.json",
+      "source_index": 1,
+      "original_finding": {
+        "location": "docs/plans/v2.0.1-execution.md:89,164,174-176,184,192,284",
+        "claim": "oaw.py add wraps the existing catalog, installs untasted skills at no token cost, installs hooks/MCP/scripts after a consent checkbox, and remove restores byte-for-byte.",
+        "evidence": "scripts/catalog_core.py:1259-1263 holds skill text until a live A/B; catalog_core.py:1268-1270 'OAW never installs hooks or MCP servers'; scripts/catalog.py:1374-1375 builds deny .mcp.json/.claude.json; catalog.py:1391-1404 and catalog_core.py:78 allow only .md/.txt in a skill folder; catalog.py:1869-1870 refuses bundled names; docs/SKILL_INTAKE.md:304,306,319; evidence/DECISIONS-D21-D31.md:21-23,148-150.",
+        "rationale": "The reused engine forbids most of W3 by design, and D21/D29 put runtime code under owner approval. W3 needs an owner decision (new Q4) and either a text-and-agents-only scope or a separately designed installer.",
+        "severity": "blocker"
+      },
+      "historical_severity": "blocker",
+      "verification_status": "partly",
+      "adjudication": "Verified incompatible installation/restore contracts, not the whole policy argument. Untasted text and runtime components cannot pass the reused absorption engine; restore excludes the runtime configuration. A universal requirement for a new owner Q4 is not established: the draft already distinguishes user-directed installation from maintainer promotion and includes user consent.",
+      "evidence": [
+        "docs/plans/v2.0.1-execution.md:89 — wraps the existing catalog.",
+        "docs/plans/v2.0.1-execution.md:163-176 — untasted installation, conflict choices and runtime consent.",
+        "docs/plans/v2.0.1-execution.md:192 — hook and bundled-name fixtures are required.",
+        "scripts/catalog_core.py:1242-1284 — executable/text A/B holds and hook/MCP/agent restrictions.",
+        "scripts/catalog.py:1863-1873 — absorption-only copying and bundled-name rejection.",
+        "scripts/catalog_core.py:78 — installed skill-file suffix allowlist is .md/.txt.",
+        "docs/plans/v2.0.1-execution.md:174-175 — permits runtime components and reuses catalog restore points.",
+        "docs/plans/v2.0.1-execution.md:192 — removal must restore managed files byte for byte.",
+        "scripts/catalog.py:1374-1375 — MCP and host paths are denied.",
+        "scripts/catalog.py:1407-1428 — build/restore layer excludes host settings and MCP configuration.",
+        "docs/SKILL_INTAKE.md:308 — documents the same restore boundary.",
+        "evidence/DECISIONS-D21-D31.md:148-150 — maintainer tier-C/host-install policy provides context, not proof that every end-user install needs the toolkit owner."
+      ],
+      "item_ids": [
+        "K15",
+        "K18"
+      ],
+      "no_item_reason": null,
+      "author_later_disposition": {
+        "status": "accepted",
+        "reason": "Appendix B reports 30 findings changed accordingly; it gives no separate per-index rationale for this finding.",
+        "source": "<workspace>/OAW-release-final/docs/plans/v2.0.1-execution.md:501-502",
+        "evidentiary_role": "Context only; never proof of a draft defect."
+      },
+      "flags": [
+        "duplicate-of"
+      ],
+      "component_notes": [
+        "Installation-policy incompatibilities are one root cause, not separate items for text, scripts, hooks, MCP and collisions.",
+        "Rollback coverage is a distinct root cause: changing installation eligibility alone does not fix restore."
+      ],
+      "duplicate_of": [
+        {
+          "source_report": "codex/report.json",
+          "source_index": 7,
+          "item_ids": [
+            "K15"
+          ]
+        },
+        {
+          "source_report": "codex/report.json",
+          "source_index": 8,
+          "item_ids": [
+            "K18"
+          ]
+        }
+      ],
+      "hindsight": false,
+      "mapping_notes": {
+        "K15": "Verified mechanism contributes to this cluster.",
+        "K18": "Verified mechanism contributes to this cluster."
+      }
+    },
+    {
+      "source_report": "egm/report.json",
+      "source_index": 2,
+      "original_finding": {
+        "location": "docs/plans/v2.0.1-execution.md:83,108,114-116,121",
+        "claim": "The agent runs oaw-review after making changes, and deep means plan mode, then EGM on the plan, then implementation, following upstream egm-review without the owner.",
+        "evidence": "Line 83 triggers after the change, but line 108 needs a plan before implementation. EGM's gain came from plan-gap detection (evidence/egm-selftest-2026-11-06-RESULT.md:42-45). templates/.agents/skills/egm-review/SKILL.md:5,16 (explicit-only; keep human checkpoints); scripts/oaw_mode.py:318-319,357 (Codex plan mode unmapped; 'the agent cannot start it').",
+        "rationale": "Classification of the finished diff fires deep after the fact. The plan gives no EGM preset, inputs, approver, round cap or report location, so the deep flow cannot run unattended as written. Classify planned paths first (suggest --paths, oaw_mode.py:402-403).",
+        "severity": "blocker"
+      },
+      "historical_severity": "blocker",
+      "verification_status": "partly",
+      "adjudication": "Verified the after-change/pre-implementation contradiction and unresolved manual upstream gates. Do not infer from an unmapped Codex plan-mode flag that automation is technically impossible; host operation is not tested here. Q2 explicitly proposes changing the old invocation permission.",
+      "evidence": [
+        "docs/plans/v2.0.1-execution.md:83 — replacement policy invokes review after making changes.",
+        "docs/plans/v2.0.1-execution.md:108 — deep sequence is plan, EGM review, implementation, then code review.",
+        "scripts/oaw_mode.py:115-141 — default classification reads existing working-tree changes.",
+        "scripts/oaw_mode.py:402-403 — planned paths are already a possible input.",
+        "docs/plans/v2.0.1-execution.md:83 — only the suggest/show policy lines are explicitly replaced.",
+        "docs/plans/v2.0.1-execution.md:114-120 — delegates to the installed upstream workflow on both hosts.",
+        "docs/plans/v2.0.1-execution.md:275 — Q2 changes permission in principle, not the upstream intake contract.",
+        "templates/AGENTS.md:6-13 — retained explicit-invocation policy and suggest-dependent EGM rule.",
+        "templates/.agents/skills/egm-review/SKILL.md:5-16 — manual entrypoint; preserve upstream human checkpoints or stop.",
+        "vendor/egm/skills/egm-review/SKILL.md:73-113 — context and omitted Step lead to user prompts.",
+        "vendor/egm/skills/egm-review/SKILL.md:179-189 — ambiguous or missing implementation split also prompts.",
+        "scripts/oaw_mode.py:318-319 — Codex plan/effort flags are unmapped, not proof that writing a plan file is impossible.",
+        "vendor/egm/skills/egm-review/SKILL.md:261-293 — an uninterrupted preset and report names already exist."
+      ],
+      "item_ids": [
+        "K05",
+        "K06"
+      ],
+      "no_item_reason": null,
+      "author_later_disposition": {
+        "status": "accepted",
+        "reason": "Appendix B reports 30 findings changed accordingly; it gives no separate per-index rationale for this finding.",
+        "source": "<workspace>/OAW-release-final/docs/plans/v2.0.1-execution.md:501-502",
+        "evidentiary_role": "Context only; never proof of a draft defect."
+      },
+      "flags": [
+        "needs-context",
+        "duplicate-of"
+      ],
+      "component_notes": [
+        "Missing report location alone is not a blocker because upstream supplies defaults.",
+        "Timing and manual workflow requirements can each fail independently, so they map to different clusters."
+      ],
+      "duplicate_of": [
+        {
+          "source_report": "egm/report.json",
+          "source_index": 9,
+          "item_ids": [
+            "K06"
+          ]
+        },
+        {
+          "source_report": "codex/report.json",
+          "source_index": 3,
+          "item_ids": [
+            "K05"
+          ]
+        }
+      ],
+      "hindsight": false,
+      "mapping_notes": {
+        "K05": "Verified mechanism contributes to this cluster.",
+        "K06": "Verified mechanism contributes to this cluster."
+      }
+    },
+    {
+      "source_report": "egm/report.json",
+      "source_index": 3,
+      "original_finding": {
+        "location": "docs/plans/v2.0.1-execution.md:137,139,147-148,233",
+        "claim": "Strengthen TS/JS parsing; callers recall >=0.95 on VS Code; X1 includes VS Code x Opus.",
+        "evidence": "scripts/code_index.py:1525-1528 (callers skips non-Python files), :1594-1596 ('only Python imports and calls are tracked'), :1556-1558; evidence/codemap-comparison-2026-11-06.md:9,56 (callers evidence is ERPNext/Python only).",
+        "rationale": "TS/JS call resolution does not exist yet. Stage 0(b), the overview ranking and X1's VS Code cell depend on an unspecified new engine.",
+        "severity": "blocker"
+      },
+      "historical_severity": "blocker",
+      "verification_status": "partly",
+      "adjudication": "Verified the Python-only call-graph dependency; narrowed to a scope/detail defect. W2 explicitly proposes adding TS/JS call-point parsing, so the absence of that future feature in today’s code is not by itself proof the planned feature is impossible or blocking. The existing resolver/traversal is additional work not clearly scoped.",
+      "evidence": [
+        "docs/plans/v2.0.1-execution.md:137-139 — call-ranked overview and stronger TS/JS parsing/call points.",
+        "docs/plans/v2.0.1-execution.md:146-148 — demands callers recall at least 0.95 on both ERPNext and VS Code.",
+        "scripts/code_index.py:1525-1534 — callers skips every non-Python record and resolves Python calls.",
+        "scripts/code_index.py:1594-1596 — affected explicitly reports Python-only tracking.",
+        "evidence/codemap-comparison-2026-11-06.md:9 — existing map comparison is ERPNext only.",
+        "scripts/code_index.py:763-811 — JavaScript extraction emits search units; only Python gets the graph record."
+      ],
+      "item_ids": [
+        "K13"
+      ],
+      "no_item_reason": null,
+      "author_later_disposition": {
+        "status": "accepted",
+        "reason": "Appendix B reports 30 findings changed accordingly; it gives no separate per-index rationale for this finding.",
+        "source": "<workspace>/OAW-release-final/docs/plans/v2.0.1-execution.md:501-502",
+        "evidentiary_role": "Context only; never proof of a draft defect."
+      },
+      "flags": [],
+      "component_notes": [],
+      "duplicate_of": [],
+      "hindsight": false,
+      "mapping_notes": {
+        "K13": "Verified mechanism contributes to this cluster."
+      }
+    },
+    {
+      "source_report": "egm/report.json",
+      "source_index": 4,
+      "original_finding": {
+        "location": "docs/plans/v2.0.1-execution.md:37,12",
+        "claim": "All three maps cut steps: tool calls 0.23-0.65x native. The plan absorbs graphify's measured strengths.",
+        "evidence": "evidence/codemap-comparison-2026-11-06.md:28,32,36,40 (graphify 88/76/100/104%; OAW 104% on Opus 4.8); :6 (graphify won on neither axis); 0.23 is codegraph in V8 (evidence/validation-2026-11-07-RESULT.md:113).",
+        "rationale": "This overstatement is the basis for treating maps as efficiency tools and for absorbing a graphify overview.",
+        "severity": "major"
+      },
+      "historical_severity": "major",
+      "verification_status": "verified",
+      "adjudication": "The quoted map efficiency range is directly contradicted by the supplied measurements. This is material evidence for the architecture choice, so it is primary despite being historically labeled major.",
+      "evidence": [
+        "docs/plans/v2.0.1-execution.md:37 — universal three-map efficiency claim used to motivate the design.",
+        "docs/plans/v2.0.1-execution.md:131-132 — attributes 0.23 to symbol lookup and proposes absorbing map features.",
+        "evidence/codemap-comparison-2026-11-06.md:28-40 — graphify ratios 0.88, 0.76, 1.00, 1.04; OAW reaches 1.04.",
+        "evidence/validation-2026-11-07-RESULT.md:109-115 — 0.23 is the aggregate VS Code codegraph experiment."
+      ],
+      "item_ids": [
+        "K02"
+      ],
+      "no_item_reason": null,
+      "author_later_disposition": {
+        "status": "accepted",
+        "reason": "Appendix B reports 30 findings changed accordingly; it gives no separate per-index rationale for this finding.",
+        "source": "<workspace>/OAW-release-final/docs/plans/v2.0.1-execution.md:501-502",
+        "evidentiary_role": "Context only; never proof of a draft defect."
+      },
+      "flags": [
+        "duplicate-of"
+      ],
+      "component_notes": [],
+      "duplicate_of": [
+        {
+          "source_report": "codex/report.json",
+          "source_index": 13,
+          "item_ids": [
+            "K02"
+          ]
+        }
+      ],
+      "hindsight": false,
+      "mapping_notes": {
+        "K02": "Verified mechanism contributes to this cluster."
+      }
+    },
+    {
+      "source_report": "egm/report.json",
+      "source_index": 5,
+      "original_finding": {
+        "location": "docs/plans/v2.0.1-execution.md:234,276,300",
+        "claim": "X2 compares N, S (standard) and E on 12 cases including orders, for about 11M. The Q3 fallback of 8 new cases stays within 10M.",
+        "evidence": "S is a diff-and-tests reviewer (line 107), but X2 cases are design docs, which always trigger deep (scripts/oaw_mode.py:246-249,283-285). orders is at ceiling (validation:52). E costs 1.07-1.43M per run (validation:87), so 9 cases cost 10.2-12.9M for E alone. The leaked checklist P matched E at 1x cost (validation:28).",
+        "rationale": "The comparison arm is not the thing that ships, the cheap readiness-checklist alternative is untested, a ceiling case breaks the plan's own rule (line 300), and the budget and fallback are understated.",
+        "severity": "major"
+      },
+      "historical_severity": "major",
+      "verification_status": "partly",
+      "adjudication": "Verified the undefined design-review S, the orders ceiling mismatch, and inadequate budget/fallback support. A new nonleaking readiness-checklist arm is an experiment-design suggestion, not an independently verified defect: the measured P leaked answers. Also, the report’s 9-case E-only lower bound is inaccurate: 9 × 1.07M = 9.63M, not 10.2M; the upper bound is 12.87M. Design documents do not always trigger deep under the actual narrow path matcher.",
+      "evidence": [
+        "docs/plans/v2.0.1-execution.md:107 — standard receives diff and tests.",
+        "docs/plans/v2.0.1-execution.md:234 — compares N/S/E on design documents and can replace deep with S.",
+        "docs/plans/v2.0.1-execution.md:264 — failed generalization also switches deep to S.",
+        "docs/plans/v2.0.1-execution.md:234 — explicitly retains orders.",
+        "docs/plans/v2.0.1-execution.md:300 — says ceiling questions must be replaced.",
+        "evidence/validation-2026-11-07-RESULT.md:49-53 — orders is fully detected by all three groups.",
+        "evidence/validation-2026-11-07-RESULT.md:83 — follow-up detection test excludes orders for that reason.",
+        "docs/plans/v2.0.1-execution.md:124 — live deep E2E required.",
+        "docs/plans/v2.0.1-execution.md:198 — two X3 passes required.",
+        "docs/plans/v2.0.1-execution.md:227-244 — two graders, experiment costs, additional costs and approximate total; X3 budgeted once.",
+        "docs/plans/v2.0.1-execution.md:252 — implementation phase misleadingly described as nearly zero tokens without a budget boundary.",
+        "docs/plans/v2.0.1-execution.md:276 — claims eight new X2 cases stay within 10M.",
+        "evidence/validation-2026-11-07-RESULT.md:87 — E runs cost 1.07–1.43M; eight upper-range runs alone cost 11.44M.",
+        "evidence/validation-2026-11-07-RESULT.md:143-144 — Claude grading and question preparation consumed tokens previously.",
+        "evidence/egm-selftest-2026-11-06-RESULT.md:69 — leaked positive control is not a real treatment.",
+        "scripts/oaw_mode.py:246-249 — design trigger is path/name-limited."
+      ],
+      "item_ids": [
+        "K24",
+        "K26",
+        "K29"
+      ],
+      "no_item_reason": null,
+      "author_later_disposition": {
+        "status": "accepted",
+        "reason": "Appendix B reports 30 findings changed accordingly; it gives no separate per-index rationale for this finding.",
+        "source": "<workspace>/OAW-release-final/docs/plans/v2.0.1-execution.md:501-502",
+        "evidentiary_role": "Context only; never proof of a draft defect."
+      },
+      "flags": [
+        "duplicate-of"
+      ],
+      "component_notes": [
+        "Three independent mechanisms bundled historically: treatment definition, panel saturation, budget accounting.",
+        "Ceiling inclusion is secondary: a saturated case can be a control if its role is specified."
+      ],
+      "duplicate_of": [
+        {
+          "source_report": "egm/report.json",
+          "source_index": 6,
+          "item_ids": [
+            "K29"
+          ]
+        },
+        {
+          "source_report": "egm/report.json",
+          "source_index": 8,
+          "item_ids": [
+            "K29"
+          ]
+        },
+        {
+          "source_report": "egm/report.json",
+          "source_index": 18,
+          "item_ids": [
+            "K29"
+          ]
+        },
+        {
+          "source_report": "codex/report.json",
+          "source_index": 10,
+          "item_ids": [
+            "K24"
+          ]
+        }
+      ],
+      "hindsight": false,
+      "mapping_notes": {
+        "K24": "Verified mechanism contributes to this cluster.",
+        "K26": "Verified mechanism contributes to this cluster.",
+        "K29": "Verified mechanism contributes to this cluster."
+      }
+    },
+    {
+      "source_report": "egm/report.json",
+      "source_index": 6,
+      "original_finding": {
+        "location": "docs/plans/v2.0.1-execution.md:26,198,229,239-244,252",
+        "claim": "About 23M split across 5 experiments; each experiment capped at 10M; segment 1 costs almost 0 tokens.",
+        "evidence": "Experiments total about 19.8M (lines 233-237). The second X3 run required by W4 (line 198), the deep E2E (line 124), Opus grading (0.63M last round, validation:143) and question writing (validation:144) are unbudgeted. Line 229 omits the X2 exception.",
+        "rationale": "Q3 asks the owner to approve a number that is incomplete and internally inconsistent.",
+        "severity": "major"
+      },
+      "historical_severity": "major",
+      "verification_status": "partly",
+      "adjudication": "Verified required omitted costs and scope/cap ambiguity. Reject simple arithmetic as proof of a wrong total: 19.8M for X1–X4 plus 0.3M usability and 2.4M reviews is about 22.5M, reasonably rounded to 23M. The defect is required work absent from those line items, not that the listed experiment-only subtotal differs from the full budget.",
+      "evidence": [
+        "docs/plans/v2.0.1-execution.md:124 — live deep E2E required.",
+        "docs/plans/v2.0.1-execution.md:198 — two X3 passes required.",
+        "docs/plans/v2.0.1-execution.md:227-244 — two graders, experiment costs, additional costs and approximate total; X3 budgeted once.",
+        "docs/plans/v2.0.1-execution.md:252 — implementation phase misleadingly described as nearly zero tokens without a budget boundary.",
+        "docs/plans/v2.0.1-execution.md:276 — claims eight new X2 cases stay within 10M.",
+        "evidence/validation-2026-11-07-RESULT.md:87 — E runs cost 1.07–1.43M; eight upper-range runs alone cost 11.44M.",
+        "evidence/validation-2026-11-07-RESULT.md:143-144 — Claude grading and question preparation consumed tokens previously."
+      ],
+      "item_ids": [
+        "K29"
+      ],
+      "no_item_reason": null,
+      "author_later_disposition": {
+        "status": "accepted",
+        "reason": "Appendix B reports 30 findings changed accordingly; it gives no separate per-index rationale for this finding.",
+        "source": "<workspace>/OAW-release-final/docs/plans/v2.0.1-execution.md:501-502",
+        "evidentiary_role": "Context only; never proof of a draft defect."
+      },
+      "flags": [
+        "duplicate-of"
+      ],
+      "component_notes": [],
+      "duplicate_of": [
+        {
+          "source_report": "egm/report.json",
+          "source_index": 5,
+          "item_ids": [
+            "K29"
+          ]
+        },
+        {
+          "source_report": "egm/report.json",
+          "source_index": 8,
+          "item_ids": [
+            "K29"
+          ]
+        },
+        {
+          "source_report": "egm/report.json",
+          "source_index": 18,
+          "item_ids": [
+            "K29"
+          ]
+        }
+      ],
+      "hindsight": false,
+      "mapping_notes": {
+        "K29": "Verified mechanism contributes to this cluster."
+      }
+    },
+    {
+      "source_report": "egm/report.json",
+      "source_index": 7,
+      "original_finding": {
+        "location": "docs/plans/v2.0.1-execution.md:77,233",
+        "claim": "X1 promotes the map when both graders judge quality 'not worse' and efficiency passes.",
+        "evidence": "Principle 6 (line 77) says undecided is never promoted. D29.2 allows default only for better (cost <= 1.5x) or same-and-cheaper (evidence/DECISIONS-D21-D31.md:142-145).",
+        "rationale": "'Not worse' is undefined and can admit 'undecided'. The 'same quality, efficiency fails' case has no rule.",
+        "severity": "major"
+      },
+      "historical_severity": "major",
+      "verification_status": "partly",
+      "adjudication": "Verified the incomplete/ambiguous X1 decision table, but narrowed severity. Line 77 explicitly forbids promotion of undetermined quality, so the text as a whole does not clearly authorize that bad outcome; interpreting not worse consistently could avoid it. This is a reproducibility/detail issue, not an unconditional blocker.",
+      "evidence": [
+        "docs/plans/v2.0.1-execution.md:77 — undetermined results must never become defaults or be treated as equal.",
+        "docs/plans/v2.0.1-execution.md:233 — not-worse-plus-efficiency promotion and only some fallback combinations.",
+        "evidence/DECISIONS-D21-D31.md:136-145 — old D29 merged uncertainty into same, motivating an explicit new mapping."
+      ],
+      "item_ids": [
+        "K23"
+      ],
+      "no_item_reason": null,
+      "author_later_disposition": {
+        "status": "accepted",
+        "reason": "Appendix B reports 30 findings changed accordingly; it gives no separate per-index rationale for this finding.",
+        "source": "<workspace>/OAW-release-final/docs/plans/v2.0.1-execution.md:501-502",
+        "evidentiary_role": "Context only; never proof of a draft defect."
+      },
+      "flags": [],
+      "component_notes": [],
+      "duplicate_of": [],
+      "hindsight": false,
+      "mapping_notes": {
+        "K23": "Verified mechanism contributes to this cluster."
+      }
+    },
+    {
+      "source_report": "egm/report.json",
+      "source_index": 8,
+      "original_finding": {
+        "location": "docs/plans/v2.0.1-execution.md:198,235",
+        "claim": "X3 compares policy-line+skill with skill-only. W4 runs X3 before and after the AGENTS.md cuts.",
+        "evidence": "The 2.0.0 one-line route was followed 2/2 (evidence/DECISIONS-D21-D31.md:180). X3 is budgeted once (line 235) and runs in segment 2, while W4 is in segment 1 (line 252).",
+        "rationale": "There is no status-quo arm, so X3 cannot show the new skill is needed. The second run is unbudgeted and creates a sequencing loop.",
+        "severity": "major"
+      },
+      "historical_severity": "major",
+      "verification_status": "verified",
+      "adjudication": "Both X3 arms contain the new skill; W4 requires pre/post-cut X3 but is scheduled before X3; only one X3 budget is listed. These are verified limitations. Lack of a current-policy arm does not prevent X3 from answering its narrower A-versus-B question, hence secondary; the uncosted required pass belongs to the shared budget cluster.",
+      "evidence": [
+        "docs/plans/v2.0.1-execution.md:198 — requires X3 before and after deletion.",
+        "docs/plans/v2.0.1-execution.md:235 — defines a single X3 experiment.",
+        "docs/plans/v2.0.1-execution.md:252-253 — W4 precedes the scheduled X3 phase.",
+        "docs/plans/v2.0.1-execution.md:235 — A and B both contain the new skill.",
+        "docs/plans/v2.0.1-execution.md:83 — replaces existing suggest/show guidance.",
+        "evidence/DECISIONS-D21-D31.md:174-180 — current routing exists and a small adherence smoke test followed it 2/2.",
+        "docs/plans/v2.0.1-execution.md:124 — live deep E2E required.",
+        "docs/plans/v2.0.1-execution.md:198 — two X3 passes required.",
+        "docs/plans/v2.0.1-execution.md:227-244 — two graders, experiment costs, additional costs and approximate total; X3 budgeted once.",
+        "docs/plans/v2.0.1-execution.md:252 — implementation phase misleadingly described as nearly zero tokens without a budget boundary.",
+        "docs/plans/v2.0.1-execution.md:276 — claims eight new X2 cases stay within 10M.",
+        "evidence/validation-2026-11-07-RESULT.md:87 — E runs cost 1.07–1.43M; eight upper-range runs alone cost 11.44M.",
+        "evidence/validation-2026-11-07-RESULT.md:143-144 — Claude grading and question preparation consumed tokens previously."
+      ],
+      "item_ids": [
+        "K27",
+        "K20",
+        "K29"
+      ],
+      "no_item_reason": null,
+      "author_later_disposition": {
+        "status": "accepted",
+        "reason": "Appendix B reports 30 findings changed accordingly; it gives no separate per-index rationale for this finding.",
+        "source": "<workspace>/OAW-release-final/docs/plans/v2.0.1-execution.md:501-502",
+        "evidentiary_role": "Context only; never proof of a draft defect."
+      },
+      "flags": [
+        "duplicate-of"
+      ],
+      "component_notes": [
+        "Do not award a second budget item for the same omitted X3 pass."
+      ],
+      "duplicate_of": [
+        {
+          "source_report": "egm/report.json",
+          "source_index": 5,
+          "item_ids": [
+            "K29"
+          ]
+        },
+        {
+          "source_report": "egm/report.json",
+          "source_index": 6,
+          "item_ids": [
+            "K29"
+          ]
+        },
+        {
+          "source_report": "egm/report.json",
+          "source_index": 18,
+          "item_ids": [
+            "K29"
+          ]
+        }
+      ],
+      "hindsight": false,
+      "mapping_notes": {
+        "K27": "Verified mechanism contributes to this cluster.",
+        "K20": "Verified mechanism contributes to this cluster.",
+        "K29": "Verified mechanism contributes to this cluster."
+      }
+    },
+    {
+      "source_report": "egm/report.json",
+      "source_index": 9,
+      "original_finding": {
+        "location": "docs/plans/v2.0.1-execution.md:83,198",
+        "claim": "AGENTS.md stays at 26 lines; the two suggest/show lines become one line 'use oaw-review after changes'.",
+        "evidence": "templates/AGENTS.md:5,10-13 (line 13 also depends on suggest; line 5 'explicit invocation' conflicts with Q2). tests/test_oaw_mode.py:374-380 assert this text. scripts/oaw.py:766-773 (doctor keys on 'oaw_mode.py'). The rendered file is 25 or 23 lines.",
+        "rationale": "The edit is under-specified, leaves contradictory policy, and breaks existing tests and doctor logic without listing them.",
+        "severity": "major"
+      },
+      "historical_severity": "major",
+      "verification_status": "partly",
+      "adjudication": "Verified retained manual/suggest-dependent policy and inaccurate rendered baseline count. Literal replacement also invalidates existing policy assertions, a repair consequence of the same policy transition rather than a separate defect item. The doctor-breakage claim is too broad: it requires oaw_mode.py whenever managed/custom ownership lists it, even when the policy no longer names it.",
+      "evidence": [
+        "docs/plans/v2.0.1-execution.md:45 — claims 25 catalog subcommands.",
+        "docs/plans/v2.0.1-execution.md:83 — claims a 26-line current policy.",
+        "docs/plans/v2.0.1-execution.md:189 — repeats 25 catalog subcommands.",
+        "example/minimal-project/AGENTS.md:1-25 — complete rendered minimal policy.",
+        "scripts/oaw.py:188-210 — rendering removes conditional markers.",
+        "scripts/catalog.py:2512-2601 — 23 commands.add_parser declarations, two policy and two scout subcommands.",
+        "docs/plans/v2.0.1-execution.md:83 — only the suggest/show policy lines are explicitly replaced.",
+        "docs/plans/v2.0.1-execution.md:114-120 — delegates to the installed upstream workflow on both hosts.",
+        "docs/plans/v2.0.1-execution.md:275 — Q2 changes permission in principle, not the upstream intake contract.",
+        "templates/AGENTS.md:6-13 — retained explicit-invocation policy and suggest-dependent EGM rule.",
+        "templates/.agents/skills/egm-review/SKILL.md:5-16 — manual entrypoint; preserve upstream human checkpoints or stop.",
+        "vendor/egm/skills/egm-review/SKILL.md:73-113 — context and omitted Step lead to user prompts.",
+        "vendor/egm/skills/egm-review/SKILL.md:179-189 — ambiguous or missing implementation split also prompts.",
+        "tests/test_oaw_mode.py:374-380 — assertions bind the existing suggest/range/EGM policy and 25-line ceiling.",
+        "scripts/oaw.py:766-773 — the helper is required by manifest ownership OR policy text."
+      ],
+      "item_ids": [
+        "K06",
+        "K04"
+      ],
+      "no_item_reason": null,
+      "author_later_disposition": {
+        "status": "accepted",
+        "reason": "Appendix B reports 30 findings changed accordingly; it gives no separate per-index rationale for this finding.",
+        "source": "<workspace>/OAW-release-final/docs/plans/v2.0.1-execution.md:501-502",
+        "evidentiary_role": "Context only; never proof of a draft defect."
+      },
+      "flags": [
+        "duplicate-of"
+      ],
+      "component_notes": [
+        "Historical evidence cites template line 5 for explicit invocation; the actual template text is line 6 (rendered example line 5)."
+      ],
+      "duplicate_of": [
+        {
+          "source_report": "egm/report.json",
+          "source_index": 2,
+          "item_ids": [
+            "K06"
+          ]
+        },
+        {
+          "source_report": "egm/report.json",
+          "source_index": 18,
+          "item_ids": [
+            "K04"
+          ]
+        },
+        {
+          "source_report": "codex/report.json",
+          "source_index": 14,
+          "item_ids": [
+            "K04"
+          ]
+        }
+      ],
+      "hindsight": false,
+      "mapping_notes": {
+        "K06": "Verified mechanism contributes to this cluster.",
+        "K04": "Verified mechanism contributes to this cluster."
+      }
+    },
+    {
+      "source_report": "egm/report.json",
+      "source_index": 10,
+      "original_finding": {
+        "location": "docs/plans/v2.0.1-execution.md:87,112,118",
+        "claim": "Add templates/.claude/agents/oaw-goldfish.md, and use claude -p for zero-context review.",
+        "evidence": "scripts/sync_egm.py:153-158 requires templates/.claude/agents to match the EGM bridges exactly (gate harness_check.py:187). scripts/goldfish_review.py:34-41,349-413 already runs zero-context claude -p review with leak and billing checks.",
+        "rationale": "The new file fails the gate, and the plan ignores the existing review kit (D23).",
+        "severity": "major"
+      },
+      "historical_severity": "major",
+      "verification_status": "partly",
+      "adjudication": "Verified a deterministic gate failure from the proposed agent filename. Reuse of the existing goldfish runner is a useful remedy, but duplication by itself is not a separate demonstrated defect; a new implementation could legitimately differ.",
+      "evidence": [
+        "docs/plans/v2.0.1-execution.md:87 — introduces oaw-goldfish.",
+        "docs/plans/v2.0.1-execution.md:112 — places it in templates/.claude/agents.",
+        "scripts/sync_egm.py:153-158 — every file in that agent directory must equal the generated EGM bridge set.",
+        "scripts/harness_check.py:183-188 — required gate calls --check-bundled.",
+        "scripts/goldfish_review.py:34-41 — an existing isolated-review runner provides a possible reuse path.",
+        "scripts/goldfish_review.py:349-413 — existing runner isolates cwd and checks context/billing."
+      ],
+      "item_ids": [
+        "K07"
+      ],
+      "no_item_reason": null,
+      "author_later_disposition": {
+        "status": "accepted",
+        "reason": "Appendix B reports 30 findings changed accordingly; it gives no separate per-index rationale for this finding.",
+        "source": "<workspace>/OAW-release-final/docs/plans/v2.0.1-execution.md:501-502",
+        "evidentiary_role": "Context only; never proof of a draft defect."
+      },
+      "flags": [],
+      "component_notes": [],
+      "duplicate_of": [],
+      "hindsight": false,
+      "mapping_notes": {
+        "K07": "Verified mechanism contributes to this cluster."
+      }
+    },
+    {
+      "source_report": "egm/report.json",
+      "source_index": 11,
+      "original_finding": {
+        "location": "docs/plans/v2.0.1-execution.md:3,60,217-218",
+        "claim": "migrate 2.0.0 -> 2.0.1 adds new skills and scripts; update VERSION.",
+        "evidence": "scripts/oaw.py:352-356 keeps explicit skill selections, so new skills are not added. The repository has VERSION.json; harness_check.py:148-158 also needs FRAMEWORK_VERSION (oaw.py:24) and docs/releases/2.0.1-sources.json. Released users are on v1 (docs/UPGRADING.md:7-33), while 2.0.0 was never released (line 3).",
+        "rationale": "The release and migration steps are partly false and skip the main installed base.",
+        "severity": "major"
+      },
+      "historical_severity": "major",
+      "verification_status": "partly",
+      "adjudication": "Verified explicit-recipe selection blocks the unconditional new-skill promise. Missing v1 release coverage and version/source-ledger detail are secondary checklist omissions: existing code already supports v1, and VERSION is plausibly shorthand for VERSION.json, not a nonexistent-file instruction.",
+      "evidence": [
+        "docs/plans/v2.0.1-execution.md:217 — promises new skills/scripts during migration while protecting custom policy.",
+        "scripts/oaw.py:352-360 — prior explicit skills are reused and select the payload.",
+        "docs/UPGRADING.md:63-69 — custom selection persists when the skill flag is omitted.",
+        "docs/plans/v2.0.1-execution.md:3 — 2.0.0 was never released; 2.0.1 is the first V2 release.",
+        "docs/plans/v2.0.1-execution.md:60 — release goal names only 2.0.0 to 2.0.1 migration.",
+        "docs/plans/v2.0.1-execution.md:217-218 — migration and metadata checklist.",
+        "docs/UPGRADING.md:7-33 — existing v1 migration behavior, including customized routers.",
+        "scripts/harness_check.py:148-158 — VERSION.json, FRAMEWORK_VERSION and versioned sources ledger must agree.",
+        "scripts/oaw.py:24 — installer version constant is separate from VERSION.json."
+      ],
+      "item_ids": [
+        "K21",
+        "K22"
+      ],
+      "no_item_reason": null,
+      "author_later_disposition": {
+        "status": "accepted",
+        "reason": "Appendix B reports 30 findings changed accordingly; it gives no separate per-index rationale for this finding.",
+        "source": "<workspace>/OAW-release-final/docs/plans/v2.0.1-execution.md:501-502",
+        "evidentiary_role": "Context only; never proof of a draft defect."
+      },
+      "flags": [],
+      "component_notes": [
+        "Existing-recipe behavior is the primary root cause; incomplete release coverage is separately secondary."
+      ],
+      "duplicate_of": [],
+      "hindsight": false,
+      "mapping_notes": {
+        "K21": "Verified mechanism contributes to this cluster.",
+        "K22": "Verified mechanism contributes to this cluster."
+      }
+    },
+    {
+      "source_report": "egm/report.json",
+      "source_index": 12,
+      "original_finding": {
+        "location": "docs/plans/v2.0.1-execution.md:42,55-56,86,108",
+        "claim": "Deep runs full EGM automatically; triggers unchanged; 'watch the deep ratio'.",
+        "evidence": "56% of code commits classify as deep (validation:102). About 1.1M per EGM run; one run was cut by the 5-hour cap (egm-selftest:74-75).",
+        "rationale": "There is no cost cap, pre-run notice, or behavior for a run cut off by usage limits once Q2 enables auto-run.",
+        "severity": "major"
+      },
+      "historical_severity": "major",
+      "verification_status": "partly",
+      "adjudication": "Verified the ordinary automatic task flow lacks a spending-cap/authorization contract. Rejected the claim that cutoff behavior is wholly absent: line 266 explicitly provides continuation and token accounting. High EGM cost/frequency alone does not prove failure or contradict a fixed per-task owner limit, so this is secondary.",
+      "evidence": [
+        "docs/plans/v2.0.1-execution.md:108 — full EGM once per deep task, about 1.1M tokens.",
+        "docs/plans/v2.0.1-execution.md:229 — 10M cap applies to experiments.",
+        "docs/plans/v2.0.1-execution.md:266 — explicitly addresses interruption and continuation.",
+        "docs/plans/v2.0.1-execution.md:275 — enables automatic deep with a project opt-out.",
+        "evidence/validation-2026-11-07-RESULT.md:102 — 56% of code commits classified deep.",
+        "evidence/egm-selftest-2026-11-06-RESULT.md:74-75 — measured subscription-limit interruptions."
+      ],
+      "item_ids": [
+        "K11"
+      ],
+      "no_item_reason": null,
+      "author_later_disposition": {
+        "status": "accepted",
+        "reason": "Appendix B reports 30 findings changed accordingly; it gives no separate per-index rationale for this finding.",
+        "source": "<workspace>/OAW-release-final/docs/plans/v2.0.1-execution.md:501-502",
+        "evidentiary_role": "Context only; never proof of a draft defect."
+      },
+      "flags": [
+        "needs-context"
+      ],
+      "component_notes": [],
+      "duplicate_of": [],
+      "hindsight": false,
+      "mapping_notes": {
+        "K11": "Verified mechanism contributes to this cluster."
+      }
+    },
+    {
+      "source_report": "egm/report.json",
+      "source_index": 13,
+      "original_finding": {
+        "location": "docs/plans/v2.0.1-execution.md:10,36,76,107,117",
+        "claim": "Second opinions should come from another model family; use codex review whenever Codex exists.",
+        "evidence": "The kappa values measure grader agreement on fixed answers (validation:17-20,65-72). No reviewer-family comparison exists; D31.5's Codex rounds have no comparison arm (DECISIONS:175-178).",
+        "rationale": "Making this the default is unsupported by measurement, and it silently sends diffs to a second vendor and bills a second subscription.",
+        "severity": "major"
+      },
+      "historical_severity": "major",
+      "verification_status": "partly",
+      "adjudication": "Verified the reviewer-versus-grader evidence mismatch. The packet does not establish a universal rule requiring a separate consent question for every cross-vendor review, nor that credentials/billing will work merely because a CLI exists. Those operational/authorization questions need context and are not primary defects established here.",
+      "evidence": [
+        "docs/plans/v2.0.1-execution.md:36 — uses grader kappa to justify changing both reviewers and graders.",
+        "docs/plans/v2.0.1-execution.md:76 — mandates a different family for the second code-review opinion.",
+        "evidence/validation-2026-11-07-RESULT.md:56-72 — calibration and cross-family regrading concern existing answers and fact labels.",
+        "evidence/DECISIONS-D21-D31.md:175-180 — cross-family code-review rounds and adherence smoke tests provide no reviewer-family control arm.",
+        "templates/AGENTS.md:31 — installing OAW alone does not authorize external actions; actual user/task authorization remains contextual."
+      ],
+      "item_ids": [
+        "K01"
+      ],
+      "no_item_reason": null,
+      "author_later_disposition": {
+        "status": "partly",
+        "reason": "Keeps cross-family grading; makes reviewer-family change subject to user consent and X2.",
+        "source": "<workspace>/OAW-release-final/docs/plans/v2.0.1-execution.md:501-509",
+        "evidentiary_role": "Context only; never proof of a draft defect."
+      },
+      "flags": [
+        "needs-context"
+      ],
+      "component_notes": [],
+      "duplicate_of": [],
+      "hindsight": false,
+      "mapping_notes": {
+        "K01": "Verified mechanism contributes to this cluster."
+      }
+    },
+    {
+      "source_report": "egm/report.json",
+      "source_index": 14,
+      "original_finding": {
+        "location": "docs/plans/v2.0.1-execution.md:22-23,28,44",
+        "claim": "Measurement uses D32's yardstick; 4x3 has poor resolution.",
+        "evidence": "The decision log ends at D31 (DECISIONS:161); the rules are proposals that need owner approval (validation:123). validation:16 'coverage resolution is not poor' (0.10 vs 0.089, :40-42).",
+        "rationale": "The summary presents a pending decision as adopted and misstates why the rule changes.",
+        "severity": "major"
+      },
+      "historical_severity": "major",
+      "verification_status": "partly",
+      "adjudication": "Verified the inaccurate coverage-resolution rationale only. Reject the claim that D32 is unconditionally presented as approved: W0 explicitly depends on Q1 and Q1 asks permission, with a D29 fallback. A proposed name absent from a log ending at D31 is not itself a defect.",
+      "evidence": [
+        "docs/plans/v2.0.1-execution.md:44 — describes 4 × 3 resolution as poor.",
+        "docs/plans/v2.0.1-execution.md:300 — repeats the rationale.",
+        "evidence/validation-2026-11-07-RESULT.md:16-20 — distinguishes adequate coverage resolution from unreliable wrong-claim labels.",
+        "evidence/validation-2026-11-07-RESULT.md:34-44 — fixed-question resolution 0.02–0.09; random-question comparison about 0.10 versus 0.089.",
+        "docs/plans/v2.0.1-execution.md:95 — W0 is conditional on Q1.",
+        "docs/plans/v2.0.1-execution.md:274 — explicit proposed approval and fallback.",
+        "evidence/validation-2026-11-07-RESULT.md:123 — rules are proposals."
+      ],
+      "item_ids": [
+        "K03"
+      ],
+      "no_item_reason": null,
+      "author_later_disposition": {
+        "status": "accepted",
+        "reason": "Appendix B reports 30 findings changed accordingly; it gives no separate per-index rationale for this finding.",
+        "source": "<workspace>/OAW-release-final/docs/plans/v2.0.1-execution.md:501-502",
+        "evidentiary_role": "Context only; never proof of a draft defect."
+      },
+      "flags": [],
+      "component_notes": [],
+      "duplicate_of": [],
+      "hindsight": false,
+      "mapping_notes": {
+        "K03": "Verified mechanism contributes to this cluster."
+      }
+    },
+    {
+      "source_report": "egm/report.json",
+      "source_index": 15,
+      "original_finding": {
+        "location": "docs/plans/v2.0.1-execution.md:88,113,235",
+        "claim": "oaw_mode.py plan outputs JSON steps for the skill to follow; X3 uses a dry-run.",
+        "evidence": "No arguments, schema or dry-run flag are given; show --json already exists (scripts/oaw_mode.py:337-372,404-408).",
+        "rationale": "The skill and X3 depend on an undefined contract.",
+        "severity": "major"
+      },
+      "historical_severity": "major",
+      "verification_status": "verified",
+      "adjudication": "The shared plan/skill/X3 API is left undefined; existing show --json could be reused but does not itself define the new dry-run step contract. This is a nonblocking implementation detail, not evidence that the command cannot be implemented.",
+      "evidence": [
+        "docs/plans/v2.0.1-execution.md:88 — proposes JSON steps.",
+        "docs/plans/v2.0.1-execution.md:113-124 — schedules the command and trigger fixtures without a schema.",
+        "docs/plans/v2.0.1-execution.md:235 — X3 requires dry-run review decisions.",
+        "scripts/oaw_mode.py:337-372 — existing instructions data structure.",
+        "scripts/oaw_mode.py:397-408 — existing suggest/show inputs and JSON flags."
+      ],
+      "item_ids": [
+        "K08"
+      ],
+      "no_item_reason": null,
+      "author_later_disposition": {
+        "status": "accepted",
+        "reason": "Appendix B reports 30 findings changed accordingly; it gives no separate per-index rationale for this finding.",
+        "source": "<workspace>/OAW-release-final/docs/plans/v2.0.1-execution.md:501-502",
+        "evidentiary_role": "Context only; never proof of a draft defect."
+      },
+      "flags": [],
+      "component_notes": [],
+      "duplicate_of": [],
+      "hindsight": false,
+      "mapping_notes": {
+        "K08": "Verified mechanism contributes to this cluster."
+      }
+    },
+    {
+      "source_report": "egm/report.json",
+      "source_index": 16,
+      "original_finding": {
+        "location": "docs/plans/v2.0.1-execution.md:170,192",
+        "claim": "Option 2 installs only A B C; remove leaves managed files byte-identical.",
+        "evidence": "Both removal paths leave .oaw/integrations/egm (66 files) and the EGM policy text (evidence/egm-selftest-2026-11-06-RESULT.md:58-63, 'needs a separate fix'). oaw.py:863 already offers --skills none.",
+        "rationale": "This depends on an unscheduled removal fix and duplicates an existing flag.",
+        "severity": "major"
+      },
+      "historical_severity": "major",
+      "verification_status": "not verified",
+      "adjudication": "The 11-06 removal report is stale relative to the frozen packet. Source generation omits the runtime without EGM; migration retires owned unchanged runtime/agents and renders policy without EGM; catalog remove egm delegates to that migration path. Preserving edited/project-owned files is intentional, not the alleged unconditional leak. --skills none also does not provide option 2’s policy-free installation, so the duplication allegation does not rescue this finding.",
+      "evidence": [
+        "evidence/egm-selftest-2026-11-06-RESULT.md:58-63 — earlier observed leak (historical, superseded within the packet).",
+        "scripts/oaw.py:188-210 — conditional EGM policy rendering.",
+        "scripts/oaw.py:310-319 — no EGM payload when no EGM skill is selected.",
+        "scripts/oaw.py:430-451 — retires runtime and native agents, preserving conflicts.",
+        "scripts/catalog.py:2021-2032 — bundled removal delegates to migrate with reduced skill selection.",
+        "scripts/catalog.py:2050-2070 — remove egm takes and applies that migration plan.",
+        "scripts/oaw.py:277-279 — empty skill selection still installs OAW policy."
+      ],
+      "item_ids": [],
+      "no_item_reason": "The 11-06 removal report is stale relative to the frozen packet. Source generation omits the runtime without EGM; migration retires owned unchanged runtime/agents and renders policy without EGM; catalog remove egm delegates to that migration path. Preserving edited/project-owned files is intentional, not the alleged unconditional leak. --skills none also does not provide option 2’s policy-free installation, so the duplication allegation does not rescue this finding.",
+      "author_later_disposition": {
+        "status": "declined",
+        "reason": "Says the cited 11-06 removal state was already fixed by f357b7d.",
+        "source": "<workspace>/OAW-release-final/docs/plans/v2.0.1-execution.md:501-509",
+        "evidentiary_role": "Context only; never proof of a draft defect."
+      },
+      "flags": [],
+      "component_notes": [
+        "No hindsight needed: the correction is visibly present in the packet. No reliance on the later author’s commit claim."
+      ],
+      "duplicate_of": [],
+      "hindsight": false,
+      "mapping_notes": {}
+    },
+    {
+      "source_report": "egm/report.json",
+      "source_index": 17,
+      "original_finding": {
+        "location": "docs/plans/v2.0.1-execution.md:236,253",
+        "claim": "X4 runs in segment 2 to check G5 (+600 tokens or fewer).",
+        "evidence": "X1 and X3, which decide which skill descriptions and policy line ship, run later or alongside (lines 233-235, 254).",
+        "rationale": "The G5 gate would measure a configuration that may not ship.",
+        "severity": "minor"
+      },
+      "historical_severity": "minor",
+      "verification_status": "verified",
+      "adjudication": "Verified early measurement precedes final default/policy decisions. No actual final context overrun is proven; this is a secondary acceptance-coverage gap.",
+      "evidence": [
+        "docs/plans/v2.0.1-execution.md:59 — G5 limits startup context growth to 600 tokens.",
+        "docs/plans/v2.0.1-execution.md:84 — X1 determines automatic codemap invocation.",
+        "docs/plans/v2.0.1-execution.md:235-236 — X3 determines policy-line retention; X4 measures footprint.",
+        "docs/plans/v2.0.1-execution.md:253-255 — X4 occurs before later experiment decisions and release."
+      ],
+      "item_ids": [
+        "K28"
+      ],
+      "no_item_reason": null,
+      "author_later_disposition": {
+        "status": "accepted",
+        "reason": "Appendix B reports 30 findings changed accordingly; it gives no separate per-index rationale for this finding.",
+        "source": "<workspace>/OAW-release-final/docs/plans/v2.0.1-execution.md:501-502",
+        "evidentiary_role": "Context only; never proof of a draft defect."
+      },
+      "flags": [],
+      "component_notes": [],
+      "duplicate_of": [],
+      "hindsight": false,
+      "mapping_notes": {
+        "K28": "Verified mechanism contributes to this cluster."
+      }
+    },
+    {
+      "source_report": "egm/report.json",
+      "source_index": 18,
+      "original_finding": {
+        "location": "docs/plans/v2.0.1-execution.md:182,189,241,311",
+        "claim": "oaw-review about 180 tokens; catalog has 25 subcommands; implementation review is one EGM run; reuse costs about a third.",
+        "evidence": "180 is court-skill's D-arm figure (validation:94); scripts/catalog.py:2519-2600 has 23 top-level commands; lines 219 and 255 call the implementation review cross-family code review; with two arms, reuse saves about half.",
+        "rationale": "Small numeric and labeling inconsistencies.",
+        "severity": "minor"
+      },
+      "historical_severity": "minor",
+      "verification_status": "partly",
+      "adjudication": "Verified the 25-command count is wrong and review budgeting is internally labeled inconsistently (EGM for implementation versus cross-family code review elsewhere). The approximately 180-token future skill estimate is not proven false just because court’s description measured 180. Likewise a universal one-half saving cannot be inferred without costs for food, native and grading; the one-third reuse estimate is unsubstantiated rather than disproven.",
+      "evidence": [
+        "docs/plans/v2.0.1-execution.md:45 — claims 25 catalog subcommands.",
+        "docs/plans/v2.0.1-execution.md:83 — claims a 26-line current policy.",
+        "docs/plans/v2.0.1-execution.md:189 — repeats 25 catalog subcommands.",
+        "example/minimal-project/AGENTS.md:1-25 — complete rendered minimal policy.",
+        "scripts/oaw.py:188-210 — rendering removes conditional markers.",
+        "scripts/catalog.py:2512-2601 — 23 commands.add_parser declarations, two policy and two scout subcommands.",
+        "docs/plans/v2.0.1-execution.md:124 — live deep E2E required.",
+        "docs/plans/v2.0.1-execution.md:198 — two X3 passes required.",
+        "docs/plans/v2.0.1-execution.md:227-244 — two graders, experiment costs, additional costs and approximate total; X3 budgeted once.",
+        "docs/plans/v2.0.1-execution.md:252 — implementation phase misleadingly described as nearly zero tokens without a budget boundary.",
+        "docs/plans/v2.0.1-execution.md:276 — claims eight new X2 cases stay within 10M.",
+        "evidence/validation-2026-11-07-RESULT.md:87 — E runs cost 1.07–1.43M; eight upper-range runs alone cost 11.44M.",
+        "evidence/validation-2026-11-07-RESULT.md:143-144 — Claude grading and question preparation consumed tokens previously.",
+        "docs/plans/v2.0.1-execution.md:182 — future oaw-review estimate, not an observed measurement.",
+        "evidence/validation-2026-11-07-RESULT.md:94 — court description measured about 180 tokens.",
+        "docs/plans/v2.0.1-execution.md:219 — specifies cross-family code review for implementation.",
+        "docs/plans/v2.0.1-execution.md:241 — budget labels both reviews EGM.",
+        "docs/plans/v2.0.1-execution.md:255 — release again specifies cross-family code review.",
+        "docs/plans/v2.0.1-execution.md:311 — approximate reuse cost estimate lacks a cost decomposition."
+      ],
+      "item_ids": [
+        "K04",
+        "K29"
+      ],
+      "no_item_reason": null,
+      "author_later_disposition": {
+        "status": "accepted",
+        "reason": "Appendix B reports 30 findings changed accordingly; it gives no separate per-index rationale for this finding.",
+        "source": "<workspace>/OAW-release-final/docs/plans/v2.0.1-execution.md:501-502",
+        "evidentiary_role": "Context only; never proof of a draft defect."
+      },
+      "flags": [
+        "duplicate-of"
+      ],
+      "component_notes": [
+        "Budget-label inconsistency is secondary support only; it alone does not detect the primary omitted-cost item.",
+        "This finding still maps to the independently verified footprint-count item."
+      ],
+      "duplicate_of": [
+        {
+          "source_report": "egm/report.json",
+          "source_index": 5,
+          "item_ids": [
+            "K29"
+          ]
+        },
+        {
+          "source_report": "egm/report.json",
+          "source_index": 6,
+          "item_ids": [
+            "K29"
+          ]
+        },
+        {
+          "source_report": "egm/report.json",
+          "source_index": 8,
+          "item_ids": [
+            "K29"
+          ]
+        },
+        {
+          "source_report": "egm/report.json",
+          "source_index": 9,
+          "item_ids": [
+            "K04"
+          ]
+        },
+        {
+          "source_report": "codex/report.json",
+          "source_index": 14,
+          "item_ids": [
+            "K04"
+          ]
+        }
+      ],
+      "hindsight": false,
+      "mapping_notes": {
+        "K04": "Verified mechanism contributes to this cluster.",
+        "K29": "Related secondary accounting-label inconsistency only; does not by itself meet this primary item’s detected_if. Required-cost omissions are established by EGM 5/6/8."
+      }
+    },
+    {
+      "source_report": "codex/report.json",
+      "source_index": 1,
+      "original_finding": {
+        "location": "docs/plans/v2.0.1-execution.md:96",
+        "severity": "major",
+        "claim": "The specified statistical method cannot estimate within-question variation from the proposed singleton runs.",
+        "evidence": "The plan specifies within-question paired bootstrap and a pooled within-question variance floor, while X1 and X2 at lines 233–234 run each question once per arm. evidence/validation-2026-11-07-RESULT.md:34–44 describes the existing method using repeated runs and warns about collapsed intervals; line 127 proposes pooling within-question variation, which singleton cells cannot supply.",
+        "fix": "Define a method valid for the proposed sampling design, including the source of the variance floor and the equivalence calculation, before approving the experiments and budget."
+      },
+      "historical_severity": "major",
+      "verification_status": "verified",
+      "adjudication": "The proposed singleton design cannot supply within-question replicate variation. An external variance model or a paired-question bootstrap could fix it, but neither is specified. This conclusion follows from the stated design and does not require the absent statistical source file.",
+      "evidence": [
+        "docs/plans/v2.0.1-execution.md:96 — specifies within-question paired bootstrap and a zero-variance floor.",
+        "docs/plans/v2.0.1-execution.md:233-234 — X1 and X2 use one run per question/case per arm.",
+        "docs/plans/v2.0.1-execution.md:274 — adopts the proposed D32 rules.",
+        "evidence/validation-2026-11-07-RESULT.md:34-44 — earlier within-question bootstrap used repeated runs and collapsed on constant cells.",
+        "evidence/validation-2026-11-07-RESULT.md:126-127 — proposes singleton questions alongside pooled within-question variance."
+      ],
+      "item_ids": [
+        "K09"
+      ],
+      "no_item_reason": null,
+      "author_later_disposition": {
+        "status": "accepted",
+        "reason": "Appendix B reports 30 findings changed accordingly; it gives no separate per-index rationale for this finding.",
+        "source": "<workspace>/OAW-release-final/docs/plans/v2.0.1-execution.md:501-502",
+        "evidentiary_role": "Context only; never proof of a draft defect."
+      },
+      "flags": [],
+      "component_notes": [],
+      "duplicate_of": [],
+      "hindsight": false,
+      "mapping_notes": {
+        "K09": "Verified mechanism contributes to this cluster."
+      }
+    },
+    {
+      "source_report": "codex/report.json",
+      "source_index": 2,
+      "original_finding": {
+        "location": "docs/plans/v2.0.1-execution.md:305",
+        "severity": "major",
+        "claim": "The new judgment rules are not connected to the catalog engine that must enforce and record them.",
+        "evidence": "scripts/catalog_core.py:1847–1849 accepts only better/same/worse and a fixed 1.5 cost threshold. Lines 2062–2111 derive and validate outcomes from a point cost ratio, without confidence intervals or separate equivalent/undetermined states. The plan changes these distinctions but only schedules a statistics module and continues claiming that record-tasting enforces consistent verdicts.",
+        "fix": "Add an explicit mapping from the new statistical results to catalog judgments, update validation where necessary, and preserve compatibility with historical records."
+      },
+      "historical_severity": "major",
+      "verification_status": "verified",
+      "adjudication": "The validator accepts only three quality states and a point ratio, rejects other judgment fields, and derives a fixed D29 outcome. A new standalone statistics module cannot alone change that enforced record contract.",
+      "evidence": [
+        "docs/plans/v2.0.1-execution.md:77 — undetermined is neither equivalence nor eligible for default.",
+        "docs/plans/v2.0.1-execution.md:96 — new statistics module.",
+        "docs/plans/v2.0.1-execution.md:305-306 — four-way/interval rules followed by claimed catalog consistency enforcement.",
+        "scripts/catalog_core.py:1847-1857 — three quality states; same explicitly includes uncertainty.",
+        "scripts/catalog_core.py:2062-2070 — point-ratio outcome function.",
+        "scripts/catalog_core.py:2084-2111 — schema rejects other quality/interval fields and validates against old outcomes.",
+        "evidence/validation-2026-11-07-RESULT.md:129 — proposed cost-too-high rule uses the interval lower bound."
+      ],
+      "item_ids": [
+        "K30"
+      ],
+      "no_item_reason": null,
+      "author_later_disposition": {
+        "status": "accepted",
+        "reason": "Appendix B reports 30 findings changed accordingly; it gives no separate per-index rationale for this finding.",
+        "source": "<workspace>/OAW-release-final/docs/plans/v2.0.1-execution.md:501-502",
+        "evidentiary_role": "Context only; never proof of a draft defect."
+      },
+      "flags": [],
+      "component_notes": [],
+      "duplicate_of": [],
+      "hindsight": false,
+      "mapping_notes": {
+        "K30": "Verified mechanism contributes to this cluster."
+      }
+    },
+    {
+      "source_report": "codex/report.json",
+      "source_index": 3,
+      "original_finding": {
+        "location": "docs/plans/v2.0.1-execution.md:83",
+        "severity": "major",
+        "claim": "The proposed policy invokes review after implementation, although deep review must happen before implementation.",
+        "evidence": "The replacement policy says to use oaw-review after making changes. The deep workflow at line 108 instead requires planning and EGM review before implementation. scripts/oaw_mode.py:115–141 normally examines changes already present in the working tree.",
+        "fix": "Specify when planned work is classified before implementation and when completed changes receive code review. Include an E2E case proving that deep implementation does not begin before plan review."
+      },
+      "historical_severity": "major",
+      "verification_status": "verified",
+      "adjudication": "The explicit after-change policy cannot ensure the pre-implementation EGM plan review in deep. The existing --paths interface makes an earlier classification feasible but the draft does not invoke it then.",
+      "evidence": [
+        "docs/plans/v2.0.1-execution.md:83 — replacement policy invokes review after making changes.",
+        "docs/plans/v2.0.1-execution.md:108 — deep sequence is plan, EGM review, implementation, then code review.",
+        "scripts/oaw_mode.py:115-141 — default classification reads existing working-tree changes.",
+        "scripts/oaw_mode.py:402-403 — planned paths are already a possible input."
+      ],
+      "item_ids": [
+        "K05"
+      ],
+      "no_item_reason": null,
+      "author_later_disposition": {
+        "status": "accepted",
+        "reason": "Appendix B reports 30 findings changed accordingly; it gives no separate per-index rationale for this finding.",
+        "source": "<workspace>/OAW-release-final/docs/plans/v2.0.1-execution.md:501-502",
+        "evidentiary_role": "Context only; never proof of a draft defect."
+      },
+      "flags": [
+        "duplicate-of"
+      ],
+      "component_notes": [],
+      "duplicate_of": [
+        {
+          "source_report": "egm/report.json",
+          "source_index": 2,
+          "item_ids": [
+            "K05"
+          ]
+        }
+      ],
+      "hindsight": false,
+      "mapping_notes": {
+        "K05": "Verified mechanism contributes to this cluster."
+      }
+    },
+    {
+      "source_report": "codex/report.json",
+      "source_index": 4,
+      "original_finding": {
+        "location": "docs/plans/v2.0.1-execution.md:108",
+        "severity": "major",
+        "claim": "Keeping the current triggers does not implement the stated trigger for new design documents generally.",
+        "evidence": "scripts/oaw_mode.py:246–249 recognizes added Markdown only under docs/designs/ or with a filename matching design*.md. An added docs/plans/v2.0.1-execution.md is classified as light by the current classifier, despite being a new implementation plan.",
+        "fix": "Either describe the actual restricted trigger or explicitly expand it and add fixtures for the repository's plan paths. Distinguish any expanded trigger from the trigger evaluated in V7."
+      },
+      "historical_severity": "major",
+      "verification_status": "verified",
+      "adjudication": "Read-only branch tracing confirms that an added docs/plans/v2.0.1-execution.md alone matches neither the design-name/path rule nor code-size thresholds. No packet code was executed.",
+      "evidence": [
+        "docs/plans/v2.0.1-execution.md:104-108 — promises unchanged triggers including new design documents.",
+        "scripts/oaw_mode.py:246-249 — restricted added-Markdown matcher.",
+        "scripts/oaw_mode.py:261-290 — no matched trigger yields light; size counts code, not documentation.",
+        "evidence/DECISIONS-D21-D31.md:166-170 — describes the new-design-document trigger.",
+        "scripts/oaw_mode.py:29-42 — thresholds and harness filename patterns do not match the example plan.",
+        "scripts/oaw_mode.py:227-237 — docs count as documentation; ordinary docs/plans paths are not harness paths."
+      ],
+      "item_ids": [
+        "K10"
+      ],
+      "no_item_reason": null,
+      "author_later_disposition": {
+        "status": "accepted",
+        "reason": "Appendix B reports 30 findings changed accordingly; it gives no separate per-index rationale for this finding.",
+        "source": "<workspace>/OAW-release-final/docs/plans/v2.0.1-execution.md:501-502",
+        "evidentiary_role": "Context only; never proof of a draft defect."
+      },
+      "flags": [],
+      "component_notes": [],
+      "duplicate_of": [],
+      "hindsight": false,
+      "mapping_notes": {
+        "K10": "Verified mechanism contributes to this cluster."
+      }
+    },
+    {
+      "source_report": "codex/report.json",
+      "source_index": 5,
+      "original_finding": {
+        "location": "docs/plans/v2.0.1-execution.md:157",
+        "severity": "major",
+        "claim": "The user-facing commands have no specified delivery path into an installed project.",
+        "evidence": "scripts/oaw.py:2 explicitly says this CLI remains in the framework checkout. Its source_files mapping at lines 277–285 installs project helpers, but neither oaw.py nor catalog.py. The payload changes listed in the plan add code_index.py, leaving the advertised project-relative add/list/remove commands and /oaw-add backend unresolved.",
+        "fix": "Specify either an installed management launcher with its dependencies or commands run from the framework checkout with an explicit project target. Test the documented flow from a separately installed project."
+      },
+      "historical_severity": "major",
+      "verification_status": "verified",
+      "adjudication": "The management CLI is deliberately checkout-only and absent from the source payload. The draft names no installed launcher or checkout target convention for its user flow. This is a delivery mismatch, not a complaint that new verbs do not yet exist.",
+      "evidence": [
+        "docs/plans/v2.0.1-execution.md:88-89 — installed script additions list code_index but management verbs wrap catalog.",
+        "docs/plans/v2.0.1-execution.md:157-160 — advertises python3 scripts/oaw.py and conversational add.",
+        "scripts/oaw.py:2 — CLI stays in framework checkout.",
+        "scripts/oaw.py:277-285 — project payload omits oaw.py and catalog.py.",
+        "scripts/oaw.py:854-856 — existing checkout management takes --target and otherwise targets current directory."
+      ],
+      "item_ids": [
+        "K14"
+      ],
+      "no_item_reason": null,
+      "author_later_disposition": {
+        "status": "accepted",
+        "reason": "Appendix B reports 30 findings changed accordingly; it gives no separate per-index rationale for this finding.",
+        "source": "<workspace>/OAW-release-final/docs/plans/v2.0.1-execution.md:501-502",
+        "evidentiary_role": "Context only; never proof of a draft defect."
+      },
+      "flags": [],
+      "component_notes": [],
+      "duplicate_of": [],
+      "hindsight": false,
+      "mapping_notes": {
+        "K14": "Verified mechanism contributes to this cluster."
+      }
+    },
+    {
+      "source_report": "codex/report.json",
+      "source_index": 6,
+      "original_finding": {
+        "location": "docs/plans/v2.0.1-execution.md:170",
+        "severity": "major",
+        "claim": "The 'only A B C' choice needs an installation mode that the current installer does not provide.",
+        "evidence": "scripts/oaw.py:277–279 always includes AGENTS.md, CLAUDE.md and OAW helpers, even with an empty bundled-skill selection. doctor at lines 745–778 requires OAW policy and helpers. Wrapping the existing catalog therefore does not provide the promised management-only installation.",
+        "fix": "Add a concrete management-only installation contract, including its manifest, doctor behavior and handling of existing OAW versus project-owned policy. Test this choice in both a clean project and an existing OAW installation."
+      },
+      "historical_severity": "major",
+      "verification_status": "verified",
+      "adjudication": "source_files always emits OAW policy/helpers, and doctor requires them. Selecting zero bundled skills is therefore not the promised policy-free management mode.",
+      "evidence": [
+        "docs/plans/v2.0.1-execution.md:170 — promises no OAW skills or policy text.",
+        "scripts/oaw.py:277-279 — policy and helpers are unconditional.",
+        "scripts/oaw.py:745-778 — doctor requires policy/helpers.",
+        "scripts/oaw.py:863 — none is only a bundled-skill selection."
+      ],
+      "item_ids": [
+        "K16"
+      ],
+      "no_item_reason": null,
+      "author_later_disposition": {
+        "status": "accepted",
+        "reason": "Appendix B reports 30 findings changed accordingly; it gives no separate per-index rationale for this finding.",
+        "source": "<workspace>/OAW-release-final/docs/plans/v2.0.1-execution.md:501-502",
+        "evidentiary_role": "Context only; never proof of a draft defect."
+      },
+      "flags": [],
+      "component_notes": [],
+      "duplicate_of": [],
+      "hindsight": false,
+      "mapping_notes": {
+        "K16": "Verified mechanism contributes to this cluster."
+      }
+    },
+    {
+      "source_report": "codex/report.json",
+      "source_index": 7,
+      "original_finding": {
+        "location": "docs/plans/v2.0.1-execution.md:164",
+        "severity": "major",
+        "claim": "The proposed wrapper cannot install ordinary untested or executable skills through the current catalog absorption path.",
+        "evidence": "scripts/catalog_core.py:1242–1267 holds executable skills and even static skill text without a behavior A/B. Lines 1268–1284 prohibit installing hooks/MCP servers and hold agents. scripts/catalog.py:1863–1873 installs only components already approved for absorption and rejects bundled-name collisions. W3 promises installation before tasting, executable-component consent and collision choices without scheduling these engine changes.",
+        "fix": "Define a user-requested installation path separately from promotion into OAW defaults, and explicitly implement the required component and collision handling. Test an untested skill and an ordinary script-bearing skill."
+      },
+      "historical_severity": "major",
+      "verification_status": "verified",
+      "adjudication": "The reused absorption path refuses the required untasted, executable and collision cases. This is independent of whether the user consented: consent does not change the hard engine rules.",
+      "evidence": [
+        "docs/plans/v2.0.1-execution.md:89 — wraps the existing catalog.",
+        "docs/plans/v2.0.1-execution.md:163-176 — untasted installation, conflict choices and runtime consent.",
+        "docs/plans/v2.0.1-execution.md:192 — hook and bundled-name fixtures are required.",
+        "scripts/catalog_core.py:1242-1284 — executable/text A/B holds and hook/MCP/agent restrictions.",
+        "scripts/catalog.py:1863-1873 — absorption-only copying and bundled-name rejection.",
+        "scripts/catalog_core.py:78 — installed skill-file suffix allowlist is .md/.txt."
+      ],
+      "item_ids": [
+        "K15"
+      ],
+      "no_item_reason": null,
+      "author_later_disposition": {
+        "status": "accepted",
+        "reason": "Appendix B reports 30 findings changed accordingly; it gives no separate per-index rationale for this finding.",
+        "source": "<workspace>/OAW-release-final/docs/plans/v2.0.1-execution.md:501-502",
+        "evidentiary_role": "Context only; never proof of a draft defect."
+      },
+      "flags": [
+        "duplicate-of"
+      ],
+      "component_notes": [],
+      "duplicate_of": [
+        {
+          "source_report": "egm/report.json",
+          "source_index": 1,
+          "item_ids": [
+            "K15"
+          ]
+        }
+      ],
+      "hindsight": false,
+      "mapping_notes": {
+        "K15": "Verified mechanism contributes to this cluster."
+      }
+    },
+    {
+      "source_report": "codex/report.json",
+      "source_index": 8,
+      "original_finding": {
+        "location": "docs/plans/v2.0.1-execution.md:175",
+        "severity": "major",
+        "claim": "Existing catalog restore points cannot provide the promised rollback for consented hooks and MCP configuration.",
+        "evidence": "scripts/catalog.py:1407–1420 explicitly excludes host settings and MCP files from build snapshots. Yet W3 permits installing those components and line 192 requires byte-identical restoration after removal.",
+        "fix": "Specify restoration records for every configuration file the new installer changes, including shared-file edits. Verify that removing B preserves A, C and pre-existing project configuration."
+      },
+      "historical_severity": "major",
+      "verification_status": "verified",
+      "adjudication": "The reused build/restore allowlist explicitly excludes hook/MCP host configuration. Supporting their installation alone leaves the removal contract unsatisfied.",
+      "evidence": [
+        "docs/plans/v2.0.1-execution.md:174-175 — permits runtime components and reuses catalog restore points.",
+        "docs/plans/v2.0.1-execution.md:192 — removal must restore managed files byte for byte.",
+        "scripts/catalog.py:1374-1375 — MCP and host paths are denied.",
+        "scripts/catalog.py:1407-1428 — build/restore layer excludes host settings and MCP configuration.",
+        "docs/SKILL_INTAKE.md:308 — documents the same restore boundary."
+      ],
+      "item_ids": [
+        "K18"
+      ],
+      "no_item_reason": null,
+      "author_later_disposition": {
+        "status": "accepted",
+        "reason": "Appendix B reports 30 findings changed accordingly; it gives no separate per-index rationale for this finding.",
+        "source": "<workspace>/OAW-release-final/docs/plans/v2.0.1-execution.md:501-502",
+        "evidentiary_role": "Context only; never proof of a draft defect."
+      },
+      "flags": [
+        "duplicate-of"
+      ],
+      "component_notes": [],
+      "duplicate_of": [
+        {
+          "source_report": "egm/report.json",
+          "source_index": 1,
+          "item_ids": [
+            "K18"
+          ]
+        }
+      ],
+      "hindsight": false,
+      "mapping_notes": {
+        "K18": "Verified mechanism contributes to this cluster."
+      }
+    },
+    {
+      "source_report": "codex/report.json",
+      "source_index": 9,
+      "original_finding": {
+        "location": "docs/plans/v2.0.1-execution.md:173",
+        "severity": "major",
+        "claim": "The zero-token installation promise includes semantic conflict detection without a defined mechanism.",
+        "evidence": "Line 163 says only the AI-composition choice consumes agent tokens, but lines 169–173 promise detection of functional overlap and contradictory policy text. scripts/catalog_core.py:1–15 describes a static pattern-matching scanner; the cited evidence does not establish a general semantic conflict detector.",
+        "fix": "Limit the free path to concrete structural conflicts and declared overlap metadata. Make semantic analysis an explicitly optional agent operation rather than an unconditional installation guarantee."
+      },
+      "historical_severity": "major",
+      "verification_status": "verified",
+      "adjudication": "Verified the unbounded semantic-conflict promise lacks a mechanism or input contract in the free path. The finding does not require claiming all semantic checks inherently need tokens; structural checks or declared metadata could satisfy a narrowed promise.",
+      "evidence": [
+        "docs/plans/v2.0.1-execution.md:163 — only AI composition spends agent tokens.",
+        "docs/plans/v2.0.1-execution.md:169 — option 1 identifies functional overlap.",
+        "docs/plans/v2.0.1-execution.md:173 — conflict checks include contradictory policy text.",
+        "scripts/catalog_core.py:1-15 — static checks decode and pattern-match bytes, not a specified policy-comparison engine."
+      ],
+      "item_ids": [
+        "K17"
+      ],
+      "no_item_reason": null,
+      "author_later_disposition": {
+        "status": "accepted",
+        "reason": "Appendix B reports 30 findings changed accordingly; it gives no separate per-index rationale for this finding.",
+        "source": "<workspace>/OAW-release-final/docs/plans/v2.0.1-execution.md:501-502",
+        "evidentiary_role": "Context only; never proof of a draft defect."
+      },
+      "flags": [],
+      "component_notes": [],
+      "duplicate_of": [],
+      "hindsight": false,
+      "mapping_notes": {
+        "K17": "Verified mechanism contributes to this cluster."
+      }
+    },
+    {
+      "source_report": "codex/report.json",
+      "source_index": 10,
+      "original_finding": {
+        "location": "docs/plans/v2.0.1-execution.md:234",
+        "severity": "major",
+        "claim": "X2 does not define the standard treatment it tests, and its replacement rule lacks a complete safety condition.",
+        "evidence": "Line 107 defines standard as reviewing a code diff and tests, while X2 supplies design documents. X2 allows S to replace E based on detection equivalence and cost without explicitly requiring S's false-positive safety. The fallback at line 264 also switches deep to S when E fails to generalize, without requiring an acceptable S-versus-N result.",
+        "fix": "Define the exact standard design-review treatment and distinguish it from code review. Give the replacement decision explicit quality and false-positive requirements, plus a deterministic fallback when neither treatment qualifies."
+      },
+      "historical_severity": "major",
+      "verification_status": "verified",
+      "adjudication": "Two independently failing rules are bundled: S’s design-review treatment is undefined, and its selection lacks the quality/false-positive eligibility imposed on E. Defining S does not repair an unsafe selection rule, and adding safety predicates does not define an executable S treatment.",
+      "evidence": [
+        "docs/plans/v2.0.1-execution.md:107 — standard receives diff and tests.",
+        "docs/plans/v2.0.1-execution.md:234 — compares N/S/E on design documents and can replace deep with S.",
+        "docs/plans/v2.0.1-execution.md:264 — failed generalization also switches deep to S.",
+        "docs/plans/v2.0.1-execution.md:234 — E must improve detection, not increase unfounded claims and make zero clean-case errors; S replacement lists only equivalence and cost.",
+        "docs/plans/v2.0.1-execution.md:264 — switches deep to S whenever E fails to generalize."
+      ],
+      "item_ids": [
+        "K24",
+        "K25"
+      ],
+      "no_item_reason": null,
+      "author_later_disposition": {
+        "status": "accepted",
+        "reason": "Appendix B reports 30 findings changed accordingly; it gives no separate per-index rationale for this finding.",
+        "source": "<workspace>/OAW-release-final/docs/plans/v2.0.1-execution.md:501-502",
+        "evidentiary_role": "Context only; never proof of a draft defect."
+      },
+      "flags": [
+        "duplicate-of"
+      ],
+      "component_notes": [],
+      "duplicate_of": [
+        {
+          "source_report": "egm/report.json",
+          "source_index": 5,
+          "item_ids": [
+            "K24"
+          ]
+        }
+      ],
+      "hindsight": false,
+      "mapping_notes": {
+        "K24": "Verified mechanism contributes to this cluster.",
+        "K25": "Verified mechanism contributes to this cluster."
+      }
+    },
+    {
+      "source_report": "codex/report.json",
+      "source_index": 11,
+      "original_finding": {
+        "location": "docs/plans/v2.0.1-execution.md:176",
+        "severity": "minor",
+        "claim": "The specified add flow contradicts its one-question usability acceptance criterion.",
+        "evidence": "Line 165 requires the composition question, and line 176 then requires another tasting question for untested skills. Line 193 nevertheless requires completing add A B C, choosing option 1 and removing B while answering only one question.",
+        "fix": "Include optional tasting in the initial interaction or defer it without another installation prompt. Make the usability fixture explicitly contain untested skills."
+      },
+      "historical_severity": "minor",
+      "verification_status": "verified",
+      "adjudication": "An untested input entails a second tasting question after the composition choice, contradicting the option-1 usability acceptance target. It is a secondary interaction defect, not a failure to install.",
+      "evidence": [
+        "docs/plans/v2.0.1-execution.md:165-171 — required composition choice.",
+        "docs/plans/v2.0.1-execution.md:176 — untested skills prompt for tasting afterward.",
+        "docs/plans/v2.0.1-execution.md:193 — one-answer add A/B/C, option 1, remove B acceptance scenario."
+      ],
+      "item_ids": [
+        "K19"
+      ],
+      "no_item_reason": null,
+      "author_later_disposition": {
+        "status": "accepted",
+        "reason": "Appendix B reports 30 findings changed accordingly; it gives no separate per-index rationale for this finding.",
+        "source": "<workspace>/OAW-release-final/docs/plans/v2.0.1-execution.md:501-502",
+        "evidentiary_role": "Context only; never proof of a draft defect."
+      },
+      "flags": [],
+      "component_notes": [],
+      "duplicate_of": [],
+      "hindsight": false,
+      "mapping_notes": {
+        "K19": "Verified mechanism contributes to this cluster."
+      }
+    },
+    {
+      "source_report": "codex/report.json",
+      "source_index": 12,
+      "original_finding": {
+        "location": "docs/plans/v2.0.1-execution.md:138",
+        "severity": "minor",
+        "claim": "The simplified map output omits an existing uncertainty distinction that matters for impact analysis.",
+        "evidence": "scripts/code_index.py:1540–1549 separates resolved callers from same-name calls with unknown receiver types, and lines 1733–1734 print a warning. Its traversal also has language and hop limits at lines 1577–1596. An untruncated result is not necessarily an exhaustive set of actual callers.",
+        "fix": "Preserve resolution warnings and state that 'complete' refers to returned indexed matches, with the applicable language and traversal limits."
+      },
+      "historical_severity": "minor",
+      "verification_status": "verified",
+      "adjudication": "The current callers results mix resolved and unknown-receiver name matches, with explicit output warnings. The proposed location/signature and complete/truncated description omits this independent uncertainty dimension. No actual future wrong answer is asserted.",
+      "evidence": [
+        "docs/plans/v2.0.1-execution.md:138 — specifies location/signature-only output and complete/truncated labels.",
+        "scripts/code_index.py:1540-1549 — results include unresolved same-name candidates and resolved counts.",
+        "scripts/code_index.py:1577-1596 — affected has hop and language limits.",
+        "scripts/code_index.py:1721-1734 — current output marks uncertain candidates and warns to check them."
+      ],
+      "item_ids": [
+        "K12"
+      ],
+      "no_item_reason": null,
+      "author_later_disposition": {
+        "status": "accepted",
+        "reason": "Appendix B reports 30 findings changed accordingly; it gives no separate per-index rationale for this finding.",
+        "source": "<workspace>/OAW-release-final/docs/plans/v2.0.1-execution.md:501-502",
+        "evidentiary_role": "Context only; never proof of a draft defect."
+      },
+      "flags": [],
+      "component_notes": [],
+      "duplicate_of": [],
+      "hindsight": false,
+      "mapping_notes": {
+        "K12": "Verified mechanism contributes to this cluster."
+      }
+    },
+    {
+      "source_report": "codex/report.json",
+      "source_index": 13,
+      "original_finding": {
+        "location": "docs/plans/v2.0.1-execution.md:37",
+        "severity": "minor",
+        "claim": "The statement that all three maps reduced tool calls to 0.23–0.65 of native overstates the measurements.",
+        "evidence": "evidence/codemap-comparison-2026-11-06.md:28–40 reports graphify ratios of 0.88, 0.76, 1.00 and 1.04, and an OAW ratio of 1.04 on Opus 4.8. The 0.23 result is codegraph's separate VS Code experiment in evidence/validation-2026-11-07-RESULT.md:113. It is an overall tool-call ratio, not specifically a symbol-query measurement as attributed at plan line 131.",
+        "fix": "Report the ratios by tool and condition, and avoid attributing aggregate efficiency to an individually unmeasured mechanism."
+      },
+      "historical_severity": "minor",
+      "verification_status": "verified",
+      "adjudication": "Verified both the incorrect generalized range and unsupported mechanism-specific attribution of the aggregate 0.23 measurement. Same root cause as the other report’s measurement finding; no extra item.",
+      "evidence": [
+        "docs/plans/v2.0.1-execution.md:37 — universal three-map efficiency claim used to motivate the design.",
+        "docs/plans/v2.0.1-execution.md:131-132 — attributes 0.23 to symbol lookup and proposes absorbing map features.",
+        "evidence/codemap-comparison-2026-11-06.md:28-40 — graphify ratios 0.88, 0.76, 1.00, 1.04; OAW reaches 1.04.",
+        "evidence/validation-2026-11-07-RESULT.md:109-115 — 0.23 is the aggregate VS Code codegraph experiment."
+      ],
+      "item_ids": [
+        "K02"
+      ],
+      "no_item_reason": null,
+      "author_later_disposition": {
+        "status": "accepted",
+        "reason": "Appendix B reports 30 findings changed accordingly; it gives no separate per-index rationale for this finding.",
+        "source": "<workspace>/OAW-release-final/docs/plans/v2.0.1-execution.md:501-502",
+        "evidentiary_role": "Context only; never proof of a draft defect."
+      },
+      "flags": [
+        "duplicate-of"
+      ],
+      "component_notes": [],
+      "duplicate_of": [
+        {
+          "source_report": "egm/report.json",
+          "source_index": 4,
+          "item_ids": [
+            "K02"
+          ]
+        }
+      ],
+      "hindsight": false,
+      "mapping_notes": {
+        "K02": "Verified mechanism contributes to this cluster."
+      }
+    },
+    {
+      "source_report": "codex/report.json",
+      "source_index": 14,
+      "original_finding": {
+        "location": "docs/plans/v2.0.1-execution.md:83",
+        "severity": "minor",
+        "claim": "Two current-size claims are inaccurate.",
+        "evidence": "example/minimal-project/AGENTS.md:1–25 and the current rendered installer payload contain 25 lines, not 26. scripts/catalog.py:2512–2601 defines 23 top-level commands and four nested commands, not the 25 repeatedly claimed at plan lines 45 and 189.",
+        "fix": "Correct the counts and specify whether command counts include nested commands. Use the measured rendered policy as the line-count baseline."
+      },
+      "historical_severity": "minor",
+      "verification_status": "verified",
+      "adjudication": "Direct enumeration of the rendered example gives 25 lines. Reading all parser declarations gives 23 top-level commands plus 4 nested. The raw conditional template is a different object; its line count is not the rendered baseline.",
+      "evidence": [
+        "docs/plans/v2.0.1-execution.md:45 — claims 25 catalog subcommands.",
+        "docs/plans/v2.0.1-execution.md:83 — claims a 26-line current policy.",
+        "docs/plans/v2.0.1-execution.md:189 — repeats 25 catalog subcommands.",
+        "example/minimal-project/AGENTS.md:1-25 — complete rendered minimal policy.",
+        "scripts/oaw.py:188-210 — rendering removes conditional markers.",
+        "scripts/catalog.py:2512-2601 — 23 commands.add_parser declarations, two policy and two scout subcommands."
+      ],
+      "item_ids": [
+        "K04"
+      ],
+      "no_item_reason": null,
+      "author_later_disposition": {
+        "status": "accepted",
+        "reason": "Appendix B reports 30 findings changed accordingly; it gives no separate per-index rationale for this finding.",
+        "source": "<workspace>/OAW-release-final/docs/plans/v2.0.1-execution.md:501-502",
+        "evidentiary_role": "Context only; never proof of a draft defect."
+      },
+      "flags": [
+        "duplicate-of"
+      ],
+      "component_notes": [],
+      "duplicate_of": [
+        {
+          "source_report": "egm/report.json",
+          "source_index": 9,
+          "item_ids": [
+            "K04"
+          ]
+        },
+        {
+          "source_report": "egm/report.json",
+          "source_index": 18,
+          "item_ids": [
+            "K04"
+          ]
+        }
+      ],
+      "hindsight": false,
+      "mapping_notes": {
+        "K04": "Verified mechanism contributes to this cluster."
+      }
+    },
+    {
+      "source_report": "codex/report.json",
+      "source_index": 15,
+      "original_finding": {
+        "location": "docs/plans/v2.0.1-execution.md:303",
+        "severity": "minor",
+        "claim": "The claimed TokenEconomizer failure caused by NFS clock skew is unsupported by the supplied evidence.",
+        "evidence": "evidence/codemap-comparison-2026-11-06.md:67 documents slow codegraph indexing on NFS, not clock skew or TokenEconomizer state failure. evidence/validation-2026-11-07-RESULT.md:30 and :54 discuss TokenEconomizer's ceiling results without that incident.",
+        "fix": "Supply the incident evidence or present local-cache placement as a design choice without claiming this measured cause."
+      },
+      "historical_severity": "minor",
+      "verification_status": "not adjudicable",
+      "adjudication": "The packet does not contain the alleged TokenEconomizer/NFS-clock-skew incident record. Its absence supports an evidence-availability concern but cannot establish that the event did not happen or the local-cache choice is wrong. The author’s later pointer cannot be used as proof in either direction; the referenced outside record was not opened.",
+      "evidence": [
+        "docs/plans/v2.0.1-execution.md:136 — cache location justified by an alleged NFS-clock-skew incident.",
+        "docs/plans/v2.0.1-execution.md:303 — names TokenEconomizer state failure.",
+        "evidence/codemap-comparison-2026-11-06.md:67 — documents codegraph NFS indexing latency, not that incident.",
+        "evidence/validation-2026-11-07-RESULT.md:30 — TokenEconomizer ceiling summary.",
+        "evidence/validation-2026-11-07-RESULT.md:54 — hidden-test verification and ceiling, no clock-skew incident."
+      ],
+      "item_ids": [],
+      "no_item_reason": "The packet does not contain the alleged TokenEconomizer/NFS-clock-skew incident record. Its absence supports an evidence-availability concern but cannot establish that the event did not happen or the local-cache choice is wrong. The author’s later pointer cannot be used as proof in either direction; the referenced outside record was not opened.",
+      "author_later_disposition": {
+        "status": "declined",
+        "reason": "Says the incident evidence exists in a 2026-11-03 records file outside the review workspace.",
+        "source": "<workspace>/OAW-release-final/docs/plans/v2.0.1-execution.md:501-509",
+        "evidentiary_role": "Context only; never proof of a draft defect."
+      },
+      "flags": [
+        "needs-context"
+      ],
+      "component_notes": [
+        "Packet-wide text search for clock-skew/Chinese equivalent found only the draft’s own two assertions.",
+        "Not labeled hindsight: the purported incident predates the cutoff; the missing source, not its date, prevents adjudication."
+      ],
+      "duplicate_of": [],
+      "hindsight": false,
+      "mapping_notes": {}
+    }
+  ],
+  "curator_found": [],
+  "structural_validation": {
+    "finding_count": 33,
+    "key_item_count": 30,
+    "citation_occurrences_checked": 367,
+    "checks": [
+      "JSON serialization and required fields",
+      "all 33 one-based report indices preserved in order",
+      "all original finding objects copied without alteration",
+      "item IDs consecutive and main draft anchors nondecreasing",
+      "every retained item has historical provenance",
+      "every evidence path and line range exists in packet",
+      "source report and cited-file SHA-256 digests recorded"
+    ],
+    "limitation": "Existence/range validation is mechanical; semantic validity was curated by reading, and still warrants a second independent check."
+  },
+  "item_adjudications": [
+    {
+      "id": "K01",
+      "main_draft_line": 36,
+      "tier": "secondary",
+      "tier_reason": "Secondary: a plausible design choice has an unsupported evidence extrapolation, but no packet result proves the choice fails or is worse.",
+      "historical_sources": [
+        {
+          "source_report": "egm/report.json",
+          "source_index": 13,
+          "mapping_role": "Verified mechanism contributes to this cluster."
+        }
+      ]
+    },
+    {
+      "id": "K02",
+      "main_draft_line": 37,
+      "tier": "primary",
+      "tier_reason": "Primary: a material claimed efficiency advantage used to select map mechanisms is numerically contradicted by the cited measurements.",
+      "historical_sources": [
+        {
+          "source_report": "egm/report.json",
+          "source_index": 4,
+          "mapping_role": "Verified mechanism contributes to this cluster."
+        },
+        {
+          "source_report": "codex/report.json",
+          "source_index": 13,
+          "mapping_role": "Verified mechanism contributes to this cluster."
+        }
+      ]
+    },
+    {
+      "id": "K03",
+      "main_draft_line": 44,
+      "tier": "secondary",
+      "tier_reason": "Secondary: the historical coverage-resolution summary is inaccurate, but more questions and zero-variance protection retain independent support.",
+      "historical_sources": [
+        {
+          "source_report": "egm/report.json",
+          "source_index": 14,
+          "mapping_role": "Verified mechanism contributes to this cluster."
+        }
+      ]
+    },
+    {
+      "id": "K04",
+      "main_draft_line": 45,
+      "tier": "secondary",
+      "tier_reason": "Secondary: present-size bookkeeping errors do not change executable behavior or the substantive line-budget limit.",
+      "historical_sources": [
+        {
+          "source_report": "egm/report.json",
+          "source_index": 9,
+          "mapping_role": "Verified mechanism contributes to this cluster."
+        },
+        {
+          "source_report": "egm/report.json",
+          "source_index": 18,
+          "mapping_role": "Verified mechanism contributes to this cluster."
+        },
+        {
+          "source_report": "codex/report.json",
+          "source_index": 14,
+          "mapping_role": "Verified mechanism contributes to this cluster."
+        }
+      ]
+    },
+    {
+      "id": "K05",
+      "main_draft_line": 83,
+      "tier": "primary",
+      "tier_reason": "Primary: a review invoked only after implementation cannot meet the required pre-implementation plan-review ordering.",
+      "historical_sources": [
+        {
+          "source_report": "egm/report.json",
+          "source_index": 2,
+          "mapping_role": "Verified mechanism contributes to this cluster."
+        },
+        {
+          "source_report": "codex/report.json",
+          "source_index": 3,
+          "mapping_role": "Verified mechanism contributes to this cluster."
+        }
+      ]
+    },
+    {
+      "id": "K06",
+      "main_draft_line": 83,
+      "tier": "primary",
+      "tier_reason": "Primary: the specified delegated workflow has mandatory user prompts inconsistent with the owner-free approved branch; permission alone does not supply bindings.",
+      "historical_sources": [
+        {
+          "source_report": "egm/report.json",
+          "source_index": 2,
+          "mapping_role": "Verified mechanism contributes to this cluster."
+        },
+        {
+          "source_report": "egm/report.json",
+          "source_index": 9,
+          "mapping_role": "Verified mechanism contributes to this cluster."
+        }
+      ]
+    },
+    {
+      "id": "K07",
+      "main_draft_line": 87,
+      "tier": "primary",
+      "tier_reason": "Primary: the specified added file deterministically violates a required exact-inventory check.",
+      "historical_sources": [
+        {
+          "source_report": "egm/report.json",
+          "source_index": 10,
+          "mapping_role": "Verified mechanism contributes to this cluster."
+        }
+      ]
+    },
+    {
+      "id": "K08",
+      "main_draft_line": 88,
+      "tier": "secondary",
+      "tier_reason": "Secondary: a shared input/output/dry-run interface needs detail, but no specific choice is contradicted or impossible.",
+      "historical_sources": [
+        {
+          "source_report": "egm/report.json",
+          "source_index": 15,
+          "mapping_role": "Verified mechanism contributes to this cluster."
+        }
+      ]
+    },
+    {
+      "id": "K09",
+      "main_draft_line": 96,
+      "tier": "primary",
+      "tier_reason": "Primary: the specified within-question estimator/floor lacks the repeated observations it needs, so its intended intervals and decisions are undefined.",
+      "historical_sources": [
+        {
+          "source_report": "codex/report.json",
+          "source_index": 1,
+          "mapping_role": "Verified mechanism contributes to this cluster."
+        }
+      ]
+    },
+    {
+      "id": "K10",
+      "main_draft_line": 108,
+      "tier": "primary",
+      "tier_reason": "Primary: keeping the actual matcher routes a class of expressly deep new design documents to no review.",
+      "historical_sources": [
+        {
+          "source_report": "codex/report.json",
+          "source_index": 4,
+          "mapping_role": "Verified mechanism contributes to this cluster."
+        }
+      ]
+    },
+    {
+      "id": "K11",
+      "main_draft_line": 108,
+      "tier": "secondary",
+      "tier_reason": "Secondary: no ordinary-task spending contract is stated, but the owner requested automatic review and the packet does not impose a demonstrated per-task limit.",
+      "historical_sources": [
+        {
+          "source_report": "egm/report.json",
+          "source_index": 12,
+          "mapping_role": "Verified mechanism contributes to this cluster."
+        }
+      ]
+    },
+    {
+      "id": "K12",
+      "main_draft_line": 138,
+      "tier": "secondary",
+      "tier_reason": "Secondary: the output specification loses a useful uncertainty distinction; it also separately requires source verification, so a wrong final answer is not inevitable.",
+      "historical_sources": [
+        {
+          "source_report": "codex/report.json",
+          "source_index": 12,
+          "mapping_role": "Verified mechanism contributes to this cluster."
+        }
+      ]
+    },
+    {
+      "id": "K13",
+      "main_draft_line": 139,
+      "tier": "secondary",
+      "tier_reason": "Secondary: new TS work is explicitly planned; the separate resolution engine scope is missing detail rather than proof the goal cannot be implemented.",
+      "historical_sources": [
+        {
+          "source_report": "egm/report.json",
+          "source_index": 3,
+          "mapping_role": "Verified mechanism contributes to this cluster."
+        }
+      ]
+    },
+    {
+      "id": "K14",
+      "main_draft_line": 157,
+      "tier": "primary",
+      "tier_reason": "Primary: the advertised command is absent in the installed project, while running it in the checkout without a target addresses the wrong location.",
+      "historical_sources": [
+        {
+          "source_report": "codex/report.json",
+          "source_index": 5,
+          "mapping_role": "Verified mechanism contributes to this cluster."
+        }
+      ]
+    },
+    {
+      "id": "K15",
+      "main_draft_line": 164,
+      "tier": "primary",
+      "tier_reason": "Primary: reused engine eligibility and filename rules refuse the explicit acceptance fixtures and untasted install flow.",
+      "historical_sources": [
+        {
+          "source_report": "egm/report.json",
+          "source_index": 1,
+          "mapping_role": "Verified mechanism contributes to this cluster."
+        },
+        {
+          "source_report": "codex/report.json",
+          "source_index": 7,
+          "mapping_role": "Verified mechanism contributes to this cluster."
+        }
+      ]
+    },
+    {
+      "id": "K16",
+      "main_draft_line": 170,
+      "tier": "primary",
+      "tier_reason": "Primary: the existing payload and health checker require the policy the selected option promises not to install.",
+      "historical_sources": [
+        {
+          "source_report": "codex/report.json",
+          "source_index": 6,
+          "mapping_role": "Verified mechanism contributes to this cluster."
+        }
+      ]
+    },
+    {
+      "id": "K17",
+      "main_draft_line": 173,
+      "tier": "primary",
+      "tier_reason": "Primary: the free path advertises a general semantic capability yet only schedules reuse of a static scanner, with no implementing scope or metadata contract; the promised result is not executable as specified.",
+      "historical_sources": [
+        {
+          "source_report": "codex/report.json",
+          "source_index": 9,
+          "mapping_role": "Verified mechanism contributes to this cluster."
+        }
+      ]
+    },
+    {
+      "id": "K18",
+      "main_draft_line": 175,
+      "tier": "primary",
+      "tier_reason": "Primary: reused snapshots cannot restore the configuration files the new installer is allowed to modify.",
+      "historical_sources": [
+        {
+          "source_report": "egm/report.json",
+          "source_index": 1,
+          "mapping_role": "Verified mechanism contributes to this cluster."
+        },
+        {
+          "source_report": "codex/report.json",
+          "source_index": 8,
+          "mapping_role": "Verified mechanism contributes to this cluster."
+        }
+      ]
+    },
+    {
+      "id": "K19",
+      "main_draft_line": 176,
+      "tier": "secondary",
+      "tier_reason": "Secondary: an extra optional-tasting prompt misses a usability target but does not block correct installation/removal.",
+      "historical_sources": [
+        {
+          "source_report": "codex/report.json",
+          "source_index": 11,
+          "mapping_role": "Verified mechanism contributes to this cluster."
+        }
+      ]
+    },
+    {
+      "id": "K20",
+      "main_draft_line": 198,
+      "tier": "secondary",
+      "tier_reason": "Secondary: a split/baseline placement detail is absent; W4 can be rescheduled without changing its experimental question.",
+      "historical_sources": [
+        {
+          "source_report": "egm/report.json",
+          "source_index": 8,
+          "mapping_role": "Verified mechanism contributes to this cluster."
+        }
+      ]
+    },
+    {
+      "id": "K21",
+      "main_draft_line": 217,
+      "tier": "primary",
+      "tier_reason": "Primary: preserving explicit recipes prevents the promised automatic new-skill delivery and requires a selection policy.",
+      "historical_sources": [
+        {
+          "source_report": "egm/report.json",
+          "source_index": 11,
+          "mapping_role": "Verified mechanism contributes to this cluster."
+        }
+      ]
+    },
+    {
+      "id": "K22",
+      "main_draft_line": 218,
+      "tier": "secondary",
+      "tier_reason": "Secondary: v1 support already exists and update VERSION can be shorthand; the deficit is explicit release validation/metadata coverage.",
+      "historical_sources": [
+        {
+          "source_report": "egm/report.json",
+          "source_index": 11,
+          "mapping_role": "Verified mechanism contributes to this cluster."
+        }
+      ]
+    },
+    {
+      "id": "K23",
+      "main_draft_line": 233,
+      "tier": "secondary",
+      "tier_reason": "Secondary: line 77 already disallows promoting uncertainty; the local decision table still needs complete, consistent outcomes.",
+      "historical_sources": [
+        {
+          "source_report": "egm/report.json",
+          "source_index": 7,
+          "mapping_role": "Verified mechanism contributes to this cluster."
+        }
+      ]
+    },
+    {
+      "id": "K24",
+      "main_draft_line": 234,
+      "tier": "primary",
+      "tier_reason": "Primary: the trial and replacement decision refer to a design-review S procedure that the draft never defines.",
+      "historical_sources": [
+        {
+          "source_report": "egm/report.json",
+          "source_index": 5,
+          "mapping_role": "Verified mechanism contributes to this cluster."
+        },
+        {
+          "source_report": "codex/report.json",
+          "source_index": 10,
+          "mapping_role": "Verified mechanism contributes to this cluster."
+        }
+      ]
+    },
+    {
+      "id": "K25",
+      "main_draft_line": 234,
+      "tier": "primary",
+      "tier_reason": "Primary: a stated selection path can ship S without its own acceptable false-positive or native-comparison result.",
+      "historical_sources": [
+        {
+          "source_report": "codex/report.json",
+          "source_index": 10,
+          "mapping_role": "Verified mechanism contributes to this cluster."
+        }
+      ]
+    },
+    {
+      "id": "K26",
+      "main_draft_line": 234,
+      "tier": "secondary",
+      "tier_reason": "Secondary: a saturated case cannot measure improvement but could be a regression control; it does not make all new-case inference impossible.",
+      "historical_sources": [
+        {
+          "source_report": "egm/report.json",
+          "source_index": 5,
+          "mapping_role": "Verified mechanism contributes to this cluster."
+        }
+      ]
+    },
+    {
+      "id": "K27",
+      "main_draft_line": 235,
+      "tier": "secondary",
+      "tier_reason": "Secondary: the test can answer line-plus-skill versus skill-only, though it cannot justify the skill upgrade over current routing.",
+      "historical_sources": [
+        {
+          "source_report": "egm/report.json",
+          "source_index": 8,
+          "mapping_role": "Verified mechanism contributes to this cluster."
+        }
+      ]
+    },
+    {
+      "id": "K28",
+      "main_draft_line": 236,
+      "tier": "secondary",
+      "tier_reason": "Secondary: the acceptance gate does not cover the final configuration; no actual context-limit breach is demonstrated.",
+      "historical_sources": [
+        {
+          "source_report": "egm/report.json",
+          "source_index": 17,
+          "mapping_role": "Verified mechanism contributes to this cluster."
+        }
+      ]
+    },
+    {
+      "id": "K29",
+      "main_draft_line": 239,
+      "tier": "primary",
+      "tier_reason": "Primary: the owner is asked to authorize an incompletely costed mandatory program and a fallback that is not justified within its claimed cap.",
+      "historical_sources": [
+        {
+          "source_report": "egm/report.json",
+          "source_index": 5,
+          "mapping_role": "Verified mechanism contributes to this cluster."
+        },
+        {
+          "source_report": "egm/report.json",
+          "source_index": 6,
+          "mapping_role": "Verified mechanism contributes to this cluster."
+        },
+        {
+          "source_report": "egm/report.json",
+          "source_index": 8,
+          "mapping_role": "Verified mechanism contributes to this cluster."
+        },
+        {
+          "source_report": "egm/report.json",
+          "source_index": 18,
+          "mapping_role": "Related secondary accounting-label inconsistency only; does not by itself meet this primary item’s detected_if. Required-cost omissions are established by EGM 5/6/8."
+        }
+      ]
+    },
+    {
+      "id": "K30",
+      "main_draft_line": 305,
+      "tier": "primary",
+      "tier_reason": "Primary: the enforcing validator rejects or conflates the new protocol states and applies a different cost decision rule.",
+      "historical_sources": [
+        {
+          "source_report": "codex/report.json",
+          "source_index": 2,
+          "mapping_role": "Verified mechanism contributes to this cluster."
+        }
+      ]
+    }
+  ],
+  "key_sha256": "c5e672866b97d29d23d83b286ec8bcef577b635f973ff8474d3ad77b4e087f93",
+  "curated_on": "2026-11-14"
+}

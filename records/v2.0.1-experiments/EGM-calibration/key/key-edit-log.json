@@ -1,0 +1,153 @@
+{
+ "before_sha256": "41efe96a84ada8b87321fbbf70474e39c5f98273f6d522ae2141dea093429ca4",
+ "after_sha256": "6d7497e90b9baf7f872bfd04c4750fee77a523e69169fd840d48df02d8e1f99e",
+ "edits": [
+  {
+   "item": "K06",
+   "field": "tier",
+   "op": "set",
+   "old": "primary",
+   "new": "secondary"
+  },
+  {
+   "item": "K10",
+   "field": "tier",
+   "op": "set",
+   "old": "primary",
+   "new": "secondary"
+  },
+  {
+   "item": "K16",
+   "field": "tier",
+   "op": "set",
+   "old": "primary",
+   "new": "secondary"
+  },
+  {
+   "item": "K17",
+   "field": "tier",
+   "op": "set",
+   "old": "primary",
+   "new": "secondary"
+  },
+  {
+   "item": "K21",
+   "field": "tier",
+   "op": "set",
+   "old": "primary",
+   "new": "secondary"
+  },
+  {
+   "item": "K24",
+   "field": "tier",
+   "op": "set",
+   "old": "primary",
+   "new": "secondary"
+  },
+  {
+   "item": "K25",
+   "field": "tier",
+   "op": "set",
+   "old": "primary",
+   "new": "secondary"
+  },
+  {
+   "item": "K02",
+   "field": "detected_if",
+   "op": "replace",
+   "old": "with at least one correct counterexample or correct attribution of the 0.23 result",
+   "new": "with at least one correct counterexample from the packet (graphify 0.76-1.04, or OAW 1.04 on Opus 4.8)"
+  },
+  {
+   "item": "K02",
+   "field": "detected_if",
+   "op": "replace",
+   "old": "Also sufficient: identifies that the quoted 0.23 measures the full treatment, not an isolated symbol-query feature.",
+   "new": "Also sufficient: shows from the packet that the step saving credited to symbol lookup had another measured cause (evidence/codemap-comparison-2026-11-06.md:52-53, the prompt hook that the draft refuses to absorb)."
+  },
+  {
+   "item": "K02",
+   "field": "mention_only_if",
+   "op": "append",
+   "old": "",
+   "new": "Also mention-only: says only that 0.23 is an aggregate or not isolated, without packet evidence of another cause; or does not say which ratios it means."
+  },
+  {
+   "item": "K02",
+   "field": "not_adjudicable_if",
+   "op": "set",
+   "old": "The cited ratios refer to different experiments or metrics and the report supplies no way to distinguish them from the frozen tool-call claim.",
+   "new": "Not applicable on packet grounds: the packet contains what is needed to decide. Use only if the report's text on this point is unreadable or cut off; a report that is merely vague is mention-only or absent."
+  },
+  {
+   "item": "K02",
+   "field": "evidence",
+   "op": "append",
+   "old": "",
+   "new": "codemap-comparison:52-53"
+  },
+  {
+   "item": "K29",
+   "field": "claim",
+   "op": "replace",
+   "old": ", and the blanket per-experiment cap is not reconciled with X2’s exception",
+   "new": ""
+  },
+  {
+   "item": "K29",
+   "field": "detected_if",
+   "op": "replace",
+   "old": " Also sufficient: connects the blanket 10M stop rule to the separately requested 11M X2 exception and asks which rule the runner enforces.",
+   "new": ""
+  },
+  {
+   "item": "K29",
+   "field": "mention_only_if",
+   "op": "append",
+   "old": "",
+   "new": "Also mention-only: notes only that the 10M per-experiment cap and X2's 11M differ, which the draft already raises as its own open question (plan:244, 276)."
+  },
+  {
+   "item": "K29",
+   "field": "evidence",
+   "op": "remove",
+   "old": "docs/plans/v2.0.1-execution.md:252 — implementation phase misleadingly described as nearly zero tokens without a budget boundary.",
+   "new": ""
+  },
+  {
+   "item": "K05",
+   "field": "mention_only_if",
+   "op": "append",
+   "old": "",
+   "new": "Also mention-only: does not distinguish plan review from final code review, so the timing it challenges cannot be told."
+  },
+  {
+   "item": "K05",
+   "field": "not_adjudicable_if",
+   "op": "set",
+   "old": "The report does not distinguish plan review from final code review, making it impossible to determine which timing it challenges.",
+   "new": "Not applicable on packet grounds: the packet contains what is needed to decide. Use only if the report's text on this point is unreadable or cut off; a report that is merely vague is mention-only or absent."
+  },
+  {
+   "item": "K18",
+   "field": "mention_only_if",
+   "op": "append",
+   "old": "",
+   "new": "Also mention-only: speaks of an unnamed component's configuration without establishing that excluded or shared files are involved. If it clearly concerns only allowlisted files, it is absent."
+  },
+  {
+   "item": "K18",
+   "field": "not_adjudicable_if",
+   "op": "set",
+   "old": "The report depends on an unnamed component’s configuration edits and does not establish whether excluded/shared files are involved. If it clearly concerns only allowlisted files, decide not detected rather than abstaining.",
+   "new": "Not applicable on packet grounds: the packet contains what is needed to decide. Use only if the report's text on this point is unreadable or cut off; a report that is merely vague is mention-only or absent."
+  },
+  {
+   "item": "K15",
+   "field": "mention_only_if",
+   "op": "append",
+   "old": "",
+   "new": "A remark only about restore points or snapshots not covering settings belongs to K18, not to this item."
+  }
+ ]
+}

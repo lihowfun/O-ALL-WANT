@@ -1,0 +1,19 @@
+{
+ "schema_version": 1,
+ "freeze_sha256": "469e78bd8a7e475c40e17c799ed7cdc9d299b8daba3cd859bf8cee56856c21b9",
+ "all_shared_work_recorded": true,
+ "isolation_audit_complete": true,
+ "grading_metering_complete": true,
+ "curation_metering_complete": true,
+ "outside_stage_claude_logical": 124069,
+ "outside_experiment_claude_logical": 124069,
+ "evidence_sha256": [
+  "50d8baaa8a66e22258caf31ec49459ac97b6cc1e2482d13076bc45992589031d",
+  "d20d9c9c593b18a6fdfdebe7e5c4bc357cac8e3da7b4689e0316fec04f07c875",
+  "09e58fffdc80c5f4316ccf65e0a89f46a17dcea745b8514a5fa415bec1dcaeda",
+  "a01c76b703f16742fa89c2ca5a2e8abc68088e2b39948488597c08dd24869148",
+  "cb9f74b3071a735762bad534534eb0d899eb2ff341307e59ddd8eb96e150eecf",
+  "2ac58150501798b514d9b060f409d667c85dd3b5070e67aaac3984a9ed6794d5"
+ ],
+ "note": "Batch 1 audit by the lead, 2026-11-14. Claude-family work outside this state root: two earlier preflights (69,446 and 54,623 logical tokens) in superseded state roots. Recorded inside: eligibility check, one preflight, Claude N1, three per-report grader requests, one reconciliation request. Not metered anywhere: the lead session's own orchestration. Codex-family preparation and earlier Codex preflights are outside this Claude audit and are reported separately."
+}

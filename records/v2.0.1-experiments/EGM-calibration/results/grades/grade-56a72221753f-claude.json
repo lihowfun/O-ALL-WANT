@@ -1,0 +1,671 @@
+{
+  "schema_version": 1,
+  "grader_id": "grader-claude-56a72221753f.a1",
+  "family": "anthropic",
+  "model": "claude-fable-5-2",
+  "key_sha256": "6d7497e90b9baf7f872bfd04c4750fee77a523e69169fd840d48df02d8e1f99e",
+  "packet_sha256": "3f61293d1b071118f73eb4590dfcefc437ecd12da735c1bd6025b4f24dd21bc1",
+  "rubric_sha256": "0217e8158e0316691182c013826f2d950b62c9eafcf49bcdb7a83ba043ea632a",
+  "blind_pack_sha256": "56a72221753f7216c05d83c5821d12367753d9b8de2a1fcb50d8becc29c8f657",
+  "independent": true,
+  "blinded": true,
+  "reports": [
+    {
+      "report_id": "R001",
+      "report_sha256": "5aaba920c8e28b94149a5dfd0690ce03aed4ac6cb9a55a9b201da8c27bdae0c9",
+      "valid_review": true,
+      "items": [
+        {
+          "id": "K01",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report never addresses the inference from grader agreement on fixed answers to cross-family code-review benefit."
+        },
+        {
+          "id": "K02",
+          "label": "detected",
+          "report_evidence": [
+            "F006.evidence: evidence/codemap-comparison-2026-11-06.md:28,32,36,40 的 graphify 比值依序為 0.88、0.76、1.00、1.04；OAW 在第 36 行為 1.04。",
+            "F006.rationale: 所列範圍沒有涵蓋 graphify 的任何模型條件，也省略 OAW 未減少步數的條件，將部分條件的收益寫成三者共同結果。"
+          ],
+          "reason": "The report states the all-three 0.23–0.65 claim is contradicted by the measurements and gives correct counterexamples (graphify 0.76–1.04, OAW 1.04)."
+        },
+        {
+          "id": "K03",
+          "label": "mention-only",
+          "report_evidence": [
+            "F001.evidence: evidence/validation-2026-11-07-RESULT.md:34-44 區分固定題目與隨機題目，並指出題內分數相同會使區間退化",
+            "uncertainties[0]: D32、自動啟動 EGM 與 X2 超額預算因此仍是提案，不能當成已生效決策"
+          ],
+          "reason": "The report discusses the bootstrap and pending D32 approval, which meets mention_only_if, but never identifies that the draft's poor-resolution rationale is contradicted by the validation."
+        },
+        {
+          "id": "K04",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report does not correct or mention the policy line count or catalog command count."
+        },
+        {
+          "id": "K05",
+          "label": "detected",
+          "report_evidence": [
+            "F004.claim: 唯一政策入口改為做完改動才呼叫 oaw-review，但 deep 必須先寫計畫、審查修正，再實作。",
+            "F004.rationale: 依這條政策執行時，首次分類發生在實作完成後，無法讓計畫審查先修正深度任務的設計。這會將承諾的實作前把關變成事後補計畫。入口需要在動工前分類，完成改動後再核對分類與執行程式碼審查。"
+          ],
+          "reason": "The report identifies that the after-change invocation is too late for pre-implementation plan review and proposes classifying before editing with post-change code review kept separate."
+        },
+        {
+          "id": "K06",
+          "label": "mention-only",
+          "report_evidence": [
+            "uncertainties[0]: Q1–Q3 在 docs/plans/v2.0.1-execution.md:272-276 明列待決；所附來源沒有後續同意紀錄。D32、自動啟動 EGM 與 X2 超額預算因此仍是提案，不能當成已生效決策"
+          ],
+          "reason": "The report only notes that automatic EGM (Q2) is still unapproved, without stating any retained manual gate, intake prompt or invocation-policy conflict."
+        },
+        {
+          "id": "K07",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report does not mention the oaw-goldfish agent file or the exact EGM inventory check."
+        },
+        {
+          "id": "K08",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report does not discuss the unspecified inputs, JSON shape or dry-run contract of the new plan command."
+        },
+        {
+          "id": "K09",
+          "label": "detected",
+          "report_evidence": [
+            "F001.claim: 12 題各跑一次，仍使用固定題目的題內配對 bootstrap 與合併題內變異下限產生判定區間。",
+            "F001.rationale: 每個題目／組別只有一筆作答，題內重抽樣只能抽回原值，也沒有重複觀測可估計新題的題內變異。",
+            "F001.rationale: 需要指定與單次作答相容的抽樣單位及變異來源，或保留足夠重複。"
+          ],
+          "reason": "The report explicitly ties the one-observation-per-arm-per-question design to the impossibility of within-question resampling and the pooled variance floor, and gives the equivalent fixes."
+        },
+        {
+          "id": "K10",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report never identifies the classifier's path/name restriction or a design/plan document that would miss the deep trigger."
+        },
+        {
+          "id": "K11",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report does not raise a per-task spending estimate, cap or over-cap authorization for the automatic deep workflow."
+        },
+        {
+          "id": "K12",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report does not discuss complete-versus-truncated labels or unresolved same-name caller candidates."
+        },
+        {
+          "id": "K13",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report does not mention the Python-only callers/affected engine or the TS call-graph scope."
+        },
+        {
+          "id": "K14",
+          "label": "mention-only",
+          "report_evidence": [
+            "uncertainties[3]: 使用者命令在已安裝專案或框架 checkout 執行，以及管理功能如何配送，尚未明確。現行 scripts/oaw.py:277-285 不會把 oaw.py 或 catalog 配送到目標專案；若 W3 預期在目標專案直接執行第 157-160 行命令，需補上配送設計。"
+          ],
+          "reason": "The report names the payload omission of oaw.py/catalog, but raises it only as an uncertainty and a conditional need rather than establishing that the documented commands have no delivery path."
+        },
+        {
+          "id": "K15",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report's only hook/MCP remarks concern restore snapshots not covering settings, which the key assigns to K18, and it names no incompatible absorption-engine rule."
+        },
+        {
+          "id": "K16",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report does not address option 2 or the unconditional installation of OAW policy and helpers."
+        },
+        {
+          "id": "K17",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report does not discuss the promised functional-overlap or contradictory-policy detection on the zero-token add path."
+        },
+        {
+          "id": "K18",
+          "label": "detected",
+          "report_evidence": [
+            "F002.evidence: scripts/catalog.py:1374-1375,1407-1428 明確排除 .mcp.json、.claude/settings*.json、.codex/ 等設定；第 1431-1450 行的快照只收允許路徑",
+            "F002.rationale: 現有快照不保存這些啟動設定，還原也不會撤銷其修改。直接沿用無法兌現移除承諾，可能留下仍會啟動的 hook 或 MCP 註冊。"
+          ],
+          "reason": "The report shows the reused snapshot/restore layer excludes host settings and MCP files, and connects that to the failed byte-identical removal promise for hook/MCP installs."
+        },
+        {
+          "id": "K19",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report does not mention the tasting prompt or the one-question usability gate."
+        },
+        {
+          "id": "K20",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report does not identify the ordering conflict between W4's pre-cut X3 baseline and the scheduled X3 segment."
+        },
+        {
+          "id": "K21",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report does not discuss preserved explicit skill recipes blocking the promised new skills during migration."
+        },
+        {
+          "id": "K22",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report does not raise v1 upgrade-path validation or installer-version/source-ledger synchronization."
+        },
+        {
+          "id": "K23",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report's X1 finding (F005) concerns the missing token-cost condition, not the ambiguous not-worse wording, the equivalence-versus-uncertainty distinction or the missing equivalent-quality outcome."
+        },
+        {
+          "id": "K24",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report does not identify that the standard treatment is defined for diffs/tests while X2 applies it to design documents."
+        },
+        {
+          "id": "K25",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report does not address the S replacement rule lacking false-positive eligibility or the unqualified S fallback."
+        },
+        {
+          "id": "K26",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report does not mention the saturated orders case or the ceiling-replacement rule."
+        },
+        {
+          "id": "K27",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report does not discuss X3 lacking a status-quo routing arm."
+        },
+        {
+          "id": "K28",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report does not connect the X4 context measurement to later configuration changes or call for a final remeasurement."
+        },
+        {
+          "id": "K29",
+          "label": "mention-only",
+          "report_evidence": [
+            "uncertainties[0]: D32、自動啟動 EGM 與 X2 超額預算因此仍是提案，不能當成已生效決策"
+          ],
+          "reason": "The report only notes that X2's over-cap budget is an unapproved open question, without identifying any omitted required cost or showing the eight-case fallback may not fit 10M."
+        },
+        {
+          "id": "K30",
+          "label": "detected",
+          "report_evidence": [
+            "F003.evidence: scripts/catalog_core.py:1847-1854 只定義 better／same／worse；第 2084-2098 行只接受單一 cost_ratio 且限制 cheaper 的組合；第 2062-2070、2105-2109 行按點估計強制計算結果。",
+            "F003.rationale: 現有引擎無法保留等效與未定的區別，也不能依成本區間決策；例如 same、成本 1.6、區間 1.3–1.8 仍被強制排掉，而新規格只能稱成本未定。新結果會被拒收或被迫壓回舊判法，需要同步設計資料格式、判定驗證及舊紀錄相容性。"
+          ],
+          "reason": "The report connects the four-state/interval protocol to the ledger's three-state point-ratio validator, gives an interval-straddling example rejected by the old rule, and calls for a schema/validator change."
+        }
+      ],
+      "blinding_risks": [],
+      "unsupported_claims": []
+    },
+    {
+      "report_id": "R002",
+      "report_sha256": "326630d2e2c84f956d0055e2e7f7ef0e4fad1ffeec3e237d11f545f149ded84f",
+      "valid_review": true,
+      "items": [
+        {
+          "id": "K01",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report criticises same-family EGM review as inconsistent with principle 5 but never questions the inference from fixed-answer grader agreement to cross-family code-review benefit."
+        },
+        {
+          "id": "K02",
+          "label": "detected",
+          "report_evidence": [
+            "F004.claim: All three maps reduce steps: tool calls 0.23-0.65x native.",
+            "F004.evidence: evidence/codemap-comparison-2026-11-06.md:28,32,36,40 (graphify 88%,76%,100%,104%; OAW 104% on Opus 4.8); :6 'graphify won neither'; 0.23x is codegraph on VS Code (validation-2026-11-07-RESULT.md:113).",
+            "F004.rationale: The range is wrong. Graphify did not reliably save steps, and the OAW map did not save steps on Opus 4.8."
+          ],
+          "reason": "The report states the all-three 0.23-0.65 claim is wrong and gives the correct graphify and OAW-on-Opus-4.8 counterexamples from the packet."
+        },
+        {
+          "id": "K03",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report never addresses the draft's poor-resolution description of the old 4x3 coverage design or the validation's contrary statement."
+        },
+        {
+          "id": "K04",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report gives no correction of the 26-line policy or 25-subcommand catalog baseline counts."
+        },
+        {
+          "id": "K05",
+          "label": "mention-only",
+          "report_evidence": [
+            "U01: Deep asks the agent to enter plan mode itself and then run EGM, which writes report files. Whether the host lets an agent enter plan mode, and still write files while in it, cannot be confirmed from the repository."
+          ],
+          "reason": "The report mentions plan mode in the deep flow only as a host-capability uncertainty and never identifies that invoking review after changes is too late for pre-implementation plan review."
+        },
+        {
+          "id": "K06",
+          "label": "detected",
+          "report_evidence": [
+            "F012.evidence: templates/.agents/skills/egm-review/SKILL.md:5,16 (disable-model-invocation; 'Preserve all upstream ... human checkpoint requirements'); vendor/egm/skills/egm-review/SKILL.md:77-79,110-113,213-233 (preset gate when Step omitted, checkpoint gates, egm-resolve applies 'approved edits').",
+            "F012.rationale: Without a specified non-interactive preset (Step=uninterrupted) and a resolve policy, the deep path stops for user input. G1 is then not met.",
+            "F011.rationale: If those lines are left as they are, the policy contradicts auto-run and refers to the retired `suggest` flow."
+          ],
+          "reason": "The report ties the omitted Step preset, retained human checkpoints and unchanged explicit-invocation policy lines to the owner-free deep flow stopping for user input."
+        },
+        {
+          "id": "K07",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The only oaw-goldfish remark concerns whether the host can keep it from reading CLAUDE.md, with nothing on the exact EGM agent inventory check or the gate failure."
+        },
+        {
+          "id": "K08",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report does not raise the unspecified inputs, JSON shape or dry-run behaviour of the new oaw_mode.py plan command."
+        },
+        {
+          "id": "K09",
+          "label": "mention-only",
+          "report_evidence": [
+            "F006.rationale: It also cuts the discriminating defect cases from 8 to 7, which weakens the E>N interval test.",
+            "F009.evidence: X3 has 6 scenarios x 1 run per model (:235)",
+            "F009.rationale: Six scenarios cannot confirm 'no change'."
+          ],
+          "reason": "The report makes only general small-sample remarks about the X2 interval test and X3, without stating that one run per question per arm cannot support within-question resampling or a within-question variance floor."
+        },
+        {
+          "id": "K10",
+          "label": "mention-only",
+          "report_evidence": [
+            "U03: X2 measures review of design documents. Most deep triggers are harness or code changes (V7: 56% of code commits). Whether X2's results carry over to those changes is open."
+          ],
+          "reason": "The report discusses what historically triggers deep and how often, but never describes the restricted matcher or a design/plan document path that misses deep."
+        },
+        {
+          "id": "K11",
+          "label": "mention-only",
+          "report_evidence": [
+            "U04: Auto-running EGM on about 56% of code commits at about 1.1M tokens each has an ongoing cost the plan does not estimate. The owner's request accepts the cost only if accuracy is high."
+          ],
+          "reason": "The report raises the unestimated ongoing cost of automatic EGM as an uncertainty citing 56%, but does not identify a missing per-task cap or over-cap authorization distinct from experiment budgets."
+        },
+        {
+          "id": "K12",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report does not discuss complete/truncated labels versus unresolved same-name candidates or language/hop limits."
+        },
+        {
+          "id": "K13",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report does not mention the Python-only callers/affected engine or the TS call-graph scope needed for VS Code recall."
+        },
+        {
+          "id": "K14",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report criticises what the catalog engine refuses and option 2's install.json/doctor dependency, but never identifies that oaw.py and catalog stay in the framework checkout and are absent from the installed project."
+        },
+        {
+          "id": "K15",
+          "label": "detected",
+          "report_evidence": [
+            "F001.evidence: scripts/catalog_core.py:1242-1248 (skills with scripts held, 'never run on this machine'), 1259-1263 (skill text held until behavior A/B), 1268-1270 ('OAW never installs hooks or MCP servers')",
+            "F001.evidence: 1869-1870 (name collision with a bundled skill refused).",
+            "F001.rationale: The current engine refuses most of what W3 promises. Without new install paths and reversed engine rules, which W3 does not list as work, the W3 E2E fixtures (hook skill, OAW same-name skill) and option ① 'use theirs' cannot pass."
+          ],
+          "reason": "The report connects W3's installation promises to the concrete catalog rules that hold untasted text and scripts, never install hooks/MCP, and reject bundled-name collisions."
+        },
+        {
+          "id": "K16",
+          "label": "detected",
+          "report_evidence": [
+            "F002.evidence: scripts/oaw.py:745,774-778 (doctor FAILs without AGENTS.md, CLAUDE.md, context_hub.py, oaw_common.py).",
+            "F002.rationale: Option ② needs a new install profile and doctor rules. As written, the manager either cannot run or reports the project as unhealthy."
+          ],
+          "reason": "The report states that option 2 needs a separate install profile because doctor rejects the absence of OAW policy and helpers."
+        },
+        {
+          "id": "K17",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report does not address the free deterministic path's unsupported promise of functional-overlap or contradictory-policy detection."
+        },
+        {
+          "id": "K18",
+          "label": "mention-only",
+          "report_evidence": [
+            "F001.evidence: 1268-1270 ('OAW never installs hooks or MCP servers')",
+            "F001.evidence: scripts/catalog.py:1374-1375 (.mcp.json and .codex/ are denied paths)",
+            "F003.rationale: No work item schedules this known removal defect, but option ② and the byte-identical remove criterion depend on it."
+          ],
+          "reason": "The report notes that hooks/MCP cannot currently be installed and challenges byte-identical removal on EGM-residue grounds, but never identifies that the build/restore layer excludes host settings and MCP configuration."
+        },
+        {
+          "id": "K19",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report does not mention the post-install tasting prompt conflicting with the one-question usability gate."
+        },
+        {
+          "id": "K20",
+          "label": "mention-only",
+          "report_evidence": [
+            "F009.claim: W4 runs X3 before and after AGENTS.md deletions to confirm adherence is unchanged",
+            "F009.rationale: Two extra X3 runs (about 3M) are not in the 23M budget."
+          ],
+          "reason": "The report notes the before/after X3 requirement only as an unbudgeted cost and does not connect the pre-cut baseline to W4 being scheduled before X3."
+        },
+        {
+          "id": "K21",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report does not discuss preserved explicit skill recipes preventing the promised addition of new skills during migration."
+        },
+        {
+          "id": "K22",
+          "label": "detected",
+          "report_evidence": [
+            "F014.evidence: VERSION.json:5-6 and plan :3 (2.0.0 never released); CHANGELOG.md:337,426 (last release 1.1.0); docs/UPGRADING.md:31 (v1 migration path).",
+            "F014.rationale: Real users upgrade from 1.1.0. G6 does not verify the 1.1.0 -> 2.0.1 path for the first V2 release."
+          ],
+          "reason": "The report identifies that the release scope validates only 2.0.0 to 2.0.1 and omits the supported v1 upgrade path for the first V2 release."
+        },
+        {
+          "id": "K23",
+          "label": "detected",
+          "report_evidence": [
+            "F010.rationale: 'Not worse' is undefined for undecided quality. Undecided quality with passing efficiency matches no branch, or promotes against principle 6."
+          ],
+          "reason": "The report identifies that X1's not-worse wording fails to separate undecided quality from equivalence and leaves that outcome unmapped or in conflict with the no-undetermined-promotion rule."
+        },
+        {
+          "id": "K24",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report notes only that the S arm never existed in old runs and never identifies that standard is defined for code diffs/tests while X2 applies it to design documents."
+        },
+        {
+          "id": "K25",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report raises an ambiguity over which X2 branch wins but does not identify the missing false-positive or quality eligibility check on S in either replacement path."
+        },
+        {
+          "id": "K26",
+          "label": "detected",
+          "report_evidence": [
+            "F006.evidence: evidence/validation-2026-11-07-RESULT.md:52 (orders: all arms at ceiling), :53 (clean measures false positives only); plan's own rules at :274 and :300 say to replace ceiling items.",
+            "F006.rationale: Keeping a ceiling case breaks the plan's own D32 rule. It also cuts the discriminating defect cases from 8 to 7, which weakens the E>N interval test."
+          ],
+          "reason": "The report identifies orders as a known ceiling case whose retention breaks the plan's own ceiling-replacement rule and dilutes the discriminating panel."
+        },
+        {
+          "id": "K27",
+          "label": "mention-only",
+          "report_evidence": [
+            "F009.evidence: X3 has 6 scenarios x 1 run per model (:235)",
+            "F009.rationale: Six scenarios cannot confirm 'no change'."
+          ],
+          "reason": "The report says X3 is too small to confirm no change but does not identify that both arms contain the new skill and no status-quo suggest/show arm exists."
+        },
+        {
+          "id": "K28",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report does not raise X4's context measurement preceding the X1/X3 decisions that settle the shipped configuration."
+        },
+        {
+          "id": "K29",
+          "label": "detected",
+          "report_evidence": [
+            "F009.evidence: Total at :244 counts X3 once",
+            "F009.rationale: Two extra X3 runs (about 3M) are not in the 23M budget.",
+            "U11: Opus grading tokens for X1 and X2 are not itemized in the Claude budget.",
+            "U05: Q3 fallback: 8 new cases at 1.07-1.43M per E run (validation:87) leaves almost no room under 10M."
+          ],
+          "reason": "The report identifies the W4-required additional X3 passes as a concrete required cost missing from the 23M total, and also flags unitemized Claude grading and the tight eight-case fallback."
+        },
+        {
+          "id": "K30",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report never connects the four-state/interval protocol to the catalog's three-state, point-ratio record-tasting validator or the missing schema mapping."
+        }
+      ],
+      "blinding_risks": [],
+      "unsupported_claims": []
+    },
+    {
+      "report_id": "R003",
+      "report_sha256": "2563eddde513c3868d976ce753883bac1ebe53764be0660d8f86b03f868a9427",
+      "valid_review": true,
+      "items": [
+        {
+          "id": "K01",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report never discusses grader kappa or the inference from fixed-answer grading agreement to cross-family code review."
+        },
+        {
+          "id": "K02",
+          "label": "detected",
+          "report_evidence": [
+            "F004.evidence: evidence/codemap-comparison-2026-11-06.md:28,32,36,40 的 graphify 比值依次為 0.88、0.76、1.00、1.04；OAW 在 Opus 4.8 也是 1.04。",
+            "F004.rationale: 摘要把特定組合的最佳結果寫成三個地圖共同的量測範圍，掩蓋了沒有減少甚至增加呼叫的條件，誇大選擇吸收機制的效率依據。"
+          ],
+          "reason": "The report states the all-three 0.23–0.65 claim is contradicted by the measurements and gives both accepted counterexamples (graphify 0.76–1.04 and OAW 1.04 on Opus 4.8)."
+        },
+        {
+          "id": "K03",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report does not address the draft's claim that the 4×3 coverage design has poor resolution."
+        },
+        {
+          "id": "K04",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report corrects neither the 26-line policy count nor the 25-command catalog count."
+        },
+        {
+          "id": "K05",
+          "label": "detected",
+          "report_evidence": [
+            "F003.rationale: 照這條政策執行時，強制入口出現在實作之後，無法保證 deep 的計畫審查先於實作；事後再寫計畫會失去阻止錯誤設計落地的作用。需要在動工前加入可執行的深度判定入口，並將完成後的程式碼審查接在其後。"
+          ],
+          "reason": "The report identifies that the after-change oaw-review entry is too late for the pre-implementation plan review deep requires, and separates pre-edit classification from post-diff code review."
+        },
+        {
+          "id": "K06",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report only notes that Q2 is unapproved and that host effort switching is unverified, and never raises a retained manual gate or invocation-policy conflict with unattended EGM."
+        },
+        {
+          "id": "K07",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report does not mention oaw-goldfish, the exact EGM adapter inventory check or the resulting gate failure."
+        },
+        {
+          "id": "K08",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report does not discuss the unspecified input, JSON or dry-run contract of the new oaw_mode.py plan command."
+        },
+        {
+          "id": "K09",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report does not raise the mismatch between one run per question per arm and within-question bootstrap or variance floor."
+        },
+        {
+          "id": "K10",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report does not identify the restricted design-document matcher or a docs/plans document that misses the deep trigger."
+        },
+        {
+          "id": "K11",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report does not address a per-task estimate, spending cap or over-cap behaviour for automatic deep EGM."
+        },
+        {
+          "id": "K12",
+          "label": "detected",
+          "report_evidence": [
+            "uncertainties[1]: 地圖的「完整」究竟只表示索引結果沒有被輸出上限截斷，還是宣稱呼叫關係完整，尚不清楚（計畫:138,148）。現有 callers 保留 resolved 標記及未知接收者警告（scripts/code_index.py:1502-1504,1542-1549,1733-1734），且會略過大型檔案（946-949）。新格式應保留這些限制；0.95 的抽樣召回率不能單獨保證全庫完整。"
+          ],
+          "reason": "Although listed as an uncertainty, the passage separates untruncated output from true caller completeness, names the resolved/unknown-receiver mechanism, and says the new format must preserve those markers, which matches the key's stated equivalent."
+        },
+        {
+          "id": "K13",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report never identifies the Python-only callers/affected engine or the need for a separate TS call-graph resolver."
+        },
+        {
+          "id": "K14",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report does not note that scripts/oaw.py and the catalog backend are missing from the installed project payload or lack a project target."
+        },
+        {
+          "id": "K15",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report's only W3 installation point concerns restore coverage (K18) and cites no absorption-engine rule that blocks a promised installation."
+        },
+        {
+          "id": "K16",
+          "label": "detected",
+          "report_evidence": [
+            "uncertainties[2]: 目前即使 skills=[]，仍產生 AGENTS.md、CLAUDE.md 與輔助腳本（scripts/oaw.py:270-280）；catalog 的還原又要求既有安裝 manifest（scripts/catalog.py:1364-1371）。需釐清新專案與既有 OAW 專案如何只保留管理功能，不能僅將空配方視為已滿足。"
+          ],
+          "reason": "The report states affirmatively that an empty skill recipe still installs policy files and helpers, so option 2 cannot be met by selecting no skills alone."
+        },
+        {
+          "id": "K17",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report does not discuss the zero-token path's promise of functional-overlap or contradictory-policy detection."
+        },
+        {
+          "id": "K18",
+          "label": "detected",
+          "report_evidence": [
+            "F001.evidence: scripts/catalog.py:1374-1375,1407-1428 明確排除 .mcp.json、.claude/settings*.json 與主機設定；1431-1451 的快照只收允許的安裝層，1620-1646 的還原亦限於該層。",
+            "F001.rationale: 現有還原範圍不包含註冊 hook／MCP 所需的設定。直接沿用它，移除 skill 後仍可能留下有效的執行設定，而第 192 行只比較受管檔案仍可通過。必須把這些設定的變更、原值與移除責任納入安裝收據及還原設計，才能成立所承諾的還原效果。"
+          ],
+          "reason": "The report ties the restore layer's exclusion of host settings and MCP files to the failure of the promised rollback for hook/MCP installs."
+        },
+        {
+          "id": "K19",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report does not mention the post-install tasting prompt or the one-question acceptance rule."
+        },
+        {
+          "id": "K20",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report does not identify the ordering conflict between W4 in segment 1 and the X3 before/after requirement."
+        },
+        {
+          "id": "K21",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report does not discuss preserved explicit skill recipes preventing new skills from being added on migration."
+        },
+        {
+          "id": "K22",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report does not raise missing v1 upgrade validation or the installer-version/source-ledger synchronisation."
+        },
+        {
+          "id": "K23",
+          "label": "detected",
+          "report_evidence": [
+            "uncertainties[0]: X1 的「兩家都判不差」尚未定義為統計等價、非劣性，或只是未判變差（docs/plans/v2.0.1-execution.md:233）。若包含未定，效率通過時能否進預設便與第 77 行衝突；應在登記時明確定義，目前不能斷言將發生錯誤升級。"
+          ],
+          "reason": "Although listed as an uncertainty, the passage states that X1's not-worse wording is undefined between equivalence and merely-not-judged-worse and ties it to the line 77 no-undetermined-promotion rule, which is what detected_if requires."
+        },
+        {
+          "id": "K24",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report does not identify that the standard treatment is defined for code diffs and tests while X2 applies it to design documents."
+        },
+        {
+          "id": "K25",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report does not address the missing false-positive or quality eligibility check for S replacing E."
+        },
+        {
+          "id": "K26",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report mentions reuse of old cases only for environment matching and never identifies orders as a known ceiling case."
+        },
+        {
+          "id": "K27",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report does not note that both X3 arms contain the new skill and so lack a current-routing control."
+        },
+        {
+          "id": "K28",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report does not connect the early X4 context measurement to later X1/X3 changes in the shipped configuration."
+        },
+        {
+          "id": "K29",
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report only notes that the added budget is unapproved and identifies no omitted required cost or fallback overrun."
+        },
+        {
+          "id": "K30",
+          "label": "detected",
+          "report_evidence": [
+            "F002.evidence: scripts/catalog_core.py:1847-1850 只接受 better／same／worse；2062-2070 仍用成本點估計 1.5 判定；2084-2088 不接受新的品質值或區間欄位，2105-2109 強制舊判定。",
+            "F002.rationale: 工作項目只安排共用統計與新 SOP，沒有銜接帳本的判定契約。例如品質未定、成本比 1.6、區間 [1.3,1.9] 的可選用結果，現有引擎會拒收；壓成 same 又會依點估計強制排掉。"
+          ],
+          "reason": "The report connects the four-state/interval protocol to the catalog's three-state, point-ratio validator and the missing integration, with a concrete interval-straddling example the old rule rejects."
+        }
+      ],
+      "blinding_risks": [],
+      "unsupported_claims": []
+    }
+  ]
+}

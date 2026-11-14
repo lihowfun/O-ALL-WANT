@@ -1,0 +1,183 @@
+{
+  "schema_version": 1,
+  "input_grade_sha256": [
+    "8aa48dfa12a2eeeb470cecca60e7c7d52a5b79c41bd9f07cf987b82e122aa053",
+    "8f56162b6891c2c374f51f441948dea310434e3e6ebc73f0df59cd4bbfe565bc"
+  ],
+  "blind_pack_sha256": "56a72221753f7216c05d83c5821d12367753d9b8de2a1fcb50d8becc29c8f657",
+  "unblinding_occurred": false,
+  "rounds": 1,
+  "changes": [
+    {
+      "scope": "item",
+      "report_id": "R002",
+      "id": "K05",
+      "label": "mention-only",
+      "reason": "The report's plan-mode concern meets K05's mention-only criterion but does not identify the conflict between after-change invocation and pre-implementation plan review in packet/docs/plans/v2.0.1-execution.md:83,108. / The report mentions plan mode and deep triggers in the deep flow, which is exactly what mention_only_if covers, but never identifies that invoking review after changes is too late for pre-implementation plan review.",
+      "report_evidence": [
+        "uncertainties[0]: Deep asks the agent to enter plan mode itself and then run EGM, which writes report files. Whether the host lets an agent enter plan mode, and still write files while in it, cannot be confirmed from the repository.",
+        "uncertainties[2]: X2 measures review of design documents. Most deep triggers are harness or code changes (V7: 56% of code commits)."
+      ],
+      "accepted_by": [
+        "grader-claude-56a72221753f.a1",
+        "grader-codex-56a72221753f.a1"
+      ]
+    },
+    {
+      "scope": "item",
+      "report_id": "R002",
+      "id": "K09",
+      "label": "mention-only",
+      "reason": "The report raises general sample-size concerns about interval inference, meeting K09's mention-only criterion without identifying the singleton-versus-within-question mismatch in packet/docs/plans/v2.0.1-execution.md:96,233-234. / The report raises general small-sample concerns about X2's interval test and the one-run X3 design, matching mention_only_if, but never ties X1/X2's one run per question per arm to the unsupported within-question bootstrap or variance floor.",
+      "report_evidence": [
+        "F006.rationale: It also cuts the discriminating defect cases from 8 to 7, which weakens the E>N interval test.",
+        "F009.rationale: Six scenarios cannot confirm 'no change'.",
+        "F009.evidence: X3 has 6 scenarios x 1 run per model (:235)"
+      ],
+      "accepted_by": [
+        "grader-claude-56a72221753f.a1",
+        "grader-codex-56a72221753f.a1"
+      ]
+    },
+    {
+      "scope": "item",
+      "report_id": "R003",
+      "id": "K29",
+      "label": "absent",
+      "reason": "The report addresses only approval status at packet/docs/plans/v2.0.1-execution.md:272-276 and never raises budget adequacy, required omitted costs, or the eight-case fallback guarantee covered by K29. / The report's only budget reference states that Q1–Q3, including the added budget, are still unapproved proposals, which neither calls the budget optimistic or under-costed nor identifies any omitted required cost or the eight-case fallback overrun.",
+      "report_evidence": [
+        "uncertainties[4]: Q1–Q3 仍是待決提案，證據沒有顯示已核准 D32、自動 EGM 或新增預算（計畫:272-276；evidence/validation-2026-11-07-RESULT.md:123）。這些變更本身不應當成違反現行決策；實作時需依決定落實分支。"
+      ],
+      "accepted_by": [
+        "grader-claude-56a72221753f.a1",
+        "grader-codex-56a72221753f.a1"
+      ]
+    }
+  ],
+  "responses": [
+    [
+      {
+        "action": "change",
+        "id": "K05",
+        "label": "mention-only",
+        "reason": "The report's plan-mode concern meets K05's mention-only criterion but does not identify the conflict between after-change invocation and pre-implementation plan review in packet/docs/plans/v2.0.1-execution.md:83,108.",
+        "report_evidence": [
+          "uncertainties[0]: Deep asks the agent to enter plan mode itself and then run EGM, which writes report files. Whether the host lets an agent enter plan mode, and still write files while in it, cannot be confirmed from the repository."
+        ],
+        "report_id": "R002"
+      },
+      {
+        "action": "change",
+        "id": "K09",
+        "label": "mention-only",
+        "reason": "The report raises general sample-size concerns about interval inference, meeting K09's mention-only criterion without identifying the singleton-versus-within-question mismatch in packet/docs/plans/v2.0.1-execution.md:96,233-234.",
+        "report_evidence": [
+          "F006.rationale: It also cuts the discriminating defect cases from 8 to 7, which weakens the E>N interval test.",
+          "F009.rationale: Six scenarios cannot confirm 'no change'."
+        ],
+        "report_id": "R002"
+      },
+      {
+        "action": "change",
+        "id": "K29",
+        "label": "absent",
+        "reason": "The report addresses only approval status at packet/docs/plans/v2.0.1-execution.md:272-276 and never raises budget adequacy, required omitted costs, or the eight-case fallback guarantee covered by K29.",
+        "report_evidence": [
+          "uncertainties[4]: Q1–Q3 仍是待決提案，證據沒有顯示已核准 D32、自動 EGM 或新增預算（計畫:272-276；evidence/validation-2026-11-07-RESULT.md:123）。這些變更本身不應當成違反現行決策；實作時需依決定落實分支。"
+        ],
+        "report_id": "R003"
+      }
+    ],
+    [
+      {
+        "report_id": "R002",
+        "id": "K05",
+        "action": "keep",
+        "label": "mention-only",
+        "report_evidence": [
+          "uncertainties[0]: Deep asks the agent to enter plan mode itself and then run EGM, which writes report files. Whether the host lets an agent enter plan mode, and still write files while in it, cannot be confirmed from the repository.",
+          "uncertainties[2]: X2 measures review of design documents. Most deep triggers are harness or code changes (V7: 56% of code commits)."
+        ],
+        "reason": "The report mentions plan mode and deep triggers in the deep flow, which is exactly what mention_only_if covers, but never identifies that invoking review after changes is too late for pre-implementation plan review."
+      },
+      {
+        "report_id": "R002",
+        "id": "K09",
+        "action": "keep",
+        "label": "mention-only",
+        "report_evidence": [
+          "F006.rationale: It also cuts the discriminating defect cases from 8 to 7, which weakens the E>N interval test.",
+          "F009.evidence: X3 has 6 scenarios x 1 run per model (:235)",
+          "F009.rationale: Six scenarios cannot confirm 'no change'."
+        ],
+        "reason": "The report raises general small-sample concerns about X2's interval test and the one-run X3 design, matching mention_only_if, but never ties X1/X2's one run per question per arm to the unsupported within-question bootstrap or variance floor."
+      },
+      {
+        "report_id": "R003",
+        "id": "K29",
+        "action": "keep",
+        "label": "absent",
+        "report_evidence": [],
+        "reason": "The report's only budget reference states that Q1–Q3, including the added budget, are still unapproved proposals, which neither calls the budget optimistic or under-costed nor identifies any omitted required cost or the eight-case fallback overrun."
+      }
+    ]
+  ],
+  "disagreements": [
+    {
+      "report_id": "R002",
+      "id": "K05",
+      "positions": {
+        "openai": {
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report discusses automatic deep review but never identifies its after-change invocation as too late for pre-implementation plan review."
+        },
+        "anthropic": {
+          "label": "mention-only",
+          "report_evidence": [
+            "U01: Deep asks the agent to enter plan mode itself and then run EGM, which writes report files. Whether the host lets an agent enter plan mode, and still write files while in it, cannot be confirmed from the repository."
+          ],
+          "reason": "The report mentions plan mode in the deep flow only as a host-capability uncertainty and never identifies that invoking review after changes is too late for pre-implementation plan review."
+        }
+      }
+    },
+    {
+      "report_id": "R002",
+      "id": "K09",
+      "positions": {
+        "openai": {
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report never links the X1/X2 singleton design to the inability to estimate within-question variance or perform the stated bootstrap."
+        },
+        "anthropic": {
+          "label": "mention-only",
+          "report_evidence": [
+            "F006.rationale: It also cuts the discriminating defect cases from 8 to 7, which weakens the E>N interval test.",
+            "F009.evidence: X3 has 6 scenarios x 1 run per model (:235)",
+            "F009.rationale: Six scenarios cannot confirm 'no change'."
+          ],
+          "reason": "The report makes only general small-sample remarks about the X2 interval test and X3, without stating that one run per question per arm cannot support within-question resampling or a within-question variance floor."
+        }
+      }
+    },
+    {
+      "report_id": "R003",
+      "id": "K29",
+      "positions": {
+        "openai": {
+          "label": "mention-only",
+          "report_evidence": [
+            "uncertainties[4]: Q1–Q3 仍是待決提案，證據沒有顯示已核准 D32、自動 EGM 或新增預算（計畫:272-276；evidence/validation-2026-11-07-RESULT.md:123）。"
+          ],
+          "reason": "The report mentions pending budget approval without identifying any specific omitted required cost or the unsupported eight-case budget guarantee."
+        },
+        "anthropic": {
+          "label": "absent",
+          "report_evidence": [],
+          "reason": "The report only notes that the added budget is unapproved and identifies no omitted required cost or fallback overrun."
+        }
+      }
+    }
+  ]
+}
