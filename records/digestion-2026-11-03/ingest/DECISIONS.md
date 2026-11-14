@@ -634,3 +634,26 @@ P2 with a recommendation on each): 「P0 -P2都照妳建議直接動工」.
 - Not covered by this answer, so unchanged: the official Harness2 runtime is not tasted (the
   recommendation was not to); closing #15 and the branch that should hold the U2 candidate were asked
   separately and are still open.
+
+## D49. Release as recommended; EGM stops at "no conclusion"; the U2 pilot runs to its 18 runs; confirm the evaluation methods in this version (2026-11-14)
+
+Owner in chat, answering the 2026-11-14 report's three open decisions (the owner numbers them P0, P1,
+P2 in the order release, EGM, U2):
+「P0照你建議 p1不用繼續 但我們至今不管harness2還怎樣 應該找到最公正的幾種方式評估harness好壞 請確認有這版 p2 請照預設跑到18次別停」.
+
+- Release (P0): as recommended, 2.0.1 is released. Merge, tag and release stay with the owner (the
+  recommendation named the owner as the one who does them); PR #16 was still an open draft when this
+  was recorded.
+- EGM (P1): not continued. Stage one of #20 closes with the formal outcome "no conclusion"; no EGM
+  arm is run; EGM stays an explicit opt-in. This is not a verdict on EGM.
+- Evaluation methods: the owner expects that, whatever happens to the Harness2 lines, the project
+  has by now settled the fairest ways to judge whether a harness is good, and asks to confirm that
+  this version has them. Lead reading: "this version" is the 2.0.1 release. The check and its result
+  are recorded in `records/release-fixes-2026-11-13/PROGRESS.md`.
+- U2 (P2): the pilot continues to its planned 18 runs with the default settings and does not stop.
+  Lead reading: the 600,000 observed ceiling stays; a run stopped at the ceiling is kept, flagged and
+  not redrawn, and no longer ends the stage. This departs from the frozen pilot text (a metering
+  error stops the stage) on the owner's instruction, given after seven attempts existed. It is
+  implemented by a lead wrapper outside the frozen files and recorded in the state before the first
+  continued launch. The stops for a severe violation or a broken checker stay. No test split is
+  authorized by this.
