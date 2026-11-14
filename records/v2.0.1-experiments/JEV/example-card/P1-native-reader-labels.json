@@ -1,0 +1,38 @@
+{
+  "task_id": "P1",
+  "checklist_sha256": "d32af8e439a76a831eceb6ac112fd23c5884bd8d801c1dcd207da37672a8a216",
+  "answer_sha256": "efc51aa29901fc5eb608fb3b000bb59666e6574bbff6c5d096584f45fec00259",
+  "counts": {
+    "yes": 4,
+    "no": 0,
+    "unknown": 0
+  },
+  "items": [
+    {
+      "id": "P1.l",
+      "label": "yes",
+      "quote": "AGENTS.md delegates to docs/agent-guide.md, which explicitly designates docs/index-directions.json as operational guidance.",
+      "reason": ""
+    },
+    {
+      "id": "P1.m",
+      "label": "yes",
+      "quote": "Missing selected metadata is unreadable under docs/fields.md and still requires a rebuild.",
+      "reason": ""
+    },
+    {
+      "id": "P1.n",
+      "label": "yes",
+      "quote": "The evidence does not establish token, cost, or latency savings.",
+      "reason": ""
+    },
+    {
+      "id": "P1.o",
+      "label": "yes",
+      "quote": "The proposed.patch changes only docs/index-directions.json.",
+      "reason": ""
+    }
+  ],
+  "judge": "claude-haiku-5-5 low",
+  "judge_tokens": 12757
+}

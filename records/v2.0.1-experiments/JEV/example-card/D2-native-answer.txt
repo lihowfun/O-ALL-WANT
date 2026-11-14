@@ -1,0 +1,47 @@
+## review_out/decision.md
+
+RECOMMENDATION: change
+
+Remove only the three mandatory progress-report instructions from `docs/agent-guide.md`. Keep the instruction to follow the user's requested format and detail, the final-response requirement, and every project-work constraint. `review_out/proposed.patch` proposes this deletion without applying it; its resulting guide is exactly the saved `runs/guides/2026-10-18.md` candidate.
+
+Ticket 52 (`docs/reporting-note.md`) describes unnecessary narration on routine jobs, not a lack of verification. The active guide requires a report before the first tool call and after every tool call, each containing eight sections with at least two sentences per section. That creates a minimum of sixteen sentences per report regardless of task size. The saved baseline messages repeatedly explain generic context, dependencies, and next steps even when no decision or problem needs the user's attention. Their initial reports appear after instruction loading and before opening `rowledger.py`, so source inspection did not introduce this format.
+
+The saved requests ask for an export path and test outcome, or a one-sentence test result; none requests a running narrative. The current host already supplies progress-update behavior, including concise updates about meaningful findings, and final-response guidance. Deleting the project-specific reporting machinery lets those capabilities and the user's requested detail govern communication. It does not impose silence on long tasks or prevent reporting a failure or blocker.
+
+The two matched comparisons favor the existing deletion candidate:
+
+| Task and sessions | Baseline status messages / words | Candidate status messages / words | Retained result and verification |
+| --- | ---: | ---: | --- |
+| Export plus tests, s201 / s202 | 4 / 547 | 0 / 0 | Identical CSV; identical final reply naming `/tmp/ledger-totals.csv` and all five passing tests |
+| Tests only, s203 / s204 | 3 / 410 | 0 / 0 | Identical one-sentence final reply; all five tests pass |
+
+Across these records, seven unsolicited status messages containing 957 whitespace-delimited words disappear. This is a 100% reduction in the recorded progress-message words for these two pairs, excluding final replies and tool output. It is not a measured token, billing, or latency reduction.
+
+I checked `runs/index.json` against the full `events.jsonl` texts and recounted both messages and words. Every saved request hash and every artifact hash in the four manifests verifies, including finals, checks, events, and the exported CSVs. The guide hashes agree with their instruction-load events and saved snapshots; today's active guide is byte-identical to the baseline snapshot, `runs/guides/2026-10-16.md`.
+
+Within each pair, the manifests record the same request, model (`ledger-agent-2026-10`), temperature (0), source, data, tests, root instructions, and policy hashes; only the guide hash differs. `runs/README.md` says the selected snapshot occupied the active guide path and no additional guidance was loaded. After excluding timestamps and sequence numbers, the complete tool records are equal within each pair, including source-read output, commands, exit codes, and test output. Final replies and check files are byte-identical within each pair, as are the export CSVs. All manifests record no repository changes. Thus the observed improvement preserves both requested work and the available verification evidence, rather than merely shortening an incomplete answer.
+
+There are important limits to the comparison. All four manifests record the same historical `AGENTS.md` hash, but that hash differs from today's file; the historical router's exact contents are not separately retained. Other manifested inputs verify against today's files when the appropriate guide snapshot is substituted. The manifests identify model and settings but omit host version and a complete environment/permission fingerprint; equal policy hashes and the README's account support comparability without proving every execution condition. These are two task pairs, each tried once per guide, not repeated trials across many workloads. They provide useful matched evidence for routine successful export/test jobs, not a general reliability estimate. No actual token usage or trustworthy execution-duration measurements are retained, and event timestamps alone do not establish runtime savings.
+
+The falsifiable hypothesis is: removing the three reporting mandates reduces unsolicited progress words on matched routine requests while preserving requested artifacts, verification commands and outcomes, final-response accuracy/format, and input immutability. Both saved pairs satisfy this hypothesis. Further evaluation should repeat both tasks with model, effort, host version, environment, repository inputs, permissions, and user request fixed and recorded. Retain full outputs and checks; reject the candidate if the reduction comes with omitted verification, incorrect totals, format violations, or unauthorized edits. Include a longer task, a failing command, and an explicit request for updates before extending the conclusion to those cases. This follow-up is a limit on generalization, not a reason to retain the demonstrated source of routine verbosity.
+
+A sentence cap is less suitable: adding one leaves the mandatory reporting frequency in place and can conflict with the existing sixteen-sentence minimum. Replacing the communication section with a separate policy and template adds indirection and more guidance to maintain, while neither saved pair tests that approach. The deletion has direct comparative evidence and the smallest policy surface. Keep the retained final requirement so results, verification, and unresolved issues remain visible; do not add a new report template, reporting workflow, or blanket ban on updates.
+
+Independent current verification also passed: `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests` ran all five tests successfully, and an in-memory call to `rowledger.export` produced bytes identical to both saved CSVs (`Office,10.20` and `Travel,7.45`, with the existing header and order). These checks corroborate the saved work products; they are not a new agent-policy trial. No Python implementation change is proposed.
+
+This decision applies to the active guide matching the 2026-10-16 snapshot (SHA-256 `9d914dd01336c08a40797ba81b97fe6eddb24ab4661584800b5ea7030f6118bb`); the proposed result matches the 2026-10-18 snapshot (`66e9d28b641cc8a8cb8f4563ccfeacf5007c484845f3e631376e7347ee85f4f4`). The ticket, four session directories, manifests, event records, and guide snapshots are the decision's sources. The patch changes only the communication mandates; standard-library/local-only work, exact decimal arithmetic, CSV format preservation, ledger immutability, required Python tests, and treatment of saved sessions as historical evidence remain intact.
+
+Review request: accept or reject this candidate and its evidence. This recommendation is not a recorded user acceptance. Acceptance alone would not apply the patch or authorize other actions; the active guidance and saved records remain untouched.
+
+## review_out/proposed.patch
+
+--- a/docs/agent-guide.md
++++ b/docs/agent-guide.md
+@@ -10,7 +10,4 @@
+ 
+ ## Communication
+ Follow the user's requested response format and level of detail.
+-For every task, send a progress report before the first tool call.
+-Each progress report must include Objective, Context, Plan, Work completed, Verification, Risks, Dependencies, and Next steps, with at least two sentences per section.
+-After every tool call, send another progress report using all of those sections.
+ In the final response, state the result, verification performed, and any unresolved issue.

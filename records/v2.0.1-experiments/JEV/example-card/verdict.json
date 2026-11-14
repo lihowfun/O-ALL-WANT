@@ -1,0 +1,30 @@
+{
+  "food": "minimal-change card (OAW 2.0.1 improve skill with the card)",
+  "result": "NO",
+  "deciding_step": "B",
+  "reason": "Native already meets at least 90% of checklist items",
+  "reopen": "Use a task that native fails",
+  "native_fraction": 0.9047619047619048,
+  "native_met": 19,
+  "total_items": 21,
+  "gained": null,
+  "gained_items": null,
+  "lost": null,
+  "lost_items": null,
+  "ratio": null,
+  "native_tokens": 1029721,
+  "food_tokens": 0,
+  "tokens_by_family": {
+    "codex": 1029721
+  },
+  "seconds": 709.9,
+  "unknown_counts": {
+    "native": 0,
+    "food": 0
+  },
+  "missing_food_tasks": [
+    "P1",
+    "P2",
+    "D2"
+  ]
+}

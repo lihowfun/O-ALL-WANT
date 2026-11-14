@@ -1,0 +1,86 @@
+[
+ {
+  "call": "P1-native-counted",
+  "exit": 0,
+  "error": false,
+  "seconds": 10.1,
+  "judge_tokens": 13573,
+  "labels_exit": 0,
+  "counts": {
+   "yes": 7,
+   "no": 1,
+   "unknown": 0
+  },
+  "reasons": []
+ },
+ {
+  "call": "P1-native-reader",
+  "exit": 0,
+  "error": false,
+  "seconds": 8.7,
+  "judge_tokens": 12757,
+  "labels_exit": 0,
+  "counts": {
+   "yes": 4,
+   "no": 0,
+   "unknown": 0
+  },
+  "reasons": []
+ },
+ {
+  "call": "P2-native-counted",
+  "exit": 0,
+  "error": false,
+  "seconds": 12.9,
+  "judge_tokens": 15680,
+  "labels_exit": 0,
+  "counts": {
+   "yes": 7,
+   "no": 1,
+   "unknown": 0
+  },
+  "reasons": []
+ },
+ {
+  "call": "P2-native-reader",
+  "exit": 0,
+  "error": false,
+  "seconds": 7.5,
+  "judge_tokens": 14000,
+  "labels_exit": 0,
+  "counts": {
+   "yes": 4,
+   "no": 0,
+   "unknown": 0
+  },
+  "reasons": []
+ },
+ {
+  "call": "D2-native-counted",
+  "exit": 0,
+  "error": false,
+  "seconds": 7.0,
+  "judge_tokens": 11367,
+  "labels_exit": 0,
+  "counts": {
+   "yes": 5,
+   "no": 0,
+   "unknown": 0
+  },
+  "reasons": []
+ },
+ {
+  "call": "D2-native-reader",
+  "exit": 0,
+  "error": false,
+  "seconds": 7.2,
+  "judge_tokens": 11210,
+  "labels_exit": 0,
+  "counts": {
+   "yes": 3,
+   "no": 0,
+   "unknown": 0
+  },
+  "reasons": []
+ }
+]

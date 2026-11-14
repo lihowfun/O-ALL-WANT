@@ -1,0 +1,32 @@
+{
+  "task_id": "D2",
+  "checklist_sha256": "0ac5148d4cbbf28a55704382dea88cd9407f307749d46f57735af46826db1ba0",
+  "answer_sha256": "ef9d7e57a5f41259ac0d435165749b3f7e04c067f0bb40c0f2faf0a3d90197e6",
+  "counts": {
+    "yes": 3,
+    "no": 0,
+    "unknown": 0
+  },
+  "items": [
+    {
+      "id": "D2.j",
+      "label": "yes",
+      "quote": "The saved baseline messages repeatedly explain generic context, dependencies, and next steps even when no decision or problem needs the user's attention.",
+      "reason": ""
+    },
+    {
+      "id": "D2.k",
+      "label": "yes",
+      "quote": "Deleting the project-specific reporting machinery lets those capabilities and the user's requested detail govern communication.",
+      "reason": ""
+    },
+    {
+      "id": "D2.l",
+      "label": "yes",
+      "quote": "These checks corroborate the saved work products; they are not a new agent-policy trial.",
+      "reason": ""
+    }
+  ],
+  "judge": "claude-haiku-5-5 low",
+  "judge_tokens": 11210
+}

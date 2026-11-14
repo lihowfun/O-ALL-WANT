@@ -1,0 +1,136 @@
+## review_out/decision.md
+
+RECOMMENDATION: change
+
+Replace the unconditional session-start rebuild with `ensure`, and compare
+`catalog_sha256`, `aliases_sha256`, and `format_version` before reuse. The
+proposed.patch changes only docs/index-directions.json. Keep the existing
+missing/unreadable/mismatched-index rebuilds, checks before lookup and after
+input writes, release rebuild, and verification reporting. Active guidance has
+not been edited.
+
+The recurring build is required by loaded agent guidance, rather than an
+application freshness mechanism. AGENTS.md delegates to docs/agent-guide.md,
+which explicitly designates docs/index-directions.json as operational guidance.
+Its `session_start: rebuild` explains the recorded startup actions.
+docs/fields.md already defines `ensure` and all three proposed comparison fields;
+there is no need for another workflow, skill, or application change. catalogue.py
+offers only build and lookup commands: an agent must perform the comparison;
+there is no `catalogue.py ensure` command. Removing the startup direction
+entirely has undefined semantics in the documented format, whereas replacing
+its action uses the existing contract.
+
+Saved evidence supports a narrower freshness requirement than rebuilding every
+session. The table distinguishes recorded behavior from the candidate's
+deterministic simulation using the same saved inputs and actual application
+functions. Build counts include the separate release action.
+
+| Saved session | Relevant state and observed evidence | Recorded builds | Candidate builds |
+| --- | --- | ---: | ---: |
+| c301 | Valid unchanged index; isolated pre-build lookup and final result both a17 | 1 | 0 |
+| c302 | Same request and exact state as c301, captured in another session | 1 | 0 |
+| c303 | Only producer differs (1.7); format 2 lookup already returns a17 | 1 | 0 |
+| c304 | Catalogue changed; pre-build Birch is b24, fresh result b25 | 1 | 1 |
+| c305 | Only aliases changed; pre-build Gold is a17, fresh result b24 | 1 | 1 |
+| c306 | Input hashes match but format is 1; pre-build lookup fails | 1 | 1 |
+| c307 | Index absent; pre-build lookup fails | 1 | 1 |
+| c308 | Index is invalid JSON; pre-build lookup fails | 1 | 1 |
+| c309 | Bundle requested; separate release rebuild and audit accepted | 2 | 1 |
+| c310 | Alias edited during session; catalogue-only ensure reuses stale a17; isolated fresh build returns requested b24 | 1 | 1 |
+
+Each row is traceable to runs/<session>/state.json, events.jsonl, request.txt,
+and manifest.json. The capture probes are recorder actions in isolated copies,
+not evidence that an assistant followed revised guidance. c310 is an observed
+correctness failure under the current directions: a startup build cannot
+protect against a later alias edit.
+
+Changing only `session_start` would be unsafe. The current reuse key covers
+only catalogue bytes. It would miss the changed aliases in c305 and c310 and
+the incompatible format in c306. catalogue.build consumes both JSON inputs;
+catalogue.lookup rejects incompatible formats. Thus both input digests and
+the reader's expected format belong in the key. Use their metadata values,
+not timestamps or a remembered assertion that files are unchanged. Missing
+selected metadata is unreadable under docs/fields.md and still requires a
+rebuild. Keep the checks after writes and before lookups so later changes
+invalidate reuse.
+
+Do not add producer to ordinary reuse checks. README.md, catalogue.py,
+tests/test_catalogue.py, and c303 agree that producer releases 1.7 and 1.8
+produce compatible format-2 indexes; the reader does not require producer
+identity. Adding it would rebuild c303 without improving lookup correctness.
+This does not relax distribution: docs/release.md and c309's bundle audit
+require a build during that session and its producer stamp. The patch retains
+`release: rebuild`, even when all reuse fields match. It also retains
+`completion: report_verification`; final replies should report the freshness
+comparison or rebuild and the verification performed.
+
+The falsifiable hypothesis is that these directions eliminate builds for valid
+unchanged ordinary lookups, preserve rebuilding for stale/missing/unreadable
+indexes and releases, and fix alias edits without degrading delivered results.
+review_out/replay.py simulates baseline, candidate, startup-only, and
+producer-inclusive policies against all ten states. It derives the candidate
+from the delivered patch, reproduces the recorded baseline lookup values and
+build counts, and checks candidate results against fresh application builds.
+replay-results.json records 11 baseline builds versus 7 candidate builds and
+10/10 correct candidate lookups, versus 9/10 baseline. These are mechanism
+checks, not measured assistant performance. A matching format and selected
+metadata assume a normally produced index; they do not prove protection from
+arbitrary payload tampering.
+
+The evidence does not establish token, cost, or latency savings. runs/README.md
+says build cost was not collected and there are no revised-guidance sessions.
+The manifest records model local-assistant-4 and high effort, but lacks a full
+host/version/environment/permission snapshot for matched agent trials. Hash
+checks also find that every captured AGENTS.md hash differs from today's file,
+despite the capture README's general unchanged-files statement. All other
+loaded-path hashes, catalogue.py hashes, and request/state/event/final artifact
+hashes match. The operational cause is independently visible in current
+guidance, but these captures are not a fully matched current-policy experiment.
+
+For validation before adoption, evaluation.json fixes all ten tasks, three
+repetitions per task, correctness/release/reporting/permission assertions, and
+complete resource accounting including loading guidance and checking freshness.
+Run baseline and candidate in isolated copies with the same model, effort,
+host/version, environment, repository state, and permissions. Retain outputs,
+checks, actual build actions, and measured tokens/time/cost; verify unchanged
+lookup reuse and all invalidation cases. Use scripts/improvement.py compare
+only after those genuine artifacts exist. No agent comparison or acceptance
+has been fabricated. The proposal record is
+review_out/.oaw/improvements/ef29e4dc13c9.json, with status proposed.
+
+Verification: the three application unit tests pass; patch --dry-run -p1
+accepts the unified diff; the candidate has exactly the two intended JSON
+field changes; all ten simulation cases pass. The first patch dry run failed
+because /tmp is read-only and passed when TMPDIR pointed inside review_out.
+The required post-change `oaw_mode.py suggest --json` cannot inspect a diff
+because this workspace has no Git repository; an explicit changed-path check
+is used instead. See verification.txt for commands and results. The guidance
+and application source hashes remain those in source_snapshot.json; saved
+sessions and permission settings were not modified.
+
+This recommendation is scoped to the supplied catalogue builder/reader and
+direction schema, identified by source_snapshot.json, rather than a general
+rule to skip session setup. It is a reviewable proposal, not an accepted or
+applied policy decision. Please explicitly accept or reject the candidate and
+its evidence after review. The [oaw-improve skill](../.agents/skills/oaw-improve/SKILL.md)
+says: "Ask for an explicit accept or reject decision on the candidate and its evidence."
+This request does not block delivery of this completed review; applying the
+patch remains outside the current propose-only instruction.
+
+## review_out/proposed.patch
+
+diff --git a/docs/index-directions.json b/docs/index-directions.json
+--- a/docs/index-directions.json
++++ b/docs/index-directions.json
+@@ -1,7 +1,9 @@
+ {
+-  "session_start": "rebuild",
++  "session_start": "ensure",
+   "reuse_fields": [
+-    "catalog_sha256"
++    "catalog_sha256",
++    "aliases_sha256",
++    "format_version"
+   ],
+   "missing_index": "rebuild",
+   "unreadable_index": "rebuild",

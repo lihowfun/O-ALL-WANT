@@ -1,0 +1,46 @@
+## review_out/decision.md
+
+RECOMMENDATION: change
+
+Recommend deleting only the three mandatory progress-report rules in `docs/agent-guide.md`, as shown in `proposed.patch`. This reproduces the already-tried `runs/guides/2026-10-18.md` revision. Keep the requirements to follow the user's requested format and detail, and to state the result, verification, and unresolved issues in the final response. Keep all bookkeeping and verification constraints. This is a proposal for acceptance or rejection; no active guidance has been edited and adoption remains undecided.
+
+Ticket 52 (`docs/reporting-note.md`) describes unwanted narration on routine jobs. The active guide, identical to `runs/guides/2026-10-16.md`, explains the behavior: reports before tool work and after every tool call, each with eight sections and at least two sentences per section. That creates a minimum of sixteen sentences per report, regardless of task size. The saved requests ask only for an output path and test result, or a one-sentence test result. Neither requests a progress narrative.
+
+The full trajectories support deletion, rather than an additional reporting system:
+
+| Matched request | Earlier guide | Trial guide | Requested work and final result |
+| --- | --- | --- | --- |
+| Export and test: s201 / s202 | 4 status messages, 547 words | 0 messages, 0 words | Same source read, export command, and test command; identical export, checks, and final reply |
+| Test only: s203 / s204 | 3 status messages, 410 words | 0 messages, 0 words | Same source read and test command; identical checks and one-sentence final reply |
+
+Evidence locations: `runs/s201/events.jsonl` seq 2, 4, 6, 8 and `runs/s203/events.jsonl` seq 2, 4, 6 contain the repeated eight-section reports. Compare the export tool events s201 seq 3, 5, 7 with s202 seq 2–4; compare the test-only events s203 seq 3, 5 with s204 seq 2–3. Removing sequence numbers and timestamps leaves identical tool records within each pair, including command outputs. Candidate trajectories contain no status events. Final replies are byte-identical within each pair: `/tmp/ledger-totals.csv; all 5 unit tests passed.` and `All 5 unit tests passed.` All four `checks.json` files record five tests, zero failures/errors, and exit code zero. Both saved CSVs contain `category,total`, `Office,10.20`, and `Travel,7.45`.
+
+I independently recounted the statuses and whitespace-delimited words from the full events; they agree with `runs/index.json`. The observed reduction is seven messages and 957 status words across the two pairs, without an observed loss of task completion or verification. This measures status text, not model tokens, latency, or monetary savings.
+
+The manifests give matching requests, model identifier (`ledger-agent-2026-10`), temperature (0), and all non-guide input hashes within each pair. Initial instruction-load events identify the corresponding guide hashes. I verified every saved request hash, guide snapshot hash, and declared artifact hash against its file. Source, ledger data, tests, and policy hashes also match today's files. The active guide hash is `9d914dd01336c08a40797ba81b97fe6eddb24ab4661584800b5ea7030f6118bb`; the proposed guide hash is `66e9d28b641cc8a8cb8f4563ccfeacf5007c484845f3e631376e7347ee85f4f4`.
+
+There are limits to attribution and transfer. The historical `AGENTS.md` hash matches between sessions but differs from today's router; its historical contents are not supplied. `runs/README.md` says the router was unchanged between arms and no additional guidance loaded. The manifests do not separately record effort, host/version, or the full environment and permission configuration. There is only one execution per arm for each of two tasks, with no failure, blocker, or long-running task. Thus the reporting burden recurs across two requests and deletion helped in both observed pairs, but this is not a fully controlled, repeated evaluation or proof of behavior on every current host. No formal `improvement.py compare` verdict is claimed: its evaluation contract requires at least three repeats per case and additional matched metadata. Missing observations were not fabricated or backfilled into saved records.
+
+The changed component is the mandatory progress-report block as a whole: observed effect **helped** for these two routine tasks; recommend **keep the deletion**, subject to user acceptance. The trials remove all three lines together, so they do not isolate each line's independent contribution. The remaining communication rules already cover the team's requested final result and verification. Today's host also supplies progress-update behavior; deleting local duplication lets applicable host and user instructions govern it. It does not require silence or promise zero progress messages on the current host.
+
+Reject the ticket's sentence-cap suggestion for this proposal: it retains compulsory per-tool reporting and could conflict with the sixteen-sentence minimum unless other rules change too. Reject a separate reporting policy and template: the existing trial achieves the desired observed result by deletion, without another file, routing step, or format to maintain. Neither alternative has saved trial evidence; no behavioral benefit is claimed for them.
+
+Falsifiable hypothesis: for routine export-and-test and test-only requests, deleting the compulsory report block reduces unsolicited status text while preserving requested tool work, exact export contents, truthful verification, and requested final format. A matched candidate run that adds comparable unwanted narration, skips requested verification, changes the export, or violates the requested final format would refute the corresponding benefit or quality claim. For a bounded follow-up on the current host, compare both guide revisions on these same two requests with at least three executions per arm per request, holding model, effort, host/version, environment, permissions, inputs, and checks fixed. Include host-required messages in counts. Add one failed-test or blocked-task case to check that necessary issue reporting survives. Retain every outcome; do not turn this limited recommendation into a universal performance claim.
+
+Scope and restoration: the attached root-relative unified diff changes only `docs/agent-guide.md`, deleting the report block. Restoration after a future adoption would reverse that diff. This review leaves the guide, router, policy, and all saved records untouched. The decision records the project-specific lesson and its source revisions: on the two saved routine requests, removing compulsory reporting eliminated repeated narration without an observed quality loss. Acceptance and applying the patch are separate future actions.
+
+Proposal verification: the decision starts with the required recommendation line; the patch parser confirms a single target; reconstructing the proposed guide in memory exactly matches the saved trial revision; and `patch --dry-run --batch -p1` succeeds with a workspace-local temporary directory. The review-mode check selected light before writing. The default post-write diff check cannot run because this workspace has no Git repository; the explicit output-path fallback also selects light, requiring no additional review. No Python implementation was changed, so no fresh application test run was necessary; the test outcomes above are verified historical records.
+
+## review_out/proposed.patch
+
+diff --git a/docs/agent-guide.md b/docs/agent-guide.md
+--- a/docs/agent-guide.md
++++ b/docs/agent-guide.md
+@@ -10,7 +10,4 @@
+ 
+ ## Communication
+ Follow the user's requested response format and level of detail.
+-For every task, send a progress report before the first tool call.
+-Each progress report must include Objective, Context, Plan, Work completed, Verification, Risks, Dependencies, and Next steps, with at least two sentences per section.
+-After every tool call, send another progress report using all of those sections.
+ In the final response, state the result, verification performed, and any unresolved issue.

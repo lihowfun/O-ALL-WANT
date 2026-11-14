@@ -1,0 +1,44 @@
+{
+  "task_id": "D2",
+  "checklist_sha256": "e9b8372135917c48967e236e0b6f49a7b1675328f39dcadecac1ff073b317c97",
+  "answer_sha256": "ef9d7e57a5f41259ac0d435165749b3f7e04c067f0bb40c0f2faf0a3d90197e6",
+  "counts": {
+    "yes": 5,
+    "no": 0,
+    "unknown": 0
+  },
+  "items": [
+    {
+      "id": "D2.a",
+      "label": "yes",
+      "quote": "Remove only the three mandatory progress-report instructions from `docs/agent-guide.md`.",
+      "reason": ""
+    },
+    {
+      "id": "D2.b",
+      "label": "yes",
+      "quote": "--- a/docs/agent-guide.md",
+      "reason": ""
+    },
+    {
+      "id": "D2.c",
+      "label": "yes",
+      "quote": "For every task, send a progress report before the first tool call.",
+      "reason": ""
+    },
+    {
+      "id": "D2.d",
+      "label": "yes",
+      "quote": "do not add a new report template, reporting workflow, or blanket ban on updates.",
+      "reason": ""
+    },
+    {
+      "id": "D2.i",
+      "label": "yes",
+      "quote": "| Tests only, s203 / s204 | 3 / 410 | 0 / 0 |",
+      "reason": ""
+    }
+  ],
+  "judge": "claude-haiku-5-5 low",
+  "judge_tokens": 11367
+}

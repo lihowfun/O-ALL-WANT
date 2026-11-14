@@ -1,0 +1,37 @@
+{
+ "task_id": "P1",
+ "items": [
+  {
+   "id": "P1.a",
+   "text": "Recommends changing guidance."
+  },
+  {
+   "id": "P1.b",
+   "text": "Supplies an applicable schema-valid proposal for the project directions file."
+  },
+  {
+   "id": "P1.c",
+   "text": "Session entry ensures freshness instead of unconditionally rebuilding or blindly reusing."
+  },
+  {
+   "id": "P1.d",
+   "text": "Reuse compares both catalogue and alias content digests."
+  },
+  {
+   "id": "P1.e",
+   "text": "Reuse also compares format version, without using producer identity."
+  },
+  {
+   "id": "P1.f",
+   "text": "Missing, unreadable and mismatched indexes still require rebuilding."
+  },
+  {
+   "id": "P1.g",
+   "text": "Lookup and post-input-write checks still ensure freshness."
+  },
+  {
+   "id": "P1.h",
+   "text": "Release rebuilding and completion reporting remain required."
+  }
+ ]
+}

@@ -1,0 +1,25 @@
+{
+ "task_id": "D2",
+ "items": [
+  {
+   "id": "D2.a",
+   "text": "Recommends changing project guidance."
+  },
+  {
+   "id": "D2.b",
+   "text": "Supplies an applicable unified diff changing only docs/agent-guide.md."
+  },
+  {
+   "id": "D2.c",
+   "text": "Removes all three mandatory progress-report instructions."
+  },
+  {
+   "id": "D2.d",
+   "text": "Preserves the rest of the guide without adding another reporting mechanism."
+  },
+  {
+   "id": "D2.i",
+   "text": "Identifies the guide and at least one complete old/new session pair in the decision."
+  }
+ ]
+}

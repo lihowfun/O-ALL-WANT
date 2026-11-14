@@ -1,0 +1,144 @@
+## review_out/decision.md
+
+RECOMMENDATION: change
+
+Replace `session_start: rebuild` with `ensure` in `docs/index-directions.json`,
+and expand `reuse_fields` to `catalog_sha256`, `aliases_sha256`, and
+`format_version`. The proposed unified diff is [proposed.patch](proposed.patch).
+This changes two existing settings without introducing another workflow.
+Active guidance has not been edited. Adoption remains pending an explicit user
+accept/reject decision; proposal `95f066d33694` is recorded as proposed, not accepted.
+
+The falsifiable prediction is that, on the ten saved task states and their
+recorded event schedule, this policy reduces build calls from 11 to 7 while
+returning results consistent with current inputs and preserving the bundle
+audit. Reusing stale data, rejecting the bundle, or rebuilding a valid ordinary
+lookup cache would refute the relevant part of that prediction.
+
+### What the saved sessions establish
+
+`docs/agent-guide.md` delegates operational behavior to this JSON document;
+`docs/fields.md` defines its actions. `catalogue.py` never loads the directions
+and has no automatic freshness operation. This is an assistant guidance change;
+the assistant must perform the comparisons before choosing whether to build.
+Changing application code or the host's separate code index would not remove
+this explicit startup requirement.
+
+| Sessions | Evidence in saved files | Implication |
+| --- | --- | --- |
+| c301–c302 | `events.jsonl` seq 2 already returns `a17`; seq 3 rebuilds an identical index. | Repeated unnecessary builds on fully matching lookup caches. |
+| c303 | `state.json` differs only in producer 1.7 versus current 1.8; events seq 2 returns `a17`, seq 3 rebuilds. | Producer identity is not needed for ordinary lookup compatibility. |
+| c304 | Events seq 2 returns old Birch ID `b24`; seq 3 builds the current `b25`. | Catalogue content must participate in freshness. |
+| c305 | Catalogue hash matches, but aliases changed; events seq 2 returns `a17`, seq 5 correctly returns `b24` after rebuilding. | Checking only the catalogue would allow stale alias reuse. |
+| c306 | `state.json` has format 1; events seq 2 reports an incompatible index. | Matching content hashes do not establish reader compatibility. |
+| c307–c308 | Initial index is absent or invalid JSON; events seq 2 reports failure, seq 3 rebuilds. | Preserve missing/unreadable recovery. |
+| c309 | Seq 1 additionally loads `docs/release.md`; seq 6 rebuilds for release and seq 7 accepts the session-build audit. | Distribution has an independent requirement beyond lookup equivalence. |
+| c310 | Seq 3 edits aliases; seq 4 checks only catalogue hash and reuses; seq 5 returns stale `a17`; isolated probe seq 6 returns requested `b24`. | An observed correctness failure already exists after writes. Expanding the shared freshness key fixes this path too. |
+
+The probes are recorder observations from isolated copies, as documented in
+`runs/README.md`; they are not candidate assistant runs or instructions.
+The c301–c302 repetition establishes recurring redundant work. c310 is one
+observed stale-answer failure, not evidence of a measured recurrence rate.
+
+### Why this particular edit
+
+Deletion alone would remove a defined operational setting without specifying a
+safe startup action. Replacement with the existing `ensure` action is sufficient.
+It reuses only after all selected metadata matches the current inputs and reader.
+The extra two field names are the only added guidance context.
+
+Changing startup alone is unsafe: under the documented field-selection rules,
+it would reuse c305's outdated alias data and c306's incompatible format. Adding
+the alias hash alone still misses c306. `catalogue.signature`, `build`, and
+`lookup` establish that both input hashes and format are the relevant key.
+Missing selected metadata is unreadable and must use the existing rebuild fallback.
+
+Exclude `producer` from ordinary freshness checks. `README.md`,
+`CatalogueTests.test_producer`, and `catalogue.lookup` confirm that producers 1.7
+and 1.8 emit compatible format 2 and that the reader does not test the stamp.
+Keep `release: rebuild`: `docs/release.md` requires a build from the distribution
+session and its producer stamp even if lookup data is identical. A producer match
+alone would not prove that audit condition.
+
+Keep the current missing/unreadable/mismatched rebuild fallbacks,
+`before_lookup: ensure`, `after_input_write: ensure`, and verification reporting.
+The expanded key applies at every existing ensure trigger, including changes
+between startup and lookup. No additional release guidance belongs on ordinary
+lookup paths.
+
+### Validation and its limits
+
+[replay.py](replay.py) interprets the documented guidance over the saved event
+schedule using the existing `catalogue` functions. [evidence.json](evidence.json)
+retains each baseline, candidate, and rejected-alternative action and lookup.
+It reproduces every recorded baseline action/result, including c310's failure.
+
+| Mechanical replay | Lookup cases correct | Build calls | Bundle audit |
+| --- | --- | --- | --- |
+| Baseline | 9/10 | 11 | Pass |
+| Proposed settings | 10/10 | 7 | Pass |
+
+The proposal skips five startup builds (c301, c302, c303, c309, c310), retains
+the five recovery builds (c304–c308), retains c309's release build, and adds
+c310's necessary post-write build. The net reduction is four calls. Three of
+the eight ordinary lookup sessions can reuse their initial index; the remaining
+five require recovery. Five additional synthetic checks verify recovery when
+each selected metadata field is missing and after a catalogue edit at both
+the post-write and before-lookup triggers.
+
+These are deterministic semantic checks, not observed candidate assistant
+behavior. Both changed components lack a matched agent comparison: their
+behavioral effect is **confounded/unmeasured**. The replay supports the startup
+replacement's predicted skipped builds and the expanded key's necessity, but
+does not establish model compliance or net token, time, or monetary savings.
+No elapsed build cost was captured; capture timestamps are not build timings.
+Do not interpret four fewer calls as a measured runtime reduction.
+
+All saved request/state/event/final hashes and application hashes verify.
+The loaded operational guide and delegation document hashes match current files,
+as does c309's release document. However, all ten manifests record a different
+`AGENTS.md` hash from the current workspace. The captured historical bytes are
+not available here, so the capture's blanket unchanged-file claim cannot be
+fully verified. The report retains this discrepancy rather than treating the
+sessions as fully matched to today's host guidance.
+
+The original model is recorded as `local-assistant-4` at high effort; matching
+host/version, permissions, resource measurements, and revised-guidance sessions
+are absent. [evaluation.json](evaluation.json) fixes a future three-repeat,
+ten-case paired evaluation contract. Establish a common repository/guidance
+snapshot, hold model, effort, host/version, environment, permissions and grader
+constant, retain both arms' complete traces and failures, and measure resources.
+`improvement.py compare` was not run: there are no genuine matched assistant
+trajectories, and replay output must not be mislabeled as such.
+
+Verification performed:
+
+- `PYTHONDONTWRITEBYTECODE=1 /usr/bin/python3 review_out/replay.py`: ten saved cases and five synthetic boundaries pass their expected checks.
+- `PYTHONDONTWRITEBYTECODE=1 /usr/bin/python3 -m unittest discover -s tests`: all three application tests pass.
+- `TMPDIR=/home/dev/proj/review_out patch --dry-run -p1 -i review_out/proposed.patch`: passes. Applying the patch only to a temporary copy also produced valid JSON exactly matching the replay candidate, with original keys and no duplicate reuse fields.
+- Original workspace files, including guidance, inputs, cache, saved sessions and permissions, are checked against [baseline.sha256.json](baseline.sha256.json).
+- Pre-change review classification is light. The required post-change `oaw_mode.py suggest --json` cannot inspect a diff because this workspace has no Git repository; an explicit output-path classification is used as the light-review fallback. This tooling limitation remains unresolved.
+
+The recommendation is scoped to this catalogue's current input/format contract.
+Restore the original JSON (startup rebuild and catalogue-only key) to withdraw
+the proposal; it has not been applied. This report preserves the review decision
+and evidence scope. No general model-behavior lesson or additional memory rule
+is warranted from the unrun candidate.
+
+## review_out/proposed.patch
+
+diff --git a/docs/index-directions.json b/docs/index-directions.json
+--- a/docs/index-directions.json
++++ b/docs/index-directions.json
+@@ -1,7 +1,9 @@
+ {
+-  "session_start": "rebuild",
++  "session_start": "ensure",
+   "reuse_fields": [
+-    "catalog_sha256"
++    "catalog_sha256",
++    "aliases_sha256",
++    "format_version"
+   ],
+   "missing_index": "rebuild",
+   "unreadable_index": "rebuild",

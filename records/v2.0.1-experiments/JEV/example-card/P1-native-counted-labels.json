@@ -1,0 +1,62 @@
+{
+  "task_id": "P1",
+  "checklist_sha256": "75846418a562cdde48e23d7d4b207a049d4a8b74781c7c4283ba02927c534d99",
+  "answer_sha256": "efc51aa29901fc5eb608fb3b000bb59666e6574bbff6c5d096584f45fec00259",
+  "counts": {
+    "yes": 7,
+    "no": 1,
+    "unknown": 0
+  },
+  "items": [
+    {
+      "id": "P1.a",
+      "label": "yes",
+      "quote": "RECOMMENDATION: change",
+      "reason": ""
+    },
+    {
+      "id": "P1.b",
+      "label": "no",
+      "quote": "",
+      "reason": ""
+    },
+    {
+      "id": "P1.c",
+      "label": "yes",
+      "quote": "`catalog_sha256`, `aliases_sha256`, and `format_version` before reuse",
+      "reason": ""
+    },
+    {
+      "id": "P1.d",
+      "label": "yes",
+      "quote": "`catalog_sha256`, `aliases_sha256`, and `format_version` before reuse",
+      "reason": ""
+    },
+    {
+      "id": "P1.e",
+      "label": "yes",
+      "quote": "Do not add producer to ordinary reuse checks.",
+      "reason": ""
+    },
+    {
+      "id": "P1.f",
+      "label": "yes",
+      "quote": "Keep the existing missing/unreadable/mismatched-index rebuilds, checks before lookup and after",
+      "reason": ""
+    },
+    {
+      "id": "P1.g",
+      "label": "yes",
+      "quote": "Keep the checks after writes and before lookups so later changes invalidate reuse.",
+      "reason": ""
+    },
+    {
+      "id": "P1.h",
+      "label": "yes",
+      "quote": "The patch retains `release: rebuild`, even when all reuse fields match.",
+      "reason": ""
+    }
+  ],
+  "judge": "claude-haiku-5-5 low",
+  "judge_tokens": 13573
+}

@@ -1,0 +1,21 @@
+{
+ "task_id": "P1",
+ "items": [
+  {
+   "id": "P1.l",
+   "text": "Locates ordinary-session behavior in the loaded entry directions, not the release procedure."
+  },
+  {
+   "id": "P1.m",
+   "text": "Explains cache validity and preserves useful rebuilds using the observed boundary cases."
+  },
+  {
+   "id": "P1.n",
+   "text": "States only supported claims about compatibility, future behavior and savings."
+  },
+  {
+   "id": "P1.o",
+   "text": "Reasoning and final reply agree with the proposed operational change and its scope."
+  }
+ ]
+}

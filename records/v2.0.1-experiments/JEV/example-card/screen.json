@@ -1,0 +1,39 @@
+{
+ "food": "minimal-change card (OAW 2.0.1 improve skill with the card)",
+ "static": {
+  "status": "clear",
+  "reason": "Markdown reference text only; no code, dependency or licence question"
+ },
+ "tasks": [
+  {
+   "id": "P1",
+   "native": {
+    "labels": "P1-native-counted-labels.json",
+    "logical_tokens": 378471,
+    "seconds": 244.8,
+    "family": "codex"
+   },
+   "food": null
+  },
+  {
+   "id": "P2",
+   "native": {
+    "labels": "P2-native-counted-labels.json",
+    "logical_tokens": 441361,
+    "seconds": 282.9,
+    "family": "codex"
+   },
+   "food": null
+  },
+  {
+   "id": "D2",
+   "native": {
+    "labels": "D2-native-counted-labels.json",
+    "logical_tokens": 209889,
+    "seconds": 182.2,
+    "family": "codex"
+   },
+   "food": null
+  }
+ ]
+}

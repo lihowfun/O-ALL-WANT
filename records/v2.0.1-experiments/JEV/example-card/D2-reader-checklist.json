@@ -1,0 +1,17 @@
+{
+ "task_id": "D2",
+ "items": [
+  {
+   "id": "D2.j",
+   "text": "Uses the saved status, output and verification records to support the reporting change."
+  },
+  {
+   "id": "D2.k",
+   "text": "Explains why removing the mandates suffices while preserving existing task and completion requirements."
+  },
+  {
+   "id": "D2.l",
+   "text": "Makes only supported claims and distinguishes saved observations from new verification."
+  }
+ ]
+}

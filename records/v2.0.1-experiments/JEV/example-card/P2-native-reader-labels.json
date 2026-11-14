@@ -1,0 +1,38 @@
+{
+  "task_id": "P2",
+  "checklist_sha256": "803b253b0ec5ed8159b682759f51a9dd81d1d91c2fcd0f5e40c8c1e199c2b077",
+  "answer_sha256": "c156a14d74807c208f8fa9e7d7d79d11a95b98a7d80c07c16694abcc533f4bb5",
+  "counts": {
+    "yes": 4,
+    "no": 0,
+    "unknown": 0
+  },
+  "items": [
+    {
+      "id": "P2.l",
+      "label": "yes",
+      "quote": "BUSY occurs before assertions run, and time can release the lease without changing assertion inputs.",
+      "reason": ""
+    },
+    {
+      "id": "P2.m",
+      "label": "yes",
+      "quote": "Keep two extra attempts per verification job, across shells and repairs.",
+      "reason": ""
+    },
+    {
+      "id": "P2.n",
+      "label": "yes",
+      "quote": "its single saved invocation provides no evidence supporting recovery by repetition.",
+      "reason": ""
+    },
+    {
+      "id": "P2.o",
+      "label": "yes",
+      "quote": "Change only `docs/verification-directions.json`: make the `MISMATCH` route",
+      "reason": ""
+    }
+  ],
+  "judge": "claude-haiku-5-5 low",
+  "judge_tokens": 14000
+}

@@ -1,0 +1,184 @@
+## review_out/decision.md
+
+RECOMMENDATION: change
+
+Change only `docs/verification-directions.json`: make the `MISMATCH` route
+`after_change` and track `source_sha256`, `suite_sha256`, and `config_sha256`.
+The unified diff is in [proposed.patch](proposed.patch). It has not been applied
+to active guidance. This JSON is agent guidance, as both `docs/agent-guide.md`
+and `docs/fields.md` state; the application does not load it.
+
+The current rule explicitly permits the reported behavior. `MISMATCH` uses
+`retry: immediate`, allowing two further calls without an input change.
+`verify.py:verify` computes assertions deterministically from source, suite, and
+configuration once the lease is available. Repeating a mismatch with those
+same inputs cannot repair it. The existing `change_fields: [source_sha256]`
+has no effect while the route is `immediate`.
+
+Evidence and scope
+------------------
+
+I read all ten saved requests, states, event streams, completions, and manifests.
+The table distinguishes application calls from report writes and completions.
+Candidate counts are predictions from filtering each recorded trace by the
+proposed policy, with recorded authorized edits and invocation times held fixed.
+
+| Session | Relevant evidence | Calls: recorded → candidate | Final result |
+| --- | --- | --- | --- |
+| v401 | Three identical-input mismatches; no edits | 3 → 1 | Unresolved MISMATCH |
+| v402 | Report write between mismatches; assertion inputs unchanged | 3 → 1 | Unresolved MISMATCH |
+| v403 | Authorized multiplier repair changes source | 2 → 2 | Pass |
+| v404 | Authorized offset repair changes configuration only | 2 → 2 | Pass |
+| v405 | User supplies a replacement assertion; suite alone changes | 2 → 2 | Pass |
+| v406 | Ordinary verification: BUSY at 0, pass at logical second 5 | 2 → 2 | Pass |
+| v407 | Publish request: same BUSY recovery; publish procedure loaded | 2 → 2 | Pass; recorded publish remains eligible |
+| v408 | Lease occupied until 30; BUSY at 0, 5, 10 | 3 → 3 | Unresolved BUSY |
+| v409 | One UNKNOWN adapter failure | 1 → 1 | Unresolved UNKNOWN |
+| v410 | Source edit still fails; subsequent configuration edit passes | 3 → 3 | Pass |
+
+In v401, verification events 2–4 have identical fingerprints and results. In
+v402, event 3 changes the report, but verification events 2, 4, and 5 retain the
+same three input fingerprints. These establish recurrence across two jobs and
+show that a report write is not a relevant repair. A report is an output; the
+verifier never reads it.
+
+The failure is not evidence of missing publish instructions. v401 and v402
+loaded the general guide and directions; neither request was to publish. v406
+succeeds after a bounded wait without loading the publish procedure. v407 loads
+that procedure for its publish request and succeeds with the same initial state.
+Adding publish guidance to all sessions would not address deterministic mismatch
+retries and would load an irrelevant procedure.
+
+All saved artifact hashes and the current verifier, operational guide,
+verification directions, and loaded publish procedure match their manifests.
+One provenance qualification matters: current `AGENTS.md` has an additional OAW
+managed block and does not match the captured whole-file hash. Its original
+directive, before that block and with its terminal newline restored, matches
+the captured hash exactly. Thus the captures establish exposure to the original
+directive and unchanged verification directions, not to the current OAW block.
+
+Why this edit
+-------------
+
+Use the existing routing format rather than add another general retry rule.
+Deleting the routing instructions would also remove useful diagnostic handling,
+bounded recovery, and reporting requirements. The current host already supports
+reading diagnostics and files and deciding whether another check is justified;
+the project rule is the specific permission for unchanged mismatch retries.
+No new tool, hook, skill, or global guidance is needed.
+
+The three input hashes are all necessary. A source-only gate blocks the
+successful configuration-only repair in v404 and suite-only repair in v405.
+In v410, compare against the **last failed invocation**, as `docs/fields.md`
+requires: after the source edit fails, the later configuration edit must qualify
+independently. Including `report_sha256` permits the useless second call in
+v402. Changes remain subject to the user's request; a changed hash is a retry
+condition, not permission to edit inputs or weaken assertions.
+
+Keep two extra attempts per verification job, across shells and repairs. Reducing
+the allowance to one blocks v410's final successful check; resetting it after
+each edit would allow an unbounded job. An input change permits checking a repair
+but does not promise success. Without an authorized relevant change, report the
+mismatch unresolved instead of spending the remaining allowance.
+
+Keep BUSY's five-second wait and bounded repeats. BUSY occurs before assertions
+run, and time can release the lease without changing assertion inputs. Gating
+BUSY on input hashes blocks recovery in v406 and v407. v408 demonstrates why
+polling still needs a cap; exhausting the three calls must leave it unresolved,
+possibly requiring operator attention. Keep UNKNOWN's stop route: its single
+saved invocation provides no evidence supporting recovery by repetition.
+
+Keep success dependent on exit zero, unresolved-failure reporting, verification
+reporting, and the publish requirement to withhold publishing on unresolved
+verification. All three failure diagnostics use exit code 1, so routing must
+continue to use the diagnostic rather than the exit number.
+
+Validation and limits
+---------------------
+
+The falsifiable hypothesis is that assistants following the amended directions
+will skip unchanged-input MISMATCH retries, including after report writes, while
+retaining authorized source/configuration/suite repair checks, bounded BUSY
+recovery, UNKNOWN stopping, truthful reporting, and publish gating.
+
+Reproduce the local evidence with `python3 review_out/replay.py`; its retained
+output is [evidence.json](evidence.json). It validates manifest provenance,
+reconstructs exact bytes after every write, checks fingerprints, reproduces all
+23 recorded results using the current verifier, and checks that the candidate
+matches the proposed diff. The candidate filter allows 19 calls, eliminating
+four redundant calls (17.4% of this sample) while preserving all ten terminal
+diagnostics and resolution states. Alternative policies in the same output show
+the source-only, report-inclusive, reduced-budget, stop-on-mismatch, and
+input-gated-BUSY regressions described above.
+
+This is a deterministic counterfactual over saved traces, not a matched live
+assistant experiment. No capture uses amended guidance. Although all manifests
+identify `local-assistant-4` with high effort, they lack host/version and complete
+environment/permission metadata, token usage, and measured latency. Logical
+seconds model the lease; event timestamps are not assistant performance metrics.
+The four-call reduction is a policy prediction, not measured token, cost, or
+wall-clock savings. Holding later edits fixed also cannot prove how an assistant
+would behave after a skipped call.
+
+Before claiming a behavioral improvement, run baseline and candidate assistants
+on the same saved requests and exact starting states, with the same model,
+effort, host/version, repository, environment, permissions, and tools. Use at
+least three independent repetitions per case; retain tool calls, outputs,
+permission checks, final reports, and usage/time measurements. Require no
+unchanged-input MISMATCH repeats, successful authorized repairs including both
+steps of v410, unchanged bounded BUSY recovery, UNKNOWN stopping, no unauthorized
+edits/publishing, and truthful terminal reporting. Treat any regression as a
+reason to revise or reject. No live candidate run or external action was taken.
+
+Additional checks passed: the unified diff passes `patch --dry-run -p1`, all four
+existing unit tests pass with `/usr/bin/python3 -m unittest discover -s tests`,
+and `/usr/bin/python3 verify.py` exits zero on current workspace inputs. The
+first patch dry run could not create a temporary file in read-only `/tmp`;
+setting `TMPDIR` to a temporary directory under `review_out` resolved it.
+The OAW precheck selected light work. Its required postcheck without paths
+cannot inspect a diff because this workspace has no Git repository; a path-list
+fallback selects light but cannot provide a Git-based line-count review.
+
+Decision status and applicable revision
+---------------------------------------
+
+This is a recommendation pending the user's explicit accept or reject decision
+on the candidate and evidence. Acceptance would not apply the patch or authorize
+external actions. No active guidance, saved sessions, application inputs, or
+permissions were changed. This report preserves the review decision and limits;
+no separate project-memory change is needed.
+
+Scope: Maple's verification agent directions and saved sessions v401–v410,
+reviewed 2026-11-14. There is no Git revision in this workspace. The applicable
+directions SHA-256 is
+`57099c0f49635954e53ebb19038b1e62d19ef8c71660a14598a7c8a8599f11c5`;
+the verifier SHA-256 is
+`f4544d128ac7cf4aa22c4c249705f3fd69fdbf6fa8f6ce42dd3e3bc07ffe51f3`.
+Additional current source hashes, patch hash, and per-session checks are retained
+in `evidence.json`. Recheck these sources before reusing this conclusion.
+
+## review_out/proposed.patch
+
+diff --git a/docs/verification-directions.json b/docs/verification-directions.json
+--- a/docs/verification-directions.json
++++ b/docs/verification-directions.json
+@@ -1,7 +1,7 @@
+ {
+   "routes": {
+     "MISMATCH": {
+-      "retry": "immediate",
++      "retry": "after_change",
+       "extra_attempts": 2,
+       "wait_seconds": 0
+     },
+@@ -17,7 +17,9 @@
+     }
+   },
+   "change_fields": [
+-    "source_sha256"
++    "source_sha256",
++    "suite_sha256",
++    "config_sha256"
+   ],
+   "budget_scope": "verification_job",
+   "success": "require_exit_zero",

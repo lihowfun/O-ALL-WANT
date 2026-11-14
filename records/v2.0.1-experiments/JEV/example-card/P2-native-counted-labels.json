@@ -1,0 +1,62 @@
+{
+  "task_id": "P2",
+  "checklist_sha256": "2a50ec8d101d669cc235abfe8523bb0c25b58092ee2ca3e85f6d7838d843e925",
+  "answer_sha256": "c156a14d74807c208f8fa9e7d7d79d11a95b98a7d80c07c16694abcc533f4bb5",
+  "counts": {
+    "yes": 7,
+    "no": 1,
+    "unknown": 0
+  },
+  "items": [
+    {
+      "id": "P2.a",
+      "label": "yes",
+      "quote": "RECOMMENDATION: change",
+      "reason": ""
+    },
+    {
+      "id": "P2.b",
+      "label": "no",
+      "quote": "",
+      "reason": ""
+    },
+    {
+      "id": "P2.c",
+      "label": "yes",
+      "quote": "Without an authorized relevant change, report the mismatch unresolved",
+      "reason": ""
+    },
+    {
+      "id": "P2.d",
+      "label": "yes",
+      "quote": "track `source_sha256`, `suite_sha256`, and `config_sha256`",
+      "reason": ""
+    },
+    {
+      "id": "P2.e",
+      "label": "yes",
+      "quote": "A report is an output; the verifier never reads it.",
+      "reason": ""
+    },
+    {
+      "id": "P2.f",
+      "label": "yes",
+      "quote": "Lease occupied until 30; BUSY at 0, 5, 10",
+      "reason": ""
+    },
+    {
+      "id": "P2.g",
+      "label": "yes",
+      "quote": "Keep UNKNOWN's stop route: its single saved invocation provides no evidence supporting recovery by repetition.",
+      "reason": ""
+    },
+    {
+      "id": "P2.h",
+      "label": "yes",
+      "quote": "Keep two extra attempts per verification job, across shells and repairs.",
+      "reason": ""
+    }
+  ],
+  "judge": "claude-haiku-5-5 low",
+  "judge_tokens": 15680
+}

@@ -701,3 +701,29 @@ re-judged under the fast decision rule):
   calibration (at most half the full-price grader's logical tokens) is set aside by this decision.
   The measured calibration and its limits stay as recorded (`v2.0.1-experiments/JEV/RESULT.md`).
 - P2 and the remaining items: no decision; the owner asked for a plainer, shorter explanation.
+
+## D52. EGM keeps its switch, the code map stays, TokenEconomizer is removed; issues are the lead's to close (2026-11-15)
+
+Owner in chat. After the lead explained why the fast decision rule gives NO for each of the three
+items kept as optional: 「1. EGM照之前規劃 變成有開關 預設會自行判斷需不需要用 2. 程式碼地圖留著，之後有什麼新架構或架構很亂時候
+定期更新畫圖 一方面也是種程式碼追蹤 找機會優化他 3 TokenEconomizer就踢 4 那harness2呢？它的專業harness好壞評估 我們吸收或參照了多少
+用來應用在之後skills吸收 應該很有幫助、我知道已經做了很多實驗 整理一下」. Just before: 「快速判定要有例子 Issue 也給你關」.
+
+- EGM: kept, with the switch as planned earlier; by default it should judge by itself whether it is
+  needed. Lead note: the shipped switch is `on`/`auto`/`off` with `auto` as the default, and `auto`
+  today always uses one native fresh-context review (D37, kept by X2). Judging per review is not
+  implemented. It is tracked as #27: the conditions are proposed to the owner first, and a "use EGM"
+  judgement comes with a cost estimate and waits for the user's confirmation.
+- Code map: kept. To be refreshed and redrawn when an architecture is new or has become messy; it
+  also serves as code tracing; look for ways to improve it. Tracked as #28.
+- TokenEconomizer: removed from the optional list. Its measured tasting is unchanged (same quality
+  as native, token ratio 1.01, original conclusion "not shown better"); by the rules that is
+  "optional", so the removal is recorded as an owner decision beside the tasting, not as a new
+  measurement.
+- Harness2: the owner asks for a summary of how much of its harness-evaluation method has been
+  absorbed or referenced for future skill intake (`intake-2026-11-13-harness2/SUMMARY.md`).
+- The fast decision needs an example: `v2.0.1-experiments/JEV/example-card/EXAMPLE.md`.
+- Issues: closing them is the lead's as well. Nine finished issues were closed the same day
+  (#10, #11, #12, #15, #17, #18 completed; #13, #20, #24 not planned).
+- Not decided: the lead's proposal to add "gains without losses but above 1.5 times the tokens:
+  optional, with the ratio stated" to the fast decision rule. The rule is unchanged.

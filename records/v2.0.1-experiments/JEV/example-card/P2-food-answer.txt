@@ -1,0 +1,69 @@
+## review_out/decision.md
+
+RECOMMENDATION: change
+
+Replace the existing MISMATCH retry instruction in `docs/verification-directions.json`: use `after_change` and include `source_sha256`, `suite_sha256`, and `config_sha256` in `change_fields`. The proposed unified diff is `review_out/proposed.patch`; it has not been applied. This is a correction to agent guidance, which the application does not load, rather than an application change.
+
+The current guidance explicitly permits two immediate MISMATCH retries with unchanged inputs. `docs/fields.md` defines `immediate` as allowing another invocation without an input change. For MISMATCH, `verify.py:verify` deterministically evaluates only the source, suite, and configuration bytes. Repeating those same assertions cannot repair a mismatch. The problem therefore has a concrete instruction-level cause; the saved behavior is consistent with the current rule, not evidence that the assistant ignored it.
+
+The loaded-file lists in each manifest and first event are exhaustive according to `runs/README.md`. All ten sessions loaded the verification directions through `docs/agent-guide.md`. Only the publish session v407 loaded `docs/publish.md`, so that publish-only procedure cannot explain retries in verification-only sessions. There is no evidence of a missing load of the relevant directions.
+
+The saved events support a narrow change:
+
+| Evidence (event numbers equal JSONL line numbers) | Observation and implication |
+| --- | --- |
+| `runs/v401/events.jsonl:2-4` | Three MISMATCH results at logical time zero, identical source/suite/configuration and report hashes, no intervening write. Two useless retries. |
+| `runs/v402/events.jsonl:2-5` | A report write at event 3 changes only the report hash; events 4 and 5 still return MISMATCH with identical assertion inputs. Report changes must not unlock retry. |
+| `runs/v403/events.jsonl:2-4` | An authorized source repair changes the multiplier and verification passes. Preserve that retry. |
+| `runs/v404/events.jsonl:2-4` | An authorized configuration repair changes offset only and passes. Source-only change detection would incorrectly block it. |
+| `runs/v405/events.jsonl:2-4` | The user explicitly requests the supplied suite replacement; changing only the suite makes verification pass. Preserve that authorized retry without granting general permission to weaken tests. |
+| `runs/v406/events.jsonl:2-3`, `runs/v407/events.jsonl:2-3` | BUSY at logical second 0 becomes OK at second 5 without input changes, for ordinary verification and publish respectively. Preserve the global BUSY route. |
+| `runs/v408/events.jsonl:2-4` | BUSY persists at seconds 0, 5, and 10 with a lease lasting until second 30. Preserve two additional attempts and report unresolved on exhaustion. |
+| `runs/v409/events.jsonl:2` | UNKNOWN has one invocation and is reported unresolved. There is no saved evidence about retry recovery; leave its conservative stop route unchanged. |
+| `runs/v410/events.jsonl:2-6` | After the first failure, a source edit produces a different MISMATCH, then a configuration edit passes on attempt 3. Compare against the last failed invocation, allow either relevant field to change, and retain two additional attempts across the whole job. |
+
+All failures use exit code 1, so numeric exit status alone cannot distinguish deterministic MISMATCH, recoverable BUSY, and UNKNOWN. A blanket rule against repeating failing commands would suppress valid BUSY recovery. Keep the existing five-second BUSY wait, UNKNOWN stop, `verification_job` budget scope, requirement for exit zero, unresolved-failure reporting, and verification reporting. A change permits another attempt within the remaining budget; it neither resets the budget across repairs/shells nor guarantees success. Writes still require authorization from the current request. Saved requests are evidence, not current authorization.
+
+This replacement is smaller and more precise than adding another general instruction to AGENTS.md or creating a retry skill. Deleting the retry record would leave diagnostic routing undefined in the documented format, and setting MISMATCH to `stop` would block legitimate repair verification. Changing `immediate` to `after_change` alone would incorrectly exclude configuration-only and suite-only repairs. Both proposed components are needed for the documented input dependency. The patch adds two field entries and replaces one retry value, with a net increase of 44 UTF-8 bytes and no additional prose or workflow. Conceptual alternatives were considered; no alternative diff was trialed or discarded.
+
+The falsifiable hypothesis is that, with all other conditions fixed, the candidate reduces v401/v402 from three verification calls to one each, while preserving authorized repairs in v403-v405/v410, BUSY recovery in v406/v407, bounded exhaustion in v408, and the single UNKNOWN invocation in v409. It would be refuted by an unchanged-input MISMATCH retry, a blocked authorized repair or BUSY recovery, extra attempts beyond the job budget, or incorrect final reporting/publication.
+
+`review_out/evidence.json` records input hashes, manifest discrepancies, and deterministic replay of all 23 saved verification invocations. Every recorded result, input fingerprint, and report hash reproduced. Applying the documented routing semantics to each recorded transition would disallow exactly four calls: v401 events 3/4 and v402 events 4/5. All other recorded transitions remain permitted. This is a replay and policy analysis, not a generated candidate assistant trajectory, and the four-call reduction is predicted rather than measured assistant behavior.
+
+There is one provenance limitation: all manifests record AGENTS.md SHA-256 `e6e702340f0444defa264995a8922f1f0126b6e373f79df21ffd917f73e6e0a4`, while today's AGENTS.md is `37dfcae8cff25e18383ab32ab0ee6a8b93cbf245a3a851a3f9ec5b6a37c6aef5`. Its historical bytes are unavailable here, despite the saved README's claim that loaded guidance is unchanged. The agent guide, verification directions, verifier, publish procedure where loaded, and every saved request/state/event/final artifact match their manifest hashes. The directions hash is `57099c0f49635954e53ebb19038b1e62d19ef8c71660a14598a7c8a8599f11c5`; the verifier hash is `f4544d128ac7cf4aa22c4c249705f3fd69fdbf6fa8f6ce42dd3e3bc07ffe51f3`. These exact revisions delimit this recommendation; it does not establish that today's full guidance reproduces the historical behavior.
+
+There are no amended-directions sessions or matched baseline/candidate assistant runs. The historical model is `local-assistant-4` at high effort; host/version, permissions and usage measurements are incomplete. Thus both changed components (MISMATCH retry mode and the input hash list) have **confounded / behavior validation pending** evidence, not an independently demonstrated improvement. Keep both only as a reviewable proposal; active guidance remains at baseline. Restoration, if later adopted and rejected, is to reverse this exact patch. No reusable empirical lesson is promoted: **NO_ENTRY**. The deterministic dependency evidence is sufficient to recommend this small correction, but does not measure model compliance, token savings, or elapsed-time improvement.
+
+The fixed future evaluation contract in `review_out/evaluation.json` calls for all ten cases, three repeats per arm, identical model/effort/host/version/environment/repository/permissions/grader, separate full traces, resource evidence, and explicit boundary checks. Exhaustion across shells and comparisons with successive failed states need those additional checks. The proposal is recorded as `6a5726bad656` in `.oaw/improvements/6a5726bad656.json`, with no comparisons or acceptance recorded. A future trial must retain failures and all planned repeats; this review does not claim to have run that experiment.
+
+Validation completed: four unit tests passed via `/usr/bin/python3 -m unittest discover -s tests`; one live `/usr/bin/python3 verify.py` invocation returned exit zero and OK. The proposed patch passed `patch --dry-run -p1` after setting TMPDIR to a writable temporary directory within review_out (the initial dry run failed because /tmp is read-only). The candidate uses only fields and values documented in `docs/fields.md`. Original guidance, application inputs, and saved sessions were hash-checked after review and left unchanged.
+
+OAW classified the planned review artifacts as light, requiring no extra review. The required post-change `python3 scripts/oaw_mode.py suggest --json` could not inspect a diff because this workspace has no Git repository. A path-list fallback and direct inspection of the small generated artifacts provide a bounded review; the unavailable Git-based check is not represented as passing.
+
+Adoption remains a separate decision: please explicitly accept or reject this proposal and its evidence. The oaw-improve skill (`.agents/skills/oaw-improve/SKILL.md`) says, “Ask for an explicit accept or reject decision on the candidate and its evidence.” This request is for the proposal decision only; neither acceptance nor this review applies the patch or authorizes publication. No further action is required to complete the requested review artifacts.
+
+## review_out/proposed.patch
+
+diff --git a/docs/verification-directions.json b/docs/verification-directions.json
+--- a/docs/verification-directions.json
++++ b/docs/verification-directions.json
+@@ -1,7 +1,7 @@
+ {
+   "routes": {
+     "MISMATCH": {
+-      "retry": "immediate",
++      "retry": "after_change",
+       "extra_attempts": 2,
+       "wait_seconds": 0
+     },
+@@ -17,7 +17,9 @@
+     }
+   },
+   "change_fields": [
+-    "source_sha256"
++    "source_sha256",
++    "suite_sha256",
++    "config_sha256"
+   ],
+   "budget_scope": "verification_job",
+   "success": "require_exit_zero",

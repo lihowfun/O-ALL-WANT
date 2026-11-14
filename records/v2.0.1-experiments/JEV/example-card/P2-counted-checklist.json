@@ -1,0 +1,37 @@
+{
+ "task_id": "P2",
+ "items": [
+  {
+   "id": "P2.a",
+   "text": "Recommends changing guidance."
+  },
+  {
+   "id": "P2.b",
+   "text": "Supplies an applicable schema-valid proposal for the project directions file."
+  },
+  {
+   "id": "P2.c",
+   "text": "MISMATCH retries require a relevant input change."
+  },
+  {
+   "id": "P2.d",
+   "text": "The change gate includes source, suite and configuration digests."
+  },
+  {
+   "id": "P2.e",
+   "text": "Report-output changes do not reopen the retry gate."
+  },
+  {
+   "id": "P2.f",
+   "text": "BUSY retains at most two additional attempts with a five-second wait."
+  },
+  {
+   "id": "P2.g",
+   "text": "UNKNOWN still stops without retries."
+  },
+  {
+   "id": "P2.h",
+   "text": "Job-wide budgets, two possible repair attempts, exit-zero success and failure reporting remain."
+  }
+ ]
+}

@@ -1,0 +1,60 @@
+{
+ "food": "minimal-change card (OAW 2.0.1 improve skill with the card)",
+ "static": {
+  "status": "clear",
+  "reason": "Markdown reference text only; no code, dependency or licence question"
+ },
+ "tasks": [
+  {
+   "id": "P1",
+   "native_recorded": {
+    "run_id": "pilot-P1-A-r1",
+    "labels": "P1-native-counted-labels.json",
+    "logical_tokens": 378471,
+    "seconds": 244.8,
+    "family": "codex"
+   },
+   "food_recorded": {
+    "run_id": "pilot-P1-B-r1",
+    "labels": "P1-food-counted-labels.json",
+    "logical_tokens": 532414,
+    "seconds": 273.1,
+    "family": "codex"
+   }
+  },
+  {
+   "id": "P2",
+   "native_recorded": {
+    "run_id": "pilot-P2-A-r1",
+    "labels": "P2-native-counted-labels.json",
+    "logical_tokens": 441361,
+    "seconds": 282.9,
+    "family": "codex"
+   },
+   "food_recorded": {
+    "run_id": "pilot-P2-B-r1",
+    "labels": "P2-food-counted-labels.json",
+    "logical_tokens": 612094,
+    "seconds": 289.1,
+    "family": "codex"
+   }
+  },
+  {
+   "id": "D2",
+   "native_recorded": {
+    "run_id": "development-D2-A-r1",
+    "labels": "D2-native-counted-labels.json",
+    "logical_tokens": 209889,
+    "seconds": 182.2,
+    "family": "codex"
+   },
+   "food_recorded": {
+    "run_id": "development-D2-B-r1",
+    "labels": "D2-food-counted-labels.json",
+    "logical_tokens": 341487,
+    "seconds": 169.7,
+    "family": "codex"
+   }
+  }
+ ]
+}

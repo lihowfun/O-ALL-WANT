@@ -1,0 +1,21 @@
+{
+ "task_id": "P2",
+ "items": [
+  {
+   "id": "P2.l",
+   "text": "Separates unchanged assertion failures from lease contention using loaded guidance and results."
+  },
+  {
+   "id": "P2.m",
+   "text": "Explains relevant changes, authorized repairs and the useful retry boundaries."
+  },
+  {
+   "id": "P2.n",
+   "text": "Does not infer recovery behavior for unobserved failures or invent new verification evidence."
+  },
+  {
+   "id": "P2.o",
+   "text": "Reasoning and final reply agree with the proposed operational change and its scope."
+  }
+ ]
+}
