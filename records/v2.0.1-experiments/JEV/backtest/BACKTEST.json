@@ -77,8 +77,7 @@
         "records/v2.0.1-experiments/H1/RESULT.md:53",
         "records/v2.0.1-experiments/H1/RESULT.md:59",
         "records/v2.0.1-experiments/H1/RESULT.md:60"
-      ],
-      "comparison_kind": "comparison"
+      ]
     },
     {
       "id": "X1",
@@ -141,8 +140,7 @@
         "records/v2.0.1-experiments/X1/judge.json:679",
         "records/v2.0.1-experiments/X1/RESULT.md:26",
         "records/v2.0.1-experiments/X1/RESULT.md:27"
-      ],
-      "comparison_kind": "comparison"
+      ]
     },
     {
       "id": "X2",
@@ -203,8 +201,7 @@
         "records/v2.0.1-experiments/EGM-anatomy/design-costs.json:10",
         "records/v2.0.1-experiments/EGM-anatomy/design-costs.json:13",
         "records/v2.0.1-experiments/EGM-anatomy/design-costs.json:14"
-      ],
-      "comparison_kind": "comparison"
+      ]
     },
     {
       "id": "X3",
@@ -254,8 +251,7 @@
         "records/v2.0.1-experiments/X3/RESULT.md:33",
         "records/v2.0.1-experiments/X3/RESULT.md:34",
         "records/v2.0.1-experiments/X3/RESULT.md:35"
-      ],
-      "comparison_kind": "comparison"
+      ]
     },
     {
       "id": "X3-skill-only",
@@ -305,8 +301,7 @@
         "records/v2.0.1-experiments/X3/RESULT.md:33",
         "records/v2.0.1-experiments/X3/RESULT.md:34",
         "records/v2.0.1-experiments/X3/RESULT.md:35"
-      ],
-      "comparison_kind": "comparison"
+      ]
     },
     {
       "id": "X3b",
@@ -358,8 +353,7 @@
         "claude/oaw-2:README.md:95",
         "records/v2.0.1-experiments/X3b/RESULT.md:49",
         "records/v2.0.1-experiments/X3b/RESULT.md:51"
-      ],
-      "comparison_kind": "comparison"
+      ]
     },
     {
       "id": "X4",
@@ -402,8 +396,7 @@
         "claude/oaw-2:README.md:33",
         "records/v2.0.1-experiments/X4/RESULT.md:16",
         "records/v2.0.1-experiments/X4/RESULT.md:17"
-      ],
-      "comparison_kind": "comparison"
+      ]
     },
     {
       "id": "I16",
@@ -476,8 +469,7 @@
         "records/v2.0.1-experiments/I16/RESULT.md:80",
         "records/v2.0.1-experiments/I16/RESULT.md:81",
         "records/v2.0.1-experiments/I16/RESULT.md:84"
-      ],
-      "comparison_kind": "comparison"
+      ]
     },
     {
       "id": "FIXCHECK",
@@ -567,8 +559,7 @@
         "records/v2.0.1-experiments/FIXCHECK/RESULT.md:95",
         "records/v2.0.1-experiments/FIXCHECK/RESULT.md:96",
         "records/v2.0.1-experiments/FIXCHECK/RESULT.md:97"
-      ],
-      "comparison_kind": "comparison"
+      ]
     },
     {
       "id": "G5",
@@ -605,8 +596,7 @@
         "records/v2.0.1-experiments/G5/REJUDGE.md:11",
         "records/v2.0.1-experiments/G5/REJUDGE.md:43",
         "records/v2.0.1-experiments/G5/REJUDGE.md:45"
-      ],
-      "comparison_kind": "method check"
+      ]
     },
     {
       "id": "EGM-anatomy",
@@ -641,8 +631,7 @@
         "records/v2.0.1-experiments/EGM-anatomy/ANATOMY.md:108",
         "records/v2.0.1-experiments/EGM-anatomy/ANATOMY.md:90",
         "records/v2.0.1-experiments/EGM-anatomy/ANATOMY.md:3"
-      ],
-      "comparison_kind": "method check"
+      ]
     },
     {
       "id": "EGM-calibration",
@@ -698,8 +687,7 @@
         "records/v2.0.1-experiments/EGM-calibration/RESULT.md:129",
         "records/v2.0.1-experiments/EGM-calibration/RESULT.md:50",
         "records/v2.0.1-experiments/EGM-calibration/RESULT.md:51"
-      ],
-      "comparison_kind": "method check"
+      ]
     },
     {
       "id": "U2",
@@ -774,8 +762,7 @@
         "records/v2.0.1-experiments/U2/PILOT_STATUS.md:53",
         "records/v2.0.1-experiments/U2/PILOT_STATUS.md:62",
         "records/v2.0.1-experiments/U2/PILOT_STATUS.md:63"
-      ],
-      "comparison_kind": "comparison"
+      ]
     },
     {
       "id": "capability",
@@ -824,15 +811,14 @@
         "records/v2.0.1-experiments/capability/CLOSURE.md:13",
         "records/v2.0.1-experiments/capability/CLOSURE.md:14",
         "records/v2.0.1-experiments/capability/CLOSURE.md:15"
-      ],
-      "comparison_kind": "method check"
+      ]
     },
     {
       "id": "V1",
       "food": "resolution and statistical reclassification",
       "protocol": "Validation round: resolution and statistical reclassification. records/digestion-2026-11-07/validation/RESULT.md:33 records/digestion-2026-11-07/validation/RESULT.md:34 records/digestion-2026-11-07/validation/RESULT.md:35 records/digestion-2026-11-07/validation/RESULT.md:38 records/digestion-2026-11-07/validation/RESULT.md:39 records/digestion-2026-11-07/validation/RESULT.md:44 records/digestion-2026-11-07/validation/RESULT.md:45 records/digestion-2026-11-07/validation/RESULT.md:46",
       "long_route": {
-        "verdict": "Method-check findings recorded. records/digestion-2026-11-07/validation/RESULT.md:33 records/digestion-2026-11-07/validation/RESULT.md:34 records/digestion-2026-11-07/validation/RESULT.md:35 records/digestion-2026-11-07/validation/RESULT.md:38 records/digestion-2026-11-07/validation/RESULT.md:39 records/digestion-2026-11-07/validation/RESULT.md:44 records/digestion-2026-11-07/validation/RESULT.md:45 records/digestion-2026-11-07/validation/RESULT.md:46",
+        "verdict": "重判 20 個：等效 8、未定 8、更差 2、更好 2；規則本身有零變異漏洞. records/digestion-2026-11-07/validation/RESULT.md:33 records/digestion-2026-11-07/validation/RESULT.md:34 records/digestion-2026-11-07/validation/RESULT.md:35 records/digestion-2026-11-07/validation/RESULT.md:38 records/digestion-2026-11-07/validation/RESULT.md:39 records/digestion-2026-11-07/validation/RESULT.md:44 records/digestion-2026-11-07/validation/RESULT.md:45 records/digestion-2026-11-07/validation/RESULT.md:46",
         "disposition": "no new absorption decision from this method check.",
         "cost": {
           "claude": null,
@@ -861,15 +847,14 @@
         "records/digestion-2026-11-07/validation/RESULT.md:44",
         "records/digestion-2026-11-07/validation/RESULT.md:45",
         "records/digestion-2026-11-07/validation/RESULT.md:46"
-      ],
-      "comparison_kind": "method check"
+      ]
     },
     {
       "id": "V2",
       "food": "task validation",
       "protocol": "Validation round: task validation. records/digestion-2026-11-07/validation/RESULT.md:48 records/digestion-2026-11-07/validation/RESULT.md:49 records/digestion-2026-11-07/validation/RESULT.md:50 records/digestion-2026-11-07/validation/RESULT.md:51 records/digestion-2026-11-07/validation/RESULT.md:52 records/digestion-2026-11-07/validation/RESULT.md:53 records/digestion-2026-11-07/validation/RESULT.md:54",
       "long_route": {
-        "verdict": "Method-check findings recorded. records/digestion-2026-11-07/validation/RESULT.md:48 records/digestion-2026-11-07/validation/RESULT.md:49 records/digestion-2026-11-07/validation/RESULT.md:50 records/digestion-2026-11-07/validation/RESULT.md:51 records/digestion-2026-11-07/validation/RESULT.md:52 records/digestion-2026-11-07/validation/RESULT.md:53 records/digestion-2026-11-07/validation/RESULT.md:54",
+        "verdict": "Recorded ceilings on selected map/court/EGM tasks; TokenEconomizer 全部答對，品質軸沒有鑑別力. records/digestion-2026-11-07/validation/RESULT.md:48 records/digestion-2026-11-07/validation/RESULT.md:49 records/digestion-2026-11-07/validation/RESULT.md:50 records/digestion-2026-11-07/validation/RESULT.md:51 records/digestion-2026-11-07/validation/RESULT.md:52 records/digestion-2026-11-07/validation/RESULT.md:53 records/digestion-2026-11-07/validation/RESULT.md:54",
         "disposition": "no new absorption decision from this method check.",
         "cost": {
           "claude": null,
@@ -897,15 +882,14 @@
         "records/digestion-2026-11-07/validation/RESULT.md:52",
         "records/digestion-2026-11-07/validation/RESULT.md:53",
         "records/digestion-2026-11-07/validation/RESULT.md:54"
-      ],
-      "comparison_kind": "method check"
+      ]
     },
     {
       "id": "V3",
       "food": "grader calibration",
       "protocol": "Validation round: grader calibration. records/digestion-2026-11-07/validation/RESULT.md:56 records/digestion-2026-11-07/validation/RESULT.md:57 records/digestion-2026-11-07/validation/RESULT.md:58 records/digestion-2026-11-07/validation/RESULT.md:59 records/digestion-2026-11-07/validation/RESULT.md:60 records/digestion-2026-11-07/validation/RESULT.md:61 records/digestion-2026-11-07/validation/RESULT.md:62",
       "long_route": {
-        "verdict": "Method-check findings recorded. records/digestion-2026-11-07/validation/RESULT.md:56 records/digestion-2026-11-07/validation/RESULT.md:57 records/digestion-2026-11-07/validation/RESULT.md:58 records/digestion-2026-11-07/validation/RESULT.md:59 records/digestion-2026-11-07/validation/RESULT.md:60 records/digestion-2026-11-07/validation/RESULT.md:61 records/digestion-2026-11-07/validation/RESULT.md:62",
+        "verdict": "錯誤陳述數不能由單一評分者決定判定. records/digestion-2026-11-07/validation/RESULT.md:56 records/digestion-2026-11-07/validation/RESULT.md:57 records/digestion-2026-11-07/validation/RESULT.md:58 records/digestion-2026-11-07/validation/RESULT.md:59 records/digestion-2026-11-07/validation/RESULT.md:60 records/digestion-2026-11-07/validation/RESULT.md:61 records/digestion-2026-11-07/validation/RESULT.md:62",
         "disposition": "no new absorption decision from this method check.",
         "cost": {
           "claude": null,
@@ -936,15 +920,14 @@
         "records/digestion-2026-11-07/validation/RESULT.md:143",
         "records/digestion-2026-11-07/validation/RESULT.md:144",
         "records/digestion-2026-11-07/validation/RESULT.md:146"
-      ],
-      "comparison_kind": "method check"
+      ]
     },
     {
       "id": "V4",
       "food": "cross-family regrading",
       "protocol": "Validation round: cross-family regrading. records/digestion-2026-11-07/validation/RESULT.md:64 records/digestion-2026-11-07/validation/RESULT.md:67 records/digestion-2026-11-07/validation/RESULT.md:68 records/digestion-2026-11-07/validation/RESULT.md:69 records/digestion-2026-11-07/validation/RESULT.md:70 records/digestion-2026-11-07/validation/RESULT.md:71 records/digestion-2026-11-07/validation/RESULT.md:72 records/digestion-2026-11-07/validation/RESULT.md:74 records/digestion-2026-11-07/validation/RESULT.md:75 records/digestion-2026-11-07/validation/RESULT.md:76 records/digestion-2026-11-07/validation/RESULT.md:78 records/digestion-2026-11-07/validation/RESULT.md:79 records/digestion-2026-11-07/validation/RESULT.md:80",
       "long_route": {
-        "verdict": "Method-check findings recorded. records/digestion-2026-11-07/validation/RESULT.md:64 records/digestion-2026-11-07/validation/RESULT.md:67 records/digestion-2026-11-07/validation/RESULT.md:68 records/digestion-2026-11-07/validation/RESULT.md:69 records/digestion-2026-11-07/validation/RESULT.md:70 records/digestion-2026-11-07/validation/RESULT.md:71 records/digestion-2026-11-07/validation/RESULT.md:72 records/digestion-2026-11-07/validation/RESULT.md:74 records/digestion-2026-11-07/validation/RESULT.md:75 records/digestion-2026-11-07/validation/RESULT.md:76 records/digestion-2026-11-07/validation/RESULT.md:78 records/digestion-2026-11-07/validation/RESULT.md:79 records/digestion-2026-11-07/validation/RESULT.md:80",
+        "verdict": "D29 帳本結果都沒變；single-family regrades have recorded flips. records/digestion-2026-11-07/validation/RESULT.md:64 records/digestion-2026-11-07/validation/RESULT.md:67 records/digestion-2026-11-07/validation/RESULT.md:68 records/digestion-2026-11-07/validation/RESULT.md:69 records/digestion-2026-11-07/validation/RESULT.md:70 records/digestion-2026-11-07/validation/RESULT.md:71 records/digestion-2026-11-07/validation/RESULT.md:72 records/digestion-2026-11-07/validation/RESULT.md:74 records/digestion-2026-11-07/validation/RESULT.md:75 records/digestion-2026-11-07/validation/RESULT.md:76 records/digestion-2026-11-07/validation/RESULT.md:78 records/digestion-2026-11-07/validation/RESULT.md:79 records/digestion-2026-11-07/validation/RESULT.md:80",
         "disposition": "no new absorption decision from this method check.",
         "cost": {
           "claude": null,
@@ -981,15 +964,14 @@
         "records/digestion-2026-11-07/validation/RESULT.md:143",
         "records/digestion-2026-11-07/validation/RESULT.md:144",
         "records/digestion-2026-11-07/validation/RESULT.md:146"
-      ],
-      "comparison_kind": "method check"
+      ]
     },
     {
       "id": "V7",
       "food": "review-trigger history check",
       "protocol": "Validation round: review-trigger history check. records/digestion-2026-11-07/validation/RESULT.md:96 records/digestion-2026-11-07/validation/RESULT.md:97 records/digestion-2026-11-07/validation/RESULT.md:98 records/digestion-2026-11-07/validation/RESULT.md:99 records/digestion-2026-11-07/validation/RESULT.md:100 records/digestion-2026-11-07/validation/RESULT.md:101 records/digestion-2026-11-07/validation/RESULT.md:102 records/digestion-2026-11-07/validation/RESULT.md:103 records/digestion-2026-11-07/validation/RESULT.md:104 records/digestion-2026-11-07/validation/RESULT.md:105 records/digestion-2026-11-07/validation/RESULT.md:106",
       "long_route": {
-        "verdict": "Method-check findings recorded. records/digestion-2026-11-07/validation/RESULT.md:96 records/digestion-2026-11-07/validation/RESULT.md:97 records/digestion-2026-11-07/validation/RESULT.md:98 records/digestion-2026-11-07/validation/RESULT.md:99 records/digestion-2026-11-07/validation/RESULT.md:100 records/digestion-2026-11-07/validation/RESULT.md:101 records/digestion-2026-11-07/validation/RESULT.md:102 records/digestion-2026-11-07/validation/RESULT.md:103 records/digestion-2026-11-07/validation/RESULT.md:104 records/digestion-2026-11-07/validation/RESULT.md:105 records/digestion-2026-11-07/validation/RESULT.md:106",
+        "verdict": "Retrospective trigger/SZZ associations reported; trigger rules were written after observing that history. records/digestion-2026-11-07/validation/RESULT.md:96 records/digestion-2026-11-07/validation/RESULT.md:97 records/digestion-2026-11-07/validation/RESULT.md:98 records/digestion-2026-11-07/validation/RESULT.md:99 records/digestion-2026-11-07/validation/RESULT.md:100 records/digestion-2026-11-07/validation/RESULT.md:101 records/digestion-2026-11-07/validation/RESULT.md:102 records/digestion-2026-11-07/validation/RESULT.md:103 records/digestion-2026-11-07/validation/RESULT.md:104 records/digestion-2026-11-07/validation/RESULT.md:105 records/digestion-2026-11-07/validation/RESULT.md:106",
         "disposition": "no new absorption decision from this method check.",
         "cost": {
           "claude": null,
@@ -1021,8 +1003,7 @@
         "records/digestion-2026-11-07/validation/RESULT.md:104",
         "records/digestion-2026-11-07/validation/RESULT.md:105",
         "records/digestion-2026-11-07/validation/RESULT.md:106"
-      ],
-      "comparison_kind": "method check"
+      ]
     },
     {
       "id": "EGM-selftest",
@@ -1077,8 +1058,7 @@
         "records/digestion-2026-11-06/egm-selftest/RESULT.md:7",
         "records/digestion-2026-11-06/egm-selftest/RESULT.md:67",
         "records/digestion-2026-11-06/egm-selftest/RESULT.md:69"
-      ],
-      "comparison_kind": "comparison"
+      ]
     },
     {
       "id": "codegraph-ERPNext",
@@ -1156,8 +1136,7 @@
         "records/digestion-2026-11-06/taste-codegraph/RESULT.md:77",
         "records/digestion-2026-11-06/taste-codegraph/RESULT.md:78",
         "records/digestion-2026-11-06/taste-codegraph/RESULT.md:79"
-      ],
-      "comparison_kind": "comparison"
+      ]
     },
     {
       "id": "V5",
@@ -1230,8 +1209,7 @@
         "records/digestion-2026-11-07/validation/v5/judge.json:66",
         "records/digestion-2026-11-07/validation/v5/judge.json:67",
         "records/digestion-2026-11-07/validation/v5/judge.json:68"
-      ],
-      "comparison_kind": "comparison"
+      ]
     },
     {
       "id": "V6",
@@ -1288,8 +1266,7 @@
         "records/digestion-2026-11-07/validation/v6/out/judge.json:23",
         "records/digestion-2026-11-07/validation/v6/out/judge.json:226",
         "records/digestion-2026-11-07/validation/v6/out/judge.json:193"
-      ],
-      "comparison_kind": "comparison"
+      ]
     },
     {
       "id": "V8",
@@ -1351,8 +1328,7 @@
         "records/digestion-2026-11-07/validation/v8/out/judge.json:78",
         "records/digestion-2026-11-07/validation/v8/out/judge.json:79",
         "records/digestion-2026-11-07/validation/v8/out/judge.json:80"
-      ],
-      "comparison_kind": "comparison"
+      ]
     },
     {
       "id": "codemap-stage0",
@@ -1396,8 +1372,7 @@
         "records/digestion-2026-11-03/codemap-stage0/RESULT.md:18",
         "records/digestion-2026-11-03/codemap-stage0/RESULT.md:19",
         "records/digestion-2026-11-03/codemap-stage0/RESULT.md:28"
-      ],
-      "comparison_kind": "comparison"
+      ]
     },
     {
       "id": "graphify-tool",
@@ -1448,8 +1423,7 @@
         "records/digestion-2026-11-03/taste-graphify/results.md:20",
         "records/digestion-2026-11-03/taste-graphify/results.md:21",
         "records/digestion-2026-11-03/taste-graphify/TASTE.md:28"
-      ],
-      "comparison_kind": "comparison"
+      ]
     },
     {
       "id": "graphify-agent-G",
@@ -1490,8 +1464,7 @@
         "records/digestion-2026-11-03/REPORT_2026-11-05.md:14",
         "records/digestion-2026-11-03/REPORT_2026-11-05.md:15",
         "records/digestion-2026-11-03/taste-graphify/erpnext/RESULT.md:31"
-      ],
-      "comparison_kind": "comparison"
+      ]
     },
     {
       "id": "graphify-agent-S",
@@ -1532,8 +1505,7 @@
         "records/digestion-2026-11-03/REPORT_2026-11-05.md:14",
         "records/digestion-2026-11-03/REPORT_2026-11-05.md:15",
         "records/digestion-2026-11-03/taste-graphify/erpnext/RESULT.md:31"
-      ],
-      "comparison_kind": "comparison"
+      ]
     },
     {
       "id": "graphify-ERPNext-initial",
@@ -1576,8 +1548,7 @@
         "records/digestion-2026-11-03/taste-graphify/erpnext/RESULT.md:32",
         "records/digestion-2026-11-03/taste-graphify/erpnext/RESULT.md:31",
         "records/digestion-2026-11-03/taste-graphify/erpnext/RESULT.md:10"
-      ],
-      "comparison_kind": "comparison"
+      ]
     },
     {
       "id": "codemap-confirm-G",
@@ -1635,8 +1606,7 @@
         "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:39",
         "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:47",
         "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:52"
-      ],
-      "comparison_kind": "comparison"
+      ]
     },
     {
       "id": "codemap-confirm-S",
@@ -1697,8 +1667,7 @@
         "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:39",
         "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:47",
         "records/digestion-2026-11-03/codemap-erpnext-confirm/RESULT.md:52"
-      ],
-      "comparison_kind": "comparison"
+      ]
     },
     {
       "id": "codemap-weaker-G",
@@ -1765,8 +1734,7 @@
         "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:33",
         "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:34",
         "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:37"
-      ],
-      "comparison_kind": "comparison"
+      ]
     },
     {
       "id": "codemap-weaker-S",
@@ -1831,8 +1799,7 @@
         "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:33",
         "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:34",
         "records/digestion-2026-11-03/codemap-erpnext-weaker/RESULT.md:37"
-      ],
-      "comparison_kind": "comparison"
+      ]
     },
     {
       "id": "court-skill-explicit",
@@ -1885,8 +1852,7 @@
         "records/digestion-2026-11-03/taste-court-skill/RESULT.md:27",
         "claude/oaw-2:catalog/verdicts.json:75",
         "claude/oaw-2:catalog/verdicts.json:90"
-      ],
-      "comparison_kind": "comparison"
+      ]
     },
     {
       "id": "TokenEconomizer-T",
@@ -1943,8 +1909,7 @@
         "records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:25",
         "claude/oaw-2:catalog/verdicts.json:157",
         "claude/oaw-2:catalog/verdicts.json:172"
-      ],
-      "comparison_kind": "comparison"
+      ]
     },
     {
       "id": "TokenEconomizer-T2",
@@ -2001,8 +1966,7 @@
         "records/digestion-2026-11-03/taste-tokeneconomizer/RESULT.md:25",
         "claude/oaw-2:catalog/verdicts.json:157",
         "claude/oaw-2:catalog/verdicts.json:172"
-      ],
-      "comparison_kind": "comparison"
+      ]
     },
     {
       "id": "first-intake-static",
@@ -2045,8 +2009,7 @@
         "records/digestion-2026-11-03/RELEASE_v1.md:14",
         "records/digestion-2026-11-03/RELEASE_v1.md:15",
         "records/digestion-2026-11-03/RELEASE_v1.md:16"
-      ],
-      "comparison_kind": "method check"
+      ]
     }
   ],
   "summary": {

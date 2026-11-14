@@ -35,7 +35,7 @@ lead 抽查了 X2、U2 兩筆的數字與 H1 的 token 倍數，和原紀錄相�
 - 沒有任何一筆是「規則說 YES，而當時把它排掉」。
 - 規則說 NO 而當時留下來的 10 筆，各自當時的判定與處置在 [backtest/BACKTEST.md](backtest/BACKTEST.md) 逐列列出；H1 留作預設是產品決定（D45）。
 - 這些實驗記下來的花費（logical token，兩家不相加）：H1 Claude 24,056,558、Codex 23,883,264；X1 Claude 24,933,421；
-  X2 Claude 47,237,230；X3 Claude 3,603,037；X3b Claude 3,016,664；FIXCHECK Claude 8,154,700；U2 Codex 5,119,897。
+  X2 Claude 47,237,230、Codex 作答與評分 75,616,387；X3 Claude 3,603,037；X3b Claude 3,016,664；FIXCHECK Claude 8,154,700；U2 Codex 5,119,897。
   紀錄裡沒有「如果照快速判定做會花多少」的數字，所以這裡不算省了多少。
 
 ## 限制
