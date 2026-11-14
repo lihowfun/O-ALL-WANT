@@ -682,3 +682,22 @@ merging it in before the release:
   verbatim quote that code checks; the YES/NO itself is computed by a fixed rule, not by the judge.
   The 2026-11-08 screen's limits on what a cheap judge may decide (no consent, safety, licence or
   isolation clearance) stay.
+
+## D51. Pull-request decisions are the lead's; the Jev judge is used (2026-11-15)
+
+Owner in chat, answering the three items the lead listed (P0 merge and tag 2.0.1, P1 whether to use
+the Jev judge although the token condition failed, P2 whether items already kept as optional are
+re-judged under the fast decision rule):
+「白話說明我要審什麼 首先 P0 PR類給你判斷 P1 Jev已經夠穩就用 P2 還有其他白話精簡講」.
+
+- Pull requests: decisions of the pull-request kind are the lead's to judge. Lead reading: merge,
+  mark ready, title and description, and the tag and release that complete an already decided
+  release (D49). Not read as covering: deleting or renaming branches, force-pushes, closing issues,
+  or deciding to release something the owner has not seen.
+- Under this, on 2026-11-14 (UTC) the lead merged PR #16 with a merge commit (`dd91780`, tree
+  identical to the verified release commit `036a3e6`), pushed the annotated tag `v2.0.1` and
+  published the release. PR #4 shows as merged with it.
+- Jev: used. The owner judges it stable enough; the token condition the lead wrote before the
+  calibration (at most half the full-price grader's logical tokens) is set aside by this decision.
+  The measured calibration and its limits stay as recorded (`v2.0.1-experiments/JEV/RESULT.md`).
+- P2 and the remaining items: no decision; the owner asked for a plainer, shorter explanation.
