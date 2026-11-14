@@ -129,9 +129,17 @@ class ContextHubTests(unittest.TestCase):
                     worker.terminate()
                     worker.join()
         content = self.memory.read_text(encoding="utf-8")
+        # A writer whose replace keeps meeting a Windows sharing violation for the whole retry window
+        # takes the documented fallback and adds its entry to pending memory instead. That is not a
+        # loss, so count both files: every entry exactly once, in one of them. (Seen once in CI on
+        # windows-latest with Python 3.13, where this test had required every entry in the main file.)
+        pending_path = self.base / ".oaw" / "memory-pending.md"
+        pending = pending_path.read_text(encoding="utf-8") if pending_path.exists() else ""
         for number in range(6):
             for entry in range(3):
-                self.assertEqual(content.count(f"writer_{number}_entry_{entry}"), 1)
+                name = f"writer_{number}_entry_{entry}"
+                found = (content.count(name), pending.count(name))
+                self.assertEqual(sum(found), 1, f"{name}: main={found[0]} pending={found[1]}")
         self.assertIn("baseline text", content)
 
     def test_failed_mutation_preserves_original_and_releases_lock(self):
