@@ -1,0 +1,384 @@
+{
+  "grades": [
+    {
+      "review_id": "R01",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        {
+          "finding_id": "uncertainties[0].a",
+          "classification": "grounded_planted_detection",
+          "reason": "The undefined Flux shim assertion is M1, credited once."
+        },
+        {
+          "finding_id": "uncertainties[0].b",
+          "classification": "grounded_planted_detection",
+          "reason": "Undefined delivery scope, readiness and verification criteria are M2, credited once; no runtime failure is asserted."
+        },
+        {
+          "finding_id": "uncertainties[1]",
+          "classification": "unverified_result",
+          "reason": "design.md:4 states targets and :16 plans verification; the supplied sources provide no measurement results. No infeasibility or success is claimed."
+        },
+        {
+          "finding_id": "uncertainties[2]",
+          "classification": "conditional_risk",
+          "reason": "design.md:13 activates every tenant together, supporting wider potential impact. No mandatory staged-rollout rule or actual failure is asserted."
+        },
+        {
+          "finding_id": "uncertainties[3]",
+          "classification": "open_details",
+          "reason": "Acknowledgement durability, retry implementation and replay infrastructure are not described by the small supplied baseline or plan. The report correctly leaves dependent failures unestablished."
+        }
+      ],
+      "explanations": {
+        "C1": "F01 identifies that design.md:7 removes the version guard and unconditionally overwrites received state, allowing an older event after a newer event to regress the projection. ADR-004:3 explicitly permits reordering/redelivery and prohibits regression; projector.py:2-7 currently locks and rejects equal/older versions. The unfiltered replay in design.md:13 is the same monotonic-state defect and receives no second credit.",
+        "C2": "F02 identifies that complete authorization-header logging on failure would persist token-bearing credentials. design.md:10 explicitly requires the complete header and 14-day log retention; accepted ADR-004:3 forbids authentication tokens in logs. This is a correct C2 detection.",
+        "M1": "uncertainties[0].a concretely identifies Flux shim as undefined. This detects the terminology/component gap in design.md:16; the baseline and ADR supply no definition. Calling it a planning ambiguity does not negate the detection.",
+        "M2": "uncertainties[0].b states delivery scope and acceptance criteria cannot be assessed and verification is undefined. This detects the actionability gap in design.md:16, regardless of its placement under uncertainties."
+      }
+    },
+    {
+      "review_id": "R02",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        {
+          "finding_id": "uncertainties[0].a",
+          "classification": "grounded_planted_detection",
+          "reason": "Undefined Flux shim is M1, credited once."
+        },
+        {
+          "finding_id": "uncertainties[0].b",
+          "classification": "grounded_planted_detection",
+          "reason": "Undefined scope and completion/verification criteria are M2, credited once."
+        },
+        {
+          "finding_id": "uncertainties[1]",
+          "classification": "unverified_result",
+          "reason": "design.md:4 provides targets and :16 future verification, without results. The report properly leaves feasibility and achievement open."
+        },
+        {
+          "finding_id": "uncertainties[2]",
+          "classification": "conditional_risk",
+          "reason": "All-tenant activation is explicit in design.md:13. Increased exposure is conditional and the report correctly finds no accepted phased-rollout mandate."
+        }
+      ],
+      "explanations": {
+        "C1": "F01 identifies that design.md:7 removes the version guard and unconditionally overwrites received state, allowing an older event after a newer event to regress the projection. ADR-004:3 explicitly permits reordering/redelivery and prohibits regression; projector.py:2-7 currently locks and rejects equal/older versions. The unfiltered replay in design.md:13 is the same monotonic-state defect and receives no second credit.",
+        "C2": "F02 identifies that complete authorization-header logging on failure would persist token-bearing credentials. design.md:10 explicitly requires the complete header and 14-day log retention; accepted ADR-004:3 forbids authentication tokens in logs. This is a correct C2 detection.",
+        "M1": "uncertainties[0].a identifies the undefined Flux shim and component scope, directly supported by design.md:16 and the absence of a definition in the complete baseline. This is a semantic M1 detection.",
+        "M2": "uncertainties[0].b explicitly says completion criteria and implementation/verification scope cannot be determined. That is the delivery-plan actionability defect in design.md:16, even though no runtime defect is claimed."
+      }
+    },
+    {
+      "review_id": "R03",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        {
+          "finding_id": "uncertainties[0]",
+          "classification": "conditional_risk",
+          "reason": "The source describes simultaneous all-tenant activation and no containment procedure. The report expressly treats resulting impact as conditional and acknowledges no staged-rollout requirement."
+        },
+        {
+          "finding_id": "uncertainties[1].a",
+          "classification": "grounded_planted_detection",
+          "reason": "Undefined Flux shim is M1, credited once."
+        },
+        {
+          "finding_id": "uncertainties[1].b",
+          "classification": "grounded_planted_detection",
+          "reason": "Unclear scope and completion criteria are M2, credited once, without asserting a specific runtime failure."
+        },
+        {
+          "finding_id": "uncertainties[2]",
+          "classification": "unverified_result",
+          "reason": "The provided design has performance goals and planned verification but no supplied results; source inspection alone establishes neither success nor failure."
+        }
+      ],
+      "explanations": {
+        "C1": "F01 identifies that design.md:7 removes the version guard and unconditionally overwrites received state, allowing an older event after a newer event to regress the projection. ADR-004:3 explicitly permits reordering/redelivery and prohibits regression; projector.py:2-7 currently locks and rejects equal/older versions. The unfiltered replay in design.md:13 is the same monotonic-state defect and receives no second credit.",
+        "C2": "F02 identifies that complete authorization-header logging on failure would persist token-bearing credentials. design.md:10 explicitly requires the complete header and 14-day log retention; accepted ADR-004:3 forbids authentication tokens in logs. This is a correct C2 detection.",
+        "M1": "uncertainties[1].a explicitly identifies undefined Flux shim terminology. design.md:16 acknowledges that gap and no canonical source defines it; this detects M1.",
+        "M2": "uncertainties[1].b states delivery scope and completion criteria remain unclear. That is an accurate detection of the plan defect in design.md:16; the disclaimer about implementation defects does not withdraw this document-level finding."
+      }
+    },
+    {
+      "review_id": "R04",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        {
+          "finding_id": "uncertainties[0]",
+          "classification": "open_question",
+          "reason": "The phrase five-minute lag budget breach in design.md:4 does not explicitly distinguish a lag threshold, sustained duration or evaluation window. This is a grounded clarification question, not an asserted alert malfunction."
+        },
+        {
+          "finding_id": "uncertainties[1]",
+          "classification": "unverified_result",
+          "reason": "design.md:4 gives targets and :16 plans verification; no executed verification or passing result is supplied. Read in this source-evidence scope, the statement does not establish historical execution outside the fixture."
+        },
+        {
+          "finding_id": "uncertainties[2]",
+          "classification": "open_details",
+          "reason": "projector.py implements only transactional projection updates and the design omits queue/retry/retention/capacity mechanics. Recovery feasibility is left unverified, not asserted impossible."
+        },
+        {
+          "finding_id": "uncertainties[3]",
+          "classification": "conditional_risk",
+          "reason": "design.md:13 supports potential impact across tenants; the report properly disclaims a required rollout policy."
+        },
+        {
+          "finding_id": "uncertainties[4]",
+          "classification": "method_standard_observation",
+          "reason": "feature-spec-standard.md requires alternatives evaluation and explicit risk treatment; the supplied design contains neither analysis. This is accurate about that review standard and is expressly not turned into a new product requirement or separate runtime defect."
+        }
+      ],
+      "explanations": {
+        "C1": "F01 identifies that design.md:7 removes the version guard and unconditionally overwrites received state, allowing an older event after a newer event to regress the projection. ADR-004:3 explicitly permits reordering/redelivery and prohibits regression; projector.py:2-7 currently locks and rejects equal/older versions. The unfiltered replay in design.md:13 is the same monotonic-state defect and receives no second credit.",
+        "C2": "F02 identifies that complete authorization-header logging on failure would persist token-bearing credentials. design.md:10 explicitly requires the complete header and 14-day log retention; accepted ADR-004:3 forbids authentication tokens in logs. This is a correct C2 detection.",
+        "M1": "F03 identifies the undefined Flux shim and absent responsibility/contract. design.md:16 explicitly leaves the term undefined; README.md, ADR-004 and projector.py supply no definition. The report correctly assesses a scope gap, not a requirement that proposed code already exist.",
+        "M2": "F03 identifies missing actionable scope and F04 identifies undefined completion/verification criteria. design.md:16 supplies only making the shim production ready and running verification. Performance goals in :4 are not an executable delivery gate; both findings map to one M2 credit."
+      }
+    },
+    {
+      "review_id": "R05",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        {
+          "finding_id": "uncertainties[0]",
+          "classification": "conditional_risk",
+          "reason": "design.md:13 specifies all-tenant activation without a bounded rollout or explicit failure trigger. Potential exposure is conditional; no outage or prohibited rollout is alleged."
+        },
+        {
+          "finding_id": "uncertainties[1]",
+          "classification": "unverified_result",
+          "reason": "The source states performance targets without workload/capacity measurements. The report properly leaves both feasibility and successful verification unresolved."
+        },
+        {
+          "finding_id": "uncertainties[2]",
+          "classification": "method_standard_observation",
+          "reason": "The feature specification method requires alternatives evaluation and explicit risk/constraint analysis, absent in design.md. The report correctly limits this to a standard gap and does not impose literal headings or product requirements."
+        }
+      ],
+      "explanations": {
+        "C1": "F01 identifies that design.md:7 removes the version guard and unconditionally overwrites received state, allowing an older event after a newer event to regress the projection. ADR-004:3 explicitly permits reordering/redelivery and prohibits regression; projector.py:2-7 currently locks and rejects equal/older versions. The unfiltered replay in design.md:13 is the same monotonic-state defect and receives no second credit. F03 separately describes this replay consequence and is merged into C1.",
+        "C2": "F02 identifies that complete authorization-header logging on failure would persist token-bearing credentials. design.md:10 explicitly requires the complete header and 14-day log retention; accepted ADR-004:3 forbids authentication tokens in logs. This is a correct C2 detection.",
+        "M1": "F04 identifies undefined Flux shim and the lack of an identifiable component. design.md:16 explicitly acknowledges the undefined term and none of the other canonical sources defines it. Its proposed/current disclaimer is appropriate and does not negate M1.",
+        "M2": "F04 also identifies missing integration/file scope and executable completion conditions; design.md:16 defines neither production ready nor verification cases/pass criteria. This detects M2 once."
+      }
+    },
+    {
+      "review_id": "R06",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        {
+          "finding_id": "uncertainties[0]",
+          "classification": "editorial_question",
+          "reason": "design.md:4 does not explicitly resolve lag magnitude versus breach duration. The report calls this editorial ambiguity and does not claim incorrect alert execution."
+        },
+        {
+          "finding_id": "uncertainties[1]",
+          "classification": "conditional_risk",
+          "reason": "Workload, capacity and retry bounds/persistent-failure handling are absent from the provided design and baseline. The report properly avoids asserting measured overload or target failure."
+        },
+        {
+          "finding_id": "uncertainties[2]",
+          "classification": "open_details_and_conditional_risk",
+          "reason": "design.md:13 mentions failure after acknowledgement without explaining detection/recovery mechanics, and activates all tenants. Possible impact is conditional and no staged-rollout mandate is invented."
+        },
+        {
+          "finding_id": "uncertainties[3].a",
+          "classification": "method_standard_observation",
+          "reason": "feature-spec-standard.md requests alternatives and explicit risks; design.md lacks that analysis. The report does not convert the method into a new product requirement."
+        },
+        {
+          "finding_id": "uncertainties[3].b",
+          "classification": "unverified_result",
+          "reason": "No performance/test results are supplied, while design.md:16 plans verification. The source-only review properly avoids treating planned work as a passing result."
+        }
+      ],
+      "explanations": {
+        "C1": "F01 identifies that design.md:7 removes the version guard and unconditionally overwrites received state, allowing an older event after a newer event to regress the projection. ADR-004:3 explicitly permits reordering/redelivery and prohibits regression; projector.py:2-7 currently locks and rejects equal/older versions. The unfiltered replay in design.md:13 is the same monotonic-state defect and receives no second credit.",
+        "C2": "F02 identifies that complete authorization-header logging on failure would persist token-bearing credentials. design.md:10 explicitly requires the complete header and 14-day log retention; accepted ADR-004:3 forbids authentication tokens in logs. This is a correct C2 detection.",
+        "M1": "F03 identifies the undefined Flux shim and absent relation to apply_event. design.md:16 expressly leaves it undefined and the supplied baseline contains no definition. The report correctly distinguishes undefined scope from proof a current component is missing.",
+        "M2": "F03 identifies undefined implementation scope/readiness and F04 unspecified verification cases and expected outcomes. design.md:16 supplies no actionable delivery details or completion procedure; these receive one M2 credit."
+      }
+    },
+    {
+      "review_id": "R07",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        {
+          "finding_id": "uncertainties[0]",
+          "classification": "open_question",
+          "reason": "The five-minute lag budget phrase in design.md:4 does not explicitly settle lag magnitude versus duration above the goal; the report leaves behavior open and does not assert an observed alert defect."
+        },
+        {
+          "finding_id": "uncertainties[1]",
+          "classification": "conditional_risk_and_unverified_result",
+          "reason": "design.md provides goals and all-tenant activation but no measurements or rollout outcome. Feasibility and impact are correctly conditional; verification is planned, not shown passed."
+        },
+        {
+          "finding_id": "uncertainties[2]",
+          "classification": "method_standard_observation",
+          "reason": "Alternatives evaluation is required by feature-spec-standard.md and absent from the design. The report appropriately separates this from literal template/title preferences and independent runtime defects."
+        }
+      ],
+      "explanations": {
+        "C1": "F01 identifies that design.md:7 removes the version guard and unconditionally overwrites received state, allowing an older event after a newer event to regress the projection. ADR-004:3 explicitly permits reordering/redelivery and prohibits regression; projector.py:2-7 currently locks and rejects equal/older versions. The unfiltered replay in design.md:13 is the same monotonic-state defect and receives no second credit. F02 separately describes this replay consequence and is merged into C1.",
+        "C2": "F03 identifies that complete authorization-header logging on failure would persist token-bearing credentials. design.md:10 explicitly requires the complete header and 14-day log retention; accepted ADR-004:3 forbids authentication tokens in logs. This is a correct C2 detection.",
+        "M1": "F04 identifies undefined Flux shim and missing responsibility/integration definition. design.md:16 acknowledges the undefined term and the complete baseline provides no definition. This detects M1 without demanding that a proposed implementation already exist.",
+        "M2": "F04 identifies missing implementation scope and F05 undefined production readiness and verification criteria. design.md:16 contains no procedure or executable completion conditions. The two findings earn one M2 detection."
+      }
+    },
+    {
+      "review_id": "R08",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        {
+          "finding_id": "uncertainties[0]",
+          "classification": "open_question",
+          "reason": "design.md:4 does not expressly choose between a five-minute lag threshold, duration or evaluation window. The report raises a clarification, not a proved malfunction."
+        },
+        {
+          "finding_id": "uncertainties[1]",
+          "classification": "method_standard_observation",
+          "reason": "feature-spec-standard.md calls for alternatives and risks/limits; the design lacks their evaluation. The report properly declines to make exact template headings independent project defects."
+        },
+        {
+          "finding_id": "uncertainties[2]",
+          "classification": "conditional_risk",
+          "reason": "design.md:13 gives no replay sizing, duration or live-traffic interaction analysis. The report accurately leaves overload/rollout hazards conditional and claims no capacity failure or rollout prohibition."
+        },
+        {
+          "finding_id": "uncertainties[3].a",
+          "classification": "grounded_planted_detection",
+          "reason": "Unspecified verification reinforces M2 already credited to F03; it earns no additional credit."
+        },
+        {
+          "finding_id": "uncertainties[3].b",
+          "classification": "unverified_result",
+          "reason": "The sources give performance goals and future verification, with no executed/passing results. The statement is assessed within that source-only review scope."
+        }
+      ],
+      "explanations": {
+        "C1": "F01 identifies that design.md:7 removes the version guard and unconditionally overwrites received state, allowing an older event after a newer event to regress the projection. ADR-004:3 explicitly permits reordering/redelivery and prohibits regression; projector.py:2-7 currently locks and rejects equal/older versions. The unfiltered replay in design.md:13 is the same monotonic-state defect and receives no second credit.",
+        "C2": "F02 identifies that complete authorization-header logging on failure would persist token-bearing credentials. design.md:10 explicitly requires the complete header and 14-day log retention; accepted ADR-004:3 forbids authentication tokens in logs. This is a correct C2 detection.",
+        "M1": "F03 identifies undefined Flux shim and lack of component definition. design.md:16 explicitly leaves the term undefined and projector.py only defines apply_event. This is M1, not an unsupported claim that proposed files must exist already.",
+        "M2": "F03 says the required changes, completion state and verification outcome cannot be identified; uncertainties[3] reinforces unspecified verification. design.md:16 indeed lacks actionable scope/readiness/verification criteria, detecting M2 once."
+      }
+    },
+    {
+      "review_id": "R09",
+      "valid_review": true,
+      "detected_planted_ids": [
+        "C1",
+        "C2",
+        "M1",
+        "M2"
+      ],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        {
+          "finding_id": "uncertainties[0]",
+          "classification": "open_question",
+          "reason": "The five-minute lag budget phrase in design.md:4 does not explicitly define the alert window/condition; this is a grounded clarification request."
+        },
+        {
+          "finding_id": "uncertainties[1]",
+          "classification": "conditional_risk_and_open_details",
+          "reason": "The supplied design provides targets but no capacity/concurrency/retry/backpressure/recovery measurements. It does not establish inherent failure of parallelism/all-tenant rollout or inevitable post-ack data loss, which the report correctly declines to assert."
+        },
+        {
+          "finding_id": "uncertainties[2].a",
+          "classification": "method_standard_observation",
+          "reason": "feature-spec-standard.md requires alternatives and risk coverage; these analyses are absent. This describes a review-standard gap rather than a new product mandate."
+        },
+        {
+          "finding_id": "uncertainties[2].b",
+          "classification": "method_standard_observation",
+          "reason": "implementation-readiness-standard.md asks for test cases/actionable steps and stable phases. These are absent from design.md:16; the observation is method-scoped and partly reinforces M2, not an additional runtime defect."
+        },
+        {
+          "finding_id": "uncertainties[3].a",
+          "classification": "unverified_result",
+          "reason": "design.md:16 explicitly plans verification and no successful result is supplied. No failure or success is inferred."
+        },
+        {
+          "finding_id": "uncertainties[3].b",
+          "classification": "grounded_planted_detection",
+          "reason": "Undefined production readiness is supported by design.md:16 and reinforces M2 already credited to F03."
+        }
+      ],
+      "explanations": {
+        "C1": "F01 identifies that design.md:7 removes the version guard and unconditionally overwrites received state, allowing an older event after a newer event to regress the projection. ADR-004:3 explicitly permits reordering/redelivery and prohibits regression; projector.py:2-7 currently locks and rejects equal/older versions. The unfiltered replay in design.md:13 is the same monotonic-state defect and receives no second credit.",
+        "C2": "F02 identifies that complete authorization-header logging on failure would persist token-bearing credentials. design.md:10 explicitly requires the complete header and 14-day log retention; accepted ADR-004:3 forbids authentication tokens in logs. This is a correct C2 detection.",
+        "M1": "F03 identifies the undefined Flux shim and absent responsibility/integration definition. design.md:16 explicitly acknowledges it and the canonical baseline supplies no definition. This detects M1 at its proper planning scope.",
+        "M2": "F03 identifies undefined implementation target and completion criteria; uncertainties[2] and [3] reinforce unspecified tests/phases/readiness. design.md:16 offers no executable plan or verification gate, so M2 is detected once."
+      }
+    }
+  ]
+}

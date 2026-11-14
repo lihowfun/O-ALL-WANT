@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "oaw-retained-skill-value-v1",
+  "status": "registered-before-candidate-outputs",
+  "date": "2026-10-30",
+  "product_commit": "341b45014afd37f54f16e254452f9586e9d1b04f",
+  "egm_commit": "f0ba151b252c9abf1318d9fe857a43265d06de89",
+  "conditions": ["EGM", "V2 skill off", "V2 skill on"],
+  "modules": {"evidence": ["scoped-recall", "superseded-handoff"], "wiki": ["linked-refresh", "annotation-boundary"], "improve": ["masked-regression", "tampered-provenance"]},
+  "repeats": 2,
+  "seed": 20261031,
+  "requested_model": "gpt-6.1-sol",
+  "requested_effort": "medium",
+  "candidate_calls": 60,
+  "grader_calls": 12,
+  "adjudicator_calls_max": 6,
+  "limits": {"concurrency": 2, "per_call_seconds": 300, "dispatch_seconds": 7200, "candidate_logical_tokens": 20000000, "candidate_output_tokens": 250000, "grader_logical_tokens": 5000000, "grader_output_tokens": 100000, "automatic_retries": 0},
+  "causal_contrast": "V2 on/off keep identical helpers, policy and facts; change only the focused native SKILL package and explicit recipe metadata. Other selected OAW skills are held fixed. EGM has the same facts and ordinary file/Python tools, without OAW helpers. Source-loaded controlled experiment, not certification of native plugin discovery.",
+  "primary_endpoints": ["typed answer correctness", "required output artifact checks", "semantic citation and before-receiver grounding", "unsupported factual claims", "unauthorized policy application or source mutation"],
+  "readiness": "Fixture oracle and adapter tests plus source/control freeze must pass before dispatch. Prior shared-protocol 110-call expansion stays NOT RUN; this is a separately registered focused module study, not a completion of that expansion.",
+  "retention_rules": {
+    "quality_gain": "On exceeds both off and EGM complete-session successes in both predeclared families, without any per-paired-session loss, unsupported claim or source/application violation.",
+    "efficiency_gain": "All planned primary fields/artifacts and semantic audits pass in all conditions; on uses at least 15% fewer candidate logical tokens than both baselines in each of the two families. No case family may be traded away. Controller/grade/failed usage reported separately.",
+    "default": "Only an observed quality or efficiency gain supports retaining/promoting the focused skill for the tested workload. Small synthetic sample is exploratory, not universal superiority or statistical equivalence.",
+    "helper_only": "Off exceeds EGM but on does not exceed off: possible helper/platform value, not demonstrated added SKILL-instruction value; prefer retaining helpers while making the redundant entry optional.",
+    "no_gain": "No measured gain, ceiling or incomplete evidence: do not call useless; remove unsupported default/value claims and recommend opt-in pending representative evidence. Do not erase user-installed custom skills.",
+    "regression": "Any new critical error, unsupported claim, protected-input mutation or unauthorized application blocks promotion; propose retirement or fix under a new cohort, never alter this cohort's answers."
+  },
+  "boundary_audit": "Fresh ephemeral CLI processes, identical workspace-write sandbox and approval mode. Audit visible literal external/cohort reads and command records; this is not a proof of OS-level filesystem read isolation or native discovery. All graders receive actual tasks, project snapshots and visible command evidence without arm mapping; method style may weaken blinding.",
+  "exclusions": ["real calendar-time memory", "real production defect reduction", "unmeasured wiki procedure idempotence", "dollar or subscription quota estimates", "cross-host absolute token ranking", "automatic merge", "external paid API or Claude F1/live"]
+}

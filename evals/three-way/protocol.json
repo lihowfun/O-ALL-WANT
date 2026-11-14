@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "id": "egm-oaw-acceptance-pilot-20261030-v2",
+  "status": "registered-before-task-runs",
+  "arms": ["EGM", "OAW v1", "OAW v2"],
+  "sources": {
+    "EGM": "f0ba151b252c9abf1318d9fe857a43265d06de89",
+    "OAW v1": "5df531372330f6b0e1c9a81aee0c1c45f2f283ff",
+    "OAW v2": "9ae4eba01b948057efb8294df061dd995d03fc6e"
+  },
+  "model": "gpt-6.1-sol",
+  "effort": "medium",
+  "seed": 20261030,
+  "review_cases": ["kestrel", "marble"],
+  "review_repeats": 2,
+  "memory_trajectories": ["larch", "pumice"],
+  "memory_sessions": 4,
+  "egm_preset": "implementation; three direct fresh reviewers, then synthesis",
+  "limits": {
+    "concurrent_model_processes": 2,
+    "per_process_seconds": 300,
+    "total_seconds": 4800,
+    "input_plus_output_tokens": 20000000,
+    "output_tokens": 250000,
+    "automatic_retries": 0
+  },
+  "acceptance": {
+    "critical_errors": 0,
+    "source_mutations_in_read_only_reviews": 0,
+    "cross_trial_answer_leaks": 0,
+    "new_unsupported_claims_allowed_for_observed_parity": 0,
+    "all_planned_runs_required": true,
+    "complete_usage_required_for_token_claim": true,
+    "statistical_equivalence_claim_allowed": false,
+    "automatic_merge": false
+  },
+  "execution": "Codex --approve-for-me, same sandbox and automatic review for all arms; per-call unknown nonce read, persisted write, successful command and returned nonce required. Stop dispatch on any failed IO proof.",
+  "prior_cohort": "v1 registration/cohort-v4 is invalid environment evidence: default CLI approval policy blocked all reads. All old quality outputs excluded, all costs preserved separately. New cohort starts from clean installs with unchanged cases, gold, repeats and model.",
+  "scope": "Controlled source-loaded design-review and persisted-file handoff pilot. Not native plugin discovery, calendar-time memory, production coding, or proof of general superiority. All pairwise results must be reported; no outcome-dependent case selection."
+}

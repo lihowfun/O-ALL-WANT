@@ -1,0 +1,14 @@
+{
+  "resolutions": [
+    {
+      "review_id": "R05",
+      "unsupported_claims": [
+        {
+          "finding_id": "uncertainties[0].b",
+          "type": "contradicted",
+          "reason": "The disputed clause is \"docs/design.md:13 activates all tenants together without a bounded rollout or failure trigger,\" specifically the assertion that a failure trigger is absent. project/docs/design.md:13 explicitly states: \"If the new flow fails after acknowledgement, roll back by replaying all source events from the beginning\"; this supplies a failure condition that triggers rollback. The condition is coarse and lacks detection mechanics or measurable thresholds, but the review does not limit its absence assertion to those details. project/docs/design.md:4 also states an alert condition for a five-minute lag budget breach, although that alert need not itself be a rollback trigger. Under frozen grade_prompt.md:13-17, concrete factually contradicted assertions must be labeled while conditional risks are recorded separately. The next sentence, \"This is conditional operational exposure, not evidence of an outage,\" limits the alleged consequence; it does not turn the preceding factual absence claim into a question or conditional premise. Grader1 identifies that distinct absence assertion; grader2 treats the entire item as conditional and overlooks the express condition in design.md:13. The grounded all-tenant/bounded-rollout observation and conditional exposure remain unchanged, as do all other agreed labels. The method standards do not supply an additional product requirement that would justify redefining 'failure trigger' to require a particular metric or template."
+        }
+      ]
+    }
+  ]
+}

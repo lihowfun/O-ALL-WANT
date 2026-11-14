@@ -1,0 +1,602 @@
+{
+  "commit": "f0ba151b252c9abf1318d9fe857a43265d06de89",
+  "checked_utc": "2026-10-29T10:08:58.901070+00:00",
+  "files": [
+    {
+      "path": ".claude-plugin/agents/bootstrap_orchestrator.md",
+      "sha256": "b36fd3aec06f8c29dcebc5d041a75a3fe6cb9f2349d8db42fa0860f15bec4d13",
+      "matches": false,
+      "lf_sha256": "b07f80ac2b54b840a48b290221e4a15d97b2e90de5ed3d2760efba4112760930",
+      "lf_matches": true,
+      "crlf_count": 19,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/.claude-plugin/agents/bootstrap_orchestrator.md"
+    },
+    {
+      "path": ".claude-plugin/agents/codebase_details.md",
+      "sha256": "a9ca5902ed92730db997227cf3fb687ce8eaea20ee4c37d0615ac7a46e4f81b1",
+      "matches": false,
+      "lf_sha256": "17d4f89bb8786f78eca6d9e01e31493497cf4c2af55fa97342507648e185b78d",
+      "lf_matches": true,
+      "crlf_count": 17,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/.claude-plugin/agents/codebase_details.md"
+    },
+    {
+      "path": ".claude-plugin/agents/comprehension.md",
+      "sha256": "5a8dbf89bc7ac4577d7fd337b9ab05011d51651e67ef7be03e7169f1991d0e6a",
+      "matches": false,
+      "lf_sha256": "78356e3e5e89c3d4a6b9d51865ad81f1b256cb3289869a4070e149b7b90ae7f2",
+      "lf_matches": true,
+      "crlf_count": 17,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/.claude-plugin/agents/comprehension.md"
+    },
+    {
+      "path": ".claude-plugin/agents/design_critic.md",
+      "sha256": "fa9f3e0d84b6a13bd4f878cf02907b075f701d96ea43a364e13e6b50b875947b",
+      "matches": false,
+      "lf_sha256": "02058b72fe6c249ac0efc393069e9bb32a9890204f4efb8c51ffad36b8e4056e",
+      "lf_matches": true,
+      "crlf_count": 17,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/.claude-plugin/agents/design_critic.md"
+    },
+    {
+      "path": ".claude-plugin/agents/implementation_readiness.md",
+      "sha256": "78e6a0d023e7213dcc6163c72862ca36c11618cd999735c1cf56dc6077bf11e7",
+      "matches": false,
+      "lf_sha256": "98e7f8ccf177f6964e0dabe01d9b5ab429c8af7fc3bc5ba4178c84aaf1f90848",
+      "lf_matches": true,
+      "crlf_count": 17,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/.claude-plugin/agents/implementation_readiness.md"
+    },
+    {
+      "path": ".claude-plugin/agents/structural.md",
+      "sha256": "d474ac80ed522bdcf1cd6fe62feb9e9483f06d66699f8df605c8bd87cc3e95a7",
+      "matches": false,
+      "lf_sha256": "33237f2b2147903a270fae5b649cf638444fc9cf1109964b46db152bef3a5f90",
+      "lf_matches": true,
+      "crlf_count": 17,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/.claude-plugin/agents/structural.md"
+    },
+    {
+      "path": ".claude-plugin/agents/style.md",
+      "sha256": "ab5e0569662f78514f667b3314ba454104af9de5db08d4575aa3f0a0dc37aa09",
+      "matches": false,
+      "lf_sha256": "edeb79ef6336337438180b936469301f49782812e0c7a9841e20af2fe50844f2",
+      "lf_matches": true,
+      "crlf_count": 17,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/.claude-plugin/agents/style.md"
+    },
+    {
+      "path": ".claude-plugin/agents/synthesizer.md",
+      "sha256": "8c663c973eed841b0b6e735b186e483a3c0d3c088dca7675c0bac0ac611a5e7e",
+      "matches": false,
+      "lf_sha256": "e6f053a5d6b289592e7bb7b56d8ebae7f9b5080db6430c9f484fc9a40f4c7dfd",
+      "lf_matches": true,
+      "crlf_count": 16,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/.claude-plugin/agents/synthesizer.md"
+    },
+    {
+      "path": ".claude-plugin/agents/zoom_out.md",
+      "sha256": "f301f3dc1f802a932da02babd7b04f659f4d8c1cfa9118aa91bcd3e0685c0312",
+      "matches": false,
+      "lf_sha256": "c74662092db4297aebae1367d4614ae42e140fd6080b4276c0327853ae96ce0b",
+      "lf_matches": true,
+      "crlf_count": 17,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/.claude-plugin/agents/zoom_out.md"
+    },
+    {
+      "path": ".claude-plugin/icon.png",
+      "sha256": "ac92b3a769ba1754941d93b3cbe6456714f04a5bc123f4e36a7e2ff3e4bc8fbd",
+      "matches": true,
+      "lf_sha256": "7459bd97ea291a56b99645d4ba7fd7e64755242de2004bfc21a4c304fb05b19c",
+      "lf_matches": true,
+      "crlf_count": 1,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/.claude-plugin/icon.png"
+    },
+    {
+      "path": ".claude-plugin/plugin.json",
+      "sha256": "56b3cac6b2f4d97b22699f5f26029d5252f821dbccc51b1d44cd03c1c791922f",
+      "matches": false,
+      "lf_sha256": "b57b690c962e00bac6979e3788083a9c8120dc09beaac49b2abff1991d0ab4cc",
+      "lf_matches": true,
+      "crlf_count": 29,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/.claude-plugin/plugin.json"
+    },
+    {
+      "path": "agents/bootstrap_orchestrator.md",
+      "sha256": "ad6794f2c187cd801a7a83ad49c281116547d2ae0e0fa3b892b9c010c1195543",
+      "matches": false,
+      "lf_sha256": "5c2fa484754f8d582669500d16d5728fe95daff8bd964f8e7f09142c6a666bfc",
+      "lf_matches": true,
+      "crlf_count": 30,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/agents/bootstrap_orchestrator.md"
+    },
+    {
+      "path": "agents/codebase_details.md",
+      "sha256": "a19676acc9bf53d155b7b0a9c63d6b63c39bd43393bcb503d2f3a5fe62c6cd42",
+      "matches": false,
+      "lf_sha256": "d80db07e449b57b3b3776d1401cca72a54b6b65a0ab218b86f9064ee4b8167bc",
+      "lf_matches": true,
+      "crlf_count": 69,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/agents/codebase_details.md"
+    },
+    {
+      "path": "agents/comprehension.md",
+      "sha256": "2a2bd8ee584bec96b9470ca53191efb68a01e5d4f8e3c668d60201f368499f8e",
+      "matches": false,
+      "lf_sha256": "974f4972f717dc7b102a9b1407b3a625749149f2ae905727241e919f43cc3fa5",
+      "lf_matches": true,
+      "crlf_count": 69,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/agents/comprehension.md"
+    },
+    {
+      "path": "agents/design_critic.md",
+      "sha256": "fa91d7ef07f2657f810c556f823dd4ab299cd0c211433933056eda5ca981a716",
+      "matches": false,
+      "lf_sha256": "cee6294735ce2bd4fea19245852b6eb07cbe8ede7e72a4bfc829f586e4a39d0f",
+      "lf_matches": true,
+      "crlf_count": 63,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/agents/design_critic.md"
+    },
+    {
+      "path": "agents/implementation_readiness.md",
+      "sha256": "5e9da8c6f7d22c6f0835393475f81aba670d37c5468e109122e01207f09ef5e0",
+      "matches": false,
+      "lf_sha256": "1f6aa61cfe7cb86dc94943ab3b3fd339e5baba533937198fd10edb06dfa64e8f",
+      "lf_matches": true,
+      "crlf_count": 62,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/agents/implementation_readiness.md"
+    },
+    {
+      "path": "agents/structural.md",
+      "sha256": "0910c45b02618a7aa017f3adcaf7c6866c35668bd2aaef1db30a0c3d9b6b522e",
+      "matches": false,
+      "lf_sha256": "f0d4fe6faee4e388366b7d653fe353a9b09f45ca1bf5dae29280e351cda7da87",
+      "lf_matches": true,
+      "crlf_count": 65,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/agents/structural.md"
+    },
+    {
+      "path": "agents/style.md",
+      "sha256": "3c09b633b37630ba0bb1afd9d2b9264730ba479ce03d10851eedc01ee22b7dcb",
+      "matches": false,
+      "lf_sha256": "9d0d59d7fac7ee479f9beea22d28b8ea20b6fea0215e06bd292a14eb2bb3b692",
+      "lf_matches": true,
+      "crlf_count": 66,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/agents/style.md"
+    },
+    {
+      "path": "agents/synthesizer.md",
+      "sha256": "2f27b78efdcc1f40e14ed595f58e2ce49dc24c096d02157e68662c69527d8c4b",
+      "matches": false,
+      "lf_sha256": "402e661fa44684ce51246575d169f65003981846f318cf13cf124c8895b4ccab",
+      "lf_matches": true,
+      "crlf_count": 71,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/agents/synthesizer.md"
+    },
+    {
+      "path": "agents/zoom_out.md",
+      "sha256": "1b164f669c7bc74ea778fa505f9fc29ef5a3a4f251c4ff0c8ad27f3f109302d1",
+      "matches": false,
+      "lf_sha256": "adc9d7b7db4c304866e61d5e5e446502231abe188ce64656939305e07ae7995f",
+      "lf_matches": true,
+      "crlf_count": 74,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/agents/zoom_out.md"
+    },
+    {
+      "path": "assets/icon.svg",
+      "sha256": "c4ad28836064ec9628bc1e6c78490aefe405540c502cc8343cff156160412b6b",
+      "matches": false,
+      "lf_sha256": "224dfd77640ed4a3e85ff1d5f2378f13556407625456ceda625646fcaa765f24",
+      "lf_matches": true,
+      "crlf_count": 12,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/assets/icon.svg"
+    },
+    {
+      "path": "docs/assets/readme-header.svg",
+      "sha256": "2f3b0b947fbc04085961914404a1aae0c287a688b6ef59951d318b3c90a629f9",
+      "matches": false,
+      "lf_sha256": "e20f4b61ae27ca32c81a65e5fe4a4275dd464df08e107ba361c6cddc87a6178c",
+      "lf_matches": true,
+      "crlf_count": 24,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/docs/assets/readme-header.svg"
+    },
+    {
+      "path": "docs/claude.md",
+      "sha256": "df83240a9026f4f17a2dd02c2ffcc476dffd675d860e338d4a307fd87b526e33",
+      "matches": false,
+      "lf_sha256": "cbc51e603740134e5890fe645f3d516c03674598be43733c53411c920f445cc1",
+      "lf_matches": true,
+      "crlf_count": 172,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/docs/claude.md"
+    },
+    {
+      "path": "docs/codex.md",
+      "sha256": "90ee73c60bb581b467b05bcc54568f05c08dec43ce3a99353532aabc3157321e",
+      "matches": false,
+      "lf_sha256": "a7390390c233ece29a2ee7508a8d328b6b4ee200f649417c097687c76f014ad0",
+      "lf_matches": true,
+      "crlf_count": 117,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/docs/codex.md"
+    },
+    {
+      "path": "docs/faq.md",
+      "sha256": "b4833a6d1d0a7a5b4497c3ae32ebe5de1c5362ae7c2f606809c7dcd72d6c0d76",
+      "matches": false,
+      "lf_sha256": "e8cb380b8295dfa4ae6c5a2f0bb86a3b0fde58b65f5ce6dc7dc2527ebc4e4ef5",
+      "lf_matches": true,
+      "crlf_count": 62,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/docs/faq.md"
+    },
+    {
+      "path": "docs/getting_started.md",
+      "sha256": "62acd09a7ed6932a9fd50bedc474c45e9d695a69b5f50732a8be1c51caed7477",
+      "matches": false,
+      "lf_sha256": "e45d171e4bc306fcb87a426f2608a9ed46a3ca329d67fd5c11a0d944865a57c7",
+      "lf_matches": true,
+      "crlf_count": 149,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/docs/getting_started.md"
+    },
+    {
+      "path": "docs/harnesses.md",
+      "sha256": "07d5b99a3a623eb77eebc860bf5180fe4e53061c7e1df9628e388b70cfceb569",
+      "matches": false,
+      "lf_sha256": "12b1e70adb6dec4edcf0d5a129806ba09135f243c545a4c9b42d87edd57dbd48",
+      "lf_matches": true,
+      "crlf_count": 121,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/docs/harnesses.md"
+    },
+    {
+      "path": "docs/index.md",
+      "sha256": "6a02a59877c765811f2db95e84d04ab84a5f2b0d906dad45c19f410b8bc6f98e",
+      "matches": false,
+      "lf_sha256": "5ebb17daf9cec8c9802e62e8ba98345b29ddb44bfa0c9638a9859539d10a86c4",
+      "lf_matches": true,
+      "crlf_count": 106,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/docs/index.md"
+    },
+    {
+      "path": "docs/privacy.md",
+      "sha256": "aaa7fc7ed70b2f99a106c57dfafff2ef143e09b6d5a643148790bdf63215d869",
+      "matches": false,
+      "lf_sha256": "9d55a0a1d860787e07be7c6c5fb23f898b0a798b8975a39676f0845465df8583",
+      "lf_matches": true,
+      "crlf_count": 45,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/docs/privacy.md"
+    },
+    {
+      "path": "docs/releases.md",
+      "sha256": "76dc74177d5c0ee5b48b16b848f11987d812bec86994731da8bf8e8c5ad4d3d7",
+      "matches": false,
+      "lf_sha256": "d5dbaf5638079ce63a01517078760618688cf00913287a5163f2855b0a4ad05d",
+      "lf_matches": true,
+      "crlf_count": 70,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/docs/releases.md"
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "3ddf9be5c28fe27dad143a5dc76eea25222ad1dd68934a047064e56ed2fa40c5",
+      "matches": false,
+      "lf_sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "lf_matches": true,
+      "crlf_count": 202,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/LICENSE"
+    },
+    {
+      "path": "plugin.json",
+      "sha256": "89353aa60ca1475f4f6305b072de1aef6bc45942db5510159f260a2549f7a0d4",
+      "matches": false,
+      "lf_sha256": "227c4a9e4c337c6f43941287af5e6a09e6a247372ec6b98cca03f8ac0cf166e7",
+      "lf_matches": true,
+      "crlf_count": 31,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/plugin.json"
+    },
+    {
+      "path": "README.md",
+      "sha256": "693982093f4dbbaa9e978846db717e94fd4dbb53cf86783f2aa2b515afcd03db",
+      "matches": false,
+      "lf_sha256": "0998accadfd3fd89405c4bc217b25eb3b84e9137e6423f4002b553f37bed1565",
+      "lf_matches": false,
+      "crlf_count": 126,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/e45f640cc3799cf2a19c1dfb88aa850c021231ac/README.md"
+    },
+    {
+      "path": "resources/document_standards/feature-spec-standard.md",
+      "sha256": "fbc700c811e936c736798c15eafbebd65a54f72b23684af435a7961378efa349",
+      "matches": false,
+      "lf_sha256": "b3e4960fd884fde880a41da782fc73342fe232769e5835a4470b3c8c517644c4",
+      "lf_matches": true,
+      "crlf_count": 36,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/resources/document_standards/feature-spec-standard.md"
+    },
+    {
+      "path": "resources/document_standards/heilmeier-standard.md",
+      "sha256": "3520b5d69e80a73685443218c9af77c9f11d96109f9201cd2f814e1530af8edb",
+      "matches": false,
+      "lf_sha256": "a23bc354a5651bd00d817409a72ebcb7536c249e2038c13255ce89f49f138174",
+      "lf_matches": true,
+      "crlf_count": 30,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/resources/document_standards/heilmeier-standard.md"
+    },
+    {
+      "path": "resources/document_standards/implementation-readiness-standard.md",
+      "sha256": "db81bc74d6102a2df683dbb946821ff32cdd6d578966caae9cae82ea501054fb",
+      "matches": false,
+      "lf_sha256": "ed0d2a085eac0fd9581d504a2ec0df2a92d6b2538636a22b16e0b1370fba6dbb",
+      "lf_matches": true,
+      "crlf_count": 34,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/resources/document_standards/implementation-readiness-standard.md"
+    },
+    {
+      "path": "resources/document_standards/re-implementation-standard.md",
+      "sha256": "d3b36caa00290f75d382e345c2c4eeeba6c13bb7e6ff1891409a90f0ad1070e8",
+      "matches": false,
+      "lf_sha256": "421aacbf5e9a0d4c5b794edfa4cac333f8cc67bc4cf0e3717efcad4f827e6e46",
+      "lf_matches": true,
+      "crlf_count": 37,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/resources/document_standards/re-implementation-standard.md"
+    },
+    {
+      "path": "resources/document_standards/zoom-out-standard.md",
+      "sha256": "5ca59c1666659c2d5c3a74bd9cc53a358385080ec916b65235c6687f02bdd105",
+      "matches": false,
+      "lf_sha256": "0a01013bd363a8d744f8372b65495892360d7339e4e35c767003ae38f48e6799",
+      "lf_matches": true,
+      "crlf_count": 60,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/resources/document_standards/zoom-out-standard.md"
+    },
+    {
+      "path": "resources/execution_instructions.md",
+      "sha256": "791df19860b2633389c642e94c06bd747512f96ee0cc5be2809106a562848163",
+      "matches": false,
+      "lf_sha256": "06f0ee648efa2fefd79081d01f32c4930d709fa709df42d06a287f97a8582179",
+      "lf_matches": true,
+      "crlf_count": 34,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/resources/execution_instructions.md"
+    },
+    {
+      "path": "resources/README.md",
+      "sha256": "75caaa6d2562001768a0802dde5c209f1d2b3d12a6911b1d2905111f35174d37",
+      "matches": false,
+      "lf_sha256": "109c89969542dd5919c3f50f1bcf569c7668a505bff10439044135526e1a6b01",
+      "lf_matches": true,
+      "crlf_count": 16,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/resources/README.md"
+    },
+    {
+      "path": "skills/egm-bootstrap/agents/openai.yaml",
+      "sha256": "ec846cae5d3e4cea4fb2c030ccce0d674ecf64328a7cac7590de157018b58527",
+      "matches": false,
+      "lf_sha256": "e5f83ece63fce8c73329efedd990f912ab395e1e8339f89f83f9e6efef00fb27",
+      "lf_matches": true,
+      "crlf_count": 6,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-bootstrap/agents/openai.yaml"
+    },
+    {
+      "path": "skills/egm-bootstrap/assets/icon.svg",
+      "sha256": "bf3dcb9194d3f0dfa770585f10aaf7ceeded3029d64d80a57a063b7050e48ab3",
+      "matches": false,
+      "lf_sha256": "e1f021c3074bc22d982301bff8374cf1c2ff7c032d1834b66fed91a9ab57d370",
+      "lf_matches": true,
+      "crlf_count": 1,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-bootstrap/assets/icon.svg"
+    },
+    {
+      "path": "skills/egm-bootstrap/references/templates.md",
+      "sha256": "b9ab2db7309bee072baa5a4c8dd8c170f33565dff62e452d7035021950bcf16d",
+      "matches": false,
+      "lf_sha256": "f49793727cccbd72afdc4a0569a1d8e8138e943d2fc9b0df772b09deaca80437",
+      "lf_matches": true,
+      "crlf_count": 68,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-bootstrap/references/templates.md"
+    },
+    {
+      "path": "skills/egm-bootstrap/references/worker-return.schema.json",
+      "sha256": "21a52a84cfd6edaddca46c9fa06ca0e7322060d8c526ec82433ec22a283188d4",
+      "matches": false,
+      "lf_sha256": "f18a3822f60a0f117e1582cccac78a90cf14154afca811d4e81ea3fe562e52a5",
+      "lf_matches": true,
+      "crlf_count": 20,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-bootstrap/references/worker-return.schema.json"
+    },
+    {
+      "path": "skills/egm-bootstrap/SKILL.md",
+      "sha256": "6175b4dfd8276ddb52939ec003a81bcad7fffd43dd215782821c248c90428da4",
+      "matches": false,
+      "lf_sha256": "ac86aae69c782b67ebb96d1dae5bcef675745e3f57cca99196038bb5e350fc4c",
+      "lf_matches": true,
+      "crlf_count": 427,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-bootstrap/SKILL.md"
+    },
+    {
+      "path": "skills/egm-brainstorm/agents/openai.yaml",
+      "sha256": "5898695aafca08a4f2b25d34d263124e5cf86111abea6147af9730bb727c679a",
+      "matches": false,
+      "lf_sha256": "2b858c20f9d3b54cc1e02410a4fd6f7989b36d6d5d152cc87cd0d1082ce3bfc9",
+      "lf_matches": true,
+      "crlf_count": 6,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-brainstorm/agents/openai.yaml"
+    },
+    {
+      "path": "skills/egm-brainstorm/assets/icon.svg",
+      "sha256": "c676dbb04776c3c61b07babbd45a70562937b5df7152606f66f3d4487bbe6363",
+      "matches": false,
+      "lf_sha256": "89d894e7e9c10c2ad955ef1964049e508b718e96e8a177f547b240c774498b49",
+      "lf_matches": true,
+      "crlf_count": 1,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-brainstorm/assets/icon.svg"
+    },
+    {
+      "path": "skills/egm-brainstorm/SKILL.md",
+      "sha256": "5de9dcbc665c797ed373db2e3213d3a5b85ae781adda7c1ebd122e92b9658c5c",
+      "matches": false,
+      "lf_sha256": "fb594315b47dca4bbea878fc77cec42a1a3ef8c75a8b903b1812260391a13ed9",
+      "lf_matches": true,
+      "crlf_count": 264,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-brainstorm/SKILL.md"
+    },
+    {
+      "path": "skills/egm-draft/agents/openai.yaml",
+      "sha256": "f9550f36a40db7b3eb982aef10a3fa620b6694d4b1a8d7a902a14e881f3bc6b9",
+      "matches": false,
+      "lf_sha256": "eafc643897b5a4ea7a849bd4211acaf8f3bc31a079f199ef5d04d08b410705b7",
+      "lf_matches": true,
+      "crlf_count": 6,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-draft/agents/openai.yaml"
+    },
+    {
+      "path": "skills/egm-draft/assets/icon.svg",
+      "sha256": "72ca069efc44d5f5b2348c06156722c91195a4453c389c99503e6681ee927081",
+      "matches": false,
+      "lf_sha256": "0cca32ed85b4198fdf3566198f92a17c943ee3d9a72d38c2898132b67130aebd",
+      "lf_matches": true,
+      "crlf_count": 1,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-draft/assets/icon.svg"
+    },
+    {
+      "path": "skills/egm-draft/references/design_doc.md",
+      "sha256": "3ca26849504862dd5bf3fec4cda06c9e98c9ffa763ba11155403bba99ea7acd1",
+      "matches": false,
+      "lf_sha256": "eb8e580e4de6be88da33fdbe662d1b39a0fa7a13378d2dd240f82eb712684e0d",
+      "lf_matches": true,
+      "crlf_count": 177,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-draft/references/design_doc.md"
+    },
+    {
+      "path": "skills/egm-draft/SKILL.md",
+      "sha256": "1718eab3546b0888ef58dcca20c0143cd431a6645da8c6f633840d617b0fb621",
+      "matches": false,
+      "lf_sha256": "7908cb6d6b9ab82fef416211988ab9abd6681d4c783b2c31b1a8c40f97009ab0",
+      "lf_matches": true,
+      "crlf_count": 314,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-draft/SKILL.md"
+    },
+    {
+      "path": "skills/egm-drift-report/agents/openai.yaml",
+      "sha256": "498e2a40145e887eec53e0c1e0237ba9c17e846336a47f2e2de4df71cb25902e",
+      "matches": false,
+      "lf_sha256": "b54c32c1badc9a73e507f097377324dc31f2839cfef9c426d4dba1c622d5673c",
+      "lf_matches": true,
+      "crlf_count": 6,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-drift-report/agents/openai.yaml"
+    },
+    {
+      "path": "skills/egm-drift-report/assets/icon.svg",
+      "sha256": "e58da0209de04c07c9329330fe7d465f6e454c81f283d664e304ee6fe001ee40",
+      "matches": false,
+      "lf_sha256": "47bc4ecbe493f4454f9b7642f42de9fe41f8a93cbb86aa3ffbb5d58532ea0e2d",
+      "lf_matches": true,
+      "crlf_count": 1,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-drift-report/assets/icon.svg"
+    },
+    {
+      "path": "skills/egm-drift-report/SKILL.md",
+      "sha256": "574f1ed358033dd21f0fa602fd5e4ceb4c0d36268918bda9ae5eab758a62519e",
+      "matches": false,
+      "lf_sha256": "c000ffe2e77a9fe74ee6915b314e1547337c95c79a19014c44fd976dc6511476",
+      "lf_matches": true,
+      "crlf_count": 67,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-drift-report/SKILL.md"
+    },
+    {
+      "path": "skills/egm-resolve/agents/openai.yaml",
+      "sha256": "ef75c47359b2233e7314e75b35d44db7756c784957d32612aea5d18c2322f759",
+      "matches": false,
+      "lf_sha256": "7ad63dc69777e6e8b2e3d33cf4105149043038ffb489e750b3f483be7836cf30",
+      "lf_matches": true,
+      "crlf_count": 6,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-resolve/agents/openai.yaml"
+    },
+    {
+      "path": "skills/egm-resolve/assets/icon.svg",
+      "sha256": "112e6b103daaa1bd4f19c1eba9b15bcddf4dec5c21d68e8edc79dfcd44760166",
+      "matches": false,
+      "lf_sha256": "14ac0ad863fc6ab83ba5fd5f7bd46fd11b609d65f9e482b3fcddd7a139834733",
+      "lf_matches": true,
+      "crlf_count": 1,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-resolve/assets/icon.svg"
+    },
+    {
+      "path": "skills/egm-resolve/SKILL.md",
+      "sha256": "ec95e61db2ba085aa5ad18e6e762757ce63d40054ab2f74204f0257a894f9c4e",
+      "matches": false,
+      "lf_sha256": "6bb1909b42b815e074bd486c6244b56eef8d61669abb3302c764a16be05af472",
+      "lf_matches": true,
+      "crlf_count": 187,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-resolve/SKILL.md"
+    },
+    {
+      "path": "skills/egm-review/agents/openai.yaml",
+      "sha256": "cec50f7eabd0a07181409b136a259e6cbbfb21cb0a5eb3f512a812060eea3b8a",
+      "matches": false,
+      "lf_sha256": "780d8877443f704ee27d504c13d08f304f0bca4c4418f5703f61ae40416fca74",
+      "lf_matches": true,
+      "crlf_count": 6,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-review/agents/openai.yaml"
+    },
+    {
+      "path": "skills/egm-review/assets/icon.svg",
+      "sha256": "87f1aee8427473790225979889cde4a442545bdb3eabaf350c125965a8d0980a",
+      "matches": false,
+      "lf_sha256": "02154028864bd8547a45d7c9f55c59f95cb4ce3f57ecb3426f67034ab97d022f",
+      "lf_matches": true,
+      "crlf_count": 1,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-review/assets/icon.svg"
+    },
+    {
+      "path": "skills/egm-review/SKILL.md",
+      "sha256": "ecebd932c44929a5078a4d90bc2fb055b88a5455bc04a09e60a33147a6ad5713",
+      "matches": false,
+      "lf_sha256": "5e96e3b586a086c7c87b4f0185303a49adc9486028134d258827e9bbfb89e986",
+      "lf_matches": true,
+      "crlf_count": 402,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-review/SKILL.md"
+    },
+    {
+      "path": "skills/egm-review-loop/agents/openai.yaml",
+      "sha256": "68e7a4c21e165f75af7d28d6184284a5450be3c244586bba4e501bd6e9e5b1a0",
+      "matches": false,
+      "lf_sha256": "2073f27ed2c084c8db710f72dac367d26cb8cbc16aa2195546feb732b47a23ce",
+      "lf_matches": true,
+      "crlf_count": 6,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-review-loop/agents/openai.yaml"
+    },
+    {
+      "path": "skills/egm-review-loop/assets/icon.svg",
+      "sha256": "f598e1104b0f025871b596e369291a0f2ed26b46e78561d695d3c1a205822b57",
+      "matches": false,
+      "lf_sha256": "d6d5537843253fe634d248b6eadd5a5bcd2ef7742e016896eb11c583174eb530",
+      "lf_matches": true,
+      "crlf_count": 1,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-review-loop/assets/icon.svg"
+    },
+    {
+      "path": "skills/egm-review-loop/SKILL.md",
+      "sha256": "f134baa28f9c9635a3b51afc78f7559bdcd68abd7003a054f9eec22a93def397",
+      "matches": false,
+      "lf_sha256": "d99803ad5bf99900e9548491f6ad1ab58a9488bbf7af79f67ead033bb48b7023",
+      "lf_matches": true,
+      "crlf_count": 191,
+      "source_url": "https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-review-loop/SKILL.md"
+    }
+  ],
+  "all_match": false,
+  "all_lf_match": false,
+  "readme_matching_history_commits": [
+    "e45f640cc3799cf2a19c1dfb88aa850c021231ac"
+  ],
+  "binary_asset_note": {
+    "path": ".claude-plugin/icon.png",
+    "raw_matches": true,
+    "actual_sha256": "ac92b3a769ba1754941d93b3cbe6456714f04a5bc123f4e36a7e2ff3e4bc8fbd",
+    "source_sha256": "ac92b3a769ba1754941d93b3cbe6456714f04a5bc123f4e36a7e2ff3e4bc8fbd",
+    "used_by_reviewers": false,
+    "scope": "Manual workflow text evaluation only; not a validated redistributable/native-install bundle."
+  },
+  "text_source_counts": {
+    "total": 63,
+    "matching_primary_commit_after_lf_normalization": 62,
+    "readme_matches_earlier_commit": [
+      "e45f640cc3799cf2a19c1dfb88aa850c021231ac"
+    ]
+  }
+}

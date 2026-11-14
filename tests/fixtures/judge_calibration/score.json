@@ -1,0 +1,102 @@
+{
+  "grades-opus-1.jsonl": {
+    "label_accuracy_a_to_d": 1.0,
+    "label_accuracy_by_variant": {
+      "a": 1.0,
+      "b": 1.0,
+      "c": 1.0,
+      "d": 1.0
+    },
+    "wrong_claim_checks": {
+      "a_wrong_is_0": "4/4",
+      "b_wrong_is_0": "4/4",
+      "c_wrong_is_0": "4/4",
+      "d_wrong_at_least_1": "4/4"
+    },
+    "planted_wrong_delta_f_minus_e": [
+      2,
+      2,
+      1,
+      2
+    ],
+    "planted_detected_rate": 0.75,
+    "planted_partial_or_better_rate": 1.0,
+    "e_f_label_consistency": 1.0,
+    "graded": 24
+  },
+  "grades-opus-2.jsonl": {
+    "label_accuracy_a_to_d": 1.0,
+    "label_accuracy_by_variant": {
+      "a": 1.0,
+      "b": 1.0,
+      "c": 1.0,
+      "d": 1.0
+    },
+    "wrong_claim_checks": {
+      "a_wrong_is_0": "4/4",
+      "b_wrong_is_0": "4/4",
+      "c_wrong_is_0": "4/4",
+      "d_wrong_at_least_1": "3/4"
+    },
+    "planted_wrong_delta_f_minus_e": [
+      2,
+      2,
+      1,
+      3
+    ],
+    "planted_detected_rate": 0.75,
+    "planted_partial_or_better_rate": 1.0,
+    "e_f_label_consistency": 1.0,
+    "graded": 24
+  },
+  "grades-codex-1.jsonl": {
+    "label_accuracy_a_to_d": 1.0,
+    "label_accuracy_by_variant": {
+      "a": 1.0,
+      "b": 1.0,
+      "c": 1.0,
+      "d": 1.0
+    },
+    "wrong_claim_checks": {
+      "a_wrong_is_0": "4/4",
+      "b_wrong_is_0": "4/4",
+      "c_wrong_is_0": "4/4",
+      "d_wrong_at_least_1": "4/4"
+    },
+    "planted_wrong_delta_f_minus_e": [
+      2,
+      2,
+      2,
+      2
+    ],
+    "planted_detected_rate": 1.0,
+    "planted_partial_or_better_rate": 1.0,
+    "e_f_label_consistency": 0.891,
+    "graded": 24
+  },
+  "grades-codex-2.jsonl": {
+    "label_accuracy_a_to_d": 1.0,
+    "label_accuracy_by_variant": {
+      "a": 1.0,
+      "b": 1.0,
+      "c": 1.0,
+      "d": 1.0
+    },
+    "wrong_claim_checks": {
+      "a_wrong_is_0": "4/4",
+      "b_wrong_is_0": "4/4",
+      "c_wrong_is_0": "4/4",
+      "d_wrong_at_least_1": "4/4"
+    },
+    "planted_wrong_delta_f_minus_e": [
+      2,
+      1,
+      2,
+      0
+    ],
+    "planted_detected_rate": 0.5,
+    "planted_partial_or_better_rate": 0.75,
+    "e_f_label_consistency": 0.927,
+    "graded": 24
+  }
+}

@@ -1,39 +1,7 @@
-# Prompt: Promote Wiki Knowledge To A Skill
+# Propose a reusable native skill
 
-Use this when a wiki topic describes a procedure that agents repeat often.
+Decide whether the observed workflow is recurring and missing from existing native capabilities/skills. Prefer removing redundant guidance or patching an existing skill. NOACTION is valid.
 
-```text
-Read CLAUDE.md first, then AI_CONTEXT.md.
+If a reusable procedure is justified, propose `<skill-name>/SKILL.md` with a concise name/description and only the non-obvious instructions/resources it needs. Keep references progressive and avoid generic thinking/testing/logging boilerplate. Respect the selected host's native installation path.
 
-Evaluate whether this wiki topic should be promoted to a skill:
-[topic id or file path]
-
-Use these criteria:
-
-1. Does the procedure repeat across sessions?
-2. Does it have a clear user trigger phrase?
-3. Does it require specific files to read before acting?
-4. Does it have deterministic commands or checks?
-5. Does it have known edge cases that should not be rediscovered?
-
-If it should become a skill, draft .agents/skills/[skill-name].md with:
-
-- name
-- description
-- triggers
-- params
-- required reads
-- outputs
-- step-by-step workflow
-- verification commands
-- edge cases
-
-If it should stay as wiki knowledge, explain the missing pieces and update the
-topic with the next evidence needed.
-```
-
-## Promotion Rule
-
-The wiki explains durable knowledge. A skill executes a repeated workflow. When
-the same wiki page is used as instructions three times, it is probably ready to
-be promoted.
+Use the optional improvement workflow for a concrete diff, fixed evaluation cases and matched baseline/candidate evidence before recording adoption. Do not automatically rewrite active policy, native memory or unrelated configuration.

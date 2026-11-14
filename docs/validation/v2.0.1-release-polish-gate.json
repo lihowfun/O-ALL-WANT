@@ -1,0 +1,99 @@
+{
+  "gate": {
+    "all_passed": true,
+    "passed_count": 9,
+    "total": 9,
+    "checks": [
+      {
+        "name": "syntax",
+        "passed": true,
+        "detail": "44 Python files compiled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "name": "cli-contracts",
+        "passed": true,
+        "detail": "8 entry points expose expected operations",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "name": "native-skills",
+        "passed": true,
+        "detail": "exit 0",
+        "stdout": "Validated 14 portable native skill package(s).\n",
+        "stderr": ""
+      },
+      {
+        "name": "egm-integration",
+        "passed": true,
+        "detail": "exit 0",
+        "stdout": "{\"status\": \"verified\", \"runtime_files\": 65, \"adapter_files\": 30, \"commit\": \"f0ba151b252c9abf1318d9fe857a43265d06de89\"}\n",
+        "stderr": ""
+      },
+      {
+        "name": "behavior-regressions",
+        "passed": true,
+        "detail": "685 tests, 0 skipped",
+        "stdout": "OAW-TEST-SUMMARY {\"run\": 685, \"skipped\": 0, \"successful\": true, \"modules\": [\"test_catalog\", \"test_catalog_core\", \"test_catalog_ui\", \"test_cli_resolve\", \"test_code_index\", \"test_codemap_eval\", \"test_context_hub\", \"test_digest_mod\", \"test_doctor_probe\", \"test_egm_integration\", \"test_egm_local\", \"test_egm_local_measure\", \"test_egm_pilot\", \"test_eval_stats\", \"test_gate\", \"test_goldfish_review\", \"test_improvement\", \"test_install\", \"test_judge_calibration\", \"test_oaw_mode\", \"test_skills\", \"test_status\", \"test_user_install\", \"test_wiki_sync\"]}\n",
+        "stderr": ".............................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................\n----------------------------------------------------------------------\nRan 685 tests in 171.194s\n\nOK\n"
+      },
+      {
+        "name": "installed-lifecycle",
+        "passed": true,
+        "detail": "minimal -> knowledge+improvement+both hosts; doctor and installed helpers; dry-run migration",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "name": "example-content",
+        "passed": true,
+        "detail": "exit 0",
+        "stdout": "Example framework files match installer payloads.\n",
+        "stderr": ""
+      },
+      {
+        "name": "repo-wiki",
+        "passed": true,
+        "detail": "exit 0",
+        "stdout": "⚠️ wiki_sync lint warnings — 22 soft issue(s):\n  - manual topic has no source refs in Harness_Engineering_Context_Fragmentation.md: add docs/raw source refs or stable source metadata when practical\n  - manual topic has no source refs in Harness_Engineering_Deterministic_State.md: add docs/raw source refs or stable source metadata when practical\n  - manual topic has no source refs in Harness_Engineering_Knowledge_Synthesis.md: add docs/raw source refs or stable source metadata when practical\n  - manual topic has no source refs in OAW_Session_Continuity_Test.md: add docs/raw source refs or stable source metadata when practical\n  - orphan page 'Release_Learnings': no sources and no topic links\n  - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:42: VERSION: ${VERSION}\n  - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:44: CURRENT PHASE: ${CURRENT_PHASE}\n  - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:61: # ${PROJECT_NAME} — Master Router\n  - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:63: > Replace `${PROJECT_NAME}`, `${LANGUAGE}`, and the custom forbidden-action\n  - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:82: - `${PROJECT_NAME}`, `${ONE_LINE_DESCRIPTION}`, `${VERSION}`, `${REPO_URL}`, `${PIPELINE_SUMMARY}`\n  - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:83: - `${LANGUAGE}`, `${SAFETY_CRITICAL_FILE}`, `${IMPORTANT_WORKAROUND}`\n  - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:84: - Metric table: `${METRIC_1}`, `${VALUE_1}`, `${DATE}`, `${NOTES}`\n  - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:85: - Test commands: `${SMOKE_TEST_CMD}`, `${REGRESSION_TEST_CMD}`, `${INTEGRATION_TEST_CMD}`\n  - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:86: - Stack: `${LANGUAGE_AND_FRAMEWORKS}`, `${RUNTIME_ENVIRONMENT}`, `${EXTERNAL_SERVICES}`\n  - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:92: \"version\": \"${VERSION}\",\n  - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:93: \"project\": \"${PROJECT_NAME}\",\n  - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:94: \"last_updated\": \"${DATE}\",\n  - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:95: \"current_phase\": \"${CURRENT_PHASE}\",\n  - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:96: \"next_phase\": \"${NEXT_PHASE}\",\n  - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:107: - **What fails**: A fresh agent cannot answer \"what project is this?\" or \"what phase are we in?\" All identity fields are\n  - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:263: | P0 | Fresh install: every file shows `${VERSION}` / `${CURRENT_PHASE}` placeholders — agent cannot orient | `context_h\n  - literal `YYYY-MM-DD` date placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:268: | P2 | Date redundancy: `memory add \"[DECISION] 2026-04-18 ...\"` produced `## [2026-04-18] [DECISION] 2026-04-18 ...` wi\n✅ wiki_sync lint passed — no unresolved issues found.\n",
+        "stderr": ""
+      },
+      {
+        "name": "version",
+        "passed": true,
+        "detail": "2.0.0 (proposed); source ledger and CI pins agree",
+        "stdout": "",
+        "stderr": ""
+      }
+    ]
+  },
+  "source_sha256": {
+    "CHANGELOG.md": "4eead7911f5e0d71c6fc179d34ecfc0617d284a9f2bae3669657cdcc64ea0b7a",
+    "README.md": "4e05fc6910bbe9f0808b517c10f5f33bc08788b846d81a75bf6aebbe4188cac2",
+    "ROADMAP.md": "7256466645fccb00c6d333461635cfb5e2a5eff542904dc67ec7162c57d92648",
+    "docs/CLI_Reference.md": "549cfbe938353e03929b100e442222ce2dffbdb9eb1fbd7b388fa4c739ad06bd",
+    "docs/SKILL_INTAKE.md": "962c5f201ace10532b9e10fcdd0a2c98a4bc244f875ea8e0a633c1a2d1f9cf76",
+    "docs/UPGRADING.md": "0471013f5fb001eea396b848e41d6df607501831a2a5b1ecbca0adecc104e071",
+    "example/minimal-project/.agents/skills/oaw-add/SKILL.md": "e0321508694d2bb5e0f404d14d7e276df006e6b71f2304cec883d0bc96293e79",
+    "example/minimal-project/.oaw/install.json": "35c6a5b910c24b472078cd55ce705b1b3c22edd647cc8ba0c8eb0422fccffb51",
+    "example/public-hybrid-demo/.agents/skills/oaw-add/SKILL.md": "e0321508694d2bb5e0f404d14d7e276df006e6b71f2304cec883d0bc96293e79",
+    "example/public-hybrid-demo/.oaw/install.json": "be5a79b6574af32e9c23cee7757a1e9a2cb9adce6d0c29b621f4f4256ff501d8",
+    "scripts/oaw.py": "6a9b93702eca25a96b03dee005bde3573fb0bfff14842d26847673d98d6161e7",
+    "scripts/user_install.py": "136c6b2a703e22e2dccabbafdb59eeaecf7f3a6038cfa6bcbc8999abd6118feb",
+    "templates/.agents/skills/oaw-add/SKILL.md": "e0321508694d2bb5e0f404d14d7e276df006e6b71f2304cec883d0bc96293e79",
+    "tests/test_catalog_ui.py": "75921cb12cee81f74fdcd496d012b910e23273ed67175f36eab12c764c7f1cde",
+    "tests/test_user_install.py": "4371939a3b690f0a10e75a415a3d3cfabb3eb7f79f880cfab4a4eb6f270b8722"
+  },
+  "exit_code": 0,
+  "post_gate_document_updates": {
+    "files": {
+      "ROADMAP.md": {
+        "at_gate": "7256466645fccb00c6d333461635cfb5e2a5eff542904dc67ec7162c57d92648",
+        "after_gate": "5ac328d7b4bc869be04ffa4c2d422b17730f8b1335e1407e8870680fd82a8661"
+      }
+    },
+    "reason": "ROADMAP appended the just-completed validation result; executable and skill sources are unchanged."
+  }
+}

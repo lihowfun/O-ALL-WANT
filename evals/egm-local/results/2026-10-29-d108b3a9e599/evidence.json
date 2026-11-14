@@ -1,0 +1,1412 @@
+{
+  "schema_version": 1,
+  "grading_round": "v2",
+  "spec_sha256": "d108b3a9e5993ef7aceabb9a790b3bad3e1d749bfe0ffe8336e2ff6454c66ad2",
+  "source_sha256": "a4ee3c46ac5fd15b45cd7218959bd4ea6d420da7c48b7493e3446a936705f0c7",
+  "trials": [
+    {
+      "trial_id": "events-r2-C",
+      "case": "events",
+      "repeat": 2,
+      "arm": "C",
+      "anonymous_review_id": "R04",
+      "completed": true,
+      "initial_inputs_intact": true,
+      "reviewer_count": 9,
+      "unique_reviewer_count": 9,
+      "stages_completed": [
+        "5 initial zoom",
+        "6 comprehension",
+        "7 design/structural/style critique",
+        "8 intermediate zoom",
+        "9 readiness/codebase/style"
+      ],
+      "words": 569,
+      "grade": {
+        "review_id": "R04",
+        "valid_review": true,
+        "detected_planted_ids": [
+          "C1",
+          "C2",
+          "M1",
+          "M2"
+        ],
+        "unsupported_concrete_claims": [],
+        "valid_additional_findings": [],
+        "uncertainties": [
+          {
+            "finding_id": "uncertainties[0]",
+            "reason": "Open question about the precise meaning of design.md:4's five-minute lag budget breach. The text gives no explicit alert calculation; the report does not assert actual wrong alert behavior."
+          },
+          {
+            "finding_id": "uncertainties[1]",
+            "reason": "Performance targets are not supplied results; design.md:16 plans verification and the baseline supplies no measurement evidence."
+          },
+          {
+            "finding_id": "uncertainties[2]",
+            "reason": "Grounded limitation of the supplied implementation: projector.py contains no queue, retry, retention or replay implementation. Recovery feasibility is left unverified rather than asserted impossible."
+          },
+          {
+            "finding_id": "uncertainties[3]",
+            "reason": "Conditional exposure from design.md:13's all-tenant rollout, without an invented rollout policy."
+          },
+          {
+            "finding_id": "uncertainties[4]",
+            "reason": "Accurate reviewer-method observation: feature-spec-standard.md requires alternatives evaluation and explicit risks/limits, which the design does not evaluate. The report explicitly avoids turning the method standard or headings into independent product/runtime requirements."
+          }
+        ],
+        "explanations": {
+          "C1": "F01 detects version regression under the design.md:7 overwrite and :13 replay rules, against ADR-004:3 and projector.py:2-7. Replay is not counted independently.",
+          "C2": "F02 identifies the conflict between full header logging at design.md:10 and ADR-004:3's no-token-logging rule.",
+          "M1": "F03 identifies the undefined Flux shim and missing component responsibility/contract at design.md:16. Its absence claims concern that deliverable, not the existence of any processing instructions elsewhere.",
+          "M2": "F03 and F04 identify missing implementable scope and specified completion/verification checks in design.md:16. The report acknowledges the existing performance targets and ADR invariants rather than claiming those are absent. One M2 credit."
+        }
+      }
+    },
+    {
+      "trial_id": "events-r2-A",
+      "case": "events",
+      "repeat": 2,
+      "arm": "A",
+      "anonymous_review_id": "R02",
+      "completed": true,
+      "initial_inputs_intact": true,
+      "reviewer_count": 0,
+      "unique_reviewer_count": 0,
+      "stages_completed": [
+        "Read README, complete design, all supplied ADRs, and Python baseline with line numbers",
+        "Checked processing, diagnostics, recovery, and delivery plan against accepted decisions and baseline behavior",
+        "Separated demonstrated defects from conditional risks and open questions",
+        "Wrote final review report"
+      ],
+      "words": 405,
+      "grade": {
+        "review_id": "R02",
+        "valid_review": true,
+        "detected_planted_ids": [
+          "C1",
+          "C2",
+          "M1",
+          "M2"
+        ],
+        "unsupported_concrete_claims": [],
+        "valid_additional_findings": [],
+        "uncertainties": [
+          {
+            "finding_id": "uncertainties[1]",
+            "reason": "Grounded lack of supplied measurements for the design.md:4 objectives. Verification is planned at :16; the report makes no infeasibility or success assertion."
+          },
+          {
+            "finding_id": "uncertainties[2]",
+            "reason": "Explicit conditional operational risk from the all-tenant rollout at design.md:13; no staged-rollout mandate is invented."
+          }
+        ],
+        "explanations": {
+          "C1": "F01 explains precisely how unconditional overwrite and unfiltered replay can apply version 11 after 12, contrary to ADR-004:3 and the baseline guard in projector.py:4-5. Counted once.",
+          "C2": "F02 connects complete header logging and retention at design.md:10 to the accepted token-logging prohibition in ADR-004:3.",
+          "M1": "uncertainties[0] explicitly identifies the undefined Flux shim component at design.md:16.",
+          "M2": "uncertainties[0] states that implementation and verification scope and completion criteria cannot be determined. This is a substantive detection of the plan gap, even though correctly separated from runtime behavior."
+        }
+      }
+    },
+    {
+      "trial_id": "events-r2-B",
+      "case": "events",
+      "repeat": 2,
+      "arm": "B",
+      "anonymous_review_id": "R06",
+      "completed": true,
+      "initial_inputs_intact": true,
+      "reviewer_count": 9,
+      "unique_reviewer_count": 9,
+      "stages_completed": [
+        "5: Initial Zoom Out",
+        "6: Comprehension",
+        "7: Design Critique",
+        "8: Intermediate Zoom Out",
+        "9: Implementation Readiness"
+      ],
+      "words": 509,
+      "grade": {
+        "review_id": "R06",
+        "valid_review": true,
+        "detected_planted_ids": [
+          "C1",
+          "C2",
+          "M1",
+          "M2"
+        ],
+        "unsupported_concrete_claims": [],
+        "valid_additional_findings": [],
+        "uncertainties": [
+          {
+            "finding_id": "uncertainties[0]",
+            "reason": "Editorial/open alert-semantics question grounded in the unspecified five-minute lag-budget wording at design.md:4; no wrong actual alert behavior is asserted."
+          },
+          {
+            "finding_id": "uncertainties[1]",
+            "reason": "The supplied sources do not specify capacity assumptions, skew, retry bounds or persistent-failure mechanics. The report correctly keeps performance failure and overload conditional."
+          },
+          {
+            "finding_id": "uncertainties[2]",
+            "reason": "Design.md:13 names failure after acknowledgement but does not explain its mechanism or detection. All-tenant exposure is explicitly conditional; no staged-rollout mandate is inferred."
+          },
+          {
+            "finding_id": "uncertainties[3]",
+            "reason": "Accurate observation about feature-spec-standard.md's alternatives and risk requirements, separated from product requirements. Supplied sources contain no performance/test results and design.md:16 only plans verification."
+          }
+        ],
+        "explanations": {
+          "C1": "F01 explains regression for version 12 followed by 11 under design.md:7 and :13, contrary to ADR-004:3 and the baseline guard. Live and replay paths receive one credit.",
+          "C2": "F02 correctly identifies token disclosure through design.md:10's complete Authorization-header logging and the conflict with ADR-004:3.",
+          "M1": "F03 identifies that design.md:16 leaves the Flux shim undefined and gives no relationship to baseline apply_event.",
+          "M2": "F03 and F04 identify undefined implementation scope/readiness and the absence of specified verification cases, procedure or expected outcomes. These are grounded in design.md:16, with one M2 credit."
+        }
+      }
+    },
+    {
+      "trial_id": "orders-r1-A",
+      "case": "orders",
+      "repeat": 1,
+      "arm": "A",
+      "anonymous_review_id": "R02",
+      "completed": true,
+      "initial_inputs_intact": true,
+      "reviewer_count": 1,
+      "unique_reviewer_count": 1,
+      "stages_completed": [
+        "Read all required workspace sources with line evidence",
+        "Independent fresh native reviewer cross-check",
+        "Parent synthesis of actual reviewer report and source evidence",
+        "Final JSON report"
+      ],
+      "words": 437,
+      "grade": {
+        "review_id": "R02",
+        "valid_review": true,
+        "detected_planted_ids": [
+          "C1",
+          "C2",
+          "M1",
+          "M2"
+        ],
+        "unsupported_concrete_claims": [],
+        "valid_additional_findings": [],
+        "uncertainties": [
+          {
+            "finding_id": "uncertainties[0]",
+            "reason": "Performance and verification caveat supported by design.md:4,20: a precise target and planned tests exist, but no measured or passing results are supplied."
+          },
+          {
+            "finding_id": "uncertainties[1]",
+            "reason": "Explicitly conditional current-code idempotency question; reserve.py:3-6 and the absence of database constraint/isolation definitions support leaving this unresolved."
+          }
+        ],
+        "explanations": {
+          "C1": "F02 detects the concrete lost-update/oversell mechanism: design.md:11-14 reads availability, inserts a reservation and unconditionally overwrites the earlier quantity without atomicity. Two successful last-unit reservations can both write zero. reserve.py:2,6-10 supplies the contrasting transaction and stock-row lock. Any partial-write consequence is part of this same atomicity issue, not a second detection.",
+          "C2": "F03 detects repeat allocation under a fresh request UUID: design.md:7,12-14 generates a new identity and repeats all allocation steps on HTTP retry without order-based deduplication. With remaining stock, a lost-response retry reserves again, contrary to ADR-001:3 per-order idempotency and reserve.py:3-5 prior-order return.",
+          "M1": "F01 identifies the explicit false ADR permission claim and implementation/cutover conflict in design.md:8,20. Accepted ADR-001 r2:2-3 specifies PostgreSQL and requires an accepted replacement before a second persistent inventory database; README.md:4 makes that decision authoritative. This is more than questioning a proposed database alternative.",
+          "M2": "F04 identifies the direct retention/support contradiction in design.md:17: the only ledger is deleted after seven days, support must use it for thirty-day disputes, and no archive is planned. Days 8-30 lack the required evidence."
+        }
+      }
+    },
+    {
+      "trial_id": "orders-r1-B",
+      "case": "orders",
+      "repeat": 1,
+      "arm": "B",
+      "anonymous_review_id": "R07",
+      "completed": true,
+      "initial_inputs_intact": true,
+      "reviewer_count": 9,
+      "unique_reviewer_count": 9,
+      "stages_completed": [
+        "5 Initial Zoom Out: initial_zoom",
+        "6 Comprehension: comprehension",
+        "7 Critic: critic_design, critic_structural, critic_style",
+        "8 Intermediate Zoom Out: intermediate_zoom",
+        "9 Implementation Readiness: readiness_implementation, readiness_codebase, readiness_style"
+      ],
+      "words": 523,
+      "grade": {
+        "review_id": "R07",
+        "valid_review": true,
+        "detected_planted_ids": [
+          "C1",
+          "C2",
+          "M1",
+          "M2"
+        ],
+        "unsupported_concrete_claims": [],
+        "valid_additional_findings": [],
+        "uncertainties": [
+          {
+            "finding_id": "uncertainties[0]",
+            "reason": "Design.md:20 plans concurrency/retry tests and directs p99 confirmation under the stated load; it supplies neither passing results nor production-incident evidence. The review preserves that distinction."
+          },
+          {
+            "finding_id": "uncertainties[1].a",
+            "reason": "Design.md contains no alternatives/risk evaluation; feature-spec-standard.md.txt explicitly addresses these. This remains a method-completeness observation."
+          },
+          {
+            "finding_id": "uncertainties[1].b",
+            "reason": "File/schema/migration/routing/rollback/checkpoint details and exact test assertions are unspecified in design.md:20. Implementation-readiness-standard.md.txt supports plan-depth scrutiny, including execution without edge-case design choices and stable phases, but does not itself impose an additional product behavior. The report presents these as separate plan-depth observations, not independent demonstrated failures."
+          },
+          {
+            "finding_id": "uncertainties[2]",
+            "reason": "Design.md leaves detailed regional coordination unspecified. No editorial/heading defect or actual invented topology is asserted."
+          }
+        ],
+        "explanations": {
+          "C1": "F01 detects the concrete lost-update/oversell mechanism: design.md:11-14 reads availability, inserts a reservation and unconditionally overwrites the earlier quantity without atomicity. Two successful last-unit reservations can both write zero. reserve.py:2,6-10 supplies the contrasting transaction and stock-row lock. Any partial-write consequence is part of this same atomicity issue, not a second detection.",
+          "C2": "F02 detects repeat allocation under a fresh request UUID: design.md:7,12-14 generates a new identity and repeats all allocation steps on HTTP retry without order-based deduplication. With remaining stock, a lost-response retry reserves again, contrary to ADR-001:3 per-order idempotency and reserve.py:3-5 prior-order return.",
+          "M1": "F03 identifies the explicit false ADR permission claim and implementation/cutover conflict in design.md:8,20. Accepted ADR-001 r2:2-3 specifies PostgreSQL and requires an accepted replacement before a second persistent inventory database; README.md:4 makes that decision authoritative. This is more than questioning a proposed database alternative.",
+          "M2": "F04 identifies the direct retention/support contradiction in design.md:17: the only ledger is deleted after seven days, support must use it for thirty-day disputes, and no archive is planned. Days 8-30 lack the required evidence."
+        }
+      }
+    },
+    {
+      "trial_id": "orders-r1-C",
+      "case": "orders",
+      "repeat": 1,
+      "arm": "C",
+      "anonymous_review_id": "R05",
+      "completed": true,
+      "initial_inputs_intact": true,
+      "reviewer_count": 9,
+      "unique_reviewer_count": 9,
+      "stages_completed": [
+        "5 Initial Zoom Out Review",
+        "6 Comprehension Review",
+        "7 Design Critique",
+        "8 Intermediate Zoom Out Review",
+        "9 Implementation Readiness"
+      ],
+      "words": 527,
+      "grade": {
+        "review_id": "R05",
+        "valid_review": true,
+        "detected_planted_ids": [
+          "C1",
+          "C2",
+          "M1",
+          "M2"
+        ],
+        "unsupported_concrete_claims": [],
+        "valid_additional_findings": [],
+        "uncertainties": [
+          {
+            "finding_id": "uncertainties[0]",
+            "reason": "Design.md does not specify regional authority/routing/coordination or partition behavior. Consequences are explicitly conditional on topology."
+          },
+          {
+            "finding_id": "uncertainties[1]",
+            "reason": "Design.md:4 supplies the measurable target; :14 offers lock-contention motivation without measurements, and :20 lists planned concurrency/retry tests. The review does not infer target attainment, impossibility, or completed tests."
+          },
+          {
+            "finding_id": "uncertainties[2]",
+            "reason": "Alternatives/risk mitigation are absent; implementation scope, schema, phases, and exact test assertions are also unresolved in design.md:20. Feature-spec-standard.md.txt and implementation-readiness-standard.md.txt support these scoped method-coverage observations; they are not independent functional defects."
+          },
+          {
+            "finding_id": "uncertainties[3]",
+            "reason": "Design.md contains no baseline-system explanation, but README.md, ADR-001 and reserve.py supply current authority/behavior. The review explicitly avoids turning a documentation observation or unimplemented proposal into another factual blocker."
+          }
+        ],
+        "explanations": {
+          "C1": "F01 detects the concrete lost-update/oversell mechanism: design.md:11-14 reads availability, inserts a reservation and unconditionally overwrites the earlier quantity without atomicity. Two successful last-unit reservations can both write zero. reserve.py:2,6-10 supplies the contrasting transaction and stock-row lock. Any partial-write consequence is part of this same atomicity issue, not a second detection.",
+          "C2": "F02 detects repeat allocation under a fresh request UUID: design.md:7,12-14 generates a new identity and repeats all allocation steps on HTTP retry without order-based deduplication. With remaining stock, a lost-response retry reserves again, contrary to ADR-001:3 per-order idempotency and reserve.py:3-5 prior-order return.",
+          "M1": "F03 identifies the explicit false ADR permission claim and implementation/cutover conflict in design.md:8,20. Accepted ADR-001 r2:2-3 specifies PostgreSQL and requires an accepted replacement before a second persistent inventory database; README.md:4 makes that decision authoritative. This is more than questioning a proposed database alternative.",
+          "M2": "F04 identifies the direct retention/support contradiction in design.md:17: the only ledger is deleted after seven days, support must use it for thirty-day disputes, and no archive is planned. Days 8-30 lack the required evidence."
+        }
+      }
+    },
+    {
+      "trial_id": "clean-r1-C",
+      "case": "clean",
+      "repeat": 1,
+      "arm": "C",
+      "anonymous_review_id": "R04",
+      "completed": true,
+      "initial_inputs_intact": true,
+      "reviewer_count": 9,
+      "unique_reviewer_count": 9,
+      "stages_completed": [
+        "5 Initial Zoom Out: one completed fresh reviewer; zoom_out_report.md",
+        "6 Comprehension: one completed fresh reviewer; complete paraphrase and result in comprehension_report.md",
+        "7 Critic: three completed fresh reviewers; critic_report.md",
+        "8 Intermediate Zoom Out: one completed fresh reviewer; required initial zoom, comprehension and critic reports read; intermediate_zoom_out_report.md",
+        "9 Implementation Readiness: three completed fresh reviewers; implementation_readiness_report.md"
+      ],
+      "words": 369,
+      "grade": {
+        "review_id": "R04",
+        "valid_review": true,
+        "detected_planted_ids": [],
+        "unsupported_concrete_claims": [],
+        "valid_additional_findings": [],
+        "uncertainties": [
+          {
+            "finding_id": "uncertainties[0]",
+            "classification": "method-standard completeness observation",
+            "reason": "The actual feature-spec standard mandates alternatives evaluation, and the design plus accepted ADR contain no rejected alternatives/rationale. The report explicitly limits the observation to that standard and does not use method guidance as a new product requirement."
+          },
+          {
+            "finding_id": "uncertainties[1]",
+            "classification": "execution and document-completeness questions",
+            "reason": "docs/design.md:13 gives numerical load/latency targets, named test scenarios, 5/25/100-percent stages and 24-hour checks, but no error-budget passing threshold or test-execution procedure. It also has no file-by-file tasks or stable implementation phases of the kind described in the actual readiness standard. The report preserves the existing acceptance criteria and classifies the remaining detail as execution questions, not a product failure."
+          },
+          {
+            "finding_id": "uncertainties[2]",
+            "classification": "unverified implementation",
+            "reason": "src/lookup.py confirms hit/miss and CacheUnavailable fallback, with no worker, archive or deployment implementation. docs/design.md:13 expressly disclaims passed tests. The claimed limits on what that function establishes are grounded."
+          }
+        ],
+        "explanations": {
+          "assessment": "Completed and assessable review, including a valid zero-finding result. The frozen clean rubric has no planted defects. ADR-012 accepts Redis and supersedes ADR-002 for this service; design.md defines the 60-second freshness/miss/failure contracts, separate 90-day archive for 30-day support lookups, full-outage fallback capacity, latency targets, and rollout/rollback release criteria. No contrary product-defect assertion is made."
+        }
+      }
+    },
+    {
+      "trial_id": "clean-r1-A",
+      "case": "clean",
+      "repeat": 1,
+      "arm": "A",
+      "anonymous_review_id": "R01",
+      "completed": true,
+      "initial_inputs_intact": true,
+      "reviewer_count": 2,
+      "unique_reviewer_count": 2,
+      "stages_completed": [
+        "Native primary review of README.md, docs/design.md, all supplied ADRs, and src/lookup.py",
+        "Fresh independent authority and consistency review",
+        "Fresh independent cache semantics and retention review",
+        "Independent report synthesis against current accepted decisions"
+      ],
+      "words": 108,
+      "grade": {
+        "review_id": "R01",
+        "valid_review": true,
+        "detected_planted_ids": [],
+        "unsupported_concrete_claims": [],
+        "valid_additional_findings": [],
+        "uncertainties": [
+          {
+            "finding_id": "uncertainties[0]",
+            "classification": "unverified implementation",
+            "reason": "The only canonical implementation is src/lookup.py, which routes hits and handles CacheUnavailable before PostgreSQL fallback. Adapter normalization/expiry, worker committed reads/version rejection, and independent archive behavior are contracts in docs/design.md:7,10; their implementation is not supplied. The report expressly does not infer a defect."
+          },
+          {
+            "finding_id": "uncertainties[1]",
+            "classification": "release verification limitation",
+            "reason": "docs/design.md:13 expressly calls performance, outage, freshness, archive tests and rollout checks release criteria, not passed tests. The report's lack-of-validation qualification is consistent with that distinction; review execution itself is not independently auditable from project sources."
+          }
+        ],
+        "explanations": {
+          "assessment": "Completed and assessable review, including a valid zero-finding result. The frozen clean rubric has no planted defects. ADR-012 accepts Redis and supersedes ADR-002 for this service; design.md defines the 60-second freshness/miss/failure contracts, separate 90-day archive for 30-day support lookups, full-outage fallback capacity, latency targets, and rollout/rollback release criteria. No contrary product-defect assertion is made."
+        }
+      }
+    },
+    {
+      "trial_id": "clean-r1-B",
+      "case": "clean",
+      "repeat": 1,
+      "arm": "B",
+      "anonymous_review_id": "R03",
+      "completed": true,
+      "initial_inputs_intact": true,
+      "reviewer_count": 9,
+      "unique_reviewer_count": 9,
+      "stages_completed": [
+        "5 Initial Zoom Out: one fresh completed reviewer; zoom_out_report.md",
+        "6 Comprehension: one fresh completed reviewer; complete two-heading paraphrase retained in comprehension_report.md",
+        "7 Critic: three fresh completed reviewers; critic_report.md",
+        "8 Intermediate Zoom Out: one fresh completed reviewer; initial zoom/comprehension/critic inputs read; intermediate_zoom_out_report.md",
+        "9 Implementation Readiness: three fresh completed reviewers; implementation_readiness_report.md"
+      ],
+      "words": 297,
+      "grade": {
+        "review_id": "R03",
+        "valid_review": true,
+        "detected_planted_ids": [],
+        "unsupported_concrete_claims": [],
+        "valid_additional_findings": [],
+        "uncertainties": [
+          {
+            "finding_id": "uncertainties[0]",
+            "classification": "method-standard completeness observation",
+            "reason": "Neither docs/design.md nor either ADR evaluates rejected alternatives. method_sources/resources/document_standards/feature-spec-standard.md.txt actually requires alternatives evaluation. The report confines this to documentation under that review standard and recognizes the accepted architecture; this is not a project correctness defect. Attribution to particular reviewers is process narrative, not independently established project evidence."
+          },
+          {
+            "finding_id": "uncertainties[1]",
+            "classification": "operational open question",
+            "reason": "docs/design.md:13 names a 24-hour error-budget check but supplies no error metric, numerical budget or pass/fail threshold. A request to clarify its operating rule is grounded. The report explicitly leaves open an external procedure and does not claim unsafe promotion occurred."
+          },
+          {
+            "finding_id": "uncertainties[2]",
+            "classification": "unverified implementation",
+            "reason": "docs/design.md:7,10,13 defines worker/version/expiry, archive, capacity, latency and rollout obligations; src/lookup.py implements only routing/fallback. The report correctly distinguishes unverified obligations from missing contracts or failed tests."
+          }
+        ],
+        "explanations": {
+          "assessment": "Completed and assessable review, including a valid zero-finding result. The frozen clean rubric has no planted defects. ADR-012 accepts Redis and supersedes ADR-002 for this service; design.md defines the 60-second freshness/miss/failure contracts, separate 90-day archive for 30-day support lookups, full-outage fallback capacity, latency targets, and rollout/rollback release criteria. No contrary product-defect assertion is made."
+        }
+      }
+    },
+    {
+      "trial_id": "events-r1-B",
+      "case": "events",
+      "repeat": 1,
+      "arm": "B",
+      "anonymous_review_id": "R08",
+      "completed": true,
+      "initial_inputs_intact": true,
+      "reviewer_count": 9,
+      "unique_reviewer_count": 9,
+      "stages_completed": [
+        "5 Initial Zoom Out",
+        "6 Comprehension",
+        "7 Design Critique",
+        "8 Intermediate Zoom Out",
+        "9 Implementation Readiness"
+      ],
+      "words": 458,
+      "grade": {
+        "review_id": "R08",
+        "valid_review": true,
+        "detected_planted_ids": [
+          "C1",
+          "C2",
+          "M1",
+          "M2"
+        ],
+        "unsupported_concrete_claims": [],
+        "valid_additional_findings": [],
+        "uncertainties": [
+          {
+            "finding_id": "uncertainties[0]",
+            "reason": "Open question about the unspecified five-minute alert condition at design.md:4. It does not claim observed wrong alert behavior."
+          },
+          {
+            "finding_id": "uncertainties[1]",
+            "reason": "Accurate observation about the alternatives and risks/limits evaluation called for by feature-spec-standard.md. Explicitly separated from exact-template demands and independent product defects."
+          },
+          {
+            "finding_id": "uncertainties[2]",
+            "reason": "Design.md:13 supplies no replay capacity, duration or live-traffic analysis. The report correctly labels overload and rollout hazards conditional, without claiming observed failure or a rollout prohibition."
+          },
+          {
+            "finding_id": "uncertainties[3]",
+            "reason": "Grounded verification limitation and part of M2: design.md:16 specifies no verification procedure, and :4's performance goals are not supplied results."
+          }
+        ],
+        "explanations": {
+          "C1": "F01 gives the version-12/version-11 regression caused by design.md:7 and :13, contrary to ADR-004:3 and projector.py:4-5. Wording about replay filtering concerns the proposal's dismissal of its necessity; one monotonic-state credit.",
+          "C2": "F02 identifies that logging and retaining complete token-bearing Authorization headers under design.md:10 violates ADR-004:3.",
+          "M1": "F03 explicitly identifies the undefined Flux shim in design.md:16.",
+          "M2": "F03 identifies missing required changes, completion state and verification outcome for the delivery instruction. uncertainties[3] reinforces the unspecified verification. These detect the actionability gap in design.md:16."
+        }
+      }
+    },
+    {
+      "trial_id": "events-r1-C",
+      "case": "events",
+      "repeat": 1,
+      "arm": "C",
+      "anonymous_review_id": "R07",
+      "completed": true,
+      "initial_inputs_intact": true,
+      "reviewer_count": 9,
+      "unique_reviewer_count": 9,
+      "stages_completed": [
+        "5 Initial Zoom Out: one fresh reviewer; zoom_out_report.md saved",
+        "6 Comprehension: one fresh reviewer; complete paraphrase/report saved",
+        "7 Critic: three fresh reviewers; critic_report.md saved",
+        "8 Intermediate Zoom Out: one fresh reviewer; initial zoom and prior reports read; report saved",
+        "9 Implementation Readiness: three fresh reviewers; implementation_readiness_report.md saved"
+      ],
+      "words": 544,
+      "grade": {
+        "review_id": "R07",
+        "valid_review": true,
+        "detected_planted_ids": [
+          "C1",
+          "C2",
+          "M1",
+          "M2"
+        ],
+        "unsupported_concrete_claims": [],
+        "valid_additional_findings": [],
+        "uncertainties": [
+          {
+            "finding_id": "uncertainties[0]",
+            "reason": "Open question about the intended alert condition in design.md:4. No actual alert behavior is established or claimed."
+          },
+          {
+            "finding_id": "uncertainties[1]",
+            "reason": "Performance feasibility and rollout impact remain conditional; the sources contain targets and a rollout proposal, without verification results."
+          },
+          {
+            "finding_id": "uncertainties[2]",
+            "reason": "Accurate reviewer-method observation: feature-spec-standard.md requires alternatives evaluation, absent from the design. The report explicitly excludes literal headings, non-goals and title preferences as independent runtime defects."
+          }
+        ],
+        "explanations": {
+          "C1": "F01 demonstrates the older-event overwrite with a 9-then-8 example and ADR-004:3/projector.py:4-5. F02 detects the same invariant failure during design.md:13 replay; no duplicate credit.",
+          "C2": "F03 identifies design.md:10's token-bearing full-header logs as conflicting with ADR-004:3.",
+          "M1": "F04 identifies the undefined Flux shim and lack of component responsibility/integration scope at design.md:16.",
+          "M2": "F04 and F05 identify missing actionability and completion/verification procedure in design.md:16, acknowledging that design.md:4 still supplies performance targets. One M2 credit."
+        }
+      }
+    },
+    {
+      "trial_id": "events-r1-A",
+      "case": "events",
+      "repeat": 1,
+      "arm": "A",
+      "anonymous_review_id": "R03",
+      "completed": true,
+      "initial_inputs_intact": true,
+      "reviewer_count": 1,
+      "unique_reviewer_count": 1,
+      "stages_completed": [
+        "Assigned packet and complete supplied source review",
+        "Parent static correctness and accepted-decision consistency review",
+        "Fresh independent child static review",
+        "Independent report synthesis and duplicate-finding consolidation"
+      ],
+      "words": 338,
+      "grade": {
+        "review_id": "R03",
+        "valid_review": true,
+        "detected_planted_ids": [
+          "C1",
+          "C2",
+          "M1",
+          "M2"
+        ],
+        "unsupported_concrete_claims": [],
+        "valid_additional_findings": [],
+        "uncertainties": [
+          {
+            "finding_id": "uncertainties[0]",
+            "reason": "Explicit conditional blast-radius concern about the all-tenant rollout, grounded in design.md:13; no unsupported staged-rollout requirement."
+          },
+          {
+            "finding_id": "uncertainties[2]",
+            "reason": "Grounded evidence limitation: design.md:4 supplies performance targets and :16 plans verification; no supplied measurements establish achievement."
+          }
+        ],
+        "explanations": {
+          "C1": "F01 identifies the accepted monotonic-version invariant and gives the 12-then-11 counterexample for design.md:7 and :13; projector.py:4-5 supplies the baseline protection. One detection covers both paths.",
+          "C2": "F02 correctly identifies that logging a complete token-bearing Authorization header at design.md:10 violates ADR-004:3.",
+          "M1": "uncertainties[1] explicitly names the undefined Flux shim in design.md:16.",
+          "M2": "uncertainties[1] expressly identifies unclear delivery scope and completion criteria from the undefined production-ready instruction. This is the planted planning gap, without inventing a runtime failure."
+        }
+      }
+    },
+    {
+      "trial_id": "orders-r3-C",
+      "case": "orders",
+      "repeat": 3,
+      "arm": "C",
+      "anonymous_review_id": "R04",
+      "completed": true,
+      "initial_inputs_intact": true,
+      "reviewer_count": 9,
+      "unique_reviewer_count": 9,
+      "stages_completed": [
+        "5: Initial Zoom Out, 1 reviewer, zoom_out_report.md",
+        "6: Comprehension, 1 reviewer, complete paraphrase and findings in comprehension_report.md",
+        "7: Critic, 3 reviewers, critic_report.md",
+        "8: Intermediate Zoom Out, 1 reviewer, required own-trial initial report and subsequent reports read, intermediate_zoom_out_report.md",
+        "9: Implementation Readiness, 3 reviewers, implementation_readiness_report.md"
+      ],
+      "words": 590,
+      "grade": {
+        "review_id": "R04",
+        "valid_review": true,
+        "detected_planted_ids": [
+          "C1",
+          "C2",
+          "M1",
+          "M2"
+        ],
+        "unsupported_concrete_claims": [],
+        "valid_additional_findings": [],
+        "uncertainties": [
+          {
+            "finding_id": "uncertainties[0]",
+            "reason": "Regional authority, routing, replication, failover, and migration mechanics are absent from design.md; feasibility is left unresolved without inventing a required topology or declaring a latency failure."
+          },
+          {
+            "finding_id": "uncertainties[1].a",
+            "reason": "Alternatives and risk coverage are absent in design.md and are specifically addressed by feature-spec-standard.md.txt; this is a supported method-coverage observation."
+          },
+          {
+            "finding_id": "uncertainties[1].b",
+            "reason": "File/schema/interface actions, cutover phases, prerequisites for correct execution, and specific correctness assertions are not resolved by design.md:20. Implementation-readiness-standard.md.txt supports identifying these as actionability questions. No additional product requirement or demonstrated runtime failure is asserted."
+          },
+          {
+            "finding_id": "uncertainties[2]",
+            "reason": "Design.md:4 explicitly states the end-to-end p99/load target, and :20 explicitly labels concurrency/retry tests planned; no target-absence or passing-test false alarm."
+          },
+          {
+            "finding_id": "uncertainties[3]",
+            "reason": "Reserve.py:2-10 supplies transaction, stock-row lock, and prior-order lookup but no complete database semantics. Auxiliary memory matches accepted ADR r2 and expressly asks source verification. The review's qualification and authority distinction are supported; no cosmetic defect is alleged."
+          }
+        ],
+        "explanations": {
+          "C1": "F01 detects the concrete lost-update/oversell mechanism: design.md:11-14 reads availability, inserts a reservation and unconditionally overwrites the earlier quantity without atomicity. Two successful last-unit reservations can both write zero. reserve.py:2,6-10 supplies the contrasting transaction and stock-row lock. Any partial-write consequence is part of this same atomicity issue, not a second detection.",
+          "C2": "F02 detects repeat allocation under a fresh request UUID: design.md:7,12-14 generates a new identity and repeats all allocation steps on HTTP retry without order-based deduplication. With remaining stock, a lost-response retry reserves again, contrary to ADR-001:3 per-order idempotency and reserve.py:3-5 prior-order return.",
+          "M1": "F03 identifies the explicit false ADR permission claim and implementation/cutover conflict in design.md:8,20. Accepted ADR-001 r2:2-3 specifies PostgreSQL and requires an accepted replacement before a second persistent inventory database; README.md:4 makes that decision authoritative. This is more than questioning a proposed database alternative.",
+          "M2": "F04 identifies the direct retention/support contradiction in design.md:17: the only ledger is deleted after seven days, support must use it for thirty-day disputes, and no archive is planned. Days 8-30 lack the required evidence."
+        }
+      }
+    },
+    {
+      "trial_id": "orders-r3-A",
+      "case": "orders",
+      "repeat": 3,
+      "arm": "A",
+      "anonymous_review_id": "R01",
+      "completed": true,
+      "initial_inputs_intact": true,
+      "reviewer_count": 1,
+      "unique_reviewer_count": 1,
+      "stages_completed": [
+        "source_review",
+        "fresh_independent_native_review",
+        "evidence_cross_check_and_synthesis"
+      ],
+      "words": 385,
+      "grade": {
+        "review_id": "R01",
+        "valid_review": true,
+        "detected_planted_ids": [
+          "C1",
+          "C2",
+          "M1",
+          "M2"
+        ],
+        "unsupported_concrete_claims": [],
+        "valid_additional_findings": [],
+        "uncertainties": [
+          {
+            "finding_id": "uncertainties[0]",
+            "reason": "Measurement caveat: design.md:4 sets 120 ms p99 at 2,000 requests/s and :20 requests confirmation but supplies no result; :20 expressly calls concurrency/retry tests planned. No missing-target or completed-test defect is alleged."
+          },
+          {
+            "finding_id": "uncertainties[1]",
+            "reason": "Explicitly conditional current-code risk: reserve.py:3-5 checks order_id before :6 locks stock. No uniqueness or isolation implementation is supplied, so the review correctly declines to assert a confirmed additional current-code defect."
+          }
+        ],
+        "explanations": {
+          "C1": "F01 detects the concrete lost-update/oversell mechanism: design.md:11-14 reads availability, inserts a reservation and unconditionally overwrites the earlier quantity without atomicity. Two successful last-unit reservations can both write zero. reserve.py:2,6-10 supplies the contrasting transaction and stock-row lock. Any partial-write consequence is part of this same atomicity issue, not a second detection.",
+          "C2": "F02 detects repeat allocation under a fresh request UUID: design.md:7,12-14 generates a new identity and repeats all allocation steps on HTTP retry without order-based deduplication. With remaining stock, a lost-response retry reserves again, contrary to ADR-001:3 per-order idempotency and reserve.py:3-5 prior-order return.",
+          "M1": "F03 identifies the explicit false ADR permission claim and implementation/cutover conflict in design.md:8,20. Accepted ADR-001 r2:2-3 specifies PostgreSQL and requires an accepted replacement before a second persistent inventory database; README.md:4 makes that decision authoritative. This is more than questioning a proposed database alternative.",
+          "M2": "F04 identifies the direct retention/support contradiction in design.md:17: the only ledger is deleted after seven days, support must use it for thirty-day disputes, and no archive is planned. Days 8-30 lack the required evidence."
+        }
+      }
+    },
+    {
+      "trial_id": "orders-r3-B",
+      "case": "orders",
+      "repeat": 3,
+      "arm": "B",
+      "anonymous_review_id": "R06",
+      "completed": true,
+      "initial_inputs_intact": true,
+      "reviewer_count": 9,
+      "unique_reviewer_count": 9,
+      "stages_completed": [
+        "5 Initial Zoom Out: one fresh reviewer; zoom_out_report.md",
+        "6 Comprehension: one fresh reviewer; complete two-heading paraphrase preserved in comprehension_report.md",
+        "7 Critic: three fresh reviewers; critic_report.md",
+        "8 Intermediate Zoom Out: one fresh reviewer; required initial zoom and own comprehension/critic reports read; intermediate_zoom_out_report.md",
+        "9 Implementation Readiness: three fresh reviewers; implementation_readiness_report.md"
+      ],
+      "words": 600,
+      "grade": {
+        "review_id": "R06",
+        "valid_review": true,
+        "detected_planted_ids": [
+          "C1",
+          "C2",
+          "M1",
+          "M2"
+        ],
+        "unsupported_concrete_claims": [],
+        "valid_additional_findings": [],
+        "uncertainties": [
+          {
+            "finding_id": "uncertainties[0]",
+            "reason": "Regional authority/routing/coordination/failure details are absent from design.md:4-20. The review explicitly leaves actual regional failures and latency outcomes unestablished."
+          },
+          {
+            "finding_id": "uncertainties[1]",
+            "reason": "Design.md:20 leaves file scope/schema/migration/routing/phase details and exact test assertions unresolved. Implementation-readiness-standard.md.txt supports these as readiness questions, without implying that proposed artifacts must exist already."
+          },
+          {
+            "finding_id": "uncertainties[2]",
+            "reason": "Design.md has no alternatives evaluation or explicit risk/limit treatment. Feature-spec-standard.md.txt addresses both; the review correctly scopes these as content observations rather than additional binding product requirements or exact-heading defects."
+          },
+          {
+            "finding_id": "uncertainties[3]",
+            "reason": "The explicit target and planned tests are present at design.md:4,20. Reserve.py demonstrates safeguards but supplies no full database uniqueness/isolation semantics. This caveat avoids both rubric hard negatives and an unproved current-code guarantee."
+          }
+        ],
+        "explanations": {
+          "C1": "F02 detects the concrete lost-update/oversell mechanism: design.md:11-14 reads availability, inserts a reservation and unconditionally overwrites the earlier quantity without atomicity. Two successful last-unit reservations can both write zero. reserve.py:2,6-10 supplies the contrasting transaction and stock-row lock. Any partial-write consequence is part of this same atomicity issue, not a second detection.",
+          "C2": "F03 detects repeat allocation under a fresh request UUID: design.md:7,12-14 generates a new identity and repeats all allocation steps on HTTP retry without order-based deduplication. With remaining stock, a lost-response retry reserves again, contrary to ADR-001:3 per-order idempotency and reserve.py:3-5 prior-order return.",
+          "M1": "F01 identifies the explicit false ADR permission claim and implementation/cutover conflict in design.md:8,20. Accepted ADR-001 r2:2-3 specifies PostgreSQL and requires an accepted replacement before a second persistent inventory database; README.md:4 makes that decision authoritative. This is more than questioning a proposed database alternative.",
+          "M2": "F04 identifies the direct retention/support contradiction in design.md:17: the only ledger is deleted after seven days, support must use it for thirty-day disputes, and no archive is planned. Days 8-30 lack the required evidence."
+        }
+      }
+    },
+    {
+      "trial_id": "events-r3-A",
+      "case": "events",
+      "repeat": 3,
+      "arm": "A",
+      "anonymous_review_id": "R01",
+      "completed": true,
+      "initial_inputs_intact": true,
+      "reviewer_count": 2,
+      "unique_reviewer_count": 2,
+      "stages_completed": [
+        "assigned_packet_read",
+        "all_assigned_sources_reviewed",
+        "fresh_native_review_a_completed",
+        "fresh_native_review_b_completed",
+        "independent_report_synthesis_completed"
+      ],
+      "words": 307,
+      "grade": {
+        "review_id": "R01",
+        "valid_review": true,
+        "detected_planted_ids": [
+          "C1",
+          "C2",
+          "M1",
+          "M2"
+        ],
+        "unsupported_concrete_claims": [],
+        "valid_additional_findings": [],
+        "uncertainties": [
+          {
+            "finding_id": "uncertainties[1]",
+            "reason": "Grounded verification limitation: design.md:4 states targets and :16 plans verification, but the supplied sources contain no measurements. This does not assert performance failure."
+          },
+          {
+            "finding_id": "uncertainties[2]",
+            "reason": "Conditional rollout exposure, correctly distinguished from an accepted staged-rollout requirement; design.md:13 enables all tenants together."
+          },
+          {
+            "finding_id": "uncertainties[3]",
+            "reason": "Open implementation questions: projector.py only implements transactional event application; acknowledgement durability, retry mechanics and replay infrastructure are not specified. No additional actual failure is asserted."
+          }
+        ],
+        "explanations": {
+          "C1": "F01 detects older-event regression with an explicit version-12/version-11 example, supported by design.md:7,13, ADR-004:3 and projector.py:2-7. Live processing and replay receive one credit.",
+          "C2": "F02 identifies the full Authorization-header logging in design.md:10 as violating ADR-004:3's prohibition on logging tokens.",
+          "M1": "uncertainties[0] explicitly identifies the undefined Flux shim at design.md:16. Calling it planning ambiguity rather than runtime failure does not erase the semantic detection.",
+          "M2": "uncertainties[0] explicitly states that delivery scope and acceptance criteria cannot be assessed because production ready and verification are undefined; this detects the actionability gap in design.md:16."
+        }
+      }
+    },
+    {
+      "trial_id": "events-r3-B",
+      "case": "events",
+      "repeat": 3,
+      "arm": "B",
+      "anonymous_review_id": "R05",
+      "completed": true,
+      "initial_inputs_intact": true,
+      "reviewer_count": 9,
+      "unique_reviewer_count": 9,
+      "stages_completed": [
+        "5 Initial Zoom Out: zoom_out_report.md",
+        "6 Comprehension: comprehension_report.md",
+        "7 Design Critique: critic_report.md",
+        "8 Intermediate Zoom Out: intermediate_zoom_out_report.md",
+        "9 Implementation Readiness: implementation_readiness_report.md"
+      ],
+      "words": 500,
+      "grade": {
+        "review_id": "R05",
+        "valid_review": true,
+        "detected_planted_ids": [
+          "C1",
+          "C2",
+          "M1",
+          "M2"
+        ],
+        "unsupported_concrete_claims": [
+          {
+            "finding_id": "uncertainties[0].b",
+            "type": "contradicted",
+            "reason": "The disputed clause is \"docs/design.md:13 activates all tenants together without a bounded rollout or failure trigger,\" specifically the assertion that a failure trigger is absent. project/docs/design.md:13 explicitly states: \"If the new flow fails after acknowledgement, roll back by replaying all source events from the beginning\"; this supplies a failure condition that triggers rollback. The condition is coarse and lacks detection mechanics or measurable thresholds, but the review does not limit its absence assertion to those details. project/docs/design.md:4 also states an alert condition for a five-minute lag budget breach, although that alert need not itself be a rollback trigger. Under frozen grade_prompt.md:13-17, concrete factually contradicted assertions must be labeled while conditional risks are recorded separately. The next sentence, \"This is conditional operational exposure, not evidence of an outage,\" limits the alleged consequence; it does not turn the preceding factual absence claim into a question or conditional premise. Grader1 identifies that distinct absence assertion; grader2 treats the entire item as conditional and overlooks the express condition in design.md:13. The grounded all-tenant/bounded-rollout observation and conditional exposure remain unchanged, as do all other agreed labels. The method standards do not supply an additional product requirement that would justify redefining 'failure trigger' to require a particular metric or template."
+          }
+        ],
+        "valid_additional_findings": [],
+        "uncertainties": [
+          {
+            "finding_id": "uncertainties[0].a",
+            "reason": "The absence of a bounded rollout and the resulting conditional exposure are grounded in design.md:13, which enables all tenants at once. No actual outage is asserted."
+          },
+          {
+            "finding_id": "uncertainties[1]",
+            "reason": "Grounded evidence limitation: performance targets appear at design.md:4, without workload/capacity measurements or verification results. No infeasibility or success claim follows."
+          },
+          {
+            "finding_id": "uncertainties[2]",
+            "reason": "Accurate method-standard observation: feature-spec-standard.md mandates alternatives evaluation and explicit risk/constraint treatment; the design does not provide that analysis. The report explicitly separates these from factual repository defects and literal-template demands."
+          }
+        ],
+        "explanations": {
+          "C1": "F01 correctly detects regression after removal of projector.py:4-5's guard, against ADR-004:3. F03 correctly identifies the same failure during design.md:13 replay and receives no second planted credit.",
+          "C2": "F02 connects design.md:10's full Authorization-header persistence with ADR-004:3's prohibition on logging authentication tokens.",
+          "M1": "F04 explicitly identifies the undefined Flux shim in design.md:16 and correctly treats this as an unspecified deliverable rather than proof a proposed component must already exist.",
+          "M2": "F04 identifies missing component responsibility, integration changes and executable completion/verification criteria in design.md:16."
+        }
+      }
+    },
+    {
+      "trial_id": "events-r3-C",
+      "case": "events",
+      "repeat": 3,
+      "arm": "C",
+      "anonymous_review_id": "R09",
+      "completed": true,
+      "initial_inputs_intact": true,
+      "reviewer_count": 9,
+      "unique_reviewer_count": 9,
+      "stages_completed": [
+        "5 Initial Zoom Out",
+        "6 Comprehension",
+        "7 Critic: design, structural, style",
+        "8 Intermediate Zoom Out",
+        "9 Implementation Readiness: readiness, codebase details, style"
+      ],
+      "words": 463,
+      "grade": {
+        "review_id": "R09",
+        "valid_review": true,
+        "detected_planted_ids": [
+          "C1",
+          "C2",
+          "M1",
+          "M2"
+        ],
+        "unsupported_concrete_claims": [],
+        "valid_additional_findings": [],
+        "uncertainties": [
+          {
+            "finding_id": "uncertainties[0]",
+            "reason": "Open alert-condition question grounded in the imprecise five-minute lag-budget phrase at design.md:4; no actual alert failure is asserted."
+          },
+          {
+            "finding_id": "uncertainties[1]",
+            "reason": "Performance, concurrency, retry and recovery details remain unverified in the supplied sources. The report expressly avoids claiming inherent rollout/parallelism failure or inevitable post-acknowledgement data loss."
+          },
+          {
+            "finding_id": "uncertainties[2]",
+            "reason": "Accurate method observations: feature-spec-standard.md calls for alternatives and risks; implementation-readiness-standard.md calls for test cases, actionability and stable phases. The design lacks those analyses and a phased plan. The report explicitly distinguishes documentation-standard gaps from additional demonstrated runtime failures or mandatory headings."
+          },
+          {
+            "finding_id": "uncertainties[3]",
+            "reason": "Design.md:16 plans verification without supplied successful results; undefined production readiness supports M2, without implying that verification already passed."
+          }
+        ],
+        "explanations": {
+          "C1": "F01 explains how version 11 can replace version 12 under design.md:7 and :13, contradicting ADR-004:3 and removing projector.py:4-5's protection. One credit covers processing and replay.",
+          "C2": "F02 identifies the token-logging violation caused by design.md:10's complete Authorization-header diagnostics, against ADR-004:3.",
+          "M1": "F03 explicitly identifies the undefined Flux shim at design.md:16 and correctly distinguishes scope ambiguity from a missing proposed implementation.",
+          "M2": "F03 identifies undefined implementation target, integration point and required finished behavior/completion criteria in design.md:16; uncertainties[2-3] also identify absent tests and verification evidence. This detects the planted actionable-plan gap."
+        }
+      }
+    },
+    {
+      "trial_id": "orders-r2-B",
+      "case": "orders",
+      "repeat": 2,
+      "arm": "B",
+      "anonymous_review_id": "R03",
+      "completed": true,
+      "initial_inputs_intact": true,
+      "reviewer_count": 9,
+      "unique_reviewer_count": 9,
+      "stages_completed": [
+        "5 Initial Zoom Out",
+        "6 Comprehension",
+        "7 Design Critique",
+        "8 Intermediate Zoom Out",
+        "9 Implementation Readiness"
+      ],
+      "words": 452,
+      "grade": {
+        "review_id": "R03",
+        "valid_review": true,
+        "detected_planted_ids": [
+          "C1",
+          "C2",
+          "M1",
+          "M2"
+        ],
+        "unsupported_concrete_claims": [],
+        "valid_additional_findings": [],
+        "uncertainties": [
+          {
+            "finding_id": "uncertainties[0]",
+            "reason": "Regional authority and routing are not specified by design.md:4-20. The overlapping-writer coordination statement is conditional, not a claimed actual topology or additional demonstrated failure."
+          },
+          {
+            "finding_id": "uncertainties[1]",
+            "reason": "Correct distinction between the explicit measurable performance target in design.md:4 and future verification in :20; no missing target or completed-test claim."
+          },
+          {
+            "finding_id": "uncertainties[2]",
+            "reason": "Accurate document-coverage observation: design.md has no alternatives evaluation, explicit risks section/content, or non-goals. Feature-spec-standard.md.txt asks for alternatives and risks and lists goals/non-goals as applicable coverage examples. This is a method/completeness observation, not an independent runtime defect or mandatory heading requirement."
+          },
+          {
+            "finding_id": "uncertainties[3]",
+            "reason": "Accurate readiness observation: design.md:20 supplies broad implementation/test intentions but no file scope, ledger schema, routing steps, stable phases, or expected correctness assertions. Implementation-readiness-standard.md.txt discusses explicit scope/actions, predetermined design choices, phases/checkpoints, and specific test cases. This is scoped plan-actionability commentary, not a claim that planned files/tests must already exist."
+          }
+        ],
+        "explanations": {
+          "C1": "F01 detects the concrete lost-update/oversell mechanism: design.md:11-14 reads availability, inserts a reservation and unconditionally overwrites the earlier quantity without atomicity. Two successful last-unit reservations can both write zero. reserve.py:2,6-10 supplies the contrasting transaction and stock-row lock. Any partial-write consequence is part of this same atomicity issue, not a second detection.",
+          "C2": "F02 detects repeat allocation under a fresh request UUID: design.md:7,12-14 generates a new identity and repeats all allocation steps on HTTP retry without order-based deduplication. With remaining stock, a lost-response retry reserves again, contrary to ADR-001:3 per-order idempotency and reserve.py:3-5 prior-order return.",
+          "M1": "F03 identifies the explicit false ADR permission claim and implementation/cutover conflict in design.md:8,20. Accepted ADR-001 r2:2-3 specifies PostgreSQL and requires an accepted replacement before a second persistent inventory database; README.md:4 makes that decision authoritative. This is more than questioning a proposed database alternative.",
+          "M2": "F04 identifies the direct retention/support contradiction in design.md:17: the only ledger is deleted after seven days, support must use it for thirty-day disputes, and no archive is planned. Days 8-30 lack the required evidence."
+        }
+      }
+    },
+    {
+      "trial_id": "orders-r2-C",
+      "case": "orders",
+      "repeat": 2,
+      "arm": "C",
+      "anonymous_review_id": "R08",
+      "completed": true,
+      "initial_inputs_intact": true,
+      "reviewer_count": 9,
+      "unique_reviewer_count": 9,
+      "stages_completed": [
+        "5 Initial Zoom Out: one completed reviewer; zoom_out_report.md",
+        "6 Comprehension: one completed reviewer; complete paraphrase preserved in comprehension_report.md",
+        "7 Design Critique: three completed reviewers; critic_report.md",
+        "8 Intermediate Zoom Out: one completed reviewer; initial zoom/comprehension/critic reports explicitly read; intermediate_zoom_out_report.md",
+        "9 Implementation Readiness: three completed reviewers; implementation_readiness_report.md"
+      ],
+      "words": 595,
+      "grade": {
+        "review_id": "R08",
+        "valid_review": true,
+        "detected_planted_ids": [
+          "C1",
+          "C2",
+          "M1",
+          "M2"
+        ],
+        "unsupported_concrete_claims": [],
+        "valid_additional_findings": [],
+        "uncertainties": [
+          {
+            "finding_id": "uncertainties[0]",
+            "reason": "Design.md specifies three-region goals but no regional authority, replication, partition, or failover mechanics; the review correctly leaves latency feasibility open rather than declaring the target impossible."
+          },
+          {
+            "finding_id": "uncertainties[1]",
+            "reason": "Absent alternatives/risk evaluation is supported by design.md and feature-spec-standard.md.txt. This is explicitly a completeness observation, not a factual product requirement or heading violation."
+          },
+          {
+            "finding_id": "uncertainties[2]",
+            "reason": "Design.md:20 leaves implementation scope/actions, ledger schema, routing integration, and incremental phases open. Implementation-readiness-standard.md.txt supports those readiness observations; the review does not claim cutover has occurred or invent a mandatory implementation."
+          },
+          {
+            "finding_id": "uncertainties[3]",
+            "reason": "Design.md:20 expressly says planned tests. Reserve.py:2-10 shows reusable safeguards without exposing every concurrency guarantee. The caveat is grounded and does not allege missing targets or completed tests."
+          }
+        ],
+        "explanations": {
+          "C1": "F02 detects the concrete lost-update/oversell mechanism: design.md:11-14 reads availability, inserts a reservation and unconditionally overwrites the earlier quantity without atomicity. Two successful last-unit reservations can both write zero. reserve.py:2,6-10 supplies the contrasting transaction and stock-row lock. Any partial-write consequence is part of this same atomicity issue, not a second detection.",
+          "C2": "F03 detects repeat allocation under a fresh request UUID: design.md:7,12-14 generates a new identity and repeats all allocation steps on HTTP retry without order-based deduplication. With remaining stock, a lost-response retry reserves again, contrary to ADR-001:3 per-order idempotency and reserve.py:3-5 prior-order return.",
+          "M1": "F01 identifies the explicit false ADR permission claim and implementation/cutover conflict in design.md:8,20. Accepted ADR-001 r2:2-3 specifies PostgreSQL and requires an accepted replacement before a second persistent inventory database; README.md:4 makes that decision authoritative. This is more than questioning a proposed database alternative.",
+          "M2": "F04 identifies the direct retention/support contradiction in design.md:17: the only ledger is deleted after seven days, support must use it for thirty-day disputes, and no archive is planned. Days 8-30 lack the required evidence."
+        }
+      }
+    },
+    {
+      "trial_id": "orders-r2-A",
+      "case": "orders",
+      "repeat": 2,
+      "arm": "A",
+      "anonymous_review_id": "R09",
+      "completed": true,
+      "initial_inputs_intact": true,
+      "reviewer_count": 1,
+      "unique_reviewer_count": 1,
+      "stages_completed": [
+        "Read README, design, all supplied ADRs and source files",
+        "Independent native source review",
+        "Fresh independent child review",
+        "Independent synthesis and report validation"
+      ],
+      "words": 440,
+      "grade": {
+        "review_id": "R09",
+        "valid_review": true,
+        "detected_planted_ids": [
+          "C1",
+          "C2",
+          "M1",
+          "M2"
+        ],
+        "unsupported_concrete_claims": [],
+        "valid_additional_findings": [],
+        "uncertainties": [
+          {
+            "finding_id": "uncertainties[0]",
+            "reason": "Design.md:4,20 supplies a precise end-to-end performance target and future confirmation, with no measurement establishing attainment or impossibility."
+          },
+          {
+            "finding_id": "uncertainties[1]",
+            "reason": "Explicit partial-failure risk follows from design.md:12-14 separate writes. Recovery is unspecified. This overlaps the non-atomic allocation issue C1 and is not double-counted as an additional finding."
+          },
+          {
+            "finding_id": "uncertainties[2]",
+            "reason": "Reserve.py does not provide database constraints or isolation semantics, so declining to confirm a separate concurrent same-order defect is appropriate."
+          },
+          {
+            "finding_id": "uncertainties[3]",
+            "reason": "Design.md:20 explicitly marks concurrency/retry tests planned. The review does not claim implementation or execution success."
+          }
+        ],
+        "explanations": {
+          "C1": "F02 detects the concrete lost-update/oversell mechanism: design.md:11-14 reads availability, inserts a reservation and unconditionally overwrites the earlier quantity without atomicity. Two successful last-unit reservations can both write zero. reserve.py:2,6-10 supplies the contrasting transaction and stock-row lock. Any partial-write consequence is part of this same atomicity issue, not a second detection.",
+          "C2": "F03 detects repeat allocation under a fresh request UUID: design.md:7,12-14 generates a new identity and repeats all allocation steps on HTTP retry without order-based deduplication. With remaining stock, a lost-response retry reserves again, contrary to ADR-001:3 per-order idempotency and reserve.py:3-5 prior-order return.",
+          "M1": "F01 identifies the explicit false ADR permission claim and implementation/cutover conflict in design.md:8,20. Accepted ADR-001 r2:2-3 specifies PostgreSQL and requires an accepted replacement before a second persistent inventory database; README.md:4 makes that decision authoritative. This is more than questioning a proposed database alternative.",
+          "M2": "F04 identifies the direct retention/support contradiction in design.md:17: the only ledger is deleted after seven days, support must use it for thirty-day disputes, and no archive is planned. Days 8-30 lack the required evidence."
+        }
+      }
+    },
+    {
+      "trial_id": "clean-r2-A",
+      "case": "clean",
+      "repeat": 2,
+      "arm": "A",
+      "anonymous_review_id": "R08",
+      "completed": true,
+      "initial_inputs_intact": true,
+      "reviewer_count": 1,
+      "unique_reviewer_count": 1,
+      "stages_completed": [
+        "Assigned packet and source inventory",
+        "All required README, design, ADR and Python source reads",
+        "Current accepted decision reconciliation",
+        "Independent fresh static review",
+        "Parent evidence reconciliation and final synthesis"
+      ],
+      "words": 101,
+      "grade": {
+        "review_id": "R08",
+        "valid_review": true,
+        "detected_planted_ids": [],
+        "unsupported_concrete_claims": [],
+        "valid_additional_findings": [],
+        "uncertainties": [
+          {
+            "finding_id": "uncertainties[0]",
+            "classification": "unverified implementation and release validation",
+            "reason": "src/lookup.py shows hit/miss and CacheUnavailable fallback but supplies no worker, adapter implementation, archive or performance results. design.md:7,10,13 states their contracts and expressly does not claim passed tests. The report explicitly rejects treating absent implementation evidence as proof of a defect."
+          }
+        ],
+        "explanations": {
+          "assessment": "Completed and assessable review, including a valid zero-finding result. The frozen clean rubric has no planted defects. ADR-012 accepts Redis and supersedes ADR-002 for this service; design.md defines the 60-second freshness/miss/failure contracts, separate 90-day archive for 30-day support lookups, full-outage fallback capacity, latency targets, and rollout/rollback release criteria. No contrary product-defect assertion is made."
+        }
+      }
+    },
+    {
+      "trial_id": "clean-r2-B",
+      "case": "clean",
+      "repeat": 2,
+      "arm": "B",
+      "anonymous_review_id": "R09",
+      "completed": true,
+      "initial_inputs_intact": true,
+      "reviewer_count": 9,
+      "unique_reviewer_count": 9,
+      "stages_completed": [
+        "5 Initial Zoom Out: full-file direct reviewer; zoom_out_report.md",
+        "6 Comprehension: ranges 1..11 and 12..13; complete paraphrase preserved in comprehension_report.md",
+        "7 Design Critique: three direct fresh reviewers; critic_report.md",
+        "8 Intermediate Zoom Out: fresh reviewer read initial zoom, comprehension and critic reports; intermediate_zoom_out_report.md",
+        "9 Implementation Readiness: three direct fresh reviewers on 12..13; implementation_readiness_report.md"
+      ],
+      "words": 341,
+      "grade": {
+        "review_id": "R09",
+        "valid_review": true,
+        "detected_planted_ids": [],
+        "unsupported_concrete_claims": [],
+        "valid_additional_findings": [],
+        "uncertainties": [
+          {
+            "finding_id": "uncertainties[0]",
+            "classification": "method-standard completeness observation",
+            "reason": "design.md:3-10 contains no alternatives comparison; the actual feature standard mandates evaluation of alternatives. ADR-012 authorizes Redis. The report explicitly confines the concern to rationale/template completeness; the internal critics' severity is not independent project-defect evidence."
+          },
+          {
+            "finding_id": "uncertainties[1]",
+            "classification": "implementation and verification detail questions",
+            "reason": "design.md:12-13 gives acceptance targets, named tests and rollout stages, without file-by-file phased tasks or executable setups/assertions. Older-version rejection and delayed-write expiry are contractual requirements at design.md:7 but are not named as separate tests at line 13. The actual readiness standard requests actionable steps/test cases; the report frames these as execution detail, not faulty behavior."
+          },
+          {
+            "finding_id": "uncertainties[2]",
+            "classification": "operational open question",
+            "reason": "design.md:13 invokes a 24-hour error-budget check without defining the metric or passing threshold. The clarification request is source-grounded and does not claim an observed unsafe promotion."
+          },
+          {
+            "finding_id": "uncertainties[3]",
+            "classification": "implementation integration question",
+            "reason": "design.md:13 defines rollback as disabling cache reads, while src/lookup.py has no explicit bypass switch. No deployment/configuration integration is supplied. The report explicitly recognizes that an absent proposed control implementation is not a contradiction of the design."
+          },
+          {
+            "finding_id": "uncertainties[4]",
+            "classification": "unverified implementation and context observation",
+            "reason": "Worker/version/expiry, archive independence, outage provisioning and performance are specified at design.md:7,10,13 but not validated by lookup.py. The report recognizes tests as future release criteria. The title and scope identify customer lookup caching under ADR-012; describing its motivation as brief but objective identifiable is a supported context/style observation."
+          }
+        ],
+        "explanations": {
+          "assessment": "Completed and assessable review, including a valid zero-finding result. The frozen clean rubric has no planted defects. ADR-012 accepts Redis and supersedes ADR-002 for this service; design.md defines the 60-second freshness/miss/failure contracts, separate 90-day archive for 30-day support lookups, full-outage fallback capacity, latency targets, and rollout/rollback release criteria. No contrary product-defect assertion is made."
+        }
+      }
+    },
+    {
+      "trial_id": "clean-r2-C",
+      "case": "clean",
+      "repeat": 2,
+      "arm": "C",
+      "anonymous_review_id": "R06",
+      "completed": true,
+      "initial_inputs_intact": true,
+      "reviewer_count": 9,
+      "unique_reviewer_count": 9,
+      "stages_completed": [
+        "5 Initial Zoom Out: zoom_out_report.md",
+        "6 Comprehension: comprehension_report.md (complete paraphrase retained)",
+        "7 Critic: critic_report.md; three completed reviewers",
+        "8 Intermediate Zoom Out: intermediate_zoom_out_report.md; initial zoom, comprehension and critic artifacts read",
+        "9 Implementation Readiness: implementation_readiness_report.md; three completed reviewers"
+      ],
+      "words": 417,
+      "grade": {
+        "review_id": "R06",
+        "valid_review": true,
+        "detected_planted_ids": [],
+        "unsupported_concrete_claims": [],
+        "valid_additional_findings": [],
+        "uncertainties": [
+          {
+            "finding_id": "uncertainties[0]",
+            "classification": "method-standard completeness observation",
+            "reason": "The supplied project documents contain neither a measured PostgreSQL-only baseline nor alternatives/rejection analysis. The actual feature standard requires alternatives; the zoom-out standard scrutinizes unproven optimization. The report limits its conclusion to assessment/documentation and explicitly does not invalidate ADR-012's accepted cache architecture."
+          },
+          {
+            "finding_id": "uncertainties[1]",
+            "classification": "conditional risk",
+            "reason": "Neither docs/design.md:7,13 nor src/lookup.py specifies a cache adapter timeout budget. Waiting on cache.get precedes database fallback, so a sufficiently slow failure could consume the 200-ms outage budget. This is explicitly hypothetical; no slow failure or SLO breach is asserted, and the existing outage target is acknowledged."
+          },
+          {
+            "finding_id": "uncertainties[2]",
+            "classification": "unverified implementation",
+            "reason": "Only src/lookup.py read routing is supplied. Worker/version/read-timestamp expiry, archive independence and outage provisioning are specified in docs/design.md:7,10; achieved latency requires validation beyond this function. The report expressly preserves the release-contract status stated at design.md:13."
+          },
+          {
+            "finding_id": "uncertainties[3]",
+            "classification": "method-standard completeness observation",
+            "reason": "docs/design.md:12-13 lacks file change lists, per-file steps, stable implementation phases and concrete execution procedures described by the actual readiness standard. It does provide targets, scenarios and rollout stages. The report expressly treats the remaining detail as document completeness, not implementation failure."
+          },
+          {
+            "finding_id": "uncertainties[4]",
+            "classification": "operational and integration questions",
+            "reason": "docs/design.md:13 specifies rollback and error-budget checking but no numeric error-budget threshold or concrete cache bypass control. src/lookup.py always attempts its cache argument. The report correctly leaves external controls/alternate adapters possible and does not claim rollback is impossible."
+          }
+        ],
+        "explanations": {
+          "assessment": "Completed and assessable review, including a valid zero-finding result. The frozen clean rubric has no planted defects. ADR-012 accepts Redis and supersedes ADR-002 for this service; design.md defines the 60-second freshness/miss/failure contracts, separate 90-day archive for 30-day support lookups, full-outage fallback capacity, latency targets, and rollout/rollback release criteria. No contrary product-defect assertion is made."
+        }
+      }
+    },
+    {
+      "trial_id": "clean-r3-B",
+      "case": "clean",
+      "repeat": 3,
+      "arm": "B",
+      "anonymous_review_id": "R07",
+      "completed": true,
+      "initial_inputs_intact": true,
+      "reviewer_count": 9,
+      "unique_reviewer_count": 9,
+      "stages_completed": [
+        "5 Initial Zoom Out: one completed fresh reviewer; zoom_out_report.md",
+        "6 Comprehension: one completed fresh reviewer; complete paraphrases preserved in comprehension_report.md",
+        "7 Design Critique: three completed fresh reviewers; critic_report.md",
+        "8 Intermediate Zoom Out: one completed fresh reviewer; read own-trial initial zoom, comprehension and critic reports; intermediate_zoom_out_report.md",
+        "9 Implementation Readiness: three completed fresh reviewers; implementation_readiness_report.md"
+      ],
+      "words": 380,
+      "grade": {
+        "review_id": "R07",
+        "valid_review": true,
+        "detected_planted_ids": [],
+        "unsupported_concrete_claims": [],
+        "valid_additional_findings": [],
+        "uncertainties": [
+          {
+            "finding_id": "uncertainties[0]",
+            "classification": "method-standard completeness observation",
+            "reason": "No alternatives comparison appears in docs/design.md or the supplied ADRs. The actual feature standard calls for one, while ADR-012 explicitly permits Redis. The report separates the review-standard completeness rating from architectural correctness; reviewer attribution is process narrative."
+          },
+          {
+            "finding_id": "uncertainties[1]",
+            "classification": "method-standard and integration completeness observation",
+            "reason": "docs/design.md:12-13 is acceptance/rollout text, without per-file implementation tasks and stable phases. The actual readiness standard requests those details. Worker/version/expiry and archive behavior are already contractually specified at design.md:7,10; in this entry's explicit execution-plan scope, their unspecified integration refers to concrete implementation tasks/interfaces, not absent behavioral rules. No factual product failure is asserted."
+          },
+          {
+            "finding_id": "uncertainties[2]",
+            "classification": "operational and verification detail questions",
+            "reason": "design.md:13 supplies test scenario names and performance limits, but no executable fixtures/assertions or numerical error-budget signal/threshold. The report frames these as detail to resolve before using the section as a zero-decision implementation plan, not as absence of release acceptance criteria."
+          },
+          {
+            "finding_id": "uncertainties[3]",
+            "classification": "release verification limitation",
+            "reason": "The supplied routing function cannot independently validate freshness enforcement, archive retrieval, capacity or latency. design.md:13 explicitly labels tests as release criteria. The report preserves that distinction and does not claim tests failed."
+          }
+        ],
+        "explanations": {
+          "assessment": "Completed and assessable review, including a valid zero-finding result. The frozen clean rubric has no planted defects. ADR-012 accepts Redis and supersedes ADR-002 for this service; design.md defines the 60-second freshness/miss/failure contracts, separate 90-day archive for 30-day support lookups, full-outage fallback capacity, latency targets, and rollout/rollback release criteria. No contrary product-defect assertion is made."
+        }
+      }
+    },
+    {
+      "trial_id": "clean-r3-C",
+      "case": "clean",
+      "repeat": 3,
+      "arm": "C",
+      "anonymous_review_id": "R05",
+      "completed": true,
+      "initial_inputs_intact": true,
+      "reviewer_count": 9,
+      "unique_reviewer_count": 9,
+      "stages_completed": [
+        "5 Initial Zoom Out",
+        "6 Comprehension",
+        "7 Design Critique",
+        "8 Intermediate Zoom Out",
+        "9 Implementation Readiness"
+      ],
+      "words": 368,
+      "grade": {
+        "review_id": "R05",
+        "valid_review": true,
+        "detected_planted_ids": [],
+        "unsupported_concrete_claims": [],
+        "valid_additional_findings": [],
+        "uncertainties": [
+          {
+            "finding_id": "uncertainties[0]",
+            "classification": "unverified implementation",
+            "reason": "The lookup function supplies no worker, expiry/version enforcement, archive, provisioning or performance evidence. Those are present as design/release commitments in docs/design.md:7,10,13; the report does not mistake them for missing requirements or completed tests."
+          },
+          {
+            "finding_id": "uncertainties[1]",
+            "classification": "method-standard completeness observation",
+            "reason": "The design/ADRs do not evaluate alternatives, and the actual feature-spec standard requests that evaluation. The report explicitly says this does not demonstrate an incorrect accepted architecture. Its internal reviewer attribution does not establish a separate project defect."
+          },
+          {
+            "finding_id": "uncertainties[2]",
+            "classification": "editorial preference",
+            "reason": "docs/design.md:7 is a long paragraph combining miss, worker, expiry, routing, outage and consistency contracts. Splitting it is expressly optional and is a style judgment, not a concrete correctness assertion."
+          },
+          {
+            "finding_id": "uncertainties[3]",
+            "classification": "method-standard completeness observation",
+            "reason": "The actual readiness standard describes explicit file scope, per-file steps, test cases and incremental stable phases; its zero-decision principle encompasses unresolved interface choices. docs/design.md:12-13 supplies acceptance/rollout criteria, without those execution details. Read interfaces and error handling are nevertheless specified in design.md:7 and lookup.py, so the report's broader interface comment is assessed within its detailed-plan scope, not as a claim all contracts are absent."
+          },
+          {
+            "finding_id": "uncertainties[4]",
+            "classification": "operational open question",
+            "reason": "docs/design.md:13 contains no numerical error-budget threshold or linked operating policy. The report recognizes that an external policy is not supplied and frames advancement as open, rather than claiming a proven unsafe release."
+          },
+          {
+            "finding_id": "uncertainties[5]",
+            "classification": "implementation integration question",
+            "reason": "docs/design.md:13 specifies rollback by disabling cache reads; src/lookup.py always attempts cache.get and supplies no explicit bypass switch. No rollout/configuration integration is supplied. The report distinguishes an unspecified concrete control from a proven broken deployed rollback, so it does not contradict the defined rollback strategy."
+          }
+        ],
+        "explanations": {
+          "assessment": "Completed and assessable review, including a valid zero-finding result. The frozen clean rubric has no planted defects. ADR-012 accepts Redis and supersedes ADR-002 for this service; design.md defines the 60-second freshness/miss/failure contracts, separate 90-day archive for 30-day support lookups, full-outage fallback capacity, latency targets, and rollout/rollback release criteria. No contrary product-defect assertion is made."
+        }
+      }
+    },
+    {
+      "trial_id": "clean-r3-A",
+      "case": "clean",
+      "repeat": 3,
+      "arm": "A",
+      "anonymous_review_id": "R02",
+      "completed": true,
+      "initial_inputs_intact": true,
+      "reviewer_count": 1,
+      "unique_reviewer_count": 1,
+      "stages_completed": [
+        "native_source_review",
+        "fresh_independent_review",
+        "independent_report_synthesis"
+      ],
+      "words": 108,
+      "grade": {
+        "review_id": "R02",
+        "valid_review": true,
+        "detected_planted_ids": [],
+        "unsupported_concrete_claims": [],
+        "valid_additional_findings": [],
+        "uncertainties": [
+          {
+            "finding_id": "uncertainties[0]",
+            "classification": "unverified implementation",
+            "reason": "src/lookup.py supplies read routing and the documented CacheUnavailable/None adapter interface. It contains no adapter or worker implementation. docs/design.md:7 specifies failure mapping, rejection of older database versions and read-timestamp expiry; the report acknowledges those contracts rather than calling them absent."
+          },
+          {
+            "finding_id": "uncertainties[1]",
+            "classification": "unverified implementation",
+            "reason": "docs/design.md:10 expressly separates 7-day hot diagnostics from a 90-day immutable archive queried for 30-day support requests. No diagnostics/archive implementation is supplied; uncertainty about implementation is grounded and does not challenge the stated retention design."
+          },
+          {
+            "finding_id": "uncertainties[2]",
+            "classification": "release verification limitation",
+            "reason": "docs/design.md:13 explicitly distinguishes acceptance criteria from passed tests. Performance, full-outage capacity and rollout verification cannot be established by src/lookup.py. The report does not assert failed validation."
+          }
+        ],
+        "explanations": {
+          "assessment": "Completed and assessable review, including a valid zero-finding result. The frozen clean rubric has no planted defects. ADR-012 accepts Redis and supersedes ADR-002 for this service; design.md defines the 60-second freshness/miss/failure contracts, separate 90-day archive for 30-day support lookups, full-outage fallback capacity, latency targets, and rollout/rollback release criteria. No contrary product-defect assertion is made."
+        }
+      }
+    }
+  ],
+  "grading": {
+    "independent_graders_per_case": 2,
+    "unresolved_disagreements": [],
+    "adjudications": [
+      {
+        "case": "events",
+        "review_id": "R05",
+        "finding_id": "uncertainties[0].b",
+        "type": "contradicted",
+        "reason": "The disputed clause is \"docs/design.md:13 activates all tenants together without a bounded rollout or failure trigger,\" specifically the assertion that a failure trigger is absent. project/docs/design.md:13 explicitly states: \"If the new flow fails after acknowledgement, roll back by replaying all source events from the beginning\"; this supplies a failure condition that triggers rollback. The condition is coarse and lacks detection mechanics or measurable thresholds, but the review does not limit its absence assertion to those details. project/docs/design.md:4 also states an alert condition for a five-minute lag budget breach, although that alert need not itself be a rollback trigger. Under frozen grade_prompt.md:13-17, concrete factually contradicted assertions must be labeled while conditional risks are recorded separately. The next sentence, \"This is conditional operational exposure, not evidence of an outage,\" limits the alleged consequence; it does not turn the preceding factual absence claim into a question or conditional premise. Grader1 identifies that distinct absence assertion; grader2 treats the entire item as conditional and overlooks the express condition in design.md:13. The grounded all-tenant/bounded-rollout observation and conditional exposure remain unchanged, as do all other agreed labels. The method standards do not supply an additional product requirement that would justify redefining 'failure trigger' to require a particular metric or template."
+      }
+    ],
+    "rule": "Identical labels retained; original grader1 wording used for serialization only. Every disputed unsupported claim explicitly adjudicated, no averaging or favorable selection."
+  }
+}

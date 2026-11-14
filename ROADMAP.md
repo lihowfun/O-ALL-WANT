@@ -1,73 +1,81 @@
-# ROADMAP — OAW
+# OAW roadmap
 
-## Current Focus
+Updated 2026-11-14. The working plan is
+[docs/plans/v2.0.1-release-path.md](docs/plans/v2.0.1-release-path.md);
+work items are GitHub issues grouped by milestone.
 
-- Phase: **star-growth polish + harness quality hardening**
-- Goal: 強化 GitHub 首屏轉換、修補 example 漂移、讓 adapter 支援與 README 敘事一致，並把 OAW 從 context-continuity harness 推進到更可觀測、可驗收的 execution harness
-- Definition of done:
-  - ✅ 所有 root operational files 指向已發布的 v1.0.0 狀態
-  - ✅ CHANGELOG 明確標示 pre-launch hardening 已併回 v1.0.0
-  - ✅ example/minimal-project 與 fresh install 必要檔案對齊
-  - ✅ README 首屏 outcome-first 化
-  - ✅ LLM-wiki collaboration packet reviewed (see Future_Optimization_Plan_Confirmed)
-  - ✅ Harness quality audit recommendations triaged (3 Accept / 4 Research / 3 Reject)
-  - [ ] LLM-wiki packet merged to main as v1.1.0
-  - [ ] `harness_check` + skill frontmatter lint landed in main
-  - [ ] GitHub topics / description / Discussions settings 合併後再調整
+## Now: v2.0.1 release line completed through review
 
-## Active Work
+v2.0.1 is the first V2 release; 2.0.0 was never released. Steps 1–5 are complete;
+the owner's merge and tag are step 6.
 
-| Priority | Workstream | Status | Notes |
-|----------|------------|--------|-------|
-| P0 | README 英文主頁 + 多語言 | ✅ Done | README.md=EN, README.zh.md=ZH, readme-i18n 其他語言 |
-| P0 | Harness Engineering 三大支柱 | ✅ Done | README + 3 knowledge 頁 |
-| P0 | Git history 清理 | ✅ Done | filter-repo 移除敏感 ref |
-| P1 | Skills alignment | ✅ Done | wiki-refresh.md 補入 example/minimal-project/ |
-| P1 | Design docs update | ✅ Done | Design_Principles.md 已有 Hybrid Router 命名演進 |
-| P1 | 正式 tag v1.0.0 | ✅ Done | 2026-04-18 |
-| P1 | 版本敘事一致化 | ✅ Done | 已明確將短暫的 v1.0.1 內部標記併回 v1.0.0 |
-| P1 | Star-growth polish | ✅ Done | README 首屏、comparison doc、minimal-project drift CI 已落地 |
-| P1 | LLM-wiki collaboration packet (A-1) | ✅ Done | 8 LLM-wiki artifacts integrated in `study/future-optimization-plan-confirmed`, merged to main as v1.1.0 |
-| P1 | `harness_check` one-command gate (A-2) | In progress | `scripts/harness_check.py` 8-check harness; CI collapsed to single `harness_check` step |
-| P1 | Skill frontmatter lint (A-3) | In progress | `wiki_sync.py lint` extended — warn by default, strict fail; existing 6 skills all green |
-| P1 | Harness evaluator skill (from R-1) | Queued — spec ready | Subagent-based evaluator design decided; implement Week 4 per `Evaluator_Design_Decision_2026-04-20.md` |
-| P2 | Lane audit log (R-2) | Contingent on R-1 usage | Defer until evaluator skill first asks "what files did parent load?" |
-| P2 | Recovery / retry / rollback automation | ❌ Deferred — see R-3 | 0/9 historical failures would benefit; skip skeleton, revisit after ≥3 new runtime-flakiness cases |
-| P2 | Worktree collaboration skill | ❌ Deferred | Maintain contingent — rebuild only when ≥3 people on a branch ≥2 weeks |
-| P2 | `--json` output on CLI (R-4) | Contingent on R-1 | Build only if evaluator skill needs structured input |
-| P2 | Task-state CLI | ❌ Rejected | `memory.md` + `ROADMAP.md` already cover the need |
-| P2 | Community feedback | Ongoing | Monitor issues and PRs |
+1. Done: all six CI jobs (Ubuntu, macOS, Windows × Python 3.10, 3.13) green at `7504eca`, run `43510582580`. #18
+2. Done: FIXCHECK disposition applied in `5c4e53b`; M1/M2/R2 reverted, M3/R1 and the path fix retained, with CI fixes through `b898e4d`. #17, #18
+3. Done: the one FIXCHECK check on frozen H1 tasks; [result](https://github.com/lihowfun/O-ALL-WANT/blob/e05c4d5a9238fe3ef4529552a27ce9095ead6a3b/records/v2.0.1-experiments/FIXCHECK/RESULT.md). #17
+4. Done: measured README claims, version files, upgrade notes and skill-intake SOP synchronized for release. #10, #12
+5. Done: three cross-family review rounds; fixes in `b4ca559`, `73fb8f7` and `7504eca`, final review without a blocker. #11
+6. Owner: merge pull request #16 and tag `v2.0.1`. #11
 
-## Next Milestones
+Disposition (2026-11-13, confirmed by the owner on 2026-11-14 as D48): M1 (session-end saving), M2 (empty-recall host guidance) and R2 (one deep
+code-review round) were implemented, failed the preregistered regression
+thresholds in the one FIXCHECK check, and were reverted. M3 (permission-only
+pending memory), R1 (native same-family Codex review with explicit cross-family
+commands) and the #18 literal-path audit fix ship.
 
-1. ✅ Repo health review complete (2026-04-15)
-2. ✅ Sensitive content sanitized (2026-04-15)
-3. ✅ Harness self-hosting merged to main (2026-04-15)
-4. ✅ README improvements shipped (2026-04-15)
-5. ✅ Cross-agent compatibility table (2026-04-16)
-6. ✅ Pre-release build complete (2026-04-16)
-7. ✅ README 大改版：EN 主頁、Harness Engineering、SOP Dispatch (2026-04-18)
-8. ✅ Skills alignment + tag v1.0.0 (2026-04-18)
-9. ✅ Version narrative cleanup: keep pre-launch hardening under v1.0.0 (2026-04-18)
-10. ✅ LLM-wiki packet + Harness Engineering audit triaged — see `docs/archive/Future_Optimization_Plan_Confirmed_2026-04-20.md` (2026-04-20)
-11. ✅ R-1 Evaluator design decision — subagent-based approach, empirically verified — see `docs/archive/Evaluator_Design_Decision_2026-04-20.md` (2026-04-20)
-12. ✅ R-3 Skill failure modes analysis — Recovery section deferred (0/9 cases fit) — see `docs/archive/Skill_Failure_Modes_2026-04-20.md` (2026-04-20)
-13. [ ] Merge `study/future-optimization-plan-confirmed` worktree → main as v1.1.0 (Week 1 target)
-14. [ ] Week 4: ship `harness-evaluator.md` skill per R-1 decision; first use on the v1.1.0 merge PR
+FIXCHECK uses frozen H1 diagnostic tasks, the O arm and one counted answer per
+task. All 24 rows are counted and the frozen calculator reports `fail`: two
+small-change token limits (`codex/t01`, `claude/t12`) and both cells' memory
+thresholds. With one answer per task, neither these failures nor the
+differences measured in the other direction can be separated from run-to-run
+variation; this is a regression gate, not an effectiveness verdict.
+[Result record](https://github.com/lihowfun/O-ALL-WANT/blob/e05c4d5a9238fe3ef4529552a27ce9095ead6a3b/records/v2.0.1-experiments/FIXCHECK/RESULT.md) ·
+[Disposition and validation](docs/validation/v2.0.1-final.md).
 
-## Completed
+Release polish is integrated: explicit external-locator consent, concise doctor
+output, upstream EGM guide links and the benefit/capability intake SOP (#10,
+#12). Its historical Linux gate was 9/9, 685 tests, 0 skips;
+[validation](docs/validation/v2.0.1-release-polish.md). FIXCHECK remains pinned
+to `c2d9852`. At `7504eca`, the Linux gate passed 9/9 with 718 tests and 0 skips
+on Python 3.10.12; the final six-job CI and three review rounds are complete.
+Follow-ups are tracked in #21, #22 and #23; see the
+[final validation](docs/validation/v2.0.1-final.md).
 
-- ✅ 2026-04-20: LLM-wiki governance packet integrated (8 artifacts) in `study/future-optimization-plan-confirmed` worktree
-- ✅ 2026-04-20: `scripts/harness_check.py` one-command health gate (8 checks, all green)
-- ✅ 2026-04-20: Skill frontmatter lint added to `wiki_sync.py` (triggers/outputs + execution-structure heading required)
-- ✅ 2026-04-20: R-1 evaluator design decision — subagent approach, empirically verified (19k tokens, 13s per review)
-- ✅ 2026-04-20: R-3 recovery-pattern research — defer (0/9 failures fit the Recovery framing; existing A-1/A-2/A-3 cover the real clusters)
-- ✅ 2026-04-18: tag v1.0.0 正式發布
-- ✅ 2026-04-18: 短暫出現的 v1.0.1 內部標記已明確併回 v1.0.0 敘事
-- ✅ 2026-04-18: README 英文主頁化，Harness Engineering 三大支柱、wiki_sync 工作流說明、readme-i18n 多語言
-- ✅ 2026-04-16: Pre-release build — cross-agent table, CHANGELOG, review validation
-- ✅ 2026-04-15: Harness testing (17/17 passed)
-- ✅ 2026-04-15: Repo health review & sanitization
-- ✅ 2026-04-14: P0 release validation
-- ✅ 2026-04-14: README refresh (zh + en)
-- ✅ 2026-04-13: Initial public release
+## Evaluation accounting (U1): next version
+
+On 2026-11-13 the owner explicitly moved Harness2 U1 accounting work forward
+(D46), on `codex/harness2-evaluation-u1`, based on release-polish 5af21f6.
+It adds an optional read-only ledger/report/comparator bridge, not a model
+experiment or a change to the frozen FIXCHECK candidate. Review and validation
+are tracked in [U1 validation](docs/validation/harness2-u1.md); usage and evidence
+limits are in [evaluation accounting](docs/EVAL_LEDGER.md). U2/U3 model-facing
+changes still need separate behavior evidence. On 2026-11-14 the owner asked whether the
+release carries the project's evaluation methods (D49) and then chose normal version
+iteration (D50): 2.0.1 ships as reviewed, and the ledger together with the overview of
+the four measurement methods in [the measurement rules](docs/EVAL_PROTOCOL.md) goes
+into the next version. The 2.0.1 line is already merged into this branch.
+
+## Next: after the release
+
+The owner lifted the pre-release experiment restriction for EGM calibration
+(#20) and the U2 comparison in D48.
+
+1. Finish capability tasting of presentation skills and its reusable tasting kit. #13, #9
+2. Verdict list (#19); independent re-judging of three earlier intake verdicts on existing data (#15).
+3. EGM calibration. #20
+4. The Harness² U2 comparison.
+5. Release-review follow-ups. #21, #22, #23
+6. 2.0.2, driven by feedback from real use.
+
+## Parked (each with a restart condition in the plan)
+
+Video-skill tasting (#14), EGM on large design documents, long-term use and
+trigger accuracy, moving the memory store out of `.agents/`, an independent
+replication of H1, and a Codex counterpart of the digestion view.
+
+## Measured so far
+
+Results and their limits are summarized in section 2 of the plan. Additional
+runtimes, vector stores, background curators, and durable workflow
+orchestration are not default dependencies.
+
+Completed v1 work and experiments remain in CHANGELOG.md and docs/archive/.

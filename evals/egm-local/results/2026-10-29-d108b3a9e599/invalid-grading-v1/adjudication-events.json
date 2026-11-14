@@ -1,0 +1,69 @@
+{
+  "resolutions": [
+    {
+      "review_id": "R04",
+      "unsupported_claims": [
+        {
+          "finding_id": "uncertainties[4]",
+          "type": "unsupported",
+          "reason": "The actual claim is: 'The feature-specification standard requests alternatives and explicit risk treatment, which are absent.' The absence of those discussions is observable in docs/design.md, but the affirmative claim about what a feature-specification standard requests has no supplied source. README.md directs review against ADR-004 and projector.py; ADR-004:3 establishes event/version and token-logging constraints, not this documentation standard. Neither those sources nor auxiliary_sources.json supplies the alleged standard. Under grade_prompt.md, style observations are separate, but a concrete unsupported assertion must still be labeled. The later disclaimer about runtime defects and heading names does not qualify or retract the assertion that such a standard requests this coverage."
+        }
+      ]
+    },
+    {
+      "review_id": "R05",
+      "unsupported_claims": [
+        {
+          "finding_id": "uncertainties[2]",
+          "type": "unsupported",
+          "reason": "The disputed sentence says alternatives evaluation and explicit risk/constraint treatment are 'required by the supplied review standard' and calls their absence 'standard gaps.' docs/design.md indeed lacks that discussion, but README.md, accepted ADR-004, projector.py and auxiliary_sources.json provide no review standard imposing this requirement. ADR-004:3 supplies consumption/version and authentication-token constraints only. This is an explicit assertion of a supplied requirement, not a question or conditional preference. grade_prompt.md forbids inferring missing requirements from a preferred template; the disclaimer about literal headings does not supply the asserted requirement."
+        }
+      ]
+    },
+    {
+      "review_id": "R06",
+      "unsupported_claims": [
+        {
+          "finding_id": "uncertainties[3]",
+          "type": "unsupported",
+          "reason": "The actual disputed claim is 'Alternatives and explicit risk assessment are absent under the supplied review standard.' The documentation omission is visible in docs/design.md, but describing it as a gap under a supplied review standard asserts an evidentiary basis that is absent: README.md, ADR-004, projector.py and all entries in auxiliary_sources.json supply no such standard. ADR-004:3 concerns delivery ordering, monotonic versions, event identity and token logging. grade_prompt.md separates style observations from concrete assertions and prohibits inventing template requirements. The sentence's disclaimer about exact headers and additional product requirements leaves its affirmative supplied-standard claim intact."
+        }
+      ]
+    },
+    {
+      "review_id": "R07",
+      "unsupported_claims": [
+        {
+          "finding_id": "uncertainties[2]",
+          "type": "unsupported",
+          "reason": "The disputed text says 'Alternatives evaluation is absent under the supplied feature standard.' Absence of alternatives evaluation is supported by docs/design.md, but no feature standard is supplied in README.md, accepted ADR-004, projector.py or auxiliary_sources.json. ADR-004:3 imposes event/version and token-logging rules, without an alternatives-analysis mandate. In context, 'under the supplied feature standard' is an affirmative attribution, not an open question or conditional suggestion. grade_prompt.md does not permit inventing documentation requirements. The subsequent exclusion of literal headings, non-goals and title preferences does not substantiate or withdraw that attribution."
+        }
+      ]
+    },
+    {
+      "review_id": "R08",
+      "unsupported_claims": [
+        {
+          "finding_id": "uncertainties[1]",
+          "type": "unsupported",
+          "reason": "The disputed claim is 'Alternatives evaluation and risk/limit analysis are absent under the supplied review standard.' docs/design.md supports observing that the analysis is absent, but no such review standard appears in README.md, ADR-004, projector.py or auxiliary_sources.json. The accepted ADR's requirements at line 3 address event consumption/version behavior and token logging, not required documentation coverage. The claimed supplied-standard basis is therefore unsupported under grade_prompt.md's requirement to ground concrete assertions and not infer template requirements. The next sentence excludes heading and template preferences as independent defects but does not make the first sentence conditional or retract its factual attribution."
+        }
+      ]
+    },
+    {
+      "review_id": "R09",
+      "unsupported_claims": [
+        {
+          "finding_id": "uncertainties[2].a",
+          "type": "unsupported",
+          "reason": "The actual first clause is 'Feature-standard alternatives and risk coverage are missing,' followed by 'These are standard/documentation gaps.' The design's missing alternatives/risk discussion is observable, but calling this a feature-standard gap affirmatively attributes required coverage to a standard that is absent from README.md, ADR-004, projector.py and auxiliary_sources.json. ADR-004:3 supplies event/version and token-logging constraints without this documentation requirement. grade_prompt.md distinguishes style observations and prohibits inventing template requirements. The qualification that this is not an additional demonstrated runtime failure does not substantiate the claimed standard gap."
+        },
+        {
+          "finding_id": "uncertainties[2].b",
+          "type": "unsupported",
+          "reason": "The actual second clause is 'implementation-standard test cases, assertions and stable phases are absent,' followed by 'These are standard/documentation gaps.' docs/design.md:16 does leave verification and completion unspecified, which is already covered by the agreed M2 assessment. However, no supplied source defines an implementation standard requiring these particular items, especially stable phases: README.md, ADR-004, projector.py and auxiliary_sources.json contain no such standard. Under grade_prompt.md, observable missing detail and the grounded M2 defect do not establish an invented standard requirement. This decision labels only the unsupported implementation-standard attribution, without changing agreed M2 or treating documentation preferences alone as false alarms."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,177 @@
+{
+  "reviews": [
+    {
+      "review_id": "R01",
+      "completed": true,
+      "findings": [],
+      "uncertainties": [
+        "The supplied implementation covers lookup reads only. Adapter failure normalization and expiry, cache-worker reads/version checks, and archive behavior are specified in docs/design.md:7 and docs/design.md:10 but their implementations are not supplied; their runtime behavior remains unverified. This is not evidence of a defect.",
+        "Performance, outage capacity, freshness visibility, archive coverage, and rollout checks in docs/design.md:13 remain release acceptance criteria. No tests or benchmarks were run in this review."
+      ]
+    },
+    {
+      "review_id": "R02",
+      "completed": true,
+      "findings": [],
+      "uncertainties": [
+        "The supplied source implements the lookup path only. The cache adapter and worker implementations are absent, so the declared failure mapping, database-version rejection, and expiry bound in docs/design.md:7 cannot be independently verified. src/lookup.py:6-14 is consistent with the stated adapter contract.",
+        "Diagnostics storage and archive implementations are absent. The separate 7-day hot retention and 90-day archive in docs/design.md:10 are internally consistent with 30-day support lookups, but their implementation is not verifiable here.",
+        "Performance, outage capacity, acceptance tests, and rollout checks in docs/design.md:13 remain release criteria. No tests or benchmarks were run, and no successful validation is inferred."
+      ]
+    },
+    {
+      "review_id": "R03",
+      "completed": true,
+      "findings": [],
+      "uncertainties": [
+        {
+          "location": "docs/design.md:3–10",
+          "claim": "No alternatives evaluation is recorded in the design or supplied ADRs.",
+          "rationale": "Two reviewers raised the feature-specification standard's alternatives rule. The accepted cache choice remains authorized; this documentation concern establishes no factual correctness defect."
+        },
+        {
+          "location": "docs/design.md:13",
+          "claim": "The 24-hour error-budget check has no supplied error definition, budget or pass/fail rule.",
+          "rationale": "A readiness reviewer classified this as an actionability gap; codebase review noted an existing operational procedure might supply it. Clarify the rule before rollout. No unsafe promotion or contradiction is demonstrated."
+        },
+        {
+          "location": "docs/design.md:7,10,13; src/lookup.py:5–14",
+          "claim": "Worker/version/expiry enforcement, archive behavior, fallback capacity, latency and rollout controls remain unverified.",
+          "rationale": "Only lookup fallback control flow is supplied. Acceptance criteria explicitly do not claim passed tests; omitted implementations are not evidence of defects."
+        }
+      ]
+    },
+    {
+      "review_id": "R04",
+      "completed": true,
+      "findings": [],
+      "uncertainties": [
+        {
+          "location": "docs/design.md:1–13; docs/adr-012-lookup-exception.md:1–3",
+          "claim": "The feature-spec standard requires alternatives evaluation, but the supplied design and accepted ADR do not document rejected alternatives or their rationale.",
+          "classification": "Standard-compliance observation; no factual architectural defect established."
+        },
+        {
+          "location": "docs/design.md:12–13",
+          "claim": "The error-budget passing threshold and performance-test procedure are unspecified. The acceptance/rollout section also lacks a complete file-by-file implementation task list and incremental phases.",
+          "classification": "Execution questions and implementation-standard completeness limits, not demonstrated incorrect behavior."
+        },
+        {
+          "location": "docs/design.md:7,10,13; src/lookup.py:5–14",
+          "claim": "The supplied lookup code supports hit/miss and CacheUnavailable fallback. It does not establish worker version checks, database-read-based expiry, archive implementation, full-outage capacity or achieved latency. These remain design commitments and release-verification obligations; line 13 explicitly does not claim tests passed.",
+          "classification": "Implementation and validation remain unverified; absence from the supplied read path does not prove a defect."
+        }
+      ]
+    },
+    {
+      "review_id": "R05",
+      "completed": true,
+      "findings": [],
+      "uncertainties": [
+        {
+          "location": "docs/design.md:7,10,13; src/lookup.py:5-14",
+          "claim": "Worker version/expiry behavior, archival access, full-load fallback capacity and performance remain unverified by the supplied lookup source. Release tests are planned acceptance criteria, not established results."
+        },
+        {
+          "location": "docs/design.md:3-7; docs/adr-012-lookup-exception.md:2-3",
+          "claim": "Two critic reviewers identified missing alternatives evaluation under the supplied feature standard. This documentation concern does not demonstrate an incorrect accepted architecture."
+        },
+        {
+          "location": "docs/design.md:7",
+          "claim": "Splitting the long flow paragraph is an optional editorial preference."
+        },
+        {
+          "location": "docs/design.md:12-13",
+          "claim": "The readiness standard expects file-change lists, interfaces, implementation tasks and incremental checkpoints. These are absent; the section supplies acceptance and rollout criteria. This limits implementation actionability without proving a factual design defect."
+        },
+        {
+          "location": "docs/design.md:13",
+          "claim": "The error-budget check lacks a threshold or linked policy. Advancement remains an operational open question; an external policy is not supplied."
+        },
+        {
+          "location": "docs/design.md:13; src/lookup.py:5-14",
+          "claim": "The planned rollback disables cache reads, but supplied lookup always calls cache.get. The bypass control/integration is unspecified. This is a missing implementation decision rather than evidence of a broken deployed rollback."
+        }
+      ]
+    },
+    {
+      "review_id": "R06",
+      "completed": true,
+      "findings": [],
+      "uncertainties": [
+        {
+          "location": "docs/design.md:3-7,13",
+          "claim": "No measured PostgreSQL-only baseline, alternatives evaluation or rejection reasons are supplied. This limits assessment of caching necessity and falls short of the supplied feature-document standard; it does not establish that the accepted cache architecture is defective.",
+          "severity": "Nit"
+        },
+        {
+          "location": "docs/design.md:7,13; src/lookup.py:8-11",
+          "claim": "The adapter failure timeout budget is unspecified. A slow cache failure could delay PostgreSQL fallback beyond the 200 ms outage target, but no slow failure or target violation is demonstrated.",
+          "severity": "Major conditional risk"
+        },
+        {
+          "location": "docs/design.md:7,10,13; src/lookup.py:1-14",
+          "claim": "The supplied code establishes read routing only. Worker version checks, read-based expiry, archive independence, full-traffic fallback capacity and latency remain unverified design/release contracts. The document explicitly does not claim passing tests.",
+          "severity": "Unverified"
+        },
+        {
+          "location": "docs/design.md:12-13",
+          "claim": "The detailed range supplies acceptance and rollout criteria rather than a zero-decision implementation plan: files, per-file changes, implementation phases and concrete verification procedures remain unspecified. This is a document-completeness gap, not a demonstrated implementation failure.",
+          "severity": "Major readiness uncertainty"
+        },
+        {
+          "location": "docs/design.md:13; src/lookup.py:5-14",
+          "claim": "The numerical error-budget threshold and concrete rollback control are unspecified. The supplied function always attempts its cache argument; an external control or alternate adapter could exist. Rollback impossibility is not established.",
+          "severity": "Major readiness uncertainty"
+        }
+      ]
+    },
+    {
+      "review_id": "R07",
+      "completed": true,
+      "findings": [],
+      "uncertainties": [
+        {
+          "location": "docs/design.md:3-10; docs/adr-012-lookup-exception.md:2-3",
+          "claim": "No alternatives comparison is supplied.",
+          "rationale": "Feature-spec reviewers rated this a Major specification-completeness gap. The accepted ADR permits Redis; this omission does not demonstrate incorrect design."
+        },
+        {
+          "location": "docs/design.md:12-13; src/lookup.py:5-14",
+          "claim": "Acceptance and rollout criteria do not form an executable implementation plan.",
+          "rationale": "Readiness reviewers identified missing per-file tasks, interfaces, logic changes and stable phases. Worker, version/expiry, archive and cache-read-disable integration remain unspecified. These are readiness-completeness concerns rather than demonstrated factual defects."
+        },
+        {
+          "location": "docs/design.md:13",
+          "claim": "The error-budget promotion rule and detailed verification fixtures/assertions are unspecified.",
+          "rationale": "The rollout requires a 24-hour check without defining its signals or threshold. Tests name scenarios but do not specify execution details. Resolve these before treating this section as a zero-decision implementation plan."
+        },
+        {
+          "location": "docs/design.md:7,10,13",
+          "claim": "Freshness, archive access, outage capacity and latency are not independently validated.",
+          "rationale": "Only the supplied read path was inspected; no tests were run. The document explicitly presents tests as release criteria rather than completed results."
+        }
+      ]
+    },
+    {
+      "review_id": "R08",
+      "completed": true,
+      "findings": [],
+      "uncertainties": [
+        "The supplied code shows lookup fallback, but does not include the cache worker, adapter implementation, diagnostics/archive path, or performance results. Version ordering, expiry enforcement, archival retrieval and latency acceptance criteria therefore remain unverified; their absence from the supplied implementation is not evidence of a defect. docs/design.md:7,10,13 states the contracts and explicitly identifies tests as release acceptance criteria, not completed validation. No tests were executed."
+      ]
+    },
+    {
+      "review_id": "R09",
+      "completed": true,
+      "findings": [],
+      "uncertainties": [
+        "docs/design.md:3-10 does not compare alternatives. Two critics identified a Major feature-standard gap; ADR-012 already approves Redis. This is rationale/template completeness, not demonstrated architecture failure.",
+        "docs/design.md:12-13 gives acceptance and rollout criteria rather than a file-by-file, phased execution plan. Readiness review identified missing implementation steps/checkpoints and executable test setups/assertions, including older-version and delayed-write expiry tests. These are implementation/verification detail questions, not established faulty behavior.",
+        "docs/design.md:13 does not define the metric or pass threshold for its 24-hour error-budget check. Promotion policy needs operational clarification.",
+        "docs/design.md:13 promises rollback by disabling cache reads; src/lookup.py:5-14 has no explicit bypass control. How the planned control is introduced/configured remains unspecified; absent proposed implementation alone does not establish a contradiction.",
+        "docs/design.md:7,10,13 worker/version/expiry/archive behavior, full-traffic fallback provisioning and latency are not validated by the supplied lookup function. Tests are release acceptance criteria, not claimed passing results. Business motivation is brief but the objective is identifiable."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,109 @@
+# Evidence-driven self-improvement
+
+This opt-in workflow turns a recurring failure or measurable cost into a reviewable candidate. It does not run a background agent, create a skill after each task, modify native memory, or apply a patch. A valid result can be no action or rejection.
+
+Install with `python3 scripts/oaw.py init --target PROJECT --with-improve`. In an installed project, `improvement.py` uses that project as its base; `--base-dir PROJECT` selects it explicitly. All supplied artifact paths must be inside the project.
+
+## Propose a concrete change
+
+Write a focused git text diff and a falsifiable hypothesis. A target can be one file or a directory scope; paths in the diff must stay within it. Binary, rename, copy, symlink/submodule and quoted-path diffs are not supported by this first version; the patch must be plain `git diff` output (a/ b/ prefixes, no email preamble or trailing text). Keep source files unchanged while collecting the proposal; run the candidate in an isolated branch/worktree.
+
+Create a fixed evaluation JSON, for example:
+
+```json
+{
+  "schema_version": 1,
+  "id": "policy-ablation-v1",
+  "cases": ["small-change", "session-handoff"],
+  "repeats": 3,
+  "assertions": ["task_correct", "source_correct"],
+  "required_checks": ["regression_tests"],
+  "minimum_improvement": 0.05,
+  "maximum_resource_regression": 0.1
+}
+```
+
+Use at least two distinct cases and three repeats per case. These minimums discourage single-run promotion; they do not establish statistical confidence. Define assertions and resource limits before observing candidate results. The repository also includes `evals/native-ablation/spec.json` as a task-set starting point.
+
+### Require the mechanism to trigger
+
+A saving or a pass gain proves nothing if the candidate's mechanism never ran. A behavior A/B should declare, outside `assertions`, the cases that must exercise it:
+
+```json
+"trigger": {"cases": ["small-change"], "minimum_rate": 0.8}
+```
+
+`cases` is a subset of the evaluation cases; `minimum_rate` is greater than 0, at most 1, and defaults to 2/3. Every candidate case record then carries a boolean `triggered` (the baseline may omit it). It is not an assertion and never enters the regression check: as an assertion, a baseline without the mechanism would fail every trigger row and the trigger alone would make the candidate eligible. Each designated case needs `triggered / repeats >= minimum_rate`; the default means 2 of 3 or 4 of 5 repeats, and a written decimal compares exactly (0.667 needs 3 of 3). If any designated case falls short, a candidate that is not rejected is `inconclusive`, and the comparison carries `vacuous` with the reason `vacuous: mechanism did not trigger`. Acceptance revalidates through the same comparison. Before any paid run, show on fixtures, without a model, that the mechanism fires; stop at $0 if it does not.
+
+The `trigger` block is enforced from the `improvement.py` of the unreleased OAW-03 change (after the 2.0.0 proposal). An older copy ignores it silently. A comparison from an enforcing copy always carries a `trigger` object when the spec declares one, so a stored comparison without it was made by an older copy. A spec field cannot make an older copy refuse: it validates only `schema_version` and its own fields, and the schema version stays 1 so that existing specs and proposals keep their verdicts. Accept with an enforcing copy, whose `decide` revalidation fails closed.
+
+### Charge overhead and declare usage coverage
+
+A candidate can spend tokens its host's usage report never shows: a judge, a background job, or a subagent outside the parent's usage. Declare `"usage_coverage": "required"` (and, for the report only, `"overhead_fields": ["judge"]`). Every case record then carries `usage_coverage` (`complete` or `incomplete`) and may carry integer `overhead_tokens` and `grading_tokens`. `overhead_tokens` are added to that arm's `tokens` total; `grading_tokens` are listed but never counted as cost. The comparison's `usage` object reports each arm's own tokens, overhead, `overhead_frac` and grading tokens, and whether coverage is complete.
+
+An efficiency gain counts only when coverage is complete in both arms; otherwise the comparison says `efficiency_blocked: "usage coverage incomplete"` and only a pass gain can make the candidate eligible. Resource regressions use the observed totals, which are lower bounds when coverage is incomplete. Over a complete baseline an excess is certain and rejects the candidate, even when the candidate's coverage is incomplete. Over an incomplete baseline, whose total is an undercount, an excess proves nothing: it is listed under `uncertain_resource_regressions` and the comparison is inconclusive, never eligible.
+
+`overhead_tokens` is a token count only. `cost_usd` and `latency_ms` are the runner's per-case totals and must already include what the overhead cost and how long it ran. The coverage block deliberately applies to all three metrics: incomplete usage means hidden work whose tokens, cost and time may all be missing. Mark a case `complete` only from usage the runner observed itself or from an independent meter (for example a wrapper around the CLI); a candidate's own ledger is a self-report and never makes coverage complete.
+
+This is a spec-declared field, not a new `schema_version`: specs and stored proposals without it keep their verdicts, including on `decide` revalidation. It is enforced from the `improvement.py` of the unreleased OAW-04 change; an older copy ignores it silently, and a comparison from an enforcing copy always carries a `usage` object when the spec declares `usage_coverage`.
+
+```bash
+python3 scripts/improvement.py propose --title "Remove duplicate startup rules" --hypothesis "Keep correctness while reducing context" --target AGENTS.md --patch runs/candidate.diff --evaluation runs/spec.json --snapshot BASE_COMMIT
+```
+
+The command returns a candidate ID and saves its diff, hypothesis, base snapshot and evaluation contract under `.oaw/improvements/`. It does not change the target.
+
+## Capture matched runs
+
+Run the same task bundle with and without the candidate. Hold model/effort, host/version, environment, base snapshot, permissions and grading method constant. Record actual native traces/artifacts, not an evaluator's unsupported recollection. Use separate baseline/candidate evidence files so one run cannot overwrite the other.
+
+A run artifact is a JSON object with the following structure. Its cases list must contain every case/repeat from the fixed specification, not just the one example row below:
+
+```json
+{
+  "schema_version": 1,
+  "run_id": "unique-baseline-run",
+  "variant": "baseline",
+  "evaluation_id": "policy-ablation-v1",
+  "base_snapshot": "BASE_COMMIT",
+  "model": "gpt-6.1-sol",
+  "effort": "medium",
+  "host": "codex",
+  "host_version": "YOUR_ACTUAL_VERSION",
+  "environment": "YOUR_FIXED_ENVIRONMENT_AND_PERMISSION_PROFILE",
+  "patch_sha256": null,
+  "checks": {"regression_tests": true},
+  "cases": [
+    {
+      "case_id": "small-change",
+      "repeat": 1,
+      "assertions": {"task_correct": true, "source_correct": true},
+      "tokens": 1000,
+      "latency_ms": 2000,
+      "cost_usd": 0.01,
+      "evidence": ["runs/baseline-small-change-1.jsonl"]
+    }
+  ]
+}
+```
+
+For the candidate use variant `candidate`, a different run_id, and the proposal's patch SHA-256. Keep the matched metadata identical. Use `claude-opus-5-5` with the actual Claude host metadata for a separate model evaluation; do not mix models in an ablation pair. The numbers above demonstrate format only, not measured model results. Report unavailable metrics honestly instead of fabricating them; a run with missing required measurements cannot pass this contract.
+
+## Compare and decide
+
+```bash
+python3 scripts/improvement.py compare ID --baseline runs/baseline.json --candidate runs/candidate.json
+python3 scripts/improvement.py decide ID --decision accept --reason "Reviewed artifacts and the proposed tradeoff"
+```
+
+The comparator checks complete/matched cases and metadata, evidence availability, finite measurements, and patch identity. Any previously passing assertion that fails in the candidate is a quality regression even if the overall pass count is unchanged. Required candidate checks must pass. Resource regressions beyond the predeclared limit reject the candidate. Otherwise, increased complete-case passes or a sufficient efficiency gain makes it eligible; no demonstrated gain is inconclusive.
+
+Acceptance requires an explicit reason and that every recorded comparison for the proposal is eligible; any rejected or inconclusive comparison means a new proposal is required. It revalidates artifact hashes, evidence and the comparison before recording the decision. A rejected candidate can be recorded with `--decision reject`. Decided proposals are immutable; create a new proposal for another attempt. Decisions never apply code, publish, merge or expand permission.
+
+The tool validates operator-supplied measurements and hashed evidence. It cannot certify the truth of a trace, independence of graders, statistical significance, or future applicability. Files can change after a decision, so preserve the reviewed artifacts and hashes. A human/independent reviewer still evaluates the patch and provenance; applying it is a separate development action.
+
+## Privacy and stopping conditions
+
+Keep `.oaw/improvements/`, native transcripts and sensitive run artifacts out of public Git history. Use a project-approved artifact location and retention policy. Do not extract private user preferences into shared project knowledge. Promote a durable lesson only when its scope, sources and current applicability are clear.
+
+If native-only behavior is already adequate, stop. If evidence is inconclusive, gather a targeted missing observation under a new proposal or reject the change; do not keep adding instructions until a grader agrees.

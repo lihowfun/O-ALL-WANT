@@ -1,0 +1,257 @@
+{
+  "grades": [
+    {
+      "review_id": "R01",
+      "valid_review": true,
+      "detected_planted_ids": [],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        {
+          "finding_id": "uncertainties[0]",
+          "assessment": "Grounded verification limit: src/lookup.py supplies the read function and adapter contract only. The worker, adapter implementation and archive implementation are not supplied; design.md specifies their required behavior."
+        },
+        {
+          "finding_id": "uncertainties[1]",
+          "assessment": "Correctly distinguishes design.md acceptance and rollout commitments from successful validation. The design expressly says tests are release criteria, not claimed passed tests."
+        }
+      ],
+      "explanations": {
+        "validity": "Completed, assessable zero-finding report. All stated limits concern evidence and validation, not demonstrated product defects.",
+        "rubric": "The clean rubric has no planted defect IDs. ADR-012 authorizes Redis; the declared retention, freshness, error contract and acceptance criteria are consistent."
+      }
+    },
+    {
+      "review_id": "R02",
+      "valid_review": true,
+      "detected_planted_ids": [],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        {
+          "finding_id": "uncertainties[0]",
+          "assessment": "Grounded: only lookup read routing is implemented in supplied source. Missing worker/adapter implementations limit independent verification without contradicting their design contracts."
+        },
+        {
+          "finding_id": "uncertainties[1]",
+          "assessment": "Grounded: no diagnostics or archive implementation is supplied. design.md explicitly retains an independent 90-day archive for 30-day support requests, so the report correctly avoids a retention defect."
+        },
+        {
+          "finding_id": "uncertainties[2]",
+          "assessment": "Correct validation caveat: design.md supplies release targets, tests and rollout checks but expressly does not claim passed tests."
+        }
+      ],
+      "explanations": {
+        "validity": "Completed, assessable zero-finding report. No concrete false defect claim.",
+        "rubric": "No planted IDs exist in the clean rubric; implementation omissions are explicitly treated as unverified commitments."
+      }
+    },
+    {
+      "review_id": "R03",
+      "valid_review": true,
+      "detected_planted_ids": [],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        {
+          "finding_id": "uncertainties[0]",
+          "assessment": "Grounded method-completeness observation: supplied design and ADRs contain no alternatives comparison. The actual feature-spec standard mandates evaluating alternatives. The report expressly preserves ADR-012 authorization and does not turn this method criterion into a product defect. Attribution to two reviewers is not independently evidenced by these project sources and is not a concrete product-defect claim."
+        },
+        {
+          "finding_id": "uncertainties[1]",
+          "assessment": "Grounded operational question: design.md requires a 24-hour error-budget check but supplies no definition of errors, numerical budget or passing threshold. It already supplies rollout stages; the report does not claim rollout criteria are wholly absent or that an unsafe promotion occurred."
+        },
+        {
+          "finding_id": "uncertainties[2]",
+          "assessment": "Grounded verification limit. Supplied source covers lookup control flow; worker, archive, capacity and latency implementations/results are not supplied. The design explicitly labels tests release criteria."
+        }
+      ],
+      "explanations": {
+        "validity": "Completed, assessable report with no findings. Documentation-method observations and operational uncertainty are explicitly separated from factual design defects.",
+        "rubric": "No planted IDs in the clean rubric. No hard negative is asserted as a defect."
+      }
+    },
+    {
+      "review_id": "R04",
+      "valid_review": true,
+      "detected_planted_ids": [],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        {
+          "finding_id": "uncertainties[0]",
+          "assessment": "Accurate about both sources and method: the feature-spec standard requires alternatives evaluation, and neither design nor accepted ADR documents rejected alternatives. Explicitly classified as standard compliance, not an architectural defect."
+        },
+        {
+          "finding_id": "uncertainties[1].a",
+          "assessment": "Grounded execution-detail question: the 24-hour error-budget threshold and a concrete performance test setup/procedure are absent. design.md does supply numerical load/latency targets and test scenarios, which this narrower observation does not deny."
+        },
+        {
+          "finding_id": "uncertainties[1].b",
+          "assessment": "Grounded method-completeness observation: the acceptance/rollout section contains no file-by-file task list or stable incremental implementation phases. The actual readiness standard calls for scoped files, actionable per-file changes and phased checkpoints. Rollout percentages are present, but differ from implementation phases."
+        },
+        {
+          "finding_id": "uncertainties[2]",
+          "assessment": "Correctly limits implementation evidence to hit/miss and CacheUnavailable fallback. Worker expiry/version enforcement, archive, capacity and achieved latency are specified or targeted but not independently implemented/validated in supplied source."
+        }
+      ],
+      "explanations": {
+        "validity": "Completed, assessable zero-finding report. Method expectations are not treated as mandatory new product requirements.",
+        "rubric": "No planted IDs. The report does not deny the existing archive, cache error contract, latency/load targets or rollout/rollback criteria."
+      }
+    },
+    {
+      "review_id": "R05",
+      "valid_review": true,
+      "detected_planted_ids": [],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        {
+          "finding_id": "uncertainties[0]",
+          "assessment": "Grounded verification limit. Supplied lookup source does not validate worker/expiry, archive, fallback provisioning or measured performance; design.md expressly labels tests release acceptance criteria."
+        },
+        {
+          "finding_id": "uncertainties[1]",
+          "assessment": "Grounded method observation: alternatives evaluation required by the feature-spec standard is not supplied. Report explicitly says this does not demonstrate incorrect accepted architecture. Reviewer-count attribution is unverified here and is not a concrete product-defect claim."
+        },
+        {
+          "finding_id": "uncertainties[2]",
+          "assessment": "Explicit optional editorial preference concerning the long flow paragraph; no factual defect claim."
+        },
+        {
+          "finding_id": "uncertainties[3]",
+          "assessment": "Scoped to design.md acceptance/rollout section, this is a readiness-completeness observation. That section supplies no file-change list, detailed interface implementation tasks or incremental implementation checkpoints. The readiness standard's zero-decision rule, API-update examples and phasing requirements support this framing. Elsewhere the design and lookup source do declare the CacheUnavailable interface contract; the report does not claim that contract is absent globally."
+        },
+        {
+          "finding_id": "uncertainties[4]",
+          "assessment": "Grounded operational open question: no error-budget threshold or linked policy accompanies the 24-hour checks. This does not deny that rollout criteria are present."
+        },
+        {
+          "finding_id": "uncertainties[5]",
+          "assessment": "Grounded integration uncertainty: design.md specifies rollback by disabling cache reads while lookup.py always invokes its cache argument. No bypass configuration/integration is supplied. The report allows missing implementation rather than asserting rollback is broken or impossible."
+        }
+      ],
+      "explanations": {
+        "validity": "Completed, assessable report. All observations are explicitly scoped as verification, editorial, method or implementation questions, without demonstrated product defects.",
+        "rubric": "No planted IDs; no unsupported concrete defect claims under these actual scopes."
+      }
+    },
+    {
+      "review_id": "R06",
+      "valid_review": true,
+      "detected_planted_ids": [],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        {
+          "finding_id": "uncertainties[0]",
+          "assessment": "Grounded method/documentation observation: supplied sources provide neither measured PostgreSQL-only baseline nor alternatives/rejection rationale. Feature-spec requires alternatives; zoom-out guidance asks for proven performance bottlenecks. Report explicitly avoids concluding the authorized architecture is defective."
+        },
+        {
+          "finding_id": "uncertainties[1]",
+          "assessment": "Grounded conditional risk: no adapter failure timeout budget is specified. Falling back on CacheUnavailable describes eventual routing, not time spent waiting for a failure. A slow failure could consume the outage latency budget, but report expressly does not assert an observed violation."
+        },
+        {
+          "finding_id": "uncertainties[2]",
+          "assessment": "Correct implementation/validation limit: the supplied function establishes read routing, not worker, archive, capacity or achieved latency. Design commitments are not claimed verified."
+        },
+        {
+          "finding_id": "uncertainties[3]",
+          "assessment": "Grounded method-completeness observation: acceptance/rollout section has no per-file implementation tasks, stable implementation phases or concrete executable verification procedures. These are expectations of the actual readiness standard, not newly imposed product requirements or an assertion that release criteria are absent."
+        },
+        {
+          "finding_id": "uncertainties[4].a",
+          "assessment": "Grounded: no numerical error-budget threshold is supplied for promotion checks."
+        },
+        {
+          "finding_id": "uncertainties[4].b",
+          "assessment": "Grounded integration question: function always attempts cache.get, while the design declares rollback disables cache reads. Supplied sources lack concrete bypass integration; report acknowledges external control/alternate adapter could supply it and does not claim rollback impossibility."
+        }
+      ],
+      "explanations": {
+        "validity": "Completed, assessable report with zero findings. Severity labels do not convert explicitly conditional or readiness uncertainty into a claimed factual product failure.",
+        "rubric": "No planted IDs; the declared accepted architecture and release contracts are not falsely rejected."
+      }
+    },
+    {
+      "review_id": "R07",
+      "valid_review": true,
+      "detected_planted_ids": [],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        {
+          "finding_id": "uncertainties[0]",
+          "assessment": "Grounded feature-method observation: alternatives comparison is absent, while actual feature-spec standard requires it. Report recognizes accepted Redis authorization and explicitly does not claim incorrect design. Reviewer ratings/counts are not independently established here and are not product-defect assertions."
+        },
+        {
+          "finding_id": "uncertainties[1]",
+          "assessment": "Grounded under its implementation-plan scope: acceptance/rollout criteria do not supply per-file tasks, concrete worker/archive implementation changes, stable implementation phases or cache-read-disable integration. Worker version rejection and expiry contracts themselves ARE specified in design.md; the report's surrounding readiness language concerns how to implement them, not an assertion that the contracts are absent."
+        },
+        {
+          "finding_id": "uncertainties[2]",
+          "assessment": "Grounded execution questions: rollout checks lack defined signals/threshold, and tests list scenarios without detailed fixtures, execution setup and assertions. Numerical latency/load and release criteria remain present. Zero-decision execution detail is a method expectation rather than proof of product failure."
+        },
+        {
+          "finding_id": "uncertainties[3]",
+          "assessment": "Grounded verification caveat: no independent validation/results for freshness, archive, capacity or latency are supplied; design expressly calls tests release criteria."
+        }
+      ],
+      "explanations": {
+        "validity": "Completed, assessable report; missing implementation detail is expressly distinguished from factual defects.",
+        "rubric": "No planted IDs. Existing worker contracts, archive, latency/load/outage targets and rollout criteria must be preserved when reading these scoped questions."
+      }
+    },
+    {
+      "review_id": "R08",
+      "valid_review": true,
+      "detected_planted_ids": [],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        {
+          "finding_id": "uncertainties[0]",
+          "assessment": "Accurate source/verification boundary: supplied source provides lookup fallback and its adapter contract but no worker, adapter implementation, archive path or measured performance. Required version/expiry/archive behavior and latency targets are specified in design.md, whose acceptance section expressly does not claim passed tests. Report does not infer defects from absent implementations."
+        }
+      ],
+      "explanations": {
+        "validity": "Completed, assessable zero-finding report.",
+        "rubric": "No planted IDs; no concrete false defect claim or additional demonstrated defect."
+      }
+    },
+    {
+      "review_id": "R09",
+      "valid_review": true,
+      "detected_planted_ids": [],
+      "unsupported_concrete_claims": [],
+      "valid_additional_findings": [],
+      "uncertainties": [
+        {
+          "finding_id": "uncertainties[0]",
+          "assessment": "Grounded method/template observation: sources contain no alternatives comparison; feature-spec standard mandates it. Report explicitly recognizes accepted ADR-012 and does not assert architectural failure. Attribution to two critics and their rating is unverified here, not a product-defect claim."
+        },
+        {
+          "finding_id": "uncertainties[1]",
+          "assessment": "Grounded readiness-detail questions: design.md acceptance/rollout section does not provide per-file phased execution tasks, test setups/assertions or explicit older-version/delayed-write expiry test procedures. It DOES specify the underlying version/expiry contracts and general acceptance tests; the review does not deny them."
+        },
+        {
+          "finding_id": "uncertainties[2]",
+          "assessment": "Grounded operational clarification: the 24-hour error-budget check has no defined metric or numerical pass threshold in supplied sources."
+        },
+        {
+          "finding_id": "uncertainties[3]",
+          "assessment": "Grounded rollback integration uncertainty: design specifies disabling cache reads, lookup source has no explicit bypass control, and no configuration/integration supplying it is shown. Report explicitly avoids asserting a contradiction from missing proposed implementation."
+        },
+        {
+          "finding_id": "uncertainties[4]",
+          "assessment": "Correct verification boundary: lookup function does not validate worker/version/expiry, archive behavior, fallback provisioning or measured latency. Tests are explicitly release criteria. Brief motivation/identifiable objective is an assessment supported by the scope and accepted lookup-cache ADR, not a concrete defect assertion."
+        }
+      ],
+      "explanations": {
+        "validity": "Completed, assessable report. Method observations and open implementation/operational questions are separated from established defects.",
+        "rubric": "No planted IDs; no hard-negative defect is asserted when claims are read within their stated scope."
+      }
+    }
+  ]
+}

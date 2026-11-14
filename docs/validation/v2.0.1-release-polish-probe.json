@@ -1,0 +1,90 @@
+{
+  "base_commit": "c2d9852bf8cabf13fd86a4340ab89f69044cae5a",
+  "source_sha256": {
+    "scripts/oaw.py": "6a9b93702eca25a96b03dee005bde3573fb0bfff14842d26847673d98d6161e7",
+    "scripts/user_install.py": "136c6b2a703e22e2dccabbafdb59eeaecf7f3a6038cfa6bcbc8999abd6118feb",
+    "templates/.agents/skills/oaw-add/SKILL.md": "e0321508694d2bb5e0f404d14d7e276df006e6b71f2304cec883d0bc96293e79",
+    "tests/test_user_install.py": "4371939a3b690f0a10e75a415a3d3cfabb3eb7f79f880cfab4a4eb6f270b8722",
+    "README.md": "4e05fc6910bbe9f0808b517c10f5f33bc08788b846d81a75bf6aebbe4188cac2",
+    "docs/CLI_Reference.md": "549cfbe938353e03929b100e442222ce2dffbdb9eb1fbd7b388fa4c739ad06bd",
+    "docs/SKILL_INTAKE.md": "962c5f201ace10532b9e10fcdd0a2c98a4bc244f875ea8e0a633c1a2d1f9cf76",
+    "docs/UPGRADING.md": "54ca20d607f3ed3a711f89bfa2a547ececebc967b9580b93144001f3faf84295"
+  },
+  "scope": "Linux temporary both-host install, isolated OAW_CONFIG_HOME; no model answers.",
+  "no_default_external_write": true,
+  "no_preview_external_write": true,
+  "explicit_apply_registered": true,
+  "doctor_exit_codes": [
+    0,
+    0,
+    0
+  ],
+  "doctor_text_lines": 7,
+  "doctor_verbose_lines": 141,
+  "doctor_json_checks": 136,
+  "egm_bridges": [
+    {
+      "entry": ".agents/skills/egm-bootstrap/SKILL.md",
+      "target_exists": true
+    },
+    {
+      "entry": ".agents/skills/egm-brainstorm/SKILL.md",
+      "target_exists": true
+    },
+    {
+      "entry": ".agents/skills/egm-draft/SKILL.md",
+      "target_exists": true
+    },
+    {
+      "entry": ".agents/skills/egm-drift-report/SKILL.md",
+      "target_exists": true
+    },
+    {
+      "entry": ".agents/skills/egm-resolve/SKILL.md",
+      "target_exists": true
+    },
+    {
+      "entry": ".agents/skills/egm-review/SKILL.md",
+      "target_exists": true
+    },
+    {
+      "entry": ".agents/skills/egm-review-loop/SKILL.md",
+      "target_exists": true
+    },
+    {
+      "entry": ".claude/skills/egm-bootstrap/SKILL.md",
+      "target_exists": true
+    },
+    {
+      "entry": ".claude/skills/egm-brainstorm/SKILL.md",
+      "target_exists": true
+    },
+    {
+      "entry": ".claude/skills/egm-draft/SKILL.md",
+      "target_exists": true
+    },
+    {
+      "entry": ".claude/skills/egm-drift-report/SKILL.md",
+      "target_exists": true
+    },
+    {
+      "entry": ".claude/skills/egm-resolve/SKILL.md",
+      "target_exists": true
+    },
+    {
+      "entry": ".claude/skills/egm-review/SKILL.md",
+      "target_exists": true
+    },
+    {
+      "entry": ".claude/skills/egm-review-loop/SKILL.md",
+      "target_exists": true
+    }
+  ],
+  "egm_docs_exist": {
+    "docs/getting_started.md": true,
+    "docs/harnesses.md": true,
+    "docs/codex.md": true,
+    "docs/claude.md": true
+  },
+  "model_answers_started": 0
+}
