@@ -205,4 +205,4 @@ Claude 執行方式見 [獨立重跑 MD](../CLAUDE_ACCEPTANCE.md)。
 
 - EGM [固定來源](https://github.com/google/elephant-goldfish-model/tree/f0ba151b252c9abf1318d9fe857a43265d06de89)、[official review preset](https://github.com/google/elephant-goldfish-model/blob/f0ba151b252c9abf1318d9fe857a43265d06de89/skills/egm-review/SKILL.md)。本測試題與評分規則由本 repo 設計，沒有把上游測試答案當品質 gold。
 - [OpenAI 非互動 JSONL／usage](https://learn.chatgpt.com/docs/non-interactive-mode)、[skills eval 實務](https://developers.openai.com/blog/eval-skills)，查閱 2026-10-30；實際 schema 另由本機 probe 確認。
-- [既有來源版本／授權表](../releases/2.0.0-sources.md)。上游來源身份、安裝身份、實測能力分別記錄。
+- [既有來源版本／授權表](../releases/2.0.1-sources.md)。上游來源身份、安裝身份、實測能力分別記錄。

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "oaw_version": "2.0.0",
-  "release_status": "proposed",
+  "oaw_version": "2.0.1",
+  "release_status": "released",
   "reviewed_on": "2026-10-30",
   "sources": [
     {

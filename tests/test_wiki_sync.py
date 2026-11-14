@@ -2,6 +2,7 @@
 
 import ast
 import contextlib
+from datetime import datetime, timezone
 import hashlib
 import importlib
 import io
@@ -823,6 +824,38 @@ class MemoryCheckTests(unittest.TestCase):
         self.assertEqual(sum(value for key, value in report["counts"].items()
                              if key != "missing_path_removal_context"), report["checked"]["tokens"])
 
+    def test_memory_add_timestamps_parse_and_reach_both_wiki_commands(self):
+        hub = importlib.import_module("context_hub")
+        self.touch("scripts/anchor.py")
+        stamp = datetime(2026, 11, 13, 23, 30, tzinfo=timezone.utc)
+        for separator in ("---\n", ""):
+            with self.subTest(separator=bool(separator)):
+                path = self.memory("# Memory\n" + separator + self.entry(
+                    "[T4] old decision", "scripts/missing_old.py", date="2026-10-01"))
+                with patch.multiple(hub, BASE_DIR=str(self.base), MEMORY_FILE=str(path)), \
+                        patch.object(hub, "datetime", wraps=datetime) as clock, \
+                        contextlib.redirect_stdout(io.StringIO()):
+                    clock.now.return_value = stamp
+                    hub.memory_add("[DECISION] [T4] new decision cites scripts/missing_new.py")
+                entries = wiki._parse_memory_entries(path.read_text(encoding="utf-8"))
+                self.assertEqual(len(entries), 2)
+                by_date = {entry["date"]: entry for entry in entries}
+                new = by_date["2026-11-13"]
+                self.assertIn("new decision", new["title"])
+                self.assertNotIn("missing_new", by_date["2026-10-01"]["body"])
+                output = io.StringIO()
+                with contextlib.redirect_stdout(output):
+                    self.assertEqual(wiki.promote_candidates(json_out=True), 0)
+                self.assertEqual({row["date"] for row in json.loads(output.getvalue())},
+                                 {"2026-10-01", "2026-11-13"})
+                code, report = self.check()
+                self.assertEqual(code, 0)
+                self.assertEqual(report["checked"]["entries"], 2)
+                findings = {row["path"]: row for row in report["findings"]}
+                self.assertEqual(findings["scripts/missing_new.py"]["entry_line"], new["line"])
+                self.assertEqual(findings["scripts/missing_new.py"]["date"], "2026-11-13")
+                self.assertEqual(findings["scripts/missing_old.py"]["date"], "2026-10-01")
+
     def test_c2_line_and_symbol_suffixes_resolve_to_present(self):
         self.touch("scripts/a.py")
         citations = ("scripts/a.py::Foo", "scripts/a.py:12", "scripts/a.py:12-20", "scripts/a.py#L12")
@@ -1131,7 +1164,10 @@ class MemoryCheckTests(unittest.TestCase):
 
         def record(function):
             def wrapper(path, *args, **kwargs):
-                judged.append(os.path.normcase(os.path.abspath(os.fspath(path))))
+                # Path.resolve() itself stats its result on Python 3.11 and 3.12 (not 3.10 or 3.13).
+                # That is link resolution, which refusing a link requires; only other callers judge a path.
+                if not sys._getframe(1).f_globals.get("__name__", "").startswith("pathlib"):
+                    judged.append(os.path.normcase(os.path.abspath(os.fspath(path))))
                 return function(path, *args, **kwargs)
             return wrapper
 

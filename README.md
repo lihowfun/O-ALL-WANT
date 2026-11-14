@@ -27,7 +27,7 @@
   <img src="docs/assets/oboi_meme.png" width="400" alt="Harness engineering: I want it all">
 </p>
 
-> **v2.0.0 is proposed in a pull request; it is not a published release.** [Upgrade guide](docs/UPGRADING.md) · [CLI reference](docs/CLI_Reference.md) · [Execution plan](docs/plans/v2.0.0-execution.md)
+> **v2.0.1 is the first release of the V2 line; 2.0.0 was never released.** [Upgrade guide](docs/UPGRADING.md) · [CLI reference](docs/CLI_Reference.md) · [Execution plan](docs/plans/v2.0.1-release-path.md)
 
 **OAW v2 includes EGM**, project evidence, optional wiki and improvement gates.
 The default recipe exposes the seven pinned EGM skills plus `oaw-add`, `oaw-codemap`, `oaw-evidence` and `oaw-review`;
@@ -36,10 +36,20 @@ specifies. Bundling a workflow does not prove a quality or token advantage.
 [Codex results and limitations](docs/validation/egm-oaw-codex-2026-10-30.md) ·
 [Shared Codex/Claude acceptance protocol](docs/SHARED_ACCEPTANCE_PROTOCOL.md).
 
-The release-fix branch adds permission-only pending memory under `.oaw/` and one
-native fresh-context Codex code review. These are D45 fixes under verification;
-they do not establish a quality or token advantage.
-[Implementation and acceptance](docs/plans/v2.0.1-release-fixes.md).
+M1 (session-end saving), M2 (empty-recall host guidance) and R2 (one deep
+code-review round) were implemented, failed the preregistered regression
+thresholds in the one FIXCHECK check, and were reverted. M3 (permission-only
+pending memory), R1 (native same-family Codex review with explicit cross-family
+commands) and the #18 literal-path audit fix ship.
+
+FIXCHECK uses frozen H1 diagnostic tasks, the O arm and one counted answer per
+task. All 24 rows are counted and the frozen calculator reports `fail`: two
+small-change token limits (`codex/t01`, `claude/t12`) and both cells' memory
+thresholds. With one answer per task, neither these failures nor the
+differences measured in the other direction can be separated from run-to-run
+variation; this is a regression gate, not an effectiveness verdict.
+[Result record](https://github.com/lihowfun/O-ALL-WANT/blob/e05c4d5a9238fe3ef4529552a27ce9095ead6a3b/records/v2.0.1-experiments/FIXCHECK/RESULT.md) ·
+[Disposition and validation](docs/validation/v2.0.1-final.md).
 
 ## 20-second pitch
 
@@ -76,7 +86,7 @@ The goal is still simple: **spend expensive tokens on real reasoning and real ou
 
 ---
 
-## 🍲 What's in the hot pot? (v2.0.0)
+## 🍲 What's in the hot pot? (v2.0.1)
 
 | | Ingredient | What it does in v2 | You get it with |
 |---|---|---|---|
@@ -88,7 +98,7 @@ The goal is still simple: **spend expensive tokens on real reasoning and real ou
 | 🛟 | **Safe lifecycle** | `init` protects existing content; `migrate` previews by default and `--apply` keeps backups, receipts, rollback and conflict proposals; `doctor` reports health | always |
 | 🔒 | **Safe writes** | Locked read-modify-write, atomic replacement, and refusal of symlink/junction or path escapes | always |
 | 📉 | **Compact output** | `search --compact` and `--max-chars` budgets keep tool output short | default |
-| ✅ | **Proof gate** | `harness_check.py`: 9 check groups, every required test module, a minimum test count and zero skips; CI on Ubuntu, macOS and Windows with Python 3.10 and 3.13 | this repo |
+| ✅ | **Proof gate** | `harness_check.py`: 9 check groups, every required test module, a minimum test count and [no unexpected skips](docs/CLI_Reference.md#repository-validation); CI on Ubuntu, macOS and Windows with Python 3.10 and 3.13 | this repo |
 
 ### 🥄 Scooped out of the pot in v2
 
@@ -164,7 +174,7 @@ v1 was built when coding agents forgot everything between sessions. Today Claude
 
 > OAW's frozen H1 comparison used 12 tasks in one Python repository with Claude Code + Opus 5.5 and Codex CLI + gpt-6.1-sol. The combined verdict was inconclusive: the Codex condition met H1's benefit criteria; the Claude condition did not establish a benefit. Total logical tokens, including cache reads and subagents, were 2.58× the native mean for Claude and 1.92× for Codex, mostly from large changes. These are H1 measurements, not a general token-savings claim. [H1 results](https://github.com/lihowfun/O-ALL-WANT/blob/268429d/records/v2.0.1-experiments/H1/RESULT.md).
 >
-> D45 retains the defaults as a product decision while repairing the observed memory and review defects. FIXCHECK reuses the diagnostic tasks to check those repairs once; it cannot establish an independent effectiveness benefit. Native discovery and permissions remain host/version dependent. [Repair plan](docs/plans/v2.0.1-release-path.md).
+> D45 retains the defaults as a product decision; the FIXCHECK disposition above keeps M3/R1 and reverts M1/M2/R2. FIXCHECK checks the repairs once on diagnostic tasks and cannot establish an independent effectiveness verdict. Native discovery and permissions remain host/version dependent. [Repair plan](docs/plans/v2.0.1-release-path.md).
 
 ---
 
@@ -277,7 +287,7 @@ See [CONTRIBUTING](CONTRIBUTING.md) and [CHANGELOG](CHANGELOG.md).
 
 ## Source lineage (standing on the shoulders of giants)
 
-Exact versions and usage status: [v2.0.0 source ledger](docs/releases/2.0.0-sources.md).
+Exact versions and usage status: [v2.0.1 source ledger](docs/releases/2.0.1-sources.md).
 EGM **0.1.0** at [`f0ba151b252c9abf1318d9fe857a43265d06de89`](https://github.com/google/elephant-goldfish-model/tree/f0ba151b252c9abf1318d9fe857a43265d06de89)
 is bundled in V2 and installed to `.oaw/integrations/egm/` when the recipe selects an EGM skill. Upstream runtime files
 retain exact bytes, Apache-2.0 licensing and individual hashes. Native entrypoint

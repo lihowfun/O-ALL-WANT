@@ -31,7 +31,7 @@
 [D38、D41、D42 原決定](https://github.com/lihowfun/O-ALL-WANT/blob/268429d/records/digestion-2026-11-03/ingest/DECISIONS.md)：
 D38 的能力型門檻是草案：成品通過數增加、閒置啟動 token 不增加超過 2%、一般任務不變差；具體試吃按自己的預登記執行。D41 優先 harness，再 PPT／影片；遊戲是能力範例，未因此自動啟動試吃。D42 只授權 H1 指定的天花板補題，不能一般化成事後換題。D45 要求發佈前收斂一條線，修正只複查一次；資料不足不宣告通過。
 
-[H1](https://github.com/lihowfun/O-ALL-WANT/blob/268429d/records/v2.0.1-experiments/H1/RESULT.md) 的合併判定仍為未定。保留預設是 D45 產品決定，FIXCHECK 重用找缺陷的題目，不是獨立收益證據。[Harness² 評估](https://github.com/lihowfun/O-ALL-WANT/blob/4033f52/records/intake-2026-11-13-harness2/EVALUATION.md) 的 U1/U2/U3 仍待發佈後處理，尚未宣稱吸收或省 token。
+[H1](https://github.com/lihowfun/O-ALL-WANT/blob/268429d/records/v2.0.1-experiments/H1/RESULT.md) 的合併判定仍為未定。保留預設是 D45 產品決定，FIXCHECK 重用找缺陷的題目，不是獨立收益證據。[Harness² 評估](https://github.com/lihowfun/O-ALL-WANT/blob/4033f52/records/intake-2026-11-13-harness2/EVALUATION.md) 的 U2 比較已由 owner 在 D48 解除發佈前的實驗限制；U1/U3 仍待處理，尚未宣稱吸收或省 token。
 
 使用者可選能力的安裝與推薦證據分開：receipt 記來源/pin、host、安裝內容、試吃狀態、備份和移除方式；未知成本標未量測。hooks/MCP/scripts 需明確 consent，安裝不執行抓取的程式。專案外 checkout locator 另需 `--remember-checkout`；可在同一個 add 問題選擇，不因同意元件而自動寫入。
 
@@ -154,7 +154,7 @@ owner 說「照建議改成 D29」（建議見 records 分支 `records/digestion
 | 6 實測 | Claude 在試吃區試吃（D25、D28），用 `record-tasting` 記錄；引擎自己的測試在常設政策內由便宜到貴跑：離線整合 T1、沙箱試跑 TX、行為 A/B、整合檢查 T4、齊平底線 P | D11、D13、D25 | 部分自動：Claude 的試吃和記錄；引擎自己的測試規劃中 |
 | 7 分流 | 每個成分判定吸收／排掉／暫留，附原因和證據等級；試吃判定寫在這一站；套用第 6 站整合檢查和齊平底線的關口 | D2、D5、D16、D17、D18 | 部分自動：成分判定自動（只有靜態量測）；試吃判定由 Claude 記錄；關口和 D18 的規劃欄位：規劃中 |
 | 8 核准 | Claude 依 D21 把挑中的單位重建成 OAW 程式和測試，用 `record-absorption` 記錄；只有 C 級問你 | D7、D11、D21 | 部分自動：重建和記錄由 Claude 做；C 級問題需要你；照原樣複製吸收是可選的 |
-| 9 版本 | 重建的單位等發布（你合併 PR，整個分支一次決定）；每次照原樣複製吸收或移除都產生 `2.0.0+build.N.<hash7>`，可一鍵線性還原，列出和預設比的效果與證據等級；任何 skill（含 EGM）都能移除 | D3、D6、D12、D14、D21 | 部分自動：版本、還原點、和預設比、附授權檔和出處說明：自動；發布、還原、移除、加回：需要你；每版引用清單、release 目標：規劃中 |
+| 9 版本 | 重建的單位等發布（你合併 PR，整個分支一次決定）；每次照原樣複製吸收或移除都產生 `2.0.1+build.N.<hash7>`，可一鍵線性還原，列出和預設比的效果與證據等級；任何 skill（含 EGM）都能移除 | D3、D6、D12、D14、D21 | 部分自動：版本、還原點、和預設比、附授權檔和出處說明：自動；發布、還原、移除、加回：需要你；每版引用清單、release 目標：規劃中 |
 
 站別的狀態符號：`●` 完成、`◐` 部分完成（這一站有規劃中的細項還沒跑，所以不畫成完成）、`◉` 目前、`⊗` 卡住、`⊖` 已移除、`○` 還沒到、`┄` 規劃中、`–` 不需要。
 
@@ -248,7 +248,7 @@ owner 說「照建議改成 D29」（建議見 records 分支 `records/digestion
 ### 9 版本（D3、D6、D12、D14）
 
 - **D21 重建的單位等發布**：吸收紀錄的單位在工作分支上，等你合併 PR；網頁、選單和 mod 標「等發布（合併 PR 時一次決定）」，不是「等你」，因為整個分支一次決定。發布後再記一筆 `release: {"state": "released"}` 的吸收紀錄，食物就標「沒有待辦」。這些單位也算進「已吸收的成分」。
-- 每次照原樣複製吸收或移除都產生一個專案版本和還原點。名稱遵守 SemVer 2.0：預設 release `2.0.0`，專案組合是 build metadata `2.0.0+build.N.<hash7>`（`hash7` 是內容 hash 的前 7 碼），附一個人看得懂的標籤，寫加了或拿掉什麼。內容相同的組合沿用同一個版本。
+- 每次照原樣複製吸收或移除都產生一個專案版本和還原點。名稱遵守 SemVer 2.0：預設 release `2.0.1`（已發布），專案組合是 build metadata `2.0.1+build.N.<hash7>`（`hash7` 是內容 hash 的前 7 碼），附一個人看得懂的標籤，寫加了或拿掉什麼。內容相同的組合沿用同一個版本。
 - **吸收裝什麼**：照原樣複製 skill 資料夾裡的文字，加上食物根目錄的授權檔和 NOTICE（LICENSE、NOTICE、COPYING），再加一份 `OAW-UPSTREAM.md`，寫明來源 repo（本機 repo 只寫私有代號）、pinned commit、封存的 tree hash、複製了哪些檔案、授權，以及「沒有修改」（D14 的授權路線）。重新實作成 OAW 部件以後，這份說明要改寫成修改說明。
 - 一鍵還原到任何一個舊版本：預覽 → 還原 → doctor。還原只切換 OAW 安裝層，不動專案紀錄。還原是線性的：只有移除版本，沒有逐項開關（D14）。
 - 每一版都列出它有哪些 skill 和成分，以及和預設 release 比的效果，每一行一個證據等級。系統在吸收當下做這個簡單評估；品質只採計這一版裝著的食物的實測證據，沒有就寫「未量測」，絕不寫「加強」。
@@ -258,7 +258,7 @@ owner 說「照建議改成 D29」（建議見 records 分支 `records/digestion
   - 用「還原到這版」把移除過的 skill 還原回來時，它會標「移除後又還原回來：要重新測試」，按鈕是「重新試吃（免費）」。
   - 內建 skill 和 EGM：`readd` 經 `oaw.py migrate` 加回，決定紀錄寫「要重新測試」，版本的品質寫「未量測」。v0 沒有可以替它們跑的測試（它們是 OAW 自己的範本，不經過試吃），所以「重新測試」今天的意思是：在有實測之前，一律當成未測。
 - 引用（D3）：每個版本只引用真正用到的上游材料，並寫出用在哪裡；移除或沒採用的列出原因。今天：吸收收據記下每樣食物的 pinned commit 和 tree hash，每個吸收的 skill 資料夾帶 `OAW-UPSTREAM.md`；release 的引用在 `docs/releases/<version>-sources.json`。**每個專案版本自動列出「用在哪裡／沒採用的原因」的引用清單：規劃中。**
-- release 目標（D14）：所有批次進還沒打 tag 的 `2.0.0`；`2.0.0` 先打 tag 的話，相容的新增進 `2.x`，不相容的（OAW-19、OAW-12/13、OAW-25）等 `3.0.0`。今天：`RELEASE` 固定是 `2.0.0`，切換 release 目標是規劃中。
+- release 目標（D14）：所有批次進還沒打 tag 的 `2.0.0`；`2.0.0` 先打 tag 的話，相容的新增進 `2.x`，不相容的（OAW-19、OAW-12/13、OAW-25）等 `3.0.0`。此為 D14 當時的目標；2.0.0 最終從未打 tag 或發布，首個發布版本是 `v2.0.1`。今天：`RELEASE` 固定是 `2.0.1`（已發布），切換 release 目標是規劃中。
 
 ## 怎麼操作（D8）
 
@@ -375,7 +375,7 @@ python3 scripts/oaw_status.py --project /path/to/project    # 只看，不做任
 - **吸收的 skill 只裝到吸收當時的 host**：之後才加上第二個 host 時，畫面會標「只在 Codex／只在 Claude」，但還沒有「補裝到另一個 host」的動作，doctor 也還沒有對應的警告。要補裝，先移除再吸收一次。
 - **還原寫入的 `install.json` 和那一版不完全相同時**（例如保留了你的自訂檔），結果會記成一個新的版本，而不是沿用原本的名字。
 
-平台驗證分開看：早期原型曾在 Windows／Python 3.13 執行；D45 修復候選在 Linux／Python 3.10 完成完整 gate（677 tests）。這不是 macOS／Windows 的當前版本證據，發佈仍需最終六格 CI。
+平台驗證分開看：早期原型曾在 Windows／Python 3.13 執行；D45 修復候選在 Linux／Python 3.10 完成完整 gate（677 tests）。發布文件提交的 parent `7504eca` 在 Linux／Python 3.10.12 通過 9/9 gate、718 tests、0 skips；Ubuntu、macOS、Windows × Python 3.10、3.13 六格 CI 全綠（run `43510582580`）。這不代表已在 CI 之外執行原生 Windows／macOS 驗證，也不證明原生 host discovery 或模型效果。[最終驗證](validation/v2.0.1-final.md)。
 
 ## 資料放在哪裡
 
@@ -431,7 +431,7 @@ python3 scripts/oaw_status.py --project /path/to/project    # 只看，不做任
 | D11 | 系統決定每樣食物怎麼測；你只設定一次常設政策；你仍決定吸收哪些成分 | 4、6、8 |
 | D12 | 每次吸收或移除都產生具名版本和還原點；SemVer `2.0.0+build.N`（加短 hash）；每版列效果和證據等級 | 9 |
 | D13 | 常設政策 PRE-01：上限、沙箱 level 1／2、API key、網路、Codex、共用成本（見第 6 站） | 6 |
-| D14 | 2026-11-03 這一輪的選擇；和流程有關的是：只有移除版本、沒有逐項開關，還原是線性的；release 目標（2.0.0 打 tag 之後相容的進 2.x、不相容的等 3.0.0）；授權路線（Apache-2.0 署名附修改說明、附上 LICENSE／NOTICE）；CLI 結束碼（3 = 需要選擇、4 = 沒有符合） | 9（結束碼：CLI） |
+| D14 | 2026-11-03 這一輪的選擇；和流程有關的是：只有移除版本、沒有逐項開關，還原是線性的；release 目標（2.0.0 打 tag 之後相容的進 2.x、不相容的等 3.0.0；2.0.0 最終未打 tag，首個 tag 目標為 v2.0.1）；授權路線（Apache-2.0 署名附修改說明、附上 LICENSE／NOTICE）；CLI 結束碼（3 = 需要選擇、4 = 沒有符合） | 9（結束碼：CLI） |
 | D15 | 零脈絡要驗證：Goldfish 的啟動 recipe、argv、init event 都要記錄；backlog 合成和合併項目也要盲審 | 5 |
 | D16 | 齊平底線是每樣測過的食物的固定關口（C ≥ B）；沒跑前標「和單吃食物比：未測」 | 6、7 |
 | D17 | 執行食物的步驟自動暫留；模型面向的文字和機制拆開，文字過 A/B，機制可用靜態證據出貨；暫留都從免費 Stage 0 開始 | 7 |

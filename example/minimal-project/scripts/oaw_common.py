@@ -104,6 +104,26 @@ def evidence_write_refusal(text):
     return None
 
 
+_EXTENDED_DRIVE = re.compile(r"\\\\\?\\([A-Za-z]:\\.*)", re.S)
+_EXTENDED_UNC = re.compile(r"\\\\\?\\UNC\\(.*)", re.S)
+
+
+def plain_windows_path(text, platform=os.name):
+    r"""Drop the extended-length prefix (\\?\) from a Windows drive or UNC path; other text is unchanged.
+
+    Python 3.10's ntpath.realpath can leave the prefix on a path that changes between its
+    two lookups, for example while another thread creates the directory. The same location
+    would then compare as a different drive.
+    """
+    if platform != "nt":
+        return text
+    match = _EXTENDED_UNC.fullmatch(text)
+    if match:
+        return "\\\\" + match.group(1)
+    match = _EXTENDED_DRIVE.fullmatch(text)
+    return match.group(1) if match else text
+
+
 def confined_path(root, *parts):
     """Resolve a path and reject escapes through '..', absolute paths or symlinks.
 
@@ -112,11 +132,12 @@ def confined_path(root, *parts):
     """
     boundary = Path(root).resolve()
     candidate = boundary.joinpath(*parts).resolve()
+    inside, target = (os.path.normcase(os.path.normpath(plain_windows_path(str(path)))) for path in (boundary, candidate))
     try:
-        common = os.path.commonpath([os.path.normcase(str(boundary)), os.path.normcase(str(candidate))])
+        common = os.path.commonpath([inside, target])
     except ValueError as exc:
         raise ValueError("Path is outside the project boundary.") from exc
-    if common != os.path.normcase(str(boundary)):
+    if common != inside:
         raise ValueError("Path is outside the project boundary.")
     return str(candidate)
 

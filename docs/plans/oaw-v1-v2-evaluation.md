@@ -234,4 +234,4 @@ P2／P3 開始前固定總 token／費用／時間上限與停止規則；不要
 - [Codex 非互動 JSONL 與 usage](https://learn.chatgpt.com/docs/non-interactive-mode)，查閱 2026-10-30。
 - [OpenAI skills eval 實務](https://developers.openai.com/blog/eval-skills)，查閱 2026-10-30；採用可重現 traces／客觀檢查的方向，實驗門檻由本計畫定義。
 - [OpenAI prompt caching](https://developers.openai.com/api/docs/guides/prompt-caching)、[pricing](https://developers.openai.com/api/docs/pricing)，查閱 2026-10-30；執行時再保存對應模型與 tier 的價格快照。
-- [EGM 固定來源](https://github.com/google/elephant-goldfish-model/tree/f0ba151b252c9abf1318d9fe857a43265d06de89)、[OAW 版本來源表](../releases/2.0.0-sources.md)。
+- [EGM 固定來源](https://github.com/google/elephant-goldfish-model/tree/f0ba151b252c9abf1318d9fe857a43265d06de89)、[OAW 版本來源表](../releases/2.0.1-sources.md)。

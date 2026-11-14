@@ -22,6 +22,15 @@ REQUIRED_TEST_MODULES = ("test_context_hub", "test_gate", "test_improvement", "t
                          "test_judge_calibration", "test_eval_ledger", "test_eval_ledger_fixcheck")
 MINIMUM_TESTS = 434  # POSIX count; Windows adds junction cases.
 SUMMARY_MARKER = "OAW-TEST-SUMMARY "
+# Optional platform limits, not required skips. Match both identity and reason so a new
+# skip (including loss of symlink privileges) still fails every CI matrix row.
+_AFFINITY_SKIP = ("test_code_index.WorkerCountTests.test_taskset_limits_workers_in_a_real_process",
+                  "needs an affinity call and 2+ usable CPUs")
+_RAW_FILENAME_TEST = "test_code_index.DrawnGraphTests.test_cli_surrogate_filename_exports_match_stdout"
+EXPECTED_SKIPS = {
+    "darwin": {_AFFINITY_SKIP, (_RAW_FILENAME_TEST, "filesystem rejects non-UTF-8 filenames (EILSEQ)")},
+    "win32": {_AFFINITY_SKIP, (_RAW_FILENAME_TEST, "raw non-UTF-8 filenames require a POSIX filesystem")},
+}
 # Per-check subprocess limit: a guard against a hung command, not a test budget. The full
 # suite took 372-480 s on Windows 11 with 393-423 tests (2026-11-04), over the old 360 s.
 CHECK_TIMEOUT = 900
@@ -76,11 +85,12 @@ def unittest_summary(start=None):
     modules = sorted({test.id().split(".", 1)[0] for test in flatten(suite)})
     result = unittest.TextTestRunner(stream=sys.stderr, verbosity=1).run(suite)
     print(SUMMARY_MARKER + json.dumps({"run": result.testsRun, "skipped": len(result.skipped),
+                                       "skips": [{"id": test.id(), "reason": reason} for test, reason in result.skipped],
                                        "successful": result.wasSuccessful(), "modules": modules}))
     return 0 if result.wasSuccessful() else 1
 
 
-def regression_check(start=None, required=REQUIRED_TEST_MODULES, minimum=MINIMUM_TESTS):
+def regression_check(start=None, required=REQUIRED_TEST_MODULES, minimum=MINIMUM_TESTS, *, platform=None):
     code = (f"import sys; sys.path.insert(0, {str(ROOT / 'scripts')!r}); import harness_check; "
             f"raise SystemExit(harness_check.unittest_summary({str(start) if start else None!r}))")
     process = run([sys.executable, "-c", code])
@@ -96,9 +106,23 @@ def regression_check(start=None, required=REQUIRED_TEST_MODULES, minimum=MINIMUM
         problems.append("missing test modules: " + ", ".join(missing))
     if summary["run"] < minimum:
         problems.append(f"{summary['run']} tests ran; at least {minimum} required")
-    if summary["skipped"] and os.environ.get("OAW_ALLOW_SKIPS") != "1":
-        problems.append(f"{summary['skipped']} skipped test(s); set OAW_ALLOW_SKIPS=1 only where a platform cannot run them")
+    platform = sys.platform if platform is None else platform
+    allowed = EXPECTED_SKIPS.get(platform, set())
+    skips = summary.get("skips", [])
+    if len(skips) != summary["skipped"]:
+        problems.append("skip inventory does not match skipped count")
+    unexpected = [skip for skip in skips if (skip["id"], skip["reason"]) not in allowed]
+    # A local override for a host that cannot run a case (for example Windows without symlink
+    # privilege). The skips are still listed; CI never sets it (tests/test_gate.py checks the workflow).
+    overridden = bool(unexpected) and os.environ.get("OAW_ALLOW_SKIPS") == "1"
+    if not overridden:
+        for skip in unexpected:
+            problems.append(f"unexpected skip on {platform}: {skip['id']}: {skip['reason']}")
     detail = "; ".join(problems) or f"{summary['run']} tests, {summary['skipped']} skipped"
+    for skip in skips:
+        detail += f"\n  SKIP {skip['id']}: {skip['reason']}"
+    if overridden:
+        detail += f"\n  {len(unexpected)} unexpected skip(s) allowed by OAW_ALLOW_SKIPS=1 (local override, not a CI result)"
     return Check("behavior-regressions", not problems, detail, process.stdout, process.stderr)
 
 

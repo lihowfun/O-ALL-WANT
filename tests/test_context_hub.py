@@ -1,6 +1,7 @@
 """Behavioral regressions for the portable Context Hub CLI (stdlib only)."""
 
 import contextlib
+from datetime import datetime, timedelta, timezone
 import errno
 import importlib
 import io
@@ -412,7 +413,7 @@ class ContextHubTests(unittest.TestCase):
                      '"kind":"knowledge","excerpt":"---\\ntitle: Recall Topic\\n---\\n# Recall Topic\\n\\nBackground '
                      'paragraph.\\nA Needle in the knowledge page.","truncated":false,"continuation":null}],'
                      '"truncated":false,"continuation":null}\n'),
-            "paged": first + "Next cursor: WzEsMSwiMDk4ODFmNmVkOTMzNjBhMmY2YWQ4MWY0IiwiYzk0OTY0NDBiMjhkYTgxZmFhNzM4Yjk1Il0\n",
+            "paged": first + "Next cursor: WzEsMSwiMDk4ODFmNmVkOTMzNjBhMmY2YWQ4MWY0IiwiMzYyY2I1Yjg5N2VmYTI3YTA0YzEzMmNkIl0\n",
         }
         for name, kwargs in (("text", {}), ("json", {"json_out": True}), ("paged", {"limit": 1})):
             with self.subTest(output=name):
@@ -436,7 +437,7 @@ class ContextHubTests(unittest.TestCase):
             if not cursor:
                 break
         self.assertEqual(len(rows), 12)
-        for number, row in zip(reversed(range(12)), rows):
+        for number, row in enumerate(rows):
             self.assertEqual((row["kind"], row["date"], row["tag"], row["title"]),
                              ("memory", f"2026-10-{number + 10}", "NOTE", f"entry {number}"))
             self.assertTrue(row["match"].startswith(f"The NEEDLE line {number} "))
@@ -447,13 +448,13 @@ class ContextHubTests(unittest.TestCase):
         _, text = self.quiet(hub.memory_recall, "needle", max_chars=600, index=True)
         self.assertLessEqual(len(text), 600)
         header, quote = text.splitlines()[:2]
-        self.assertEqual(header, f".agents/memory.md:{rows[0]['line']}  2026-10-21 [NOTE] entry 11  "
+        self.assertEqual(header, f".agents/memory.md:{rows[0]['line']}  2026-10-10 [NOTE] entry 0  "
                                  f"({rows[0]['entry_chars']} chars)")
         self.assertEqual(quote, "  > " + rows[0]["match"])
         self.assertIn("Next cursor: ", text)
         completed = self.cli("memory", "recall", "needle", "--index", "--limit", "1")
         self.assertEqual(completed.returncode, 0, completed.stdout)
-        self.assertIn("  > The NEEDLE line 11 ", completed.stdout)
+        self.assertIn("  > The NEEDLE line 0 ", completed.stdout)
 
     def test_recall_index_cursor_is_refused_by_default_mode(self):
         self.memory.parent.mkdir()
@@ -556,6 +557,147 @@ class ContextHubTests(unittest.TestCase):
 
     def pending(self):
         return self.base / ".oaw/memory-pending.md"
+
+    def test_memory_order_preserves_new_note_before_local_day_legacy(self):
+        self.memory.parent.mkdir()
+        packets = []
+        for offset in (8, -8):
+            with self.subTest(local_offset=offset):
+                local = timezone(timedelta(hours=offset))
+                clock_value = datetime(2026, 11, 13, 23, 30, tzinfo=timezone.utc)
+                self.memory.write_text("# Memory\n---\n## [2026-11-14] [DECISION] cache needle: use LRU\n")
+                with patch.object(hub, "datetime", wraps=datetime) as clock:
+                    # Simulate a host whose local clock differs; UTC-aware calls agree.
+                    clock.now.side_effect = lambda tz=None: clock_value.astimezone(tz or local)
+                    self.quiet(hub.memory_add, "[DECISION] cache needle: LRU superseded, use ARC")
+                    rendered = []
+                    for index in (False, True):
+                        output = self.quiet(hub.memory_recall, "cache needle", json_out=True, index=index)[1]
+                        rows = json.loads(output)["results"]
+                        self.assertIn("use ARC", rows[0]["title" if index else "excerpt"])
+                        self.assertIn("use LRU", rows[1]["title" if index else "excerpt"])
+                        rendered.append(output)
+                    packets.append(rendered)
+                    self.assertIn("use ARC", self.quiet(hub.memory_show, 1)[1])
+                    for function, kwargs in ((hub.status, {}), (hub.bootstrap, {"compact": True})):
+                        output = self.quiet(function, **kwargs)[1]
+                        self.assertLess(output.index("use ARC"), output.index("use LRU"))
+        self.assertEqual(len(packets), 2)
+        self.assertEqual(packets[0], packets[1])
+
+    def test_memory_order_merges_heads_without_reordering_either_file(self):
+        def source(name, headers):
+            return {"source": name, "content": "".join(
+                f"## [{date}] [NOTE] {title}\n" for date, title in headers)}
+
+        main = source("main", [("2026-11-14T02:00:00.000000+00:00", "m-new"),
+                               ("2026-11-14", "m-legacy"),
+                               ("2026-11-14T01:00:00.000000+00:00", "m-handwritten")])
+        pending = source("pending", [("2026-11-14T03:00:00.000000+00:00", "p-new"),
+                                     ("2026-11-14T01:30:00.000000+00:00", "p-middle"),
+                                     ("2026-11-14T00:00:00.000000+00:00", "p-midnight"),
+                                     ("2026-11-13", "p-old")])
+        titles = lambda sources: [row["entry"].split("] ")[-1] for row in hub._memory_entries(sources)]
+        self.assertEqual(titles([main, pending]),
+                         ["p-new", "m-new", "p-middle", "p-midnight", "m-legacy", "m-handwritten", "p-old"])
+        # A date alone cannot outrank a timestamp on the same UTC day, in either source.
+        for sources in ([source("main", [("2026-11-14", "legacy")]),
+                         source("pending", [("2026-11-14T00:00:00.000000+00:00", "stamp")])],
+                        [source("main", [("2026-11-14T00:00:00.000000+00:00", "stamp")]),
+                         source("pending", [("2026-11-14", "legacy")])]):
+            self.assertEqual(titles(sources), ["stamp", "legacy"])
+        # Compact and week dates must not acquire version-dependent ISO parsing semantics.
+        for date in ("20261114", "2026-W46", "14 Nov 2026"):
+            self.assertEqual(titles([source("main", [(date, "unknown")]),
+                                     source("pending", [("2026-11-13", "dated")])]), ["dated", "unknown"])
+        # A hand-written time after the date keeps the date, so one such header at the top of a file
+        # does not push the whole file below older pending notes (release review C2-03).
+        for date in ("2026-11-14 09:00", "2026-11-14T03:00:00Z", "2026-11-14T09:00"):
+            self.assertEqual(titles([source("main", [(date, "handwritten"), ("2026-11-12", "m-older")]),
+                                     source("pending", [("2026-11-13", "p-older")])]),
+                             ["handwritten", "p-older", "m-older"])
+            # Ordered by the date alone: a full timestamp on the same UTC day still comes first.
+            self.assertEqual(titles([source("main", [(date, "handwritten")]),
+                                     source("pending", [("2026-11-14T00:00:00.000000+00:00", "stamp")])]),
+                             ["stamp", "handwritten"])
+
+    def test_memory_add_puts_the_new_note_on_top_without_a_separator(self):
+        # Release review R2-01: a memory file without '---' used to get new notes appended, so the
+        # superseded decision stayed first for recall, show, status and bootstrap.
+        self.memory.parent.mkdir()
+        self.memory.write_text("# Notes\n\nPreamble text.\n\n## [2026-10-01] [DECISION] cache needle: use LRU\n\nBody.\n",
+                               encoding="utf-8")
+        self.quiet(hub.memory_add, "[DECISION] cache needle: LRU superseded, use ARC")
+        text = self.memory.read_text(encoding="utf-8")
+        self.assertTrue(text.startswith("# Notes\n\nPreamble text.\n\n## ["), text[:60])
+        self.assertLess(text.index("use ARC"), text.index("use LRU"))
+        self.assertTrue(text.endswith("## [2026-10-01] [DECISION] cache needle: use LRU\n\nBody.\n"))
+        for index in (False, True):
+            rows = json.loads(self.quiet(hub.memory_recall, "cache needle", json_out=True, index=index)[1])["results"]
+            self.assertIn("use ARC", rows[0]["title" if index else "excerpt"])
+            self.assertIn("use LRU", rows[1]["title" if index else "excerpt"])
+        self.assertIn("use ARC", self.quiet(hub.memory_show, 1)[1])
+        self.assertNotIn("use LRU", self.quiet(hub.memory_show, 1)[1])
+        for function, kwargs in ((hub.status, {}), (hub.bootstrap, {"compact": True})):
+            output = self.quiet(function, **kwargs)[1]
+            self.assertLess(output.index("use ARC"), output.index("use LRU"))
+        # A file with no entry at all still gets the note appended after its text.
+        self.memory.write_text("# Notes\n\nNothing yet.\n", encoding="utf-8")
+        self.quiet(hub.memory_add, "[NOTE] first needle")
+        self.assertTrue(self.memory.read_text(encoding="utf-8").startswith("# Notes\n\nNothing yet.\n\n## ["))
+
+    def test_a_cursor_issued_under_another_entry_order_is_refused(self):
+        # Release review R2-02: the order of unchanged files changed, so an old cursor must not
+        # be accepted (it skipped one entry and repeated another).
+        self.memory.parent.mkdir()
+        self.memory.write_text("# Memory\n---\n" + "".join(
+            f"\n## [2026-11-{day:02d}] [NOTE] needle {day}\n" for day in (14, 13, 12)), encoding="utf-8")
+        for index in (False, True):
+            with self.subTest(index=index):
+                with patch.object(hub, "MEMORY_ORDER_MARKER", b"memory-sources-v2\0"):
+                    old = json.loads(self.quiet(hub.memory_recall, "needle", limit=1, json_out=True, index=index)[1])["continuation"]
+                self.assertTrue(old)
+                with self.assertRaisesRegex(ValueError, "cursor"):
+                    self.quiet(hub.memory_recall, "needle", limit=1, cursor=old, index=index)
+                fresh = json.loads(self.quiet(hub.memory_recall, "needle", limit=1, json_out=True, index=index)[1])["continuation"]
+                self.assertNotEqual(old, fresh)
+                self.quiet(hub.memory_recall, "needle", limit=1, cursor=fresh, index=index)
+
+    def test_read_only_main_routes_directly_to_pending_without_temporary_or_retry(self):
+        self.memory.parent.mkdir()
+        self.memory.write_bytes(b"# Memory\n---\n## [2026-10-01] [NOTE] original\n")
+        original, mode = self.memory.read_bytes(), self.memory.stat().st_mode
+        self.addCleanup(self.memory.chmod, mode)
+        self.memory.chmod(0o444)
+        access = os.access
+        # Privileged hosts may ignore mode bits; still exercise the denial path there.
+        def writable(path, flags):
+            return False if Path(path) == self.memory and flags == os.W_OK else access(path, flags)
+        access_patch = patch.object(hub.os, "access", side_effect=writable) if access(self.memory, os.W_OK) else contextlib.nullcontext()
+        with access_patch, patch.object(hub, "locked_update", wraps=hub.locked_update) as update, \
+                patch.object(common.time, "sleep", side_effect=AssertionError("permission fallback must not retry")):
+            _, output = self.quiet(hub.memory_add, "[NOTE] read-only needle")
+        self.assertEqual(self.memory.read_bytes(), original)
+        self.assertIn("read-only needle", self.pending().read_text(encoding="utf-8"))
+        self.assertIn(".oaw/memory-pending.md", output)
+        self.assertEqual([Path(call.args[0]) for call in update.call_args_list], [self.pending()])
+        self.assertEqual(list(self.base.rglob("*.tmp")), [])
+
+    def test_memory_add_reports_relative_destination_for_symlink_base(self):
+        link = self.top / "link"
+        with contextlib.ExitStack() as stack:
+            try:
+                link.symlink_to(self.base, target_is_directory=True)
+            except (OSError, NotImplementedError):
+                # No symlink privilege: simulate resolution and keep the actual write.
+                realpath, resolve = os.path.realpath, Path.resolve
+                stack.enter_context(patch.object(os.path, "realpath", side_effect=lambda path, **kwargs:
+                                    realpath(str(path).replace(str(link), str(self.base)), **kwargs)))
+                stack.enter_context(patch.object(Path, "resolve", lambda path, *args, **kwargs:
+                                    resolve(Path(str(path).replace(str(link), str(self.base))), *args, **kwargs)))
+            stack.enter_context(patch.multiple(hub, BASE_DIR=str(link), MEMORY_FILE=str(link / ".agents/memory.md")))
+            _, output = self.quiet(hub.memory_add, "[NOTE] linked destination")
+        self.assertIn("added to .agents/memory.md", output)
 
     def deny_primary(self, err=errno.EACCES):
         original = hub.locked_update
@@ -703,15 +845,18 @@ class ContextHubTests(unittest.TestCase):
         for lane in ("operational", "debug"):
             self.assertIn("pending visibility", self.quiet(hub.context_lane, lane)[1])
 
-    def test_empty_recall_directs_to_host_only_when_no_hits(self):
+    def test_empty_recall_has_plain_output_without_host_guidance(self):
         for index in (False, True):
             for json_out in (False, True):
                 _, output = self.quiet(hub.memory_recall, "missing", max_chars=512, index=index, json_out=json_out)
                 self.assertLessEqual(len(output), 512)
-                self.assertIn("No matching project record", output)
-                self.assertIn("available and permitted memory", output)
                 if json_out:
-                    self.assertEqual(json.loads(output)["results"], [])
+                    packet = json.loads(output)
+                    self.assertEqual(packet["results"], [])
+                    self.assertNotIn("message", packet)
+                    self.assertNotIn("next_action", packet)
+                else:
+                    self.assertEqual(output, "No matches found.\n")
         self.quiet(hub.memory_add, "[NOTE] missing word now exists")
         _, output = self.quiet(hub.memory_recall, "missing", json_out=True)
         self.assertNotIn("next_action", json.loads(output))

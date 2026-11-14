@@ -166,7 +166,7 @@ class EgmIntegrationTests(unittest.TestCase):
         result = self.install()
         self.assertEqual(result["pending_conflicts"], [])
         manifest = json.loads((self.target / ".oaw/install.json").read_text(encoding="utf-8"))
-        self.assertEqual(manifest["framework_version"], "2.0.0")
+        self.assertEqual(manifest["framework_version"], "2.0.1")
         self.assertTrue(set(EGM_SKILLS) <= set(manifest["skills"]))
         self.assertEqual(oaw.doctor(self.target)["status"], "healthy")
 

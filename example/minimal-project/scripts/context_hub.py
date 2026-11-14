@@ -13,6 +13,7 @@ import argparse
 import base64
 import errno
 import hashlib
+import heapq
 import json
 import os
 import re
@@ -310,10 +311,17 @@ def _memory_sources():
     return sources
 
 
+MEMORY_SEPARATOR = re.compile(r"^---[ \t]*$", re.MULTILINE)
+# Part of every recall cursor. Change it whenever the order of entries changes for unchanged
+# files, so a cursor issued under the old order is refused instead of skipping or repeating entries.
+MEMORY_ORDER_MARKER = b"memory-sources-v3\0"
+
+
 def _memory_entries(sources=None):
-    """Merge individual entries, retaining their original source offsets."""
-    entries = []
+    """Merge source heads by UTC date/time, preserving each file's written order (newest on top)."""
+    groups = []
     for priority, source in enumerate(_memory_sources() if sources is None else sources):
+        entries = []
         content = source["content"]
         if content is None:
             continue
@@ -323,16 +331,24 @@ def _memory_entries(sources=None):
             end = starts[number + 1].start() if number + 1 < len(starts) else len(content)
             entry = content[start:end].rstrip()
             header = re.match(r"## \[([^\]\n]*)\]", entry)
+            full = False
             try:
-                stamp = datetime.fromisoformat(header[1]) if header else None
-                if stamp is None:
-                    raise ValueError("Missing entry date")
-                stamp = stamp.replace(tzinfo=timezone.utc) if stamp.tzinfo is None else stamp.astimezone(timezone.utc)
+                value = header[1] if header else ""
+                full = bool(re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}[+-]\d{2}:\d{2}", value))
+                if full:
+                    stamp = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f%z").astimezone(timezone.utc)
+                elif re.fullmatch(r"\d{4}-\d{2}-\d{2}(?:[T ].*)?", value):
+                    # A date, or a date followed by a time in another form: ordered by the date alone.
+                    stamp = datetime.strptime(value[:10], "%Y-%m-%d").replace(tzinfo=timezone.utc)
+                else:
+                    raise ValueError("Unknown entry date format")
             except (ValueError, OverflowError):
                 stamp = datetime.min.replace(tzinfo=timezone.utc)
+                full = False
             entries.append({"source": source["source"], "content": content, "start": start,
-                            "entry": entry, "order": (stamp, priority, -start)})
-    return sorted(entries, key=lambda entry: entry["order"], reverse=True)
+                            "entry": entry, "order": (stamp, full, priority)})
+        groups.append(entries)
+    return list(heapq.merge(*groups, key=lambda entry: entry["order"], reverse=True))
 
 
 def memory_add(note):
@@ -348,16 +364,22 @@ def memory_add(note):
         now = datetime.now(timezone.utc)
         body = re.sub(r'^' + re.escape(now.date().isoformat()) + r'\s+', '', note_body)
         entry = f"\n## [{now.isoformat(timespec='microseconds')}] [{tag}] {body}\n"
-        separator = re.search(r"^---[ \t]*$", content, re.MULTILINE)
+        separator = MEMORY_SEPARATOR.search(content)
         if separator:
             insert_pos = separator.end()
             return content[:insert_pos] + "\n" + entry + content[insert_pos:]
+        first = re.search(r"^## \[", content, re.MULTILINE)
+        if first:
+            # No separator: keep the documented order (newest on top) so readers see the new note first.
+            return content[:first.start()] + entry.lstrip("\n") + "\n" + content[first.start():]
         return content.rstrip() + "\n" + entry
 
     target = confined_path(BASE_DIR, MEMORY_FILE)
     default = "# Agent Memory — Decision & Finding Log\n\n---\n"
     fallback = False
     try:
+        if os.path.exists(target) and not os.access(target, os.W_OK):
+            raise PermissionError(errno.EACCES, "Primary memory is not writable", target)
         locked_update(target, mutate, default=default, root=BASE_DIR)
     except OSError as exc:
         if exc.errno not in {errno.EACCES, errno.EPERM, errno.EROFS}:
@@ -365,7 +387,7 @@ def memory_add(note):
         target = confined_path(BASE_DIR, ".oaw", "memory-pending.md")
         locked_update(target, mutate, default=default, root=BASE_DIR)
         fallback = True
-    label = os.path.relpath(target, BASE_DIR).replace("\\", "/")
+    label = os.path.relpath(target, os.path.realpath(BASE_DIR)).replace("\\", "/")
     suffix = " (pending: primary memory is read-only or permission denied)" if fallback else ""
     print(f"✅ Memory entry added to {label}{suffix}: [{tag}] {note[:60]}...")
 
@@ -459,9 +481,7 @@ def _render_recall(packet, json_out):
             lines.append("[Excerpt truncated; read the cited source for the complete entry.]")
         lines.append("")
     if not lines:
-        lines.append(packet.get("message", "No matches found."))
-        if packet.get("next_action"):
-            lines.append(packet["next_action"])
+        lines.append("No matches found.")
     if packet["continuation"]:
         lines.append("Next cursor: " + packet["continuation"])
     return "\n".join(lines).rstrip()
@@ -509,7 +529,7 @@ def memory_recall(query, limit=8, cursor=None, max_chars=12000, json_out=False, 
 
     sources = _memory_sources()
     # Bind ordering semantics and missing/present state, including empty files.
-    digest.update(b"memory-sources-v2\0")
+    digest.update(MEMORY_ORDER_MARKER)
     for source in sources:
         content = source["content"]
         digest.update(source["source"].encode("utf-8") + b"\0")
@@ -602,9 +622,6 @@ def memory_recall(query, limit=8, cursor=None, max_chars=12000, json_out=False, 
     if position < len(hits):
         packet["continuation"] = _recall_cursor(position, query_hash, snapshot)
         packet["truncated"] = True
-    if not hits:
-        packet["message"] = "No matching project record found."
-        packet["next_action"] = "Continue with the host\'s available and permitted memory or session history."
     output = _render_recall(packet, json_out)
     if len(output) + 1 > max_chars:
         raise ValueError("--max-chars is too small for the recall response.")

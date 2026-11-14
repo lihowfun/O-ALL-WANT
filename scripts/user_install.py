@@ -1315,6 +1315,7 @@ def commit_parts(target: Path, plan: dict) -> dict:
                 entry = record["packages"].setdefault(package["name"], _package_record(package, plan, stamp))
                 entry["consents"] = sorted(set(entry.get("consents", [])) | set(plan["consents"] or ()))
                 entry["held_back"] = [key for key in entry.get("held_back", []) if key != part_key(part)]
+                tracked = {item["path"]: item for previous in entry["parts"].values() for item in previous["files"]}
                 files_record = []
                 deletes = set()
                 for prefix in part["replace"]:
@@ -1328,24 +1329,31 @@ def commit_parts(target: Path, plan: dict) -> dict:
                         files_record.append(dict(written[relative]))  # a support file another part of this source also runs
                         continue
                     before = _read(target, relative)
-                    backup = None
+                    previous = tracked.get(relative)
+                    if previous and (sha(before) if before is not None else None) != previous["sha256"]:
+                        raise InstallError(f"{relative} changed since installation; resolve the edit before adding more parts.")
+                    backup = previous.get("backup") if previous else None
+                    previous_sha = previous["previous_sha256"] if previous else (sha(before) if before is not None else None)
                     if before is not None:
-                        backup = f"{STATE_DIR}/backups/{package['name']}/{relative}"
                         mode = stat.S_IMODE(oaw.joined(target, relative).stat().st_mode)
-                        undo.append((backup, _read(target, backup), None))
-                        _write(target, backup, before, mode)
+                        if not previous:
+                            backup = f"{STATE_DIR}/backups/{package['name']}/{relative}"
+                            if _read(target, backup) is not None:
+                                raise InstallError(f"{backup} already exists; preserve it before retrying the command.")
+                            undo.append((backup, None, None))
+                            _write(target, backup, before, mode)
                         undo.append((relative, before, mode))
                     else:
                         undo.append((relative, None, None))
                     if relative in part["writes"]:
                         data, mode = part["writes"][relative]
                         _write(target, relative, data, mode)
-                        files_record.append({"path": relative, "sha256": sha(data), "mode": oct(mode), "previous_sha256": sha(before) if before is not None else None,
+                        files_record.append({"path": relative, "sha256": sha(data), "mode": oct(mode), "previous_sha256": previous_sha,
                                              "backup": backup})
                         written[relative] = files_record[-1]
                     else:
                         _delete(target, relative)
-                        files_record.append({"path": relative, "sha256": None, "previous_sha256": sha(before), "backup": backup})
+                        files_record.append({"path": relative, "sha256": None, "previous_sha256": previous_sha, "backup": backup})
                 entries = []
                 for item in _shared_entries(part):
                     relative = item["file"]

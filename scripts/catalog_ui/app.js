@@ -1443,7 +1443,7 @@
       el('div', { class: 'build-label', text: current ? txt(current.label_zh || current.label, 160) : '還沒有建立版本：第一次吸收或移除時，會先存一個基準版。' }),
       my.current_build && my.current_matches_build === false ? el('p', { class: 'notice warn', text: '⚠ 目前的安裝和記錄的版本不同（在 catalog 之外被改過）。' }) : ''));
     kids.push(el('div', { class: 'my-grid' },
-      el('div', {}, skillsBlock(view), effectBlock(my.effect, view.release || '2.0.0')),
+      el('div', {}, skillsBlock(view), effectBlock(my.effect, view.release || '2.0.1')),
       el('div', {}, timelineBlock(timeline), policyBlock(view.policy || {}))));
     body.replaceChildren(...kids);
   }
@@ -1913,7 +1913,7 @@
     }
     const r = preview.result || {};
     const lines = r.creates_build
-      ? ['先存一個還原點，再產生新版本，並立刻評估和預設 2.0.0 比的差異（每一行標證據等級）。',
+      ? ['先存一個還原點，再產生新版本，並立刻評估和預設 2.0.1 比的差異（每一行標證據等級）。',
         'skill 文字照原樣複製（還沒重新實作成 OAW 部件），附上食物的授權檔和出處說明 OAW-UPSTREAM.md。']
       : ['只把歷史提案記成待辦（寫進決定紀錄）：不改任何安裝檔，也不產生新版本。'];
     for (const s of r.selections || []) lines.push(`${s.id}：${s.outcome === 'installed' ? '安裝 skill ' + s.name : '記成待辦項目（不改程式）'}`);

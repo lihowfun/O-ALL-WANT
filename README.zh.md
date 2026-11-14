@@ -27,14 +27,26 @@
   <img src="docs/assets/oboi_meme.png" width="400" alt="Harness engineering：我全都要">
 </p>
 
-> **v2.0.0 目前是 PR 中的提案版本，尚未發布 release。** [升級指南](docs/UPGRADING.md) · [CLI](docs/CLI_Reference.md) · [執行計畫](docs/plans/v2.0.0-execution.md)
+> **v2.0.1 是 V2 系列的首個正式發布版本；2.0.0 從未發布。** [升級指南](docs/UPGRADING.md) · [CLI](docs/CLI_Reference.md) · [執行計畫](docs/plans/v2.0.1-release-path.md)
 
 **OAW v2 就是整套 OAW，包含已整合的 EGM**。預設提供七個固定版本的 EGM
-skills 與 `oaw-evidence`；wiki、improve 和要啟用哪些 skills 可自行選擇。
+skills 與 `oaw-add`、`oaw-codemap`、`oaw-evidence`、`oaw-review`；可自行選擇 recipe，wiki 和 improve 為選配。
 EGM 沿用上游的明確呼叫方式，不會每個任務都強制跑完整流程。
-安裝完成與效果提升分開驗證。
+內建 workflow 並不代表已證明品質或 token 優勢。
 [Codex 分數與完整說明](docs/validation/egm-oaw-codex-2026-10-30.md) ·
 [Codex／Claude 共用驗收協議](docs/SHARED_ACCEPTANCE_PROTOCOL.md)。
+
+M1（session 結束時儲存）、M2（recall 無結果時引導使用 host 記憶）與 R2（deep
+code review 只跑一輪）曾經實作，但在唯一一次 FIXCHECK 中未通過預先登記的回歸
+門檻，因此已還原。M3（僅在權限錯誤時寫入 pending memory）、R1（Codex 使用原生
+同系列模型審查，跨系列審查須明確下指令）及 #18 literal-path audit 修正隨此版提供。
+
+FIXCHECK 使用 H1 凍結的診斷題、O 組，每題只計一次作答。24 筆結果全部納入，
+凍結的計算器回報 `fail`：兩題小改動超過 token 上限（`codex/t01`、`claude/t12`），
+兩個條件也都未達記憶門檻。每題只有一次作答，無論這些失敗或其他方向的量測差異，
+都無法與執行間波動分開；這是回歸 gate，不能據此判定效果。
+[結果紀錄](https://github.com/lihowfun/O-ALL-WANT/blob/e05c4d5a9238fe3ef4529552a27ce9095ead6a3b/records/v2.0.1-experiments/FIXCHECK/RESULT.md) ·
+[處置與驗證](docs/validation/v2.0.1-final.md)。
 
 ## 20 秒看懂
 
@@ -71,19 +83,19 @@ python3 OAW/scripts/oaw.py doctor --target /path/to/project
 
 ---
 
-## 🍲 這版鍋裡有什麼？（v2.0.0）
+## 🍲 這版鍋裡有什麼？（v2.0.1）
 
 | | 料 | 在 v2 做什麼 | 怎麼拿到 |
 |---|---|---|---|
 | 🧭 | **原生優先的核心** | 短短的 `AGENTS.md`，只寫不明顯的限制和真正的驗證指令；`CLAUDE.md` 只負責引用它。沒有 router，也沒有強制開場閱讀 | 預設 |
 | 🧾 | **證據回想（Context Hub）** | `context_hub.py memory recall` 回傳有上限的 JSON 或文字，附來源位置、截斷標記和續讀 cursor。筆記是要對照現行程式碼檢查的證據，不會蓋過你的指令 | 預設 |
-| 🧩 | **原生 skills** | 七個 EGM 與三個 OAW `SKILL.md` 套件，可選擇啟用配方。`--host codex\|claude\|both` 從同一份來源產生 `.agents/skills` 和／或 `.claude/skills` | 預設七個 EGM＋`oaw-evidence`，wiki/improve 見下 |
+| 🧩 | **原生 skills** | 七個 EGM 與七個 OAW `SKILL.md` 套件，可選擇啟用配方。`--host codex\|claude\|both` 從同一份來源產生 `.agents/skills` 和／或 `.claude/skills` | 預設七個 EGM＋四個 OAW 入口；bugbash/wiki/improve 為選配 |
 | 📚 | **LLM Wiki** | `wiki_sync.py` 把 `docs/raw/` 確定性地編譯成 `docs/knowledge/`，並檢查連結、metadata 和新鮮度。它是 renderer，不是 LLM 摘要器 | `--profile knowledge` |
 | 🔬 | **有證據的自我改進** | 假設＋具體 diff → 固定案例的 baseline／candidate 對照 → 你明確採用或拒絕。品質退步、證據缺失或被改動都會擋下；永遠不會自動套用 | `--with-improve` |
 | 🛟 | **安全的安裝與升級** | `init` 保護既有內容；`migrate` 預設只預覽，`--apply` 會留下備份、收據、可回復，衝突變成 proposal；`doctor` 回報健康狀態 | 一律 |
 | 🔒 | **安全寫入** | 加鎖的讀改寫、原子替換，拒絕 symlink／junction 和路徑逃逸 | 一律 |
 | 📉 | **精簡輸出** | `search --compact` 和 `--max-chars` 上限讓工具輸出保持精簡 | 預設 |
-| ✅ | **證明閘門** | `harness_check.py`：9 組檢查，要求所有測試模組都在、達到最低測試數、零 skip；CI 跑 Ubuntu、macOS、Windows × Python 3.10、3.13 | 本 repo |
+| ✅ | **證明閘門** | `harness_check.py`：9 組檢查，要求所有測試模組都在、達到最低測試數、[沒有預期外的 skip](docs/CLI_Reference.md#repository-validation)；CI 跑 Ubuntu、macOS、Windows × Python 3.10、3.13 | 本 repo |
 
 ### 🥄 這版從鍋裡撈掉的料
 
@@ -157,7 +169,9 @@ v1 誕生的時代，coding agent 每換一個 session 就全部忘光。現在 
 | 兩個 host 用同一套 skill | 每個 host 各放一份、各自維護 | 同一份來源產生 `.agents/skills` 和 `.claude/skills`，`doctor` 會檢查 |
 | 新增規則或 skill | 誰寫了就加 | 選配 `oaw-improve`：要有 diff、對照組 A/B 證據，並經過你明確同意 |
 
-> v2 沒有宣稱 token 節省數字。已完成[固定案例的 Codex 手動流程比較](docs/validation/egm-codex-2026-10-29.md)；Claude CLI 模型測試、具名模型版本驗證與原生 skill 自動 discovery 仍未驗證。
+> OAW 凍結的 H1 比較使用單一 Python repository 中的 12 題，分別在 Claude Code + Opus 5.5 與 Codex CLI + gpt-6.1-sol 上測試。合併判定為未定（inconclusive）：Codex 條件達到 H1 的效益標準；Claude 條件未能確立效益。包含 cache reads 與 subagents 的 logical tokens 總量，Claude 為原生平均的 2.58×，Codex 為 1.92×，主要來自大改動。這些是 H1 的量測，不是通用的 token 節省宣稱。[H1 結果](https://github.com/lihowfun/O-ALL-WANT/blob/268429d/records/v2.0.1-experiments/H1/RESULT.md)。
+>
+> D45 以產品決策保留預設；上方的 FIXCHECK 處置保留 M3/R1、還原 M1/M2/R2。FIXCHECK 僅在診斷題上檢查修正一次，不能形成獨立的效果判定。原生 discovery 與權限仍取決於 host 及版本。[修正計畫](docs/plans/v2.0.1-release-path.md)。
 
 ---
 
@@ -171,7 +185,9 @@ python3 scripts/oaw.py init --target /path/to/project --host both
 python3 scripts/oaw.py doctor --target /path/to/project
 ```
 
-預設安裝短 `AGENTS.md`、Claude 相容 import、完整固定版本 EGM、七個 EGM skill 入口、evidence skill、Context Hub 和共用 helper。不建立記憶檔、不塞佔位架構，也沒有強制的 session 流程。遇到既有的不同內容會保留。
+預設安裝短 `AGENTS.md`、Claude 相容 import、完整固定版本 EGM、七個 EGM skill 入口、上面列出的四個 OAW 入口、Context Hub 和共用 helper。不建立記憶檔、不塞佔位架構，也沒有強制的 session 流程。遇到既有的不同內容會保留。
+
+只有指定 `--remember-checkout` 才會寫入專案外的選配 checkout locator；預設安裝不會更動它。位置與同意方式見 [CLI reference](docs/CLI_Reference.md#optional-checkout-locator)。
 
 選配功能可以在已安裝的專案上累加：
 
@@ -259,10 +275,12 @@ python3 scripts/sync_examples.py --write
 
 ## Source lineage（站在巨人肩膀上）
 
-確切版本與使用狀態見 [v2.0.0 來源版本表](docs/releases/2.0.0-sources.md)。
+確切版本與使用狀態見 [v2.0.1 來源版本表](docs/releases/2.0.1-sources.md)。
 EGM **0.1.0**、commit [`f0ba151b252c9abf1318d9fe857a43265d06de89`](https://github.com/google/elephant-goldfish-model/tree/f0ba151b252c9abf1318d9fe857a43265d06de89)
 完整 runtime 已內建於 V2，recipe 選了任一 EGM skill 時安裝至 `.oaw/integrations/egm/`。上游檔案保留原文、Apache-2.0 授權與逐檔雜湊；入口轉接變更另列於來源紀錄。
 採用、替換與淘汰建議見 [review](docs/reviews/2026-10-29-pr4-egm.md)。
+
+固定版本來源內附 EGM 指南：[getting started](vendor/egm/docs/getting_started.md)、[Codex](vendor/egm/docs/codex.md)、[Claude](vendor/egm/docs/claude.md) 與 [supported environments](vendor/egm/docs/harnesses.md)。安裝後位於 `.oaw/integrations/egm/docs/`；上游指南的相對連結從該目錄解析。
 
 **v2 保留的歷史概念來源**（當時未記錄上游版本；以下是閱讀入口，並非固定版本的 runtime 相依）
 

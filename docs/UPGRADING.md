@@ -1,6 +1,6 @@
-# Upgrade to OAW v2.0.0
+# Upgrade to OAW v2.0.1
 
-v2.0.0 is a proposed breaking upgrade. Review and merge happen separately; no tag or release is implied by the version field.
+v2.0.1 is the first release of the V2 line and a breaking upgrade from v1. It also supports existing 2.0.0-proposal installs through the normal migration preview and `--apply` path, preserving project records and customized policy. 2.0.0 was a proposal that was never released.
 
 ## What changes
 
@@ -15,6 +15,31 @@ v2.0.0 is a proposed breaking upgrade. Review and merge happen separately; no ta
 | Frozen evidence tiers/do-not-rerun rules | Scope, source and reproducible validation; no permanent runtime freeze |
 
 Python 3.10+ is now required. The runtime still has no pip dependencies. Current host capabilities must be checked separately from whether they are enabled. Framework init/migrate do not configure host runtimes or guarantee native discovery just because files pass schema checks. User-selected packages may add project hooks/MCP settings only through the separate add consent flow.
+
+## FIXCHECK disposition (2026-11-13)
+
+M1 (session-end saving), M2 (empty-recall host guidance) and R2 (one deep
+code-review round) were implemented, failed the preregistered regression
+thresholds in the one FIXCHECK check, and were reverted. M3 (permission-only
+pending memory), R1 (native same-family Codex review with explicit cross-family
+commands) and the #18 literal-path audit fix ship.
+
+FIXCHECK uses frozen H1 diagnostic tasks, the O arm and one counted answer per
+task. All 24 rows are counted and the frozen calculator reports `fail`: two
+small-change token limits (`codex/t01`, `claude/t12`) and both cells' memory
+thresholds. With one answer per task, neither these failures nor the
+differences measured in the other direction can be separated from run-to-run
+variation; this is a regression gate, not an effectiveness verdict.
+[Result record](https://github.com/lihowfun/O-ALL-WANT/blob/e05c4d5a9238fe3ef4529552a27ce9095ead6a3b/records/v2.0.1-experiments/FIXCHECK/RESULT.md) ·
+[Disposition and validation](validation/v2.0.1-final.md).
+
+The save policy again says to save when requested or when a decision would be
+difficult to reconstruct; the evidence skill appends only the requested durable
+finding. Empty recall prints `No matches found.` and adds no host-memory guidance
+or JSON `message`/`next_action`. Deep code review repeats until no new findings,
+at most three rounds; standard remains one round. M3 pending notes are retained
+and read alongside primary memory; no records are migrated or deleted. Existing
+custom policy remains protected by the migration conflict rules below.
 
 ## Checkout locator and doctor output
 

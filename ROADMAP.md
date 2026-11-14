@@ -1,40 +1,44 @@
 # OAW roadmap
 
-Updated 2026-11-13. The working plan is
+Updated 2026-11-14. The working plan is
 [docs/plans/v2.0.1-release-path.md](docs/plans/v2.0.1-release-path.md);
 work items are GitHub issues grouped by milestone.
 
-## Now: release v2.0.1
+## Now: v2.0.1 release line completed through review
 
-2.0.0 was never released, so v2.0.1 is the first released V2. No new experiment
-starts before it ships. One trial was already under way when this plan was
-written and continues in its own session without gating the release: the
-capability tasting of presentation skills (#13, #9).
+v2.0.1 is the first V2 release; 2.0.0 was never released. Steps 1–5 are complete;
+the owner's merge and tag are step 6.
 
-1. Cross-platform CI on the release pull request (Linux, macOS, Windows). It
-   needs the pull request's base changed to `main`, which waits for the owner. #18
-2. Fix the five defects traced by the installed-versus-native trial (H1):
-   when notes are saved, what happens when recall is empty, memory writes in the
-   Codex sandbox, the Codex review step, and the number of deep review rounds. #17
-3. One check of those fixes on the frozen H1 tasks. #17
-4. Documentation: measured claims in the README, version files, upgrade notes,
-   the skill-intake SOP. #10, #12
-5. One full cross-family review, at most three rounds. #11
-6. The owner merges the release pull request and tags `v2.0.1`. #11
+1. Done: all six CI jobs (Ubuntu, macOS, Windows × Python 3.10, 3.13) green at `7504eca`, run `43510582580`. #18
+2. Done: FIXCHECK disposition applied in `5c4e53b`; M1/M2/R2 reverted, M3/R1 and the path fix retained, with CI fixes through `b898e4d`. #17, #18
+3. Done: the one FIXCHECK check on frozen H1 tasks; [result](https://github.com/lihowfun/O-ALL-WANT/blob/e05c4d5a9238fe3ef4529552a27ce9095ead6a3b/records/v2.0.1-experiments/FIXCHECK/RESULT.md). #17
+4. Done: measured README claims, version files, upgrade notes and skill-intake SOP synchronized for release. #10, #12
+5. Done: three cross-family review rounds; fixes in `b4ca559`, `73fb8f7` and `7504eca`, final review without a blocker. #11
+6. Owner: merge pull request #16 and tag `v2.0.1`. #11
 
-Implementation update (2026-11-13): the five fixes and the visible path-audit repair
-are implemented on `codex/v2.0.1-release-fixes`. Linux offline gate: 9/9,
-677 tests, 0 skips; native Codex sandbox pending-memory probe passed.
-[Validation and remaining gates](docs/validation/v2.0.1-release-fixes.md).
-FIXCHECK, cross-platform CI, final release review and owner merge are still pending.
+Disposition (2026-11-13, confirmed by the owner on 2026-11-14 as D48): M1 (session-end saving), M2 (empty-recall host guidance) and R2 (one deep
+code-review round) were implemented, failed the preregistered regression
+thresholds in the one FIXCHECK check, and were reverted. M3 (permission-only
+pending memory), R1 (native same-family Codex review with explicit cross-family
+commands) and the #18 literal-path audit fix ship.
 
-Release polish is being prepared separately on `codex/v2.0.1-release-polish`:
-explicit external-locator consent, concise doctor output, upstream EGM guide links
-and the benefit/capability intake SOP (#10, #12). FIXCHECK remains pinned to
-`c2d9852`; integrate this work only after its disposition, then validate the final
-release commit. Linux validation: 9/9 gate, 685 tests, 0 skips; independent code
-review findings closed. [Validation](docs/validation/v2.0.1-release-polish.md).
-The version has not been bumped.
+FIXCHECK uses frozen H1 diagnostic tasks, the O arm and one counted answer per
+task. All 24 rows are counted and the frozen calculator reports `fail`: two
+small-change token limits (`codex/t01`, `claude/t12`) and both cells' memory
+thresholds. With one answer per task, neither these failures nor the
+differences measured in the other direction can be separated from run-to-run
+variation; this is a regression gate, not an effectiveness verdict.
+[Result record](https://github.com/lihowfun/O-ALL-WANT/blob/e05c4d5a9238fe3ef4529552a27ce9095ead6a3b/records/v2.0.1-experiments/FIXCHECK/RESULT.md) ·
+[Disposition and validation](docs/validation/v2.0.1-final.md).
+
+Release polish is integrated: explicit external-locator consent, concise doctor
+output, upstream EGM guide links and the benefit/capability intake SOP (#10,
+#12). Its historical Linux gate was 9/9, 685 tests, 0 skips;
+[validation](docs/validation/v2.0.1-release-polish.md). FIXCHECK remains pinned
+to `c2d9852`. At `7504eca`, the Linux gate passed 9/9 with 718 tests and 0 skips
+on Python 3.10.12; the final six-job CI and three review rounds are complete.
+Follow-ups are tracked in #21, #22 and #23; see the
+[final validation](docs/validation/v2.0.1-final.md).
 
 ## Evaluation accounting: owner-authorized U1 work
 
@@ -48,11 +52,15 @@ changes still need separate behavior evidence. Release integration is pending.
 
 ## Next: after the release
 
-1. Finish the capability tasting of presentation skills if it is still
-   running, with the reusable tasting kit built as its runner. #13, #9
-2. Independent re-judging of three earlier intake verdicts on the existing
-   data. #15
-3. 2.0.2, driven by feedback from real use.
+The owner lifted the pre-release experiment restriction for EGM calibration
+(#20) and the U2 comparison in D48.
+
+1. Finish capability tasting of presentation skills and its reusable tasting kit. #13, #9
+2. Verdict list (#19); independent re-judging of three earlier intake verdicts on existing data (#15).
+3. EGM calibration. #20
+4. The Harness² U2 comparison.
+5. Release-review follow-ups. #21, #22, #23
+6. 2.0.2, driven by feedback from real use.
 
 ## Parked (each with a restart condition in the plan)
 

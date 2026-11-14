@@ -1620,6 +1620,16 @@ def load_restore_point(target: Path, lab: Path, build: dict) -> tuple:
     return snap, manifest
 
 
+def check_captured_files(target: Path, captured: dict, *, manifest: dict | None = None) -> None:
+    """Under the install lock, reject a stale capture before changing any project files."""
+    for relative, expected in captured.items():
+        path = oaw.joined(target, relative)
+        oaw.check_path(path, kind="file")
+        actual = path.read_bytes() if path.is_file() else None
+        if actual != expected or (relative == oaw.MANIFEST_PATH and manifest is not None and json.loads(actual) != manifest):
+            raise CatalogError(f"{relative} changed since capture; run the command again. Nothing was changed.")
+
+
 def cmd_restore(target: Path, ident: str, apply: bool) -> dict:
     """Switch the OAW-managed layer to a build. Files the current install does not manage are never overwritten:
     a declared custom file is kept (and stays custom); any other existing file blocks the restore."""
@@ -1628,6 +1638,8 @@ def cmd_restore(target: Path, ident: str, apply: bool) -> dict:
     lab = lab_home(target)
     snap, snap_manifest = load_restore_point(target, lab, build)
     current, manifest = layer_files(target)
+    if json.loads(current[oaw.MANIFEST_PATH]) != manifest:
+        raise CatalogError("Install manifest changed during capture; run the command again. Nothing was changed.")
     custom_now = set(manifest.get("custom_files", []))
     kept, conflicts, writes = [], [], []
     for relative in sorted(p for p in snap if p != oaw.MANIFEST_PATH):
@@ -1669,10 +1681,13 @@ def cmd_restore(target: Path, ident: str, apply: bool) -> dict:
     if conflicts:
         raise CatalogError("Restore would overwrite file(s) the current install does not manage: "
                            + ", ".join(core.sanitize_text(p, 80) for p in conflicts[:10]) + "; nothing was restored.")
-    before = record_build(target, lab, current, label=f"restore point before restoring {build['name']}",
-                          label_zh=f"還原到 {build['name']} 之前的還原點", kind="restore-point")
+    before = None
     try:
         with oaw.install_lock(target):
+            check_captured_files(target, {p: current.get(p) for p in
+                                         {oaw.MANIFEST_PATH} | {item["path"] for item in writes + deletes}})
+            before = record_build(target, lab, current, label=f"restore point before restoring {build['name']}",
+                                  label_zh=f"還原到 {build['name']} 之前的還原點", kind="restore-point")
             for item in deletes:
                 path = oaw.joined(target, item["path"])
                 oaw.check_path(path, kind="file")
@@ -1683,7 +1698,8 @@ def cmd_restore(target: Path, ident: str, apply: bool) -> dict:
                 data = manifest_bytes if item["path"] == oaw.MANIFEST_PATH else snap[item["path"]]
                 oaw.atomic_write(oaw.joined(target, item["path"]), data)
     except (OSError, oaw.InstallError) as exc:
-        raise CatalogError(f"Restore failed; the previous install is kept as {before['name']}: {exc}") from exc
+        recovery = f"; the previous install is kept as {before['name']}" if before else "; no restore writes were made"
+        raise CatalogError(f"Restore failed{recovery}: {exc}") from exc
     doctor = doctor_summary(target)
     # Re-evaluate against the default so every renderer shows the restored layer, not the one before it.
     effect = safe_effect(target, lab)
@@ -1846,6 +1862,7 @@ def cmd_absorb(target: Path, ident: str, component_ids, reason: str, apply: bool
                 historical[component["id"]] = component
     done = {cid for d in decisions if d.get("kind") == "absorb" for cid in d.get("components", [])}
     manifest = install_manifest(target)
+    manifest_before = oaw.joined(target, oaw.MANIFEST_PATH).read_bytes()
     hosts = manifest.get("hosts", ["codex"])
     selections, writes = [], {}
     paper = entry["source"].get("kind") == "paper"
@@ -1941,12 +1958,13 @@ def cmd_absorb(target: Path, ident: str, component_ids, reason: str, apply: bool
     if installed:
         files, _manifest = layer_files(target)
         first = not load_builds(target).get("builds")
-        before = record_build(target, lab, files, label="baseline before the first catalog change" if first else f"restore point before absorbing {fid}",
-                              label_zh="第一次變更前的基準版" if first else f"吸收 {fid} 之前的還原點",
-                              kind="baseline" if first else "restore-point")
         manifest_path = oaw.joined(target, oaw.MANIFEST_PATH)
         written = []
         with oaw.install_lock(target):
+            check_captured_files(target, {oaw.MANIFEST_PATH: manifest_before, **{p: None for p in writes}}, manifest=manifest)
+            before = record_build(target, lab, files, label="baseline before the first catalog change" if first else f"restore point before absorbing {fid}",
+                                  label_zh="第一次變更前的基準版" if first else f"吸收 {fid} 之前的還原點",
+                                  kind="baseline" if first else "restore-point")
             original = manifest_path.read_bytes()
             fresh = json.loads(original.decode("utf-8"))
             try:
@@ -2047,6 +2065,7 @@ def bundled_change(target: Path, manifest: dict, names: list, *, adding: bool):
 def cmd_remove(target: Path, name: str, reason: str, apply: bool, *, food: bool = False) -> dict:
     """Remove `egm`, one bundled skill, one absorbed skill (by skill name) or, with `food`, every installed part of a food."""
     manifest = install_manifest(target)
+    manifest_before = oaw.joined(target, oaw.MANIFEST_PATH).read_bytes()
     receipts = load_receipts(target)
     if apply and not (reason or "").strip():
         raise CatalogError("A removal reason is required with --apply (D6: record why).")
@@ -2097,7 +2116,8 @@ def cmd_remove(target: Path, name: str, reason: str, apply: bool, *, food: bool 
         for cid, part in parts.items():
             _skill, files = receipt_files(manifest, part)
             deletes.update(files)
-        edited = [p for p, h in deletes.items() if oaw.joined(target, p).is_file() and core.sha256_bytes(oaw.joined(target, p).read_bytes()) != h]
+        captured = {p: oaw.joined(target, p).read_bytes() if oaw.joined(target, p).is_file() else None for p in deletes}
+        edited = [p for p, data in captured.items() if data is not None and core.sha256_bytes(data) != deletes[p]]
         lines = [f"remove {', '.join(parts)} from {owner['food']} (absorbed skill files)"] + [f"  delete {p}" for p in sorted(deletes)]
         if edited:
             raise CatalogError("Edited absorbed files are protected; restore or remove them by hand: " + ", ".join(edited))
@@ -2107,11 +2127,12 @@ def cmd_remove(target: Path, name: str, reason: str, apply: bool, *, food: bool 
         lab = lab_home(target)
         files, _m = layer_files(target)
         first = not load_builds(target).get("builds")
-        before = record_build(target, lab, files, label="baseline before the first catalog change" if first else f"restore point before removing {name}",
-                              label_zh="第一次變更前的基準版" if first else f"移除 {name} 之前的還原點",
-                              kind="baseline" if first else "restore-point")
         manifest_path = oaw.joined(target, oaw.MANIFEST_PATH)
         with oaw.install_lock(target):
+            check_captured_files(target, {oaw.MANIFEST_PATH: manifest_before, **captured}, manifest=manifest)
+            before = record_build(target, lab, files, label="baseline before the first catalog change" if first else f"restore point before removing {name}",
+                                  label_zh="第一次變更前的基準版" if first else f"移除 {name} 之前的還原點",
+                                  kind="baseline" if first else "restore-point")
             fresh = json.loads(manifest_path.read_text(encoding="utf-8"))
             for relative in sorted(deletes):
                 path = oaw.joined(target, relative)
@@ -2585,7 +2606,7 @@ def parser() -> argparse.ArgumentParser:
     restore = commands.add_parser("restore", parents=[common], help="restore the OAW-managed layer of a build")
     restore.add_argument("build")
     restore.add_argument("--apply", action="store_true")
-    commands.add_parser("effect", parents=[common], help="static effect of this install versus the default 2.0.0 recipe")
+    commands.add_parser("effect", parents=[common], help=f"static effect of this install versus the default {core.RELEASE} recipe")
     commands.add_parser("view", parents=[common], help="write .oaw/catalog/view.json for every renderer")
     scout = commands.add_parser("scout", parents=[common], help="weekly scout: search, filter, accumulate candidates")
     scout_commands = scout.add_subparsers(dest="scout_command")

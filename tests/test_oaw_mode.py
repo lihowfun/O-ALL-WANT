@@ -3,6 +3,7 @@ import contextlib
 import importlib.util
 import io
 import json
+import os
 from pathlib import Path, PurePosixPath, PureWindowsPath
 import re
 import shlex
@@ -11,6 +12,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 GIT = shutil.which("git")
@@ -588,7 +590,7 @@ class SwitchAndStepTests(unittest.TestCase):
         self.run_ok("egm", "off")
         steps = self.steps()
         self.assertEqual(list(steps), ["plan", "code-review"])
-        self.assertEqual(steps["code-review"]["rounds"], 1)
+        self.assertEqual(steps["code-review"]["rounds"], 3)
         self.run_ok("egm", "on")
         self.assertEqual(self.steps()["design-review"]["how"], "egm")
         self.assertNotIn("basis", self.steps()["design-review"], "on is the user's choice, not evidence")
@@ -633,8 +635,7 @@ class SwitchAndStepTests(unittest.TestCase):
         text = self.run_ok("suggest", "--paths", ".github/workflows/ci.yml")
         self.assertIn("before code: design review by EGM (EGM switch: on)", text)
         self.assertIn("before EGM: python3 scripts/oaw_mode.py egm estimate PLAN CONTEXT...", text)
-        self.assertIn("after code: code review by a fresh session of the same model family", text)
-        self.assertNotIn("up to 3 rounds", text)
+        self.assertIn("after code: code review by a fresh session of the same model family, up to 3 rounds", text)
 
     def test_a_recorded_review_counts_only_for_the_same_file_content(self):
         self.install_egm_entry()
@@ -662,7 +663,14 @@ class SwitchAndStepTests(unittest.TestCase):
         self.assertIn("when done: python3 scripts/oaw_mode.py reviewed docs/plans/cache.md --how egm --report", text)
         self.write("docs/plans/odd name;x.md", "# Odd\n")
         text = self.run_ok("suggest", "--plan", "docs/plans/odd name;x.md")
-        self.assertIn("reviewed 'docs/plans/odd name;x.md' --how egm", text)  # codex review round 8
+        if os.name == "nt":
+            self.assertIn("run reviewed with the exact path from suggest --json (this name has shell characters)", text)
+            self.assertNotIn("scripts/oaw_mode.py reviewed docs/plans/odd name;x.md", text)
+            self.assertNotIn("reviewed 'docs/plans/odd name;x.md'", text)
+        else:
+            self.assertIn("reviewed 'docs/plans/odd name;x.md' --how egm", text)
+        suggested = self.json("suggest", "--plan", "docs/plans/odd name;x.md")
+        self.assertIn("docs/plans/odd name;x.md", suggested["design_docs"])
         self.assertEqual(mode.shell_word("docs/a b.md", platform="nt"), '"docs/a b.md"')
         self.assertEqual(mode.shell_word("docs/a.md", platform="nt"), "docs/a.md")
         # Windows shells expand $(...), %VAR% and backticks even inside double quotes (codex review round 9).
@@ -672,6 +680,20 @@ class SwitchAndStepTests(unittest.TestCase):
             with self.subTest(bad=bad):
                 code, _, errors = run("reviewed", bad, "--how", "egm", "--root", str(self.root))
                 self.assertEqual(code, 2, errors)
+
+    def test_review_command_rendering_for_both_shell_platforms(self):
+        self.write("docs/plans/odd name;x.md", "# Odd\n")
+        result = self.json("suggest", "--plan", "docs/plans/odd name;x.md")
+        shell_word = mode.shell_word
+        for platform in ("posix", "nt"):
+            with self.subTest(platform=platform), patch.object(
+                    mode, "shell_word", side_effect=lambda value: shell_word(value, platform=platform)):
+                text = mode.render_suggest(result)
+            if platform == "nt":
+                self.assertIn("run reviewed with the exact path from suggest --json (this name has shell characters)", text)
+                self.assertNotIn("scripts/oaw_mode.py reviewed", text)
+            else:
+                self.assertIn("reviewed 'docs/plans/odd name;x.md' --how fresh-context", text)
 
     def test_cap_and_estimate(self):
         self.install_egm_entry()
@@ -767,6 +789,46 @@ class SwitchAndStepTests(unittest.TestCase):
         self.assertFalse(review["done"], "a record of other content never marks the range's version reviewed")
         self.assertIn("differs from HEAD", review["note"])
 
+    def test_range_reviews_compare_git_filtered_working_content(self):
+        self.install_egm_entry()
+        git = [GIT, "-C", str(self.root), "-c", "user.name=t", "-c", "user.email=t@example.invalid",
+               "-c", "commit.gpgsign=false"]
+        subprocess.run([*git, "config", "core.autocrlf", "true"], check=True)
+        self.write(".gitattributes", "docs/plans/lf.md text eol=lf\ndocs/plans/raw.md -text\n")
+        subprocess.run([*git, "add", "-A"], check=True, capture_output=True)
+        subprocess.run([*git, "commit", "-q", "-m", "base"], check=True, capture_output=True)
+        paths = ["docs/plans/" + name + ".md" for name in ("auto", "lf", "raw")]
+        for path in paths:
+            self.write(path, "")
+            (self.root / path).write_bytes(b"# Plan\n")
+        subprocess.run([*git, "add", "-A"], check=True, capture_output=True)
+        subprocess.run([*git, "commit", "-q", "-m", "plans"], check=True, capture_output=True)
+        for path in paths:
+            self.assertEqual(mode.git(self.root, "show", "HEAD:./" + path), b"# Plan\n")
+            # Explicit bytes reproduce Python text-mode writes on Windows on every OS.
+            (self.root / path).write_bytes(b"# Plan\r\n")
+            self.run_ok("reviewed", path, "--how", "egm")
+
+        def reviews():
+            return {r["target"]: r for r in self.steps("--range", "HEAD~1..HEAD")["design-review"]["reviews"]}
+
+        result = reviews()
+        self.assertTrue(result[paths[0]]["done"], "core.autocrlf clean conversion matches the LF blob")
+        self.assertTrue(result[paths[1]]["done"], "path attributes apply to the hash")
+        self.assertFalse(result[paths[2]]["done"], "-text preserves CRLF; never normalize arbitrary bytes")
+        # A stale index cannot make different working content pass (or matching content fail).
+        (self.root / paths[0]).write_bytes(b"# Staged content\r\n")
+        subprocess.run([*git, "add", "--", paths[0]], check=True, capture_output=True)
+        (self.root / paths[0]).write_bytes(b"# Plan\r\n")
+        self.assertTrue(reviews()[paths[0]]["done"])
+        (self.root / paths[0]).write_bytes(b"# Changed\r\n")
+        self.assertFalse(mode.already_reviewed(self.root, paths[0], "egm"), "review freshness still uses exact bytes")
+        self.run_ok("reviewed", paths[0], "--how", "egm")
+        self.assertFalse(reviews()[paths[0]]["done"], "a review of different text cannot satisfy the endpoint")
+        self.assertFalse(mode.matches_revision(self.root, "HEAD", "docs/plans/missing.md"))
+        with patch.object(mode, "git", side_effect=mode.ModeError("filter failed")):
+            self.assertFalse(mode.matches_revision(self.root, "HEAD", paths[0]))
+
     def test_a_lighter_review_never_stands_in_for_egm(self):
         self.install_egm_entry()
         self.write("docs/plans/cache.md", "# Cache plan\n")
@@ -805,13 +867,13 @@ class SwitchAndStepTests(unittest.TestCase):
         self.assertEqual(both["egm_max_tokens"], mode.DEFAULT_EGM_MAX_TOKENS)
         self.assertIn("ask the user first", self.run_ok("egm", "estimate", "docs/plans/small.md", "docs/context.md"))
 
-    def test_native_review_is_one_round_and_cross_family_remains_explicit(self):
+    def test_native_review_preserves_deep_rounds_and_explicit_cross_family(self):
         for choice in ("same", "codex", "claude"):
             self.run_ok("second-opinion", choice)
             steps = self.json("suggest", "--paths", "scripts/context_hub.py")["steps"]
             review = next(step for step in steps if step["step"] == "code-review")
-            self.assertEqual(review["rounds"], 1)
-            self.assertNotIn("repeat", review["do"])
+            self.assertEqual(review["rounds"], 3)
+            self.assertEqual(review["do"], "after the change, review the diff and tests; repeat until a round finds nothing new")
             if choice != "claude":
                 self.assertIn("native subagent", review["codex"])
                 self.assertIn("wait for its review", review["codex"])
@@ -825,7 +887,10 @@ class SwitchAndStepTests(unittest.TestCase):
             output = self.run_ok("show", level)
             self.assertIn("native subagent", output)
             self.assertNotIn("codex review --uncommitted", output)
-            self.assertNotIn("at most 3 rounds", output)
+            if level == "deep":
+                self.assertIn("after fixes, review again until a round finds nothing new (at most 3 rounds)", output)
+            else:
+                self.assertNotIn("at most 3 rounds", output)
 
     def test_show_follows_the_second_opinion_setting(self):
         self.run_ok("second-opinion", "codex")

@@ -20,5 +20,5 @@ sessions, compaction, personal memory, and permissions.
 - Keep credentials, private project references, native transcripts, and local
   improvement runs out of the public repository.
 
-See `docs/plans/v2.0.0-execution.md` for the current upgrade scope and
+See `docs/plans/v2.0.1-release-path.md` for the current upgrade scope and
 `docs/UPGRADING.md` for migration behavior. Read other documentation as needed.

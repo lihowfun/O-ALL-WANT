@@ -26,7 +26,7 @@ if __name__ == "__main__":
     sys.modules.setdefault("oaw", sys.modules[__name__])
 
 FRAMEWORK_ROOT = Path(__file__).resolve().parents[1]
-FRAMEWORK_VERSION = "2.0.0"
+FRAMEWORK_VERSION = "2.0.1"
 MANIFEST_PATH = ".oaw/install.json"
 PROFILES = ("minimal", "knowledge")
 # Plan W3 choice 2: OAW only manages the user's own skills; no OAW policy, skills or helpers are installed.
@@ -812,6 +812,52 @@ def skill_tool_denied(target: Path) -> list[str]:
     return found
 
 
+def stop_probe(process, *, platform: str = os.name) -> None:
+    """Stop the probe, including the host behind a Windows .cmd launcher, and reap it."""
+    import subprocess
+
+    if process.poll() is not None:
+        return
+    if platform == "nt":
+        try:
+            subprocess.run(["taskkill", "/PID", str(process.pid), "/T", "/F"],
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=10, check=True)
+        except (OSError, subprocess.SubprocessError):
+            process.terminate()
+    else:
+        process.terminate()
+    try:
+        process.wait(timeout=10)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.wait(timeout=10)
+
+
+def host_command(command: str, *, platform: str = os.name, search_path: str | None = None) -> str | None:
+    """Find a host CLI in the absolute PATH directories, never in the current directory.
+
+    On Windows the PATHEXT extensions are tried here: before Python 3.12 shutil.which does not
+    apply them to a name with a directory part, and it searches the current directory first.
+    An explicit path is tried as given, with the same extensions on Windows.
+    """
+    windows = platform == "nt"
+    pathext = (os.environ.get("PATHEXT") or ".COM;.EXE;.BAT;.CMD").split(";")
+    extensions = list(dict.fromkeys(item.lower() for item in pathext if item.startswith("."))) if windows else [""]
+    suffix = os.path.splitext(command)[1].lower()
+    names = [command] if not windows or suffix in extensions else [command + extension for extension in extensions]
+    if os.path.dirname(command):
+        directories = [""]
+    else:
+        entries = os.environ.get("PATH", os.defpath) if search_path is None else search_path
+        directories = [entry for entry in (item.strip('"') for item in entries.split(os.pathsep)) if os.path.isabs(entry)]
+    for directory in directories:
+        for name in names:
+            candidate = os.path.join(directory, name) if directory else name
+            if os.path.isfile(candidate) and (windows or os.access(candidate, os.X_OK)):
+                return candidate
+    return None
+
+
 def probe_claude(target: Path, *, command: str = "claude", timeout: float = 60.0) -> dict:
     """Start Claude Code in the project only until it reports its init event (tools and skills), then stop it.
 
@@ -821,7 +867,15 @@ def probe_claude(target: Path, *, command: str = "claude", timeout: float = 60.0
     import subprocess
     import threading
 
-    argv = [command, "-p", "Reply with OK.", "--output-format", "stream-json", "--verbose", "--no-session-persistence"]
+    # CreateProcess does not search PATHEXT for an extensionless command. Resolve it first
+    # so both claude.cmd and claude.exe on PATH work. All probe arguments are fixed literals.
+    executable = host_command(command)
+    if executable is None:
+        if not os.path.dirname(command):
+            return {"error": f"cannot start {command}: not found in absolute PATH directories"}
+        executable = command  # an explicit path that does not exist fails in Popen below
+    argv = [executable, "-p", "Reply with OK.", "--output-format", "stream-json",
+            "--verbose", "--no-session-persistence"]
     try:
         process = subprocess.Popen(argv, cwd=str(target), stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
                                    stderr=subprocess.DEVNULL, text=True, encoding="utf-8", errors="replace")
@@ -834,7 +888,8 @@ def probe_claude(target: Path, *, command: str = "claude", timeout: float = 60.0
             lines.put(line)
         lines.put(None)
 
-    threading.Thread(target=pump, daemon=True).start()
+    reader = threading.Thread(target=pump, daemon=True)
+    reader.start()
     deadline = datetime.now(timezone.utc).timestamp() + timeout
     result = {"error": "no init event before the timeout"}
     try:
@@ -859,12 +914,10 @@ def probe_claude(target: Path, *, command: str = "claude", timeout: float = 60.0
                           "version": event.get("claude_code_version")}
                 break
     finally:
-        if process.poll() is None:
-            process.terminate()
-            try:
-                process.wait(timeout=10)
-            except Exception:
-                process.kill()
+        stop_probe(process)
+        reader.join(timeout=1)
+        if not reader.is_alive():
+            process.stdout.close()
     return result
 
 

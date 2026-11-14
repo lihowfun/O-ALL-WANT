@@ -4,6 +4,7 @@ The index parses fixture files with ast or regular expressions; nothing in a
 fixture tree is imported or run.
 """
 
+import errno
 import json
 import os
 from pathlib import Path
@@ -1199,7 +1200,12 @@ class DrawnGraphTests(unittest.TestCase):
         name = os.fsdecode(b"caf\xe9.py")
         if not any(0xDC80 <= ord(char) <= 0xDCFF for char in name):
             self.skipTest("filesystem encoding does not use surrogate escapes for this filename")
-        Path(self.root, name).write_text("def ping(): return 1\n", encoding="utf-8")
+        try:
+            Path(self.root, name).write_text("def ping(): return 1\n", encoding="utf-8")
+        except OSError as exc:
+            if exc.errno != errno.EILSEQ:
+                raise
+            self.skipTest("filesystem rejects non-UTF-8 filenames (EILSEQ)")
         for output_format in ("html", "json"):
             with self.subTest(output_format=output_format):
                 args = ("graph", "--root", self.root, "--no-cache", "--format", output_format)
@@ -1211,6 +1217,18 @@ class DrawnGraphTests(unittest.TestCase):
                 self.assertEqual(process.returncode, 0, process.stderr)
                 self.assertEqual(output.read_bytes(), stdout.stdout.encode("utf-8"))
                 self.assertIn(b"caf\\udce9.py", output.read_bytes())
+
+    def test_surrogate_filename_creation_skips_only_eilseq(self):
+        method = type(self).test_cli_surrogate_filename_exports_match_stdout
+        # Unwrap the Windows decorator to simulate the filesystem failure on every OS.
+        method = getattr(method, "__wrapped__", method)
+        for number, expected in ((errno.EILSEQ, unittest.SkipTest), (errno.EACCES, OSError)):
+            with self.subTest(errno=number), unittest.mock.patch.object(os, "fsdecode", return_value="caf\udce9.py"):
+                with unittest.mock.patch.object(Path, "write_text", side_effect=OSError(number, "fixture")):
+                    with self.assertRaises(expected) as raised:
+                        method(self)
+            if number == errno.EILSEQ:
+                self.assertEqual(str(raised.exception), "filesystem rejects non-UTF-8 filenames (EILSEQ)")
 
     def test_cli_failed_export_preserves_existing_output_and_cleans_temporary(self):
         output = Path(self.root, "empty", "existing.html")
