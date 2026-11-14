@@ -1,0 +1,15 @@
+{
+ "attempt_rows_before": 7,
+ "decision": "D49 (repository owner, 2026-11-14): run the planned 18 pilot runs, do not stop",
+ "frozen_u2_run_sha256": "52de56197039ad81315003e0f70fca1664d52fc8ffbd2decf1125526820f3570",
+ "replaced_statements": [
+  "                if attempts and attempts[-1]['reason'] not in ('infrastructure','zero_or_unknown_usage'):\n                    raise ValueError('nonretryable attempt; stop stage')\n",
+  "            if attempts[-1]['status']!='completed':\n                raise ValueError('attempt limit or infrastructure stop; both attempts retained and billed')\n"
+ ],
+ "replacements": [
+  "                if attempts and _lead_keep_ceiling_stop(state,args.cell,attempts[-1]):\n                    break\n                if attempts and attempts[-1]['reason'] not in ('infrastructure','zero_or_unknown_usage'):\n                    raise ValueError('nonretryable attempt; stop stage')\n",
+  "            if attempts[-1]['status']!='completed' and not _lead_is_ceiling_stop(attempts[-1]):\n                raise ValueError('attempt limit or infrastructure stop; both attempts retained and billed')\n"
+ ],
+ "wrapper_sha256": "fc9da42036216a2b253156e95cad804622198235ed891f5c9881928a97e85680",
+ "written_at": "2026-11-14T13:52:20+0800"
+}

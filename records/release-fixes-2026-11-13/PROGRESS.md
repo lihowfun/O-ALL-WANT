@@ -120,9 +120,11 @@ Codex 12 列的事件稽核與 90 筆證據引用雜湊已核對；完整 FIXCHE
 | 合併、tag | owner |
 | 本機實驗 state | H1 與 FIXCHECK 的 state（254,542 與 49,437 個檔案，約 18.3 GB）由 Opus 5.5 搬到共用儲存區，逐檔 SHA-256 核對零差異，原位置是 symlink。空的憑證佔位檔（167 個，都是 0 bytes）沒有搬。封存後 `fixcheck.py check` 不能在共用儲存區原地跑（Git 拒絕擁有者不同的 repo）；複製回本機後通過 |
 | #20 EGM 原生校準 | **跑完。形式判定：兩格都是無結論**（有了資料之後做了兩個程序變更，獨立結果審查判為事後變更）。照標籤算（描述性）：兩格都有空間，Claude 兩次合起來找到阻擋級 3/9，Codex 5/9。沒有跑 EGM，對 EGM 不下判定。等 owner 決定要不要照「無結論」收。[結果](../v2.0.1-experiments/EGM-calibration/RESULT.md) |
-| Harness² U2 A/B | **試跑停在第 7 次（預定 18 次），沒有通過試跑關卡；對照卡沒有判定。** 開發題 6 次完成。只跑了 Codex 那一格。測試階段沒有出題。等 owner 決定。[狀態](../v2.0.1-experiments/U2/PILOT_STATUS.md) |
+| Harness² U2 A/B | **試跑照 D49 跑完 18 次；沒有通過試跑關卡，成本停損條件成立，測試階段不做。** 原生三次都符合全部機械項目；A、B 兩組的 patch 逐位元組相同。對照卡沒有效果判定；照快速判定規則（D50）套現有數字是 NO。只跑了 Codex 那一格。[紀錄](../v2.0.1-experiments/U2/PILOT_STATUS.md) |
+| 快速判定與 JEV（D50） | 規則第 0 版、判定工具 `scripts/fast_screen.py`、小模型判定的第一次校準、用過去紀錄做的回測都完成；工具與文件在下一版的草稿 PR #25。校準照事先的條件是「未准入」（token 條件沒過，準確度條件都過），等 owner 裁決。[校準](../v2.0.1-experiments/JEV/RESULT.md)、[回測](../v2.0.1-experiments/JEV/BACKTEST_SUMMARY.md) |
+| 下一版 | owner 決定照正常的版本迭代（D50）：2.0.1 照已審查的內容發佈，評估帳本、量法總覽、快速判定進下一版（PR #25，等 #16 合併後） |
 
 兩個 preflight 的共同發現：Codex CLI 0.167.2 的 hosted 工具（`codex_apps`）在本機網路被擋時仍能連外，原本的 runner 沒有關掉它。
 已封存的 H1（254 份）與 FIXCHECK（46 份）Codex rollout 全部掃過：工具清單裡都有這組工具，沒有任何一次呼叫。
 
-Claude 的花費（logical tokens，含快取讀取）：EGM 校準合計 7,207,968（上限 30M）；U2 是 0。Codex 另計：EGM 校準最終 state 內 8,191,441；U2 合計 5,119,897。發佈審查的兩位 Opus 審查者與搬移用的 Opus agent 是工程用量，沒有逐筆計入實驗帳。
+Claude 的花費（logical tokens，含快取讀取）：EGM 校準合計 7,207,968（上限 30M）；U2 是 0；JEV 校準 266,642。Codex 另計：EGM 校準最終 state 內 8,191,441；U2 合計 9,387,480。發佈審查的兩位 Opus 審查者與搬移用的 Opus agent 是工程用量，沒有逐筆計入實驗帳。

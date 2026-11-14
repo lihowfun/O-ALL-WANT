@@ -1,0 +1,783 @@
+{
+ "planned": 18,
+ "final_attempts": 18,
+ "completed": 17,
+ "kept_ceiling_stops": [
+  "pilot-P2-A-r2"
+ ],
+ "completed_above_ceiling": [
+  "pilot-P2-B-r1"
+ ],
+ "arm_means_are_lower_bounds": [
+  "A"
+ ],
+ "attempt_rows": 18,
+ "total_logical_tokens_all_attempts": 7294865,
+ "arm_means": {
+  "A": 493137.83,
+  "B": 500877.5,
+  "N": 221795.5
+ },
+ "projection_highest_observed_arm_mean_x108_x1_3_lower_bound": 70323201.0,
+ "cells_all_items_met_in_all_repeats": 2,
+ "runs_all_items_met": 6,
+ "any_severe": false,
+ "cells": [
+  {
+   "task": "P1",
+   "arm": "A",
+   "runs": 3,
+   "kept_ceiling_stops": 0,
+   "tokens_by_repeat": [
+    378471,
+    536888,
+    523455
+   ],
+   "mean_tokens": 479604.67,
+   "mechanical_by_repeat": [
+    "10/11",
+    "10/11",
+    "10/11"
+   ],
+   "unmet_ids": [
+    "P1.k"
+   ],
+   "patches": [
+    "11dc95b95f"
+   ],
+   "card_full_reads_by_lines": null,
+   "instrument_reads": null
+  },
+  {
+   "task": "P1",
+   "arm": "B",
+   "runs": 3,
+   "kept_ceiling_stops": 0,
+   "tokens_by_repeat": [
+    532414,
+    373126,
+    576941
+   ],
+   "mean_tokens": 494160.33,
+   "mechanical_by_repeat": [
+    "10/11",
+    "10/11",
+    "10/11"
+   ],
+   "unmet_ids": [
+    "P1.k"
+   ],
+   "patches": [
+    "11dc95b95f"
+   ],
+   "card_full_reads_by_lines": 2,
+   "instrument_reads": [
+    "full",
+    "unknown",
+    "unknown"
+   ]
+  },
+  {
+   "task": "P1",
+   "arm": "N",
+   "runs": 3,
+   "kept_ceiling_stops": 0,
+   "tokens_by_repeat": [
+    172832,
+    272802,
+    157097
+   ],
+   "mean_tokens": 200910.33,
+   "mechanical_by_repeat": [
+    "11/11",
+    "11/11",
+    "11/11"
+   ],
+   "unmet_ids": [],
+   "patches": [
+    "6216573d83"
+   ],
+   "card_full_reads_by_lines": null,
+   "instrument_reads": null
+  },
+  {
+   "task": "P2",
+   "arm": "A",
+   "runs": 3,
+   "kept_ceiling_stops": 1,
+   "tokens_by_repeat": [
+    441361,
+    632881,
+    445771
+   ],
+   "mean_tokens_lower_bound": 506671.0,
+   "mechanical_by_repeat": [
+    "10/11",
+    "10/11",
+    "10/11"
+   ],
+   "unmet_ids": [
+    "P2.k"
+   ],
+   "patches": [
+    "5dc66e38ff"
+   ],
+   "card_full_reads_by_lines": null,
+   "instrument_reads": null
+  },
+  {
+   "task": "P2",
+   "arm": "B",
+   "runs": 3,
+   "kept_ceiling_stops": 0,
+   "tokens_by_repeat": [
+    612094,
+    438020,
+    472670
+   ],
+   "mean_tokens": 507594.67,
+   "mechanical_by_repeat": [
+    "10/11",
+    "10/11",
+    "10/11"
+   ],
+   "unmet_ids": [
+    "P2.k"
+   ],
+   "patches": [
+    "5dc66e38ff"
+   ],
+   "card_full_reads_by_lines": 3,
+   "instrument_reads": [
+    "full",
+    "full",
+    "full"
+   ]
+  },
+  {
+   "task": "P2",
+   "arm": "N",
+   "runs": 3,
+   "kept_ceiling_stops": 0,
+   "tokens_by_repeat": [
+    325266,
+    184309,
+    218467
+   ],
+   "mean_tokens": 242680.67,
+   "mechanical_by_repeat": [
+    "11/11",
+    "11/11",
+    "11/11"
+   ],
+   "unmet_ids": [],
+   "patches": [
+    "a6dffff28c"
+   ],
+   "card_full_reads_by_lines": null,
+   "instrument_reads": null
+  }
+ ],
+ "runs": [
+  {
+   "order": 1,
+   "run_id": "pilot-P2-N-r3",
+   "task": "P2",
+   "arm": "N",
+   "repeat": 3,
+   "status": "completed",
+   "exit": 0,
+   "truncated": false,
+   "kept_ceiling_stop": false,
+   "above_ceiling": false,
+   "logical_tokens": 218467,
+   "noncache_tokens": 29539,
+   "meter_complete": true,
+   "seconds": 134,
+   "mechanical_met": 11,
+   "mechanical_total": 11,
+   "unmet": [],
+   "severe": [],
+   "burden": {
+    "files_changed": 1,
+    "lines_added": 4,
+    "lines_deleted": 2,
+    "guidance_words_added": 5,
+    "guidance_words_deleted": 3
+   },
+   "extra_files": 0,
+   "patch_sha256": "a6dffff28c",
+   "instrument_read": "not_installed",
+   "card_lines_in_tool_output": null
+  },
+  {
+   "order": 2,
+   "run_id": "pilot-P2-A-r3",
+   "task": "P2",
+   "arm": "A",
+   "repeat": 3,
+   "status": "completed",
+   "exit": 0,
+   "truncated": false,
+   "kept_ceiling_stop": false,
+   "above_ceiling": false,
+   "logical_tokens": 445771,
+   "noncache_tokens": 44747,
+   "meter_complete": true,
+   "seconds": 251,
+   "mechanical_met": 10,
+   "mechanical_total": 11,
+   "unmet": [
+    "P2.k"
+   ],
+   "severe": [],
+   "burden": {
+    "files_changed": 1,
+    "lines_added": 4,
+    "lines_deleted": 2,
+    "guidance_words_added": 5,
+    "guidance_words_deleted": 3
+   },
+   "extra_files": 5,
+   "patch_sha256": "5dc66e38ff",
+   "instrument_read": "not_installed",
+   "card_lines_in_tool_output": null
+  },
+  {
+   "order": 3,
+   "run_id": "pilot-P2-B-r3",
+   "task": "P2",
+   "arm": "B",
+   "repeat": 3,
+   "status": "completed",
+   "exit": 0,
+   "truncated": false,
+   "kept_ceiling_stop": false,
+   "above_ceiling": false,
+   "logical_tokens": 472670,
+   "noncache_tokens": 68702,
+   "meter_complete": true,
+   "seconds": 262,
+   "mechanical_met": 10,
+   "mechanical_total": 11,
+   "unmet": [
+    "P2.k"
+   ],
+   "severe": [],
+   "burden": {
+    "files_changed": 1,
+    "lines_added": 4,
+    "lines_deleted": 2,
+    "guidance_words_added": 5,
+    "guidance_words_deleted": 3
+   },
+   "extra_files": 5,
+   "patch_sha256": "5dc66e38ff",
+   "instrument_read": "full",
+   "card_lines_in_tool_output": [
+    72,
+    72
+   ]
+  },
+  {
+   "order": 4,
+   "run_id": "pilot-P1-B-r3",
+   "task": "P1",
+   "arm": "B",
+   "repeat": 3,
+   "status": "completed",
+   "exit": 0,
+   "truncated": false,
+   "kept_ceiling_stop": false,
+   "above_ceiling": false,
+   "logical_tokens": 576941,
+   "noncache_tokens": 44461,
+   "meter_complete": true,
+   "seconds": 214,
+   "mechanical_met": 10,
+   "mechanical_total": 11,
+   "unmet": [
+    "P1.k"
+   ],
+   "severe": [],
+   "burden": {
+    "files_changed": 1,
+    "lines_added": 4,
+    "lines_deleted": 2,
+    "guidance_words_added": 5,
+    "guidance_words_deleted": 3
+   },
+   "extra_files": 5,
+   "patch_sha256": "11dc95b95f",
+   "instrument_read": "unknown",
+   "card_lines_in_tool_output": [
+    6,
+    72
+   ]
+  },
+  {
+   "order": 5,
+   "run_id": "pilot-P1-A-r3",
+   "task": "P1",
+   "arm": "A",
+   "repeat": 3,
+   "status": "completed",
+   "exit": 0,
+   "truncated": false,
+   "kept_ceiling_stop": false,
+   "above_ceiling": false,
+   "logical_tokens": 523455,
+   "noncache_tokens": 51007,
+   "meter_complete": true,
+   "seconds": 293,
+   "mechanical_met": 10,
+   "mechanical_total": 11,
+   "unmet": [
+    "P1.k"
+   ],
+   "severe": [],
+   "burden": {
+    "files_changed": 1,
+    "lines_added": 4,
+    "lines_deleted": 2,
+    "guidance_words_added": 5,
+    "guidance_words_deleted": 3
+   },
+   "extra_files": 5,
+   "patch_sha256": "11dc95b95f",
+   "instrument_read": "not_installed",
+   "card_lines_in_tool_output": null
+  },
+  {
+   "order": 6,
+   "run_id": "pilot-P1-N-r3",
+   "task": "P1",
+   "arm": "N",
+   "repeat": 3,
+   "status": "completed",
+   "exit": 0,
+   "truncated": false,
+   "kept_ceiling_stop": false,
+   "above_ceiling": false,
+   "logical_tokens": 157097,
+   "noncache_tokens": 22697,
+   "meter_complete": true,
+   "seconds": 113,
+   "mechanical_met": 11,
+   "mechanical_total": 11,
+   "unmet": [],
+   "severe": [],
+   "burden": {
+    "files_changed": 1,
+    "lines_added": 4,
+    "lines_deleted": 2,
+    "guidance_words_added": 5,
+    "guidance_words_deleted": 3
+   },
+   "extra_files": 0,
+   "patch_sha256": "6216573d83",
+   "instrument_read": "not_installed",
+   "card_lines_in_tool_output": null
+  },
+  {
+   "order": 7,
+   "run_id": "pilot-P2-A-r2",
+   "task": "P2",
+   "arm": "A",
+   "repeat": 2,
+   "status": "failed",
+   "exit": "token_ceiling",
+   "truncated": true,
+   "kept_ceiling_stop": true,
+   "above_ceiling": true,
+   "logical_tokens": 632881,
+   "noncache_tokens": 57137,
+   "meter_complete": false,
+   "seconds": 283,
+   "mechanical_met": 10,
+   "mechanical_total": 11,
+   "unmet": [
+    "P2.k"
+   ],
+   "severe": [],
+   "burden": {
+    "files_changed": 1,
+    "lines_added": 4,
+    "lines_deleted": 2,
+    "guidance_words_added": 5,
+    "guidance_words_deleted": 3
+   },
+   "extra_files": 8,
+   "patch_sha256": "5dc66e38ff",
+   "instrument_read": "not_installed",
+   "card_lines_in_tool_output": null
+  },
+  {
+   "order": 8,
+   "run_id": "pilot-P2-B-r2",
+   "task": "P2",
+   "arm": "B",
+   "repeat": 2,
+   "status": "completed",
+   "exit": 0,
+   "truncated": false,
+   "kept_ceiling_stop": false,
+   "above_ceiling": false,
+   "logical_tokens": 438020,
+   "noncache_tokens": 68484,
+   "meter_complete": true,
+   "seconds": 200,
+   "mechanical_met": 10,
+   "mechanical_total": 11,
+   "unmet": [
+    "P2.k"
+   ],
+   "severe": [],
+   "burden": {
+    "files_changed": 1,
+    "lines_added": 4,
+    "lines_deleted": 2,
+    "guidance_words_added": 5,
+    "guidance_words_deleted": 3
+   },
+   "extra_files": 5,
+   "patch_sha256": "5dc66e38ff",
+   "instrument_read": "full",
+   "card_lines_in_tool_output": [
+    72,
+    72
+   ]
+  },
+  {
+   "order": 9,
+   "run_id": "pilot-P2-N-r2",
+   "task": "P2",
+   "arm": "N",
+   "repeat": 2,
+   "status": "completed",
+   "exit": 0,
+   "truncated": false,
+   "kept_ceiling_stop": false,
+   "above_ceiling": false,
+   "logical_tokens": 184309,
+   "noncache_tokens": 28405,
+   "meter_complete": true,
+   "seconds": 110,
+   "mechanical_met": 11,
+   "mechanical_total": 11,
+   "unmet": [],
+   "severe": [],
+   "burden": {
+    "files_changed": 1,
+    "lines_added": 4,
+    "lines_deleted": 2,
+    "guidance_words_added": 5,
+    "guidance_words_deleted": 3
+   },
+   "extra_files": 0,
+   "patch_sha256": "a6dffff28c",
+   "instrument_read": "not_installed",
+   "card_lines_in_tool_output": null
+  },
+  {
+   "order": 10,
+   "run_id": "pilot-P1-N-r2",
+   "task": "P1",
+   "arm": "N",
+   "repeat": 2,
+   "status": "completed",
+   "exit": 0,
+   "truncated": false,
+   "kept_ceiling_stop": false,
+   "above_ceiling": false,
+   "logical_tokens": 272802,
+   "noncache_tokens": 27042,
+   "meter_complete": true,
+   "seconds": 152,
+   "mechanical_met": 11,
+   "mechanical_total": 11,
+   "unmet": [],
+   "severe": [],
+   "burden": {
+    "files_changed": 1,
+    "lines_added": 4,
+    "lines_deleted": 2,
+    "guidance_words_added": 5,
+    "guidance_words_deleted": 3
+   },
+   "extra_files": 0,
+   "patch_sha256": "6216573d83",
+   "instrument_read": "not_installed",
+   "card_lines_in_tool_output": null
+  },
+  {
+   "order": 11,
+   "run_id": "pilot-P1-B-r2",
+   "task": "P1",
+   "arm": "B",
+   "repeat": 2,
+   "status": "completed",
+   "exit": 0,
+   "truncated": false,
+   "kept_ceiling_stop": false,
+   "above_ceiling": false,
+   "logical_tokens": 373126,
+   "noncache_tokens": 47366,
+   "meter_complete": true,
+   "seconds": 221,
+   "mechanical_met": 10,
+   "mechanical_total": 11,
+   "unmet": [
+    "P1.k"
+   ],
+   "severe": [],
+   "burden": {
+    "files_changed": 1,
+    "lines_added": 4,
+    "lines_deleted": 2,
+    "guidance_words_added": 5,
+    "guidance_words_deleted": 3
+   },
+   "extra_files": 5,
+   "patch_sha256": "11dc95b95f",
+   "instrument_read": "unknown",
+   "card_lines_in_tool_output": [
+    72,
+    72
+   ]
+  },
+  {
+   "order": 12,
+   "run_id": "pilot-P1-A-r2",
+   "task": "P1",
+   "arm": "A",
+   "repeat": 2,
+   "status": "completed",
+   "exit": 0,
+   "truncated": false,
+   "kept_ceiling_stop": false,
+   "above_ceiling": false,
+   "logical_tokens": 536888,
+   "noncache_tokens": 62264,
+   "meter_complete": true,
+   "seconds": 308,
+   "mechanical_met": 10,
+   "mechanical_total": 11,
+   "unmet": [
+    "P1.k"
+   ],
+   "severe": [],
+   "burden": {
+    "files_changed": 1,
+    "lines_added": 4,
+    "lines_deleted": 2,
+    "guidance_words_added": 5,
+    "guidance_words_deleted": 3
+   },
+   "extra_files": 2,
+   "patch_sha256": "11dc95b95f",
+   "instrument_read": "not_installed",
+   "card_lines_in_tool_output": null
+  },
+  {
+   "order": 13,
+   "run_id": "pilot-P1-N-r1",
+   "task": "P1",
+   "arm": "N",
+   "repeat": 1,
+   "status": "completed",
+   "exit": 0,
+   "truncated": false,
+   "kept_ceiling_stop": false,
+   "above_ceiling": false,
+   "logical_tokens": 172832,
+   "noncache_tokens": 27040,
+   "meter_complete": true,
+   "seconds": 120,
+   "mechanical_met": 11,
+   "mechanical_total": 11,
+   "unmet": [],
+   "severe": [],
+   "burden": {
+    "files_changed": 1,
+    "lines_added": 4,
+    "lines_deleted": 2,
+    "guidance_words_added": 5,
+    "guidance_words_deleted": 3
+   },
+   "extra_files": 0,
+   "patch_sha256": "6216573d83",
+   "instrument_read": "not_installed",
+   "card_lines_in_tool_output": null
+  },
+  {
+   "order": 14,
+   "run_id": "pilot-P1-A-r1",
+   "task": "P1",
+   "arm": "A",
+   "repeat": 1,
+   "status": "completed",
+   "exit": 0,
+   "truncated": false,
+   "kept_ceiling_stop": false,
+   "above_ceiling": false,
+   "logical_tokens": 378471,
+   "noncache_tokens": 45671,
+   "meter_complete": true,
+   "seconds": 245,
+   "mechanical_met": 10,
+   "mechanical_total": 11,
+   "unmet": [
+    "P1.k"
+   ],
+   "severe": [],
+   "burden": {
+    "files_changed": 1,
+    "lines_added": 4,
+    "lines_deleted": 2,
+    "guidance_words_added": 5,
+    "guidance_words_deleted": 3
+   },
+   "extra_files": 7,
+   "patch_sha256": "11dc95b95f",
+   "instrument_read": "not_installed",
+   "card_lines_in_tool_output": null
+  },
+  {
+   "order": 15,
+   "run_id": "pilot-P1-B-r1",
+   "task": "P1",
+   "arm": "B",
+   "repeat": 1,
+   "status": "completed",
+   "exit": 0,
+   "truncated": false,
+   "kept_ceiling_stop": false,
+   "above_ceiling": false,
+   "logical_tokens": 532414,
+   "noncache_tokens": 58686,
+   "meter_complete": true,
+   "seconds": 273,
+   "mechanical_met": 10,
+   "mechanical_total": 11,
+   "unmet": [
+    "P1.k"
+   ],
+   "severe": [],
+   "burden": {
+    "files_changed": 1,
+    "lines_added": 4,
+    "lines_deleted": 2,
+    "guidance_words_added": 5,
+    "guidance_words_deleted": 3
+   },
+   "extra_files": 7,
+   "patch_sha256": "11dc95b95f",
+   "instrument_read": "full",
+   "card_lines_in_tool_output": [
+    72,
+    72
+   ]
+  },
+  {
+   "order": 16,
+   "run_id": "pilot-P2-A-r1",
+   "task": "P2",
+   "arm": "A",
+   "repeat": 1,
+   "status": "completed",
+   "exit": 0,
+   "truncated": false,
+   "kept_ceiling_stop": false,
+   "above_ceiling": false,
+   "logical_tokens": 441361,
+   "noncache_tokens": 62609,
+   "meter_complete": true,
+   "seconds": 283,
+   "mechanical_met": 10,
+   "mechanical_total": 11,
+   "unmet": [
+    "P2.k"
+   ],
+   "severe": [],
+   "burden": {
+    "files_changed": 1,
+    "lines_added": 4,
+    "lines_deleted": 2,
+    "guidance_words_added": 5,
+    "guidance_words_deleted": 3
+   },
+   "extra_files": 2,
+   "patch_sha256": "5dc66e38ff",
+   "instrument_read": "not_installed",
+   "card_lines_in_tool_output": null
+  },
+  {
+   "order": 17,
+   "run_id": "pilot-P2-B-r1",
+   "task": "P2",
+   "arm": "B",
+   "repeat": 1,
+   "status": "completed",
+   "exit": "token_ceiling",
+   "truncated": true,
+   "kept_ceiling_stop": false,
+   "above_ceiling": true,
+   "logical_tokens": 612094,
+   "noncache_tokens": 57470,
+   "meter_complete": true,
+   "seconds": 289,
+   "mechanical_met": 10,
+   "mechanical_total": 11,
+   "unmet": [
+    "P2.k"
+   ],
+   "severe": [],
+   "burden": {
+    "files_changed": 1,
+    "lines_added": 4,
+    "lines_deleted": 2,
+    "guidance_words_added": 5,
+    "guidance_words_deleted": 3
+   },
+   "extra_files": 4,
+   "patch_sha256": "5dc66e38ff",
+   "instrument_read": "full",
+   "card_lines_in_tool_output": [
+    72,
+    72
+   ]
+  },
+  {
+   "order": 18,
+   "run_id": "pilot-P2-N-r1",
+   "task": "P2",
+   "arm": "N",
+   "repeat": 1,
+   "status": "completed",
+   "exit": 0,
+   "truncated": false,
+   "kept_ceiling_stop": false,
+   "above_ceiling": false,
+   "logical_tokens": 325266,
+   "noncache_tokens": 33810,
+   "meter_complete": true,
+   "seconds": 131,
+   "mechanical_met": 11,
+   "mechanical_total": 11,
+   "unmet": [],
+   "severe": [],
+   "burden": {
+    "files_changed": 1,
+    "lines_added": 4,
+    "lines_deleted": 2,
+    "guidance_words_added": 5,
+    "guidance_words_deleted": 3
+   },
+   "extra_files": 0,
+   "patch_sha256": "a6dffff28c",
+   "instrument_read": "not_installed",
+   "card_lines_in_tool_output": null
+  }
+ ]
+}

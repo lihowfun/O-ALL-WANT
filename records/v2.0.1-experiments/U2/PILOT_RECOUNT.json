@@ -1,0 +1,300 @@
+{
+  "overall": "FAIL",
+  "recomputed": [
+    {
+      "claim": "18 次；17 次完成且計量完整；1 次中止且計量不完整",
+      "document": "PILOT_STATUS.md:138",
+      "recomputed": "{\"attempts\":18,\"unique_run_ids\":18,\"completed\":17,\"meter_complete\":17,\"failed\":1,\"completed_rows\":17,\"above_ceiling\":2,\"completed_above_ceiling\":1}",
+      "match": true
+    },
+    {
+      "claim": "600,000 上限、CLI 0.167.2、gpt-6.1-sol/high；每題每組3次、11機械項目",
+      "document": "PILOT_STATUS.md:125-126",
+      "recomputed": "18列 token_policy=600000；18份原始 turn_context=model gpt-6.1-sol/effort high；meter CLI=0.167.2；6格各3次、每次11項",
+      "match": true
+    },
+    {
+      "claim": "pilot-P2-A-r2 超限狀態",
+      "document": "PILOT_STATUS.md:138-139",
+      "recomputed": "{\"status\":\"failed\",\"exit\":\"token_ceiling\",\"reason\":\"meter_incomplete\",\"truncated\":true,\"deviations\":[\"observed_token_ceiling_overshoot\"],\"tokens\":632881,\"meter_complete\":false,\"result_seen\":false,\"native_task_complete\":0,\"overshoot\":32881}",
+      "match": true
+    },
+    {
+      "claim": "pilot-P2-B-r1 超限狀態",
+      "document": "PILOT_STATUS.md:138-139",
+      "recomputed": "{\"status\":\"completed\",\"exit\":\"token_ceiling\",\"reason\":null,\"truncated\":true,\"deviations\":[\"observed_token_ceiling_overshoot\"],\"tokens\":612094,\"meter_complete\":true,\"result_seen\":true,\"native_task_complete\":1,\"overshoot\":12094}",
+      "match": true
+    },
+    {
+      "claim": "B-r1 最後結果先於觀測超限中止",
+      "document": "PILOT_STATUS.md:139",
+      "recomputed": "原始 task_complete duration_ms=288431；首次觀測612094在elapsed=289.12055364158005秒，結束289.12796804029495秒；result_seen=true、meter.complete=true",
+      "match": true
+    },
+    {
+      "claim": "沒有一次被標嚴重；a–j全部符合",
+      "document": "PILOT_STATUS.md:140",
+      "recomputed": "{\"severe_flagged_runs\":0,\"a_j_met\":180,\"a_j_total\":180}",
+      "match": true
+    },
+    {
+      "claim": "項目k N組",
+      "document": "PILOT_STATUS.md:141",
+      "recomputed": "6/6通過；0/6未過",
+      "match": true
+    },
+    {
+      "claim": "項目k A組",
+      "document": "PILOT_STATUS.md:141",
+      "recomputed": "0/6通過；6/6未過",
+      "match": true
+    },
+    {
+      "claim": "項目k B組",
+      "document": "PILOT_STATUS.md:141",
+      "recomputed": "0/6通過；6/6未過",
+      "match": true
+    },
+    {
+      "claim": "N組額外檔案數（P1 r1–3、P2 r1–3）",
+      "document": "PILOT_STATUS.md:141",
+      "recomputed": "{\"counts\":[0,0,0,0,0,0],\"range\":[0,0]}",
+      "match": true
+    },
+    {
+      "claim": "A組額外檔案數（P1 r1–3、P2 r1–3）",
+      "document": "PILOT_STATUS.md:141",
+      "recomputed": "{\"counts\":[7,2,5,2,8,5],\"range\":[2,8]}",
+      "match": true
+    },
+    {
+      "claim": "B組額外檔案數（P1 r1–3、P2 r1–3）",
+      "document": "PILOT_STATUS.md:141",
+      "recomputed": "{\"counts\":[7,5,5,4,5,5],\"range\":[4,7]}",
+      "match": true
+    },
+    {
+      "claim": "P1題patch位元組一致性",
+      "document": "PILOT_STATUS.md:142",
+      "recomputed": "{\"AB_six_identical\":true,\"N_three_identical\":true,\"N_differs_from_AB\":true,\"AB_sha256\":\"11dc95b95f2299a3409d57d4945e9468f179a521587333409261f2c1e192a0f8\",\"N_sha256\":\"6216573d837843b41f170ee19e0727baae1c03a1d671ab240a3a23cd6ae31304\",\"difference\":\"A/B僅比N多一行diff --git標頭；其餘patch內容相同\"}",
+      "match": true
+    },
+    {
+      "claim": "P2題patch位元組一致性",
+      "document": "PILOT_STATUS.md:142",
+      "recomputed": "{\"AB_six_identical\":true,\"N_three_identical\":true,\"N_differs_from_AB\":true,\"AB_sha256\":\"5dc66e38ffbd4b5f67b188f3a191a95afb5a478c2c25bd84c9b85b8235ca161b\",\"N_sha256\":\"a6dffff28c803e7f876eccfe3214d6f81538b928d3e9f1577f088c86987bf35d\",\"difference\":\"A/B僅比N多一行diff --git標頭；其餘patch內容相同\"}",
+      "match": true
+    },
+    {
+      "claim": "18次burden相同",
+      "document": "PILOT_STATUS.md:142",
+      "recomputed": "{\"all_18_checker_burden\":{\"files_changed\":1,\"lines_added\":4,\"lines_deleted\":2,\"guidance_words_added\":5,\"guidance_words_deleted\":3},\"independent_patch_counts\":\"每份1個目標檔、加4行刪2行；新增5個/刪除3個英數或底線詞\"}",
+      "match": true
+    },
+    {
+      "claim": "P1 N token表",
+      "document": "PILOT_STATUS.md:146-151",
+      "recomputed": "{\"logical_by_repeat\":[172832,272802,157097],\"noncache_by_repeat\":[27040,27042,22697],\"mean\":200910.33333333334,\"rounded_mean\":200910,\"ratio_to_N\":null,\"rounded_ratio\":null,\"lower_bound\":false,\"mechanical_by_repeat\":[\"11/11\",\"11/11\",\"11/11\"],\"raw_validation\":\"每次最後原始token_count cumulative總量及total-cached均與meter相符\"}",
+      "match": true
+    },
+    {
+      "claim": "P1 A token表",
+      "document": "PILOT_STATUS.md:146-151",
+      "recomputed": "{\"logical_by_repeat\":[378471,536888,523455],\"noncache_by_repeat\":[45671,62264,51007],\"mean\":479604.6666666667,\"rounded_mean\":479605,\"ratio_to_N\":2.38715778680705,\"rounded_ratio\":2.39,\"lower_bound\":false,\"mechanical_by_repeat\":[\"10/11\",\"10/11\",\"10/11\"],\"raw_validation\":\"每次最後原始token_count cumulative總量及total-cached均與meter相符\"}",
+      "match": true
+    },
+    {
+      "claim": "P1 B token表",
+      "document": "PILOT_STATUS.md:146-151",
+      "recomputed": "{\"logical_by_repeat\":[532414,373126,576941],\"noncache_by_repeat\":[58686,47366,44461],\"mean\":494160.3333333333,\"rounded_mean\":494160,\"ratio_to_N\":2.459606358392052,\"rounded_ratio\":2.46,\"lower_bound\":false,\"mechanical_by_repeat\":[\"10/11\",\"10/11\",\"10/11\"],\"raw_validation\":\"每次最後原始token_count cumulative總量及total-cached均與meter相符\"}",
+      "match": true
+    },
+    {
+      "claim": "P2 N token表",
+      "document": "PILOT_STATUS.md:146-151",
+      "recomputed": "{\"logical_by_repeat\":[325266,184309,218467],\"noncache_by_repeat\":[33810,28405,29539],\"mean\":242680.66666666666,\"rounded_mean\":242681,\"ratio_to_N\":null,\"rounded_ratio\":null,\"lower_bound\":false,\"mechanical_by_repeat\":[\"11/11\",\"11/11\",\"11/11\"],\"raw_validation\":\"每次最後原始token_count cumulative總量及total-cached均與meter相符\"}",
+      "match": true
+    },
+    {
+      "claim": "P2 A token表",
+      "document": "PILOT_STATUS.md:146-151",
+      "recomputed": "{\"logical_by_repeat\":[441361,632881,445771],\"noncache_by_repeat\":[62609,57137,44747],\"mean\":506671,\"rounded_mean\":506671,\"ratio_to_N\":2.087809494507185,\"rounded_ratio\":2.09,\"lower_bound\":true,\"mechanical_by_repeat\":[\"10/11\",\"10/11\",\"10/11\"],\"raw_validation\":\"每次最後原始token_count cumulative總量及total-cached均與meter相符\"}",
+      "match": true
+    },
+    {
+      "claim": "P2 B token表",
+      "document": "PILOT_STATUS.md:146-151",
+      "recomputed": "{\"logical_by_repeat\":[612094,438020,472670],\"noncache_by_repeat\":[57470,68484,68702],\"mean\":507594.6666666667,\"rounded_mean\":507595,\"ratio_to_N\":2.0916155936058636,\"rounded_ratio\":2.09,\"lower_bound\":false,\"mechanical_by_repeat\":[\"10/11\",\"10/11\",\"10/11\"],\"raw_validation\":\"每次最後原始token_count cumulative總量及total-cached均與meter相符\"}",
+      "match": true
+    },
+    {
+      "claim": "三組各6次平均",
+      "document": "PILOT_STATUS.md:153",
+      "recomputed": "{\"N\":221795.5,\"A_lower_bound\":493137.8333333333,\"B\":500877.5,\"rounded\":[221796,493138,500878]}",
+      "match": true
+    },
+    {
+      "claim": "P1 B附件讀取表",
+      "document": "PILOT_STATUS.md:157-162",
+      "recomputed": "{\"instrument_by_repeat\":[\"full\",\"unknown\",\"unknown\"],\"card_nonblank_lines\":[72,72,72],\"lines_in_any_raw_string\":[72,72,6],\"entire_card_in_native_aggregated_output\":[true,true,false]}",
+      "match": true
+    },
+    {
+      "claim": "P2 B附件讀取表",
+      "document": "PILOT_STATUS.md:157-162",
+      "recomputed": "{\"instrument_by_repeat\":[\"full\",\"full\",\"full\"],\"card_nonblank_lines\":[72,72,72],\"lines_in_any_raw_string\":[72,72,72],\"entire_card_in_native_aggregated_output\":[true,true,true]}",
+      "match": true
+    },
+    {
+      "claim": "P1 B第3次沒有觀察到讀取",
+      "document": "PILOT_STATUS.md:162",
+      "recomputed": "原始工具呼叫沒有minimal-change-card讀取命令；僅6/72非空白行在任意字串出現；instrument=unknown。不能推論完全未讀。",
+      "match": true
+    },
+    {
+      "claim": "機械ceiling停止規則不成立",
+      "document": "PILOT_STATUS.md:168",
+      "recomputed": "{\"all_mechanical_cells\":2,\"total_cells\":6,\"all_mechanical_runs\":6,\"stop\":false}",
+      "match": true
+    },
+    {
+      "claim": "附件停止規則：instrument成立，人工逐行核對不成立",
+      "document": "PILOT_STATUS.md:169",
+      "recomputed": "{\"instrument_full\":{\"P1\":1,\"P2\":3},\"raw_card_coverage_full\":{\"P1\":2,\"P2\":3},\"rule\":\"每題少於2/3 full就停；unknown不計full；人工證據與凍結分類分列。\"}",
+      "match": true
+    },
+    {
+      "claim": "成本停損成立；500877.5×108×1.3=70323201",
+      "document": "PILOT_STATUS.md:170",
+      "recomputed": "{\"B_mean\":500877.5,\"B_projection\":70323201.0,\"A_projection_lower_bound\":69236551.8,\"cost_stop\":true}",
+      "match": true
+    },
+    {
+      "claim": "最高的是B；最高組均值投影恰為70323201",
+      "document": "PILOT_STATUS.md:170",
+      "recomputed": "只能確認最高組均值≥500877.5、投影≥70323201；A均值≥493137.8333，沒有上界，不能確認B最高。",
+      "match": false
+    },
+    {
+      "claim": "試跑關卡未通過；停止並報owner",
+      "document": "PILOT_STATUS.md:172",
+      "recomputed": "{\"completed_complete\":17,\"required\":18,\"grader_items_unscored\":72,\"B_behavioral_use\":[\"unknown\"],\"gate\":\"PREREG:288–300另要求subscription/model/meter、checker、零severe、兩題B各≥2/3 full及兩家behavioral-use、instrument validation；288–300及465–483支持停止與owner決定。\"}",
+      "match": true
+    },
+    {
+      "claim": "18次試跑總token與state5 preflight",
+      "document": "PILOT_STATUS.md:176",
+      "recomputed": "{\"pilot_lower_bound\":7294865,\"state5_preflight\":75613}",
+      "match": true
+    },
+    {
+      "claim": "U2花費明細與總額",
+      "document": "PILOT_STATUS.md:177",
+      "recomputed": "{\"development\":1306638,\"earlier_two\":395249,\"pilot_lower_bound\":7294865,\"five_preflight\":390728,\"preflight_values\":[75613,78019,77796,83615,75685],\"total_lower_bound\":9387480,\"preflight_count\":5}",
+      "match": true
+    },
+    {
+      "claim": "Claude仍為0",
+      "document": "PILOT_STATUS.md:177",
+      "recomputed": "{\"claude_external_charges\":0,\"claude_attempt_files\":0}",
+      "match": true
+    },
+    {
+      "claim": "兩段記憶體替換與記錄一致",
+      "document": "PILOT_STATUS.md:130-132",
+      "recomputed": "A：恢復時先保留非completed且exit=token_ceiling且truncated=true的attempt，驗checker/severe後break跳過重抽；B：結尾attempt-limit不再因同類ceiling-stop而raise。兩段old/new均與記錄完全相同；wrapper不寫SOURCE、仍編譯記憶體字串。",
+      "match": true
+    },
+    {
+      "claim": "紀錄在已有7列後寫下，含雜湊與時間",
+      "document": "PILOT_STATUS.md:131-132",
+      "recomputed": "{\"attempt_rows_before\":7,\"written_at\":\"2026-11-14T13:52:20+0800\",\"wrapper_sha256_matches\":true,\"frozen_source_digest_matches_freeze\":true,\"state_record_identical\":true,\"chronology\":\"前7個run的session_meta早於written_at；其餘11個晚於written_at\"}",
+      "match": true
+    },
+    {
+      "claim": "續跑列仍帶凍結runner雜湊",
+      "document": "PILOT_STATUS.md:132",
+      "recomputed": "{\"all_18_runner_sha256\":[\"8dfbcda0578e8ff9678aae584902eb3d33241efd24434133949fb9346360a65c\"],\"original_7_equal_continued_11\":true,\"limitation\":\"缺原runner及digest演算法，不能獨立重建此彙總雜湊。\"}",
+      "match": true
+    },
+    {
+      "claim": "保留一筆中止作答且不重抽",
+      "document": "PILOT_STATUS.md:126,138",
+      "recomputed": "{\"kept_record_run_ids\":[\"pilot-P2-A-r2\"],\"all_run_ids_unique\":true,\"state_kept_record_identical\":true,\"attempt_number_frequencies\":{\"1\":18}}",
+      "match": true
+    },
+    {
+      "claim": "lead報告程式從保留檔生成結果",
+      "document": "PILOT_STATUS.md:133-134",
+      "recomputed": "靜態閱讀：讀attempt、checker、workspace、trigger、all-native，不呼叫模型。正文數值已獨立重算；lead JSON的kept_ceiling_stops及B均值lower-bound標籤另有分類錯誤。",
+      "match": true
+    },
+    {
+      "claim": "快速規則套現有機械數字：native NO與重開條件",
+      "document": "PILOT_STATUS.md:181-183",
+      "recomputed": "依FAST_SCREEN_RULE的back-test條款、以本文明示的機械項目為量尺：D1 N=8/8、D2 N=9/9、P1/P2 N各3×11/11，合計83/83=100%≥90%，故B.native為NO；重開需native失敗的題。這只驗證機械量尺的回套。",
+      "match": true
+    },
+    {
+      "claim": "快速規則的第一步是native",
+      "document": "PILOT_STATUS.md:181",
+      "recomputed": "正式流程先A.Static，再B.Native；回套條款另明列Step B。",
+      "match": false
+    },
+    {
+      "claim": "不是正式快速判定；未用judge、人工項目未評",
+      "document": "PILOT_STATUS.md:183",
+      "recomputed": "限制正確。正式規則還要求3題、每題每arm一次fresh-context、逐項yes/no/unknown與逐字引文驗證；此處為4題歷史資料（pilot每格3次），只可作機械結果back-test。",
+      "match": true
+    },
+    {
+      "claim": "lead JSON對中止與完整超限作答的分類",
+      "document": "lead/pilot-report.json:kept_ceiling_stops,cells[P2,B]",
+      "recomputed": "實際kept stop只有pilot-P2-A-r2；pilot-P2-B-r1為completed且meter.complete=true。報告把兩者均列kept_ceiling_stops、把B均值列mean_tokens_lower_bound；數值507594.67仍正確。",
+      "match": false
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "severity": "medium",
+      "where": "PILOT_STATUS.md:170",
+      "problem": "「最高的是 B 的 500,877.5，乘出來是 70,323,201」把含未知上尾的比較與投影寫成確定值。",
+      "evidence": "A均值只有下限493137.8333；若P2-A-r2實際token高於679319，A便高於B。現有記錄沒有排除此情況。B投影70323201已足以確定超過60000000。",
+      "suggested_fix": "改成「按觀測值／下限計，B為500877.5；最高組均值投影至少70323201，成本停損確定成立；不能確認實際最高組」。"
+    },
+    {
+      "id": "F2",
+      "severity": "low",
+      "where": "PILOT_STATUS.md:162",
+      "problem": "「第二欄是 lead 的人工核對，不是凍結的偵測腳本」指錯欄。",
+      "evidence": "第二欄是凍結偵測腳本；72/72/6等人工核對行數在第三欄。",
+      "suggested_fix": "將「第二欄」改為「第三欄」（或「右欄」）。"
+    },
+    {
+      "id": "F3",
+      "severity": "low",
+      "where": "PILOT_STATUS.md:181",
+      "problem": "「第一步」省略了正式規則的A.Static。",
+      "evidence": "FAST_SCREEN_RULE.md先列A.Static，再列B.Native；back-test另從Step B處理歷史品質數字。機械量尺的native NO不受影響。",
+      "suggested_fix": "改為「回套條款的B.Native步驟」；保留機械量尺及非正式篩選的限制。"
+    },
+    {
+      "id": "F4",
+      "severity": "low",
+      "where": "lead/u2_lead_pilot_report.py:summary/out；lead/pilot-report.json:kept_ceiling_stops,cells[P2,B]",
+      "problem": "報告用truncated同時表示保留的失敗中止與計量下限，誤分類完整完成的P2-B-r1；正文未交代與附件JSON的差異。",
+      "evidence": "JSON列兩個kept_ceiling_stops，且P2-B mean_tokens_lower_bound=507594.67；state的kept紀錄僅P2-A-r2一筆。P2-B-r1 status=completed、meter.complete=true，雖truncated=true仍非不完整計量。",
+      "suggested_fix": "以status!=completed且exit=token_ceiling且truncated=true計kept；以meter.complete判下限；同步修正JSON分類。"
+    }
+  ],
+  "could_not_check": [
+    "D49/D50的owner原始決定與是否另送其他審查：連結目標不在本目錄；僅能確認本地lead記錄如此記載。",
+    "原凍結u2_run.py/u2_report.py與完整preflight/launch證據未提供；不能獨立確認每次freeze check通過、凍結檔始終未改、原報告的18列限制或重建runner彙總雜湊。wrapper靜態內容、記錄雜湊與freeze對應已核對。",
+    "D1/D2原生答案、checker與原始開發軌跡未提供；其8/8、9/9僅採PILOT_STATUS早段及PREREG表格。開發token可由state4 attempts獨立加總。",
+    "包含人工項目的完整品質、behavioral-use及對照卡效果無法查證：18次各4項grader均null，B behavioral_use均unknown。不能把機械100%推廣為完整清單品質≥90%。",
+    "未入帳的工程與lead session、帳外Claude活動無法核實；花費僅限提供帳本，總額因一筆不完整meter而為下限。"
+  ],
+  "privacy": [],
+  "notes": "僅審PILOT_STATUS末節（123行起）；早段只取指定開發數字。不用網路、不執行或匯入lead程式；用stdin自寫Python，僅建立RECOUNT.json。18份row與attempt一致，checker檔雜湊均吻合；token亦對原始cumulative counter。正文各表數值的加總／四捨五入均相符；F1是下限解讀問題，非乘法錯誤。沒有找到其他可由材料否定的因果或預測句。關卡除了少1列，兩家behavioral-use及人工評分也缺；不能暗示補齊完成列便足夠。privacy掃描涵蓋整份PILOT_STATUS及lead全部檔案，未發現私人絕對路徑、使用者／帳號名稱或憑證；僅有標準shebang /usr/bin/env。"
+}
