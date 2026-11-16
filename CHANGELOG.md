@@ -16,8 +16,15 @@ accumulated (D50).
   tasting is unchanged: the same quality as native on 12 tasks and 1.01 times the tokens, never a
   measured gain. The shipped verdict list shows the decision beside the measurement.
 
-### Evaluation methods (D46, D49, D50)
+### Evaluation methods (D46, D49, D50, D53)
 
+- Fast screen, effective but expensive (owner decision D53, 2026-11-16): a food with at least 2 gains
+  and no losses is YES even when it uses more than 1.5 times native's tokens. `verdict` reports
+  `expensive: true` and puts the ratio in the reason, so the food is listed as optional with its
+  price; before, the ratio alone gave NO. The ratio is no longer a failing condition at step C. The
+  budget stop is unchanged and still comes first. This brings the screen in line with the catalogue
+  rule for tastings (D29). It was changed after the back-test of the first version, with EGM's
+  recorded numbers in view; no new food has been screened with either version.
 - `docs/FAST_SCREEN.md` gains the first real example of the fast screen (the minimal-change card,
   NO at the native step) and what it showed: checklist items must be things an answer shows; an item
   that needs execution belongs to a mechanical check.

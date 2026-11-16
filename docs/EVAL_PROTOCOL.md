@@ -8,7 +8,7 @@
 
 | 要回答的問題 | 量法 | 規則與工具 | 用過的紀錄（`records` 分支） |
 |---|---|---|---|
-| 一樣食物要不要吸收，要很快有答案 | **快速判定**：原生先跑 3 題，已經做得到就 NO；有漏才讓食物跑，補得上、沒弄壞、不太貴才 YES。沒有「未定」 | [FAST_SCREEN.md](FAST_SCREEN.md)；`scripts/fast_screen.py`；流程在 [SKILL_INTAKE.md](SKILL_INTAKE.md) 開頭 | `v2.0.1-experiments/JEV/`（判定模型的校準） |
+| 一樣食物要不要吸收，要很快有答案 | **快速判定**：原生先跑 3 題，已經做得到就 NO；有漏才讓食物跑，補得上、沒弄壞就 YES；超過 1.5 倍的照樣 YES，但標明貴幾倍（D53）。沒有「未定」 | [FAST_SCREEN.md](FAST_SCREEN.md)；`scripts/fast_screen.py`；流程在 [SKILL_INTAKE.md](SKILL_INTAKE.md) 開頭 | `v2.0.1-experiments/JEV/`（判定模型的校準） |
 | 一個 skill 或一個做法，值不值得進預設 | **試吃**：同一批題目，原生對官方安裝，兩家盲評，配對統計 | 這一頁「設計」以下；`scripts/eval_stats.py` | `digestion-2026-11-07/validation/` |
 | 整包 harness，裝了有沒有比不裝好 | **裝對不裝**：凍結的題組，每題全新 context，每個 host 各自一格；token 算 logical 總量，含快取讀取與 subagent | 判定用這一頁的統計；runner 還沒整理成工具（#9） | `v2.0.1-experiments/H1/` |
 | 比較貴的做法（多輪審查、多 agent），值不值得花錢去比 | **先校準**：只跑原生，對照已核實的缺陷清單看有沒有漏。原生都找到了就不用比；有漏才出資跑貴的那一組 | 判定表在開跑前寫好：天花板、有空間、無結論 | `v2.0.1-experiments/EGM-calibration/` |

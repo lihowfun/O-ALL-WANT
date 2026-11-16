@@ -25,7 +25,14 @@ incurred cost cannot disappear behind a quality decision.
 | Budget | Sum logical tokens by model family across every supplied native and food run; sum seconds across all runs and families | More than 2,000,000 tokens in any family or more than 1,800 seconds: NO; reopen with smaller tasks. Exact limits pass. |
 | B: native | Native `yes` items / all checklist items over all tasks | At least 0.90: NO, native already does it; reopen with a task native fails. |
 | Coverage | B leaves room, but at least one task has no food arm | INCOMPLETE: "run the food arm". No intake verdict yet. |
-| C: food | `gained`: food `yes`, native `no`. `lost`: native `yes`, food anything other than `yes`. `ratio`: summed food tokens / summed native tokens | YES only with gained ≥ 2, lost = 0 and ratio ≤ 1.5. Otherwise NO listing every failing condition; reopen with evidence satisfying all three on a new screen. |
+| C: food | `gained`: food `yes`, native `no`. `lost`: native `yes`, food anything other than `yes`. `ratio`: summed food tokens / summed native tokens | YES with gained ≥ 2 and lost = 0. With ratio ≤ 1.5 it is a plain YES; above 1.5 it is still YES, marked `expensive`, and the ratio is stated wherever the food is listed (D53). Otherwise NO listing every failing condition; reopen with at least 2 gains and no losses on a new screen. |
+
+Effective but expensive (owner decision D53, 2026-11-16): a food that adds items and breaks none
+is no longer turned down for its price. This matches the catalogue rule for tastings (D29: better
+but above 1.5 times native is optional). The ratio alone never produces a YES, and a high ratio does
+not rescue too few gains or a loss. The budget row is unchanged and comes first: food runs large
+enough to pass 2,000,000 tokens in one family still end as NO, too expensive to screen, whatever
+they gained.
 
 Native `unknown` is never a gain. Food `unknown` loses an item native met.
 Unknowns remain in B's denominator. Logical tokens include cache reads and
@@ -102,7 +109,9 @@ python3 scripts/fast_screen.py verdict --screen fast-screen-example/screen.json 
 ```
 
 The result is YES at C: native met 3/6 items (0.50), food gained three,
-lost none, and its token ratio is 450/300 = 1.5. The family used 750 tokens and
+lost none, and its token ratio is 450/300 = 1.5, so `expensive` is false. With
+food runs of 151 tokens the result would still be YES, with `expensive` true and
+the ratio in the reason. The family used 750 tokens and
 the summed duration is 60 seconds. In a real screen, start with `food: null` for
 each task. A native-only screen may already decide NO at B; otherwise it exits 2
 and asks for the food runs.
@@ -157,10 +166,11 @@ are refused. JSON loading rejects duplicate keys and non-finite numbers.
 
 Verdicts retain the result, deciding step, one-line reason and reopening
 condition; native fraction and its numerator/denominator; gained and lost counts
-with `{task_id, id}` pairs; token ratio, arm totals, tokens by family, summed
+with `{task_id, id}` pairs; token ratio and `expensive` (true when the ratio
+exceeds 1.5), arm totals, tokens by family, summed
 seconds, unknown counts per arm, and missing food task IDs. Unavailable numbers
 are null. With missing food runs, food totals and unknown counts cover only the
-supplied runs; gains, losses and ratio remain null. A static stop leaves task
+supplied runs; gains, losses, ratio and `expensive` remain null. A static stop leaves task
 measurements null. Invalid input prints an error and never a partial verdict.
 
 | Exit code | Meaning |
@@ -197,17 +207,25 @@ Two things this example showed:
   food arm, and the six runs together (2,515,716 logical tokens) would have exceeded the 2,000,000
   budget: a NO as too expensive to screen. Tasks of this size leave little room in the budget.
 
-The example reaches no YES. Applying the rule to the recorded numbers of EGM's 2026-11-06 self-test
-shows a case the rule turns down on price alone: native found 12 of 16 planted defects, EGM 16 of 16
-with none lost, at about 28 times the tokens, so step C says NO because the ratio exceeds 1.5. The
-owner kept EGM as an explicit switch (D52). Whether the rule should say "optional, with the ratio
-stated" for such a case is not decided; the rule is unchanged.
+The example reaches no YES. The recorded numbers of EGM's 2026-11-06 self-test are the case the
+"effective but expensive" clause was written for: native found 12 of 16 planted defects, EGM 16 of
+16 with none lost, at about 28 times the tokens per review. The first version of the rule said NO
+at step C on the ratio alone, while the owner kept EGM as an explicit switch (D52). Since D53 the
+same numbers give YES at step C, optional, with the ratio stated.
+
+That is the rule applied to old numbers after it was changed with those numbers in view, so it is
+not a test of the clause. It also leaves out the budget: one EGM review in that self-test used
+1,137,230 logical tokens (median), so three of them come to about 3,400,000, above the 2,000,000
+budget. A real screen with tasks of that size would end as NO, too expensive to screen, before
+step C. The clause decides for foods whose three runs fit the budget.
 
 ## Meaning and limits
 
-YES means absorbed as optional, available on explicit call. It is not evidence
+YES means absorbed as optional, available on explicit call. A YES marked
+`expensive` is listed with its token ratio, so whoever calls it sees the price.
+Neither is evidence
 for a default: becoming a default still needs the full measurement rules in
-[EVAL_PROTOCOL.md](EVAL_PROTOCOL.md). NO means do not absorb now, with a recorded
+[EVAL_PROTOCOL.md](EVAL_PROTOCOL.md), including their cost limit. NO means do not absorb now, with a recorded
 reason and reopening condition. It does not mean the food is useless.
 
 The tool does not run models, approve a judge, or clear consent, licence, safety
