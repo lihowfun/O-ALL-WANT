@@ -3878,6 +3878,115 @@ def _graph_status(report):
             f"stale files: {report['stale_files']}")
 
 
+def _read_graph_snapshot(path):
+    def invalid(*_args):
+        raise ValueError("invalid graph snapshot")
+
+    def object_pairs(pairs):
+        result = dict(pairs)
+        if len(result) != len(pairs):
+            invalid()
+        return result
+
+    def count(value):
+        return type(value) is int and value >= 0
+
+    def relative(value):
+        return (isinstance(value, str) and bool(value) and not value.startswith(("/", "../"))
+                and value != ".." and posixpath.normpath(value) == value)
+
+    try:
+        with open(path, encoding="utf-8") as stream:
+            report = json.load(stream, object_pairs_hook=object_pairs, parse_constant=invalid)
+    except OSError as exc:
+        raise CodeIndexError(f"cannot read graph snapshot: {str(path)!r}") from exc
+    except (ValueError, RecursionError) as exc:
+        raise CodeIndexError(f"malformed graph snapshot: {str(path)!r}") from exc
+    try:
+        if (not isinstance(report, dict) or type(report["schema_version"]) is not int
+                or report["schema_version"] != SCHEMA_VERSION
+                or not relative(report["scope"]) or type(report["complete"]) is not bool
+                or not isinstance(report["nodes"], list) or not isinstance(report["edges"], list)):
+            invalid()
+        nodes = {}
+        for row in report["nodes"]:
+            node = row["id"]
+            if (not relative(node) or node == "." or node in nodes
+                    or row["group"] != (posixpath.dirname(node) or ".")
+                    or (report["scope"] != "." and not node.startswith(report["scope"] + "/"))):
+                invalid()
+            nodes[node] = row
+        edges = set()
+        for row in report["edges"]:
+            key = (row["source"], row["target"])
+            if (key in edges or key[0] == key[1] or any(end not in nodes for end in key)
+                    or any(not count(row[field]) for field in ("imports", "calls", "weight"))
+                    or row["weight"] == 0 or row["weight"] != row["imports"] + row["calls"]):
+                invalid()
+            edges.add(key)
+        for field in ("nodes", "edges"):
+            total, cut = report["total"][field], report["truncated"][field]
+            if not count(total) or not count(cut) or total != len(report[field]) + cut:
+                invalid()
+        if report["complete"] != (not any(report["truncated"][field] for field in ("nodes", "edges"))):
+            invalid()
+    except (KeyError, TypeError, ValueError) as exc:
+        raise CodeIndexError(f"malformed graph snapshot: {str(path)!r}") from exc
+    return report
+
+
+def changes(index, snapshot, scope=".", max_nodes=GRAPH_NODES, max_edges=GRAPH_EDGES):
+    """Compare displayed graph entries; totals retain the counts before graph caps."""
+    before = _read_graph_snapshot(snapshot)
+    scope = _graph_scope(index, scope)
+    if before["scope"] != scope:
+        raise CodeIndexError(f"snapshot scope {before['scope']!r} does not match requested scope {scope!r}")
+    current = graph(index, scope, max_nodes, max_edges)
+    old_nodes, new_nodes = ({row["id"] for row in report["nodes"]} for report in (before, current))
+    old_groups, new_groups = ({row["group"] for row in report["nodes"]} for report in (before, current))
+    old_edges, new_edges = ({(row["source"], row["target"]): row for row in report["edges"]}
+                            for report in (before, current))
+    report = {"schema_version": SCHEMA_VERSION, "scope": scope,
+              "snapshot_complete": before["complete"], "current_complete": current["complete"],
+              "files_added": sorted(new_nodes - old_nodes), "files_removed": sorted(old_nodes - new_nodes),
+              "edges_added": [new_edges[key] for key in sorted(new_edges.keys() - old_edges.keys())],
+              "edges_removed": [old_edges[key] for key in sorted(old_edges.keys() - new_edges.keys())],
+              "edges_changed": [{"source": key[0], "target": key[1],
+                                 "old_weight": old_edges[key]["weight"], "new_weight": new_edges[key]["weight"]}
+                                for key in sorted(old_edges.keys() & new_edges.keys())
+                                if old_edges[key]["weight"] != new_edges[key]["weight"]],
+              "directories_added": sorted(new_groups - old_groups),
+              "directories_removed": sorted(old_groups - new_groups)}
+    report["totals"] = {key: len(report[key]) for key in (
+        "files_added", "files_removed", "edges_added", "edges_removed", "edges_changed",
+        "directories_added", "directories_removed")}
+    report["totals"].update(nodes_before=before["total"]["nodes"], nodes_now=current["total"]["nodes"],
+                            edges_before=before["total"]["edges"], edges_now=current["total"]["edges"])
+    return report
+
+
+def _print_changes(report, limit):
+    total = report["totals"]
+    print(f"Nodes {total['nodes_before']} -> {total['nodes_now']}; "
+          f"edges {total['edges_before']} -> {total['edges_now']}; "
+          f"files +{total['files_added']} -{total['files_removed']}; "
+          f"edges +{total['edges_added']} -{total['edges_removed']} changed {total['edges_changed']}; "
+          f"directories +{total['directories_added']} -{total['directories_removed']}")
+    if not report["snapshot_complete"] or not report["current_complete"]:
+        sides = [name for name in ("snapshot", "current") if not report[name + "_complete"]]
+        print("Partial comparison: " + " and ".join(sides) + " graph truncated; comparing displayed entries only.")
+    for key in ("files_added", "files_removed", "edges_added", "edges_removed", "edges_changed",
+                "directories_added", "directories_removed"):
+        print(key.replace("_", " ").capitalize() + ":")
+        for row in report[key][:limit]:
+            line = row if isinstance(row, str) else f"{row['source']} -> {row['target']}"
+            if key == "edges_changed":
+                line += f" (weight {row['old_weight']} -> {row['new_weight']})"
+            print("  " + line)
+        if len(report[key]) > limit:
+            print(f"  {len(report[key]) - limit} more")
+
+
 def _mermaid_label(text):
     # Numeric entities keep quotes, brackets, directives and markup inside quoted labels.
     return "".join(char if char.isascii() and (char.isalnum() or char in " /._-")
@@ -4317,6 +4426,7 @@ Commands:
   affected PATH[::Symbol] [--hops 2]  Files that import the module or call the symbol
   overview                            One page: entry points, main directories, most-called code
   graph [--scope DIR] [--format html|mermaid|json] [--out FILE]  Draw local file dependencies
+  changes --since SNAPSHOT.json [--scope DIR] [--limit N] [--json]  Compare file dependency maps
   stats                               Files, symbols, build time and cache state
 
 Python is parsed with ast; JavaScript and TypeScript with a scanner that
@@ -4353,6 +4463,14 @@ callers and affected say whether a list is complete within the index.
                               help="node cap (default 200; Mermaid 40; maximum 1000)")
     graph_parser.add_argument("--max-edges", type=_limit, default=None,
                               help="edge cap (default 500; Mermaid 80; maximum 1000)")
+    changes_parser = commands.add_parser("changes", parents=[shared], help="compare against a graph JSON snapshot")
+    changes_parser.add_argument("--since", required=True, metavar="FILE", help="previous graph --format json export")
+    changes_parser.add_argument("--scope", default=".", metavar="DIR", help="must match the snapshot scope (default .)")
+    changes_parser.add_argument("--limit", type=_limit, default=20, help="lines per text section (default 20)")
+    changes_parser.add_argument("--max-nodes", type=_limit, default=GRAPH_NODES,
+                                help="node cap (default 200; maximum 1000)")
+    changes_parser.add_argument("--max-edges", type=_limit, default=GRAPH_EDGES,
+                                help="edge cap (default 500; maximum 1000)")
     commands.add_parser("stats", parents=[shared], help="files, symbols, build time and cache state")
     return result
 
@@ -4428,6 +4546,12 @@ def main(argv=None):
                       + ("s" if args.hops > 1 else "") + ")")
                 _print_sites(index, report, "affected")
             _emit(report, as_json, show)
+        elif args.command == "changes":
+            report = changes(index, args.since, args.scope, args.max_nodes, args.max_edges)
+            if as_json:
+                print(json.dumps(report, ensure_ascii=False, indent=1))
+            else:
+                _print_changes(report, args.limit)
         elif args.command == "graph":
             output_format = args.format or ("json" if as_json else "html")
             nodes = args.max_nodes or (40 if output_format == "mermaid" else GRAPH_NODES)

@@ -401,9 +401,17 @@ python3 scripts/code_index.py affected PATH[::Symbol] [--hops 1|2] [--limit N] [
 python3 scripts/code_index.py overview [--json]
 python3 scripts/code_index.py stats [--json]
 python3 scripts/code_index.py graph [--scope DIR] [--format html|mermaid|json] [--out FILE]
+python3 scripts/code_index.py changes --since SNAPSHOT.json [--scope DIR] [--limit N] [--json]
 ```
 
 Every command also takes `--root DIR` (default: the current directory), `--cache DIR` or `--no-cache`, `--frozen` and `--include-generated`, before or after the command name.
+
+`changes` compares a strict UTF-8 `graph --format json --out SNAPSHOT.json` export with the current graph;
+a scope mismatch is an input error (exit 1). It reports added/removed files, edges and directory groups, plus edge weight changes.
+Text shows a summary and up to `--limit` lines per section (default 20); JSON includes full sorted lists, `totals`, `scope`,
+`snapshot_complete` and `current_complete`. Totals include each change count and node/edge counts before and now, before caps.
+It uses the graph's 200-node/500-edge defaults and accepts `--max-nodes`/`--max-edges` (1–1000); either truncated graph makes
+the comparison partial, covering displayed entries only. It exits 0 even without changes and writes only the normal index cache.
 
 `graph` draws file dependencies using the existing index, with no second parser or runtime dependency.
 HTML (default) is a self-contained offline SVG view with inline CSS/JS, directory groups, search,

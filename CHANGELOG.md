@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 Changes after 2.0.1. They ship with the next version; the owner cuts a new version when enough has
 accumulated (D50).
 
+- Add `code_index.py changes --since SNAPSHOT.json` to compare file dependency maps, with sorted
+  file/edge/directory changes, weight changes, totals and explicit partial-comparison flags.
+- The `oaw-codemap` skill says when to draw the map again (a new or long-untouched repository, after
+  many files move, when layout and documents disagree, before a cross-module refactor) and how to
+  check what changed first. It is still used only on an explicit call (#28).
+
 ### Catalogue
 
 - Add `catalog.py decide` for recorded owner dispositions with replacement history; catalogue views,

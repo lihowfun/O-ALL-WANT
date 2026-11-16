@@ -34,3 +34,21 @@ python3 scripts/code_index.py path A.py B.py               # import chain betwee
   Read `complete`, `truncated`, totals and limits before claiming coverage. Lists describe displayed edges.
   Use a smaller scope when truncated; nodes rank by total incident edge weight, with path tie-breaks.
   Exported paths and structure may be private; review before sharing. No agent comprehension benefit is measured.
+
+## When to draw it again
+
+Nothing keeps the map current for you. Draw it, or draw it again, at these moments:
+
+- you are new to the repository or back after a long gap: `overview`, then `graph --scope` on the part you will touch;
+- after a change that moves, renames, adds or deletes many files or a whole directory;
+- when the directory layout and the documents that describe it no longer agree;
+- before a refactor that crosses modules: `affected` on what you are about to change.
+
+Keep the last export and ask what changed before you redraw:
+
+```bash
+python3 scripts/code_index.py graph --scope src --format json --out map.json   # snapshot
+python3 scripts/code_index.py changes --since map.json --scope src             # files, dependencies and directories added or removed
+```
+
+Few or no changes: keep the old drawing. Updating is cheap, because the index reads again only the files that changed.
