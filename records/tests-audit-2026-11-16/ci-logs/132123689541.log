@@ -1,0 +1,268 @@
+﻿2026-11-13T19:50:38.1084490Z Current runner version: '2.338.2'
+2026-11-13T19:50:38.1103210Z ##[group]Runner Image Provisioner
+2026-11-13T19:50:38.1103930Z Hosted Compute Agent
+2026-11-13T19:50:38.1104420Z Version: 20261028.624
+2026-11-13T19:50:38.1104890Z Commit: 54898b74c23fde5556c9b3c3a2290865feef0dfe
+2026-11-13T19:50:38.1105580Z Build Date: 2026-10-28T21:51:42Z
+2026-11-13T19:50:38.1106050Z Worker ID: {5c16f573-de9c-4a81-90b8-cca437afd046}
+2026-11-13T19:50:38.1106570Z Region: westus
+2026-11-13T19:50:38.1106920Z Cloud: MacCloud
+2026-11-13T19:50:38.1107290Z ##[endgroup]
+2026-11-13T19:50:38.1108450Z ##[group]Operating System
+2026-11-13T19:50:38.1108920Z macOS
+2026-11-13T19:50:38.1109260Z 26.7.2
+2026-11-13T19:50:38.1109590Z 25G332
+2026-11-13T19:50:38.1110060Z ##[endgroup]
+2026-11-13T19:50:38.1110480Z ##[group]Runner Image
+2026-11-13T19:50:38.1111240Z Image: macos-26-arm64
+2026-11-13T19:50:38.1111930Z Version: 20261102.0473.1
+2026-11-13T19:50:38.1113310Z Included Software: https://github.com/actions/runner-images/blob/macos-26-arm64/20261102.0473/images/macos/macos-26-arm64-Readme.md
+2026-11-13T19:50:38.1114650Z Image Release: https://github.com/actions/runner-images/releases/tag/macos-26-arm64%2F20261102.0473
+2026-11-13T19:50:38.1115600Z ##[endgroup]
+2026-11-13T19:50:38.1116600Z ##[group]GITHUB_TOKEN Permissions
+2026-11-13T19:50:38.1118220Z Contents: read
+2026-11-13T19:50:38.1118830Z Metadata: read
+2026-11-13T19:50:38.1141810Z ##[endgroup]
+2026-11-13T19:50:38.1146090Z Secret source: Actions
+2026-11-13T19:50:38.1152290Z Cache mode: write
+2026-11-13T19:50:38.1152960Z Prepare workflow directory
+2026-11-13T19:50:38.1629800Z Prepare all required actions
+2026-11-13T19:50:38.1669850Z Getting action download info
+2026-11-13T19:50:38.6313690Z Download action repository 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+2026-11-13T19:50:39.8085810Z Download action repository 'actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0' (SHA:6d4fd22b20465ccc0f7354476588e8df7c9ca0e0)
+2026-11-13T19:50:40.5051540Z Complete job name: contracts (macos-latest, 3.10)
+2026-11-13T19:50:40.6013960Z ##[group]Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+2026-11-13T19:50:40.6015490Z with:
+2026-11-13T19:50:40.6015940Z   repository: lihowfun/O-ALL-WANT
+2026-11-13T19:50:40.6042740Z   token: ***
+2026-11-13T19:50:40.6043190Z   ssh-strict: true
+2026-11-13T19:50:40.6043570Z   ssh-user: git
+2026-11-13T19:50:40.6044000Z   persist-credentials: true
+2026-11-13T19:50:40.6044440Z   clean: true
+2026-11-13T19:50:40.6044820Z   sparse-checkout-cone-mode: true
+2026-11-13T19:50:40.6045310Z   fetch-depth: 1
+2026-11-13T19:50:40.6045720Z   fetch-tags: false
+2026-11-13T19:50:40.6046090Z   show-progress: true
+2026-11-13T19:50:40.6046470Z   lfs: false
+2026-11-13T19:50:40.6046920Z   submodules: false
+2026-11-13T19:50:40.6047340Z   set-safe-directory: true
+2026-11-13T19:50:40.6047760Z   allow-unsafe-pr-checkout: false
+2026-11-13T19:50:40.6049380Z ##[endgroup]
+2026-11-13T19:50:41.2181380Z Syncing repository: lihowfun/O-ALL-WANT
+2026-11-13T19:50:41.2183970Z ##[group]Getting Git version info
+2026-11-13T19:50:41.2184840Z Working directory is '/Users/runner/work/O-ALL-WANT/O-ALL-WANT'
+2026-11-13T19:50:41.2188720Z [command]/opt/homebrew/bin/git version
+2026-11-13T19:50:41.3020240Z git version 2.56.0
+2026-11-13T19:50:41.3045060Z ##[endgroup]
+2026-11-13T19:50:41.3053140Z Copying '/Users/runner/.gitconfig' to '/Users/runner/work/_temp/bd324aa7-d486-40ca-97fb-31dfa8907ebe/.gitconfig'
+2026-11-13T19:50:41.3068110Z Temporarily overriding HOME='/Users/runner/work/_temp/bd324aa7-d486-40ca-97fb-31dfa8907ebe' before making global git config changes
+2026-11-13T19:50:41.3074830Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-13T19:50:41.3077560Z [command]/opt/homebrew/bin/git config --global --add safe.directory /Users/runner/work/O-ALL-WANT/O-ALL-WANT
+2026-11-13T19:50:41.3256730Z Deleting the contents of '/Users/runner/work/O-ALL-WANT/O-ALL-WANT'
+2026-11-13T19:50:41.3264160Z ##[group]Determining repository object format
+2026-11-13T19:50:41.3270120Z ##[endgroup]
+2026-11-13T19:50:41.3273790Z ##[group]Initializing the repository
+2026-11-13T19:50:41.3277520Z [command]/opt/homebrew/bin/git init /Users/runner/work/O-ALL-WANT/O-ALL-WANT
+2026-11-13T19:50:41.3675730Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-11-13T19:50:41.3678410Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-11-13T19:50:41.3680580Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-11-13T19:50:41.3682990Z hint: call:
+2026-11-13T19:50:41.3683840Z hint:
+2026-11-13T19:50:41.3684860Z hint: 	git config --global init.defaultBranch <name>
+2026-11-13T19:50:41.3686310Z hint:
+2026-11-13T19:50:41.3688120Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-11-13T19:50:41.3693270Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-11-13T19:50:41.3702750Z hint:
+2026-11-13T19:50:41.3703950Z hint: 	git branch -m <name>
+2026-11-13T19:50:41.3706090Z hint:
+2026-11-13T19:50:41.3707610Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-11-13T19:50:41.3709900Z Initialized empty Git repository in /Users/runner/work/O-ALL-WANT/O-ALL-WANT/.git/
+2026-11-13T19:50:41.3715120Z [command]/opt/homebrew/bin/git remote add origin https://github.com/lihowfun/O-ALL-WANT
+2026-11-13T19:50:41.3851080Z ##[endgroup]
+2026-11-13T19:50:41.3852590Z ##[group]Disabling automatic garbage collection
+2026-11-13T19:50:41.3854040Z [command]/opt/homebrew/bin/git config --local gc.auto 0
+2026-11-13T19:50:41.3962460Z ##[endgroup]
+2026-11-13T19:50:41.3965940Z ##[group]Setting up auth
+2026-11-13T19:50:41.3968560Z Removing SSH command configuration
+2026-11-13T19:50:41.3972150Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-13T19:50:41.4031670Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-13T19:50:41.5535770Z Removing HTTP extra header
+2026-11-13T19:50:41.5540660Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-13T19:50:41.5622450Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-13T19:50:41.6880830Z Removing includeIf entries pointing to credentials config files
+2026-11-13T19:50:41.6883000Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-13T19:50:41.6957620Z [command]/opt/homebrew/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-13T19:50:41.8503690Z [command]/opt/homebrew/bin/git config --file /Users/runner/work/_temp/git-credentials-e8028220-16a0-4fad-ac95-fede8258f465.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-11-13T19:50:41.8625680Z [command]/opt/homebrew/bin/git config --local includeIf.gitdir:/Users/runner/work/O-ALL-WANT/O-ALL-WANT/.git.path /Users/runner/work/_temp/git-credentials-e8028220-16a0-4fad-ac95-fede8258f465.config
+2026-11-13T19:50:41.8759990Z [command]/opt/homebrew/bin/git config --local includeIf.gitdir:/Users/runner/work/O-ALL-WANT/O-ALL-WANT/.git/worktrees/*.path /Users/runner/work/_temp/git-credentials-e8028220-16a0-4fad-ac95-fede8258f465.config
+2026-11-13T19:50:41.8863460Z [command]/opt/homebrew/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-e8028220-16a0-4fad-ac95-fede8258f465.config
+2026-11-13T19:50:41.8957530Z [command]/opt/homebrew/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-e8028220-16a0-4fad-ac95-fede8258f465.config
+2026-11-13T19:50:41.9036260Z ##[endgroup]
+2026-11-13T19:50:41.9037660Z ##[group]Fetching the repository
+2026-11-13T19:50:41.9044070Z [command]/opt/homebrew/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +e61a0c945a0e5235cf46909adb9c6eaf0bf03460:refs/remotes/pull/16/merge
+2026-11-13T19:50:42.9573450Z From https://github.com/lihowfun/O-ALL-WANT
+2026-11-13T19:50:42.9575290Z  * [new ref]         e61a0c945a0e5235cf46909adb9c6eaf0bf03460 -> pull/16/merge
+2026-11-13T19:50:42.9578830Z ##[endgroup]
+2026-11-13T19:50:42.9579460Z ##[group]Determining the checkout info
+2026-11-13T19:50:42.9580080Z ##[endgroup]
+2026-11-13T19:50:42.9586330Z [command]/opt/homebrew/bin/git sparse-checkout disable
+2026-11-13T19:50:42.9716070Z [command]/opt/homebrew/bin/git config --local --unset-all extensions.worktreeConfig
+2026-11-13T19:50:42.9824430Z ##[group]Checking out the ref
+2026-11-13T19:50:42.9828450Z [command]/opt/homebrew/bin/git checkout --progress --force refs/remotes/pull/16/merge
+2026-11-13T19:50:43.1308280Z HEAD is now at e61a0c9 Merge 06ed481776676384168f51498863d6897dbdc3f5 into 5df531372330f6b0e1c9a81aee0c1c45f2f283ff
+2026-11-13T19:50:43.1321400Z ##[endgroup]
+2026-11-13T19:50:43.1440800Z [command]/opt/homebrew/bin/git log -1 --format=%H
+2026-11-13T19:50:43.1539520Z e61a0c945a0e5235cf46909adb9c6eaf0bf03460
+2026-11-13T19:50:43.1895250Z ##[group]Run actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
+2026-11-13T19:50:43.1895710Z with:
+2026-11-13T19:50:43.1895970Z   python-version: 3.10
+2026-11-13T19:50:43.1896300Z   check-latest: false
+2026-11-13T19:50:43.1898970Z   token: ***
+2026-11-13T19:50:43.1899370Z   mirror: https://raw.githubusercontent.com/actions/python-versions/main
+2026-11-13T19:50:43.1899730Z   update-environment: true
+2026-11-13T19:50:43.1899940Z   allow-prereleases: false
+2026-11-13T19:50:43.1900220Z   freethreaded: false
+2026-11-13T19:50:43.1900480Z ##[endgroup]
+2026-11-13T19:50:43.3582820Z ##[group]Installed versions
+2026-11-13T19:50:43.3646110Z Version 3.10 was not found in the local cache
+2026-11-13T19:50:44.3389270Z Version 3.10 is available for downloading
+2026-11-13T19:50:44.3390310Z Download from "https://github.com/actions/python-versions/releases/download/3.10.11-11114431484/python-3.10.11-darwin-arm64.tar.gz"
+2026-11-13T19:50:44.8600170Z Extract downloaded archive
+2026-11-13T19:50:44.8791260Z [command]/usr/bin/tar xz -C /Users/runner/work/_temp/a36b69fe-8ab3-43f4-8327-e4ac938b5ccc -f /Users/runner/work/_temp/b64ccc0a-3970-4432-bebb-32e76ba6b445
+2026-11-13T19:50:44.9903380Z Execute installation script
+2026-11-13T19:50:45.0480720Z Check if Python hostedtoolcache folder exist...
+2026-11-13T19:50:45.0595480Z Install Python binaries from prebuilt package
+2026-11-13T19:51:01.2289060Z installer: Package name is Python
+2026-11-13T19:51:01.2334720Z installer: Upgrading at base path /
+2026-11-13T19:51:01.2344800Z installer: The upgrade was successful.
+2026-11-13T19:51:01.2360120Z Create hostedtoolcach symlinks (Required for the backward compatibility)
+2026-11-13T19:51:01.2377540Z Create Python 3.10.11 folder
+2026-11-13T19:51:01.2812070Z Create additional symlinks (Required for the UsePythonVersion Azure Pipelines task and the setup-python GitHub Action)
+2026-11-13T19:51:01.3072290Z Upgrading pip...
+2026-11-13T19:51:03.5103380Z Looking in links: /var/folders/h5/t85nd63d71x27_8gl5gw3l_w0000gn/T/tmpevmf1kyf
+2026-11-13T19:51:03.5105210Z Requirement already satisfied: setuptools in /Library/Frameworks/Python.framework/Versions/3.10/lib/python3.10/site-packages (65.5.0)
+2026-11-13T19:51:03.5107110Z Requirement already satisfied: pip in /Library/Frameworks/Python.framework/Versions/3.10/lib/python3.10/site-packages (23.0.1)
+2026-11-13T19:51:04.3409460Z Collecting pip
+2026-11-13T19:51:04.4515260Z Downloading pip-26.3-py3-none-any.whl (2.0 MB)
+2026-11-13T19:51:04.5237440Z ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.0/2.0 MB 29.8 MB/s eta 0:00:00
+2026-11-13T19:51:04.5343430Z 
+2026-11-13T19:51:04.5646490Z Installing collected packages: pip
+2026-11-13T19:51:04.5748440Z Attempting uninstall: pip
+2026-11-13T19:51:04.5859190Z Found existing installation: pip 23.0.1
+2026-11-13T19:51:04.7549370Z Uninstalling pip-23.0.1:
+2026-11-13T19:51:05.0586540Z Successfully uninstalled pip-23.0.1
+2026-11-13T19:51:06.4771510Z Successfully installed pip-26.3
+2026-11-13T19:51:06.6467160Z Install OpenSSL certificates
+2026-11-13T19:51:07.4844350Z Collecting certifi
+2026-11-13T19:51:07.4948040Z Using cached certifi-2026.10.23-py3-none-any.whl.metadata (2.5 kB)
+2026-11-13T19:51:07.4983880Z Using cached certifi-2026.10.23-py3-none-any.whl (135 kB)
+2026-11-13T19:51:07.5590550Z Installing collected packages: certifi
+2026-11-13T19:51:07.5699710Z Successfully installed certifi-2026.10.23
+2026-11-13T19:51:07.7504460Z -- pip install --upgrade certifi
+2026-11-13T19:51:07.7505960Z  -- removing any existing file or link
+2026-11-13T19:51:07.7506880Z  -- creating symlink to certifi certificate bundle
+2026-11-13T19:51:07.7507890Z  -- setting permissions
+2026-11-13T19:51:07.7508500Z  -- update complete
+2026-11-13T19:51:07.7593280Z Create complete file
+2026-11-13T19:51:07.8053830Z Successfully set up CPython (3.10.11)
+2026-11-13T19:51:07.8181110Z ##[endgroup]
+2026-11-13T19:51:07.8784520Z ##[group]Run python scripts/harness_check.py --verbose
+2026-11-13T19:51:07.8786070Z [36;1mpython scripts/harness_check.py --verbose[0m
+2026-11-13T19:51:07.8993470Z shell: /bin/bash -e {0}
+2026-11-13T19:51:07.8994260Z env:
+2026-11-13T19:51:07.8995990Z   pythonLocation: /Users/runner/hostedtoolcache/Python/3.10.11/arm64
+2026-11-13T19:51:07.8999730Z   PKG_CONFIG_PATH: /Users/runner/hostedtoolcache/Python/3.10.11/arm64/lib/pkgconfig
+2026-11-13T19:51:07.9000830Z   Python_ROOT_DIR: /Users/runner/hostedtoolcache/Python/3.10.11/arm64
+2026-11-13T19:51:07.9002380Z   Python2_ROOT_DIR: /Users/runner/hostedtoolcache/Python/3.10.11/arm64
+2026-11-13T19:51:07.9003800Z   Python3_ROOT_DIR: /Users/runner/hostedtoolcache/Python/3.10.11/arm64
+2026-11-13T19:51:07.9004980Z ##[endgroup]
+2026-11-13T19:54:22.2519110Z PASS syntax: 44 Python files compiled
+2026-11-13T19:54:22.2523670Z PASS cli-contracts: 8 entry points expose expected operations
+2026-11-13T19:54:22.2533480Z PASS native-skills: exit 0
+2026-11-13T19:54:22.2539730Z Validated 14 portable native skill package(s).
+2026-11-13T19:54:22.2540530Z PASS egm-integration: exit 0
+2026-11-13T19:54:22.2541310Z {"status": "verified", "runtime_files": 65, "adapter_files": 30, "commit": "f0ba151b252c9abf1318d9fe857a43265d06de89"}
+2026-11-13T19:54:22.2543610Z FAIL behavior-regressions: exit 1; 1 skipped test(s); set OAW_ALLOW_SKIPS=1 only where a platform cannot run them
+2026-11-13T19:54:22.2545770Z OAW-TEST-SUMMARY {"run": 687, "skipped": 1, "successful": false, "modules": ["test_catalog", "test_catalog_core", "test_catalog_ui", "test_cli_resolve", "test_code_index", "test_codemap_eval", "test_context_hub", "test_digest_mod", "test_doctor_probe", "test_egm_integration", "test_egm_local", "test_egm_local_measure", "test_egm_pilot", "test_eval_stats", "test_gate", "test_goldfish_review", "test_improvement", "test_install", "test_judge_calibration", "test_oaw_mode", "test_skills", "test_status", "test_user_install", "test_wiki_sync"]}
+2026-11-13T19:54:22.2549490Z ...............................................................................................................................................................................................E.................................................s.............................................................................................................................................................................................................................................................................................................................................................................................................................................................
+2026-11-13T19:54:22.2551050Z ======================================================================
+2026-11-13T19:54:22.2554440Z ERROR: test_cli_surrogate_filename_exports_match_stdout (test_code_index.DrawnGraphTests)
+2026-11-13T19:54:22.2560130Z ----------------------------------------------------------------------
+2026-11-13T19:54:22.2563450Z Traceback (most recent call last):
+2026-11-13T19:54:22.2594340Z   File "/Users/runner/work/O-ALL-WANT/O-ALL-WANT/tests/test_code_index.py", line 1202, in test_cli_surrogate_filename_exports_match_stdout
+2026-11-13T19:54:22.2595490Z     Path(self.root, name).write_text("def ping(): return 1\n", encoding="utf-8")
+2026-11-13T19:54:22.2596380Z   File "/Library/Frameworks/Python.framework/Versions/3.10/lib/python3.10/pathlib.py", line 1154, in write_text
+2026-11-13T19:54:22.2597120Z     with self.open(mode='w', encoding=encoding, errors=errors, newline=newline) as f:
+2026-11-13T19:54:22.2597880Z   File "/Library/Frameworks/Python.framework/Versions/3.10/lib/python3.10/pathlib.py", line 1119, in open
+2026-11-13T19:54:22.2598830Z     return self._accessor.open(self, mode, buffering, encoding, errors,
+2026-11-13T19:54:22.2599500Z OSError: [Errno 92] Illegal byte sequence: '/var/folders/h5/t85nd63d71x27_8gl5gw3l_w0000gn/T/oaw-drawn-graph-cw4o2jqh/caf\udce9.py'
+2026-11-13T19:54:22.2599940Z 
+2026-11-13T19:54:22.2605600Z ----------------------------------------------------------------------
+2026-11-13T19:54:22.2606090Z Ran 687 tests in 189.474s
+2026-11-13T19:54:22.2606220Z 
+2026-11-13T19:54:22.2606300Z FAILED (errors=1, skipped=1)
+2026-11-13T19:54:22.2606800Z PASS installed-lifecycle: minimal -> knowledge+improvement+both hosts; doctor and installed helpers; dry-run migration
+2026-11-13T19:54:22.2751150Z PASS example-content: exit 0
+2026-11-13T19:54:22.2751470Z Example framework files match installer payloads.
+2026-11-13T19:54:22.2751760Z PASS repo-wiki: exit 0
+2026-11-13T19:54:22.2760820Z ⚠️ wiki_sync lint warnings — 22 soft issue(s):
+2026-11-13T19:54:22.2761410Z   - manual topic has no source refs in Harness_Engineering_Context_Fragmentation.md: add docs/raw source refs or stable source metadata when practical
+2026-11-13T19:54:22.2762220Z   - manual topic has no source refs in Harness_Engineering_Deterministic_State.md: add docs/raw source refs or stable source metadata when practical
+2026-11-13T19:54:22.2763080Z   - manual topic has no source refs in Harness_Engineering_Knowledge_Synthesis.md: add docs/raw source refs or stable source metadata when practical
+2026-11-13T19:54:22.2763860Z   - manual topic has no source refs in OAW_Session_Continuity_Test.md: add docs/raw source refs or stable source metadata when practical
+2026-11-13T19:54:22.2764410Z   - orphan page 'Release_Learnings': no sources and no topic links
+2026-11-13T19:54:22.2764880Z   - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:42: VERSION: ${VERSION}
+2026-11-13T19:54:22.2765710Z   - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:44: CURRENT PHASE: ${CURRENT_PHASE}
+2026-11-13T19:54:22.2766550Z   - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:61: # ${PROJECT_NAME} — Master Router
+2026-11-13T19:54:22.2767990Z   - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:63: > Replace `${PROJECT_NAME}`, `${LANGUAGE}`, and the custom forbidden-action
+2026-11-13T19:54:22.2768970Z   - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:82: - `${PROJECT_NAME}`, `${ONE_LINE_DESCRIPTION}`, `${VERSION}`, `${REPO_URL}`, `${PIPELINE_SUMMARY}`
+2026-11-13T19:54:22.2769920Z   - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:83: - `${LANGUAGE}`, `${SAFETY_CRITICAL_FILE}`, `${IMPORTANT_WORKAROUND}`
+2026-11-13T19:54:22.2775590Z   - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:84: - Metric table: `${METRIC_1}`, `${VALUE_1}`, `${DATE}`, `${NOTES}`
+2026-11-13T19:54:22.2776410Z   - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:85: - Test commands: `${SMOKE_TEST_CMD}`, `${REGRESSION_TEST_CMD}`, `${INTEGRATION_TEST_CMD}`
+2026-11-13T19:54:22.2777280Z   - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:86: - Stack: `${LANGUAGE_AND_FRAMEWORKS}`, `${RUNTIME_ENVIRONMENT}`, `${EXTERNAL_SERVICES}`
+2026-11-13T19:54:22.2778630Z   - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:92: "version": "${VERSION}",
+2026-11-13T19:54:22.2779220Z   - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:93: "project": "${PROJECT_NAME}",
+2026-11-13T19:54:22.2779810Z   - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:94: "last_updated": "${DATE}",
+2026-11-13T19:54:22.2780410Z   - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:95: "current_phase": "${CURRENT_PHASE}",
+2026-11-13T19:54:22.2781140Z   - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:96: "next_phase": "${NEXT_PHASE}",
+2026-11-13T19:54:22.2782420Z   - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:107: - **What fails**: A fresh agent cannot answer "what project is this?" or "what phase are we in?" All identity fields are
+2026-11-13T19:54:22.2784240Z   - unfilled `${...}` placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:263: | P0 | Fresh install: every file shows `${VERSION}` / `${CURRENT_PHASE}` placeholders — agent cannot orient | `context_h
+2026-11-13T19:54:22.2785530Z   - literal `YYYY-MM-DD` date placeholder in docs/knowledge/OAW_Session_Continuity_Test.md:268: | P2 | Date redundancy: `memory add "[DECISION] 2026-04-18 ..."` produced `## [2026-04-18] [DECISION] 2026-04-18 ...` wi
+2026-11-13T19:54:22.2786460Z ✅ wiki_sync lint passed — no unresolved issues found.
+2026-11-13T19:54:22.2787030Z PASS version: 2.0.1 (proposed); source ledger and CI pins agree
+2026-11-13T19:54:22.2787490Z 8/9 checks passed
+2026-11-13T19:54:22.2823800Z ##[error]Process completed with exit code 1.
+2026-11-13T19:54:22.3136180Z Post job cleanup.
+2026-11-13T19:54:23.1492910Z [command]/opt/homebrew/bin/git version
+2026-11-13T19:54:23.1593940Z git version 2.56.0
+2026-11-13T19:54:23.1702400Z Copying '/Users/runner/.gitconfig' to '/Users/runner/work/_temp/f63bdd64-3b91-4e8f-97d5-260f3a5041cf/.gitconfig'
+2026-11-13T19:54:23.1704450Z Temporarily overriding HOME='/Users/runner/work/_temp/f63bdd64-3b91-4e8f-97d5-260f3a5041cf' before making global git config changes
+2026-11-13T19:54:23.1707640Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-13T19:54:23.1711640Z [command]/opt/homebrew/bin/git config --global --add safe.directory /Users/runner/work/O-ALL-WANT/O-ALL-WANT
+2026-11-13T19:54:23.1813200Z Removing SSH command configuration
+2026-11-13T19:54:23.1818580Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-13T19:54:23.1907120Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-13T19:54:23.3419280Z Removing HTTP extra header
+2026-11-13T19:54:23.3424720Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-13T19:54:23.3568390Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-13T19:54:23.4917890Z Removing includeIf entries pointing to credentials config files
+2026-11-13T19:54:23.4929950Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-13T19:54:23.5021120Z includeif.gitdir:/Users/runner/work/O-ALL-WANT/O-ALL-WANT/.git.path
+2026-11-13T19:54:23.5023170Z includeif.gitdir:/Users/runner/work/O-ALL-WANT/O-ALL-WANT/.git/worktrees/*.path
+2026-11-13T19:54:23.5023820Z includeif.gitdir:/github/workspace/.git.path
+2026-11-13T19:54:23.5024230Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-11-13T19:54:23.5035480Z [command]/opt/homebrew/bin/git config --local --get-all includeif.gitdir:/Users/runner/work/O-ALL-WANT/O-ALL-WANT/.git.path
+2026-11-13T19:54:23.5165250Z /Users/runner/work/_temp/git-credentials-e8028220-16a0-4fad-ac95-fede8258f465.config
+2026-11-13T19:54:23.5208700Z [command]/opt/homebrew/bin/git config --local --unset includeif.gitdir:/Users/runner/work/O-ALL-WANT/O-ALL-WANT/.git.path \/Users\/runner\/work\/_temp\/git\-credentials\-e8028220\-16a0\-4fad\-ac95\-fede8258f465\.config
+2026-11-13T19:54:23.5352580Z [command]/opt/homebrew/bin/git config --local --get-all includeif.gitdir:/Users/runner/work/O-ALL-WANT/O-ALL-WANT/.git/worktrees/*.path
+2026-11-13T19:54:23.5464950Z /Users/runner/work/_temp/git-credentials-e8028220-16a0-4fad-ac95-fede8258f465.config
+2026-11-13T19:54:23.5473630Z [command]/opt/homebrew/bin/git config --local --unset includeif.gitdir:/Users/runner/work/O-ALL-WANT/O-ALL-WANT/.git/worktrees/*.path \/Users\/runner\/work\/_temp\/git\-credentials\-e8028220\-16a0\-4fad\-ac95\-fede8258f465\.config
+2026-11-13T19:54:23.5555590Z [command]/opt/homebrew/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+2026-11-13T19:54:23.5617470Z /github/runner_temp/git-credentials-e8028220-16a0-4fad-ac95-fede8258f465.config
+2026-11-13T19:54:23.5625010Z [command]/opt/homebrew/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-e8028220\-16a0\-4fad\-ac95\-fede8258f465\.config
+2026-11-13T19:54:23.5701600Z [command]/opt/homebrew/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-11-13T19:54:23.5821640Z /github/runner_temp/git-credentials-e8028220-16a0-4fad-ac95-fede8258f465.config
+2026-11-13T19:54:23.5836270Z [command]/opt/homebrew/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-e8028220\-16a0\-4fad\-ac95\-fede8258f465\.config
+2026-11-13T19:54:23.5951070Z [command]/opt/homebrew/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-13T19:54:23.7053460Z Removing credentials config '/Users/runner/work/_temp/git-credentials-e8028220-16a0-4fad-ac95-fede8258f465.config'
+2026-11-13T19:54:23.7218560Z Cleaning up orphan processes

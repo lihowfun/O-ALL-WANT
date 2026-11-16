@@ -1,0 +1,174 @@
+﻿2026-10-28T07:33:31.3429471Z Current runner version: '2.338.0'
+2026-10-28T07:33:31.3691165Z ##[group]Runner Image Provisioner
+2026-10-28T07:33:31.3692096Z Hosted Compute Agent
+2026-10-28T07:33:31.3692690Z Version: 20261021.618
+2026-10-28T07:33:31.3693313Z Commit: 21505ad2541d5be6135ed84fc33697146cf75b8e
+2026-10-28T07:33:31.3694195Z Build Date: 2026-10-21T00:45:21Z
+2026-10-28T07:33:31.3695310Z Worker ID: {f290b15a-71ec-46ca-af71-5d242f0d6eb7}
+2026-10-28T07:33:31.3696098Z Region: westus2
+2026-10-28T07:33:31.3696715Z Cloud: Azure
+2026-10-28T07:33:31.3697224Z ##[endgroup]
+2026-10-28T07:33:31.3698795Z ##[group]Operating System
+2026-10-28T07:33:31.3699449Z Microsoft Windows Server 2025
+2026-10-28T07:33:31.3700045Z 10.0.26100
+2026-10-28T07:33:31.3701000Z Datacenter
+2026-10-28T07:33:31.3701524Z ##[endgroup]
+2026-10-28T07:33:31.3702087Z ##[group]Runner Image
+2026-10-28T07:33:31.3702725Z Image: windows-2025-vs2026
+2026-10-28T07:33:31.3703294Z Version: 20261021.278.1
+2026-10-28T07:33:31.3704853Z Included Software: https://github.com/actions/runner-images/blob/win25-vs2026/20261021.278/images/windows/Windows2025-VS2026-Readme.md
+2026-10-28T07:33:31.3706497Z Image Release: https://github.com/actions/runner-images/releases/tag/win25-vs2026%2F20261021.278
+2026-10-28T07:33:31.3707450Z ##[endgroup]
+2026-10-28T07:33:31.3708565Z ##[group]GITHUB_TOKEN Permissions
+2026-10-28T07:33:31.3710509Z Contents: read
+2026-10-28T07:33:31.3711086Z Metadata: read
+2026-10-28T07:33:31.3711705Z ##[endgroup]
+2026-10-28T07:33:31.3713929Z Secret source: Actions
+2026-10-28T07:33:31.3714863Z Cache mode: write
+2026-10-28T07:33:31.3715570Z Prepare workflow directory
+2026-10-28T07:33:31.4891484Z Prepare all required actions
+2026-10-28T07:33:31.4943121Z Getting action download info
+2026-10-28T07:33:31.8497089Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-10-28T07:33:32.0344407Z Download action repository 'actions/setup-python@v5' (SHA:a26af69be951a213d495a4c3e4e4022e16d87065)
+2026-10-28T07:33:32.6224699Z Complete job name: contracts (windows-latest, 3.13)
+2026-10-28T07:33:34.2246309Z ##[group]Run actions/checkout@v4
+2026-10-28T07:33:34.2247992Z with:
+2026-10-28T07:33:34.2249022Z   repository: lihowfun/O-ALL-WANT
+2026-10-28T07:33:34.2260191Z   token: ***
+2026-10-28T07:33:34.2261020Z   ssh-strict: true
+2026-10-28T07:33:34.2261845Z   ssh-user: git
+2026-10-28T07:33:34.2262694Z   persist-credentials: true
+2026-10-28T07:33:34.2263625Z   clean: true
+2026-10-28T07:33:34.2264465Z   sparse-checkout-cone-mode: true
+2026-10-28T07:33:34.2265479Z   fetch-depth: 1
+2026-10-28T07:33:34.2266302Z   fetch-tags: false
+2026-10-28T07:33:34.2267157Z   show-progress: true
+2026-10-28T07:33:34.2268020Z   lfs: false
+2026-10-28T07:33:34.2268810Z   submodules: false
+2026-10-28T07:33:34.2269674Z   set-safe-directory: true
+2026-10-28T07:33:34.2270645Z   allow-unsafe-pr-checkout: false
+2026-10-28T07:33:34.2272314Z ##[endgroup]
+2026-10-28T07:33:34.4305922Z Syncing repository: lihowfun/O-ALL-WANT
+2026-10-28T07:33:34.4309247Z ##[group]Getting Git version info
+2026-10-28T07:33:34.4310554Z Working directory is 'D:\a\O-ALL-WANT\O-ALL-WANT'
+2026-10-28T07:33:34.5270533Z [command]"C:\Program Files\Git\bin\git.exe" version
+2026-10-28T07:33:34.9104720Z git version 2.56.0.windows.2
+2026-10-28T07:33:34.9158338Z ##[endgroup]
+2026-10-28T07:33:34.9202270Z Temporarily overriding HOME='D:\a\_temp\0d2f26fb-7dde-4a0a-a613-54eb8efc092b' before making global git config changes
+2026-10-28T07:33:34.9204940Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-28T07:33:34.9207261Z [command]"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory D:\a\O-ALL-WANT\O-ALL-WANT
+2026-10-28T07:33:34.9877351Z Deleting the contents of 'D:\a\O-ALL-WANT\O-ALL-WANT'
+2026-10-28T07:33:34.9883704Z ##[group]Initializing the repository
+2026-10-28T07:33:34.9892452Z [command]"C:\Program Files\Git\bin\git.exe" init D:\a\O-ALL-WANT\O-ALL-WANT
+2026-10-28T07:33:35.1018879Z Initialized empty Git repository in D:/a/O-ALL-WANT/O-ALL-WANT/.git/
+2026-10-28T07:33:35.1105156Z [command]"C:\Program Files\Git\bin\git.exe" remote add origin https://github.com/lihowfun/O-ALL-WANT
+2026-10-28T07:33:35.1798290Z ##[endgroup]
+2026-10-28T07:33:35.1800763Z ##[group]Disabling automatic garbage collection
+2026-10-28T07:33:35.1808831Z [command]"C:\Program Files\Git\bin\git.exe" config --local gc.auto 0
+2026-10-28T07:33:35.2197386Z ##[endgroup]
+2026-10-28T07:33:35.2198267Z ##[group]Setting up auth
+2026-10-28T07:33:35.2210126Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2026-10-28T07:33:35.2617909Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2026-10-28T07:33:37.4224036Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-28T07:33:37.4644936Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+2026-10-28T07:33:38.0873771Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-28T07:33:38.1301386Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2026-10-28T07:33:38.7369142Z [command]"C:\Program Files\Git\bin\git.exe" config --local http.https://github.com/.extraheader "AUTHORIZATION: basic ***"
+2026-10-28T07:33:38.7782695Z ##[endgroup]
+2026-10-28T07:33:38.7783371Z ##[group]Fetching the repository
+2026-10-28T07:33:38.7796455Z [command]"C:\Program Files\Git\bin\git.exe" -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +a34383429148f18a4b57e3f9fc7a00f7270f4305:refs/remotes/pull/4/merge
+2026-10-28T07:33:39.8509673Z From https://github.com/lihowfun/O-ALL-WANT
+2026-10-28T07:33:39.8510646Z  * [new ref]         a34383429148f18a4b57e3f9fc7a00f7270f4305 -> pull/4/merge
+2026-10-28T07:33:39.8557757Z ##[endgroup]
+2026-10-28T07:33:39.8558186Z ##[group]Determining the checkout info
+2026-10-28T07:33:39.8561721Z ##[endgroup]
+2026-10-28T07:33:39.8577004Z [command]"C:\Program Files\Git\bin\git.exe" sparse-checkout disable
+2026-10-28T07:33:39.9145769Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset-all extensions.worktreeConfig
+2026-10-28T07:33:39.9537259Z ##[group]Checking out the ref
+2026-10-28T07:33:39.9545897Z [command]"C:\Program Files\Git\bin\git.exe" checkout --progress --force refs/remotes/pull/4/merge
+2026-10-28T07:33:40.0990500Z Note: switching to 'refs/remotes/pull/4/merge'.
+2026-10-28T07:33:40.0991847Z 
+2026-10-28T07:33:40.0992293Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-10-28T07:33:40.0993121Z changes and commit them, and you can discard any commits you make in this
+2026-10-28T07:33:40.0993639Z state without impacting any branches by switching back to a branch.
+2026-10-28T07:33:40.0994114Z 
+2026-10-28T07:33:40.0994333Z If you want to create a new branch to retain commits you create, you may
+2026-10-28T07:33:40.0994834Z do so (now or later) by using -c with the switch command. Example:
+2026-10-28T07:33:40.0995578Z 
+2026-10-28T07:33:40.0995875Z   git switch -c <new-branch-name>
+2026-10-28T07:33:40.0996071Z 
+2026-10-28T07:33:40.0996169Z Or undo this operation with:
+2026-10-28T07:33:40.0996364Z 
+2026-10-28T07:33:40.0996495Z   git switch -
+2026-10-28T07:33:40.0996607Z 
+2026-10-28T07:33:40.0996826Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-10-28T07:33:40.0997147Z 
+2026-10-28T07:33:40.0997508Z HEAD is now at a343834 Merge 31242a5470736cf382af48f2d0891af7feb8991c into 5df531372330f6b0e1c9a81aee0c1c45f2f283ff
+2026-10-28T07:33:40.1085837Z ##[endgroup]
+2026-10-28T07:33:40.1571393Z [command]"C:\Program Files\Git\bin\git.exe" log -1 --format=%H
+2026-10-28T07:33:40.1928862Z a34383429148f18a4b57e3f9fc7a00f7270f4305
+2026-10-28T07:33:40.2416319Z ##[group]Run actions/setup-python@v5
+2026-10-28T07:33:40.2416639Z with:
+2026-10-28T07:33:40.2416819Z   python-version: 3.13
+2026-10-28T07:33:40.2417034Z   check-latest: false
+2026-10-28T07:33:40.2419783Z   token: ***
+2026-10-28T07:33:40.2419977Z   update-environment: true
+2026-10-28T07:33:40.2420198Z   allow-prereleases: false
+2026-10-28T07:33:40.2420412Z   freethreaded: false
+2026-10-28T07:33:40.2420598Z ##[endgroup]
+2026-10-28T07:33:40.4178740Z ##[group]Installed versions
+2026-10-28T07:33:40.4639366Z (node:1732) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-28T07:33:40.4640129Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-28T07:33:40.4641570Z Successfully set up CPython (3.13.16)
+2026-10-28T07:33:40.4642441Z ##[endgroup]
+2026-10-28T07:33:40.4965983Z ##[group]Run python scripts/harness_check.py --verbose
+2026-10-28T07:33:40.4966518Z [36;1mpython scripts/harness_check.py --verbose[0m
+2026-10-28T07:33:40.5809112Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-10-28T07:33:40.5809536Z env:
+2026-10-28T07:33:40.5809848Z   pythonLocation: C:\hostedtoolcache\windows\Python\3.13.16\x64
+2026-10-28T07:33:40.5810421Z   PKG_CONFIG_PATH: C:\hostedtoolcache\windows\Python\3.13.16\x64/lib/pkgconfig
+2026-10-28T07:33:40.5810972Z   Python_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.13.16\x64
+2026-10-28T07:33:40.5811458Z   Python2_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.13.16\x64
+2026-10-28T07:33:40.5811941Z   Python3_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.13.16\x64
+2026-10-28T07:33:40.5812321Z ##[endgroup]
+2026-10-28T07:33:50.8337691Z PASS syntax: 14 Python files compiled
+2026-10-28T07:33:50.8338214Z PASS cli-contracts: 4 entry points expose expected operations
+2026-10-28T07:33:50.8338742Z PASS native-skills: exit 0
+2026-10-28T07:33:50.8339080Z Validated 3 portable native skill package(s).
+2026-10-28T07:33:50.8339459Z PASS behavior-regressions: exit 0
+2026-10-28T07:33:50.8339776Z ----------------------------------------------------------------------
+2026-10-28T07:33:50.8340114Z Ran 78 tests in 6.208s
+2026-10-28T07:33:50.8340256Z 
+2026-10-28T07:33:50.8340325Z OK
+2026-10-28T07:33:50.8340826Z PASS installed-lifecycle: minimal -> knowledge+improvement+both hosts; doctor and installed helpers; dry-run migration
+2026-10-28T07:33:50.8341425Z PASS example-content: exit 0
+2026-10-28T07:33:50.8341705Z Example framework files match installer payloads.
+2026-10-28T07:33:50.8342003Z PASS repo-wiki: exit 0
+2026-10-28T07:33:50.8391661Z Traceback (most recent call last):
+2026-10-28T07:33:50.8405964Z   File "D:\a\O-ALL-WANT\O-ALL-WANT\scripts\harness_check.py", line 132, in <module>
+2026-10-28T07:33:50.8406496Z     raise SystemExit(main())
+2026-10-28T07:33:50.8406757Z                      ~~~~^^
+2026-10-28T07:33:50.8407452Z   File "D:\a\O-ALL-WANT\O-ALL-WANT\scripts\harness_check.py", line 124, in main
+2026-10-28T07:33:50.8407862Z     print(check.stdout.rstrip())
+2026-10-28T07:33:50.8408088Z     ~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-28T07:33:50.8408530Z   File "C:\hostedtoolcache\windows\Python\3.13.16\x64\Lib\encodings\cp1252.py", line 19, in encode
+2026-10-28T07:33:50.8409082Z     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+2026-10-28T07:33:50.8409474Z            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-28T07:33:50.8409996Z UnicodeEncodeError: 'charmap' codec can't encode characters in position 0-1: character maps to <undefined>
+2026-10-28T07:33:50.9825854Z ##[error]Process completed with exit code 1.
+2026-10-28T07:33:51.0085447Z Post job cleanup.
+2026-10-28T07:33:51.2589146Z [command]"C:\Program Files\Git\bin\git.exe" version
+2026-10-28T07:33:51.3105647Z git version 2.56.0.windows.2
+2026-10-28T07:33:51.3217853Z Temporarily overriding HOME='D:\a\_temp\aa2039c3-fcb9-4b31-8447-641901488b80' before making global git config changes
+2026-10-28T07:33:51.3219829Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-28T07:33:51.3233283Z [command]"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory D:\a\O-ALL-WANT\O-ALL-WANT
+2026-10-28T07:33:51.3970588Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2026-10-28T07:33:51.4582584Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2026-10-28T07:33:52.1777318Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-28T07:33:52.2145998Z http.https://github.com/.extraheader
+2026-10-28T07:33:52.2202134Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset-all http.https://github.com/.extraheader
+2026-10-28T07:33:52.2646034Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+2026-10-28T07:33:52.9281770Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-28T07:33:52.9689424Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2026-10-28T07:33:53.5839730Z Cleaning up orphan processes
+2026-10-28T07:33:53.5937588Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-python@v5. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

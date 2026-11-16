@@ -1,0 +1,294 @@
+﻿2026-10-30T08:18:17.1229666Z Current runner version: '2.338.0'
+2026-10-30T08:18:17.1255902Z ##[group]Runner Image Provisioner
+2026-10-30T08:18:17.1256784Z Hosted Compute Agent
+2026-10-30T08:18:17.1257404Z Version: 20261021.618
+2026-10-30T08:18:17.1257980Z Commit: 21505ad2541d5be6135ed84fc33697146cf75b8e
+2026-10-30T08:18:17.1258700Z Build Date: 2026-10-21T00:45:21Z
+2026-10-30T08:18:17.1259377Z Worker ID: {ba03a4f6-da1b-4f9d-939c-8f87af42941b}
+2026-10-30T08:18:17.1260052Z Region: centralus
+2026-10-30T08:18:17.1260565Z Cloud: Azure
+2026-10-30T08:18:17.1261054Z ##[endgroup]
+2026-10-30T08:18:17.1262205Z ##[group]Operating System
+2026-10-30T08:18:17.1262831Z Microsoft Windows Server 2025
+2026-10-30T08:18:17.1263533Z 10.0.26100
+2026-10-30T08:18:17.1264235Z Datacenter
+2026-10-30T08:18:17.1264728Z ##[endgroup]
+2026-10-30T08:18:17.1265217Z ##[group]Runner Image
+2026-10-30T08:18:17.1265882Z Image: windows-2025-vs2026
+2026-10-30T08:18:17.1266469Z Version: 20261021.278.1
+2026-10-30T08:18:17.1268060Z Included Software: https://github.com/actions/runner-images/blob/win25-vs2026/20261021.278/images/windows/Windows2025-VS2026-Readme.md
+2026-10-30T08:18:17.1269915Z Image Release: https://github.com/actions/runner-images/releases/tag/win25-vs2026%2F20261021.278
+2026-10-30T08:18:17.1270902Z ##[endgroup]
+2026-10-30T08:18:17.1272107Z ##[group]GITHUB_TOKEN Permissions
+2026-10-30T08:18:17.1274554Z Contents: read
+2026-10-30T08:18:17.1275180Z Metadata: read
+2026-10-30T08:18:17.1275678Z ##[endgroup]
+2026-10-30T08:18:17.1277677Z Secret source: Actions
+2026-10-30T08:18:17.1278530Z Cache mode: write
+2026-10-30T08:18:17.1279239Z Prepare workflow directory
+2026-10-30T08:18:17.1634418Z Prepare all required actions
+2026-10-30T08:18:17.1685333Z Getting action download info
+2026-10-30T08:18:17.3916757Z Download action repository 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+2026-10-30T08:18:17.5006420Z Download action repository 'actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0' (SHA:6d4fd22b20465ccc0f7354476588e8df7c9ca0e0)
+2026-10-30T08:18:18.0532397Z Complete job name: contracts (windows-latest, 3.10)
+2026-10-30T08:18:18.2088052Z ##[group]Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+2026-10-30T08:18:18.2089502Z with:
+2026-10-30T08:18:18.2089894Z   repository: lihowfun/O-ALL-WANT
+2026-10-30T08:18:18.2094039Z   token: ***
+2026-10-30T08:18:18.2094403Z   ssh-strict: true
+2026-10-30T08:18:18.2094767Z   ssh-user: git
+2026-10-30T08:18:18.2095138Z   persist-credentials: true
+2026-10-30T08:18:18.2095553Z   clean: true
+2026-10-30T08:18:18.2095930Z   sparse-checkout-cone-mode: true
+2026-10-30T08:18:18.2096366Z   fetch-depth: 1
+2026-10-30T08:18:18.2096713Z   fetch-tags: false
+2026-10-30T08:18:18.2097071Z   show-progress: true
+2026-10-30T08:18:18.2097440Z   lfs: false
+2026-10-30T08:18:18.2097779Z   submodules: false
+2026-10-30T08:18:18.2098151Z   set-safe-directory: true
+2026-10-30T08:18:18.2098571Z   allow-unsafe-pr-checkout: false
+2026-10-30T08:18:18.2099334Z ##[endgroup]
+2026-10-30T08:18:18.3676252Z Syncing repository: lihowfun/O-ALL-WANT
+2026-10-30T08:18:18.3678064Z ##[group]Getting Git version info
+2026-10-30T08:18:18.3678629Z Working directory is 'D:\a\O-ALL-WANT\O-ALL-WANT'
+2026-10-30T08:18:18.4424208Z [command]"C:\Program Files\Git\bin\git.exe" version
+2026-10-30T08:18:18.7611237Z git version 2.56.0.windows.2
+2026-10-30T08:18:18.7668909Z ##[endgroup]
+2026-10-30T08:18:18.7687765Z Temporarily overriding HOME='D:\a\_temp\9dd4919d-db88-4e63-8421-384addb6f5db' before making global git config changes
+2026-10-30T08:18:18.7699414Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-30T08:18:18.7701559Z [command]"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory D:\a\O-ALL-WANT\O-ALL-WANT
+2026-10-30T08:18:18.8319368Z Deleting the contents of 'D:\a\O-ALL-WANT\O-ALL-WANT'
+2026-10-30T08:18:18.8325342Z ##[group]Determining repository object format
+2026-10-30T08:18:18.8327866Z ##[endgroup]
+2026-10-30T08:18:18.8332070Z ##[group]Initializing the repository
+2026-10-30T08:18:18.8337790Z [command]"C:\Program Files\Git\bin\git.exe" init D:\a\O-ALL-WANT\O-ALL-WANT
+2026-10-30T08:18:18.9222643Z Initialized empty Git repository in D:/a/O-ALL-WANT/O-ALL-WANT/.git/
+2026-10-30T08:18:18.9281569Z [command]"C:\Program Files\Git\bin\git.exe" remote add origin https://github.com/lihowfun/O-ALL-WANT
+2026-10-30T08:18:19.0220706Z ##[endgroup]
+2026-10-30T08:18:19.0222578Z ##[group]Disabling automatic garbage collection
+2026-10-30T08:18:19.0231155Z [command]"C:\Program Files\Git\bin\git.exe" config --local gc.auto 0
+2026-10-30T08:18:19.0616361Z ##[endgroup]
+2026-10-30T08:18:19.0618138Z ##[group]Setting up auth
+2026-10-30T08:18:19.0619333Z Removing SSH command configuration
+2026-10-30T08:18:19.0626533Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2026-10-30T08:18:19.1007015Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2026-10-30T08:18:20.4238499Z Removing HTTP extra header
+2026-10-30T08:18:20.4249492Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-30T08:18:20.4635238Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+2026-10-30T08:18:21.0349964Z Removing includeIf entries pointing to credentials config files
+2026-10-30T08:18:21.0361773Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-30T08:18:21.0813674Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2026-10-30T08:18:21.6634818Z [command]"C:\Program Files\Git\bin\git.exe" config --file D:\a\_temp\git-credentials-46906340-225e-4f20-8384-cfb70200bc40.config http.https://github.com/.extraheader "AUTHORIZATION: basic ***"
+2026-10-30T08:18:21.7106266Z [command]"C:\Program Files\Git\bin\git.exe" config --local includeIf.gitdir:D:/a/O-ALL-WANT/O-ALL-WANT/.git.path D:\a\_temp\git-credentials-46906340-225e-4f20-8384-cfb70200bc40.config
+2026-10-30T08:18:21.7494062Z [command]"C:\Program Files\Git\bin\git.exe" config --local includeIf.gitdir:D:/a/O-ALL-WANT/O-ALL-WANT/.git/worktrees/*.path D:\a\_temp\git-credentials-46906340-225e-4f20-8384-cfb70200bc40.config
+2026-10-30T08:18:21.7934959Z [command]"C:\Program Files\Git\bin\git.exe" config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-46906340-225e-4f20-8384-cfb70200bc40.config
+2026-10-30T08:18:21.8325494Z [command]"C:\Program Files\Git\bin\git.exe" config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-46906340-225e-4f20-8384-cfb70200bc40.config
+2026-10-30T08:18:21.8711908Z ##[endgroup]
+2026-10-30T08:18:21.8712598Z ##[group]Fetching the repository
+2026-10-30T08:18:21.8724854Z [command]"C:\Program Files\Git\bin\git.exe" -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +c3e32358fd1ea331a30845e060639106c493cfa2:refs/remotes/pull/4/merge
+2026-10-30T08:18:24.1151791Z From https://github.com/lihowfun/O-ALL-WANT
+2026-10-30T08:18:24.1153636Z  * [new ref]         c3e32358fd1ea331a30845e060639106c493cfa2 -> pull/4/merge
+2026-10-30T08:18:24.1209548Z ##[endgroup]
+2026-10-30T08:18:24.1210824Z ##[group]Determining the checkout info
+2026-10-30T08:18:24.1211400Z ##[endgroup]
+2026-10-30T08:18:24.1224537Z [command]"C:\Program Files\Git\bin\git.exe" sparse-checkout disable
+2026-10-30T08:18:24.1755884Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset-all extensions.worktreeConfig
+2026-10-30T08:18:24.2143648Z ##[group]Checking out the ref
+2026-10-30T08:18:24.2154525Z [command]"C:\Program Files\Git\bin\git.exe" checkout --progress --force refs/remotes/pull/4/merge
+2026-10-30T08:18:24.4433572Z Note: switching to 'refs/remotes/pull/4/merge'.
+2026-10-30T08:18:24.4434122Z 
+2026-10-30T08:18:24.4434755Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-10-30T08:18:24.4435634Z changes and commit them, and you can discard any commits you make in this
+2026-10-30T08:18:24.4436449Z state without impacting any branches by switching back to a branch.
+2026-10-30T08:18:24.4436940Z 
+2026-10-30T08:18:24.4437239Z If you want to create a new branch to retain commits you create, you may
+2026-10-30T08:18:24.4437958Z do so (now or later) by using -c with the switch command. Example:
+2026-10-30T08:18:24.4438387Z 
+2026-10-30T08:18:24.4438642Z   git switch -c <new-branch-name>
+2026-10-30T08:18:24.4439005Z 
+2026-10-30T08:18:24.4439222Z Or undo this operation with:
+2026-10-30T08:18:24.4439489Z 
+2026-10-30T08:18:24.4439726Z   git switch -
+2026-10-30T08:18:24.4439980Z 
+2026-10-30T08:18:24.4440382Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-10-30T08:18:24.4440860Z 
+2026-10-30T08:18:24.4441469Z HEAD is now at c3e3235 Merge 99a16b296f823570645453bcacfd30f374b135dc into 5df531372330f6b0e1c9a81aee0c1c45f2f283ff
+2026-10-30T08:18:24.4524503Z ##[endgroup]
+2026-10-30T08:18:24.5010156Z [command]"C:\Program Files\Git\bin\git.exe" log -1 --format=%H
+2026-10-30T08:18:24.5371421Z c3e32358fd1ea331a30845e060639106c493cfa2
+2026-10-30T08:18:24.5885058Z ##[group]Run actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
+2026-10-30T08:18:24.5885730Z with:
+2026-10-30T08:18:24.5886058Z   python-version: 3.10
+2026-10-30T08:18:24.5886361Z   check-latest: false
+2026-10-30T08:18:24.5888684Z   token: ***
+2026-10-30T08:18:24.5889091Z   mirror: https://raw.githubusercontent.com/actions/python-versions/main
+2026-10-30T08:18:24.5889566Z   update-environment: true
+2026-10-30T08:18:24.5889954Z   allow-prereleases: false
+2026-10-30T08:18:24.5890251Z   freethreaded: false
+2026-10-30T08:18:24.5890564Z ##[endgroup]
+2026-10-30T08:18:24.7409721Z ##[group]Installed versions
+2026-10-30T08:18:24.7504433Z Version 3.10 was not found in the local cache
+2026-10-30T08:18:25.6855261Z Version 3.10 is available for downloading
+2026-10-30T08:18:25.6856184Z Download from "https://github.com/actions/python-versions/releases/download/3.10.11-11114431484/python-3.10.11-win32-x64.zip"
+2026-10-30T08:18:26.1462241Z Extract downloaded archive
+2026-10-30T08:18:26.2350665Z [command]"C:\Program Files\PowerShell\7\pwsh.exe" -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -Command "$ErrorActionPreference = 'Stop' ; try { Add-Type -AssemblyName System.IO.Compression.ZipFile } catch { } ; try { [System.IO.Compression.ZipFile]::ExtractToDirectory('D:\a\_temp\python-3.10.11-win32-x64.zip', 'D:\a\_temp\1143241d-7904-4310-a25c-7986f94802ca', $true) } catch { if (($_.Exception.GetType().FullName -eq 'System.Management.Automation.MethodException') -or ($_.Exception.GetType().FullName -eq 'System.Management.Automation.RuntimeException') ){ Expand-Archive -LiteralPath 'D:\a\_temp\python-3.10.11-win32-x64.zip' -DestinationPath 'D:\a\_temp\1143241d-7904-4310-a25c-7986f94802ca' -Force } else { throw $_ } } ;"
+2026-10-30T08:18:26.7036474Z Execute installation script
+2026-10-30T08:18:29.5273763Z Check if Python hostedtoolcache folder exist...
+2026-10-30T08:18:29.5276054Z 
+2026-10-30T08:18:29.5435257Z Check if current Python version is installed...
+2026-10-30T08:18:29.5435872Z 
+2026-10-30T08:18:29.5618653Z No Python3.10.* found
+2026-10-30T08:18:29.5619202Z 
+2026-10-30T08:18:29.5626727Z Remove registry entries for Python 3.10(x64)...
+2026-10-30T08:18:29.5629211Z 
+2026-10-30T08:18:30.1552938Z Create Python 3.10.11 folder in C:\hostedtoolcache\windows\Python
+2026-10-30T08:18:30.1553562Z 
+2026-10-30T08:18:30.1625243Z Copy Python binaries to C:\hostedtoolcache\windows\Python\3.10.11\x64
+2026-10-30T08:18:30.1626271Z 
+2026-10-30T08:18:30.1784564Z Install Python 3.10.11 in C:\hostedtoolcache\windows\Python...
+2026-10-30T08:18:30.1784974Z 
+2026-10-30T08:19:00.5338188Z Create python3 symlink
+2026-10-30T08:19:00.5338603Z 
+2026-10-30T08:19:00.6144881Z 
+2026-10-30T08:19:00.6147531Z 
+2026-10-30T08:19:00.6153317Z Directory: C:\hostedtoolcache\windows\Python\3.10.11\x64
+2026-10-30T08:19:00.6153783Z 
+2026-10-30T08:19:00.6154812Z 
+2026-10-30T08:19:00.6168326Z Mode                 LastWriteTime         Length Name
+2026-10-30T08:19:00.6174706Z ----                 -------------         ------ ----
+2026-10-30T08:19:00.6190831Z -a---l        10/30/2026   8:19 AM              0 python3.exe
+2026-10-30T08:19:00.6203286Z Install and upgrade Pip
+2026-10-30T08:19:00.6204219Z 
+2026-10-30T08:19:02.8467400Z Looking in links: c:\Users\RUNNER~1\AppData\Local\Temp\tmp95kepus1
+2026-10-30T08:19:02.8472358Z Requirement already satisfied: setuptools in c:\hostedtoolcache\windows\python\3.10.11\x64\lib\site-packages (65.5.0)
+2026-10-30T08:19:02.8477276Z Requirement already satisfied: pip in c:\hostedtoolcache\windows\python\3.10.11\x64\lib\site-packages (23.0.1)
+2026-10-30T08:19:04.0150170Z Collecting pip
+2026-10-30T08:19:04.0946689Z Downloading pip-26.2.2-py3-none-any.whl (1.8 MB)
+2026-10-30T08:19:04.2031710Z 
+2026-10-30T08:19:04.2033322Z ---------------------------------------- 1.8/1.8 MB 19.5 MB/s eta
+2026-10-30T08:19:04.2033963Z 0:00:00
+2026-10-30T08:19:04.2036053Z 
+2026-10-30T08:19:04.2468931Z Installing collected packages: pip
+2026-10-30T08:19:04.2472115Z Attempting uninstall: pip
+2026-10-30T08:19:04.2479192Z Found existing installation: pip 23.0.1
+2026-10-30T08:19:04.5389643Z Uninstalling pip-23.0.1:
+2026-10-30T08:19:04.5600882Z Successfully uninstalled pip-23.0.1
+2026-10-30T08:19:06.8908163Z Successfully installed pip-26.2.2
+2026-10-30T08:19:07.5937569Z Create complete file
+2026-10-30T08:19:07.5937962Z 
+2026-10-30T08:19:07.5955325Z 
+2026-10-30T08:19:07.5955377Z 
+2026-10-30T08:19:07.6610396Z Successfully set up CPython (3.10.11)
+2026-10-30T08:19:07.6611637Z ##[endgroup]
+2026-10-30T08:19:07.6942112Z ##[group]Run python scripts/harness_check.py --verbose
+2026-10-30T08:19:07.6942813Z [36;1mpython scripts/harness_check.py --verbose[0m
+2026-10-30T08:19:07.7069761Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-10-30T08:19:07.7070206Z env:
+2026-10-30T08:19:07.7070614Z   pythonLocation: C:\hostedtoolcache\windows\Python\3.10.11\x64
+2026-10-30T08:19:07.7071156Z   PKG_CONFIG_PATH: C:\hostedtoolcache\windows\Python\3.10.11\x64/lib/pkgconfig
+2026-10-30T08:19:07.7071722Z   Python_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.10.11\x64
+2026-10-30T08:19:07.7072208Z   Python2_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.10.11\x64
+2026-10-30T08:19:07.7072668Z   Python3_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.10.11\x64
+2026-10-30T08:19:07.7073082Z ##[endgroup]
+2026-10-30T08:21:18.1036334Z PASS syntax: 21 Python files compiled
+2026-10-30T08:21:18.1037216Z PASS cli-contracts: 4 entry points expose expected operations
+2026-10-30T08:21:18.1039095Z PASS native-skills: exit 0
+2026-10-30T08:21:18.1039799Z Validated 10 portable native skill package(s).
+2026-10-30T08:21:18.1041220Z PASS egm-integration: exit 0
+2026-10-30T08:21:18.1042203Z {"status": "verified", "runtime_files": 65, "adapter_files": 30, "commit": "f0ba151b252c9abf1318d9fe857a43265d06de89"}
+2026-10-30T08:21:18.1043030Z FAIL behavior-regressions: exit 1
+2026-10-30T08:21:18.1045060Z OAW-TEST-SUMMARY {"run": 169, "skipped": 0, "successful": false, "modules": ["test_context_hub", "test_egm_integration", "test_egm_local", "test_egm_local_measure", "test_egm_pilot", "test_gate", "test_improvement", "test_install", "test_skills", "test_status", "test_wiki_sync"]}
+2026-10-30T08:21:18.1046996Z .................................................................................................................................................................Process SpawnProcess-7:
+2026-10-30T08:21:18.1047731Z Traceback (most recent call last):
+2026-10-30T08:21:18.1053978Z   File "C:\hostedtoolcache\windows\Python\3.10.11\x64\lib\multiprocessing\process.py", line 314, in _bootstrap
+2026-10-30T08:21:18.1054661Z     self.run()
+2026-10-30T08:21:18.1055176Z   File "C:\hostedtoolcache\windows\Python\3.10.11\x64\lib\multiprocessing\process.py", line 108, in run
+2026-10-30T08:21:18.1055732Z     self._target(*self._args, **self._kwargs)
+2026-10-30T08:21:18.1056269Z   File "D:\a\O-ALL-WANT\O-ALL-WANT\tests\test_wiki_sync.py", line 27, in _experiment_worker
+2026-10-30T08:21:18.1056947Z     wiki.add_experiment(f"writer_{number}_entry_{entry}", "accepted", "result", "conclusion")
+2026-10-30T08:21:18.1057636Z   File "D:\a\O-ALL-WANT\O-ALL-WANT\scripts\wiki_sync.py", line 941, in add_experiment
+2026-10-30T08:21:18.1058124Z     locked_update(path, mutate, root=boundary)
+2026-10-30T08:21:18.1058634Z   File "D:\a\O-ALL-WANT\O-ALL-WANT\scripts\oaw_common.py", line 158, in locked_update
+2026-10-30T08:21:18.1059098Z     with _exclusive_lock(path, root=root):
+2026-10-30T08:21:18.1059630Z   File "C:\hostedtoolcache\windows\Python\3.10.11\x64\lib\contextlib.py", line 135, in __enter__
+2026-10-30T08:21:18.1060153Z     return next(self.gen)
+2026-10-30T08:21:18.1060635Z   File "D:\a\O-ALL-WANT\O-ALL-WANT\scripts\oaw_common.py", line 95, in _exclusive_lock
+2026-10-30T08:21:18.1061175Z     handle.flush()
+2026-10-30T08:21:18.1061503Z PermissionError: [Errno 13] Permission denied
+2026-10-30T08:21:18.1062024Z F.......
+2026-10-30T08:21:18.1062797Z ======================================================================
+2026-10-30T08:21:18.1063321Z FAIL: test_multiprocessing_experiment_rows_all_survive (test_wiki_sync.WikiSyncTests)
+2026-10-30T08:21:18.1063845Z ----------------------------------------------------------------------
+2026-10-30T08:21:18.1064339Z Traceback (most recent call last):
+2026-10-30T08:21:18.1064911Z   File "D:\a\O-ALL-WANT\O-ALL-WANT\tests\test_wiki_sync.py", line 257, in test_multiprocessing_experiment_rows_all_survive
+2026-10-30T08:21:18.1065519Z     self.assertEqual(worker.exitcode, 0)
+2026-10-30T08:21:18.1067994Z AssertionError: 1 != 0
+2026-10-30T08:21:18.1068275Z 
+2026-10-30T08:21:18.1068460Z ----------------------------------------------------------------------
+2026-10-30T08:21:18.1068993Z Ran 169 tests in 124.127s
+2026-10-30T08:21:18.1069159Z 
+2026-10-30T08:21:18.1069295Z FAILED (failures=1)
+2026-10-30T08:21:18.1069882Z PASS installed-lifecycle: minimal -> knowledge+improvement+both hosts; doctor and installed helpers; dry-run migration
+2026-10-30T08:21:18.1070474Z PASS example-content: exit 0
+2026-10-30T08:21:18.1070830Z Example framework files match installer payloads.
+2026-10-30T08:21:18.1071222Z PASS repo-wiki: exit 0
+2026-10-30T08:21:18.1072151Z ⚠️ wiki_sync lint warnings — 22 soft issue(s):
+2026-10-30T08:21:18.1072859Z   - manual topic has no source refs in Harness_Engineering_Context_Fragmentation.md: add docs/raw source refs or stable source metadata when practical
+2026-10-30T08:21:18.1073871Z   - manual topic has no source refs in Harness_Engineering_Deterministic_State.md: add docs/raw source refs or stable source metadata when practical
+2026-10-30T08:21:18.1074777Z   - manual topic has no source refs in Harness_Engineering_Knowledge_Synthesis.md: add docs/raw source refs or stable source metadata when practical
+2026-10-30T08:21:18.1075666Z   - manual topic has no source refs in OAW_Session_Continuity_Test.md: add docs/raw source refs or stable source metadata when practical
+2026-10-30T08:21:18.1076331Z   - orphan page 'Release_Learnings': no sources and no topic links
+2026-10-30T08:21:18.1076922Z   - unfilled `${...}` placeholder in docs\knowledge\OAW_Session_Continuity_Test.md:42: VERSION: ${VERSION}
+2026-10-30T08:21:18.1077639Z   - unfilled `${...}` placeholder in docs\knowledge\OAW_Session_Continuity_Test.md:44: CURRENT PHASE: ${CURRENT_PHASE}
+2026-10-30T08:21:18.1078515Z   - unfilled `${...}` placeholder in docs\knowledge\OAW_Session_Continuity_Test.md:61: # ${PROJECT_NAME} — Master Router
+2026-10-30T08:21:18.1080015Z   - unfilled `${...}` placeholder in docs\knowledge\OAW_Session_Continuity_Test.md:63: > Replace `${PROJECT_NAME}`, `${LANGUAGE}`, and the custom forbidden-action
+2026-10-30T08:21:18.1081040Z   - unfilled `${...}` placeholder in docs\knowledge\OAW_Session_Continuity_Test.md:82: - `${PROJECT_NAME}`, `${ONE_LINE_DESCRIPTION}`, `${VERSION}`, `${REPO_URL}`, `${PIPELINE_SUMMARY}`
+2026-10-30T08:21:18.1082065Z   - unfilled `${...}` placeholder in docs\knowledge\OAW_Session_Continuity_Test.md:83: - `${LANGUAGE}`, `${SAFETY_CRITICAL_FILE}`, `${IMPORTANT_WORKAROUND}`
+2026-10-30T08:21:18.1083409Z   - unfilled `${...}` placeholder in docs\knowledge\OAW_Session_Continuity_Test.md:84: - Metric table: `${METRIC_1}`, `${VALUE_1}`, `${DATE}`, `${NOTES}`
+2026-10-30T08:21:18.1084406Z   - unfilled `${...}` placeholder in docs\knowledge\OAW_Session_Continuity_Test.md:85: - Test commands: `${SMOKE_TEST_CMD}`, `${REGRESSION_TEST_CMD}`, `${INTEGRATION_TEST_CMD}`
+2026-10-30T08:21:18.1085459Z   - unfilled `${...}` placeholder in docs\knowledge\OAW_Session_Continuity_Test.md:86: - Stack: `${LANGUAGE_AND_FRAMEWORKS}`, `${RUNTIME_ENVIRONMENT}`, `${EXTERNAL_SERVICES}`
+2026-10-30T08:21:18.1086332Z   - unfilled `${...}` placeholder in docs\knowledge\OAW_Session_Continuity_Test.md:92: "version": "${VERSION}",
+2026-10-30T08:21:18.1087041Z   - unfilled `${...}` placeholder in docs\knowledge\OAW_Session_Continuity_Test.md:93: "project": "${PROJECT_NAME}",
+2026-10-30T08:21:18.1087753Z   - unfilled `${...}` placeholder in docs\knowledge\OAW_Session_Continuity_Test.md:94: "last_updated": "${DATE}",
+2026-10-30T08:21:18.1088529Z   - unfilled `${...}` placeholder in docs\knowledge\OAW_Session_Continuity_Test.md:95: "current_phase": "${CURRENT_PHASE}",
+2026-10-30T08:21:18.1089279Z   - unfilled `${...}` placeholder in docs\knowledge\OAW_Session_Continuity_Test.md:96: "next_phase": "${NEXT_PHASE}",
+2026-10-30T08:21:18.1090633Z   - unfilled `${...}` placeholder in docs\knowledge\OAW_Session_Continuity_Test.md:107: - **What fails**: A fresh agent cannot answer "what project is this?" or "what phase are we in?" All identity fields are
+2026-10-30T08:21:18.1092005Z   - unfilled `${...}` placeholder in docs\knowledge\OAW_Session_Continuity_Test.md:263: | P0 | Fresh install: every file shows `${VERSION}` / `${CURRENT_PHASE}` placeholders — agent cannot orient | `context_h
+2026-10-30T08:21:18.1093248Z   - literal `YYYY-MM-DD` date placeholder in docs\knowledge\OAW_Session_Continuity_Test.md:268: | P2 | Date redundancy: `memory add "[DECISION] 2026-04-18 ..."` produced `## [2026-04-18] [DECISION] 2026-04-18 ...` wi
+2026-10-30T08:21:18.1094170Z ✅ wiki_sync lint passed — no unresolved issues found.
+2026-10-30T08:21:18.1094648Z PASS version: 2.0.0 (proposed); source ledger and CI pins agree
+2026-10-30T08:21:18.1095054Z 8/9 checks passed
+2026-10-30T08:21:18.2102566Z ##[error]Process completed with exit code 1.
+2026-10-30T08:21:18.2396542Z Post job cleanup.
+2026-10-30T08:21:18.4226160Z [command]"C:\Program Files\Git\bin\git.exe" version
+2026-10-30T08:21:18.4602911Z git version 2.56.0.windows.2
+2026-10-30T08:21:18.4687182Z Temporarily overriding HOME='D:\a\_temp\531c3a38-459d-4cc4-85dd-460220df7100' before making global git config changes
+2026-10-30T08:21:18.4689111Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-30T08:21:18.4699566Z [command]"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory D:\a\O-ALL-WANT\O-ALL-WANT
+2026-10-30T08:21:18.5190944Z Removing SSH command configuration
+2026-10-30T08:21:18.5203599Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2026-10-30T08:21:18.5647221Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2026-10-30T08:21:19.1520713Z Removing HTTP extra header
+2026-10-30T08:21:19.1531253Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-30T08:21:19.1923240Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+2026-10-30T08:21:19.7606384Z Removing includeIf entries pointing to credentials config files
+2026-10-30T08:21:19.7618931Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-30T08:21:19.7994127Z includeif.gitdir:D:/a/O-ALL-WANT/O-ALL-WANT/.git.path
+2026-10-30T08:21:19.7995690Z includeif.gitdir:D:/a/O-ALL-WANT/O-ALL-WANT/.git/worktrees/*.path
+2026-10-30T08:21:19.7996390Z includeif.gitdir:/github/workspace/.git.path
+2026-10-30T08:21:19.7997088Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-10-30T08:21:19.8051985Z [command]"C:\Program Files\Git\bin\git.exe" config --local --get-all includeif.gitdir:D:/a/O-ALL-WANT/O-ALL-WANT/.git.path
+2026-10-30T08:21:19.8409895Z D:\a\_temp\git-credentials-46906340-225e-4f20-8384-cfb70200bc40.config
+2026-10-30T08:21:19.8460347Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset includeif.gitdir:D:/a/O-ALL-WANT/O-ALL-WANT/.git.path D\:\\a\\_temp\\git\-credentials\-46906340\-225e\-4f20\-8384\-cfb70200bc40\.config
+2026-10-30T08:21:19.8906012Z [command]"C:\Program Files\Git\bin\git.exe" config --local --get-all includeif.gitdir:D:/a/O-ALL-WANT/O-ALL-WANT/.git/worktrees/*.path
+2026-10-30T08:21:19.9248851Z D:\a\_temp\git-credentials-46906340-225e-4f20-8384-cfb70200bc40.config
+2026-10-30T08:21:19.9295529Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset includeif.gitdir:D:/a/O-ALL-WANT/O-ALL-WANT/.git/worktrees/*.path D\:\\a\\_temp\\git\-credentials\-46906340\-225e\-4f20\-8384\-cfb70200bc40\.config
+2026-10-30T08:21:19.9688833Z [command]"C:\Program Files\Git\bin\git.exe" config --local --get-all includeif.gitdir:/github/workspace/.git.path
+2026-10-30T08:21:20.0029021Z /github/runner_temp/git-credentials-46906340-225e-4f20-8384-cfb70200bc40.config
+2026-10-30T08:21:20.0074786Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-46906340\-225e\-4f20\-8384\-cfb70200bc40\.config
+2026-10-30T08:21:20.0469340Z [command]"C:\Program Files\Git\bin\git.exe" config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-10-30T08:21:20.0809702Z /github/runner_temp/git-credentials-46906340-225e-4f20-8384-cfb70200bc40.config
+2026-10-30T08:21:20.0854259Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-46906340\-225e\-4f20\-8384\-cfb70200bc40\.config
+2026-10-30T08:21:20.1245475Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2026-10-30T08:21:20.6995215Z Removing credentials config 'D:\a\_temp\git-credentials-46906340-225e-4f20-8384-cfb70200bc40.config'
+2026-10-30T08:21:20.7210745Z Cleaning up orphan processes
