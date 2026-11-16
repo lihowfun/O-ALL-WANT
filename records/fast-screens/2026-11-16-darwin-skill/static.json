@@ -1,0 +1,5 @@
+{
+ "food": "darwin-skill 3.0.1 @ e7c0e66 (alchaincyf/darwin-skill)",
+ "status": "clear",
+ "reason": "MIT. 6 open static flags, 0 high: network, writes to the home folder and an update check in its scripts, and a SKILL.md above the 24,000-byte size cap. Screened read-only: the runs have no shell tool, so its scripts are not executed."
+}
