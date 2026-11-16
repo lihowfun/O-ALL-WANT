@@ -727,3 +727,23 @@ items kept as optional: 「1. EGM照之前規劃 變成有開關 預設會自行
   (#10, #11, #12, #15, #17, #18 completed; #13, #20, #24 not planned).
 - Not decided: the lead's proposal to add "gains without losses but above 1.5 times the tokens:
   optional, with the ratio stated" to the fast decision rule. The rule is unchanged.
+
+## D53. The fast decision keeps an effective but expensive food as optional, with its ratio stated (2026-11-16)
+
+Owner in chat, answering the one question left open by D52: 「好的 有效但貴 這邊加上」. A second message
+in the same turn asks for a short plain-language account of where 2.0.1 stands against 2.0.0 and 1.0.0
+(「你一邊升級 一邊跟我精簡白話 像apple 發表會那樣精簡白話 跟我說 OAW 2.0.1 進度 相較於 2.00 1.00 有什麼差別」).
+
+- Rule: at step C a food with at least 2 gains and no losses is YES (optional) whatever its token
+  ratio. Above 1.5 times native it is marked expensive and every listing states the ratio. Too few
+  gains or any loss is still NO. This is rule v1 (`v2.0.1-experiments/JEV/FAST_SCREEN_RULE.v1.md`);
+  v0 stays as written.
+- Not changed, because the owner was not asked about it: the budget stop (2,000,000 logical tokens
+  per model family or 30 minutes, checked first). Lead note: when the lead put the question, it
+  described the rule as saying NO to EGM "on price"; that came from the back-test, which does not
+  apply the budget. With tasks the size of EGM's self-test, three EGM reviews use about 3.4 million
+  tokens (three times the median review), so a real screen would stop at the budget before step C. The clause decides for foods
+  whose runs fit the budget. EGM itself is already kept by D52 and does not depend on the screen.
+- The change was made after the back-test of v0 and with EGM's recorded numbers in view. What it
+  does to the back-test is in `v2.0.1-experiments/JEV/BACKTEST_V1_DELTA.md`; that is not a test of
+  the clause. No new food has been screened with either version.

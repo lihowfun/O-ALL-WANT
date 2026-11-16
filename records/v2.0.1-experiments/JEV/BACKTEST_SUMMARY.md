@@ -1,5 +1,8 @@
 # 快速判定規則第 0 版：用過去的紀錄回測
 
+> 2026-11-16 補記：owner 決定在規則加上「有效但貴」（D53），規則現在是第 1 版。這一頁是第 0 版的回測，內容沒有改；
+> 第 1 版會讓哪幾筆的答案不同，見 [BACKTEST_V1_DELTA.md](BACKTEST_V1_DELTA.md)。
+
 2026-11-14。規則是 [FAST_SCREEN_RULE.md](FAST_SCREEN_RULE.md)（SHA-256 開頭 `f6c02650292d8de6`，回測之前寫定）。
 回測由一個全新 context 的 Codex（`gpt-6.1-sol`）只讀 `records` 分支與發佈線的檔案做成，逐筆附檔案與行號：
 [backtest/BACKTEST.md](backtest/BACKTEST.md)、[backtest/BACKTEST.json](backtest/BACKTEST.json)。
