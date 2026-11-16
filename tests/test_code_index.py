@@ -1284,6 +1284,180 @@ class DrawnGraphTests(unittest.TestCase):
 
 
 
+class GraphChangesTests(unittest.TestCase):
+    """Snapshot comparisons use the exported graph, including its caps and scope."""
+
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory(prefix="oaw-graph-changes-")
+        self.addCleanup(temporary.cleanup)
+        self.root = str(Path(temporary.name, "tree"))
+        self.snapshot = Path(temporary.name, "snapshot.json")
+        self.cache = Path(temporary.name, "cache")
+        write_tree(self.root, {
+            "lib.py": "def ping():\n    return 1\n",
+            "main.py": "from lib import ping\nping()\n",
+            "old/unused.py": "VALUE = 1\n",
+        })
+        self.index = code_index.build_index(self.root)
+        self.before = code_index.graph(self.index)
+        self.save(self.before)
+
+    def save(self, report):
+        self.snapshot.write_text(json.dumps(report), encoding="utf-8")
+
+    def compare(self, *args):
+        process = run_cli("changes", "--since", self.snapshot, "--root", self.root, "--no-cache", *args)
+        self.assertEqual(process.returncode, 0, process.stderr)
+        return process
+
+    def test_no_changes_json_shape_and_real_export_round_trip(self):
+        exported = run_cli("graph", "--root", self.root, "--no-cache", "--format", "json",
+                           "--out", self.snapshot)
+        self.assertEqual(exported.returncode, 0, exported.stderr)
+        report = json.loads(self.compare("--json", "--limit", "1").stdout)
+        self.assertEqual(set(report), {"schema_version", "scope", "snapshot_complete", "current_complete", "totals",
+                                      "files_added", "files_removed", "edges_added", "edges_removed", "edges_changed",
+                                      "directories_added", "directories_removed"})
+        self.assertEqual(report["schema_version"], 1)
+        self.assertEqual(report["scope"], ".")
+        self.assertTrue(report["snapshot_complete"])
+        self.assertTrue(report["current_complete"])
+        for key in ("files_added", "files_removed", "edges_added", "edges_removed", "edges_changed",
+                    "directories_added", "directories_removed"):
+            self.assertEqual(report[key], [])
+            self.assertEqual(report["totals"][key], 0)
+        self.assertEqual({key: report["totals"][key] for key in
+                          ("nodes_before", "nodes_now", "edges_before", "edges_now")},
+                         {"nodes_before": 3, "nodes_now": 3, "edges_before": 1, "edges_now": 1})
+        self.assertIn("files +0 -0", self.compare().stdout.splitlines()[0])
+        self.assertNotIn("\x1b", self.compare().stdout)
+
+    def test_added_removed_files_edges_and_directory_groups(self):
+        Path(self.root, "main.py").unlink()
+        Path(self.root, "old/unused.py").unlink()
+        write_tree(self.root, {"new/entry.py": "from lib import ping\nping()\n"})
+        report = json.loads(self.compare("--json").stdout)
+        self.assertEqual(report["files_added"], ["new/entry.py"])
+        self.assertEqual(report["files_removed"], ["main.py", "old/unused.py"])
+        self.assertEqual(report["edges_added"], [{"source": "new/entry.py", "target": "lib.py",
+                                                "imports": 1, "calls": 1, "weight": 2}])
+        self.assertEqual(report["edges_removed"], self.before["edges"])
+        self.assertEqual(report["directories_added"], ["new"])
+        self.assertEqual(report["directories_removed"], ["old"])
+        self.assertEqual(report["totals"], {"files_added": 1, "files_removed": 2, "edges_added": 1,
+                                          "edges_removed": 1, "edges_changed": 0, "directories_added": 1,
+                                          "directories_removed": 1, "nodes_before": 3, "nodes_now": 2,
+                                          "edges_before": 1, "edges_now": 1})
+
+    def test_edges_added_removed_without_file_changes(self):
+        write_tree(self.root, {"main.py": "VALUE = 1\n", "old/unused.py": "from lib import ping\n"})
+        report = json.loads(self.compare("--json").stdout)
+        self.assertEqual(report["files_added"], [])
+        self.assertEqual(report["files_removed"], [])
+        self.assertEqual([(row["source"], row["target"]) for row in report["edges_added"]],
+                         [("old/unused.py", "lib.py")])
+        self.assertEqual(report["edges_removed"], self.before["edges"])
+
+    def test_edge_weight_change(self):
+        write_tree(self.root, {"main.py": "from lib import ping\nping()\nping()\n"})
+        report = json.loads(self.compare("--json").stdout)
+        self.assertEqual(report["edges_changed"], [{"source": "main.py", "target": "lib.py",
+                                                  "old_weight": 2, "new_weight": 3}])
+        self.assertEqual(report["edges_added"], [])
+        self.assertEqual(report["edges_removed"], [])
+        self.assertIn("main.py -> lib.py (weight 2 -> 3)", self.compare().stdout)
+
+    def test_snapshot_and_current_truncation_are_partial(self):
+        self.save(code_index.graph(self.index, max_nodes=1))
+        report = json.loads(self.compare("--json").stdout)
+        self.assertFalse(report["snapshot_complete"])
+        self.assertTrue(report["current_complete"])
+        self.assertEqual(report["totals"]["nodes_before"], 3)
+        self.assertIn("Partial comparison: snapshot graph truncated", self.compare().stdout)
+        self.save(self.before)
+        report = json.loads(self.compare("--json", "--max-nodes", "1", "--max-edges", "1").stdout)
+        self.assertTrue(report["snapshot_complete"])
+        self.assertFalse(report["current_complete"])
+        self.assertEqual(report["totals"]["nodes_now"], 3)
+        self.assertIn("Partial comparison: current graph truncated", self.compare("--max-nodes", "1").stdout)
+        write_tree(self.root, {"old/unused.py": "from lib import ping\n"})
+        self.assertFalse(json.loads(self.compare("--json", "--max-edges", "1").stdout)["current_complete"])
+
+    def test_missing_unreadable_malformed_and_non_utf8_snapshots(self):
+        for content in (b"{", b"[]", b"{}", b'\xff', b'{"nodes":[],"nodes":[],"edges":[]}', b'{"x": NaN}'):
+            with self.subTest(content=content):
+                self.snapshot.write_bytes(content)
+                process = run_cli("changes", "--since", self.snapshot, "--root", self.root, "--no-cache")
+                self.assertEqual(process.returncode, 1, process.stderr)
+                self.assertEqual(process.stdout, "")
+                self.assertEqual(len(process.stderr.splitlines()), 1)
+                self.assertIn("malformed graph snapshot", process.stderr)
+        self.snapshot.unlink()
+        for path in (self.snapshot, self.snapshot.parent):
+            process = run_cli("changes", "--since", path, "--root", self.root, "--no-cache")
+            self.assertEqual(process.returncode, 1, process.stderr)
+            self.assertEqual(len(process.stderr.splitlines()), 1)
+            self.assertIn("cannot read graph snapshot", process.stderr)
+
+    def test_invalid_graph_records_are_handled_input_errors(self):
+        for mutate in (lambda r: r.update(schema_version=True), lambda r: r.update(nodes={}),
+                       lambda r: r["nodes"].append(r["nodes"][0]),
+                       lambda r: r["nodes"][0].update(id="../outside.py"),
+                       lambda r: r["nodes"][0].update(group="wrong"),
+                       lambda r: r["edges"][0].update(source="missing.py"),
+                       lambda r: r["edges"].append(r["edges"][0]),
+                       lambda r: r["edges"][0].update(weight="2"),
+                       lambda r: r["edges"][0].update(weight=True),
+                       lambda r: r["edges"][0].update(weight=3),
+                       lambda r: r.update(complete=True, truncated={"nodes": 1, "edges": 0}),
+                       lambda r: r.update(complete="yes"), lambda r: r.update(total={})):
+            report = json.loads(json.dumps(self.before))
+            mutate(report)
+            self.save(report)
+            with self.assertRaisesRegex(code_index.CodeIndexError, "malformed graph snapshot"):
+                code_index.changes(self.index, self.snapshot)
+
+    def test_scope_mismatch_is_clear_and_normalized_scope_is_accepted(self):
+        process = run_cli("changes", "--since", self.snapshot, "--root", self.root, "--no-cache", "--scope", "old")
+        self.assertEqual(process.returncode, 1, process.stderr)
+        self.assertIn("snapshot scope '.' does not match requested scope 'old'", process.stderr)
+        self.save(code_index.graph(self.index, "old"))
+        report = json.loads(self.compare("--scope", "old/../old", "--json").stdout)
+        self.assertEqual(report["scope"], "old")
+        self.assertEqual(report["files_added"], [])
+
+    def test_limit_applies_per_section_in_path_order_but_json_is_full(self):
+        write_tree(self.root, {f"new{n}/entry.py": "from lib import ping\n" for n in reversed(range(23))})
+        report = json.loads(self.compare("--json", "--limit", "1").stdout)
+        self.assertEqual(len(report["files_added"]), 23)
+        self.assertEqual(report["files_added"], sorted(report["files_added"]))
+        self.assertEqual([row["source"] for row in report["edges_added"]], report["files_added"])
+        text = self.compare("--limit", "1").stdout
+        self.assertEqual(text.count("22 more"), 3)
+        self.assertIn("  new0/entry.py\n  22 more", text)
+        self.assertIn("  new0/entry.py -> lib.py\n  22 more", text)
+        self.assertIn("  new0\n  22 more", text)
+        self.assertEqual(self.compare().stdout.count("3 more"), 3)
+
+    def test_cache_frozen_and_no_cache_follow_shared_command_behavior(self):
+        args = ("changes", "--since", self.snapshot, "--root", self.root, "--cache", self.cache, "--json")
+        first = run_cli(*args)
+        self.assertEqual(first.returncode, 0, first.stderr)
+        write_tree(self.root, {"main.py": "from lib import ping\nping()\nping()\n"})
+        frozen = run_cli(*args, "--frozen")
+        self.assertEqual(frozen.returncode, 0, frozen.stderr)
+        self.assertIn("stale file(s) not re-indexed (--frozen)", frozen.stderr)
+        self.assertEqual(json.loads(frozen.stdout)["edges_changed"], [])
+        refreshed = run_cli(*args)
+        self.assertEqual(refreshed.returncode, 0, refreshed.stderr)
+        self.assertEqual(json.loads(refreshed.stdout)["edges_changed"][0]["new_weight"], 3)
+        before = {path.relative_to(self.root) for path in Path(self.root).rglob("*")}
+        snapshot_bytes = self.snapshot.read_bytes()
+        self.compare("--json")
+        self.assertEqual({path.relative_to(self.root) for path in Path(self.root).rglob("*")}, before)
+        self.assertEqual(self.snapshot.read_bytes(), snapshot_bytes)
+
+
 def _usable_cpus():
     try:
         return len(os.sched_getaffinity(0))

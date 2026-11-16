@@ -140,7 +140,7 @@ def cli_check():
                 "wiki_sync.py": ("refresh", "lint", "cites"),
                 "improvement.py": ("propose", "compare", "decide"),
                 "goldfish_review.py": ("build", "run", "check"),
-                "code_index.py": ("find", "callers", "path", "affected", "overview", "stats"),
+                "code_index.py": ("find", "callers", "path", "affected", "overview", "stats", "changes"),
                 "catalog.py": ("add", "taste", "import-report", "plan", "policy", "absorb", "remove", "restore", "effect", "view", "scout",
                                "readd", "forget", "ui", "menu", "record-tasting", "record-absorption")}
     for script, commands in required.items():
