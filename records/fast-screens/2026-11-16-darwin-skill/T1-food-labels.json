@@ -1,0 +1,32 @@
+{
+  "task_id": "T1",
+  "checklist_sha256": "3ca9411a4f17cec2429001c19a7a0c958dc26694ec6c607251bfa5339159b708",
+  "answer_sha256": "18d968a4baddb9a9120978f08e9115c41c752576560df3cbe3b7236bbb1c674f",
+  "counts": {
+    "yes": 2,
+    "no": 0,
+    "unknown": 1
+  },
+  "items": [
+    {
+      "id": "T1.a",
+      "label": "yes",
+      "quote": "但他們評的是人讀起來的感受，不是 skill 實際執行的效果。",
+      "reason": ""
+    },
+    {
+      "id": "T1.b",
+      "label": "unknown",
+      "quote": "新舊兩版各跑一次，把產出的摘要存下來。",
+      "reason": "Quote does not occur in the answer after whitespace collapse"
+    },
+    {
+      "id": "T1.c",
+      "label": "yes",
+      "quote": "把兩份摘要的版本標記拿掉、打亂順序，再請同事挑哪份比較好。",
+      "reason": ""
+    }
+  ],
+  "judge": "claude-haiku-5-5 low",
+  "judge_tokens": 8337
+}

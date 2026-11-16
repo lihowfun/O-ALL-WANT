@@ -1,0 +1,38 @@
+{
+  "task_id": "T3",
+  "checklist_sha256": "c49c30458d2ea58dc67ec702dee74a5a232d8d8307ddc3237c32162b41a5e812",
+  "answer_sha256": "c3858b757d02bd8f946f37df6450fa996edfffbfefb40e2626b002501084f015",
+  "counts": {
+    "yes": 4,
+    "no": 0,
+    "unknown": 0
+  },
+  "items": [
+    {
+      "id": "T3.a",
+      "label": "yes",
+      "quote": "**建議退回舊版**，除非這次改動是為了修某個已知的具體問題（見下）。",
+      "reason": ""
+    },
+    {
+      "id": "T3.b",
+      "label": "yes",
+      "quote": "這個結果分不出新版比較好、比較差，還是兩版一樣。",
+      "reason": ""
+    },
+    {
+      "id": "T3.c",
+      "label": "yes",
+      "quote": "多 15% 的 SKILL.md 每次觸發都會佔用 context，也多了一些讓模型分心或互相衝突的指令。",
+      "reason": ""
+    },
+    {
+      "id": "T3.d",
+      "label": "yes",
+      "quote": "只有 2 個提示、各跑 1 次，模型輸出本身就有隨機性。",
+      "reason": ""
+    }
+  ],
+  "judge": "claude-haiku-5-5 low",
+  "judge_tokens": 9288
+}

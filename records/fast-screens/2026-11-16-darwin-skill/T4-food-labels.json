@@ -1,0 +1,38 @@
+{
+  "task_id": "T4",
+  "checklist_sha256": "eaa832be43e5f2cd57075ddc24765d7b0efb6b7b420c6ef7bfd069ab0ad0fadd",
+  "answer_sha256": "3c307bdc6e435724f7f98ae81aa0d54c1916ef04845c3dd18e7f351af35c6f0b",
+  "counts": {
+    "yes": 4,
+    "no": 0,
+    "unknown": 0
+  },
+  "items": [
+    {
+      "id": "T4.a",
+      "label": "yes",
+      "quote": "這樣成本很高，效果也不一定好。",
+      "reason": ""
+    },
+    {
+      "id": "T4.b",
+      "label": "yes",
+      "quote": "這一步不實際執行 skill，只讀內容。",
+      "reason": ""
+    },
+    {
+      "id": "T4.c",
+      "label": "yes",
+      "quote": "挑**最常用、而且第 1 步發現有問題的 5～10 個**優先跑。",
+      "reason": ""
+    },
+    {
+      "id": "T4.d",
+      "label": "yes",
+      "quote": "每個 skill 都要跑好幾輪",
+      "reason": ""
+    }
+  ],
+  "judge": "claude-haiku-5-5 low",
+  "judge_tokens": 9910
+}

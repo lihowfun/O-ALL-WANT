@@ -1,0 +1,32 @@
+{
+  "task_id": "T1",
+  "checklist_sha256": "3ca9411a4f17cec2429001c19a7a0c958dc26694ec6c607251bfa5339159b708",
+  "answer_sha256": "b1ff7c6fb54057cb880bd8e97001fa01f19fea033050c6301ceaa0dabb41ea29",
+  "counts": {
+    "yes": 3,
+    "no": 0,
+    "unknown": 0
+  },
+  "items": [
+    {
+      "id": "T1.a",
+      "label": "yes",
+      "quote": "人讀起來清楚，不代表模型照著做會比較好",
+      "reason": ""
+    },
+    {
+      "id": "T1.b",
+      "label": "yes",
+      "quote": "對同一批 PR 呼叫 skill，把輸出並排存下來",
+      "reason": ""
+    },
+    {
+      "id": "T1.c",
+      "label": "yes",
+      "quote": "不告訴他們哪份是新版，請他們挑比較好的摘要",
+      "reason": ""
+    }
+  ],
+  "judge": "claude-haiku-5-5 low",
+  "judge_tokens": 8877
+}

@@ -1,0 +1,1 @@
+{"items":[{"id":"T2.a","label":"yes","quote":"我建議先不要照多數決留下新版。"},{"id":"T2.b","label":"yes","quote":"看 skill 資料夾裡有沒有 `scripts/check_schema.py`，路徑是不是相對於 skill 根目錄。"},{"id":"T2.c","label":"yes","quote":"補上腳本，或改寫第 3 步讓它不依賴這個腳本，然後"}]}

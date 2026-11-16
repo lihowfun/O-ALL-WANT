@@ -1,0 +1,40 @@
+{
+ "id": "T3-food",
+ "arm": "food",
+ "model": "claude-opus-5-5",
+ "effort": "high",
+ "tools_allowed": "Read,Glob,Grep,Skill",
+ "exit": 0,
+ "seconds": 17.2,
+ "logical_tokens": 9534,
+ "noncache_tokens": 3814,
+ "models_used": [
+  "claude-opus-5-5"
+ ],
+ "listed_skills": [
+  "batch",
+  "claude-api",
+  "code-review",
+  "darwin-skill",
+  "dataviz",
+  "debug",
+  "deep-research",
+  "design",
+  "design-sync",
+  "doctor",
+  "fewer-permission-prompts",
+  "loop",
+  "plugin-authoring",
+  "run",
+  "run-skill-generator",
+  "schedule",
+  "simplify",
+  "update-config",
+  "verify",
+  "workflow-authoring"
+ ],
+ "tool_calls": {},
+ "skill_calls": [],
+ "skill_file_reads": 0,
+ "is_error": false
+}

@@ -1,0 +1,69 @@
+{
+ "food": "darwin-skill 3.0.1 @ e7c0e66 (alchaincyf/darwin-skill)",
+ "static": {
+  "status": "clear",
+  "reason": "MIT. 6 open static flags, 0 high: network, writes to the home folder and an update check in its scripts, and a SKILL.md above the 24,000-byte size cap. Screened read-only: the runs have no shell tool, so its scripts are not executed."
+ },
+ "tasks": [
+  {
+   "id": "T1",
+   "native": {
+    "labels": "T1-native-labels.json",
+    "logical_tokens": 18263,
+    "seconds": 18.9,
+    "family": "claude"
+   },
+   "food": {
+    "labels": "T1-food-labels.json",
+    "logical_tokens": 18607,
+    "seconds": 17.5,
+    "family": "claude"
+   }
+  },
+  {
+   "id": "T2",
+   "native": {
+    "labels": "T2-native-labels.json",
+    "logical_tokens": 27123,
+    "seconds": 17.8,
+    "family": "claude"
+   },
+   "food": {
+    "labels": "T2-food-labels.json",
+    "logical_tokens": 27684,
+    "seconds": 18.1,
+    "family": "claude"
+   }
+  },
+  {
+   "id": "T3",
+   "native": {
+    "labels": "T3-native-labels.json",
+    "logical_tokens": 9647,
+    "seconds": 20.4,
+    "family": "claude"
+   },
+   "food": {
+    "labels": "T3-food-labels.json",
+    "logical_tokens": 9534,
+    "seconds": 17.2,
+    "family": "claude"
+   }
+  },
+  {
+   "id": "T4",
+   "native": {
+    "labels": "T4-native-labels.json",
+    "logical_tokens": 19180,
+    "seconds": 29.2,
+    "family": "claude"
+   },
+   "food": {
+    "labels": "T4-food-labels.json",
+    "logical_tokens": 19437,
+    "seconds": 26.9,
+    "family": "claude"
+   }
+  }
+ ]
+}

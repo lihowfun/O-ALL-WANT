@@ -1,0 +1,19 @@
+{
+ "call": "T1-native",
+ "exit": 0,
+ "error": false,
+ "seconds": 7.5,
+ "judge_tokens": 8877,
+ "labels_exit": 0,
+ "counts": {
+  "yes": 3,
+  "no": 0,
+  "unknown": 0
+ },
+ "items": {
+  "T1.a": "yes",
+  "T1.b": "yes",
+  "T1.c": "yes"
+ },
+ "reasons": []
+}

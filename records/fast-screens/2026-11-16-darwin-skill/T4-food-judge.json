@@ -1,0 +1,20 @@
+{
+ "call": "T4-food",
+ "exit": 0,
+ "error": false,
+ "seconds": 10.1,
+ "judge_tokens": 9910,
+ "labels_exit": 0,
+ "counts": {
+  "yes": 4,
+  "no": 0,
+  "unknown": 0
+ },
+ "items": {
+  "T4.a": "yes",
+  "T4.b": "yes",
+  "T4.c": "yes",
+  "T4.d": "yes"
+ },
+ "reasons": []
+}

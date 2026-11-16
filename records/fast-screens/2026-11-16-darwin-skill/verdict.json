@@ -1,0 +1,45 @@
+{
+  "food": "darwin-skill 3.0.1 @ e7c0e66 (alchaincyf/darwin-skill)",
+  "result": "NO",
+  "deciding_step": "C",
+  "reason": "lost != 0 (1)",
+  "reopen": "Show at least 2 gains and no losses on a new screen",
+  "native_fraction": 0.7857142857142857,
+  "native_met": 11,
+  "total_items": 14,
+  "gained": 3,
+  "gained_items": [
+    {
+      "task_id": "T4",
+      "id": "T4.a"
+    },
+    {
+      "task_id": "T4",
+      "id": "T4.c"
+    },
+    {
+      "task_id": "T4",
+      "id": "T4.d"
+    }
+  ],
+  "lost": 1,
+  "lost_items": [
+    {
+      "task_id": "T1",
+      "id": "T1.b"
+    }
+  ],
+  "ratio": 1.0141349898265803,
+  "expensive": false,
+  "native_tokens": 74213,
+  "food_tokens": 75262,
+  "tokens_by_family": {
+    "claude": 149475
+  },
+  "seconds": 166.0,
+  "unknown_counts": {
+    "native": 0,
+    "food": 1
+  },
+  "missing_food_tasks": []
+}

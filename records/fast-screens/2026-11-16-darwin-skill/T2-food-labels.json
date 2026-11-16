@@ -1,0 +1,32 @@
+{
+  "task_id": "T2",
+  "checklist_sha256": "d6e869c088955ef640312150d6a204e3ea17b8daf2802961aae96b2b5cf1bee8",
+  "answer_sha256": "e9c2ce367050b930f34b438d2eb7a8877b8c2de791b40d60538879e9d46dcef0",
+  "counts": {
+    "yes": 3,
+    "no": 0,
+    "unknown": 0
+  },
+  "items": [
+    {
+      "id": "T2.a",
+      "label": "yes",
+      "quote": "我建議先不要照多數決留下新版。",
+      "reason": ""
+    },
+    {
+      "id": "T2.b",
+      "label": "yes",
+      "quote": "確認 skill 資料夾裡有沒有 `scripts/check_schema.py`。",
+      "reason": ""
+    },
+    {
+      "id": "T2.c",
+      "label": "yes",
+      "quote": "修好之後重新跑一次比較，再決定要不要留新版。",
+      "reason": ""
+    }
+  ],
+  "judge": "claude-haiku-5-5 low",
+  "judge_tokens": 8473
+}

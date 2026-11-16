@@ -1,0 +1,19 @@
+{
+ "call": "T2-native",
+ "exit": 0,
+ "error": false,
+ "seconds": 7.7,
+ "judge_tokens": 8557,
+ "labels_exit": 0,
+ "counts": {
+  "yes": 3,
+  "no": 0,
+  "unknown": 0
+ },
+ "items": {
+  "T2.a": "yes",
+  "T2.b": "yes",
+  "T2.c": "yes"
+ },
+ "reasons": []
+}
