@@ -1,0 +1,32 @@
+{
+  "task_id": "T1",
+  "checklist_sha256": "3ca9411a4f17cec2429001c19a7a0c958dc26694ec6c607251bfa5339159b708",
+  "answer_sha256": "6e41064c59cf2e7448c4794e19f8c9180337e8bc8c3b734fedffded3bb5bb7c4",
+  "counts": {
+    "yes": 3,
+    "no": 0,
+    "unknown": 0
+  },
+  "items": [
+    {
+      "id": "T1.a",
+      "label": "yes",
+      "quote": "目前的證據不足以證明它比舊版好",
+      "reason": ""
+    },
+    {
+      "id": "T1.b",
+      "label": "yes",
+      "quote": "讓 agent 真的照兩版去做同一件事，再盲評兩邊的產出",
+      "reason": ""
+    },
+    {
+      "id": "T1.c",
+      "label": "yes",
+      "quote": "打亂 A/B 順序並去掉版本資訊，交給 3 位獨立評審",
+      "reason": ""
+    }
+  ],
+  "judge": "claude-haiku-5-5 low",
+  "judge_tokens": 9669
+}

@@ -1,0 +1,38 @@
+{
+  "task_id": "T4",
+  "checklist_sha256": "eaa832be43e5f2cd57075ddc24765d7b0efb6b7b420c6ef7bfd069ab0ad0fadd",
+  "answer_sha256": "ad11f26ad75c5da9bd24f221df683b08aabb5ef41032a3ca7e13f1375568af96",
+  "counts": {
+    "yes": 4,
+    "no": 0,
+    "unknown": 0
+  },
+  "items": [
+    {
+      "id": "T4.a",
+      "label": "yes",
+      "quote": "完整最佳化一個 skill 大約要派 23 次子 agent，60 個就是約 1,400 次，成本太高，而且大多數 skill 不值得花這個代價。",
+      "reason": ""
+    },
+    {
+      "id": "T4.b",
+      "label": "yes",
+      "quote": "這一步只用腳本讀檔，不呼叫模型。它會產出一張排序表，檢查這幾類硬傷：",
+      "reason": ""
+    },
+    {
+      "id": "T4.c",
+      "label": "yes",
+      "quote": "先跑第 1 層的體檢表，看完數據再決定第 2 層要挑哪幾個。",
+      "reason": ""
+    },
+    {
+      "id": "T4.d",
+      "label": "yes",
+      "quote": "完整最佳化一個 skill 大約要派 23 次子 agent，60 個就是約 1,400 次",
+      "reason": ""
+    }
+  ],
+  "judge": "claude-haiku-5-5 low",
+  "judge_tokens": 9890
+}

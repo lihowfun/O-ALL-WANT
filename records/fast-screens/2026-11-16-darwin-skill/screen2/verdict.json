@@ -1,0 +1,40 @@
+{
+  "food": "darwin-skill 3.0.1 @ e7c0e66 (alchaincyf/darwin-skill)",
+  "result": "YES",
+  "deciding_step": "C",
+  "reason": "At least 2 gains and no losses; token ratio 2.64967 exceeds 1.5: absorb as optional and state the ratio wherever the food is listed",
+  "reopen": "Becoming a default still needs the full measurement rules in docs/EVAL_PROTOCOL.md, including their cost limit",
+  "native_fraction": 0.7857142857142857,
+  "native_met": 11,
+  "total_items": 14,
+  "gained": 3,
+  "gained_items": [
+    {
+      "task_id": "T4",
+      "id": "T4.a"
+    },
+    {
+      "task_id": "T4",
+      "id": "T4.c"
+    },
+    {
+      "task_id": "T4",
+      "id": "T4.d"
+    }
+  ],
+  "lost": 0,
+  "lost_items": [],
+  "ratio": 2.6496705428967973,
+  "expensive": true,
+  "native_tokens": 74213,
+  "food_tokens": 196640,
+  "tokens_by_family": {
+    "claude": 270853
+  },
+  "seconds": 201.29999999999998,
+  "unknown_counts": {
+    "native": 0,
+    "food": 0
+  },
+  "missing_food_tasks": []
+}

@@ -1,0 +1,1 @@
+{"items":[{"id":"T2.a","label":"yes","quote":"不行，不能照多數決留下新版。"},{"id":"T2.b","label":"yes","quote":"**確認檔案在不在**。看新版 skill 資料夾裡（例如 `W/s{round}/scripts/`，以及 git 裡當前那版）有沒有 `check_schema.py`。"},{"id":"T2.c","label":"yes","quote":"**如果檔案確實不存在**，指控成立，這一輪就 **revert**："}]}

@@ -1,0 +1,38 @@
+{
+  "task_id": "T3",
+  "checklist_sha256": "c49c30458d2ea58dc67ec702dee74a5a232d8d8307ddc3237c32162b41a5e812",
+  "answer_sha256": "ff520f7a5278a478da676bbbe1acaf0f4245e2f3d98258f17f71b9aa25143e0a",
+  "counts": {
+    "yes": 4,
+    "no": 0,
+    "unknown": 0
+  },
+  "items": [
+    {
+      "id": "T3.a",
+      "label": "yes",
+      "quote": "新版另外存一份，等有更多證據再決定。",
+      "reason": ""
+    },
+    {
+      "id": "T3.b",
+      "label": "yes",
+      "quote": "所以 1:1 只表示「看不出差別」，不表示「兩版一樣好」。",
+      "reason": ""
+    },
+    {
+      "id": "T3.c",
+      "label": "yes",
+      "quote": "新版拿不出比較好的證據，就不值得付這個成本。",
+      "reason": ""
+    },
+    {
+      "id": "T3.d",
+      "label": "yes",
+      "quote": "只有 2 個提示、每版各跑一次，模型每次輸出本來就會變。",
+      "reason": ""
+    }
+  ],
+  "judge": "claude-haiku-5-5 low",
+  "judge_tokens": 8275
+}

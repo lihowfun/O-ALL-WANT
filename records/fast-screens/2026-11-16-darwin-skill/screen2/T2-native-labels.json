@@ -1,0 +1,32 @@
+{
+  "task_id": "T2",
+  "checklist_sha256": "d6e869c088955ef640312150d6a204e3ea17b8daf2802961aae96b2b5cf1bee8",
+  "answer_sha256": "9dcda17a32fe5a66d411d16d34cf5345500b065cac100f33842e108151a0c5cb",
+  "counts": {
+    "yes": 3,
+    "no": 0,
+    "unknown": 0
+  },
+  "items": [
+    {
+      "id": "T2.a",
+      "label": "yes",
+      "quote": "我建議先不要照多數決留下新版。",
+      "reason": ""
+    },
+    {
+      "id": "T2.b",
+      "label": "yes",
+      "quote": "看 skill 資料夾裡有沒有 `scripts/check_schema.py`，路徑是不是相對於 skill 根目錄。",
+      "reason": ""
+    },
+    {
+      "id": "T2.c",
+      "label": "yes",
+      "quote": "補上腳本，或改寫第 3 步讓它不依賴這個腳本，然後",
+      "reason": ""
+    }
+  ],
+  "judge": "claude-haiku-5-5 low",
+  "judge_tokens": 8557
+}

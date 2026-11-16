@@ -1,0 +1,38 @@
+{
+  "task_id": "T3",
+  "checklist_sha256": "c49c30458d2ea58dc67ec702dee74a5a232d8d8307ddc3237c32162b41a5e812",
+  "answer_sha256": "dac374793c2b98c822849b37ff2498867ea16d3ab84ec465e03b37abf113b9bb",
+  "counts": {
+    "yes": 4,
+    "no": 0,
+    "unknown": 0
+  },
+  "items": [
+    {
+      "id": "T3.a",
+      "label": "yes",
+      "quote": "依照 darwin-skill 3.0 的裁決規則，這一版要 **revert**。",
+      "reason": ""
+    },
+    {
+      "id": "T3.b",
+      "label": "yes",
+      "quote": "tally 的叫法是「勝負相當」，不算「嚴格更好」。",
+      "reason": ""
+    },
+    {
+      "id": "T3.c",
+      "label": "yes",
+      "quote": "淨效果是零，撐不起這 15% 的增長。",
+      "reason": ""
+    },
+    {
+      "id": "T3.d",
+      "label": "yes",
+      "quote": "dev 集只有 2 條，只看得出很大的差異。一勝一負很可能只是雜訊",
+      "reason": ""
+    }
+  ],
+  "judge": "claude-haiku-5-5 low",
+  "judge_tokens": 9291
+}

@@ -1,0 +1,20 @@
+{
+ "call": "T3-food",
+ "exit": 0,
+ "error": false,
+ "seconds": 8.5,
+ "judge_tokens": 9291,
+ "labels_exit": 0,
+ "counts": {
+  "yes": 4,
+  "no": 0,
+  "unknown": 0
+ },
+ "items": {
+  "T3.a": "yes",
+  "T3.b": "yes",
+  "T3.c": "yes",
+  "T3.d": "yes"
+ },
+ "reasons": []
+}
