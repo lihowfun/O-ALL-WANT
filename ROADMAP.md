@@ -63,8 +63,9 @@ tasting stopped before a candidate comparison (#13); three earlier verdicts were
 existing data (#15); TokenEconomizer was removed from the optional list by owner decision; EGM keeps
 its switch and the code map stays.
 
-1. Use the fast decision ([flow](docs/SKILL_INTAKE.md), [tool](docs/FAST_SCREEN.md)) on a new food, and
-   settle its open rule question: gains without losses at more than 1.5 times the tokens.
+1. Use the fast decision ([flow](docs/SKILL_INTAKE.md), [tool](docs/FAST_SCREEN.md)) on a new food. Its
+   rule question is settled (D53, 2026-11-16): gains without losses at more than 1.5 times the tokens
+   give YES as optional, with the ratio stated.
 2. EGM: let the default `auto` judge per review, with a cost estimate and the user's confirmation. #27
 3. Code map: when to refresh and redraw it, cheaper updates, and the tasks where it helps. #28
 4. Verdict list: sync the three re-judged entries. #19

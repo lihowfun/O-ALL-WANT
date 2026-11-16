@@ -213,7 +213,7 @@ def verdict(screen_path):
     result = {'food': food, 'result': None, 'deciding_step': None, 'reason': '', 'reopen': '',
               'native_fraction': None, 'native_met': None, 'total_items': None,
               'gained': None, 'gained_items': None, 'lost': None, 'lost_items': None,
-              'ratio': None, 'native_tokens': None, 'food_tokens': None,
+              'ratio': None, 'expensive': None, 'native_tokens': None, 'food_tokens': None,
               'tokens_by_family': None, 'seconds': None,
               'unknown_counts': {'native': None, 'food': None}, 'missing_food_tasks': None}
 
@@ -288,20 +288,29 @@ def verdict(screen_path):
                 gained.append(item)
             if native == 'yes' and food_label != 'yes':
                 lost.append(item)
+    # Integer comparison keeps the 1.5 boundary exact. A ratio above it no longer turns a food down
+    # (owner decision D53): it marks the YES as expensive, so the ratio is stated wherever it is listed.
+    ratio_numerator, ratio_denominator = MAX_TOKEN_RATIO.as_integer_ratio()
+    expensive = tokens['food'] * ratio_denominator > tokens['native'] * ratio_numerator
     result.update(gained=len(gained), gained_items=gained, lost=len(lost), lost_items=lost,
-                  ratio=tokens['food'] / tokens['native'])
+                  ratio=tokens['food'] / tokens['native'], expensive=expensive)
     failures = []
     if result['gained'] < MIN_GAINED:
         failures.append(f'gained < {MIN_GAINED} ({result["gained"]})')
     if result['lost'] != 0:
         failures.append(f'lost != 0 ({result["lost"]})')
-    ratio_numerator, ratio_denominator = MAX_TOKEN_RATIO.as_integer_ratio()
-    if tokens['food'] * ratio_denominator > tokens['native'] * ratio_numerator:
-        failures.append(f'ratio > {MAX_TOKEN_RATIO} ({result["ratio"]:.6g})')
     if failures:
         return decide('NO', 'C', '; '.join(failures),
-                      'Show at least 2 gains, no losses, and a token ratio at most 1.5 on a new screen')
-    return decide('YES', 'C', 'At least 2 gains, no losses, and token ratio at most 1.5; absorb as optional',
+                      f'Show at least {MIN_GAINED} gains and no losses on a new screen')
+    if expensive:
+        return decide('YES', 'C',
+                      f'At least {MIN_GAINED} gains and no losses; token ratio {result["ratio"]:.6g} exceeds '
+                      f'{MAX_TOKEN_RATIO}: absorb as optional and state the ratio wherever the food is listed',
+                      'Becoming a default still needs the full measurement rules in docs/EVAL_PROTOCOL.md, '
+                      'including their cost limit')
+    return decide('YES', 'C',
+                  f'At least {MIN_GAINED} gains, no losses, and token ratio at most {MAX_TOKEN_RATIO}; '
+                  'absorb as optional',
                   'Becoming a default still needs the full measurement rules in docs/EVAL_PROTOCOL.md')
 
 

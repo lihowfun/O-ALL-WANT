@@ -236,12 +236,57 @@ class FastScreenTests(unittest.TestCase):
         self.assertEqual(result['result'], 'NO')
         self.assertIn('gained < 2', result['reason'])
 
-    def test_ratio_just_above_limit_fails(self):
+    def test_ratio_just_above_limit_is_yes_marked_expensive(self):
         value = self.fixture()
         value['tasks'][0]['food']['logical_tokens'] += 1
+        code, result = self.run_screen(value)
+        self.assertEqual(code, 0)
+        self.assertEqual((result['result'], result['deciding_step'], result['expensive']), ('YES', 'C', True))
+        self.assertEqual((result['gained'], result['lost'], result['ratio']), (2, 0, 451 / 300))
+        self.assertIn('exceeds 1.5', result['reason'])
+        self.assertIn('state the ratio', result['reason'])
+        self.assertIn(f'{451 / 300:.6g}', result['reason'])
+        self.assertIn('default still needs the full measurement rules', result['reopen'])
+        self.assertIn('cost limit', result['reopen'])
+
+    def test_large_ratio_with_gains_and_no_losses_is_yes_marked_expensive(self):
+        value = self.fixture()
+        for task in value['tasks']:
+            task['food']['logical_tokens'] = 2_800
         _, result = self.run_screen(value)
-        self.assertEqual(result['result'], 'NO')
-        self.assertIn('ratio > 1.5', result['reason'])
+        self.assertEqual((result['result'], result['expensive'], result['ratio']), ('YES', True, 28.0))
+        self.assertIn('token ratio 28 exceeds 1.5', result['reason'])
+
+    def test_expensive_is_false_within_the_ratio_and_null_before_step_c(self):
+        _, result = self.run_screen(self.fixture())
+        self.assertIs(result['expensive'], False)
+        self.assertNotIn('exceeds', result['reason'])
+        _, result = self.run_screen(self.fixture([['yes'] * 9 + ['no']] * 3, [None] * 3))
+        self.assertEqual(result['deciding_step'], 'B')
+        self.assertIsNone(result['expensive'])
+        _, result = self.run_screen(self.fixture(food=[['yes'], None, ['yes']]))
+        self.assertEqual(result['result'], 'INCOMPLETE')
+        self.assertIsNone(result['expensive'])
+
+    def test_a_high_ratio_does_not_rescue_too_few_gains_or_a_loss(self):
+        for food, condition in (([['yes'], ['no'], ['yes']], 'gained < 2'), ([['yes'], ['yes'], ['no']], 'lost != 0')):
+            value = self.fixture(food=food)
+            value['tasks'][0]['food']['logical_tokens'] = 10_000
+            _, result = self.run_screen(value)
+            self.assertEqual((result['result'], result['deciding_step'], result['expensive']), ('NO', 'C', True))
+            self.assertIn(condition, result['reason'])
+            self.assertNotIn('ratio', result['reason'])
+            self.assertIn('gains and no losses', result['reopen'])
+
+    def test_budget_still_stops_an_expensive_food_before_step_c(self):
+        value = self.fixture()
+        for task in value['tasks']:
+            task['native']['logical_tokens'] = 40_000
+            task['food']['logical_tokens'] = 1_120_000
+        _, result = self.run_screen(value)
+        self.assertEqual((result['result'], result['deciding_step']), ('NO', 'budget'))
+        self.assertIsNone(result['expensive'])
+        self.assertIsNone(result['gained'])
 
     def test_one_loss_fails_and_lists_item(self):
         _, result = self.run_screen(self.fixture(food=[['yes'], ['yes'], ['no']]))
@@ -253,8 +298,10 @@ class FastScreenTests(unittest.TestCase):
         value = self.fixture(food=[['yes'], ['no'], ['no']])
         value['tasks'][0]['food']['logical_tokens'] += 1
         _, result = self.run_screen(value)
-        for condition in ('gained < 2', 'lost != 0', 'ratio > 1.5'):
+        for condition in ('gained < 2', 'lost != 0'):
             self.assertIn(condition, result['reason'])
+        self.assertNotIn('ratio', result['reason'])
+        self.assertIs(result['expensive'], True)
         self.assertNotIn('\n', result['reason'])
         self.assertNotIn('\n', result['reopen'])
 
