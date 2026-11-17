@@ -1,88 +1,68 @@
 # OAW roadmap
 
-Updated 2026-11-15. The working plan is
-[docs/plans/v2.0.1-release-path.md](docs/plans/v2.0.1-release-path.md);
-work items are GitHub issues grouped by milestone.
+Updated 2026-11-17. Work items are GitHub issues grouped by milestone. Measured results and their
+limits are in section 2 of [the plan](docs/plans/v2.0.1-release-path.md).
 
-## Released: v2.0.1
+## Direction: know quickly whether something helps
 
-v2.0.1 is the first V2 release; 2.0.0 was never released. It was merged as `dd91780` and
-tagged `v2.0.1` on 2026-11-14 (UTC). Later work is listed under Unreleased in the changelog
-and ships with the next version, cut when enough has accumulated (D50).
+Owner, 2026-11-17 (D54): much of what OAW carries can only be judged by trying it, and the most
+efficient way to learn "this helps" or "this does not help" is not ready yet. Getting it ready is the
+main job of the next version. It is a way to find out, not a condition for shipping.
 
-1. Done: all six CI jobs (Ubuntu, macOS, Windows × Python 3.10, 3.13) green at `7504eca`, run `43510582580`. #18
-2. Done: FIXCHECK disposition applied in `5c4e53b`; M1/M2/R2 reverted, M3/R1 and the path fix retained, with CI fixes through `b898e4d`. #17, #18
-3. Done: the one FIXCHECK check on frozen H1 tasks; [result](https://github.com/lihowfun/O-ALL-WANT/blob/e05c4d5a9238fe3ef4529552a27ce9095ead6a3b/records/v2.0.1-experiments/FIXCHECK/RESULT.md). #17
-4. Done: measured README claims, version files, upgrade notes and skill-intake SOP synchronized for release. #10, #12
-5. Done: three cross-family review rounds; fixes in `b4ca559`, `73fb8f7` and `7504eca`, final review without a blocker. #11
-6. Done: pull request #16 merged and `v2.0.1` tagged and released by the lead under the owner's delegation of pull-request decisions (D51). #11
+Where the [fast screen](docs/FAST_SCREEN.md) stands after the first new food taken through it from start
+to finish on 2026-11-16
+([record](https://github.com/lihowfun/O-ALL-WANT/blob/c927dc1624dab45e09956604bd14f9ecd5171add/records/fast-screens/2026-11-16-darwin-skill/RESULT.md)):
 
-Disposition (2026-11-13, confirmed by the owner on 2026-11-14 as D48): M1 (session-end saving), M2 (empty-recall host guidance) and R2 (one deep
-code-review round) were implemented, failed the preregistered regression
-thresholds in the one FIXCHECK check, and were reverted. M3 (permission-only
-pending memory), R1 (native same-family Codex review with explicit cross-family
-commands) and the #18 literal-path audit fix ship.
+| Part | Today | Not ready |
+|---|---|---|
+| Rule | Version 1 (D53): YES needs at least 2 gained items and none lost; above 1.5 times the tokens it is optional, with the ratio stated | It does not say which use is screened. The same food got NO when only installed (called in 0 of 4 answers) and YES when called by name (4 of 4, 2.65 times the tokens) |
+| Judge | Claude Haiku 5.5, one call per answer; about 36,000 tokens for 4 answers | A quote that drops Markdown bold fails the check and counts as a loss. That one item turned a screen to NO |
+| Runner | A script written for that one food: sandbox, fresh home, answers, judge, verdict | No reusable command (#9). Tasks and checklists are written by hand |
+| Cost | 149,475 to 270,853 tokens and 166 to 201 s of answering per screen; the limits are 2,000,000 tokens and 1,800 s | One answer per task, so run-to-run variation is not seen |
+| Coverage | 2 foods on real answers: 1 NO at the native step, 1 YES as optional | OAW's own parts and the whole kit have not been through it |
 
-FIXCHECK uses frozen H1 diagnostic tasks, the O arm and one counted answer per
-task. All 24 rows are counted and the frozen calculator reports `fail`: two
-small-change token limits (`codex/t01`, `claude/t12`) and both cells' memory
-thresholds. With one answer per task, neither these failures nor the
-differences measured in the other direction can be separated from run-to-run
-variation; this is a regression gate, not an effectiveness verdict.
-[Result record](https://github.com/lihowfun/O-ALL-WANT/blob/e05c4d5a9238fe3ef4529552a27ce9095ead6a3b/records/v2.0.1-experiments/FIXCHECK/RESULT.md) ·
-[Disposition and validation](docs/validation/v2.0.1-final.md).
+## Next version, in order
 
-Release polish is integrated: explicit external-locator consent, concise doctor
-output, upstream EGM guide links and the benefit/capability intake SOP (#10,
-#12). Its historical Linux gate was 9/9, 685 tests, 0 skips;
-[validation](docs/validation/v2.0.1-release-polish.md). FIXCHECK remains pinned
-to `c2d9852`. At `7504eca`, the Linux gate passed 9/9 with 718 tests and 0 skips
-on Python 3.10.12; the final six-job CI and three review rounds are complete.
-Follow-ups are tracked in #21, #22 and #23; see the
-[final validation](docs/validation/v2.0.1-final.md).
+1. One command for a fast screen: make the one-off runner the reusable tasting kit. #9
+2. Fix what the first screen exposed: the quote check with Markdown emphasis; say which use is screened
+   (only installed, or called by name); decide whether gains must come from more than one task.
+3. Take OAW's own parts through it one at a time, to learn what each adds and what it costs: memory, the
+   fresh-context review, the code map (#28), EGM when switched on. A screen informs; removing a part
+   stays the owner's decision.
+4. The whole kit against no kit, by the same method, once 1 to 3 work. H1 measured this once on a
+   pre-release build: no conclusion, the two hosts in opposite directions, 1.92 and 2.58 times the tokens.
+5. Smaller items: verdict list sync (#19); memory ordering, catalogue lock checks, Python 3.11 and 3.12
+   in CI (#21, #22, #23); Windows concurrent writers (#26).
+6. The next version is cut when enough has accumulated (D50).
 
-## Evaluation accounting (U1): next version
+## Settled
 
-On 2026-11-13 the owner explicitly moved Harness2 U1 accounting work forward
-(D46), on `codex/harness2-evaluation-u1`, based on release-polish 5af21f6.
-It adds an optional read-only ledger/report/comparator bridge, not a model
-experiment or a change to the frozen FIXCHECK candidate. Review and validation
-are tracked in [U1 validation](docs/validation/harness2-u1.md); usage and evidence
-limits are in [evaluation accounting](docs/EVAL_LEDGER.md). U2/U3 model-facing
-changes still need separate behavior evidence. On 2026-11-14 the owner asked whether the
-release carries the project's evaluation methods (D49) and then chose normal version
-iteration (D50): 2.0.1 ships as reviewed, and the ledger together with the overview of
-the four measurement methods in [the measurement rules](docs/EVAL_PROTOCOL.md) goes
-into the next version. Both are on `main`, listed under Unreleased in the changelog.
-
-## Next: after the release
-
-Settled on 2026-11-14 and 2026-11-15 (D49 to D52): the EGM calibration closed at no conclusion (#20);
-the Harness2 U2 comparison ended with the minimal-change card not absorbed (#24); the presentation
-tasting stopped before a candidate comparison (#13); three earlier verdicts were re-judged on
-existing data (#15); TokenEconomizer was removed from the optional list by owner decision; EGM keeps
-its switch and the code map stays.
-
-1. Use the fast decision ([flow](docs/SKILL_INTAKE.md), [tool](docs/FAST_SCREEN.md)) on a new food. Its
-   rule question is settled (D53, 2026-11-16): gains without losses at more than 1.5 times the tokens
-   give YES as optional, with the ratio stated.
-2. EGM: let the default `auto` judge per review, with a cost estimate and the user's confirmation. #27
-3. Code map: when to refresh and redraw it, cheaper updates, and the tasks where it helps. #28
-4. Verdict list: sync the three re-judged entries. #19
-5. Release-review follow-ups and the Windows concurrent-writers test. #21, #22, #23, #26
-6. A reusable tasting kit from the H1 runner. #9
-7. The next version, cut when enough has accumulated (D50).
+- EGM stays, with its switch (D52, D55). The default `auto` gives a deep task one fresh-context review.
+  The user turns EGM on when they want a stronger review: `python3 scripts/oaw_mode.py egm on`, or
+  `/egm-review` for one run. Nothing triggers it automatically. #27
+- The code map stays (D52). `code_index.py changes` compares it with an earlier export and the skill says
+  when to draw it again (#28, first half).
+- Evaluation ledger and the overview of the four measurement methods are on `main`
+  ([accounting](docs/EVAL_LEDGER.md), [measurement rules](docs/EVAL_PROTOCOL.md); D46, D49, D50).
+- Closed without a change to OAW: the EGM calibration at no conclusion (#20), the minimal-change card
+  not absorbed (#24), the presentation tasting stopped before a candidate comparison (#13), three earlier
+  verdicts re-judged on existing data (#15). TokenEconomizer was removed from the optional list by owner
+  decision (D52).
 
 ## Parked (each with a restart condition in the plan)
 
-Video-skill tasting (#14), EGM on large design documents, long-term use and
-trigger accuracy, moving the memory store out of `.agents/`, an independent
-replication of H1, and a Codex counterpart of the digestion view.
+Video-skill tasting (#14), EGM on large design documents, long-term use and trigger accuracy, moving
+the memory store out of `.agents/`, and a Codex counterpart of the digestion view.
 
-## Measured so far
+## Released: v2.0.1
 
-Results and their limits are summarized in section 2 of the plan. Additional
-runtimes, vector stores, background curators, and durable workflow
-orchestration are not default dependencies.
+The first V2 release; 2.0.0 was never released. Merged as `dd91780` and tagged `v2.0.1` on 2026-11-14
+(UTC), with all six CI jobs green (Ubuntu, macOS, Windows × Python 3.10, 3.13) and three cross-family
+review rounds. Of the five fixes tried after H1, three failed their regression thresholds and were
+reverted (session-end saving, empty-recall guidance, one deep code-review round); two ship
+(permission-only pending memory, native same-family Codex review). What shipped and how it was checked:
+[final validation](docs/validation/v2.0.1-final.md) and [CHANGELOG](CHANGELOG.md). Later work is listed
+under Unreleased there.
 
-Completed v1 work and experiments remain in CHANGELOG.md and docs/archive/.
+Additional runtimes, vector stores, background curators and durable workflow orchestration are not
+default dependencies. Completed v1 work and experiments remain in CHANGELOG.md and docs/archive/.

@@ -31,9 +31,10 @@ EXPECTED_SKIPS = {
     "darwin": {_AFFINITY_SKIP, (_RAW_FILENAME_TEST, "filesystem rejects non-UTF-8 filenames (EILSEQ)")},
     "win32": {_AFFINITY_SKIP, (_RAW_FILENAME_TEST, "raw non-UTF-8 filenames require a POSIX filesystem")},
 }
-# Per-check subprocess limit: a guard against a hung command, not a test budget. The full
-# suite took 372-480 s on Windows 11 with 393-423 tests (2026-11-04), over the old 360 s.
-CHECK_TIMEOUT = 900
+# Per-check subprocess limit: a guard against a hung command, not a test budget. About twice the
+# slowest measured run: on windows-latest with Python 3.10 the test suite took 559-882 s at 688-721
+# tests and passed the old 900 s limit once (CI run 43615890860, 2026-11-14).
+CHECK_TIMEOUT = 1800
 
 
 def configure_stdio():

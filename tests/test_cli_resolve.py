@@ -8,6 +8,7 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -234,6 +235,71 @@ class ConfinedPathTests(unittest.TestCase):
                 calls.clear()
                 with patch.object(Path, "resolve", resolve), self.assertRaises(ValueError):
                     oaw_common.confined_path(root, "..", "elsewhere")
+
+
+class _RefusedFirstByte:
+    """A real unbuffered lock file whose write is refused, as Windows refuses a write to a locked byte."""
+
+    def __init__(self, handle):
+        self.handle, self.writes = handle, 0
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        self.handle.close()
+
+    def write(self, data):
+        self.writes += 1
+        raise PermissionError(13, "Permission denied")
+
+    def __getattr__(self, name):
+        return getattr(self.handle, name)
+
+
+class ExclusiveLockTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory(prefix="oaw-lock-")
+        self.addCleanup(self.tmp.cleanup)
+        self.root = os.path.abspath(self.tmp.name)
+        self.target = os.path.join(self.root, "notes.md")
+        self.lock_file = os.path.join(self.root, ".notes.md.oaw.lock")
+
+    def acquire_with_refused_first_byte(self, **platform):
+        opened, real_open = [], open
+
+        def refusing_open(path, mode, buffering=-1):
+            # A buffered handle would keep the refused byte and write it again on seek or close.
+            self.assertEqual((os.path.basename(path), mode, buffering), (os.path.basename(self.lock_file), "a+b", 0))
+            opened.append(_RefusedFirstByte(real_open(path, mode, buffering=buffering)))
+            return opened[-1]
+
+        with patch.object(oaw_common, "open", refusing_open, create=True), \
+                patch.object(oaw_common, "fcntl", platform.get("fcntl")), \
+                patch.object(oaw_common, "msvcrt", platform.get("msvcrt")):
+            with oaw_common._exclusive_lock(self.target):
+                self.assertEqual(opened[0].writes, 1)
+        return opened[0]
+
+    def test_windows_waits_for_the_lock_when_the_first_byte_is_refused(self):
+        # CI runs 41025531953 and 43614452107 (windows-latest, Python 3.10) ended in PermissionError here.
+        calls = []
+        msvcrt = SimpleNamespace(LK_NBLCK=2, LK_UNLCK=0, locking=lambda fd, mode, count: calls.append((mode, count)))
+        handle = self.acquire_with_refused_first_byte(msvcrt=msvcrt)
+        self.assertEqual(calls, [(msvcrt.LK_NBLCK, 1), (msvcrt.LK_UNLCK, 1)])
+        self.assertEqual((handle.writes, handle.handle.closed), (1, True))
+
+    def test_refused_first_byte_is_an_error_where_writes_are_not_locked_out(self):
+        fcntl = SimpleNamespace(LOCK_EX=2, LOCK_UN=8, flock=lambda fd, mode: self.fail("locked after a refused write"))
+        with self.assertRaises(PermissionError):
+            self.acquire_with_refused_first_byte(fcntl=fcntl)
+
+    def test_new_lock_file_keeps_exactly_one_byte(self):
+        for _ in range(3):
+            with oaw_common._exclusive_lock(self.target):
+                self.assertEqual(os.path.getsize(self.lock_file), 1)
+        oaw_common.atomic_write(self.target, "kept\n")
+        self.assertEqual((os.path.getsize(self.lock_file), Path(self.target).read_text(encoding="utf-8")), (1, "kept\n"))
 
 
 if __name__ == "__main__":

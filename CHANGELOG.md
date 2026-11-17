@@ -12,6 +12,15 @@ accumulated (D50).
 - The `oaw-codemap` skill says when to draw the map again (a new or long-untouched repository, after
   many files move, when layout and documents disagree, before a cross-module refactor) and how to
   check what changed first. It is still used only on an explicit call (#28).
+- Windows: a writer no longer ends in `PermissionError` when another process creates and locks a new
+  lock file between its size check and its first write; it waits for the lock like any other writer.
+  Seen twice in CI on windows-latest with Python 3.10 (runs 41025531953 and 43614452107), never
+  reproduced on demand, so one green run does not prove it gone.
+- The gate's per-check limit goes from 900 to 1,800 s: on windows-latest with Python 3.10 the test suite
+  took 559 to 882 s and passed the old limit once (run 43615890860).
+- ROADMAP rewritten around the owner's direction of 2026-11-17 (D54): the next version's main job is
+  the most efficient way to learn whether something helps. EGM keeps its default and its switch, with
+  nothing triggering it automatically (D55; #27 closed).
 
 ### Catalogue
 

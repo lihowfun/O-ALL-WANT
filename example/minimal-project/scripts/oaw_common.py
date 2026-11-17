@@ -223,12 +223,17 @@ def _exclusive_lock(path, root=None, timeout=30):
     parent = os.path.dirname(path)
     os.makedirs(parent, exist_ok=True)
     lock_path = _checked(os.path.join(parent, "." + os.path.basename(path) + ".oaw.lock"), root)
-    with open(lock_path, "a+b") as handle:
-        # Windows byte-range locks require a stable byte even for a new file.
-        handle.seek(0, os.SEEK_END)
-        if handle.tell() == 0:
-            handle.write(b"\0")
-            handle.flush()
+    with open(lock_path, "a+b", buffering=0) as handle:
+        # Windows byte-range locks require a stable byte even for a new file. The write is unbuffered,
+        # so a refused write leaves nothing behind for a later seek or close to write again.
+        if handle.seek(0, os.SEEK_END) == 0:
+            try:
+                handle.write(b"\0")
+            except PermissionError:
+                # Windows refuses a write to a byte another process has locked: that process created the
+                # byte between this size check and this write. Wait for the lock like any other writer.
+                if msvcrt is None:
+                    raise
         if fcntl is not None:
             fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
         elif msvcrt is not None:
